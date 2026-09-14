@@ -23,11 +23,20 @@ const formatTime = (seconds) => {
 
 const qualityLabel = (video) => {
   if (!video || !video.videoWidth) return null;
+
   const w = video.videoWidth;
+
+  if (w >= 7680) return "8K";
   if (w >= 3840) return "4K";
   if (w >= 2560) return "1440p";
   if (w >= 1920) return "1080p";
+  if (w >= 1600) return "900p";
   if (w >= 1280) return "720p";
+  if (w >= 1024) return "576p";
+  if (w >= 854) return "480p";
+  if (w >= 640) return "360p";
+  if (w >= 426) return "240p";
+
   return null;
 };
 
@@ -324,7 +333,6 @@ class MediaPlayerTray {
         <button class="mp-icon-btn mp-speed-btn" title="Playback speed">1x</button>
       </div>
       <div class="mp-controls">
-        <button class="mp-ctl mp-shuffle" title="Shuffle"><i class="fas fa-shuffle"></i></button>
         <button class="mp-ctl mp-prev" title="Previous"><i class="fas fa-backward-step"></i></button>
         <button class="mp-ctl mp-play" title="Play/Pause"><i class="fas fa-play"></i></button>
         <button class="mp-ctl mp-next" title="Next"><i class="fas fa-forward-step"></i></button>
@@ -336,10 +344,6 @@ class MediaPlayerTray {
     this.panel.querySelector(".mp-collapse").addEventListener("click", () => this.close());
     this.panel.querySelector(".mp-pin").addEventListener("click", () => this.togglePin());
     this.panel.querySelector(".mp-seek").addEventListener("input", (e) => this.handleSeek(e));
-    this.panel.querySelector(".mp-shuffle").addEventListener("click", (e) => {
-      e.stopPropagation();
-      this.panel.querySelector(".mp-shuffle").classList.toggle("active");
-    });
     this.panel.querySelector(".mp-repeat").addEventListener("click", (e) => this.toggleRepeat(e));
     this.panel.querySelector(".mp-prev").addEventListener("click", (e) => this.sendControl(e, "prev"));
     this.panel.querySelector(".mp-next").addEventListener("click", (e) => this.sendControl(e, "next"));

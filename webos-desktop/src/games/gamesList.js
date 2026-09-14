@@ -23,7 +23,8 @@ export const appMap = {
     type: "game",
     url: "https://cdn.jsdelivr.net/gh/NaoTomori1/yukios-games@main/html/pttr.html",
     icon: "/static/icons/pttr.webp",
-    title: "Paint The Town Red"
+    title: "Paint The Town Red",
+    skipRewrite: true
   },
   howToDateASleepParalysisDemon: {
     type: "game",
@@ -76,12 +77,6 @@ export const appMap = {
     icon: "/static/icons/plague.webp",
     title: "Plague Inc Evolved"
   },
-  pttr: {
-    type: "game",
-    url: "/static/games/html/pttr.html",
-    icon: "/static/icons/pttr.webp",
-    title: "Paint the Town Red"
-  },
   fiveNightsAtFrickbears3: {
     type: "game",
     url: "https://cdn.jsdelivr.net/gh/Reeyuki/Unblocked@main/frickbears3-stable.svg",
@@ -98,7 +93,8 @@ export const appMap = {
     type: "game",
     url: "/static/games/html/inscryption.html",
     icon: "/static/icons/inscryption.webp",
-    title: "Inscryption"
+    title: "Inscryption",
+    skipRewrite: true
   },
   nightInTheWoods: {
     type: "game",
