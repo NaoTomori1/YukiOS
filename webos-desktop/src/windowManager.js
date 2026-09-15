@@ -668,6 +668,7 @@ export class WindowManager {
     if (!win) return;
     if (os.tray.isRegistered(win.id)) {
       os.tray.sendToTray(win.id);
+      this.triggerSessionSave();
       return;
     }
     this.silenceWindow(win);

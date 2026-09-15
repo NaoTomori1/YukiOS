@@ -99,6 +99,9 @@ class TrayManager {
     if (taskbarItem) taskbarItem.style.display = "none";
     item.inTray = true;
     this.render();
+    try {
+      this.wm?.triggerSessionSave();
+    } catch {}
     return true;
   }
 

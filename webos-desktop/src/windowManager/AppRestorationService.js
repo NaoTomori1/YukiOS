@@ -133,6 +133,12 @@ export class AppRestorationService {
     const sortedWindows = Array.from(this.wm.openWindows.keys())
       .map((id) => $("#" + id))
       .filter(Boolean)
+      .filter((win) => {
+        try {
+          if (os.tray.isInTray(win.id) && win.style.display === "none") return false;
+        } catch {}
+        return true;
+      })
       .sort((a, b) => (parseInt(a.style.zIndex) || 0) - (parseInt(b.style.zIndex) || 0));
 
     for (const win of sortedWindows) {

@@ -639,6 +639,54 @@ export class WallpaperEngineApp extends BaseApp {
         <button class="we-card-action" data-action="login" data-id="${item.id}" title="Set Login"><i class="fas fa-lock"></i></button>
       </div>`;
 
+    const img = card.querySelector(".we-card-thumb img");
+    if (img && thumb && !thumb.startsWith("blob:") && !thumb.startsWith("data:")) {
+      let retries = 0;
+      const maxRetries = 1;
+      const reloadDelay = 2500;
+      let pending = false;
+      const onError = (e) => {
+        const target = e.target;
+        if (!target || target.tagName !== "IMG") return;
+        if (!card.contains(target)) return;
+        if (pending) return;
+        if (retries >= maxRetries) {
+          target.style.display = "none";
+          const existing = card.querySelector(".we-card-img-placeholder");
+          if (!existing) {
+            const ph = createElement("div", { className: "we-card-img-placeholder we-card-img-placeholder--error" });
+            ph.innerHTML = '<i class="fas fa-image"></i>';
+            const thumbWrap = card.querySelector(".we-card-thumb");
+            if (thumbWrap) thumbWrap.appendChild(ph);
+          }
+          card.removeEventListener("error", onError, true);
+          return;
+        }
+        pending = true;
+        retries += 1;
+        const failedImg = target;
+        setTimeout(() => {
+          pending = false;
+          const sep = thumb.includes("?") ? "&" : "?";
+          failedImg.src = `${thumb}${sep}retry=${retries}&t=${Date.now()}`;
+        }, reloadDelay);
+      };
+      const onLoad = (e) => {
+        const target = e.target;
+        if (!target || target.tagName !== "IMG") return;
+        if (!card.contains(target)) return;
+        pending = false;
+        const ph = card.querySelector(".we-card-img-placeholder--error");
+        if (ph) ph.remove();
+        target.style.display = "";
+        if (target.src.includes("retry=")) {
+          card.removeEventListener("error", onError, true);
+        }
+      };
+      card.addEventListener("error", onError, true);
+      card.addEventListener("load", onLoad, true);
+    }
+
     this.attachCardContextMenu(card);
   }
 
