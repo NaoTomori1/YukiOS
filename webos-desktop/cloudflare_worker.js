@@ -4930,7 +4930,8 @@ canvas{width:100%!important;height:100%!important}
   </div>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
 async function pruneOld(){
   if(!confirm("Delete all records older than 60 days? This cannot be undone.")) return;
   var token=document.getElementById("token").value.trim();

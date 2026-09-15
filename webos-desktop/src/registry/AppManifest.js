@@ -1562,5 +1562,20 @@ export const APP_MANIFESTS = [
     description: "Stream and play cloud games instantly via Geometry Today.",
     targetUrl: "https://geometry.today/",
     windowSize: ["90vw", "85vh"]
+  },
+  {
+    serviceKey: "infaredYoutubeApp",
+    enhanced: true,
+    type: "system",
+    title: "Infared Youtube",
+    icon: `${CDN_BASE}/static/icons/favicons/youtube.webp`,
+    launchType: "instance",
+    windowIdPatterns: ["infared-youtube", "infrared-youtube"],
+    category: "media",
+    persistContentState: false,
+    clippy: { message: "Watch videos on Infared Youtube", animation: ClippyAnimation.Show },
+    description: "Watch videos with Infared Youtube experience.",
+    targetUrl: "https://youtube-liard-ten.vercel.app/",
+    windowSize: ["90vw", "85vh"]
   }
 ];

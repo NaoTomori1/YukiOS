@@ -30,7 +30,12 @@ const HARDCODED_DESKTOP_ICONS = [
   { app: "shittifyApp", name: "Evil Spotify", icon: "static/icons/shittify.webp" },
   { app: "steamApp", name: "Yuki Steam", icon: "papirus:apps/steam" },
   { app: "discordApp", name: "Discord", icon: "papirus:apps/discord" },
-  { app: "geometryTodayApp", name: "Cloud Gaming (Geometry Today)", icon: "papirus:apps/preferences-desktop-gaming" }
+  { app: "geometryTodayApp", name: "Cloud Gaming (Geometry Today)", icon: "papirus:apps/preferences-desktop-gaming" },
+  {
+    app: "infaredYoutubeApp",
+    name: "Infared Youtube",
+    icon: "https://cdn.jsdelivr.net/gh/NaoTomori1/yukios@main/static/icons/favicons/youtube.webp"
+  }
 ];
 
 export class IconManager {
