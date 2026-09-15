@@ -19,7 +19,6 @@ import { applySteamDeckSettings, disableSteamDeckSettings } from "../modes/steam
 import { SystemUtilities } from "../system.js";
 
 const OVERLAY_SELECTOR = ".intro-tour-overlay";
-const DIM_SELECTOR = ".intro-tour-dim";
 const CARD_SELECTOR = ".intro-tour-card";
 const CARD_ENTER_CLASS = "intro-tour-enter";
 
@@ -36,12 +35,25 @@ const MODES = [
 function runSwitcher() {
   if (switcher) return;
   if ($(OVERLAY_SELECTOR)) return;
-  const dim = createElement("div", { className: "intro-tour-dim" });
+  const dim = createElement("div", {
+    styles: {
+      position: "fixed",
+      inset: "0",
+      zIndex: "2147483000",
+      background: "transparent",
+      backdropFilter: "none",
+      pointerEvents: "auto"
+    }
+  });
   const overlay = createElement("div", { className: "intro-tour-overlay" });
-  overlay.appendChild(createElement("div", { className: "intro-tour-spotlight", style: "display:none" }));
+  overlay.appendChild(createElement("div", { className: "intro-tour-spotlight", styles: { display: "none" } }));
   overlay.appendChild(createElement("div", { className: "intro-tour-card" }));
   document.body.appendChild(dim);
   document.body.appendChild(overlay);
+  dim.addEventListener("click", cleanup);
+  overlay.addEventListener("click", (event) => {
+    if (event.target === overlay) cleanup();
+  });
   switcher = {
     overlay,
     dim,

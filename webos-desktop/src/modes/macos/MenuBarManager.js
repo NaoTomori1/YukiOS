@@ -15,29 +15,64 @@ export class MenuBarManager {
     this.appOverrides = new Map();
     this.currentMenus = DEFAULT_SYSTEM_MENUS;
     this.openMenuIndex = -1;
+    this.enabled = false;
+    this.appleWired = false;
     this.boundClick = this.onDocClick.bind(this);
     this.boundFocus = this.onWindowFocused.bind(this);
     this.boundClosed = this.onWindowClosed.bind(this);
     this.boundKeydown = this.onKeydown.bind(this);
+    this.boundModeEntered = this.onModeEntered.bind(this);
+    this.boundModeExited = this.onModeExited.bind(this);
   }
 
   init() {
-    if (!this.isEnabled()) return;
+    this.os.events.on(BusEvents.MODE_ENTERED, this.boundModeEntered);
+    this.os.events.on(BusEvents.MODE_EXITED, this.boundModeExited);
+    this.wireAppleLogo();
+    if (this.isEnabled()) {
+      this.enable();
+    } else {
+      this.renderMenuBar();
+      this.wireMenuItems();
+      this.wireFinderItem();
+    }
+  }
 
+  enable() {
+    if (this.enabled) return;
+    this.enabled = true;
     this.renderMenuBar();
     this.wireMenuItems();
-    this.wireAppleLogo();
     this.wireFinderItem();
-
     this.os.events.on(BusEvents.WINDOW_FOCUSED, this.boundFocus);
     this.os.events.on(BusEvents.WINDOW_CLOSED, this.boundClosed);
     bindEvent(document, "click", this.boundClick);
     bindEvent(document, "keydown", this.boundKeydown);
   }
 
+  disable() {
+    if (!this.enabled) return;
+    this.enabled = false;
+    this.hideMenu();
+    this.os.events.off(BusEvents.WINDOW_FOCUSED, this.boundFocus);
+    this.os.events.off(BusEvents.WINDOW_CLOSED, this.boundClosed);
+    document.removeEventListener("click", this.boundClick);
+    document.removeEventListener("keydown", this.boundKeydown);
+  }
+
+  onModeEntered({ id }) {
+    if (id === MODES.MAC) this.enable();
+  }
+
+  onModeExited({ id }) {
+    if (id === MODES.MAC) this.disable();
+  }
+
   wireAppleLogo() {
+    if (this.appleWired) return;
     const appleBtn = $("#mac-menu-bar .mac-menu-apple");
     if (appleBtn) {
+      this.appleWired = true;
       bindEvent(appleBtn, "click", (e) => {
         e.stopPropagation();
         import("../../desktopui/startMenu.js").then((m) => m.toggleStartMenu());
@@ -48,6 +83,8 @@ export class MenuBarManager {
   wireFinderItem() {
     const finder = $("#mac-menu-bar .mac-menu-item[data-menu='Finder']");
     if (!finder) return;
+    if (finder.dataset.wired === "true") return;
+    finder.dataset.wired = "true";
     bindEvent(finder, "click", (e) => {
       e.stopPropagation();
       os.app.getInstance(ServiceKeys.COMMAND_PALETTE)?.toggle();
@@ -55,10 +92,9 @@ export class MenuBarManager {
   }
 
   destroy() {
-    this.os.events.off(BusEvents.WINDOW_FOCUSED, this.boundFocus);
-    this.os.events.off(BusEvents.WINDOW_CLOSED, this.boundClosed);
-    document.removeEventListener("click", this.boundClick);
-    document.removeEventListener("keydown", this.boundKeydown);
+    this.os.events.off(BusEvents.MODE_ENTERED, this.boundModeEntered);
+    this.os.events.off(BusEvents.MODE_EXITED, this.boundModeExited);
+    if (this.enabled) this.disable();
   }
 
   registerAppMenu(appId, menuDefs) {
