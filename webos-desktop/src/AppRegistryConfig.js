@@ -19,7 +19,8 @@ const SYSTEM_APPS = APP_MANIFESTS.reduce((acc, manifest) => {
     targetUrl: manifest.targetUrl,
     trayOptions: manifest.trayOptions,
     windowSize: manifest.windowSize,
-    fileAssociations: manifest.fileAssociations
+    fileAssociations: manifest.fileAssociations,
+    skipRewrite: manifest.skipRewrite
   };
   return acc;
 }, {});

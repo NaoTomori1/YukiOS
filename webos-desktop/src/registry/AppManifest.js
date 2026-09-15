@@ -1565,17 +1565,14 @@ export const APP_MANIFESTS = [
   },
   {
     serviceKey: "infaredYoutubeApp",
-    enhanced: true,
     type: "system",
     title: "Infared Youtube",
     icon: `${CDN_BASE}/static/icons/favicons/youtube.webp`,
-    launchType: "instance",
+    launchType: "iframe",
     windowIdPatterns: ["infared-youtube", "infrared-youtube"],
     category: "media",
-    persistContentState: false,
-    clippy: { message: "Watch videos on Infared Youtube", animation: ClippyAnimation.Show },
     description: "Watch videos with Infared Youtube experience.",
-    targetUrl: "https://youtube-liard-ten.vercel.app/",
-    windowSize: ["90vw", "85vh"]
+    source: "https://youtube-liard-ten.vercel.app/",
+    skipRewrite: true
   }
 ];
