@@ -41,7 +41,6 @@ import { StorageKeys } from "./StorageKeys.js";
 import { ServiceKeys } from "./ServiceKeys.js";
 import { showBootScreen } from "./bootScreen.js";
 import { deckCapture } from "./modes/steamdeck/deckCapture.js";
-import { checkAndShowDonationPopup } from "./donationPopup.js";
 import { initPopunder } from "./ads.js";
 import { bus } from "./core/EventBus.js";
 import { trayManager } from "./tray/tray.js";
@@ -212,7 +211,6 @@ async function start() {
   batteryPerformanceManager.init();
   versionChecker.start();
   menuBar.init();
-  setTimeout(() => checkAndShowDonationPopup(), 4000);
   setTimeout(() => initPopunder(), 5000);
 
   const url = new URL(location.href);

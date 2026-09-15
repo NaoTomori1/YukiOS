@@ -1,12 +1,9 @@
 import "./styles/donationPopup.css";
 import { StorageKeys, os, createElement } from "./framework.js";
 import { $, bindEvent } from "./shared/domUtils.js";
-import { parseBool } from "./utils/utils.js";
 
 const MONERO_ADDRESS =
   "4B5RKGR4C5WDkHGKVemU4rDcnKDG5NbwBLogE1tnxAWJAqbLPpNiDNaVZC1jrfwSdB7Sh1ALQNe3TMMvhdEJTPRcAUJhyVm";
-const DAY_MS = 86400000;
-const FOURTEEN_DAYS = 14 * DAY_MS;
 
 let overlay = null;
 
@@ -124,19 +121,7 @@ async function copyAddress() {
 }
 
 export function checkAndShowDonationPopup() {
-  if (!os.storage.get(StorageKeys.setupCompleted)) return;
-
-  if (parseBool(os.storage.get(StorageKeys.donationDismissed))) return;
-  if (parseBool(os.storage.get(StorageKeys.adsDisabled))) return;
-
-  const firstLaunch = Number(os.storage.get(StorageKeys.firstLaunchTime));
-  if (!firstLaunch || isNaN(firstLaunch)) return;
-  if (Date.now() - firstLaunch < FOURTEEN_DAYS) return;
-
-  const lastShown = Number(os.storage.get(StorageKeys.donationLastShown));
-  if (lastShown && !isNaN(lastShown) && Date.now() - lastShown < FOURTEEN_DAYS) return;
-
-  showPopup();
+  return;
 }
 
 window.showDonationPopup = showPopup;
