@@ -50,6 +50,7 @@ import { RemoteHostApp } from "./apps/RemoteHostApp.js";
 import { IntroTourApp } from "./apps/introTour.js";
 import { ModeSwitcherApp } from "./apps/modeSwitcher.js";
 import { AquariumApp } from "./apps/aquarium.js";
+import { InfaredYoutubeApp } from "./apps/infraredYoutube.js";
 
 const APP_CLASS_MAP = {
   terminalApp: TerminalApp,
@@ -97,6 +98,7 @@ const APP_CLASS_MAP = {
   notepadApp: NotepadApp,
   modeSwitcherApp: ModeSwitcherApp,
   aquariumApp: AquariumApp,
+  infaredYoutubeApp: InfaredYoutubeApp,
   lavatApp: LavatApp,
   btopApp: BtopApp,
   cmatrixApp: CmatrixApp,

@@ -1568,11 +1568,9 @@ export const APP_MANIFESTS = [
     type: "system",
     title: "Infared Youtube",
     icon: `${CDN_BASE}/static/icons/favicons/youtube.webp`,
-    launchType: "iframe",
+    launchType: "instance",
     windowIdPatterns: ["infared-youtube", "infrared-youtube"],
     category: "media",
-    description: "Watch videos with Infared Youtube experience.",
-    source: "https://youtube-liard-ten.vercel.app/",
-    skipRewrite: true
+    description: "Watch videos with Infared Youtube experience."
   }
 ];
