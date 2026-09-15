@@ -439,13 +439,28 @@ function setupImageViewer(win) {
   ro.observe(container);
 }
 
-export function openMediaViewer(name, src, kind) {
+export function openMediaViewer(name, src, kind, storedIcon = null) {
   const isVideo = kind === FileKind.VIDEO || isVideoFile(name);
   const isAudio = kind === FileKind.AUDIO || isAudioFile(name);
   const isImage = !isVideo && !isAudio;
 
   const [width, height] = isAudio ? ["400px", "120px"] : ["500px", "400px"];
-  const icon = isAudio ? resolveIconUrl("static/icons/spot.webp") : resolveIconUrl("static/icons/file.webp");
+  let icon;
+  if (storedIcon) {
+    const effective = getEffectiveIcon(storedIcon);
+    if (typeof effective === "string" && effective.startsWith("papirus:")) {
+      icon = resolveIconUrl(effective);
+    } else if (
+      typeof effective === "string" &&
+      (effective.startsWith("http") || effective.startsWith("data:") || effective.startsWith("/"))
+    ) {
+      icon = effective;
+    } else {
+      icon = isAudio ? resolveIconUrl("static/icons/spot.webp") : resolveIconUrl("static/icons/file.webp");
+    }
+  } else {
+    icon = isAudio ? resolveIconUrl("static/icons/spot.webp") : resolveIconUrl("static/icons/file.webp");
+  }
 
   let media;
   if (isVideo) {
@@ -611,14 +626,16 @@ async function openMediaFile(name, path) {
       return await readFileAsDataURL(typedBlob);
     };
 
+    const storedIcon = await os.fs.getFileIcon([...path, name]);
+
     const blob = await os.fs.readBinaryFile(path, name);
     if (blob && blob.size > 0) {
-      openMediaViewer(name, await getMediaSrc(blob), kind);
+      openMediaViewer(name, await getMediaSrc(blob), kind, storedIcon);
       return;
     }
     const content = await os.fs.getFileContent(path, name);
     if (content instanceof Blob && content.size > 0) {
-      openMediaViewer(name, await getMediaSrc(content), kind);
+      openMediaViewer(name, await getMediaSrc(content), kind, storedIcon);
       return;
     }
     if (typeof content === "string" && content) {
@@ -629,7 +646,7 @@ async function openMediaFile(name, path) {
         const typedBlob = new Blob([Uint8Array.from(content, (c) => c.charCodeAt(0))], { type: mime });
         src = await getMediaSrc(typedBlob);
       }
-      openMediaViewer(name, src, kind);
+      openMediaViewer(name, src, kind, storedIcon);
     }
   } catch (err) {
     console.error("[FileDisplay] openMediaFile error:", err);

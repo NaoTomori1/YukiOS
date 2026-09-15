@@ -238,6 +238,12 @@ export const defaultStorage = {
       content: resolveIconUrl("static/flymetothemoon.mp4"),
       kind: FileKind.VIDEO,
       icon: resolveIconUrl("static/flymetothemoon-preview.webp")
+    },
+    "serial-experiments-lain.mp4": {
+      type: "file",
+      content: resolveIconUrl("https://cdn.jsdelivr.net/gh/Reeyuki/ringracers@main/l.mp4"),
+      kind: FileKind.VIDEO,
+      icon: resolveIconUrl("https://cdn.jsdelivr.net/gh/Yangmoooo/lain-sddm-theme@master/VisLain.gif")
     }
   },
   Config: {

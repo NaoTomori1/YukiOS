@@ -536,6 +536,7 @@ export class CommandPalette {
     }
 
     for (const file of this.cachedFiles) {
+      if (file.name.toLowerCase().endsWith(".desktop") && file.path.toLowerCase().includes("/desktop/")) continue;
       if (!search || file.name.toLowerCase().includes(search)) {
         items.push({
           title: file.name,
@@ -729,7 +730,7 @@ export class CommandPalette {
     const go = (section, target) => {
       launchSettingsPane(section, target);
     };
-    const entries = SETTINGS_CATEGORIES.map((cat) => ({
+    const entries = SETTINGS_CATEGORIES.filter((cat) => cat.id !== "steam").map((cat) => ({
       title: `Settings: ${cat.title}`,
       subtitle: `Open the ${cat.title} settings panel`,
       tag: "settings",

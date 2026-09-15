@@ -1561,6 +1561,8 @@ export class ExplorerApp extends BaseApp {
     let thumbnailSrc = null;
     if (name === "flymetothemoon.mp4") {
       thumbnailSrc = resolveIconUrl("static/flymetothemoon-preview.webp");
+    } else if (name === "serial-experiments-lain.mp4") {
+      thumbnailSrc = resolveIconUrl("https://cdn.jsdelivr.net/gh/Yangmoooo/lain-sddm-theme@master/VisLain.gif");
     } else if (isImageFile(name) && !inSystem) {
       const cacheKey = inst.currentPath.join("/") + "/" + name;
       const cached = this.thumbnailCache.get(cacheKey);

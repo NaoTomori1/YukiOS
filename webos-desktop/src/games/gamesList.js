@@ -1740,5 +1740,19 @@ export const appMap = {
     icon: "/static/icons/mindustry.webp",
     title: "Mindustry",
     skipRewrite: true
+  },
+  lethalCompany: {
+    type: "game",
+    url: "/static/games/html/lethalcompany.html",
+    icon: "/static/icons/lethal.webp",
+    title: "Lethal Company",
+    skipRewrite: true
+  },
+  rimworld: {
+    type: "game",
+    url: "/static/games/html/rimworld.html",
+    icon: "/static/icons/rimworld.webp",
+    title: "RimWorld",
+    skipRewrite: true
   }
 };
