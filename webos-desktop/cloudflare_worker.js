@@ -4,12 +4,7 @@ let cachedKey = null;
 let cachedKeySecret = null;
 
 const Caches = {
-  sessions: { data: null, time: 0, promise: null },
   games: { data: null, time: 0, promise: null },
-  topTime: { data: null, time: 0, promise: null },
-  stats: {},
-  peak: {},
-  insights: {},
   live: { data: null, time: 0, promise: null },
   appList: { data: null, time: 0, promise: null },
   themes: {},
@@ -203,7 +198,8 @@ function ensureAnalyticsIndexes(env) {
     "CREATE INDEX IF NOT EXISTS idx_analytics_daily_id ON analytics (daily_id)",
     "CREATE INDEX IF NOT EXISTS idx_analytics_event ON analytics (json_extract(data, '$.event'))",
     "CREATE INDEX IF NOT EXISTS idx_analytics_app ON analytics (json_extract(data, '$.app'))",
-    "CREATE INDEX IF NOT EXISTS idx_analytics_ts_event ON analytics (timestamp, json_extract(data, '$.event'))"
+    "CREATE INDEX IF NOT EXISTS idx_analytics_ts_event ON analytics (timestamp, json_extract(data, '$.event'))",
+    "CREATE INDEX IF NOT EXISTS idx_analytics_event_app_ts ON analytics (json_extract(data, '$.event'), json_extract(data, '$.app'), timestamp)"
   ];
   analyticsIndexInitPromise = env.DB.batch(statements.map((sql) => env.DB.prepare(sql))).catch((e) => {
     analyticsIndexInitPromise = null;
@@ -1963,7 +1959,9 @@ function themeRateLimit(env, ip, bucket) {
     redeem: [3, 24 * 60 * 60 * 1000],
     quests: [10, 10 * 60 * 1000],
     feed: [30, 60 * 1000],
-    admin_list: [30, 60 * 1000]
+    admin_list: [30, 60 * 1000],
+    analytics: [30, 60 * 1000],
+    activity: [30, 60 * 1000]
   };
   const config = limits[bucket];
   if (!config) return true;
@@ -2225,6 +2223,9 @@ async function handleYukiRequest(request, env) {
     if (ipBlocked(env, clientIP)) {
       return jsonResponse({ error: "Forbidden" }, 403);
     }
+    if (!themeRateLimit(env, clientIP, "analytics")) {
+      return jsonResponse({ error: "Rate limited" }, 429);
+    }
 
     let payload;
     try {
@@ -2233,7 +2234,8 @@ async function handleYukiRequest(request, env) {
       return jsonResponse({ error: "invalid json" }, 400);
     }
 
-    const events = Array.isArray(payload) ? payload : [payload];
+    let events = Array.isArray(payload) ? payload : [payload];
+    if (events.length > 20) events = events.slice(0, 20);
     const timestamp = new Date().toISOString();
     const dailyId = await deriveDailyId(env, clientIP);
 
@@ -2265,6 +2267,9 @@ async function handleYukiRequest(request, env) {
     if (ipBlocked(env, clientIP)) {
       return jsonResponse({ error: "Forbidden" }, 403);
     }
+    if (!themeRateLimit(env, clientIP, "analytics")) {
+      return jsonResponse({ error: "Rate limited" }, 429);
+    }
 
     let payload;
     try {
@@ -2273,7 +2278,8 @@ async function handleYukiRequest(request, env) {
       return jsonResponse({ error: "invalid json" }, 400);
     }
 
-    const events = Array.isArray(payload) ? payload : [payload];
+    let events = Array.isArray(payload) ? payload : [payload];
+    if (events.length > 20) events = events.slice(0, 20);
     const timestamp = new Date().toISOString();
     const dailyId = await deriveDailyId(env, clientIP);
 
@@ -2305,6 +2311,9 @@ async function handleYukiRequest(request, env) {
     if (ipBlocked(env, clientIP)) {
       return jsonResponse({ error: "Forbidden" }, 403);
     }
+    if (!themeRateLimit(env, clientIP, "activity")) {
+      return jsonResponse({ error: "Rate limited" }, 429);
+    }
 
     let payload;
     try {
@@ -2315,7 +2324,8 @@ async function handleYukiRequest(request, env) {
 
     await ensureSocialSchema(env);
     const now = new Date().toISOString();
-    const events = Array.isArray(payload) ? payload : [payload];
+    let events = Array.isArray(payload) ? payload : [payload];
+    if (events.length > 20) events = events.slice(0, 20);
     let cleanEvents = events.filter(
       (e) => !isUrlPrefixed(e.username) && !isUrlPrefixed(e.appId) && !isUrlPrefixed(e.gameTitle)
     );
@@ -2335,6 +2345,7 @@ async function handleYukiRequest(request, env) {
       }
       return true;
     });
+    if (cleanEvents.length > 20) cleanEvents = cleanEvents.slice(0, 20);
 
     const inserts = cleanEvents.map((event) => {
       const data = {
@@ -2382,46 +2393,53 @@ async function handleYukiRequest(request, env) {
   }
 
   if (url.pathname === "/live/now-playing" && request.method === "GET") {
-    return cachedJsonResponse(request, "now-playing", 5, async () => {
-      const fiveMinAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+    return cachedJsonResponse(request, "now-playing", 5, () =>
+      withCache(
+        Caches.social,
+        "now-playing",
+        async () => {
+          const fiveMinAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
 
-      const result = await env.DB.prepare(
-        `SELECT data FROM analytics
+          const result = await env.DB.prepare(
+            `SELECT data FROM analytics
          WHERE json_extract(data, '$.event') = 'activity_start'
            AND timestamp >= ?
          ORDER BY timestamp DESC`
-      )
-        .bind(fiveMinAgo)
-        .all();
+          )
+            .bind(fiveMinAgo)
+            .all();
 
-      const usersMap = new Map();
-      for (const row of result.results) {
-        try {
-          const d = typeof row.data === "string" ? JSON.parse(row.data) : row.data;
-          if (!d.name) continue;
-          const key = d.userId || d.name;
-          if (!usersMap.has(key)) {
-            usersMap.set(key, {
-              userId: d.userId || null,
-              username: String(d.name).slice(0, 32),
-              appId: String(d.app || "").slice(0, 64),
-              gameTitle: String(d.gameTitle || "").slice(0, 128),
-              gameIcon: String(d.gameIcon || "").slice(0, 512),
-              avatarIndex: typeof d.avatarIndex === "number" ? d.avatarIndex : -1,
-              startedAt: d.timestamp
-            });
+          const usersMap = new Map();
+          for (const row of result.results) {
+            try {
+              const d = typeof row.data === "string" ? JSON.parse(row.data) : row.data;
+              if (!d.name) continue;
+              const key = d.userId || d.name;
+              if (!usersMap.has(key)) {
+                usersMap.set(key, {
+                  userId: d.userId || null,
+                  username: String(d.name).slice(0, 32),
+                  appId: String(d.app || "").slice(0, 64),
+                  gameTitle: String(d.gameTitle || "").slice(0, 128),
+                  gameIcon: String(d.gameIcon || "").slice(0, 512),
+                  avatarIndex: typeof d.avatarIndex === "number" ? d.avatarIndex : -1,
+                  startedAt: d.timestamp
+                });
+              }
+            } catch {}
           }
-        } catch {}
-      }
 
-      const presenceRows = await env.DB.prepare("SELECT user_id, presence FROM live_users").all();
-      const presenceMap = new Map((presenceRows.results || []).map((r) => [r.user_id, r.presence]));
+          const presenceRows = await env.DB.prepare("SELECT user_id, presence FROM live_users").all();
+          const presenceMap = new Map((presenceRows.results || []).map((r) => [r.user_id, r.presence]));
 
-      const users = Array.from(usersMap.values()).filter(
-        (u) => !(u.userId && presenceMap.get(u.userId) && presenceMap.get(u.userId) !== "online")
-      );
-      return { users };
-    });
+          const users = Array.from(usersMap.values()).filter(
+            (u) => !(u.userId && presenceMap.get(u.userId) && presenceMap.get(u.userId) !== "online")
+          );
+          return { users };
+        },
+        5000
+      )
+    );
   }
 
   if (url.pathname === "/live/recent-players" && request.method === "GET") {
@@ -3066,39 +3084,48 @@ async function handleYukiRequest(request, env) {
     const userId = validUserId(url.searchParams.get("userId")) ? url.searchParams.get("userId") : null;
     if (!userId) return jsonResponse({ error: "invalid userId" }, 400);
 
-    await ensureSocialSchema(env);
+    const data = await withCache(
+      Caches.social,
+      "me:" + userId,
+      async () => {
+        await ensureSocialSchema(env);
 
-    const row = await env.DB.prepare(
-      "SELECT user_id, username, avatar_index, bio, presence, created_at, last_seen FROM live_users WHERE user_id = ?"
-    )
-      .bind(userId)
-      .first();
-    if (!row) {
+        const row = await env.DB.prepare(
+          "SELECT user_id, username, avatar_index, bio, presence, created_at, last_seen FROM live_users WHERE user_id = ?"
+        )
+          .bind(userId)
+          .first();
+        if (!row) return null;
+
+        const coinsData = await fetchCoinsForUser(env, userId);
+        const invRows = await env.DB.prepare("SELECT item_id FROM inventory WHERE user_id = ?").bind(userId).all();
+        const account = await env.DB.prepare("SELECT supporter, supporter_since FROM accounts WHERE user_id = ?")
+          .bind(userId)
+          .first();
+
+        return {
+          userId: row.user_id,
+          username: row.username,
+          avatarIndex: row.avatar_index,
+          bio: row.bio || "",
+          presence: row.presence,
+          createdAt: row.created_at,
+          lastSeen: row.last_seen,
+          coins: coinsData.coins,
+          inventory: invRows.results.map((r) => r.item_id),
+          supporter: Number(account?.supporter) > 0,
+          supporterSince: account?.supporter_since || null,
+          streak: coinsData.streak,
+          achievementsCount: coinsData.achievementsCount,
+          playtimeMinutes: coinsData.playtimeMinutes
+        };
+      },
+      15000
+    );
+    if (!data) {
       return jsonResponse({ error: "Profile not found." }, 404);
     }
-
-    const coinsData = await fetchCoinsForUser(env, userId);
-    const invRows = await env.DB.prepare("SELECT item_id FROM inventory WHERE user_id = ?").bind(userId).all();
-    const account = await env.DB.prepare("SELECT supporter, supporter_since FROM accounts WHERE user_id = ?")
-      .bind(userId)
-      .first();
-
-    return jsonResponse({
-      userId: row.user_id,
-      username: row.username,
-      avatarIndex: row.avatar_index,
-      bio: row.bio || "",
-      presence: row.presence,
-      createdAt: row.created_at,
-      lastSeen: row.last_seen,
-      coins: coinsData.coins,
-      inventory: invRows.results.map((r) => r.item_id),
-      supporter: Number(account?.supporter) > 0,
-      supporterSince: account?.supporter_since || null,
-      streak: coinsData.streak,
-      achievementsCount: coinsData.achievementsCount,
-      playtimeMinutes: coinsData.playtimeMinutes
-    });
+    return jsonResponse(data);
   }
 
   if (url.pathname === "/live/leaderboard" && request.method === "GET") {
@@ -3286,29 +3313,39 @@ async function handleYukiRequest(request, env) {
     const userId = validUserId(url.searchParams.get("userId")) ? url.searchParams.get("userId") : null;
     if (!userId) return jsonResponse({ error: "invalid userId" }, 400);
 
-    await ensureSocialSchema(env);
+    const data = await withCache(
+      Caches.social,
+      "quests:" + userId,
+      async () => {
+        await ensureSocialSchema(env);
 
-    const claimedRows = await env.DB.prepare("SELECT quest_id FROM quest_claims WHERE user_id = ? AND claim_day = ?")
-      .bind(userId, todayIso())
-      .all();
-    const claimedSet = new Set(claimedRows.results.map((r) => r.quest_id));
+        const claimedRows = await env.DB.prepare(
+          "SELECT quest_id FROM quest_claims WHERE user_id = ? AND claim_day = ?"
+        )
+          .bind(userId, todayIso())
+          .all();
+        const claimedSet = new Set(claimedRows.results.map((r) => r.quest_id));
 
-    const quests = [];
-    for (const item of QUEST_POOL) {
-      const progress = await computeQuestProgress(env, userId, item.id);
-      quests.push({
-        id: item.id,
-        title: item.title,
-        desc: item.desc,
-        icon: item.icon,
-        target: item.target,
-        rewardCoins: item.rewardCoins,
-        progress,
-        claimed: claimedSet.has(item.id)
-      });
-    }
+        const quests = [];
+        for (const item of QUEST_POOL) {
+          const progress = await computeQuestProgress(env, userId, item.id);
+          quests.push({
+            id: item.id,
+            title: item.title,
+            desc: item.desc,
+            icon: item.icon,
+            target: item.target,
+            rewardCoins: item.rewardCoins,
+            progress,
+            claimed: claimedSet.has(item.id)
+          });
+        }
 
-    return jsonResponse({ day: todayIso(), quests });
+        return { day: todayIso(), quests };
+      },
+      30000
+    );
+    return jsonResponse(data);
   }
 
   if (url.pathname === "/live/quests/claim" && request.method === "POST") {
@@ -3621,12 +3658,17 @@ async function handleYukiRequest(request, env) {
       return jsonResponse({ error: "Forbidden" }, 403);
     }
     await ensureSocialSchema(env);
-    return cachedJsonResponse(request, "discover", 30, () => fetchDiscoverData(env));
+    return cachedJsonResponse(request, "discover", 30, () =>
+      withCache(Caches.social, "discover", () => fetchDiscoverData(env), 30000)
+    );
   }
 
   if (url.pathname === "/analytics" && request.method === "POST") {
     if (ipBlocked(env, clientIP)) {
       return jsonResponse({ error: "Forbidden" }, 403);
+    }
+    if (!themeRateLimit(env, clientIP, "analytics")) {
+      return jsonResponse({ error: "Rate limited" }, 429);
     }
 
     let payload;
@@ -3635,8 +3677,12 @@ async function handleYukiRequest(request, env) {
     } catch {
       return jsonResponse({ error: "invalid json" }, 400);
     }
+    if (JSON.stringify(payload).length > 64 * 1024) {
+      return jsonResponse({ error: "Payload too large" }, 413);
+    }
 
-    const events = Array.isArray(payload) ? payload : [payload];
+    let events = Array.isArray(payload) ? payload : [payload];
+    if (events.length > 20) events = events.slice(0, 20);
     const timestamp = new Date().toISOString();
     const dailyId = await deriveDailyId(env, clientIP);
 
@@ -3650,7 +3696,12 @@ async function handleYukiRequest(request, env) {
       return /^[a-z0-9_.-]{1,64}$/.test(app);
     });
 
-    const inserts = cleanEvents.map((event) => {
+    const launchEvents = cleanEvents.filter((event) => event.event === "launch");
+    const usageEvents = cleanEvents.filter(
+      (event) => event.event === "usage" && typeof event.durationMs === "number" && event.durationMs >= 60000
+    );
+
+    const inserts = launchEvents.map((event) => {
       if (event.app) event.app = normalizeApp(event.app);
       const id = crypto.randomUUID();
       return env.DB.prepare("INSERT INTO analytics (id, daily_id, timestamp, data) VALUES (?, ?, ?, ?)").bind(
@@ -3662,39 +3713,33 @@ async function handleYukiRequest(request, env) {
     });
 
     const socialStatements = [];
-    for (const event of cleanEvents) {
+    for (const event of launchEvents) {
       if (!validUserId(event.userId)) continue;
       socialStatements.push(profileUpsertStatement(env, event.userId, "", -1, now));
-      if (
-        event.event === "usage" &&
-        typeof event.durationMs === "number" &&
-        event.durationMs > 0 &&
-        typeof event.app === "string" &&
-        event.app
-      ) {
-        const minutes = event.durationMs / 60000;
-        socialStatements.push(
-          env.DB.prepare(
-            `INSERT INTO user_playtime (user_id, app, minutes, last_played) VALUES (?, ?, ?, ?)
-               ON CONFLICT(user_id, app) DO UPDATE SET
-                 minutes = minutes + excluded.minutes,
-                 last_played = excluded.last_played`
-          ).bind(event.userId, normalizeApp(event.app), minutes, now)
-        );
-      }
+    }
+    for (const event of usageEvents) {
+      if (!validUserId(event.userId)) continue;
+      if (typeof event.app !== "string" || !event.app) continue;
+      socialStatements.push(profileUpsertStatement(env, event.userId, "", -1, now));
+      const minutes = event.durationMs / 60000;
+      socialStatements.push(
+        env.DB.prepare(
+          `INSERT INTO user_playtime (user_id, app, minutes, last_played) VALUES (?, ?, ?, ?)
+             ON CONFLICT(user_id, app) DO UPDATE SET
+               minutes = minutes + excluded.minutes,
+               last_played = excluded.last_played`
+        ).bind(event.userId, normalizeApp(event.app), minutes, now)
+      );
     }
 
     const allStatements = inserts.concat(socialStatements);
     if (allStatements.length === 0) return jsonResponse({ status: "ok", count: 0 });
     await env.DB.batch(allStatements);
-    return jsonResponse({ status: "ok", count: cleanEvents.length });
+    return jsonResponse({ status: "ok", count: launchEvents.length + usageEvents.length });
   }
 
   if (url.pathname === "/admin/stats" && request.method === "GET") {
-    const range = url.searchParams.get("range") || "30d";
-    return cachedJsonResponse(request, "stats-" + range, 60, () =>
-      withCache(Caches.stats, range, () => fetchStatsData(env, range))
-    );
+    return jsonResponse({ daily: [], topGames: {} });
   }
 
   if (url.pathname === "/admin/list" && request.method === "GET") {
@@ -3731,7 +3776,8 @@ async function handleYukiRequest(request, env) {
 
   if (url.pathname === "/admin/downloads/stats" && request.method === "GET") {
     const range = url.searchParams.get("range") || "30d";
-    let days = range === "7d" ? 7 : range === "90d" ? 90 : range === "1y" ? 365 : 30;
+    let days = range === "7d" ? 7 : range === "60d" ? 60 : 30;
+    if (days > 60) days = 60;
 
     const total = await env.DB.prepare(
       `SELECT COUNT(*) AS count,
@@ -3792,7 +3838,7 @@ async function handleYukiRequest(request, env) {
   }
 
   if (url.pathname === "/api/game-play-counts" && request.method === "GET") {
-    return cachedJsonResponse(request, "game-play-counts", 60, async () => {
+    return cachedJsonResponse(request, "game-play-counts", 300, async () => {
       const results = await withCache(Caches.games, null, () => fetchGameCounts(env));
       const playCounts = {};
       for (const row of results) {
@@ -3810,38 +3856,31 @@ async function handleYukiRequest(request, env) {
   }
 
   if (url.pathname === "/admin/top-played-time-games" && request.method === "GET") {
-    return cachedJsonResponse(request, "top-played-time", 60, async () => {
-      const results = await withCache(Caches.topTime, null, () => fetchTopTime(env));
-      return { results };
-    });
+    return jsonResponse({ results: [] });
   }
 
   if (url.pathname === "/admin/sessions" && request.method === "GET") {
-    return cachedJsonResponse(request, "sessions", 60, async () => {
-      const data = await withCache(Caches.sessions, null, () => buildAggregatedData(env));
-      return data.sessionsResponse;
+    return jsonResponse({
+      total_sessions: 0,
+      avg_duration_ms: 0,
+      avg_apps_per_session: 0,
+      longest_session_ms: 0,
+      shortest_session_ms: 0,
+      bounce_sessions: 0,
+      power_users: 0
     });
   }
 
   if (url.pathname === "/admin/flows" && request.method === "GET") {
-    return cachedJsonResponse(request, "flows", 60, async () => {
-      const data = await withCache(Caches.sessions, null, () => buildAggregatedData(env));
-      return data.flowsResponse;
-    });
+    return jsonResponse({ flows: [] });
   }
 
   if (url.pathname === "/admin/entry-exit" && request.method === "GET") {
-    return cachedJsonResponse(request, "entry-exit", 60, async () => {
-      const data = await withCache(Caches.sessions, null, () => buildAggregatedData(env));
-      return data.entryExitResponse;
-    });
+    return jsonResponse({ top_entry_apps: [], top_exit_apps: [] });
   }
 
   if (url.pathname === "/admin/exploration" && request.method === "GET") {
-    return cachedJsonResponse(request, "exploration", 60, async () => {
-      const data = await withCache(Caches.sessions, null, () => buildAggregatedData(env));
-      return data.explorationResponse;
-    });
+    return jsonResponse({ avg_unique_apps_per_session: 0, top_explorers: [], top_diverse_sessions: [] });
   }
 
   if ((url.pathname === "/live" || url.pathname === "/admin/live") && request.method === "GET") {
@@ -3849,17 +3888,21 @@ async function handleYukiRequest(request, env) {
   }
 
   if (url.pathname === "/admin/peak-concurrent" && request.method === "GET") {
-    const range = url.searchParams.get("range") || "30d";
-    return cachedJsonResponse(request, "peak-" + range, 60, () =>
-      withCache(Caches.peak, "peak-" + range, () => fetchPeakConcurrent(env, range))
-    );
+    return jsonResponse({ overall_peak: { concurrent: 0, at_time: null }, daily: [] });
   }
 
   if (url.pathname === "/admin/insights" && request.method === "GET") {
-    const range = url.searchParams.get("range") || "30d";
-    return cachedJsonResponse(request, "insights-" + range, 60, () =>
-      withCache(Caches.insights, "insights-" + range, () => fetchInsights(env, range))
-    );
+    return jsonResponse({
+      event_types: [],
+      new_returning: [],
+      retention: [],
+      hourly: [],
+      user_activity: [],
+      app_unique_users: [],
+      app_avg_time: [],
+      dau_wau_mau: [],
+      session_durations: { t: 0, a: 0, b: 0, c: 0, d: 0, e: 0, f: 0 }
+    });
   }
 
   if (url.pathname === "/admin/export" && request.method === "GET") {
@@ -3962,13 +4005,11 @@ async function handleYukiRequest(request, env) {
       }
     }
 
-    Caches.sessions = { data: null, time: 0, promise: null };
     Caches.games = { data: null, time: 0, promise: null };
-    Caches.topTime = { data: null, time: 0, promise: null };
-    Caches.stats = {};
-    Caches.peak = {};
-    Caches.insights = {};
     Caches.live = { data: null, time: 0, promise: null };
+    Caches.social = {};
+    Caches.themes = {};
+    Caches.adminThemes = {};
 
     return jsonResponse({
       success: true,
@@ -3976,6 +4017,18 @@ async function handleYukiRequest(request, env) {
       skipped,
       errors: errors.length > 0 ? errors : undefined
     });
+  }
+
+  if (url.pathname === "/admin/prune" && request.method === "POST") {
+    if (!themeRateLimit(env, clientIP, "admin_list")) {
+      return jsonResponse({ error: "Rate limited" }, 429);
+    }
+    const result = await env.DB.prepare(`DELETE FROM analytics WHERE timestamp < datetime('now', '-60 days')`).run();
+    const deleted = result.meta?.changes ?? 0;
+    Caches.games = { data: null, time: 0, promise: null };
+    Caches.live = { data: null, time: 0, promise: null };
+    Caches.social = {};
+    return jsonResponse({ success: true, deleted });
   }
 
   if (url.pathname === "/api/themes" && request.method === "POST") {
@@ -4374,5 +4427,1239 @@ function corsHeaders(type) {
 }
 
 function adminHTML() {
-  return `PLACEHOLDER_ADMIN_HTML`;
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>YukiOS Analytics</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:oklch(10% 0.02 220);
+  --surface:oklch(15% 0.025 220);
+  --surface2:oklch(20% 0.03 220);
+  --border:oklch(22% 0.03 220 / 0.7);
+  --border2:oklch(28% 0.03 220 / 0.6);
+  --accent:oklch(55% 0.14 220);
+  --accent2:oklch(62% 0.14 220);
+  --accent3:oklch(72% 0.12 220);
+  --green:#22c55e;
+  --red:#ef4444;
+  --yellow:#f59e0b;
+  --text:oklch(95% 0.01 220);
+  --muted:oklch(48% 0.01 220);
+  --muted2:oklch(62% 0.01 220);
+  --glass:oklch(100% 0 0 / 0.04);
+  --glass-border:oklch(100% 0 0 / 0.1);
+  --shadow:0 24px 64px oklch(0% 0 0 / 0.65);
+}
+body{font-family:'Segoe UI',system-ui,Arial,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+a{color:inherit;text-decoration:none}
+*::-webkit-scrollbar{width:8px;height:8px}
+*::-webkit-scrollbar-track{background:transparent}
+*::-webkit-scrollbar-thumb{background:oklch(100% 0 0 / 0.12);border-radius:4px}
+*::-webkit-scrollbar-thumb:hover{background:oklch(100% 0 0 / 0.18)}
+
+.app-shell{display:flex;min-height:100vh}
+
+.sidebar{width:220px;min-height:100vh;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;z-index:100;box-shadow:4px 0 24px oklch(0% 0 0 / 0.4)}
+.sidebar-logo{padding:24px 20px 18px;border-bottom:1px solid var(--border)}
+.sidebar-logo .logo-text{font-size:18px;font-weight:800;background:linear-gradient(135deg,var(--accent3),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:.5px}
+.sidebar-logo .logo-sub{font-size:10px;color:var(--muted);margin-top:3px;letter-spacing:.5px;text-transform:uppercase}
+.sidebar-nav{flex:1;padding:16px 0}
+.nav-section-label{font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);padding:12px 20px 6px;font-weight:600}
+.nav-item{display:flex;align-items:center;gap:12px;padding:10px 20px;font-size:13px;color:var(--muted2);cursor:pointer;transition:all .15s;border-left:2px solid transparent;user-select:none}
+.nav-item i{width:16px;text-align:center;font-size:14px}
+.nav-item:hover{color:var(--text);background:var(--surface2)}
+.nav-item.active{color:var(--accent3);background:oklch(55% 0.14 220 / 0.08);border-left-color:var(--accent)}
+.sidebar-footer{padding:16px 20px;border-top:1px solid var(--border)}
+.live-badge{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--green);font-weight:600}
+.live-dot{width:7px;height:7px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(34,197,94,.4)}50%{opacity:.7;box-shadow:0 0 0 6px rgba(34,197,94,0)}}
+
+.main{margin-left:220px;flex:1;display:flex;flex-direction:column;min-height:100vh}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:16px 28px;background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:50;box-shadow:0 4px 24px oklch(0% 0 0 / 0.3);backdrop-filter:blur(20px)}
+.topbar-left{display:flex;align-items:center;gap:14px}
+.topbar-title{font-size:18px;font-weight:700;color:var(--text)}
+.topbar-right{display:flex;align-items:center;gap:10px}
+.auth-input{padding:8px 14px;border-radius:8px;border:1px solid var(--border2);background:var(--surface2);color:var(--text);font-size:13px;width:200px;outline:none;transition:border-color .15s;-webkit-appearance:none;appearance:none}
+.auth-input:focus{border-color:var(--accent)}
+.range-select{padding:8px 12px;border-radius:8px;border:1px solid var(--border2);background:var(--surface2);color:var(--text);font-size:13px;outline:none;cursor:pointer;transition:border-color .15s;-webkit-appearance:none;appearance:none}
+.range-select:focus{border-color:var(--accent)}
+.btn-load{padding:8px 20px;border-radius:8px;border:none;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;font-weight:700;font-size:13px;cursor:pointer;transition:opacity .15s,transform .1s;display:flex;align-items:center;gap:8px;box-shadow:0 4px 16px oklch(55% 0.14 220 / 0.35)}
+.btn-load:hover{opacity:.88;transform:translateY(-1px)}
+.btn-load:active{transform:translateY(0)}
+.last-refresh{font-size:11px;color:var(--muted);margin-left:4px;transition:color .2s}
+
+.content{padding:28px;flex:1}
+.panel{display:none}
+.panel.active{display:block}
+
+.kpi-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:16px;margin-bottom:28px}
+.kpi{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px 20px;position:relative;overflow:hidden;transition:border-color .2s,transform .15s,box-shadow .2s;box-shadow:0 8px 32px oklch(0% 0 0 / 0.3)}
+.kpi:hover{border-color:var(--border2);transform:translateY(-2px);box-shadow:0 16px 48px oklch(0% 0 0 / 0.4)}
+.kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--accent),var(--accent2))}
+.kpi-icon{width:36px;height:36px;border-radius:10px;background:oklch(55% 0.14 220 / 0.12);display:flex;align-items:center;justify-content:center;color:var(--accent2);font-size:16px;margin-bottom:12px}
+.kpi-val{font-size:28px;font-weight:800;color:var(--text);line-height:1}
+.kpi-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-top:6px;font-weight:600}
+.kpi-sub{font-size:11px;color:var(--muted);margin-top:4px}
+
+.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.section-title{font-size:15px;font-weight:700;color:var(--accent3);display:flex;align-items:center;gap:10px}
+.section-title i{font-size:16px;color:var(--accent)}
+
+.sort-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.sort-btn{padding:5px 12px;border-radius:6px;border:1px solid var(--border2);background:var(--surface2);color:var(--muted2);font-size:11px;cursor:pointer;transition:all .15s;font-weight:600;display:flex;align-items:center;gap:5px}
+.sort-btn:hover{border-color:var(--accent);color:var(--accent3)}
+.sort-btn.active{background:oklch(55% 0.14 220 / 0.14);border-color:var(--accent);color:var(--accent3)}
+.filter-input{padding:5px 12px;border-radius:6px;border:1px solid var(--border2);background:var(--surface2);color:var(--text);font-size:11px;outline:none;width:160px;transition:border-color .15s;-webkit-appearance:none;appearance:none}
+.filter-input:focus{border-color:var(--accent)}
+
+.chart-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;margin-bottom:28px}
+.chart-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px;box-shadow:0 8px 32px oklch(0% 0 0 / 0.25)}
+.chart-card-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.chart-card-title i{color:var(--accent)}
+
+.canvas-wrap{height:160px;position:relative}
+canvas{width:100%!important;height:100%!important}
+
+.days-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px}
+.day-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;transition:border-color .2s,box-shadow .2s}
+.day-card:hover{border-color:var(--border2);box-shadow:0 8px 32px oklch(0% 0 0 / 0.35)}
+.day-card-header{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;cursor:pointer;user-select:none}
+.day-card-date{font-size:14px;font-weight:700;color:var(--text)}
+.day-card-quick{display:flex;gap:16px}
+.day-card-quick-stat{text-align:center}
+.day-card-quick-stat .qv{font-size:16px;font-weight:700;color:var(--accent3)}
+.day-card-quick-stat .ql{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px}
+.day-expand-icon{color:var(--muted);font-size:12px;transition:transform .2s}
+.day-card.open .day-expand-icon{transform:rotate(180deg)}
+.day-card-body{display:none;padding:0 16px 16px;border-top:1px solid var(--border)}
+.day-card.open .day-card-body{display:block}
+.day-stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:12px 0}
+.day-stat-box{background:var(--surface2);border-radius:8px;padding:10px;text-align:center}
+.day-stat-box .dsv{font-size:18px;font-weight:700;color:var(--text)}
+.day-stat-box .dsl{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-top:3px}
+.games-section-label{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);font-weight:600;margin-bottom:8px;margin-top:4px}
+.game-item{display:flex;align-items:center;gap:10px;margin-top:6px}
+.game-rank{font-size:10px;font-weight:700;color:var(--muted);width:16px;text-align:right}
+.game-name{font-size:12px;color:var(--text);font-weight:600;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.game-count{font-size:11px;color:var(--muted2);min-width:28px;text-align:right;font-weight:700}
+.game-bar-wrap{width:80px;height:4px;background:var(--border);border-radius:2px;overflow:hidden}
+.game-bar-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:2px;transition:width .3s}
+
+.cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px 20px;transition:border-color .2s,transform .15s,box-shadow .2s;box-shadow:0 4px 20px oklch(0% 0 0 / 0.2)}
+.stat-card:hover{border-color:var(--border2);transform:translateY(-2px);box-shadow:0 12px 40px oklch(0% 0 0 / 0.35)}
+.stat-card .sc-label{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);font-weight:600;margin-bottom:8px}
+.stat-card .sc-val{font-size:26px;font-weight:800;color:var(--accent3);line-height:1}
+.stat-card .sc-sub{font-size:11px;color:var(--muted);margin-top:5px}
+
+.time-list{display:flex;flex-direction:column;gap:10px}
+.time-item{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px;display:flex;align-items:center;gap:14px;transition:border-color .2s,box-shadow .2s}
+.time-item:hover{border-color:var(--border2);box-shadow:0 6px 24px oklch(0% 0 0 / 0.3)}
+.time-rank-badge{width:32px;height:32px;border-radius:8px;background:oklch(55% 0.14 220 / 0.12);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:var(--accent2);flex-shrink:0}
+.time-info{flex:1;min-width:0}
+.time-app{font-size:13px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.time-bar-track{height:4px;background:var(--border);border-radius:2px;margin-top:5px;overflow:hidden}
+.time-bar-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:2px;transition:width .4s}
+.time-stats{display:flex;flex-direction:column;align-items:flex-end;gap:2px;flex-shrink:0}
+.time-duration{font-size:14px;font-weight:700;color:var(--text)}
+.time-sessions{font-size:10px;color:var(--muted)}
+
+.flow-wrap{background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;box-shadow:0 8px 32px oklch(0% 0 0 / 0.25)}
+.flow-table{width:100%;border-collapse:collapse;font-size:13px}
+.flow-table th{padding:11px 16px;color:var(--muted);font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:.5px;background:var(--surface2);text-align:left;border-bottom:1px solid var(--border)}
+.flow-table td{padding:11px 16px;border-bottom:1px solid var(--border);vertical-align:middle}
+.flow-table tr:last-child td{border-bottom:none}
+.flow-table tr:hover td{background:var(--surface2)}
+.flow-from{color:var(--accent2);font-weight:700}
+.flow-to{color:var(--accent3)}
+.flow-arrow{color:var(--muted);font-size:11px;padding:0 4px}
+.flow-bar-cell{display:flex;align-items:center;gap:8px}
+.flow-count{font-weight:700;color:var(--text);min-width:32px}
+.flow-bar{height:6px;background:var(--border);border-radius:3px;flex:1;overflow:hidden;max-width:120px}
+.flow-bar-inner{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:3px}
+
+.entry-exit-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:700px){.entry-exit-grid{grid-template-columns:1fr}}
+.entry-exit-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px 20px;box-shadow:0 6px 24px oklch(0% 0 0 / 0.2)}
+.entry-exit-card-title{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.entry-exit-card-title.entry{color:var(--green)}
+.entry-exit-card-title.exit{color:var(--red)}
+.ee-item{display:flex;align-items:center;gap:10px;margin-top:10px}
+.ee-name{font-size:12px;color:var(--text);font-weight:600;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ee-count{font-size:11px;color:var(--muted2);font-weight:700;min-width:28px;text-align:right}
+.ee-bar-wrap{width:72px;height:4px;background:var(--border);border-radius:2px;overflow:hidden}
+.ee-bar-entry{height:100%;background:var(--green);border-radius:2px}
+.ee-bar-exit{height:100%;background:var(--red);border-radius:2px}
+
+.explore-grid{display:grid;grid-template-columns:1fr 2fr 2fr;gap:14px}
+@media(max-width:900px){.explore-grid{grid-template-columns:1fr}}
+.explore-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px 20px;box-shadow:0 6px 24px oklch(0% 0 0 / 0.2)}
+.explore-card-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:12px}
+.explore-big{font-size:40px;font-weight:800;color:var(--accent3)}
+.explore-sub{font-size:11px;color:var(--muted);margin-top:6px}
+.user-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border);font-size:12px}
+.user-row:last-child{border-bottom:none}
+.user-id{color:var(--accent2);font-family:monospace;font-weight:600}
+.user-val{color:var(--text);font-weight:700}
+
+.live-strip{display:grid;grid-template-columns:auto auto 1fr;gap:24px;align-items:center;background:rgba(34,197,94,.04);border:1px solid rgba(34,197,94,.15);border-radius:14px;padding:16px 22px;margin-bottom:28px}
+.live-strip-stat .lsv{font-size:32px;font-weight:800;color:var(--text)}
+.live-strip-stat .lsl{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);font-weight:600;margin-top:2px}
+.live-divider{width:1px;height:40px;background:var(--border)}
+.live-apps-label{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:6px;font-weight:600}
+.live-app-chips{display:flex;flex-wrap:wrap;gap:6px}
+.live-chip{padding:4px 10px;border-radius:20px;background:oklch(55% 0.14 220 / 0.12);border:1px solid oklch(55% 0.14 220 / 0.25);font-size:11px;color:var(--accent3);font-weight:600}
+
+.empty-state{padding:40px;text-align:center;color:var(--muted);font-size:13px}
+.empty-state i{font-size:28px;margin-bottom:10px;display:block;opacity:.4}
+.error-msg{color:var(--red);font-size:13px;padding:12px}
+
+@media(max-width:768px){
+  .sidebar{transform:translateX(-100%)}
+  .main{margin-left:0}
+  .kpi-row{grid-template-columns:1fr 1fr}
+  .day-stats-row{grid-template-columns:1fr 1fr}
+  .explore-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-text">YukiOS</div>
+      <div class="logo-sub">Analytics Dashboard</div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Overview</div>
+      <div class="nav-item active" data-panel="dashboard" onclick="switchPanel('dashboard',this)">
+        <i class="fa-solid fa-gauge-high"></i>Dashboard
+      </div>
+      <div class="nav-item" data-panel="daily" onclick="switchPanel('daily',this)">
+        <i class="fa-solid fa-calendar-days"></i>Daily Stats
+      </div>
+      <div class="nav-section-label">Deep Dive</div>
+      <div class="nav-item" data-panel="playtime" onclick="switchPanel('playtime',this)">
+        <i class="fa-solid fa-clock"></i>Play Time
+      </div>
+      <div class="nav-item" data-panel="sessions" onclick="switchPanel('sessions',this)">
+        <i class="fa-solid fa-layer-group"></i>Sessions
+      </div>
+      <div class="nav-item" data-panel="flows" onclick="switchPanel('flows',this)">
+        <i class="fa-solid fa-route"></i>Flows
+      </div>
+      <div class="nav-section-label">Behavior</div>
+      <div class="nav-item" data-panel="entryexit" onclick="switchPanel('entryexit',this)">
+        <i class="fa-solid fa-door-open"></i>Entry / Exit
+      </div>
+      <div class="nav-item" data-panel="exploration" onclick="switchPanel('exploration',this)">
+        <i class="fa-solid fa-compass"></i>Exploration
+      </div>
+      <div class="nav-section-label">Analytics</div>
+      <div class="nav-item" data-panel="insights" onclick="switchPanel('insights',this)">
+        <i class="fa-solid fa-chart-pie"></i>Insights
+      </div>
+      <div class="nav-section-label">Admin</div>
+      <div class="nav-item" data-panel="data" onclick="switchPanel('data',this)">
+        <i class="fa-solid fa-database"></i>Data Management
+      </div>
+      <div class="nav-item" data-panel="downloadstelemetry" onclick="switchPanel('downloadstelemetry',this);loadDownloadsTelemetry()">
+        <i class="fa-solid fa-download"></i>Downloads & Telemetry
+      </div>
+      <div class="nav-item" data-panel="themes" onclick="switchPanel('themes',this);loadAdminThemes()">
+        <i class="fa-solid fa-palette"></i>Themes
+      </div>
+
+    </nav>
+    <div class="sidebar-footer">
+      <div class="live-badge"><span class="live-dot"></span>Live monitoring</div>
+      <div id="lastRefresh" style="font-size:10px;color:var(--muted);margin-top:6px"></div>
+    </div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <div class="topbar-left">
+        <div class="topbar-title" id="panelTitle">Dashboard</div>
+      </div>
+      <div class="topbar-right">
+        <input class="auth-input" id="token" type="password" placeholder="Auth token...">
+        <select class="range-select" id="range">
+          <option value="7d">7 days</option>
+          <option value="30d" selected>30 days</option>
+          <option value="60d">60 days</option>
+        </select>
+        <button class="btn-load" onclick="loadAll()"><i class="fa-solid fa-bolt"></i>Load</button>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <div id="panel-dashboard" class="panel active">
+        <div id="liveStrip" style="display:none">
+          <div class="live-strip">
+            <div class="live-strip-stat">
+              <div class="lsv" id="liveUsers">-</div>
+              <div class="lsl"><i class="fa-solid fa-users" style="margin-right:4px"></i>Active Users</div>
+            </div>
+            <div class="live-divider"></div>
+            <div class="live-strip-stat">
+              <div class="lsv" id="liveSessions">-</div>
+              <div class="lsl"><i class="fa-solid fa-layer-group" style="margin-right:4px"></i>Active Sessions</div>
+            </div>
+            <div>
+              <div class="live-apps-label"><i class="fa-solid fa-fire" style="margin-right:4px"></i>Trending Now</div>
+              <div class="live-app-chips" id="liveApps"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="kpi-row" id="kpiRow">
+          <div class="kpi">
+            <div class="kpi-icon"><i class="fa-solid fa-arrow-trend-up"></i></div>
+            <div class="kpi-val" id="kTotal">-</div>
+            <div class="kpi-label">Total Requests</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-icon"><i class="fa-solid fa-users"></i></div>
+            <div class="kpi-val" id="kUsers">-</div>
+            <div class="kpi-label">Unique Users</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-icon"><i class="fa-solid fa-layer-group"></i></div>
+            <div class="kpi-val" id="kSessions">-</div>
+            <div class="kpi-label">Total Sessions</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-icon"><i class="fa-solid fa-clock"></i></div>
+            <div class="kpi-val" id="kAvgDur">-</div>
+            <div class="kpi-label">Avg Session</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-icon"><i class="fa-solid fa-bolt"></i></div>
+            <div class="kpi-val" id="kPower">-</div>
+            <div class="kpi-label">Power Users</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-icon"><i class="fa-solid fa-person-running"></i></div>
+            <div class="kpi-val" id="kBounce">-</div>
+            <div class="kpi-label">Bounce Sessions</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-icon"><i class="fa-solid fa-people-group"></i></div>
+            <div class="kpi-val" id="kPeak">-</div>
+            <div class="kpi-label">Peak Concurrent</div>
+            <div class="kpi-sub" id="kPeakTime"></div>
+          </div>
+        </div>
+
+        <div class="chart-grid">
+          <div class="chart-card">
+            <div class="chart-card-title"><i class="fa-solid fa-chart-bar"></i>Requests / Day</div>
+            <div class="canvas-wrap"><canvas id="chartReq"></canvas></div>
+          </div>
+          <div class="chart-card">
+            <div class="chart-card-title"><i class="fa-solid fa-chart-line"></i>Sessions / Day</div>
+            <div class="canvas-wrap"><canvas id="chartSess"></canvas></div>
+          </div>
+          <div class="chart-card">
+            <div class="chart-card-title"><i class="fa-solid fa-people-group"></i>Peak Concurrent / Day</div>
+            <div class="canvas-wrap"><canvas id="chartPeak"></canvas></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="panel-daily" class="panel">
+        <div class="section-header">
+          <div class="section-title"><i class="fa-solid fa-calendar-days"></i>Daily Breakdown</div>
+          <div class="sort-bar">
+            <span style="font-size:11px;color:var(--muted);font-weight:600">Sort:</span>
+            <button class="sort-btn active" id="sortDate" onclick="sortDays('date')"><i class="fa-solid fa-calendar"></i>Date</button>
+            <button class="sort-btn" id="sortReq" onclick="sortDays('requests')"><i class="fa-solid fa-arrow-up"></i>Requests</button>
+            <button class="sort-btn" id="sortUsers" onclick="sortDays('users')"><i class="fa-solid fa-users"></i>Users</button>
+            <input class="filter-input" id="dayFilter" placeholder="Filter by date..." oninput="filterDays()">
+          </div>
+        </div>
+        <div class="days-grid" id="daysGrid"><div class="empty-state"><i class="fa-solid fa-calendar-xmark"></i>Load data to see daily stats.</div></div>
+      </div>
+
+      <div id="panel-playtime" class="panel">
+        <div class="section-header">
+          <div class="section-title"><i class="fa-solid fa-clock"></i>Play Time Rankings</div>
+          <div class="sort-bar">
+            <input class="filter-input" id="timeFilter" placeholder="Filter app..." oninput="filterTime()">
+          </div>
+        </div>
+        <div class="time-list" id="timeList"><div class="empty-state"><i class="fa-solid fa-clock"></i>Load data to see play time.</div></div>
+      </div>
+
+      <div id="panel-sessions" class="panel">
+        <div class="section-header">
+          <div class="section-title"><i class="fa-solid fa-layer-group"></i>Session Analytics</div>
+        </div>
+        <div class="cards-grid" id="sessionsGrid"><div class="empty-state"><i class="fa-solid fa-layer-group"></i>Load data to see session stats.</div></div>
+      </div>
+
+      <div id="panel-flows" class="panel">
+        <div class="section-header">
+          <div class="section-title"><i class="fa-solid fa-route"></i>Navigation Flows</div>
+          <div class="sort-bar">
+            <input class="filter-input" id="flowFilter" placeholder="Filter app..." oninput="filterFlows()">
+          </div>
+        </div>
+        <div class="flow-wrap"><table class="flow-table">
+          <thead><tr><th>From</th><th></th><th>To</th><th>Volume</th></tr></thead>
+          <tbody id="flowBody"><tr><td colspan="4" class="empty-state">Load data to see flows.</td></tr></tbody>
+        </table></div>
+      </div>
+
+      <div id="panel-entryexit" class="panel">
+        <div class="section-header">
+          <div class="section-title"><i class="fa-solid fa-door-open"></i>Entry &amp; Exit Apps</div>
+        </div>
+        <div class="entry-exit-grid" id="entryExitGrid"><div class="empty-state"><i class="fa-solid fa-door-open"></i>Load data to see entry/exit data.</div></div>
+      </div>
+
+      <div id="panel-exploration" class="panel">
+        <div class="section-header">
+          <div class="section-title"><i class="fa-solid fa-compass"></i>Exploration Stats</div>
+        </div>
+        <div class="explore-grid" id="exploreGrid"><div class="empty-state"><i class="fa-solid fa-compass"></i>Load data to see exploration stats.</div></div>
+      </div>
+
+      <div id="panel-insights" class="panel">
+        <div id="insightsContent" style="display:flex;flex-direction:column;gap:4px">
+          <div class="section-header"><div class="section-title"><i class="fa-solid fa-chart-pie"></i>Event Type Breakdown</div></div>
+          <div class="chart-grid">
+            <div class="chart-card"><div class="chart-card-title"><i class="fa-solid fa-chart-simple"></i>Events by Type</div><div class="canvas-wrap"><canvas id="chartET"></canvas></div></div>
+            <div class="chart-card"><div class="chart-card-title"><i class="fa-solid fa-clock"></i>Activity by Hour of Day</div><div class="canvas-wrap"><canvas id="chartHourly"></canvas></div></div>
+          </div>
+          <div class="section-header"><div class="section-title"><i class="fa-solid fa-users-line"></i>User Growth</div></div>
+          <div class="chart-grid">
+            <div class="chart-card"><div class="chart-card-title"><i class="fa-solid fa-user-plus"></i>New vs Returning Users / Day</div><div class="canvas-wrap"><canvas id="chartNR"></canvas></div></div>
+            <div class="chart-card"><div class="chart-card-title"><i class="fa-solid fa-chart-line"></i>DAU / WAU / MAU</div><div class="canvas-wrap"><canvas id="chartDWM"></canvas></div></div>
+          </div>
+          <div class="section-header"><div class="section-title"><i class="fa-solid fa-retweet"></i>Retention & Session Quality</div></div>
+          <div class="chart-grid">
+            <div class="chart-card"><div class="chart-card-title"><i class="fa-solid fa-percent"></i>Day-over-Day Retention (D1, D7)</div><div class="canvas-wrap"><canvas id="chartRet"></canvas></div></div>
+            <div class="chart-card"><div class="chart-card-title"><i class="fa-solid fa-clock-rotate-left"></i>Session Duration Distribution</div><div class="canvas-wrap"><canvas id="chartSD"></canvas></div></div>
+          </div>
+          <div class="section-header"><div class="section-title"><i class="fa-solid fa-gauge-high"></i>User & App Depth</div></div>
+          <div class="chart-grid">
+            <div class="chart-card"><div class="chart-card-title"><i class="fa-solid fa-gauge"></i>User Activity Levels (events)</div><div class="canvas-wrap"><canvas id="chartUA"></canvas></div></div>
+            <div class="chart-card"><div class="chart-card-title"><i class="fa-solid fa-users"></i>Apps by Unique Users</div><div class="canvas-wrap"><canvas id="chartAU"></canvas></div></div>
+          </div>
+          <div class="chart-grid">
+            <div class="chart-card"><div class="chart-card-title"><i class="fa-solid fa-stopwatch"></i>Avg Time Spent per App</div><div class="canvas-wrap"><canvas id="chartAT"></canvas></div></div>
+          </div>
+        </div>
+        <div id="insightsEmpty" class="empty-state" style="display:none"><i class="fa-solid fa-chart-pie"></i>Load data to see insights.</div>
+      </div>
+
+      <div id="panel-data" class="panel">
+        <div class="section-header">
+          <div class="section-title"><i class="fa-solid fa-database"></i>Data Management</div>
+        </div>
+        <div class="cards-grid">
+          <div class="stat-card">
+            <div class="sc-label"><i class="fa-solid fa-download" style="margin-right:6px;color:var(--accent)"></i>Export Data</div>
+            <div class="sc-sub" style="margin-bottom:12px">Download all analytics data as JSON</div>
+            <button class="btn-load" onclick="exportData()" style="width:100%;justify-content:center"><i class="fa-solid fa-download"></i>Export</button>
+          </div>
+          <div class="stat-card">
+            <div class="sc-label"><i class="fa-solid fa-upload" style="margin-right:6px;color:var(--accent)"></i>Import Data</div>
+            <div class="sc-sub" style="margin-bottom:12px">Restore analytics from JSON file</div>
+            <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(this)">
+            <button class="btn-load" onclick="document.getElementById('importFile').click()" style="width:100%;justify-content:center"><i class="fa-solid fa-upload"></i>Import</button>
+          </div>
+          <div class="stat-card" style="border-color:oklch(0.55 0.14 25 / 0.25)">
+            <div class="sc-label"><i class="fa-solid fa-broom" style="margin-right:6px;color:#f59e0b"></i>Prune Old Data</div>
+            <div class="sc-sub" style="margin-bottom:12px">Delete records older than 60 days</div>
+            <button class="btn-load" onclick="pruneOld()" style="width:100%;justify-content:center;background:linear-gradient(135deg,#ef4444,#f59e0b)"><i class="fa-solid fa-broom"></i>Prune &gt;60d</button>
+            <div id="pruneStatus" style="margin-top:12px;font-size:12px"></div>
+          </div>
+        </div>
+        <div id="importStatus" style="margin-top:20px"></div>
+      </div>
+
+      <div id="panel-downloadstelemetry" class="panel">
+        <div class="section-header">
+          <div class="section-title"><i class="fa-solid fa-download"></i>Downloads & Telemetry</div>
+          <div class="sort-bar">
+            <button class="sort-btn active" id="dtTabDownloads" onclick="switchDTTab('downloads')"><i class="fa-solid fa-download"></i>Downloads</button>
+            <button class="sort-btn" id="dtTabElectron" onclick="switchDTTab('electron')"><i class="fa-solid fa-microchip"></i>Electron Usage</button>
+            <span style="font-size:11px;color:var(--muted);margin-left:4px">|</span>
+            <button class="sort-btn" onclick="loadDownloadsTelemetry()"><i class="fa-solid fa-rotate"></i>Refresh</button>
+          </div>
+        </div>
+        <div class="flow-wrap" id="dtTableWrap">
+          <div id="dtEmpty" class="empty-state"><i class="fa-solid fa-download"></i>Loading data...</div>
+          <table class="flow-table" id="dtTable" style="display:none">
+            <thead id="dtThead"></thead>
+            <tbody id="dtTbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="panel-themes" class="panel">
+        <div class="section-header">
+          <div class="section-title"><i class="fa-solid fa-palette"></i>Theme Management</div>
+          <div class="sort-bar">
+            <button class="sort-btn active" id="tsTabAll" onclick="loadAdminThemes('all')"><i class="fa-solid fa-circle-dot"></i>All</button>
+            <button class="sort-btn" id="tsTabApproved" onclick="loadAdminThemes('approved')"><i class="fa-solid fa-check"></i>Approved</button>
+            <button class="sort-btn" id="tsTabFlagged" onclick="loadAdminThemes('flagged')"><i class="fa-solid fa-flag"></i>Flagged</button>
+            <button class="sort-btn" id="tsTabDeleted" onclick="loadAdminThemes('deleted')"><i class="fa-solid fa-trash"></i>Deleted</button>
+            <button class="sort-btn" onclick="loadAdminThemes()"><i class="fa-solid fa-rotate"></i>Refresh</button>
+          </div>
+        </div>
+        <div class="flow-wrap" id="themeTableWrap">
+          <div id="themeEmpty" class="empty-state"><i class="fa-solid fa-palette"></i>Loading themes...</div>
+          <table class="flow-table" id="themeTable" style="display:none">
+            <thead id="themeThead"></thead>
+            <tbody id="themeTbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js">
+async function pruneOld(){
+  if(!confirm("Delete all records older than 60 days? This cannot be undone.")) return;
+  var token=document.getElementById("token").value.trim();
+  if(!token){alert("Enter auth token");return;}
+  var el=document.getElementById("pruneStatus");
+  el.innerHTML='<div style="color:var(--muted);font-size:13px">Pruning...</div>';
+  try{
+    var res=await fetch("/admin/prune",{method:"POST",headers:{"Authorization":"Bearer "+token}});
+    var data=await res.json().catch(function(){return {};});
+    if(!res.ok) throw new Error(data.error||res.statusText);
+    el.innerHTML='<div style="color:var(--green);font-size:13px;font-weight:700"><i class="fa-solid fa-check-circle"></i> Deleted '+ (data.deleted||0) +' records older than 60 days</div>';
+    if(typeof loadAll==="function") loadAll();
+  }catch(e){ el.innerHTML='<div style="color:var(--red);font-size:13px">Failed: '+ (e.message||e) +'</div>'; }
+}
+</script>
+<script>
+var token="";
+var refreshTimer=null;
+var _statsData=null;
+var _sessionsData=null;
+var _timeData=null;
+var _flowsData=null;
+var _eeData=null;
+var _exploreData=null;
+var _daySort="date";
+var _chartReq=null;
+var _chartSess=null;
+var _chartPeak=null;
+var _peakData=null;
+var _insightsData=null;
+var _cET=null,_cH=null,_cNR=null,_cDWM=null,_cRet=null,_cSD=null,_cUA=null,_cAU=null,_cAT=null;
+
+var panelTitles={
+  dashboard:"Dashboard",
+  daily:"Daily Stats",
+  playtime:"Play Time",
+  sessions:"Session Analytics",
+  flows:"Navigation Flows",
+  entryexit:"Entry / Exit Apps",
+  exploration:"Exploration Stats",
+  insights:"Insights",
+  data:"Data Management",
+  downloadstelemetry:"Downloads & Telemetry",
+  themes:"Theme Management"
+};
+
+function escapeHtml(str){
+  if(typeof str!=="string")return "";
+  return str.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;");
+}
+
+function switchPanel(id,el){
+  document.querySelectorAll(".panel").forEach(function(p){p.classList.remove("active");});
+  document.querySelectorAll(".nav-item").forEach(function(n){n.classList.remove("active");});
+  document.getElementById("panel-"+id).classList.add("active");
+  el.classList.add("active");
+  document.getElementById("panelTitle").textContent=panelTitles[id]||id;
+}
+
+function getHeaders(){return{"Authorization":"Bearer "+token};}
+
+function fmtMs(ms){
+  if(!ms||ms<=0)return"0s";
+  var s=Math.floor(ms/1000),m=Math.floor(s/60),h=Math.floor(m/60);
+  if(h>0)return h+"h "+(m%60)+"m";
+  if(m>0)return m+"m "+(s%60)+"s";
+  return s+"s";
+}
+
+function displayApp(name){
+  if(!name)return"Unknown";
+  var s=name.trim();
+  if(s.toLowerCase().endsWith("app")){
+    s=s.slice(0,-3).trim();
+    s=s.replace(/([a-z])([A-Z])/g,"$1 $2");
+    s=s.charAt(0).toUpperCase()+s.slice(1);
+    return escapeHtml(s+" App");
+  }
+  s=s.replace(/([a-z])([A-Z])/g,"$1 $2");
+  return escapeHtml(s.charAt(0).toUpperCase()+s.slice(1));
+}
+
+function apiFetch(url, onSuccess, label) {
+  fetch(url, { headers: getHeaders() })
+    .then(function(r) {
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      return r.json();
+    })
+    .then(function(data) {
+      onSuccess(data);
+      var statusEl = document.getElementById("lastRefresh");
+      if (statusEl) {
+        statusEl.textContent = "Loaded " + new Date().toLocaleTimeString();
+        statusEl.style.color = "var(--muted)";
+      }
+    })
+    .catch(function(err) {
+      console.error(err);
+      var statusEl = document.getElementById("lastRefresh");
+      if (statusEl) {
+        statusEl.textContent = "Error " + label + ". Retrying...";
+        statusEl.style.color = "var(--red)";
+      }
+      setTimeout(function() {
+        if (document.getElementById("token").value.trim() === token) {
+          apiFetch(url, onSuccess, label);
+        }
+      }, 5000);
+    });
+}
+
+var _dtTab="downloads";
+var _dtData={downloads:[],electron:[]};
+
+function switchDTTab(tab){
+  _dtTab=tab;
+  document.querySelectorAll("#panel-downloadstelemetry .sort-btn[id^=dtTab]").forEach(function(b){b.classList.remove("active");});
+  document.getElementById("dtTab"+(tab==="downloads"?"Downloads":"Electron")).classList.add("active");
+  renderDTTable();
+}
+
+function loadDownloadsTelemetry(){
+  apiFetch("/admin/downloads?limit=100",function(d){_dtData.downloads=d.results||[];if(_dtTab==="downloads")renderDTTable();},"Downloads");
+  apiFetch("/admin/electron-usage?limit=100",function(d){_dtData.electron=d.results||[];if(_dtTab==="electron")renderDTTable();},"Electron");
+}
+
+function renderDTTable(){
+  var rows=_dtData[_dtTab];
+  var table=document.getElementById("dtTable");
+  var empty=document.getElementById("dtEmpty");
+  var thead=document.getElementById("dtThead");
+  var tbody=document.getElementById("dtTbody");
+  if(!rows||!rows.length){
+    table.style.display="none";
+    empty.style.display="block";
+    empty.innerHTML='<i class="fa-solid fa-download"></i>No records found.';
+    return;
+  }
+  table.style.display="";
+  empty.style.display="none";
+  if(_dtTab==="downloads"){
+    thead.innerHTML='<tr><th>App</th><th>File Name</th><th>Size</th><th>Type</th><th>Source</th><th>Timestamp</th></tr>';
+    tbody.innerHTML=rows.map(function(r){
+      var d=typeof r.data==="string"?JSON.parse(r.data):r.data;
+      var ts=r.timestamp?r.timestamp.slice(0,19).replace("T"," "):"-";
+      var sz=typeof d.fileSize==="number"?(d.fileSize>1048576?(d.fileSize/1048576).toFixed(1)+" MB":(d.fileSize>1024?(d.fileSize/1024).toFixed(1)+" KB":d.fileSize+" B")):"-";
+      return '<tr><td class="flow-from">'+displayApp(d.app||"-")+'</td><td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(d.fileName||"-")+'</td><td>'+sz+'</td><td>'+(d.fileType||"-")+'</td><td>'+(d.source||"-")+'</td><td style="font-size:11px;color:var(--muted2)">'+ts+'</td></tr>';
+    }).join("");
+  } else {
+    thead.innerHTML='<tr><th>Action</th><th>Platform</th><th>Version</th><th>Details</th><th>Dev</th><th>Timestamp</th></tr>';
+    tbody.innerHTML=rows.map(function(r){
+      var d=typeof r.data==="string"?JSON.parse(r.data):r.data;
+      var ts=r.timestamp?r.timestamp.slice(0,19).replace("T"," "):"-";
+      return '<tr><td class="flow-from">'+(d.action||"-")+'</td><td>'+(d.platform||"-")+'</td><td>'+(d.version||"-")+'</td><td style="max-width:250px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(d.details||"-")+'</td><td>'+(d.isDev?"<span style='color:var(--green)'>Yes</span>":"No")+'</td><td style="font-size:11px;color:var(--muted2)">'+ts+'</td></tr>';
+    }).join("");
+  }
+}
+
+function loadAll(){
+  token=document.getElementById("token").value.trim();
+  if(!token){alert("Enter auth token first");return;}
+  localStorage.setItem("yukios_admin_token", token);
+  loadStats();loadTopTime();loadSessions();loadFlows();loadEntryExit();loadExploration();loadLive();loadPeak();loadInsights();
+  document.getElementById("lastRefresh").textContent="Loaded "+new Date().toLocaleTimeString();
+  if(refreshTimer)clearInterval(refreshTimer);
+  refreshTimer=setInterval(function(){
+    loadStats();loadTopTime();loadSessions();loadFlows();loadEntryExit();loadExploration();loadLive();loadPeak();loadInsights();
+    document.getElementById("lastRefresh").textContent="Loaded "+new Date().toLocaleTimeString();
+  },60000);
+}
+
+function loadStats(){
+  var range=document.getElementById("range").value;
+  apiFetch("/admin/stats?range="+range, function(d){_statsData=d;renderDashboardCharts(d);renderDays(d);}, "Stats");
+}
+
+function loadTopTime(){
+  apiFetch("/admin/top-played-time-games", function(d){_timeData=d;renderTime(d);}, "Playtime");
+}
+
+function loadSessions(){
+  apiFetch("/admin/sessions", function(d){_sessionsData=d;renderSessions(d);updateKpiSessions(d);}, "Sessions");
+}
+
+function loadFlows(){
+  apiFetch("/admin/flows", function(d){_flowsData=d;renderFlows(d);}, "Flows");
+}
+
+function loadEntryExit(){
+  apiFetch("/admin/entry-exit", function(d){_eeData=d;renderEntryExit(d);}, "Navigation");
+}
+
+function loadExploration(){
+  apiFetch("/admin/exploration", function(d){_exploreData=d;renderExploration(d);}, "Exploration");
+}
+
+function loadLive(){
+  apiFetch("/admin/live", renderLive, "Live");
+}
+
+function loadPeak(){
+  var range=document.getElementById("range").value;
+  apiFetch("/admin/peak-concurrent?range="+range, function(d){_peakData=d;updateKpiPeak(d);renderPeakChart(d);}, "Peak");
+}
+
+function updateKpiPeak(data){
+  document.getElementById("kPeak").textContent=data.overall_peak.concurrent||0;
+  var t=data.overall_peak.at_time;
+  document.getElementById("kPeakTime").textContent=t?"at "+t:"";
+}
+
+function renderPeakChart(data){
+  if(!data.daily||!data.daily.length)return;
+  var reversed=[].concat(data.daily).reverse();
+  var labels=reversed.map(function(d){return d.day.slice(5);});
+  var vals=reversed.map(function(d){return d.peak;});
+  var cfg={type:"bar",options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:function(ctx){return" "+ctx.parsed.y.toLocaleString();}}}},scales:{x:{grid:{color:"rgba(255,255,255,.04)"},ticks:{color:"#64748b",font:{size:9}}},y:{grid:{color:"rgba(255,255,255,.04)"},ticks:{color:"#64748b",font:{size:9}}}}}};
+  if(_chartPeak){_chartPeak.destroy();}
+  var ctx=document.getElementById("chartPeak").getContext("2d");
+  var grad=ctx.createLinearGradient(0,0,0,160);
+  grad.addColorStop(0,"oklch(55% 0.14 220 / 0.9)");
+  grad.addColorStop(1,"oklch(55% 0.14 220 / 0.15)");
+  _chartPeak=new Chart(ctx,Object.assign({},cfg,{data:{labels:labels,datasets:[{data:vals,backgroundColor:grad,borderRadius:4,borderSkipped:false}]}}));
+}
+
+function bCfg(){return{type:"bar",options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:function(ctx){return" "+ctx.parsed.y.toLocaleString();}}}},scales:{x:{grid:{color:"rgba(255,255,255,.04)"},ticks:{color:"#64748b",font:{size:9}}},y:{beginAtZero:true,grid:{color:"rgba(255,255,255,.04)"},ticks:{color:"#64748b",font:{size:9}}}}}};}
+function lCfg(multi){var c={type:"line",options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:"#94a3b8",font:{size:9},boxWidth:10,usePointStyle:true},display:!!multi,position:"bottom"},tooltip:{callbacks:{label:function(ctx){return" "+ctx.parsed.y.toLocaleString();}}}},scales:{x:{grid:{color:"rgba(255,255,255,.04)"},ticks:{color:"#64748b",font:{size:9}}},y:{beginAtZero:true,grid:{color:"rgba(255,255,255,.04)"},ticks:{color:"#64748b",font:{size:9}}}}}};return c;}
+function hCfg(){var c=bCfg();c.options.indexAxis="y";c.options.plugins.legend.display=true;c.options.plugins.legend.labels={color:"#94a3b8",font:{size:8},boxWidth:10};return c;}
+function destroyChart(arr){arr.forEach(function(c){if(c)c.destroy();});}
+function grad(ctx,color){var g=ctx.createLinearGradient(0,0,0,160);g.addColorStop(0,"oklch("+color+" / 0.9)");g.addColorStop(1,"oklch("+color+" / 0.15)");return g;}
+var COLORS=["#22c55e","#f59e0b","#ef4444","#3b82f6","#a855f7","#ec4899","#14b8a6","#f97316"];
+
+function loadInsights(){
+  var range=document.getElementById("range").value;
+  apiFetch("/admin/insights?range="+range,function(d){_insightsData=d;renderInsights(d);},"Insights");
+}
+
+function renderInsights(d){
+  if(!d.event_types||!d.event_types.length){
+    document.getElementById("insightsContent").style.display="none";
+    document.getElementById("insightsEmpty").style.display="block";
+    return;
+  }
+  document.getElementById("insightsContent").style.display="flex";
+  document.getElementById("insightsEmpty").style.display="none";
+  renderET(d.event_types);renderHourly(d.hourly);renderNR(d.new_returning);renderDWM(d.dau_wau_mau);
+  renderRet(d.retention);renderSD(d.session_durations);renderUA(d.user_activity);renderAU(d.app_unique_users);renderAT(d.app_avg_time);
+}
+
+function renderET(data){
+  destroyChart([_cET]);
+  var labels=data.map(function(r){return r.et||"unknown";});
+  var vals=data.map(function(r){return r.c;});
+  var colors=COLORS.slice(0,labels.length);
+  var cfg=bCfg();cfg.options.plugins.legend.display=true;cfg.options.plugins.legend.labels={color:"#94a3b8",font:{size:9},boxWidth:10};
+  var ctx=document.getElementById("chartET").getContext("2d");
+  _cET=new Chart(ctx,Object.assign({},cfg,{data:{labels:labels,datasets:[{data:vals,backgroundColor:colors,borderRadius:4,borderSkipped:false}]}}));
+}
+
+function renderHourly(data){
+  destroyChart([_cH]);
+  var labels=data.map(function(r){return r.h.toString().padStart(2,"0")+":00";});
+  var vals=data.map(function(r){return r.c;});
+  if(!labels.length)return;
+  var ctx=document.getElementById("chartHourly").getContext("2d");
+  var g=grad(ctx,"55% 0.14 220");
+  _cH=new Chart(ctx,Object.assign({},bCfg(),{data:{labels:labels,datasets:[{data:vals,backgroundColor:g,borderRadius:2,borderSkipped:false}]}}));
+}
+
+function renderNR(data){
+  destroyChart([_cNR]);
+  if(!data||!data.length)return;
+  var labels=data.map(function(r){return r.d.slice(5);});
+  var newVals=data.map(function(r){return parseInt(r.n)||0;});
+  var retVals=data.map(function(r){return parseInt(r.rl)||0;});
+  var cfg=bCfg();cfg.options.scales.x.stacked=true;cfg.options.scales.y.stacked=true;
+  cfg.options.plugins.legend.display=true;cfg.options.plugins.legend.labels={color:"#94a3b8",font:{size:9},boxWidth:10};
+  var ctx=document.getElementById("chartNR").getContext("2d");
+  _cNR=new Chart(ctx,Object.assign({},cfg,{data:{labels:labels,datasets:[
+    {label:"New",data:newVals,backgroundColor:"#22c55e",borderRadius:0},
+    {label:"Returning",data:retVals,backgroundColor:"#3b82f6",borderRadius:4}
+  ]}}));
+}
+
+function renderDWM(data){
+  destroyChart([_cDWM]);
+  if(!data||!data.length)return;
+  var labels=data.map(function(r){return r.d.slice(5);});
+  var cfg=lCfg(true);
+  var ctx=document.getElementById("chartDWM").getContext("2d");
+  _cDWM=new Chart(ctx,Object.assign({},cfg,{data:{labels:labels,datasets:[
+    {label:"DAU",data:data.map(function(r){return r.dau;}),borderColor:"#22c55e",backgroundColor:"rgba(34,197,94,0.1)",fill:true,tension:0.2,pointRadius:2},
+    {label:"WAU",data:data.map(function(r){return r.wau;}),borderColor:"#f59e0b",backgroundColor:"rgba(245,158,11,0.1)",fill:true,tension:0.2,pointRadius:2},
+    {label:"MAU",data:data.map(function(r){return r.mau;}),borderColor:"#a855f7",backgroundColor:"rgba(168,85,247,0.1)",fill:true,tension:0.2,pointRadius:2}
+  ]}}));
+}
+
+function renderRet(data){
+  destroyChart([_cRet]);
+  if(!data||!data.length)return;
+  var cutoff=new Date();cutoff.setDate(cutoff.getDate()-1);
+  var filtered=data.filter(function(r){return r.d1!==null||r.d7!==null;});
+  if(!filtered.length)return;
+  var labels=filtered.map(function(r){return r.d.slice(5);});
+  var d1=filtered.map(function(r){return r.d1?Math.round(r.d1*100):null;});
+  var d7=filtered.map(function(r){return r.d7?Math.round(r.d7*100):null;});
+  var cfg=bCfg();cfg.options.plugins.legend.display=true;cfg.options.plugins.legend.labels={color:"#94a3b8",font:{size:9},boxWidth:10};
+  var ctx=document.getElementById("chartRet").getContext("2d");
+  _cRet=new Chart(ctx,Object.assign({},cfg,{data:{labels:labels,datasets:[
+    {label:"D1%",data:d1,backgroundColor:"#22c55e",borderRadius:2},
+    {label:"D7%",data:d7,backgroundColor:"#3b82f6",borderRadius:2}
+  ]}}));
+}
+
+function renderSD(data){
+  destroyChart([_cSD]);
+  if(!data||!data.t)return;
+  var labels=["<1m","1-5m","5-15m","15-30m","30-60m","60m+"];
+  var vals=[data.a||0,data.b||0,data.c||0,data.d||0,data.e||0,data.f||0];
+  var colors=["#22c55e","#3b82f6","#f59e0b","#f97316","#ef4444","#a855f7"];
+  var cfg=bCfg();
+  var ctx=document.getElementById("chartSD").getContext("2d");
+  _cSD=new Chart(ctx,Object.assign({},cfg,{data:{labels:labels,datasets:[{data:vals,backgroundColor:colors,borderRadius:4,borderSkipped:false}]}}));
+}
+
+function renderUA(data){
+  destroyChart([_cUA]);
+  if(!data||!data.length)return;
+  var labels=data.map(function(r){return r.b;});
+  var vals=data.map(function(r){return r.u;});
+  var ctx=document.getElementById("chartUA").getContext("2d");
+  var g=grad(ctx,"55% 0.14 220");
+  _cUA=new Chart(ctx,Object.assign({},bCfg(),{data:{labels:labels,datasets:[{data:vals,backgroundColor:g,borderRadius:4,borderSkipped:false}]}}));
+}
+
+function renderAU(data){
+  destroyChart([_cAU]);
+  if(!data||!data.length)return;
+  var reversed=[].concat(data).reverse();
+  var labels=reversed.map(function(r){return r.a||"unknown";});
+  var vals=reversed.map(function(r){return r.u;});
+  var ctx=document.getElementById("chartAU").getContext("2d");
+  _cAU=new Chart(ctx,Object.assign({},hCfg(),{
+    data:{labels:labels,datasets:[{data:vals,backgroundColor:"#3b82f6",borderRadius:4,borderSkipped:false}]},
+    options:Object.assign({},hCfg().options,{indexAxis:"y",scales:{x:{beginAtZero:true,grid:{color:"rgba(255,255,255,.04)"},ticks:{color:"#64748b",font:{size:8}}},y:{grid:{color:"rgba(255,255,255,.04)"},ticks:{color:"#64748b",font:{size:8}}}}})
+  }));
+}
+
+function renderAT(data){
+  destroyChart([_cAT]);
+  if(!data||!data.length)return;
+  var reversed=[].concat(data).reverse();
+  var labels=reversed.map(function(r){return r.a||"unknown";});
+  var vals=reversed.map(function(r){return Math.round((r.d||0)/1000);});
+  var ctx=document.getElementById("chartAT").getContext("2d");
+  _cAT=new Chart(ctx,Object.assign({},hCfg(),{
+    data:{labels:labels,datasets:[{data:vals,backgroundColor:"#a855f7",borderRadius:4,borderSkipped:false}]},
+    options:Object.assign({},hCfg().options,{indexAxis:"y",scales:{x:{beginAtZero:true,grid:{color:"rgba(255,255,255,.04)"},ticks:{color:"#64748b",font:{size:8},callback:function(v){return v+"s";}}},y:{grid:{color:"rgba(255,255,255,.04)"},ticks:{color:"#64748b",font:{size:8}}}}})
+  }));
+}
+
+document.addEventListener("DOMContentLoaded", function() {
+  var savedToken = localStorage.getItem("yukios_admin_token");
+  if (savedToken) {
+    document.getElementById("token").value = savedToken;
+    loadAll();
+  }
+});
+
+function renderLive(data){
+  document.getElementById("liveStrip").style.display="block";
+  document.getElementById("liveUsers").textContent=data.active_users_5min||0;
+  document.getElementById("liveSessions").textContent=data.active_sessions||0;
+  var chips=document.getElementById("liveApps");
+  chips.innerHTML="";
+  (data.top_active_apps||[]).forEach(function(a){
+    var c=document.createElement("span");
+    c.className="live-chip";
+    c.textContent=displayApp(a.app)+" · "+a.count;
+    chips.appendChild(c);
+  });
+  if(!chips.children.length)chips.innerHTML='<span style="color:var(--muted);font-size:11px">No active apps</span>';
+}
+
+function updateKpiSessions(d){
+  document.getElementById("kSessions").textContent=(d.total_sessions||0).toLocaleString();
+  document.getElementById("kAvgDur").textContent=fmtMs(d.avg_duration_ms);
+  document.getElementById("kPower").textContent=(d.power_users||0).toLocaleString();
+  document.getElementById("kBounce").textContent=(d.bounce_sessions||0).toLocaleString();
+}
+
+function renderDashboardCharts(data){
+  if(!data.daily||!data.daily.length)return;
+  var reversed=[].concat(data.daily).reverse();
+  var labels=reversed.map(function(d){return d.day.slice(5);});
+  var reqVals=reversed.map(function(d){return d.requests;});
+  var sessVals=reversed.map(function(d){return d.inferred_sessions||0;});
+
+  var totalReq=data.daily.reduce(function(s,d){return s+d.requests;},0);
+  var totalUsers=new Set(data.daily.map(function(d){return d.unique_players;})).size;
+  document.getElementById("kTotal").textContent=totalReq.toLocaleString();
+  document.getElementById("kUsers").textContent=data.daily.reduce(function(s,d){return s+(d.unique_players||0);},0).toLocaleString();
+
+  var cfg={type:"bar",options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:function(ctx){return" "+ctx.parsed.y.toLocaleString();}}}},scales:{x:{grid:{color:"rgba(255,255,255,.04)"},ticks:{color:"#64748b",font:{size:9}}},y:{grid:{color:"rgba(255,255,255,.04)"},ticks:{color:"#64748b",font:{size:9}}}}}};
+
+  if(_chartReq){_chartReq.destroy();}
+  var ctx1=document.getElementById("chartReq").getContext("2d");
+  var grad1=ctx1.createLinearGradient(0,0,0,160);
+  grad1.addColorStop(0,"oklch(55% 0.14 220 / 0.9)");
+  grad1.addColorStop(1,"oklch(55% 0.14 220 / 0.15)");
+  _chartReq=new Chart(ctx1,Object.assign({},cfg,{data:{labels:labels,datasets:[{data:reqVals,backgroundColor:grad1,borderRadius:4,borderSkipped:false}]}}));
+
+  if(_chartSess){_chartSess.destroy();}
+  var ctx2=document.getElementById("chartSess").getContext("2d");
+  var grad2=ctx2.createLinearGradient(0,0,0,160);
+  grad2.addColorStop(0,"oklch(72% 0.12 220 / 0.9)");
+  grad2.addColorStop(1,"oklch(72% 0.12 220 / 0.15)");
+  _chartSess=new Chart(ctx2,Object.assign({},cfg,{data:{labels:labels,datasets:[{data:sessVals,backgroundColor:grad2,borderRadius:4,borderSkipped:false}]}}));
+}
+
+function renderDays(data){
+  if(!data.daily||!data.daily.length){
+    document.getElementById("daysGrid").innerHTML='<div class="empty-state"><i class="fa-solid fa-calendar-xmark"></i>No daily data found.</div>';
+    return;
+  }
+  _daySort=_daySort||"date";
+  var days=[].concat(data.daily);
+  sortAndRenderDays(days,data.topGames);
+}
+
+var _lastDays=null,_lastGames=null;
+function sortAndRenderDays(days,games){
+  _lastDays=days||_lastDays;
+  _lastGames=games||_lastGames;
+  if(!_lastDays)return;
+  var filter=document.getElementById("dayFilter").value.toLowerCase().trim();
+  var sorted=[].concat(_lastDays).filter(function(d){return!filter||d.day.includes(filter);});
+  if(_daySort==="requests")sorted.sort(function(a,b){return b.requests-a.requests;});
+  else if(_daySort==="users")sorted.sort(function(a,b){return b.unique_players-a.unique_players;});
+  else sorted.sort(function(a,b){return b.day.localeCompare(a.day);});
+  var grid=document.getElementById("daysGrid");
+  grid.innerHTML="";
+  sorted.forEach(function(day){
+    var card=document.createElement("div");
+    card.className="day-card";
+    var list=(_lastGames&&_lastGames[day.day]||[]).slice(0,5);
+    var maxC=list.length?list[0].count:1;
+    var gamesHTML=list.length?list.map(function(g,i){
+      var pct=maxC>0?Math.round((g.count/maxC)*100):0;
+      return '<div class="game-item"><span class="game-rank">#'+(i+1)+'</span><span class="game-name">'+displayApp(g.app)+'</span><div class="game-bar-wrap"><div class="game-bar-fill" style="width:'+pct+'%"></div></div><span class="game-count">'+g.count+'</span></div>';
+    }).join(""):'<div style="font-size:11px;color:var(--muted);padding:6px 0">No launches</div>';
+    card.innerHTML=
+      '<div class="day-card-header" onclick="toggleDay(this)">'
+        +'<span class="day-card-date"><i class="fa-regular fa-calendar" style="margin-right:8px;color:var(--accent)"></i>'+day.day+'</span>'
+        +'<div class="day-card-quick">'
+          +'<div class="day-card-quick-stat"><div class="qv">'+day.requests+'</div><div class="ql">Req</div></div>'
+          +'<div class="day-card-quick-stat"><div class="qv">'+day.unique_players+'</div><div class="ql">Users</div></div>'
+          +'<div class="day-card-quick-stat"><div class="qv">'+(day.inferred_sessions||0)+'</div><div class="ql">Sess</div></div>'
+        +'</div>'
+        +'<i class="fa-solid fa-chevron-down day-expand-icon"></i>'
+      +'</div>'
+      +'<div class="day-card-body">'
+        +'<div class="day-stats-row">'
+          +'<div class="day-stat-box"><div class="dsv">'+day.requests+'</div><div class="dsl">Requests</div></div>'
+          +'<div class="day-stat-box"><div class="dsv">'+day.unique_players+'</div><div class="dsl">Unique Users</div></div>'
+          +'<div class="day-stat-box"><div class="dsv">'+(day.requests_per_user||0)+'</div><div class="dsl">Req / User</div></div>'
+          +'<div class="day-stat-box"><div class="dsv">'+(day.inferred_sessions||0)+'</div><div class="dsl">Sessions</div></div>'
+        +'</div>'
+        +'<div class="games-section-label"><i class="fa-solid fa-gamepad" style="margin-right:6px;color:var(--accent)"></i>Top Launches</div>'
+        +gamesHTML
+      +'</div>';
+    grid.appendChild(card);
+  });
+}
+
+function toggleDay(header){
+  var card=header.parentElement;
+  card.classList.toggle("open");
+}
+
+function sortDays(by){
+  _daySort=by;
+  document.querySelectorAll(".sort-btn").forEach(function(b){b.classList.remove("active");});
+  document.getElementById("sort"+by.charAt(0).toUpperCase()+by.slice(1)).classList.add("active");
+  if(_lastDays)sortAndRenderDays();
+}
+
+function filterDays(){
+  if(_lastDays)sortAndRenderDays();
+}
+
+function renderTime(data){
+  var results=(data.results||[]);
+  var list=document.getElementById("timeList");
+  var filter=document.getElementById("timeFilter")&&document.getElementById("timeFilter").value.toLowerCase()||"";
+  var filtered=filter?results.filter(function(r){return (r.app||"").toLowerCase().includes(filter);}):results;
+  if(!filtered.length){list.innerHTML='<div class="empty-state"><i class="fa-solid fa-clock"></i>No playtime data found.</div>';return;}
+  var max=filtered[0].total_time_ms||1;
+  list.innerHTML="";
+  filtered.forEach(function(r,i){
+    var pct=max>0?Math.round(((r.total_time_ms||0)/max)*100):0;
+    var item=document.createElement("div");
+    item.className="time-item";
+    item.innerHTML=
+      '<div class="time-rank-badge">'+(i+1)+'</div>'
+      +'<div class="time-info">'
+        +'<div class="time-app">'+displayApp(r.app)+'</div>'
+        +'<div class="time-bar-track"><div class="time-bar-fill" style="width:'+pct+'%"></div></div>'
+      +'</div>'
+      +'<div class="time-stats">'
+        +'<div class="time-duration">'+fmtMs(r.total_time_ms)+'</div>'
+        +'<div class="time-sessions"><i class="fa-solid fa-rotate" style="margin-right:3px"></i>'+(r.event_count||0)+' events</div>'
+      +'</div>';
+    list.appendChild(item);
+  });
+}
+
+function filterTime(){
+  if(_timeData)renderTime(_timeData);
+}
+
+function renderSessions(data){
+  var grid=document.getElementById("sessionsGrid");
+  var items=[
+    {icon:"fa-layer-group",label:"Total Sessions",val:(data.total_sessions||0).toLocaleString(),sub:"inferred from event gaps"},
+    {icon:"fa-stopwatch",label:"Avg Duration",val:fmtMs(data.avg_duration_ms),sub:"per session"},
+    {icon:"fa-gamepad",label:"Avg Apps / Session",val:data.avg_apps_per_session,sub:"launches per session"},
+    {icon:"fa-trophy",label:"Longest Session",val:fmtMs(data.longest_session_ms),sub:"single session"},
+    {icon:"fa-hourglass-start",label:"Shortest Session",val:fmtMs(data.shortest_session_ms),sub:"single session"},
+    {icon:"fa-person-running",label:"Bounce Sessions",val:(data.bounce_sessions||0).toLocaleString(),sub:"1 event or <20s"},
+    {icon:"fa-bolt",label:"Power Users",val:(data.power_users||0).toLocaleString(),sub:"20+ events in one day"}
+  ];
+  grid.innerHTML="";
+  items.forEach(function(item){
+    var c=document.createElement("div");
+    c.className="stat-card";
+    c.innerHTML='<div class="sc-label"><i class="fa-solid '+item.icon+'" style="margin-right:6px;color:var(--accent)"></i>'+item.label+'</div><div class="sc-val">'+item.val+'</div><div class="sc-sub">'+item.sub+'</div>';
+    grid.appendChild(c);
+  });
+}
+
+var _allFlows=[];
+function renderFlows(data){
+  _allFlows=data.flows||[];
+  buildFlowTable(_allFlows);
+}
+
+function buildFlowTable(flows){
+  var filter=(document.getElementById("flowFilter").value||"").toLowerCase();
+  var filtered=filter?flows.filter(function(f){return (f.source||"").includes(filter)||(f.destination||"").includes(filter);}):flows;
+  var tbody=document.getElementById("flowBody");
+  if(!filtered.length){tbody.innerHTML='<tr><td colspan="4" class="empty-state">No navigation flows found.</td></tr>';return;}
+  var maxC=filtered[0].count||1;
+  tbody.innerHTML="";
+  filtered.slice(0,30).forEach(function(f){
+    var pct=Math.round((f.count/maxC)*100);
+    var tr=document.createElement("tr");
+    tr.innerHTML=
+      '<td class="flow-from">'+displayApp(f.source)+'</td>'
+      +'<td class="flow-arrow"><i class="fa-solid fa-arrow-right"></i></td>'
+      +'<td class="flow-to">'+displayApp(f.destination)+'</td>'
+      +'<td><div class="flow-bar-cell"><span class="flow-count">'+f.count+'</span><div class="flow-bar"><div class="flow-bar-inner" style="width:'+pct+'%"></div></div></div></td>';
+    tbody.appendChild(tr);
+  });
+}
+
+function filterFlows(){buildFlowTable(_allFlows);}
+
+function renderEntryExit(data){
+  var grid=document.getElementById("entryExitGrid");
+  grid.innerHTML="";
+  function makeCard(title,cls,items,barClass){
+    var card=document.createElement("div");
+    card.className="entry-exit-card";
+    var icon=cls==="entry"?'<i class="fa-solid fa-right-to-bracket"></i>':'<i class="fa-solid fa-right-from-bracket"></i>';
+    card.innerHTML='<div class="entry-exit-card-title '+cls+'">'+icon+' '+title+'</div>';
+    if(!items||!items.length){card.innerHTML+='<div class="empty-state" style="padding:16px">No data</div>';return card;}
+    var maxC=items[0].count||1;
+    items.forEach(function(item){
+      var pct=Math.round((item.count/maxC)*100);
+      var row=document.createElement("div");
+      row.className="ee-item";
+      row.innerHTML='<span class="ee-name">'+displayApp(item.app)+'</span><div class="ee-bar-wrap"><div class="'+barClass+'" style="width:'+pct+'%"></div></div><span class="ee-count">'+item.count+'</span>';
+      card.appendChild(row);
+    });
+    return card;
+  }
+  grid.appendChild(makeCard("Top Entry Apps","entry",data.top_entry_apps,"ee-bar-entry"));
+  grid.appendChild(makeCard("Top Exit Apps","exit",data.top_exit_apps,"ee-bar-exit"));
+}
+
+function renderExploration(data){
+  var grid=document.getElementById("exploreGrid");
+  grid.innerHTML="";
+  var avg=document.createElement("div");
+  avg.className="explore-card";
+  avg.innerHTML='<div class="explore-card-title"><i class="fa-solid fa-compass" style="margin-right:6px;color:var(--accent)"></i>Avg Unique Apps / Session</div><div class="explore-big">'+data.avg_unique_apps_per_session+'</div><div class="explore-sub">app diversity per session</div>';
+  grid.appendChild(avg);
+
+  var explorers=document.createElement("div");
+  explorers.className="explore-card";
+  explorers.innerHTML='<div class="explore-card-title"><i class="fa-solid fa-ranking-star" style="margin-right:6px;color:var(--accent)"></i>Most Exploratory Users</div>';
+  if(data.top_explorers&&data.top_explorers.length){
+    data.top_explorers.forEach(function(u){
+      explorers.innerHTML+='<div class="user-row"><span class="user-id">'+u.user_id+'</span><span class="user-val">'+u.avg_unique+' apps/sess</span></div>';
+    });
+  } else {explorers.innerHTML+='<div style="font-size:11px;color:var(--muted);margin-top:8px">No data</div>';}
+  grid.appendChild(explorers);
+
+  var diverse=document.createElement("div");
+  diverse.className="explore-card";
+  diverse.innerHTML='<div class="explore-card-title"><i class="fa-solid fa-shuffle" style="margin-right:6px;color:var(--accent)"></i>Most Diverse Sessions</div>';
+  if(data.top_diverse_sessions&&data.top_diverse_sessions.length){
+    data.top_diverse_sessions.forEach(function(s){
+      diverse.innerHTML+='<div class="user-row"><span class="user-id">'+s.user_id+'</span><span class="user-val">'+s.unique_apps+' unique apps</span></div>';
+    });
+  } else {diverse.innerHTML+='<div style="font-size:11px;color:var(--muted);margin-top:8px">No data</div>';}
+  grid.appendChild(diverse);
+}
+
+function exportData(){
+  fetch("/admin/export",{headers:getHeaders()})
+    .then(function(r){return r.blob();})
+    .then(function(blob){
+      var url=URL.createObjectURL(blob);
+      var a=document.createElement("a");
+      a.href=url;
+      a.download="yukios-analytics-"+new Date().toISOString().slice(0,10)+".json";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    })
+    .catch(function(e){
+      alert("Export failed: "+e.message);
+    });
+}
+
+function importData(input){
+  var file=input.files[0];
+  if(!file){return;}
+  var reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      var data=JSON.parse(e.target.result);
+      if(!data.records||!Array.isArray(data.records)){
+        alert("Invalid file format");
+        return;
+      }
+      var statusDiv=document.getElementById("importStatus");
+      statusDiv.innerHTML='<div style="color:var(--muted);font-size:13px">Importing '+data.records.length+' records...</div>';
+      fetch("/admin/import",{method:"POST",headers:{"Authorization":"Bearer "+token,"Content-Type":"application/json"},body:JSON.stringify(data)})
+        .then(function(r){return r.json();})
+        .then(function(res){
+          if(res.success){
+            statusDiv.innerHTML='<div style="color:var(--green);font-size:13px;font-weight:700"><i class="fa-solid fa-check-circle"></i> Import complete: '+res.imported+' imported, '+res.skipped+' skipped</div>';
+            if(res.errors&&res.errors.length){
+              statusDiv.innerHTML+='<div style="color:var(--red);font-size:11px;margin-top:8px">Errors: '+res.errors.join(", ")+'</div>';
+            }
+          }else{
+            statusDiv.innerHTML='<div style="color:var(--red);font-size:13px">Import failed</div>';
+          }
+        })
+        .catch(function(err){
+          statusDiv.innerHTML='<div style="color:var(--red);font-size:13px">Import failed: '+err.message+'</div>';
+        });
+    }catch(err){
+      alert("Failed to parse file: "+err.message);
+    }
+  };
+  reader.readAsText(file);
+  input.value="";
+}
+
+var _themeStatus="all";
+var _themeData=[];
+function loadAdminThemes(status){
+  if(status!==undefined)_themeStatus=status;
+  document.querySelectorAll("#panel-themes .sort-btn[id^=tsTab]").forEach(function(b){b.classList.remove("active");});
+  document.getElementById("tsTab"+(_themeStatus.charAt(0).toUpperCase()+_themeStatus.slice(1))).classList.add("active");
+  var empty=document.getElementById("themeEmpty");
+  var table=document.getElementById("themeTable");
+  table.style.display="none";
+  empty.style.display="block";
+  empty.innerHTML='<i class="fa-solid fa-spinner fa-spin"></i> Loading themes...';
+  fetch("/admin/themes?status="+encodeURIComponent(_themeStatus),{headers:getHeaders()})
+    .then(function(r){if(!r.ok)throw new Error("HTTP "+r.status);return r.json();})
+    .then(function(data){_themeData=data.themes||[];renderAdminThemes();})
+    .catch(function(e){empty.style.display="block";empty.innerHTML='<i class="fa-solid fa-circle-xmark"></i> Error loading themes.';});
+}
+function renderAdminThemes(){
+  var table=document.getElementById("themeTable");
+  var empty=document.getElementById("themeEmpty");
+  if(!_themeData.length){table.style.display="none";empty.style.display="block";empty.innerHTML='<i class="fa-solid fa-circle-info"></i> No themes found for this filter.';return;}
+  table.style.display="";
+  empty.style.display="none";
+  document.getElementById("themeThead").innerHTML="<tr><th>Name</th><th>Author</th><th>Status</th><th>Score</th><th>Installs</th><th>Created</th><th>Actions</th></tr>";
+  document.getElementById("themeTbody").innerHTML=_themeData.map(function(t){
+    var badge=themeStatusBadge(t.status);
+    var date=new Date(t.created_at).toLocaleDateString();
+    var shortId=(t.id||"").slice(-8);
+    return "<tr>"+
+      "<td style=\\"max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap\\">"+escapeHtml(t.name||"Untitled")+"</td>"+
+      "<td>"+escapeHtml(t.author||t.author_id||"Unknown")+"</td>"+
+      "<td>"+badge+"</td>"+
+      "<td>"+t.score+"</td>"+
+      "<td>"+t.installs+"</td>"+
+      "<td>"+date+"</td>"+
+      "<td style=\\"white-space:nowrap\\">"+
+      "<button class=\\"sort-btn\\" title=\\"Approve\\" onclick=\\"adminThemeAction('"+t.id+"','approve')\\"><i class=\\"fa-solid fa-check\\"></i></button> "+
+      "<button class=\\"sort-btn\\" title=\\"Flag\\" onclick=\\"adminThemeAction('"+t.id+"','flag')\\"><i class=\\"fa-solid fa-flag\\"></i></button> "+
+      "<button class=\\"sort-btn\\" title=\\"Delete\\" onclick=\\"adminThemeAction('"+t.id+"','delete')\\" style=\\"color:var(--red)\\"><i class=\\"fa-solid fa-trash\\"></i></button>"+
+      "<div style=\\"font-size:9px;color:var(--muted);margin-top:3px\\">"+shortId+"</div>"+
+      "</td>"+
+      "</tr>";
+  }).join("");
+}
+function themeStatusBadge(s){
+  var map={approved:'<span style="color:var(--green)">approved</span>',flagged:'<span style="color:var(--yellow)">flagged</span>',deleted:'<span style="color:var(--red)">deleted</span>'};
+  return map[s]||escapeHtml(s||"unknown");
+}
+function adminThemeAction(id,action){
+  if(action==="delete"&&!confirm("Permanently delete theme "+id+"? This removes it from the hub."))return;
+  fetch("/admin/themes/"+id+"/"+action,{method:"POST",headers:getHeaders()})
+    .then(function(r){if(!r.ok)throw new Error("HTTP "+r.status);return r.json();})
+    .then(function(){loadAdminThemes();})
+    .catch(function(e){alert("Action failed: "+e.message);});
+}
+<\/script>
+</body>
+</html>`;
 }

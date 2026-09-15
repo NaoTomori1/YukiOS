@@ -25,6 +25,8 @@ export class LiveActivityManager {
     this.knownUsers = new Map();
     this.flushTimer = null;
     this.pollTimer = null;
+    this.nowPlayingCache = { data: null, time: 0 };
+    this.recentPlayersCache = new Map();
     this.onVisibilityChange = () => {
       if (!this.isEnabled()) return;
       if (document.hidden) {
@@ -103,7 +105,6 @@ export class LiveActivityManager {
   startTimers() {
     this.stopTimers();
     if (!this.isEnabled()) return;
-    this.flushTimer = setInterval(() => this.flush(), ACTIVITY_FLUSH_INTERVAL);
     this.pollTimer = setInterval(() => this.poll(), POLL_INTERVAL);
     this.poll();
     document.addEventListener("visibilitychange", this.onVisibilityChange);
@@ -111,7 +112,7 @@ export class LiveActivityManager {
 
   stopTimers() {
     if (this.flushTimer) {
-      clearInterval(this.flushTimer);
+      clearTimeout(this.flushTimer);
       this.flushTimer = null;
     }
     if (this.pollTimer) {
@@ -150,12 +151,29 @@ export class LiveActivityManager {
 
     this.queue.push(item);
 
-    if (this.queue.length >= 10) this.flush();
+    if (this.queue.length >= 10) {
+      if (this.flushTimer) {
+        clearTimeout(this.flushTimer);
+        this.flushTimer = null;
+      }
+      this.flush();
+      return;
+    }
+    if (!this.flushTimer) {
+      this.flushTimer = setTimeout(() => {
+        this.flushTimer = null;
+        this.flush();
+      }, ACTIVITY_FLUSH_INTERVAL);
+    }
   }
 
   flush() {
     if (!this.isEnabled()) return;
     if (this.queue.length === 0) return;
+    if (this.flushTimer) {
+      clearTimeout(this.flushTimer);
+      this.flushTimer = null;
+    }
     const batch = this.queue.splice(0);
     const payload = JSON.stringify(batch);
     if (navigator.sendBeacon) {
@@ -206,24 +224,33 @@ export class LiveActivityManager {
   }
 
   async getNowPlaying() {
+    const now = Date.now();
+    if (this.nowPlayingCache.data && now - this.nowPlayingCache.time < 30000) return this.nowPlayingCache.data;
     try {
       const res = await fetch(SOCIAL_NOW_PLAYING_ENDPOINT);
-      if (!res.ok) return [];
+      if (!res.ok) return this.nowPlayingCache.data || [];
       const data = await res.json();
-      return Array.isArray(data.users) ? data.users : [];
+      const users = Array.isArray(data.users) ? data.users : [];
+      this.nowPlayingCache = { data: users, time: now };
+      return users;
     } catch {
-      return [];
+      return this.nowPlayingCache.data || [];
     }
   }
 
   async getRecentPlayers(appId) {
+    const now = Date.now();
+    const cached = this.recentPlayersCache.get(appId);
+    if (cached && now - cached.time < 30000) return cached.data;
     try {
       const res = await fetch(SOCIAL_BASE + "/live/recent-players?app=" + encodeURIComponent(appId));
-      if (!res.ok) return [];
+      if (!res.ok) return cached?.data || [];
       const data = await res.json();
-      return Array.isArray(data.users) ? data.users : [];
+      const users = Array.isArray(data.users) ? data.users : [];
+      this.recentPlayersCache.set(appId, { data: users, time: now });
+      return users;
     } catch {
-      return [];
+      return cached?.data || [];
     }
   }
 

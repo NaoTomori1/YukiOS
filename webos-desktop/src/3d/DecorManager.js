@@ -206,43 +206,6 @@ export class DecorManager {
     );
 
     this.defineItem(
-      "desk-plant",
-      "Desk Succulent",
-      "fas fa-leaf",
-      (T) => {
-        const group = new T.Group();
-
-        const potMat = new T.MeshStandardMaterial({ color: 0x4a2a1a, roughness: 0.8 });
-        const pot = new T.Mesh(new T.CylinderGeometry(0.025, 0.035, 0.03, 8), potMat);
-        pot.position.y = 0.015;
-        group.add(pot);
-
-        const soilMat = new T.MeshStandardMaterial({ color: 0x2a1a0a, roughness: 0.9 });
-        const soil = new T.Mesh(new T.CylinderGeometry(0.024, 0.024, 0.008, 8), soilMat);
-        soil.position.y = 0.034;
-        group.add(soil);
-
-        const plantMat = new T.MeshStandardMaterial({ color: 0x3d8c4a, roughness: 0.6 });
-        const plant = new T.Mesh(new T.SphereGeometry(0.025, 8, 8), plantMat);
-        plant.position.y = 0.055;
-        plant.scale.set(1, 1.2, 1);
-        group.add(plant);
-
-        const smallMat = new T.MeshStandardMaterial({ color: 0x4a9c5a, roughness: 0.6 });
-        for (let i = 0; i < 4; i++) {
-          const angle = (i / 4) * Math.PI * 2;
-          const small = new T.Mesh(new T.SphereGeometry(0.015, 6, 6), smallMat);
-          small.position.set(Math.cos(angle) * 0.025, 0.045, Math.sin(angle) * 0.025);
-          small.scale.set(0.8, 0.6, 0.8);
-          group.add(small);
-        }
-
-        return group;
-      },
-      { x: -0.5, y: 0.82, z: -0.6 }
-    );
-
-    this.defineItem(
       "desk-books",
       "Books on Desk",
       "fas fa-book",

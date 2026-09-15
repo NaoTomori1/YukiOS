@@ -94,6 +94,10 @@ export class GameCaseManager {
     this.done = false;
     this.gameMode = false;
     this.gameState = null;
+    this.sparkles = [];
+    this.flashes = [];
+    this.shatterSpeed = 20;
+    this.squashAt = 0;
   }
 
   init(THREE, savedPositions, savedShelves) {
@@ -166,7 +170,13 @@ export class GameCaseManager {
           tex,
           iconUrl: game.icon,
           loadedIcon: null,
-          shelvedAt: shelfSlotIndex != null ? shelfSlotIndex : null
+          shelvedAt: shelfSlotIndex != null ? shelfSlotIndex : null,
+          type: "book",
+          fragile: false,
+          shattered: false,
+          respawnAt: 0,
+          prevSpeed: 0,
+          squashAt: 0
         });
       } else {
         this.gamePool.push({
@@ -252,7 +262,13 @@ export class GameCaseManager {
       title: game.title,
       tex,
       iconUrl: game.icon,
-      loadedIcon: null
+      loadedIcon: null,
+      type: "book",
+      fragile: false,
+      shattered: false,
+      respawnAt: 0,
+      prevSpeed: 0,
+      squashAt: 0
     };
 
     this.gameCases.push(gameCase);
@@ -480,6 +496,7 @@ export class GameCaseManager {
     mesh.castShadow = true;
     mesh.receiveShadow = true;
     mesh.userData.isBook = true;
+    mesh.userData.isCase = true;
     return mesh;
   }
 
@@ -677,7 +694,13 @@ export class GameCaseManager {
         loadedIcon: null,
         shelvedAt: null,
         shelved: false,
-        isCorrect: false
+        isCorrect: false,
+        type: "book",
+        fragile: false,
+        shattered: false,
+        respawnAt: 0,
+        prevSpeed: 0,
+        squashAt: 0
       };
 
       this.scene.add(mesh);
@@ -687,6 +710,135 @@ export class GameCaseManager {
 
     gameState.totalGameCases = this.gameCases.length;
     gameState.remaining = this.gameCases.length;
+  }
+
+  getRestY() {
+    return 0.02;
+  }
+
+  randomFloorPosition(gameCase) {
+    const T = this.THREE;
+    const b = this.bounds;
+    if (b) {
+      const margin = 0.8;
+      const minX = b.minX + margin;
+      const maxX = b.maxX - margin;
+      const minZ = b.minZ + margin;
+      const maxZ = b.maxZ - margin;
+      const x = minX + Math.random() * Math.max(0.1, maxX - minX);
+      const z = minZ + Math.random() * Math.max(0.1, maxZ - minZ);
+      return new T.Vector3(x, this.getRestY(), z);
+    }
+    if (gameCase) return this.spawnPosition({ id: gameCase.gameId });
+    return new T.Vector3((Math.random() - 0.5) * 2, this.getRestY(), (Math.random() - 0.5) * 2);
+  }
+
+  spawnFlashRing(position, color, grow, maxLife) {
+    const T = this.THREE;
+    const geo = new T.RingGeometry(0.2, 0.26, 24);
+    const mat = new T.MeshBasicMaterial({
+      color,
+      transparent: true,
+      opacity: 0.9,
+      blending: T.AdditiveBlending,
+      side: T.DoubleSide,
+      depthWrite: false
+    });
+    const mesh = new T.Mesh(geo, mat);
+    mesh.position.copy(position);
+    mesh.rotation.x = -Math.PI / 2;
+    this.scene.add(mesh);
+    this.flashes.push({
+      mesh,
+      basePos: position.clone(),
+      grow,
+      maxLife,
+      maxOpacity: 0.9,
+      life: 0
+    });
+  }
+
+  spawnSparkle(position, color) {
+    const T = this.THREE;
+    const count = 16;
+    const arr = new Float32Array(count * 3);
+    const velocities = [];
+    for (let i = 0; i < count; i++) {
+      arr[i * 3] = position.x + (Math.random() - 0.5) * 0.5;
+      arr[i * 3 + 1] = position.y + (Math.random() - 0.5) * 0.5;
+      arr[i * 3 + 2] = position.z + (Math.random() - 0.5) * 0.5;
+      velocities.push(new T.Vector3((Math.random() - 0.5) * 1.5, Math.random() * 1.5, (Math.random() - 0.5) * 1.5));
+    }
+    const geo = new T.BufferGeometry();
+    geo.setAttribute("position", new T.BufferAttribute(arr, 3));
+    const mat = new T.PointsMaterial({
+      size: 0.05,
+      color,
+      transparent: true,
+      opacity: 0.9,
+      blending: T.AdditiveBlending,
+      depthWrite: false
+    });
+    const points = new T.Points(geo, mat);
+    this.scene.add(points);
+    this.sparkles.push({ points, velocities, life: 0, maxLife: 0.7 });
+  }
+
+  spawnSnapFlash(position, color) {
+    const c = color || 0x44ff88;
+    this.spawnFlashRing(position, c, 0.55, 0.8);
+    this.spawnSparkle(position, c);
+  }
+
+  spawnDustPuff(position) {
+    this.spawnFlashRing(position, 0x9a9088, 0.7, 0.35);
+  }
+
+  spawnCatchPulse(position) {
+    this.spawnFlashRing(position, 0xffcc44, 0.3, 0.6);
+  }
+
+  updateSquash(delta) {
+    const ease = Math.min(1, delta / 0.15);
+    for (const gameCase of this.gameCases) {
+      if (gameCase.shattered || gameCase.grabbed || gameCase.shelved) continue;
+      if (!gameCase.body || gameCase.body.mass <= 0) continue;
+      const speed = gameCase.body.velocity.length();
+      if (
+        gameCase.prevSpeed > 2.5 &&
+        speed < 0.8 &&
+        gameCase.body.position.y <= this.getRestY() + 0.5 &&
+        performance.now() >= gameCase.squashAt
+      ) {
+        gameCase.mesh.scale.set(1.12, 0.8, 1.12);
+        gameCase.squashAt = performance.now() + 400;
+        this.spawnDustPuff(new this.THREE.Vector3(gameCase.body.position.x, this.getRestY(), gameCase.body.position.z));
+      } else if (gameCase.mesh.scale.x !== 1 || gameCase.mesh.scale.y !== 1 || gameCase.mesh.scale.z !== 1) {
+        const s = gameCase.mesh.scale;
+        gameCase.mesh.scale.set(s.x + (1 - s.x) * ease, s.y + (1 - s.y) * ease, s.z + (1 - s.z) * ease);
+      }
+      gameCase.prevSpeed = speed;
+    }
+  }
+
+  setHintGlow(active, time) {
+    const pulse = active ? 0.3 + Math.sin(time * 3) * 0.2 : 0;
+    for (const gameCase of this.gameCases) {
+      if (gameCase.shelved || gameCase.grabbed || gameCase.shattered) continue;
+      const mesh = gameCase.mesh;
+      if (!mesh.material) continue;
+      if (!mesh.userData.hintEmissiveSaved) {
+        mesh.userData.hintEmissiveSaved = mesh.material.emissive.clone();
+        mesh.userData.hintEmissiveISaved = mesh.material.emissiveIntensity;
+      }
+      if (active) {
+        mesh.material.emissive.setHex(0x44ccff);
+        mesh.material.emissiveIntensity = pulse;
+      } else {
+        mesh.material.emissive.copy(mesh.userData.hintEmissiveSaved);
+        mesh.material.emissiveIntensity = mesh.userData.hintEmissiveISaved;
+      }
+    }
   }
 
   update(delta) {
@@ -705,6 +857,74 @@ export class GameCaseManager {
     if (this.spawnQueue.length === 0 && !this.done) {
       this.done = true;
     }
+    for (let i = this.flashes.length - 1; i >= 0; i--) {
+      const flash = this.flashes[i];
+      flash.life += delta;
+      const t = Math.min(1, flash.life / flash.maxLife);
+      const scale = 0.25 + t * flash.grow;
+      flash.mesh.scale.set(scale, scale, scale);
+      flash.mesh.position.copy(flash.basePos);
+      flash.mesh.position.y += t * 0.2;
+      flash.mesh.material.opacity = 0.9 * (1 - t);
+      if (flash.life >= flash.maxLife) {
+        this.scene.remove(flash.mesh);
+        flash.mesh.geometry.dispose();
+        flash.mesh.material.dispose();
+        this.flashes.splice(i, 1);
+      }
+    }
+    for (let i = this.sparkles.length - 1; i >= 0; i--) {
+      const sparkle = this.sparkles[i];
+      sparkle.life += delta;
+      const arr = sparkle.points.geometry.attributes.position.array;
+      for (let p = 0; p < sparkle.velocities.length; p++) {
+        const v = sparkle.velocities[p];
+        v.y -= 0.6 * delta;
+        arr[p * 3] += v.x * delta;
+        arr[p * 3 + 1] += v.y * delta;
+        arr[p * 3 + 2] += v.z * delta;
+      }
+      sparkle.points.geometry.attributes.position.needsUpdate = true;
+      sparkle.points.material.opacity = 0.9 * (1 - sparkle.life / sparkle.maxLife);
+      if (sparkle.life >= sparkle.maxLife) {
+        this.scene.remove(sparkle.points);
+        sparkle.points.geometry.dispose();
+        sparkle.points.material.dispose();
+        this.sparkles.splice(i, 1);
+      }
+    }
+    for (const gameCase of this.gameCases) {
+      if (!gameCase.fragile || gameCase.shattered || gameCase.grabbed || gameCase.shelved) continue;
+      if (!gameCase.body || gameCase.body.mass <= 0) continue;
+      const speed = gameCase.body.velocity.length();
+      if (speed > this.shatterSpeed && !gameCase.body.sleepState) {
+        gameCase.shattered = true;
+        gameCase.mesh.visible = false;
+        gameCase.body.type = 0;
+        gameCase.body.collisionResponse = false;
+        gameCase.body.velocity.set(0, 0, 0);
+        gameCase.body.angularVelocity.set(0, 0, 0);
+        gameCase.respawnAt = performance.now() + 2500;
+      }
+    }
+    for (const gameCase of this.gameCases) {
+      if (!gameCase.shattered || !gameCase.respawnAt) continue;
+      if (performance.now() < gameCase.respawnAt) continue;
+      const pos = this.randomFloorPosition(gameCase);
+      gameCase.mesh.position.copy(pos);
+      gameCase.body.position.set(pos.x, pos.y, pos.z);
+      gameCase.body.type = 1;
+      gameCase.body.collisionResponse = true;
+      gameCase.body.mass = gameCase.dynamicMass;
+      gameCase.body.updateMassProperties();
+      gameCase.body.velocity.set(0, 0, 0);
+      gameCase.body.wakeUp();
+      gameCase.mesh.visible = true;
+      gameCase.mesh.scale.set(1, 1, 1);
+      gameCase.shattered = false;
+      gameCase.respawnAt = 0;
+    }
+    this.updateSquash(delta);
     this.physics.update(this.gameCases, delta, this.ballBody);
   }
 
@@ -727,10 +947,26 @@ export class GameCaseManager {
       gameCase.mesh.material.dispose();
       gameCase.mesh.geometry.dispose();
     }
+    for (const flash of this.flashes) {
+      this.scene.remove(flash.mesh);
+      flash.mesh.geometry.dispose();
+      flash.mesh.material.dispose();
+    }
+    for (const sparkle of this.sparkles) {
+      this.scene.remove(sparkle.points);
+      sparkle.points.geometry.dispose();
+      sparkle.points.material.dispose();
+    }
+    this.flashes = [];
+    this.sparkles = [];
     this.physics.destroy();
     this.gameCases = [];
     this.spawnQueue = [];
     this.gamePool = [];
     this.trashed = [];
+  }
+
+  dispose() {
+    this.destroy();
   }
 }

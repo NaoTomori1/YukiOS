@@ -1040,6 +1040,7 @@ export function openFriendDmWindow(friend) {
 
   const poll = async () => {
     if (!messagesEl || !messagesEl.isConnected) return;
+    if (document.hidden) return;
     const messages = await fetchMessages(friendId);
     if (!messagesEl.isConnected) return;
     if (!messages || messages.length === 0) {
@@ -1079,7 +1080,7 @@ export function openFriendDmWindow(friend) {
     bindEvent(input, "keydown", (e) => {
       if (e.key === "Enter") doSend();
     });
-  const pollTimer = setInterval(poll, 6000);
+  const pollTimer = setInterval(poll, 15000);
   win.addEventListener("remove", () => clearInterval(pollTimer));
   poll();
 }

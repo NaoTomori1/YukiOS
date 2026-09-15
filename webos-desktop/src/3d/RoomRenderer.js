@@ -3,11 +3,13 @@ import { HologramRenderer } from "./HologramRenderer.js";
 import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer.js";
 import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass.js";
 import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass.js";
+import { OutlinePass } from "three/examples/jsm/postprocessing/OutlinePass.js";
 import { Reflector } from "three/examples/jsm/objects/Reflector.js";
 import { EXRLoader } from "three/examples/jsm/loaders/EXRLoader.js";
 import { CDN_BASES } from "../shared/assetResolver.js";
 import { PlayerBody } from "./PlayerBody.js";
 import { createElement } from "../shared/domUtils.js";
+import { toonifyScene } from "./ArtStyle.js";
 
 export class RoomRenderer {
   constructor(container) {
@@ -44,6 +46,9 @@ export class RoomRenderer {
     this.hdriEnvMap = null;
     this.isDay = false;
     this.quality = null;
+    this.outlinePass = null;
+    this.bloomResolutionMult = 0.5;
+    this.fogEnabled = true;
   }
 
   async init() {
@@ -77,6 +82,15 @@ export class RoomRenderer {
     this.bloomPass = new UnrealBloomPass(new THREE.Vector2(w / 2, h / 2), 0.4, 0.2, 0.1);
     this.composer.addPass(this.bloomPass);
 
+    this.outlinePass = new OutlinePass(new THREE.Vector2(w, h), this.scene, this.camera);
+    this.outlinePass.visibleEdgeColor.setHex(0xffffff);
+    this.outlinePass.hiddenEdgeColor.setHex(0x16162a);
+    this.outlinePass.edgeGlow = 0.6;
+    this.outlinePass.edgeThickness = 2;
+    this.outlinePass.edgeStrength = 6;
+    this.outlinePass.enabled = false;
+    this.composer.addPass(this.outlinePass);
+
     this.clock = new THREE.Clock();
     this.mirrorRes = 512;
 
@@ -90,6 +104,8 @@ export class RoomRenderer {
 
     this.player = new PlayerBody(THREE, this.scene, this.camera);
     this.player.build();
+
+    this.refreshArtStyle();
 
     this.toggleDayNight();
     this.toggleDayNight();
@@ -1239,6 +1255,30 @@ export class RoomRenderer {
       this.mirrorMesh = null;
     }
     this.buildMirror();
+    this.refreshArtStyle();
+  }
+
+  refreshArtStyle() {
+    if (this.THREE && this.scene) toonifyScene(this.THREE, this.scene);
+  }
+
+  setOutlineMeshes(meshes) {
+    if (this.outlinePass) {
+      this.outlinePass.selectedObjects = meshes || [];
+      this.outlinePass.enabled = meshes && meshes.length > 0;
+    }
+  }
+
+  clearOutline() {
+    this.setOutlineMeshes([]);
+  }
+
+  applyBloomResolution() {
+    if (!this.bloomPass || !this.renderer) return;
+    const w = this.container.clientWidth;
+    const h = this.container.clientHeight;
+    const mult = this.bloomResolutionMult;
+    this.bloomPass.setSize(Math.max(1, Math.floor(w * mult)), Math.max(1, Math.floor(h * mult)));
   }
 
   enableMonitorCapture(os) {
@@ -1290,6 +1330,7 @@ export class RoomRenderer {
     requestAnimationFrame(() => this.animate());
 
     const delta = this.clock.getDelta();
+    this.time += delta;
 
     if (this.player) this.player.update();
 
@@ -1303,6 +1344,41 @@ export class RoomRenderer {
         const floatOffset = Math.sin(this.hologramTime * 0.8) * 0.04;
         this.hologramGroup.position.y = this.hologramBaseY + floatOffset;
       }
+    }
+
+    if (this.curtainGeos && this.curtainGeos.length) {
+      for (const entry of this.curtainGeos) {
+        const geo = entry.geo;
+        const orig = entry.origPositions;
+        const pos = geo.attributes.position;
+        for (let i = 0; i < pos.count; i++) {
+          const origX = orig[i * 3];
+          const origY = orig[i * 3 + 1];
+          const origZ = orig[i * 3 + 2];
+          const offset = Math.sin(this.time * 0.8 + origY * 3 + origX * 5) * 0.006;
+          pos.setZ(i, origZ + offset);
+        }
+        pos.needsUpdate = true;
+      }
+    }
+
+    if (this.dustMesh && this.dustPositions && this.dustVelocities) {
+      const count = this.dustPositions.length / 3;
+      const dummy = new THREE.Matrix4();
+      for (let i = 0; i < count; i++) {
+        this.dustPositions[i * 3] += this.dustVelocities[i * 3] * delta * 0.05;
+        this.dustPositions[i * 3 + 1] += this.dustVelocities[i * 3 + 1] * delta * 0.05;
+        this.dustPositions[i * 3 + 2] += this.dustVelocities[i * 3 + 2] * delta * 0.05;
+        if (this.dustPositions[i * 3 + 1] < 0) this.dustPositions[i * 3 + 1] = 2.8;
+        if (this.dustPositions[i * 3 + 1] > 3) this.dustPositions[i * 3 + 1] = 0;
+        if (this.dustPositions[i * 3] < -5) this.dustPositions[i * 3] = 5;
+        if (this.dustPositions[i * 3] > 5) this.dustPositions[i * 3] = -5;
+        if (this.dustPositions[i * 3 + 2] < -4) this.dustPositions[i * 3 + 2] = 4;
+        if (this.dustPositions[i * 3 + 2] > 4) this.dustPositions[i * 3 + 2] = -4;
+        dummy.makeTranslation(this.dustPositions[i * 3], this.dustPositions[i * 3 + 1], this.dustPositions[i * 3 + 2]);
+        this.dustMesh.setMatrixAt(i, dummy);
+      }
+      this.dustMesh.instanceMatrix.needsUpdate = true;
     }
 
     this.composer.render();
@@ -1322,6 +1398,7 @@ export class RoomRenderer {
     if (this.composer) {
       this.composer.setSize(w, h);
     }
+    if (this.bloomPass) this.applyBloomResolution();
   }
 
   getCameraPosition() {
@@ -1410,10 +1487,13 @@ export class RoomRenderer {
     this.bloomPass.strength = isUltra ? 0.5 : 0.4;
     this.bloomPass.radius = isUltra ? 0.25 : 0.2;
     this.bloomPass.threshold = isUltra ? 0.08 : 0.1;
+    if (this.outlinePass) this.outlinePass.edgeThickness = isLow ? 1.5 : 2;
     this.renderer.shadowMap.type = isLow ? THREE.PCFShadowMap : THREE.PCFSoftShadowMap;
     this.renderer.toneMappingExposure = isLow ? 1.5 : isUltra ? 1.6 : isHigh ? 1.5 : 1.2;
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, isLow ? 1 : 2));
+    this.bloomResolutionMult = isLow ? 0.25 : isUltra ? 0.5 : isHigh ? 0.5 : 0.25;
     this.resize();
+    this.applyBloomResolution();
 
     const shadowRes = isLow ? 128 : isUltra ? 4096 : isHigh ? 2048 : 256;
     if (this.keyLight) {
@@ -1457,12 +1537,26 @@ export class RoomRenderer {
   destroy() {
     this.running = false;
     this.disableMonitorCapture();
+    if (this.mirrorMesh && this.scene) {
+      this.scene.remove(this.mirrorMesh);
+      const rt = this.mirrorMesh.getRenderTarget();
+      if (rt) rt.dispose();
+      this.mirrorMesh.material.dispose();
+      this.mirrorMesh.geometry.dispose();
+      this.mirrorMesh = null;
+    }
     if (this.composer) {
       this.composer.dispose();
       this.composer = null;
     }
     if (this.bloomPass) {
       this.bloomPass = null;
+    }
+    if (this.outlinePass) {
+      this.outlinePass.enabled = false;
+      this.outlinePass.selectedObjects = [];
+      if (typeof this.outlinePass.dispose === "function") this.outlinePass.dispose();
+      this.outlinePass = null;
     }
     for (const m of this.navArrowMeshes) {
       if (m.parent) m.parent.remove(m);
@@ -1484,14 +1578,6 @@ export class RoomRenderer {
     this.clock = null;
     this.monitorScreen = null;
     this.allMeshes = [];
-    if (this.mirrorMesh) {
-      this.scene.remove(this.mirrorMesh);
-      const rt = this.mirrorMesh.getRenderTarget();
-      if (rt) rt.dispose();
-      this.mirrorMesh.material.dispose();
-      this.mirrorMesh.geometry.dispose();
-      this.mirrorMesh = null;
-    }
     if (this.player) this.player.destroy();
     this.player = null;
   }

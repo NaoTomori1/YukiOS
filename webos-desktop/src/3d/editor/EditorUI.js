@@ -4,7 +4,6 @@ const FA_ICONS = {
   crate: "\uf466",
   barrel: "\uf0fc",
   "small-table": "\uf0ce",
-  "desk-plant": "\uf06c",
   "wall-poster": "\uf5aa",
   "wall-clock": "\uf017",
   painting: "\uf1fc",
@@ -343,7 +342,6 @@ const ICON_DRAWERS = {
   crate: drawIconCrate,
   barrel: drawIconBarrel,
   "small-table": drawIconTable,
-  "desk-plant": drawIconSucculent,
   "wall-poster": drawIconPoster,
   "wall-clock": drawIconClock,
   painting: drawIconPainting,
@@ -411,10 +409,6 @@ export class EditorUI {
         name: "Decorations",
         expanded: true,
         subcategories: [
-          {
-            name: "Plants",
-            items: [{ id: "desk-plant", name: "Desk Succulent", iconColor: "#5abc6a", manager: "decor" }]
-          },
           {
             name: "Wall Art",
             items: [

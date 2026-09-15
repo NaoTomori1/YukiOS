@@ -145,9 +145,6 @@ export class Room3DApp extends BaseApp {
       <div class="room3d-editor-overlay" id="room3d-editor-overlay">
         <canvas class="room3d-editor-canvas" id="room3d-editor-canvas"></canvas>
       </div>
-      <div class="room3d-hint" id="room3d-hint">
-        <span class="room3d-hint-key">G</span> Sort  <span class="room3d-hint-key">Tab</span> Edit  <span class="room3d-hint-key">N</span> Day/Night
-      </div>
       <div class="room3d-launch-hint" id="room3d-launch-hint">
         <span class="room3d-hint-key">F</span> Launch
       </div>
@@ -163,7 +160,6 @@ export class Room3DApp extends BaseApp {
   async init3D(container) {
     const root = container.parentElement;
     this.crosshairEl = root.querySelector("#room3d-crosshair");
-    this.hintEl = root.querySelector("#room3d-hint");
     this.wastebinHintEl = root.querySelector("#room3d-wastebin-hint");
     this.launchHintEl = root.querySelector("#room3d-launch-hint");
     this.rotateHintEl = null;
@@ -255,7 +251,7 @@ export class Room3DApp extends BaseApp {
     const savedBallPos = rmStore.get("ballPosition");
     const ballPos = savedBallPos
       ? new THREE.Vector3(savedBallPos.x, savedBallPos.y, savedBallPos.z)
-      : new THREE.Vector3(0.4, 0.95, -0.6);
+      : new THREE.Vector3(-1, 0.95, -0.6);
     this.rainbowBall = new RainbowBall(THREE, this.renderer.scene);
     this.rainbowBall.init(ballPos);
     this.gameCaseManager.physics.world.addBody(this.rainbowBall.body);
@@ -570,7 +566,7 @@ export class Room3DApp extends BaseApp {
       }
       if (!this.interaction || !this.gameCaseManager || !this.renderer) return;
       this.interaction.updateGrabbed();
-      this.interaction.updateEGrabbed(this.renderer.camera);
+      this.interaction.updateEGrabbed(this.renderer.camera, delta);
       this.interaction.updateWastebinProximity(this.renderer.camera);
       if (this.wastebinHintEl) {
         this.wastebinHintEl.classList.toggle("room3d-wastebin-hint--visible", this.interaction.nearWastebin);
@@ -725,13 +721,9 @@ export class Room3DApp extends BaseApp {
       }
     };
 
-    this.showHint = () => {
-      if (this.hintEl && this.gameState && !this.gameState.active) this.hintEl.classList.add("room3d-hint--visible");
-    };
+    this.showHint = () => {};
 
-    this.hideHint = () => {
-      if (this.hintEl) this.hintEl.classList.remove("room3d-hint--visible");
-    };
+    this.hideHint = () => {};
 
     this.resizeObserver = new ResizeObserver(() => {
       if (this.renderer) this.renderer.resize();
@@ -1204,6 +1196,9 @@ export class Room3DApp extends BaseApp {
         this.ctrlHeld = false;
         this.updateEditorSnap();
       }
+      if ((e.code === "KeyE" || e.key === "e") && this.controls && this.interaction) {
+        this.interaction.releaseCharge(this.renderer.camera);
+      }
     };
     document.addEventListener("keyup", this.onKeyUpBound);
     this.triggerRoomAchievement("room_explorer");
@@ -1306,8 +1301,6 @@ export class Room3DApp extends BaseApp {
       },
       "wall-poster": (T) =>
         this.decorManager ? this.decorManager.definitions.find((d) => d.id === "wall-poster")?.builderFn(T) : null,
-      "desk-plant": (T) =>
-        this.decorManager ? this.decorManager.definitions.find((d) => d.id === "desk-plant")?.builderFn(T) : null,
       "desk-books": (T) =>
         this.decorManager ? this.decorManager.definitions.find((d) => d.id === "desk-books")?.builderFn(T) : null,
       "floor-lamp": (T) =>

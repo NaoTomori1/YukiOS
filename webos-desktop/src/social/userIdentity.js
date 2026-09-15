@@ -7,6 +7,9 @@ import { isSocialDisabled } from "./socialSettings.js";
 import { setSession, getSession } from "../account/session.js";
 
 let cachedUserId = null;
+const REGISTER_THROTTLE_MS = 5 * 60 * 1000;
+const LIVE_REGISTER_TS_KEY = "yuki_live_register_ts";
+let lastRegisterTs = 0;
 
 function currentProfile() {
   const username = String(os.storage.get(StorageKeys.username) || "Anonymous").slice(0, 32);
@@ -42,6 +45,11 @@ export async function ensureLiveUserId() {
   if (isSocialDisabled()) return null;
   const existing = getLiveUserId();
   if (existing) {
+    const now = Date.now();
+    const storedTs = Number(os.storage.get(LIVE_REGISTER_TS_KEY) || lastRegisterTs || 0);
+    if (now - storedTs < REGISTER_THROTTLE_MS) return existing;
+    lastRegisterTs = now;
+    os.storage.set(LIVE_REGISTER_TS_KEY, now);
     registerLiveIdentity(existing).catch(() => {});
     return existing;
   }

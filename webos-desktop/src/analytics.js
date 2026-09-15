@@ -9,9 +9,8 @@ import { parseBool } from "./utils/utils.js";
 const ENDPOINT = SOCIAL_BASE + "/analytics";
 const DOWNLOAD_ENDPOINT = SOCIAL_BASE + "/api/download";
 const ELECTRON_USAGE_ENDPOINT = SOCIAL_BASE + "/api/electron-usage";
-const hostname = window.location.hostname;
 const ANALYTICS_DISABLED = () => parseBool(os.storage.get(StorageKeys.analyticsDisabled));
-const FLUSH_INTERVAL_MS = 30000;
+const FLUSH_INTERVAL_MS = 5000;
 const MAX_QUEUE_SIZE = 15;
 
 let cachedPlayCounts = null;
@@ -24,6 +23,8 @@ let liveStatsPromise = null;
 
 let pageLoadTime = Date.now();
 let flushTimer = null;
+const launchDedup = new Map();
+const DEDUP_WINDOW_MS = 10000;
 
 function shouldExcludeFromAnalytics(app) {
   return app?.startsWith("custom-");
@@ -86,6 +87,10 @@ function queueEvent(event) {
   if (ANALYTICS_DISABLED()) return;
   const userId = getLiveUserId();
   if (userId) event.userId = userId;
+  if (navigator.sendBeacon) {
+    const single = JSON.stringify([event]);
+    if (navigator.sendBeacon(ENDPOINT, single)) return;
+  }
   const queue = loadQueue();
   queue.push(event);
   if (queue.length >= MAX_QUEUE_SIZE) {
@@ -106,12 +111,6 @@ export function initAnalytics() {
   ensureLiveUserId().catch(() => {});
   pageLoadTime = Date.now();
   flushQueue();
-  queueEvent({
-    app: "hit-page",
-    event: "start",
-    timestamp: Date.now(),
-    sessionAgeMs: 0
-  });
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "hidden") flushQueue();
   });
@@ -121,6 +120,18 @@ export function initAnalytics() {
 export function sendLaunchAnalytics(app) {
   if (ANALYTICS_DISABLED()) return;
   if (shouldExcludeFromAnalytics(app)) return;
+  const normalized = app?.toLowerCase?.().trim() || app;
+  const now = Date.now();
+  const last = launchDedup.get(normalized);
+  if (last !== undefined && now - last < DEDUP_WINDOW_MS) return;
+  launchDedup.set(normalized, now);
+  for (const [k, v] of launchDedup) {
+    if (now - v > DEDUP_WINDOW_MS) launchDedup.delete(k);
+  }
+  if (launchDedup.size > 50) {
+    const oldest = launchDedup.keys().next().value;
+    launchDedup.delete(oldest);
+  }
   queueEvent({
     app,
     event: "launch",
@@ -129,35 +140,17 @@ export function sendLaunchAnalytics(app) {
   });
 }
 
-export function recordUsage(winId) {
-  if (ANALYTICS_DISABLED()) return;
-  const start = Date.now();
-  const win = $("#" + winId);
-  if (!win) return;
-  const appId = win.dataset.appId;
-  if (shouldExcludeFromAnalytics(appId)) return;
-  let sent = false;
-  const send = () => {
-    if (sent) return;
-    sent = true;
-    queueEvent({
-      app: appId,
-      event: "usage",
-      durationMs: Date.now() - start,
-      timestamp: Date.now(),
-      sessionAgeMs: Date.now() - pageLoadTime
-    });
-  };
-  win.querySelector(".close-btn")?.addEventListener("click", send);
-}
+export function recordUsage(winId) {}
 
 export function recordUsageDuration(appId, durationMs) {
   if (ANALYTICS_DISABLED()) return;
   if (!appId || shouldExcludeFromAnalytics(appId)) return;
+  const ms = Number(durationMs) || 0;
+  if (ms < 60000) return;
   queueEvent({
     app: appId,
     event: "usage",
-    durationMs: Math.max(1000, Number(durationMs) || 0),
+    durationMs: Math.max(60000, ms),
     timestamp: Date.now(),
     sessionAgeMs: Date.now() - pageLoadTime
   });

@@ -27,7 +27,7 @@ import { ClippyAnimation, initClippy, speak } from "./ai/clippy.js";
 const clippySpeak = speak;
 import { GameOverlayController } from "./gameOverlay.js";
 import "./styles/gameOverlay.css";
-import { initAnalytics, getAnalyticsBase, sendLaunchAnalytics, recordUsage, recordUsageDuration } from "./analytics.js";
+import { initAnalytics, getAnalyticsBase, sendLaunchAnalytics, recordUsageDuration } from "./analytics.js";
 import { maybeTriggerSmartlink, buildGameAdBannerHtml, ADSTERRA_KEYS, shouldEnableAds } from "./ads.js";
 import { getNewsContentSignature, updateNewsBadge } from "./apps/news.js";
 import { SteamSettings } from "./games/steamSettings.js";
@@ -356,7 +356,7 @@ export class AppLauncher {
         const durationMs = Date.now() - session.startTime;
         const durationMin = Math.round(durationMs / 60000);
         this.updateSteamStats(session.appId, durationMin);
-        recordUsageDuration(session.appId, durationMs);
+        if (durationMs >= 60000) recordUsageDuration(session.appId, durationMs);
         this.appSessions.delete(winId);
         this.adsManager?.onGameClosed();
       }
@@ -838,7 +838,5 @@ player.load("${swfPath}");
           URL.revokeObjectURL(iframeSrc);
         } catch {}
     });
-
-    recordUsage(`${id}-win`);
   }
 }

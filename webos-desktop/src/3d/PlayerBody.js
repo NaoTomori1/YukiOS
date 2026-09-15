@@ -17,6 +17,7 @@ export class PlayerBody {
     this.leftFoot = null;
     this.rightFoot = null;
     this.shadowMesh = null;
+    this.holdRight = false;
     this.startTime = Date.now();
     this.prevPos = new THREE.Vector3();
     this.lastTime = this.startTime / 1000;
@@ -174,7 +175,14 @@ export class PlayerBody {
 
       const armSwing = walkIntensity * 0.25;
       this.leftArm.rotation.x = 0.1 + armSwing * Math.sin(this.walkPhase + Math.PI);
-      this.rightArm.rotation.x = 0.1 + armSwing * Math.sin(this.walkPhase);
+      if (!this.holdRight) {
+        this.rightArm.position.set(this.baseArmR.x, this.baseArmR.y, this.baseArmR.z);
+        this.rightArm.quaternion.identity();
+        this.rightArm.rotation.x = 0.1 + armSwing * Math.sin(this.walkPhase);
+        this.rightArm.rotation.z = -0.2;
+        this.rightArm.scale.set(1, 1, 1);
+        this.rightHand.position.set(this.baseHandR.x, this.baseHandR.y, this.baseHandR.z);
+      }
 
       const bob = walkIntensity * 0.012;
       this.group.position.y = floorY + Math.abs(Math.sin(this.walkPhase)) * bob;
@@ -184,13 +192,17 @@ export class PlayerBody {
 
       this.leftArm.quaternion.identity();
       this.leftArm.scale.set(1, 1, 1);
-      this.rightArm.quaternion.identity();
-      this.rightArm.scale.set(1, 1, 1);
+      if (!this.holdRight) {
+        this.rightArm.quaternion.identity();
+        this.rightArm.scale.set(1, 1, 1);
+        this.rightArm.position.set(this.baseArmR.x, this.baseArmR.y, this.baseArmR.z);
+        this.rightHand.position.set(this.baseHandR.x, this.baseHandR.y, this.baseHandR.z);
+      }
     }
 
     const t = (Date.now() - this.startTime) / 1000;
 
-    if (!isMoving) {
+    if (!isMoving && !this.holdRight) {
       const sway = Math.sin(t * 1.1) * 0.025;
       const float = Math.sin(t * 0.7 + 1.5) * 0.018;
       const rotSway = Math.sin(t * 1.3 + 1) * 0.04;
@@ -201,6 +213,13 @@ export class PlayerBody {
       this.rightArm.rotation.z = -0.2 - rotSway * 0.4;
       this.leftHand.position.set(this.baseHandL.x + sway * 0.6, this.baseHandL.y + float * 1.2, this.baseHandL.z);
       this.rightHand.position.set(this.baseHandR.x - sway * 0.6, this.baseHandR.y + float * 1.2, this.baseHandR.z);
+    } else if (!isMoving) {
+      const sway = Math.sin(t * 1.1) * 0.025;
+      const float = Math.sin(t * 0.7 + 1.5) * 0.018;
+      const rotSway = Math.sin(t * 1.3 + 1) * 0.04;
+      this.leftArm.position.set(this.baseArmL.x + sway, this.baseArmL.y + float * 0.8, this.baseArmL.z);
+      this.leftArm.rotation.z = 0.2 + rotSway * 0.4;
+      this.leftHand.position.set(this.baseHandL.x + sway * 0.6, this.baseHandL.y + float * 1.2, this.baseHandL.z);
     }
 
     this.leftShoulder.position.y = this.baseShoulderL.y + Math.sin(t * 0.8) * 0.008;
