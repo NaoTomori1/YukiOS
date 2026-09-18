@@ -7,10 +7,10 @@ export const appMap = {
   },
   deltaruneCh5: {
     type: "game",
-    url: "https://mollomm1.github.io/test",
+    url: "https://cdn.jsdelivr.net/gh/NaoTomori1/yukios-games@main/deltarunefull.html",
     icon: "/static/icons/deltarune.png",
     title: "Deltarune CH1-5",
-    scramjetEnabled: true
+    skipRewrite: true
   },
   howToFish: {
     type: "game",
