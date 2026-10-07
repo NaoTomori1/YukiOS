@@ -18,6 +18,8 @@ import { getPresence, setPresence, getDnd, setDnd, PRESENCE } from "../social/pr
 import { showContextMenu } from "../shared/contextMenu.js";
 import { initSteamPopupWindow } from "./steamPopupWindow.js";
 import { callIfFunction, isFunction, hasMethod } from "../shared/functionUtils.js";
+
+let activeDraggedFriendId = null;
 import { initSettingsToggles, buildSettingsItemsHtml } from "./steamSettings.js";
 import {
   fetchFriends,
@@ -918,6 +920,58 @@ export async function renderDiscoverPanel(panel, options = {}) {
   await renderUserList(panel, users, { ...opts, localAvatar, friendActions: true });
 }
 
+export function getFriendFavorites() {
+  try {
+    const stored = os.storage.get(StorageKeys.steamFriendFavorites);
+    if (!Array.isArray(stored)) return [];
+    return [...new Set(stored)];
+  } catch {
+    return [];
+  }
+}
+
+export function toggleFriendFavorite(userId) {
+  let favorites = getFriendFavorites();
+  if (favorites.includes(userId)) {
+    favorites = favorites.filter((id) => id !== userId);
+  } else {
+    favorites.push(userId);
+  }
+  favorites = [...new Set(favorites)];
+  try {
+    os.storage.set(StorageKeys.steamFriendFavorites, favorites);
+  } catch {
+    return false;
+  }
+  return favorites.includes(userId);
+}
+
+export function reorderFriendFavorites(draggedId, targetId) {
+  let favorites = getFriendFavorites();
+  const fromIndex = favorites.indexOf(draggedId);
+  const toIndex = favorites.indexOf(targetId);
+  if (fromIndex !== -1 && toIndex !== -1 && fromIndex !== toIndex) {
+    favorites.splice(fromIndex, 1);
+    favorites.splice(toIndex, 0, draggedId);
+  } else if (fromIndex === -1) {
+    if (toIndex !== -1) {
+      favorites.splice(toIndex, 0, draggedId);
+    } else {
+      favorites.push(draggedId);
+    }
+  }
+  favorites = [...new Set(favorites)];
+  try {
+    os.storage.set(StorageKeys.steamFriendFavorites, favorites);
+  } catch {
+    return;
+  }
+}
+
+export function isFriendFavorite(userId) {
+  return getFriendFavorites().includes(userId);
+}
+
 function friendGroupFor(friend) {
   if (friend.nowPlaying) return "ingame";
   if (isUserOnline(friend)) return "online";
@@ -934,6 +988,18 @@ function friendGameIconHtml(friend) {
 function buildFriendRow(friend, opts) {
   const row = createElement("div", {
     className: `steam-friend-row steam-friend-row--${friendGroupFor(friend)}`
+  });
+  row.draggable = true;
+  bindEvent(row, "dragstart", (e) => {
+    activeDraggedFriendId = friend.userId;
+    if (e.dataTransfer) {
+      e.dataTransfer.setData("text/friend-id", friend.userId);
+      e.dataTransfer.setData("text/plain", friend.userId);
+      e.dataTransfer.effectAllowed = "copyMove";
+    }
+  });
+  bindEvent(row, "dragend", () => {
+    activeDraggedFriendId = null;
   });
   const gameBadgeHtml = friendGameIconHtml(friend);
   if (gameBadgeHtml) {
@@ -958,6 +1024,19 @@ function buildFriendRow(friend, opts) {
     );
   }
   row.appendChild(info);
+  if (isFriendFavorite(friend.userId)) {
+    const star = createElement("span", {
+      className: "steam-friend-fav-star",
+      html: '<i class="fas fa-star"></i>',
+      attributes: { title: "Click to remove from favorites" }
+    });
+    bindEvent(star, "click", (e) => {
+      e.stopPropagation();
+      toggleFriendFavorite(friend.userId);
+      callIfFunction(opts.onChange || opts.onUpdate);
+    });
+    row.appendChild(star);
+  }
   bindEvent(row, "click", () => {
     os.app.launch("steamApp", { steamPage: "profile", steamUserId: friend.userId });
   });
@@ -1086,15 +1165,26 @@ export function openFriendDmWindow(friend) {
 }
 
 export function openFriendRowContextMenu(event, friend, refresh) {
+  const favorited = isFriendFavorite(friend.userId);
   const items = [
     { id: "friend-chat", label: "Send Message", icon: "fa-comment-dots", action: "chat" },
     { id: "friend-profile", label: "View Profile", icon: "fa-id-badge", action: "profile" },
+    {
+      id: "friend-favorite",
+      label: favorited ? "Remove from Favorites" : "Add to Favorites",
+      icon: "fa-star",
+      action: "favorite"
+    },
     "hr",
     { id: "friend-remove", label: "Remove Friend", icon: "fa-user-slash", action: "remove" }
   ];
   const handlers = {
     chat: () => openFriendDmWindow(friend),
     profile: () => os.app.launch("steamApp", { steamPage: "profile", steamUserId: friend.userId }),
+    favorite: () => {
+      toggleFriendFavorite(friend.userId);
+      callIfFunction(refresh);
+    },
     remove: async () => {
       const confirmed = await os.dialog.confirm(
         "Remove Friend",
@@ -1140,16 +1230,177 @@ export async function renderFriendsListPanel(panel, options = {}) {
     );
     return;
   }
+  const favIds = new Set(getFriendFavorites());
+  const favoritedFriends = Array.from(favIds)
+    .map((id) => friends.find((friend) => friend.userId === id))
+    .filter(Boolean)
+    .filter(
+      (friend) =>
+        !query ||
+        String(friend.username || "")
+          .toLowerCase()
+          .includes(query)
+    );
+
   const grouped = {
     ingame: [],
     online: [],
     offline: []
   };
-  filtered.forEach((friend) => grouped[friendGroupFor(friend)].push(friend));
+  filtered.forEach((friend) => {
+    if (!favIds.has(friend.userId)) {
+      grouped[friendGroupFor(friend)].push(friend);
+    }
+  });
   Object.keys(grouped).forEach((key) => {
     grouped[key].sort((a, b) => String(b.lastSeen || "").localeCompare(String(a.lastSeen || "")));
   });
   const list = createElement("div", { className: "steam-friend-list" });
+
+  const favSection = createElement("div", { className: "steam-friends-favorites" });
+  favSection.appendChild(createElement("div", { className: "steam-friends-favorites-label", text: "Favorites" }));
+  const grid = createElement("div", { className: "steam-friends-favorites-grid" });
+
+  if (favoritedFriends.length) {
+    favoritedFriends.forEach((friend) => {
+      const groupClass = friendGroupFor(friend);
+      const box = createElement("div", {
+        className: `steam-fav-box steam-fav-box--${groupClass}`,
+        attributes: { title: friend.username || "Unknown" }
+      });
+      box.draggable = true;
+      bindEvent(box, "dragstart", (e) => {
+        activeDraggedFriendId = friend.userId;
+        if (e.dataTransfer) {
+          e.dataTransfer.setData("text/friend-id", friend.userId);
+          e.dataTransfer.setData("text/plain", friend.userId);
+          e.dataTransfer.effectAllowed = "copyMove";
+        }
+      });
+      bindEvent(box, "dragend", () => {
+        activeDraggedFriendId = null;
+      });
+      bindEvent(box, "dragover", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (e.dataTransfer) e.dataTransfer.dropEffect = "move";
+        box.classList.add("steam-favorites-dragover");
+      });
+      bindEvent(box, "dragleave", (e) => {
+        e.stopPropagation();
+        box.classList.remove("steam-favorites-dragover");
+      });
+      bindEvent(box, "drop", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        box.classList.remove("steam-favorites-dragover");
+        grid.classList.remove("steam-favorites-dragover");
+        favSection.classList.remove("steam-favorites-dragover");
+        const droppedId =
+          (e.dataTransfer ? e.dataTransfer.getData("text/friend-id") || e.dataTransfer.getData("text/plain") : "") ||
+          activeDraggedFriendId;
+        activeDraggedFriendId = null;
+        if (!droppedId) return;
+        reorderFriendFavorites(droppedId, friend.userId);
+        renderFriendsListPanel(panel, opts);
+      });
+      const favAvatarUrl = avatarUrlForIndex(friend.avatarIndex);
+      const favAvatarHtml = favAvatarUrl
+        ? `<img src="${favAvatarUrl}" class="steam-friend-avatar" loading="lazy" />`
+        : '<div class="steam-friend-avatar steam-friend-avatar--default"><i class="fas fa-user"></i></div>';
+      box.appendChild(createElement("div", { className: "steam-friend-avatar-frame", html: favAvatarHtml }));
+      const removeBtn = createElement("button", {
+        className: "steam-fav-remove",
+        html: '<i class="fas fa-xmark"></i>',
+        attributes: { type: "button", title: "Remove from Favorites" }
+      });
+      box.appendChild(removeBtn);
+      bindEvent(box, "click", () => {
+        os.app.launch("steamApp", { steamPage: "profile", steamUserId: friend.userId });
+      });
+      bindEvent(box, "dblclick", () => {
+        callIfFunction(rowOpts.onOpenChat, friend);
+      });
+      bindEvent(box, "contextmenu", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        callIfFunction(rowOpts.onOpenContextMenu, e, friend);
+      });
+      bindEvent(removeBtn, "click", (e) => {
+        e.stopPropagation();
+        toggleFriendFavorite(friend.userId);
+        renderFriendsListPanel(panel, opts);
+      });
+      grid.appendChild(box);
+    });
+  } else {
+    const emptyHint = createElement("div", {
+      className: "steam-friends-favorites-empty",
+      html: '<i class="fas fa-hand-pointer"></i> Drag friends here to favorite'
+    });
+    grid.appendChild(emptyHint);
+  }
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    if (e.dataTransfer) e.dataTransfer.dropEffect = "copy";
+    grid.classList.add("steam-favorites-dragover");
+    favSection.classList.add("steam-favorites-dragover");
+  };
+
+  const handleDragLeave = (e) => {
+    if (e.relatedTarget && (grid.contains(e.relatedTarget) || favSection.contains(e.relatedTarget))) return;
+    grid.classList.remove("steam-favorites-dragover");
+    favSection.classList.remove("steam-favorites-dragover");
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    grid.classList.remove("steam-favorites-dragover");
+    favSection.classList.remove("steam-favorites-dragover");
+    const droppedId =
+      (e.dataTransfer ? e.dataTransfer.getData("text/friend-id") || e.dataTransfer.getData("text/plain") : "") ||
+      activeDraggedFriendId;
+    activeDraggedFriendId = null;
+    if (!droppedId) return;
+    if (!isFriendFavorite(droppedId)) {
+      toggleFriendFavorite(droppedId);
+    }
+    renderFriendsListPanel(panel, opts);
+  };
+
+  bindEvent(favSection, "dragover", handleDragOver);
+  bindEvent(favSection, "dragleave", handleDragLeave);
+  bindEvent(favSection, "drop", handleDrop);
+
+  bindEvent(list, "dragover", (e) => {
+    e.preventDefault();
+    if (e.dataTransfer) e.dataTransfer.dropEffect = "move";
+  });
+  bindEvent(list, "drop", (e) => {
+    e.preventDefault();
+    const droppedId =
+      (e.dataTransfer ? e.dataTransfer.getData("text/friend-id") || e.dataTransfer.getData("text/plain") : "") ||
+      activeDraggedFriendId;
+    activeDraggedFriendId = null;
+    if (droppedId && isFriendFavorite(droppedId)) {
+      toggleFriendFavorite(droppedId);
+      renderFriendsListPanel(panel, opts);
+    }
+  });
+
+  favSection.appendChild(grid);
+  const favSlot =
+    opts.favoritesPanel ||
+    (panel.closest
+      ? panel.closest(".window-content, .steam-friends-container")?.querySelector("[data-friends-favorites-panel]")
+      : null);
+  if (favSlot) {
+    setHTML(favSlot, "");
+    favSlot.appendChild(favSection);
+  } else {
+    list.prepend(favSection);
+  }
   if (grouped.ingame.length) list.appendChild(buildFriendGroup("In Game", "ingame", grouped.ingame, rowOpts));
   if (grouped.online.length) list.appendChild(buildFriendGroup("Online", "online", grouped.online, rowOpts));
   if (grouped.offline.length) list.appendChild(buildFriendGroup("Offline", "offline", grouped.offline, rowOpts));

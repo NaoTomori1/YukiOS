@@ -297,9 +297,9 @@
   border-radius: var(--r-sm);
 }
 
-.start-cat i {
-  width: 20px;
-  font-size: 15px;
+.start-cat svg {
+  width: 30px;
+  font-size: 20px;
   text-align: center;
   color: color-mix(in srgb, var(--brand) 70%, var(--tx2));
   flex-shrink: 0;
@@ -307,8 +307,8 @@
 
 .start-cat img,
 .start-cat .papirus-icon {
-  width: 24px;
-  height: 24px;
+  width: 32px;
+  height: 32px;
   object-fit: contain;
   flex-shrink: 0;
   margin: 0 2px;
@@ -493,8 +493,8 @@ html[data-icon-pack="papirus"] .start-cat {
 .start-menu-item svg,
 .start-menu-item i,
 .start-menu-item img {
-  width: 32px;
-  height: 32px;
+  width: 42px;
+  height: 42px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -618,7 +618,15 @@ html[data-icon-pack="papirus"] .start-cat {
 }
 
 .start-editor-dialog {
-  max-width: 450px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--glass-border);
+  border-radius: 14px;
+  box-shadow: var(--shadow-depth);
+  padding: 28px 32px 24px;
+  min-width: 440px;
+  max-width: 560px;
+  width: 92%;
+  color: var(--text-primary);
   overflow: visible;
 }
 

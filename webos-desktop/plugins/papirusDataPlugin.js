@@ -23,8 +23,18 @@ function ensurePapirusData() {
   }
 }
 
+function trimPapirusData() {
+  const trimScript = resolve(process.cwd(), "scripts/trimPapirusData.js");
+  if (!existsSync(trimScript)) return;
+  const res = spawnSync("node", [trimScript], { stdio: "inherit", cwd: process.cwd() });
+  if (res.status !== 0) {
+    console.warn("[papirus] trimPapirusData.js failed, shipping full icon data");
+  }
+}
+
 function compressPapirusData() {
   ensurePapirusData();
+  trimPapirusData();
   const base = resolve(process.cwd(), "src/generated");
   const files = ["papirus-available.json", "papirus-symlinks.json"];
   for (const name of files) {

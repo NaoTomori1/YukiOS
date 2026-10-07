@@ -1,13 +1,47 @@
 import { BaseApp } from "./BaseApp.js";
-
+import "../styles/scramjet.css";
+import { handlePopupMessage, handlePopupTitleMessage } from "./ScramjetPopupManager.js";
 import { os } from "../framework.js";
 import { getWispUrl } from "../shared/wispConfig.js";
 import { injectFileProtocolFallback, isFileProtocol } from "../shared/fileProtocolFallback.js";
 export class ScramjetBaseApp extends BaseApp {
+  popupMessageHandler = null;
+
   constructor(services) {
     super(services);
     this.iframe = null;
     this.scramjetController = null;
+  }
+
+  getPopupBridgeMeta() {
+    return { parentAppId: this.getAppId(), parentName: this.getAppName(), parentIcon: this.getAppIcon() };
+  }
+
+  bindPopupBridge(win) {
+    if (win.dataset.popupBridgeBound) {
+      return;
+    }
+    const iframe = win.querySelector(`#${this.getAppId()}-iframe`);
+    if (!iframe) {
+      return;
+    }
+    win.dataset.popupBridgeBound = "true";
+    const handler = (event) => {
+      try {
+        const meta = this.getPopupBridgeMeta();
+        if (handlePopupTitleMessage(event)) {
+          return;
+        }
+        handlePopupMessage(event, iframe, meta);
+      } catch {}
+    };
+    this.popupMessageHandler = handler;
+    window.addEventListener("message", handler);
+    win.addEventListener("remove", () => {
+      try {
+        window.removeEventListener("message", handler);
+      } catch {}
+    });
   }
 
   getTargetURL() {
@@ -53,7 +87,8 @@ export class ScramjetBaseApp extends BaseApp {
       </div>
     `;
 
-    this.initScramjet(null, null, win, {});
+    await this.initScramjet(null, null, win, {});
+    this.bindPopupBridge(win);
     return win;
   }
 
@@ -66,7 +101,7 @@ export class ScramjetBaseApp extends BaseApp {
   }
 
   getAppIcon() {
-    return resolveIconUrl("static/icons/firefox.webp");
+    return resolveIconUrl("static/icons/chrome.webp");
   }
 
   getHTMLPath() {

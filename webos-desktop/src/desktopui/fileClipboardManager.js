@@ -105,6 +105,9 @@ export class ClipboardManager {
 
             if (action === "cut") await os.fs.delete(srcPath, name);
 
+            try {
+              this.deletedIconsStore.remove(`file:${finalName}`);
+            } catch {}
             const existingIcon = $(`.desktop-file-icon[data-file-name="${CSS.escape(finalName)}"]`);
             if (!existingIcon) await this.iconManager.createDesktopFileIcon(finalName, { content, kind });
             pastedCount++;
@@ -180,6 +183,9 @@ export class ClipboardManager {
 
             if (action === "cut") await os.fs.delete(srcPath, name);
 
+            try {
+              this.deletedIconsStore.remove(`folder:${finalFolderName}`);
+            } catch {}
             const existingFolder = $(`.folder-icon[data-folder-name="${CSS.escape(finalFolderName)}"]`);
             if (!existingFolder) await this.iconManager.createFolderIcon(finalFolderName);
             pastedCount++;
@@ -208,6 +214,9 @@ export class ClipboardManager {
             if (action === "copy") {
               const uniqueName = await this.fs.getUniqueFileName(["Desktop"], srcName);
               await this.fs.createFile(["Desktop"], uniqueName, content, kind, fileIcon);
+              try {
+                this.deletedIconsStore.remove(`file:${uniqueName}`);
+              } catch {}
               await this.iconManager.createDesktopFileIcon(uniqueName, { content, kind, icon: fileIcon });
             }
             pastedCount++;
@@ -227,6 +236,9 @@ export class ClipboardManager {
                 await os.fs.createFile(["Desktop", uniqueName], childName, childContent, childKind, childIcon);
               }
 
+              try {
+                this.deletedIconsStore.remove(`folder:${uniqueName}`);
+              } catch {}
               await this.iconManager.createFolderIcon(uniqueName);
             }
             pastedCount++;
@@ -238,6 +250,9 @@ export class ClipboardManager {
             if (action === "copy") {
               const uniqueName = await this.fs.getUniqueFileName(["Desktop"], srcFileName);
               await os.fs.write(["Desktop"], uniqueName, content);
+              try {
+                this.deletedIconsStore.remove(`file:${uniqueName}`);
+              } catch {}
             }
             pastedCount++;
           }
@@ -256,7 +271,6 @@ export class ClipboardManager {
     if (!selectedArray || selectedArray.length === 0) return;
 
     const saved = this.positionStore.load();
-    const count = selectedArray.length;
 
     for (const icon of selectedArray) {
       const key = this.positionStore.getKey(icon);
@@ -268,8 +282,10 @@ export class ClipboardManager {
       try {
         if (fileName) {
           await os.fs.trashFile(["Desktop"], fileName);
+          this.deletedIconsStore.add(key);
         } else if (folderName) {
           await os.fs.trashFile(["Desktop"], folderName);
+          this.deletedIconsStore.add(key);
         } else if (icon.dataset.app) {
           this.deletedIconsStore.add(key);
         }
@@ -288,7 +304,6 @@ export class ClipboardManager {
     if (!selectedArray || selectedArray.length === 0) return;
 
     const saved = this.positionStore.load();
-    const count = selectedArray.length;
 
     for (const icon of selectedArray) {
       const key = this.positionStore.getKey(icon);
@@ -300,8 +315,10 @@ export class ClipboardManager {
       try {
         if (fileName) {
           await os.fs.trashFile(["Desktop"], fileName);
+          this.deletedIconsStore.add(key);
         } else if (folderName) {
           await os.fs.trashFile(["Desktop"], folderName);
+          this.deletedIconsStore.add(key);
         } else if (icon.dataset.app) {
           this.deletedIconsStore.add(key);
         }

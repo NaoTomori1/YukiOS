@@ -43,29 +43,46 @@ function readPackageMeta(pkgPath) {
     return null;
   }
 }
-
 function collectPackageLicenses() {
   const entries = [];
+
   try {
     const pkgJson = JSON.parse(readFileSync(resolve(process.cwd(), "package.json"), "utf-8"));
+
     for (const [name, spec] of Object.entries(pkgJson.dependencies || {})) {
       const meta = readPackageMeta(resolve(process.cwd(), "node_modules", name, "package.json"));
+
       let version = spec;
       let license = "Unknown";
       let repo = "";
+
       if (meta) {
         if (meta.version) version = meta.version;
+
         if (typeof meta.license === "string") license = meta.license;
         else if (meta.license && meta.license.type) license = meta.license.type;
-        else if (Array.isArray(meta.licenses)) license = meta.licenses.map((l) => l.type || l).join(", ");
+        else if (Array.isArray(meta.licenses)) {
+          license = meta.licenses.map((l) => l.type || l).join(", ");
+        }
+
         repo = normalizeRepoUrl(meta.repository);
       }
+
       entries.push({ name, version, license, repo });
     }
   } catch (err) {
     console.warn("Failed to collect package licenses:", err.message);
   }
+
+  entries.push({
+    name: "hatsune-miku-windows-linux-cursors",
+    version: "git",
+    license: "Fan art (non-commercial)",
+    repo: "https://github.com/supermariofps/hatsune-miku-windows-linux-cursors"
+  });
+
   entries.sort((a, b) => a.name.localeCompare(b.name));
+
   return entries;
 }
 
@@ -75,6 +92,7 @@ const isDevBuild = process.env.VITE_DEV_BUILD === "true";
 const isSingleFile = process.env.VITE_SINGLE_FILE === "true";
 const isVisualize = process.env.VITE_VISUALIZE === "true";
 const isElectronBuild = process.env.VITE_ELECTRON === "true";
+const DISABLE_STEAM_NEWS_FETCH = true;
 
 const CDN_BASE = "https://cdn.jsdelivr.net/gh/NaoTomori1/yukios@main/";
 const outDir = resolve(__dirname, "dist");
@@ -145,6 +163,7 @@ function faviconBundlePlugin() {
 function steamNewsData() {
   const FALLBACK_ICON = "fab fa-steam";
   const OUTPUT_PATH = resolve(process.cwd(), "src/games/steamNewsData.js");
+  const FEED_TIMEOUT_MS = 10000;
   const FEEDS = [
     { url: "https://store.steampowered.com/feeds/news.xml", source: "News" },
     { url: "https://store.steampowered.com/feeds/newreleases.xml", source: "New Releases" },
@@ -188,9 +207,27 @@ function steamNewsData() {
     return items;
   }
 
+  async function fetchFeedItems(feed) {
+    try {
+      const resp = await fetch(feed.url, { signal: AbortSignal.timeout(FEED_TIMEOUT_MS) });
+      if (!resp.ok) {
+        console.warn(`Steam feed ${feed.source} responded ${resp.status}`);
+        return [];
+      }
+      return parseRssItems(await resp.text());
+    } catch (err) {
+      console.warn(`Steam feed ${feed.source} failed: ${err.message}`);
+      return [];
+    }
+  }
+
   return {
     name: "steam-news-data",
     async buildStart() {
+      if (DISABLE_STEAM_NEWS_FETCH) {
+        console.log("Steam news fetch disabled, keeping existing steamNewsData.js");
+        return;
+      }
       const CACHE_FILE = resolve(process.cwd(), "node_modules/.cache/steam-news.json");
       const CACHE_TTL = 60 * 60 * 1000;
       let allItems = [];
@@ -210,34 +247,25 @@ function steamNewsData() {
       }
 
       if (allItems.length === 0) {
-        try {
-          const results = await Promise.all(
-            FEEDS.map(async (feed) => {
-              try {
-                const resp = await fetch(feed.url);
-                if (!resp.ok) return [];
-                const xml = await resp.text();
-                return parseRssItems(xml);
-              } catch {
-                return [];
-              }
-            })
-          );
+        allItems = (await Promise.all(FEEDS.map(fetchFeedItems))).flat();
+        console.log(`Fetched ${allItems.length} steam news items`);
 
-          allItems = results.flat();
-
-          console.log(`Fetched ${allItems.length} steam news items`);
-        } catch (err) {
-          console.error("Failed to fetch steam news:", err.message);
+        if (allItems.length > 0) {
+          try {
+            mkdirSync(dirname(CACHE_FILE), { recursive: true });
+            writeFileSync(CACHE_FILE, JSON.stringify({ timestamp: Date.now(), items: allItems }), "utf-8");
+            console.log("Steam news cache saved");
+          } catch (err) {
+            console.error("Failed to save steam news cache:", err.message);
+          }
+        } else {
+          console.warn("Steam news fetch returned no items, keeping existing cache untouched");
         }
+      }
 
-        try {
-          mkdirSync(dirname(CACHE_FILE), { recursive: true });
-          writeFileSync(CACHE_FILE, JSON.stringify({ timestamp: Date.now(), items: allItems }), "utf-8");
-          console.log("Steam news cache saved");
-        } catch (err) {
-          console.error("Failed to save steam news cache:", err.message);
-        }
+      if (allItems.length === 0 && existsSync(OUTPUT_PATH)) {
+        console.log("Steam news unavailable, keeping previously generated file");
+        return;
       }
 
       const items = [
@@ -256,6 +284,12 @@ function steamNewsData() {
       const content = `// Auto-generated by vite.config.js steamNewsData plugin
 export const STEAM_NEWS_ITEMS = ${JSON.stringify(items, null, 2)};
 `;
+
+      let existingContent = null;
+      try {
+        existingContent = readFileSync(OUTPUT_PATH, "utf-8");
+      } catch {}
+      if (existingContent === content) return;
 
       writeFileSync(OUTPUT_PATH, content, "utf-8");
     }
@@ -307,6 +341,15 @@ function copyRemoteClient() {
           console.log(`Copied remote/${file} → dist/remote/${file}`);
         }
       }
+    }
+  };
+}
+
+function removeBoxedWineDist() {
+  return {
+    name: "remove-boxedwine-dist",
+    closeBundle() {
+      rmSync(resolve(outDir, "static/apps/boxedwine"), { recursive: true, force: true });
     }
   };
 }
@@ -387,6 +430,7 @@ plugins.push(staticCdnRewrite());
 plugins.push(removeCosmicFolder());
 plugins.push(pageGenerator());
 plugins.push(copyRemoteClient());
+plugins.push(removeBoxedWineDist());
 
 const baseOutput = {
   entryFileNames: "assets/[name].[hash].js",
@@ -399,7 +443,6 @@ if (isSingleFile) {
 
 export default defineConfig({
   base: isSingleFile || isElectronBuild ? "./" : "/",
-  outDir,
   plugins,
   server: {
     host: "127.0.0.1",
@@ -441,6 +484,7 @@ export default defineConfig({
     __PACKAGE_LICENSES__: JSON.stringify(packageLicenses)
   },
   build: {
+    outDir,
     target: "esnext",
     minify: isDevBuild ? false : "esbuild",
     sourcemap: false,
@@ -451,7 +495,19 @@ export default defineConfig({
     assetsInlineLimit: 0,
     rollupOptions: {
       treeshake: !isDevBuild,
-      external: isSingleFile ? ["7z-wasm", "archive-wasm", "clippyjs", /^clippyjs\/.*/] : [],
+      external: isSingleFile
+        ? [
+            "7z-wasm",
+            "archive-wasm",
+            "clippyjs",
+            /^clippyjs\/.*/,
+            "eruda",
+            "html2canvas-pro",
+            "isomorphic-git",
+            /^isomorphic-git\/.*/,
+            "@webcontainer/api"
+          ]
+        : [],
       output: baseOutput
     }
   },

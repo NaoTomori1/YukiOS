@@ -199,7 +199,6 @@ const noopAchievements = {
   trigger: NOOP,
   incrementAppLaunched: NOOP,
   incrementGameLaunched: NOOP,
-  incrementScreenshotTaken: NOOP,
   incrementCalculationDone: NOOP,
   incrementPowerProfileChange: NOOP,
   incrementSession: NOOP,

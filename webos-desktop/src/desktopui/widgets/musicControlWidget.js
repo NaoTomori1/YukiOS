@@ -1,6 +1,7 @@
 import { WidgetBase } from "../widgetManager.js";
 import { $, $$, createElement } from "../../shared/domUtils.js";
 import { audioMixer } from "../../audioMixer.js";
+import { createAdaptiveInterval } from "../../shared/pollThrottle.js";
 
 export class MusicControlWidget extends WidgetBase {
   constructor(manager, id) {
@@ -83,7 +84,7 @@ export class MusicControlWidget extends WidgetBase {
     });
 
     this.update();
-    this.interval = setInterval(() => this.update(), 600);
+    this.stopPoll = createAdaptiveInterval(() => this.update(), 600, 5000);
   }
 
   getActiveChannel() {
@@ -224,6 +225,7 @@ export class MusicControlWidget extends WidgetBase {
   }
 
   destroy() {
+    if (this.stopPoll) this.stopPoll();
     if (this.interval) clearInterval(this.interval);
     super.destroy();
   }

@@ -6,11 +6,17 @@ import { getWeekNumber } from "../shared/calendarUtils.js";
 import { subscribeTimeTick } from "../services/timeWorker.js";
 import { isTaskbarTop } from "../utils/utils.js";
 import { $ } from "../shared/domUtils.js";
+import { createTrayPinButton, setTrayPinState } from "../shared/trayPin.js";
 
 let calendarPopup = null;
+let calendarPinned = false;
 let currentCalendarMonth = new Date();
 let unsubTimeTick = null;
 let lastWorkerData = null;
+
+export function isCalendarPinned() {
+  return calendarPinned;
+}
 
 function drawClock(canvas, date) {
   if (!canvas || !date) return;
@@ -167,6 +173,14 @@ export function createCalendarPopup() {
   header.appendChild(prevBtn);
   header.appendChild(monthYearContainer);
   header.appendChild(nextBtn);
+  const pinBtn = createTrayPinButton();
+  setTrayPinState(popup, pinBtn, calendarPinned);
+  pinBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    calendarPinned = !calendarPinned;
+    setTrayPinState(popup, pinBtn, calendarPinned);
+  });
+  header.appendChild(pinBtn);
 
   const grid = createElement("div");
   grid.className = "calendar-grid";
@@ -360,6 +374,7 @@ function handleCalendarKeydown(e) {
 }
 
 function closeCalendarOnClickOutside(e) {
+  if (calendarPinned) return;
   if (
     calendarPopup &&
     !calendarPopup.contains(e.target) &&

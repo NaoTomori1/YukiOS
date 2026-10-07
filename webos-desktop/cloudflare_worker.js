@@ -48,17 +48,39 @@ async function withCache(cacheObj, key, fetcher, ttl = CACHE_TTL) {
 }
 
 async function cachedJsonResponse(request, cacheKeySuffix, ttlSeconds, computeFn) {
-  const cache = caches.default;
   const url = new URL(request.url);
-  const cacheKey = new Request(url.origin + url.pathname + "?ck=" + cacheKeySuffix, request);
-  const hit = await cache.match(cacheKey);
-  if (hit) return hit;
-  const data = await computeFn();
+  let cache = null;
+  try {
+    cache = caches.default;
+  } catch {
+    cache = null;
+  }
+  let cacheKey = null;
+  if (cache) {
+    try {
+      cacheKey = new Request(url.origin + url.pathname + "?ck=" + cacheKeySuffix, request);
+      const hit = await cache.match(cacheKey);
+      if (hit) return hit;
+    } catch {
+      cacheKey = null;
+    }
+  }
+  let data;
+  try {
+    data = await computeFn();
+  } catch (err) {
+    return errorJsonResponse(err, 500);
+  }
   const response = jsonResponse(data);
-  const toStore = new Response(response.body, response);
-  toStore.headers.set("Cache-Control", "public, max-age=" + ttlSeconds);
-  await cache.put(cacheKey, toStore.clone());
-  return toStore;
+  if (!cache || !cacheKey) return response;
+  try {
+    const toStore = new Response(response.body, response);
+    toStore.headers.set("Cache-Control", "public, max-age=" + ttlSeconds);
+    await cache.put(cacheKey, toStore.clone());
+    return toStore;
+  } catch {
+    return response;
+  }
 }
 
 function invalidateThemeListCache() {
@@ -110,18 +132,58 @@ async function deriveDailyId(env, ip) {
   return hex.slice(0, 32);
 }
 
+function getErrorMessage(err) {
+  if (!err) return "Unknown error";
+  if (typeof err === "string") return err.slice(0, 1000) || "Unknown error";
+  const msg = err.message || String(err);
+  return String(msg).slice(0, 1000) || "Unknown error";
+}
+
 async function sendReportEmbed(env, embed) {
   const webhook = env.DISCORD_REPORT_WEBHOOK_URL || env.DISCORD_WEBHOOK_URL;
   if (!webhook) return;
-  await fetch(webhook, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ embeds: [embed] })
-  });
+  let res;
+  try {
+    res = await fetch(webhook, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ embeds: [embed] })
+    });
+  } catch (err) {
+    throw new Error("Report delivery failed: " + getErrorMessage(err));
+  }
+  if (!res.ok) {
+    let detail = "";
+    try {
+      detail = await res.text();
+    } catch {
+      detail = "";
+    }
+    const suffix = detail ? ": " + detail.slice(0, 500) : "";
+    throw new Error("Report delivery failed with " + res.status + suffix);
+  }
+}
+
+const DEBUG_ENABLED = false;
+
+function errorJsonResponse(err, status = 500) {
+  return jsonResponse(
+    {
+      error: DEBUG_ENABLED ? getErrorMessage(err) : "Internal Error"
+    },
+    status
+  );
 }
 
 function jsonResponse(data, status = 200) {
-  return new Response(JSON.stringify(data), { status, headers: corsHeaders() });
+  let body = "";
+  try {
+    body = JSON.stringify(data);
+  } catch (err) {
+    status = 500;
+    body = JSON.stringify({ error: getErrorMessage(err) || "Serialization failed" });
+  }
+  return new Response(body, { status, headers: corsHeaders() });
 }
 
 function normalizeApp(name) {
@@ -2205,17 +2267,21 @@ async function handleYukiRequest(request, env) {
       return jsonResponse({ error: "missing appId or title" }, 400);
     }
     const ipHash = (await deriveDailyId(env, clientIP)).slice(0, 12);
-    await sendReportEmbed(env, {
-      title: "🚨 Broken Game Reported",
-      color: 15158332,
-      fields: [
-        { name: "Game Title", value: title, inline: true },
-        { name: "App ID", value: appId, inline: true },
-        { name: "Reason", value: reason || "No reason provided", inline: false },
-        { name: "Reporter ID", value: ipHash, inline: false },
-        { name: "Timestamp", value: new Date().toISOString(), inline: false }
-      ]
-    });
+    try {
+      await sendReportEmbed(env, {
+        title: "🚨 Broken Game Reported",
+        color: 15158332,
+        fields: [
+          { name: "Game Title", value: title, inline: true },
+          { name: "App ID", value: appId, inline: true },
+          { name: "Reason", value: reason || "No reason provided", inline: false },
+          { name: "Reporter ID", value: ipHash, inline: false },
+          { name: "Timestamp", value: new Date().toISOString(), inline: false }
+        ]
+      });
+    } catch (err) {
+      return errorJsonResponse(err, 502);
+    }
     return jsonResponse({ success: true });
   }
 
@@ -3950,7 +4016,12 @@ async function handleYukiRequest(request, env) {
           controller.enqueue(encoder.encode("]}"));
           controller.close();
         } catch (error) {
-          controller.error(error);
+          try {
+            controller.enqueue(encoder.encode(JSON.stringify({ error: getErrorMessage(error) })));
+          } catch {
+            controller.enqueue(encoder.encode('{"error":"Export failed"}'));
+          }
+          controller.close();
         }
       }
     });
@@ -4282,17 +4353,21 @@ async function handleYukiRequest(request, env) {
     const reason = typeof payload.reason === "string" ? payload.reason.slice(0, 200) : "No reason provided";
     const theme = await env.DB.prepare(`SELECT name FROM themes WHERE id = ?`).bind(id).first();
     if (!theme) return jsonResponse({ error: "Theme not found" }, 404);
-    await sendReportEmbed(env, {
-      title: "🚨 Theme Reported",
-      color: 15158332,
-      fields: [
-        { name: "Theme", value: theme.name, inline: true },
-        { name: "Theme ID", value: id, inline: true },
-        { name: "Reason", value: reason, inline: false },
-        { name: "Reporter ID", value: (await deriveDailyId(env, clientIP)).slice(0, 12), inline: false },
-        { name: "Timestamp", value: new Date().toISOString(), inline: false }
-      ]
-    });
+    try {
+      await sendReportEmbed(env, {
+        title: "🚨 Theme Reported",
+        color: 15158332,
+        fields: [
+          { name: "Theme", value: theme.name, inline: true },
+          { name: "Theme ID", value: id, inline: true },
+          { name: "Reason", value: reason, inline: false },
+          { name: "Reporter ID", value: (await deriveDailyId(env, clientIP)).slice(0, 12), inline: false },
+          { name: "Timestamp", value: new Date().toISOString(), inline: false }
+        ]
+      });
+    } catch (err) {
+      return errorJsonResponse(err, 502);
+    }
     return jsonResponse({ success: true });
   }
 
@@ -4406,10 +4481,13 @@ function withCors(response) {
 export default {
   async fetch(request, env) {
     try {
-      if (env.DB) ensureAnalyticsIndexes(env).catch(() => {});
+      try {
+        if (env.DB) ensureAnalyticsIndexes(env).catch(() => {});
+      } catch {}
       return withCors(await handleYukiRequest(request, env));
     } catch (error) {
-      return withCors(new Response("Internal Error", { status: 500, headers: corsHeaders("text/plain") }));
+      const status = error && error.status && Number.isInteger(error.status) ? error.status : 500;
+      return withCors(errorJsonResponse(error, status));
     }
   }
 };

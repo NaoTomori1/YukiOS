@@ -1,6 +1,40 @@
-import { os } from "../framework.js";
+import { os, ServiceKeys } from "../framework.js";
 import { buildFileIconHTML } from "../fileDisplay.js";
 import { showFileProperties } from "../fileDisplay.js";
+
+export function getScreenshotService() {
+  try {
+    return os.app.getInstance(ServiceKeys.SCREENSHOT);
+  } catch {
+    return null;
+  }
+}
+
+export function isScreenshotRecording(service) {
+  const target = service || getScreenshotService();
+  if (!target) return false;
+  try {
+    if (typeof target.isRecording === "function") return target.isRecording() === true;
+  } catch {}
+  return target.recording === true;
+}
+
+export async function toggleDesktopRecording() {
+  const service = getScreenshotService();
+  if (!service) {
+    os.dialog.alert("Recording", "Screen recorder is not available");
+    return;
+  }
+  try {
+    if (isScreenshotRecording(service)) {
+      service.stopRecording();
+    } else {
+      await service.toggleRecording();
+    }
+  } catch {
+    os.dialog.alert("Recording", "Could not change recording state");
+  }
+}
 
 export function buildCopyAction(selectedArray, desktopUI) {
   return () => {

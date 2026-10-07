@@ -100,3 +100,47 @@
     transform: rotate(360deg);
   }
 }
+
+.scramjet-popup-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--bg-secondary);
+}
+
+.scramjet-popup-frame {
+  width: 100%;
+  height: 100%;
+  border: none;
+  display: block;
+  flex: 1;
+}
+
+.webapp-music-btn {
+  position: absolute;
+  right: 14px;
+  bottom: 14px;
+  width: 38px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  color: var(--text-primary);
+  font-size: 14px;
+  cursor: pointer;
+  z-index: 60;
+  backdrop-filter: blur(32px);
+  transition:
+    background 0.15s,
+    transform 0.15s;
+}
+
+.webapp-music-btn:hover {
+  background: var(--surface-hover);
+  transform: scale(1.06);
+}

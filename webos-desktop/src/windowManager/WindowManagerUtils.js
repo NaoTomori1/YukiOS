@@ -2,6 +2,9 @@ import { $, createElement } from "../shared/domUtils.js";
 import { resolveIconUrl } from "../shared/assetResolver.js";
 import { getEffectiveIcon } from "../shared/iconPack.js";
 import { sanitizeTitle } from "../utils/utils.js";
+import { os } from "../framework.js";
+import { StorageKeys } from "../StorageKeys.js";
+import { CLOAK_PRESETS } from "../stealth/tabCloak.js";
 import { isImageFile } from "../fileDisplay.js";
 import { updateTransparency } from "./transparencyManager.js";
 import { getSetting } from "../utils/utils.js";
@@ -56,6 +59,31 @@ export class WindowManagerUtils {
   getFaviconLink() {
     let link = $("link[rel~='icon']");
     return link;
+  }
+
+  reassertCloak() {
+    if (window.__yukiCloakActive !== true) return false;
+    let key = null;
+    try {
+      key = os.storage.get(StorageKeys.tabCloak) || null;
+    } catch {
+      key = null;
+    }
+    const preset = (key && CLOAK_PRESETS[key]) || null;
+    if (!preset) return true;
+    document.title = preset.title;
+    try {
+      let link = this.getFaviconLink();
+      if (!link) {
+        link = createElement("link");
+        link.rel = "icon";
+        document.head.appendChild(link);
+      }
+      link.href = preset.icon;
+    } catch {
+      /* ignore */
+    }
+    return true;
   }
 
   getOpenWindowCount() {
@@ -129,6 +157,7 @@ export class WindowManagerUtils {
   }
 
   updatePageFavicon(iconValue, title) {
+    if (this.reassertCloak()) return;
     document.title = sanitizeTitle(title) || this.manager.initialTitle;
     const link = this.getFaviconLink();
     iconValue = resolveIconUrl(iconValue);
@@ -141,6 +170,7 @@ export class WindowManagerUtils {
   }
 
   resetToDefaultState() {
+    if (this.reassertCloak()) return;
     document.title = this.manager.initialTitle;
     const link = this.getFaviconLink();
     link.href = this.manager.initialFavicon || "";
@@ -148,6 +178,7 @@ export class WindowManagerUtils {
 
   initVisibilityTracking() {
     document.addEventListener("visibilitychange", () => {
+      if (window.__yukiCloakActive === true) return;
       if (document.hidden) {
         document.title = this.manager.initialTitle;
         this.getFaviconLink().href = this.manager.initialFavicon || "";

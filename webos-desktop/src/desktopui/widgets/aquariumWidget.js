@@ -59,6 +59,15 @@ export class AquariumWidget extends WidgetBase {
     this.bindWidgetEvents(contentEl);
     this.trackResize(contentEl);
     this.lastTime = performance.now();
+    this.pausedHidden = false;
+    this.visHandler = () => {
+      if (!document.hidden && this.pausedHidden && this.ctx) {
+        this.pausedHidden = false;
+        this.lastTime = performance.now();
+        this.loop();
+      }
+    };
+    document.addEventListener("visibilitychange", this.visHandler);
     this.loop();
   }
 
@@ -188,6 +197,11 @@ export class AquariumWidget extends WidgetBase {
 
   loop = () => {
     if (!this.ctx || !this.canvas) return;
+    if (document.hidden || !this.element?.isConnected) {
+      this.rafId = null;
+      this.pausedHidden = true;
+      return;
+    }
     this.rafId = requestAnimationFrame(this.loop);
     const now = performance.now();
     const dt = Math.min(32, now - this.lastTime) / 16.66;
@@ -354,6 +368,7 @@ export class AquariumWidget extends WidgetBase {
   destroy() {
     if (this.rafId) cancelAnimationFrame(this.rafId);
     this.rafId = null;
+    if (this.visHandler) document.removeEventListener("visibilitychange", this.visHandler);
     if (this.resizeObserver) {
       this.resizeObserver.disconnect();
       this.resizeObserver = null;

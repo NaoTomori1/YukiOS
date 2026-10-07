@@ -25,6 +25,7 @@ import {
   isPluginEnabled as isWindowOpenPluginEnabled,
   setPluginEnabled as setWindowOpenPluginEnabled
 } from "./browser/plugins/windowOpenInNewTab.js";
+import { createPopupWindow, isPopupInterceptEnabled } from "../core/ScramjetPopupManager.js";
 
 const THEME_VARS = [
   "--brand",
@@ -49,6 +50,31 @@ const THEME_VARS = [
   "--success",
   "--warning"
 ];
+
+const DIRECT_LOAD_DOMAINS = ["reeyuki.github.io", "reeyuki.neocities.org"];
+const DEFAULT_BOOKMARK_URL = "https://reeyuki.github.io/YukiOS-AlphaHistorical/desktop/";
+const DEFAULT_BOOKMARK_NAME = "YukiOS Alpha Historical";
+
+function isDirectLoadUrl(url) {
+  try {
+    const host = new URL(url).hostname.toLowerCase();
+    return DIRECT_LOAD_DOMAINS.some((domain) => host === domain || host.endsWith("." + domain));
+  } catch {
+    return false;
+  }
+}
+
+function getBookmarksWithFirstRunSeed() {
+  const raw = os.storage.get(StorageKeys.browserBookmarks);
+  if (raw === null || raw === undefined) {
+    const seeded = [{ name: DEFAULT_BOOKMARK_NAME, url: DEFAULT_BOOKMARK_URL }];
+    try {
+      os.storage.set(StorageKeys.browserBookmarks, seeded);
+    } catch {}
+    return seeded;
+  }
+  return Array.isArray(raw) ? raw : [];
+}
 
 let scramjetInstanceCount = 0;
 let cachedThemeVars = null;
@@ -105,7 +131,7 @@ export class BrowserApp extends BaseApp {
 
     const title = isIncognito ? "Scramjet Browser (Private)" : "Scramjet Browser";
     const win = os.window.create(winId, title, "1024px", "630px", {
-      icon: "static/icons/firefox.webp",
+      icon: "static/icons/chrome.webp",
       appId: "browserApp",
       skipHeader: true,
       position: "center"
@@ -167,7 +193,7 @@ export class BrowserApp extends BaseApp {
     const sendDataToIframe = (opts = {}) => {
       if (!iframe || !iframe.contentWindow) return;
       const vars = getCachedThemeVars();
-      const bookmarks = os.storage.get(StorageKeys.browserBookmarks) || [];
+      const bookmarks = getBookmarksWithFirstRunSeed();
       const history = os.storage.get(StorageKeys.browserHistory) || [];
       const wispUrl = getWispUrl();
       const transport = os.storage.get(StorageKeys.browserTransport) || "epoxy";
@@ -237,13 +263,25 @@ export class BrowserApp extends BaseApp {
         if (!data.active) this.exitTorMode();
       } else if (data.type === "scram:navigate") {
         if (this.torEnabled && data.url) {
-          this.loadWithTor(data.url);
+          if (isDirectLoadUrl(data.url)) {
+            try {
+              iframe?.contentWindow?.postMessage({ type: "browser-create-tab", url: String(data.url) }, "*");
+            } catch {}
+          } else {
+            this.loadWithTor(data.url);
+          }
         }
       } else if (data.type === "browser-tor-reconnect") {
         this.reconnectTor();
       } else if (data.type === "browser-navigate") {
         if (this.torEnabled && data.url) {
-          this.loadWithTor(data.url);
+          if (isDirectLoadUrl(data.url)) {
+            try {
+              iframe?.contentWindow?.postMessage({ type: "browser-create-tab", url: String(data.url) }, "*");
+            } catch {}
+          } else {
+            this.loadWithTor(data.url);
+          }
         }
       } else if (data.type === "browser-tor-download") {
         if (this.torEnabled && data.url) {
@@ -272,6 +310,26 @@ export class BrowserApp extends BaseApp {
             iframe.contentWindow.postMessage({ type: "browser-create-tab", url: String(url) }, "*");
           } catch {}
         }
+      } else if (data.type === "browser-popup-open") {
+        if (e.source !== iframe?.contentWindow) return;
+        const targetUrl = data.url ? String(data.url) : "";
+        if (!targetUrl) return;
+        if (!isPopupInterceptEnabled()) {
+          try {
+            iframe.contentWindow.postMessage({ type: "browser-create-tab", url: targetUrl }, "*");
+          } catch {}
+          return;
+        }
+        try {
+          createPopupWindow({
+            parentAppId: "browserApp",
+            parentName: "Browser",
+            parentIcon: "static/icons/chrome.webp",
+            url: targetUrl,
+            pageTitle: data.pageTitle || targetUrl,
+            features: data.specs || ""
+          });
+        } catch {}
       } else if (data.type === "scram:localRequest") {
         this.handleLocalRequest(data.url).then((result) => {
           try {
@@ -488,7 +546,7 @@ export class BrowserApp extends BaseApp {
   sendDataToIframe() {
     if (!this.iframe || !this.iframe.contentWindow) return;
     const vars = getCachedThemeVars();
-    const bookmarks = os.storage.get(StorageKeys.browserBookmarks) || [];
+    const bookmarks = getBookmarksWithFirstRunSeed();
     const history = os.storage.get(StorageKeys.browserHistory) || [];
     const wispUrl = getWispUrl();
     const transport = os.storage.get(StorageKeys.browserTransport) || "epoxy";
@@ -559,7 +617,8 @@ export class BrowserApp extends BaseApp {
       }
     }
     maybeTriggerSmartlink();
-    if (this.isTorUrl(url)) {
+    const bypassProxy = isDirectLoadUrl(url);
+    if (!bypassProxy && this.isTorUrl(url)) {
       this.loadWithTor(url);
       return;
     }

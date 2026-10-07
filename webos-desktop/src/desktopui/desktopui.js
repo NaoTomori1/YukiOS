@@ -491,6 +491,14 @@ class DeletedIconsStore {
       this.save(list);
     }
   }
+  static has(key) {
+    return this.load().includes(key);
+  }
+  static remove(key) {
+    const list = this.load();
+    const next = list.filter((entry) => entry !== key);
+    if (next.length !== list.length) this.save(next);
+  }
 }
 
 export class PositionStore {
@@ -545,14 +553,13 @@ class IconDataHelper {
       explorer: resolveIconUrl("static/icons/file.webp"),
       notepad: resolveIconUrl("static/icons/notepad.webp"),
       flash: resolveIconUrl("static/icons/flash.webp"),
-      browser: resolveIconUrl("static/icons/firefox.webp"),
+      browser: resolveIconUrl("static/icons/chrome.webp"),
       terminal: resolveIconUrl("static/icons/terminal.webp"),
       music: resolveIconUrl("static/icons/spot.webp"),
       cameraApp: resolveIconUrl("static/icons/obs.webp"),
       paint: resolveIconUrl("static/icons/paint.webp"),
       photopea: resolveIconUrl("static/icons/photopea.webp"),
       vscode: resolveIconUrl("static/icons/vscode.webp"),
-      liventcord: resolveIconUrl("static/icons/liventcord.webp"),
       steamApp: "fab fa-steam",
       return: resolveIconUrl("static/icons/file.webp")
     };
@@ -598,6 +605,10 @@ class SelectionManager {
   }
   has(icon) {
     return this.selectedIcons.has(icon);
+  }
+  selectAll() {
+    this.clear();
+    $$(".icon.selectable").forEach((icon) => this.add(icon));
   }
   toArray() {
     return Array.from(this.selectedIcons);
@@ -876,7 +887,7 @@ export class DesktopUI {
 
         if (this.explorerApp) {
           for (const [winId, inst] of this.explorerApp.instances) {
-            if (inst.selectedItems.size > 0) {
+            if (inst.selectedItems.size > 0 && isWindowFocused(winId)) {
               hasExplorerSelection = true;
               explorerInst = inst;
               break;
@@ -884,12 +895,62 @@ export class DesktopUI {
           }
         }
 
-        if (hasExplorerSelection && this.lastFocusedContext === "explorer" && explorerInst) {
+        if (hasExplorerSelection && explorerInst) {
           e.preventDefault();
           (async () => {
             const effectiveItems = [...explorerInst.selectedItems];
+            explorerInst.selectedItems = new Set();
             for (const name of effectiveItems) {
               await os.fs.trashFile(explorerInst.currentPath, name);
+            }
+            const explorerPath = explorerInst.currentPath;
+            const isDesktopPath = Array.isArray(explorerPath)
+              ? explorerPath.length === 1 && explorerPath[0] === "Desktop"
+              : explorerPath === "Desktop";
+            if (isDesktopPath) {
+              const cachedPositions = PositionStore.load();
+              let cachedDirty = false;
+              for (const name of effectiveItems) {
+                const fileKey = `file:${name}`;
+                const folderKey = `folder:${name}`;
+                if (cachedPositions[fileKey] !== undefined) {
+                  delete cachedPositions[fileKey];
+                  cachedDirty = true;
+                }
+                if (cachedPositions[folderKey] !== undefined) {
+                  delete cachedPositions[folderKey];
+                  cachedDirty = true;
+                }
+                DeletedIconsStore.add(fileKey);
+                DeletedIconsStore.add(folderKey);
+                const fileIcon = $(`.desktop-file-icon[data-file-name="${CSS.escape(name)}"]`);
+                if (fileIcon) {
+                  const resolvedKey = PositionStore.getKey(fileIcon);
+                  if (cachedPositions[resolvedKey] !== undefined) {
+                    delete cachedPositions[resolvedKey];
+                    cachedDirty = true;
+                  }
+                  DeletedIconsStore.add(resolvedKey);
+                  try {
+                    this.selectionManager.remove(fileIcon);
+                  } catch {}
+                  fileIcon.remove();
+                }
+                const folderIcon = $(`.folder-icon[data-folder-name="${CSS.escape(name)}"]`);
+                if (folderIcon) {
+                  const resolvedFolderKey = PositionStore.getKey(folderIcon);
+                  if (cachedPositions[resolvedFolderKey] !== undefined) {
+                    delete cachedPositions[resolvedFolderKey];
+                    cachedDirty = true;
+                  }
+                  DeletedIconsStore.add(resolvedFolderKey);
+                  try {
+                    this.selectionManager.remove(folderIcon);
+                  } catch {}
+                  folderIcon.remove();
+                }
+              }
+              if (cachedDirty) PositionStore.save(cachedPositions);
             }
             await this.explorerApp.renderInstance(explorerInst);
             os.notify.send(`${effectiveItems.length} item${effectiveItems.length !== 1 ? "s" : ""} moved to trash`);
@@ -898,6 +959,36 @@ export class DesktopUI {
           e.preventDefault();
           this.clipboardManager.moveSelectedIconsToTrash(selectedArray, this.selectionManager);
         }
+      }
+
+      if (KeybindManager.matches(e, "desktop.selectAll")) {
+        const explorerWins = $$("[id^='explorer-']");
+        let anyExplorerFocused = false;
+        for (const win of explorerWins) {
+          if (isWindowFocused(win.id, lastMousePos)) {
+            anyExplorerFocused = true;
+            break;
+          }
+        }
+        if (anyExplorerFocused) return;
+        e.preventDefault();
+        this.selectionManager.selectAll();
+      }
+
+      if (KeybindManager.matches(e, "desktop.physicsChaos")) {
+        const chaosExplorerWins = $$("[id^='explorer-']");
+        let chaosExplorerFocused = false;
+        for (const win of chaosExplorerWins) {
+          if (isWindowFocused(win.id, lastMousePos)) {
+            chaosExplorerFocused = true;
+            break;
+          }
+        }
+        if (chaosExplorerFocused) return;
+        e.preventDefault();
+        import("../shared/desktopPhysics.js").then((physicsModule) => {
+          physicsModule.togglePhysicsChaos();
+        });
       }
     });
   }
@@ -1122,6 +1213,7 @@ export class DesktopUI {
     const onMouseDown = (e) => {
       if (e.target !== this.desktop) return;
       if (e.target?.closest?.(".window")) return;
+      this.lastFocusedContext = "desktop";
       $$(".icon.selectable").forEach((i) => {
         setStyle(i, { zIndex: "", opacity: "", cursor: "" });
       });
@@ -1187,6 +1279,47 @@ export class DesktopUI {
 
   async loadDesktopItems() {
     await this.iconManager.loadDesktopItems();
+    const deletedList = DeletedIconsStore.load();
+    const deletedSet = new Set(deletedList);
+    const savedPositions = PositionStore.load();
+    let positionsDirty = false;
+    const desktopIcons = $$(".icon.selectable");
+    for (const icon of desktopIcons) {
+      const iconKey = PositionStore.getKey(icon);
+      if (deletedSet.has(iconKey)) {
+        try {
+          this.selectionManager.remove(icon);
+        } catch {}
+        icon.remove();
+        if (savedPositions[iconKey] !== undefined) {
+          delete savedPositions[iconKey];
+          positionsDirty = true;
+        }
+        continue;
+      }
+      const desktopFileName = icon.dataset.fileName;
+      const desktopFolderName = icon.dataset.folderName;
+      const checkName = desktopFileName || desktopFolderName;
+      if (checkName) {
+        let stillExists = true;
+        try {
+          stillExists = await os.fs.exists(["Desktop", checkName]);
+        } catch {
+          stillExists = true;
+        }
+        if (!stillExists) {
+          try {
+            this.selectionManager.remove(icon);
+          } catch {}
+          icon.remove();
+          if (savedPositions[iconKey] !== undefined) {
+            delete savedPositions[iconKey];
+            positionsDirty = true;
+          }
+        }
+      }
+    }
+    if (positionsDirty) PositionStore.save(savedPositions);
     const autoSort = os.storage.get(StorageKeys.desktopAutoSort);
     if (autoSort === true || autoSort === "true") {
       const storedMode = os.storage.get(StorageKeys.desktopSortMode);

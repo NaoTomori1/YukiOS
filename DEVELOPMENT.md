@@ -513,7 +513,7 @@ Session modes: `isActive(id)`, `getActiveModes()`, `enter(id)`, `exit(id)`, `exi
 
 ### Achievements API - `os.achievements`
 
-`trigger(id)`, `unlock(key)`, `incrementAppLaunched()`, `incrementGameLaunched()`, `incrementScreenshotTaken()`,
+`trigger(id)`, `unlock(key)`, `incrementAppLaunched()`, `incrementGameLaunched()`,
 `incrementCalculationDone()`, `incrementPowerProfileChange()`, `incrementSession()`, `incrementWallpaper()`,
 `incrementTerminalCmd()`, `incrementFileUploaded()`, `triggerCommandExecution(command)`
 

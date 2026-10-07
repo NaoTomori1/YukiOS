@@ -19,7 +19,9 @@ export const ServiceKeys = {
   REMOTE_HOST: "remoteHostApp",
   CLIPBOARD_MANAGER: "clipboardManagerApp",
   DESKTOP_UI: "desktopUI",
-  INSTALLED_APPS: "systemAppsApp"
+  INSTALLED_APPS: "systemAppsApp",
+  BOXEDWINE: "boxedWineApp",
+  DISPLAY_PERFORMANCE: "displayPerformanceApp"
 };
 
 /**
@@ -42,6 +44,7 @@ export const ServiceKeys = {
  * @typedef {import("./apps/setupApp.js").SetupApp} SetupApp
  * @typedef {import("./apps/RemoteHostApp.js").RemoteHostApp} RemoteHostApp
  * @typedef {import("./apps/clipboardApp.js").ClipboardManagerApp} ClipboardManagerApp
+
  * @typedef {import("./desktopui/desktopui.js").DesktopUI} DesktopUI
  */
 
@@ -66,5 +69,6 @@ export const ServiceKeys = {
  * @property {SetupApp} setupApp
  * @property {RemoteHostApp} remoteHostApp
  * @property {ClipboardManagerApp} clipboardManagerApp
+
  * @property {DesktopUI} desktopUI
  */

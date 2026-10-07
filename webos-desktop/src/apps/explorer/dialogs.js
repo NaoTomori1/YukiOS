@@ -123,7 +123,7 @@ export function showArchiveDialog({ title, defaultValue, onConfirm }) {
     { value: "tar.gz", label: "TAR.GZ (.tar.gz)" }
   ];
   overlay.innerHTML = `
-    <div class="fd-dialog" style="width: 360px;">
+    <div class="fd-dialog" style="width: 480px;">
       <div class="fd-dialog-title">${title}</div>
       <div class="fd-dialog-body">
         <div class="fd-field">

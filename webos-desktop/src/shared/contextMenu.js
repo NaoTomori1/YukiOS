@@ -1,9 +1,21 @@
-import { $, createElement } from "./domUtils.js";
+import { $, bindEvent, createElement } from "./domUtils.js";
 import { getEffectiveIcon } from "./iconPack.js";
 import { resolveIconUrl } from "./assetResolver.js";
 
 const MENU_ID = "context-menu";
 const bodySubmenus = [];
+
+bindEvent(
+  document,
+  "contextmenu",
+  (e) => {
+    if (e.altKey) {
+      e.preventDefault();
+      e.stopImmediatePropagation();
+    }
+  },
+  true
+);
 
 function getMenu() {
   return $("#" + MENU_ID);

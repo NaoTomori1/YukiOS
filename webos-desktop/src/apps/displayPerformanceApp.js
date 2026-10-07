@@ -1,4 +1,5 @@
 import { performanceManager } from "../shared/performanceManager.js";
+import { batteryService } from "../services/batteryService.js";
 const BRIGHTNESS_PRESETS = {
   default: { brightness: 100, contrast: 1, temperature: 50, label: "Default" },
   reading: { brightness: 90, contrast: 1.1, temperature: 35, label: "Reading" },
@@ -12,6 +13,7 @@ import { $, $$, setStyle, createElement, BusEvents, BaseApp, StorageKeys, os, MO
 import { KeybindManager } from "../keybindManager.js";
 import { isTaskbarTop } from "../utils/utils.js";
 import { getTrayPosition } from "../tray/tray.js";
+import { createTrayPinButton, setTrayPinState } from "../shared/trayPin.js";
 
 class DisplayPerformanceApp extends BaseApp {
   constructor(services) {
@@ -19,77 +21,43 @@ class DisplayPerformanceApp extends BaseApp {
     this.winId = "display-performance-window";
     this.popupId = "display-performance-tray-popup";
     this.popupVisible = false;
+    this.pinned = false;
 
     this.powerMode = performanceManager.getMode();
     this.batteryInfo = { level: 1, charging: true };
+    this.unsubscribeBattery = null;
 
     this.brightness = parseInt(os.storage.get(StorageKeys.brightness), 10) || 100;
     this.contrast = parseFloat(os.storage.get(StorageKeys.contrast)) || 1;
     this.temperature = parseInt(os.storage.get(StorageKeys.temperature), 10) || 50;
     this.nightModeEnabled = os.storage.get(StorageKeys.nightModeEnabled) === "true";
 
-    this.initBattery();
+    this.unsubscribeBattery = batteryService.subscribe((snap) => this.onBatterySnapshot(snap));
     this.initTray();
     this.applyDisplaySettings();
     this.setupKeybinds();
   }
 
-  async initBattery() {
-    if ("getBattery" in navigator) {
-      try {
-        const battery = await navigator.getBattery();
-        this.batteryInfo = {
-          level: battery.level,
-          charging: battery.charging
-        };
-        battery.addEventListener("levelchange", () => {
-          this.batteryInfo.level = battery.level;
-          this.updateTrayIcon();
-          this.updateBatteryDisplay();
-        });
-        battery.addEventListener("chargingchange", () => {
-          this.batteryInfo.charging = battery.charging;
-          this.updateTrayIcon();
-          this.updateBatteryDisplay();
-        });
-      } catch (e) {
-        console.warn("Battery API error:", e);
-      }
-    }
+  onBatterySnapshot(snap) {
+    this.batteryInfo = { level: snap.level, charging: snap.charging };
+    this.updateTrayIcon();
+    this.updateBatteryDisplay();
   }
 
   getBatteryIcon() {
-    const level = Math.round(this.batteryInfo.level * 100);
-    if (level > 90) return "fas fa-battery-full";
-    if (level > 65) return "fas fa-battery-three-quarters";
-    if (level > 35) return "fas fa-battery-half";
-    if (level > 10) return "fas fa-battery-quarter";
-    return "fas fa-battery-empty";
+    return batteryService.getFaIconClass();
   }
 
   getBatteryFillColor(level) {
-    if (this.batteryInfo.charging) return "var(--charging)";
-    if (level > 60) return "var(--charging)";
-    if (level > 30) return "var(--brand)";
-    return "var(--error)";
+    return batteryService.getFillColor();
   }
 
   getBatteryIconHtml() {
-    if (this.batteryInfo.charging) {
-      return `<i class="fas fa-bolt" style="color:var(--charging)"></i>`;
-    }
-    return `<i class="${this.getBatteryIcon()}"></i>`;
+    return batteryService.getBoltOrFaHtml();
   }
 
   getBatteryStatusText() {
-    const level = Math.round(this.batteryInfo.level * 100);
-    const charging = this.batteryInfo.charging;
-    if (charging) {
-      if (level === 100) return "Fully Charged";
-      return "Charging";
-    }
-    if (level <= 20) return "Low Battery";
-    return "On Battery";
+    return batteryService.getStatusText();
   }
 
   updateTrayIcon() {
@@ -106,7 +74,7 @@ class DisplayPerformanceApp extends BaseApp {
     const batteryPercent = popup.querySelector(".battery-percent");
     const batteryStatus = popup.querySelector(".battery-status");
     const batteryIconContainer = popup.querySelector(".battery-icon");
-    if (batteryPercent) batteryPercent.textContent = `${Math.round(this.batteryInfo.level * 100)}%`;
+    if (batteryPercent) batteryPercent.textContent = `${batteryService.getPercent()}%`;
     if (batteryStatus) batteryStatus.textContent = this.getBatteryStatusText();
     if (batteryIconContainer) batteryIconContainer.innerHTML = this.getBatteryIconHtml();
   }
@@ -304,7 +272,7 @@ class DisplayPerformanceApp extends BaseApp {
     const popup = createElement("div");
     popup.id = this.popupId;
     popup.className = "display-performance-tray-popup";
-    const batteryPercent = Math.round(this.batteryInfo.level * 100);
+    const batteryPercent = batteryService.getPercent();
     const batteryStatus = this.getBatteryStatusText();
     const batteryFillColor = this.getBatteryFillColor(batteryPercent);
     popup.innerHTML = `
@@ -402,6 +370,31 @@ class DisplayPerformanceApp extends BaseApp {
     `;
 
     document.body.appendChild(popup);
+    const popupContent = $(".display-performance-popup-content", popup);
+    const header = createElement("div", {
+      className: "display-performance-header",
+      html: `<span class="display-performance-header-title"><i class="fas fa-bolt"></i> Power</span><span class="display-performance-header-actions"></span>`
+    });
+    const headerActions = $(".display-performance-header-actions", header);
+    const pinBtn = createTrayPinButton();
+    pinBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      this.pinned = !this.pinned;
+      setTrayPinState(popup, pinBtn, this.pinned);
+    });
+    const closeBtn = createElement("button", {
+      className: "display-performance-close-btn",
+      attributes: { title: "Close" },
+      html: `<i class="fas fa-times"></i>`
+    });
+    closeBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      this.closePopup();
+    });
+    headerActions.appendChild(pinBtn);
+    headerActions.appendChild(closeBtn);
+    popupContent.prepend(header);
+    setTrayPinState(popup, pinBtn, this.pinned);
     popup.style.display = "block";
     popup.style.visibility = "hidden";
     const btn = document.querySelector('[data-win-id="display-performance-window"]') || $("#app-tray");
@@ -435,6 +428,7 @@ class DisplayPerformanceApp extends BaseApp {
   }
 
   handleOutsideClick = (e) => {
+    if (this.pinned) return;
     const popup = $("#" + this.popupId);
     const trayEl = $("#app-tray");
     if (popup && !e.target.closest("#display-performance-tray-popup") && !e.target.closest("#app-tray")) {
@@ -566,6 +560,10 @@ class DisplayPerformanceApp extends BaseApp {
   }
 
   onClose(winId) {
+    if (this.unsubscribeBattery) {
+      this.unsubscribeBattery();
+      this.unsubscribeBattery = null;
+    }
     this.closePopup();
     this.cleanupKeybinds();
   }

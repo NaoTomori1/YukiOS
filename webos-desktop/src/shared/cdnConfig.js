@@ -95,6 +95,23 @@ export const CDN_CONFIG = {
     pyodide: {
       version: "0.25.0",
       module: "pyodide/v0.25.0/full/pyodide.mjs"
+    },
+    eruda: {
+      version: "2.11.3",
+      path: "eruda@2.11.3/eruda.js"
+    },
+    html2canvasPro: {
+      version: "1.5.8",
+      path: "html2canvas-pro@1.5.8/dist/html2canvas-pro.min.js"
+    },
+    isomorphicGit: {
+      version: "1.41.4",
+      module: "isomorphic-git@1.41.4",
+      httpWeb: "isomorphic-git@1.41.4/http/web"
+    },
+    webcontainer: {
+      version: "1.6.4",
+      module: "@webcontainer/api@1.6.4"
     }
   }
 };
@@ -110,20 +127,23 @@ export function getLibraryUrl(libraryName, type = "path") {
   const path = lib[type] || lib.path;
   if (!path) return null;
 
-  if (libraryName === "ruffle") {
-    return `https://unpkg.com/@ruffle-rs/ruffle/ruffle.js`;
-  }
-
-  if (libraryName === "7z-wasm") {
-    return `https://unpkg.com/${path}`;
-  }
-
   if (libraryName === "clippyjs") {
     return `https://esm.sh/${path}`;
   }
 
   if (libraryName === "docx") {
     return `https://esm.sh/docx@8.5.0`;
+  }
+
+  if (libraryName === "isomorphicGit") {
+    if (type === "httpWeb") {
+      return `https://esm.sh/${lib.httpWeb}`;
+    }
+    return `https://esm.sh/${lib.module}`;
+  }
+
+  if (libraryName === "webcontainer") {
+    return `https://esm.sh/${lib.module}`;
   }
 
   const npmBase = CDN_CONFIG.repos.npm.base;

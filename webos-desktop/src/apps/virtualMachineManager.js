@@ -16,6 +16,13 @@ const OS_LIST = [
   { id: "win7", name: "Windows 7", url: "https://win7simu.visnalize.com/", color: "#3a6ea5", icon: "fab fa-windows" },
   { id: "winxp", name: "Windows XP", url: "https://winxp.vercel.app", color: "#3a6ea5", icon: "fab fa-windows" },
   {
+    id: "winxpQuenq",
+    name: "Windows XP (Reborn XP)",
+    url: "https://xp.quenq.com",
+    color: "#3a6ea5",
+    icon: "fab fa-windows"
+  },
+  {
     id: "winxpHeavy",
     name: "Windows XP (Heavy)",
     url: "https://cdn.jsdelivr.net/gh/NaoTomori1/yukios@main/static/apps/winxp/index.html",

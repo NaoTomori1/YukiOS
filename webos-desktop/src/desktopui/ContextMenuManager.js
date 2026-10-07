@@ -1,7 +1,7 @@
 import { $, $$, createElement } from "../shared/domUtils.js";
 import { showContextMenu, showDynamicContextMenu, hideMenu } from "../shared/contextMenu.js";
 import { sortDesktopIcons, relayoutDesktopIcons, changeDesktopIconSize } from "./desktopui.js";
-import { os, StorageKeys } from "../framework.js";
+import { os, StorageKeys, ServiceKeys } from "../framework.js";
 import { ArchiveExtractor } from "../archiveExtractor.js";
 import { AppSource } from "../AppSource.js";
 import { showFileProperties, isImageFile, openFileWithApp, buildFileIconHTML } from "../fileDisplay.js";
@@ -15,13 +15,188 @@ import {
   buildCutAction,
   buildDeleteAction,
   buildRenameAction,
-  buildPropertiesAction
+  buildPropertiesAction,
+  getScreenshotService,
+  isScreenshotRecording,
+  toggleDesktopRecording
 } from "./contextActions.js";
 import { openFileConverter } from "../utils/fileConverter.js";
+import { getTargetFormats, detectCategory, convertFileBlob } from "../utils/converterCore.js";
+import { showTransferDialog } from "../shared/transferDialog.js";
 import { SystemUtilities } from "../system.js";
 import { videos } from "../wallpaperList.js";
 import { vantaPresets } from "../vantaPresets.js";
 import { downloadBlob } from "../utils/utils.js";
+
+function isCursorFileName(fileName) {
+  const lower = fileName.toLowerCase();
+  return lower.endsWith(".ani") || lower.endsWith(".cur");
+}
+
+function isCustomCursorActive() {
+  return Boolean(os.storage.get(StorageKeys.cursorKey));
+}
+
+function blobToDataUrl(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+}
+
+function parseDesktopDir(filePath) {
+  if (Array.isArray(filePath)) return filePath.filter(Boolean);
+  if (!filePath) return ["Desktop"];
+  const parts = String(filePath).split("/").filter(Boolean);
+  return parts.length ? parts : ["Desktop"];
+}
+
+async function readDesktopCursorBlob(fileName, dirParts) {
+  try {
+    const blob = await os.fs.readBinaryFile(dirParts, fileName);
+    if (blob && blob.size) return blob;
+  } catch {}
+  const content = await os.fs.getFileContent(dirParts, fileName);
+  if (content instanceof Blob && content.size) return content;
+  return null;
+}
+
+function applyDesktopPointerCursor(dataUrl) {
+  os.storage.set(StorageKeys.cursorKey, dataUrl);
+  document.body.style.cursor = `url("${dataUrl}"), auto`;
+}
+
+function resetDesktopPointerCursor() {
+  os.storage.remove(StorageKeys.cursorKey);
+  document.body.style.cursor = "";
+}
+
+async function setDesktopPointerFromFile(fileName, dirParts) {
+  try {
+    const blob = await readDesktopCursorBlob(fileName, dirParts);
+    if (!blob) throw new Error("empty cursor");
+    applyDesktopPointerCursor(await blobToDataUrl(blob));
+  } catch {
+    os.dialog.alert("Error", "Could not set mouse pointer");
+  }
+}
+
+async function createDesktopShortcut(fileName, dirParts, desktopUI) {
+  try {
+    const targetPath = [...dirParts, fileName].join("/");
+    const payload = JSON.stringify({ targetPath, targetName: fileName });
+    const baseName = `${fileName}.shortcut.json`;
+    const shortcutName = await os.fs.getUniqueFileName(dirParts, baseName);
+    await os.fs.write([...dirParts, shortcutName], payload);
+    if (dirParts.length === 1 && dirParts[0] === "Desktop") {
+      try {
+        await desktopUI.createDesktopFileIcon(shortcutName);
+      } catch {}
+    }
+  } catch {
+    os.dialog.alert("Error", "Could not create shortcut");
+  }
+}
+
+function getDesktopScreenshotService() {
+  try {
+    return os.app.getInstance(ServiceKeys.SCREENSHOT);
+  } catch {
+    return getScreenshotService();
+  }
+}
+
+function getDesktopConvertExtension(fileName) {
+  const parts = fileName.split(".");
+  return parts.length > 1 ? parts.pop().toLowerCase() : "";
+}
+
+function getDesktopConvertBaseName(fileName) {
+  const idx = fileName.lastIndexOf(".");
+  return idx > 0 ? fileName.slice(0, idx) : fileName;
+}
+
+function getDesktopConvertDefaults(category) {
+  if (category === "image") return { quality: 90 };
+  if (category === "audio") return { bitrate: "192k", channels: 2 };
+  if (category === "video") return { videoCodec: "h264", audioCodec: "aac" };
+  return {};
+}
+
+async function readDesktopConvertSource(dirParts, fileName) {
+  try {
+    const blob = await os.fs.readBinaryFile(dirParts, fileName);
+    if (blob && blob.size) return blob;
+  } catch {}
+  const content = await os.fs.getFileContent(dirParts, fileName);
+  if (content instanceof Blob) return content;
+  if (typeof content === "string") return new Blob([content]);
+  return new Blob([]);
+}
+
+async function runDesktopConvert(fileName, dirParts, targetFormat) {
+  const ext = getDesktopConvertExtension(fileName);
+  const category = detectCategory(ext);
+  const source = await readDesktopConvertSource(dirParts, fileName);
+  let text = null;
+  if (category === "text" || category === "structured") {
+    try {
+      text = await source.text();
+    } catch {
+      text = String(source);
+    }
+  }
+  const out = await convertFileBlob({
+    blob: source,
+    text,
+    sourceExt: ext,
+    targetFormat,
+    options: getDesktopConvertDefaults(category)
+  });
+  let result = out;
+  if (out && typeof out === "object" && !(out instanceof Blob) && ("blob" in out || "text" in out)) {
+    result = out.blob || out.text;
+  }
+  const candidate = `${getDesktopConvertBaseName(fileName)}.${targetFormat}`;
+  let uniqueName = candidate;
+  try {
+    uniqueName = await os.fs.getUniqueFileName(dirParts, candidate);
+  } catch {}
+  if (result instanceof Blob) {
+    await os.fs.writeBinaryFile(dirParts, uniqueName, result);
+  } else if (typeof result === "string") {
+    await os.fs.createFile(dirParts, uniqueName, result);
+  } else {
+    throw new Error("Empty conversion result");
+  }
+  return uniqueName;
+}
+
+async function quickDesktopConvert(fileName, dirParts, targetFormat, desktopUI) {
+  const label = targetFormat.toUpperCase();
+  const dialog = showTransferDialog({ title: `Converting to ${label}`, total: 1 });
+  try {
+    dialog.update(0, fileName);
+    const created = await runDesktopConvert(fileName, dirParts, targetFormat);
+    dialog.update(1, created);
+    dialog.complete();
+    if (dirParts.length === 1 && dirParts[0] === "Desktop") {
+      try {
+        await desktopUI.createDesktopFileIcon(created);
+      } catch {}
+    }
+  } catch {
+    dialog.complete();
+    const category = detectCategory(getDesktopConvertExtension(fileName));
+    if (category === "audio" || category === "video") {
+      openFileConverter(fileName, dirParts, os, desktopUI.appLauncher);
+    } else {
+      os.dialog.alert("Convert to", `Could not convert "${fileName}".`);
+    }
+  }
+}
 
 export class DesktopContextMenuManager {
   constructor(desktopUI, PositionStore, IconDataHelper, wm) {
@@ -234,64 +409,35 @@ export class DesktopContextMenuManager {
       );
       menu.appendChild(hr());
 
-      const convertableExtensions = [
-        "png",
-        "jpg",
-        "jpeg",
-        "webp",
-        "bmp",
-        "svg",
-        "gif",
-        "txt",
-        "md",
-        "html",
-        "json",
-        "log",
-        "csv",
-        "xml",
-        "yaml",
-        "yml",
-        "js",
-        "ts",
-        "tsx",
-        "jsx",
-        "css",
-        "scss",
-        "py",
-        "java",
-        "cpp",
-        "c",
-        "h",
-        "hpp",
-        "go",
-        "rs",
-        "rb",
-        "php",
-        "swift",
-        "kt",
-        "scala",
-        "lua",
-        "dart",
-        "sh",
-        "bash",
-        "zsh",
-        "toml",
-        "ini",
-        "cfg",
-        "conf",
-        "env",
-        "sql",
-        "gradle",
-        "makefile",
-        "dockerfile"
-      ];
-      const ext = fileName.split(".").pop().toLowerCase();
-      if (convertableExtensions.includes(ext)) {
+      const desktopExt = getDesktopConvertExtension(fileName);
+      const desktopCategory = detectCategory(desktopExt);
+      const rawDesktopTargets = desktopCategory ? getTargetFormats(desktopExt) : null;
+      const desktopTargets = Array.isArray(rawDesktopTargets)
+        ? rawDesktopTargets.filter((target) => target !== desktopExt)
+        : [];
+      if (desktopTargets.length > 0) {
+        const desktopDir = parseDesktopDir(filePath);
         menu.appendChild(
-          item(
-            "Convert / Transform",
-            async () => {
-              openFileConverter(fileName, [filePath], os, this.desktopUI.appLauncher);
+          submenu(
+            "Convert to",
+            (subMenuEl, subItem, subHr) => {
+              for (const target of desktopTargets) {
+                subMenuEl.appendChild(
+                  subItem(target.toUpperCase(), () => {
+                    quickDesktopConvert(fileName, desktopDir, target, this.desktopUI);
+                  })
+                );
+              }
+              subMenuEl.appendChild(subHr());
+              subMenuEl.appendChild(
+                subItem(
+                  "Convert / Transform...",
+                  () => {
+                    openFileConverter(fileName, desktopDir, os, this.desktopUI.appLauncher);
+                  },
+                  "fa-exchange-alt"
+                )
+              );
             },
             "fa-exchange-alt"
           )
@@ -344,7 +490,6 @@ export class DesktopContextMenuManager {
               try {
                 const dataUrl = await readAsDataUrl();
                 await SystemUtilities.setWallpaper(dataUrl);
-                os.notify.send(`Wallpaper set to "${fileName}"`);
               } catch (err) {
                 console.error("Set wallpaper error:", err);
                 os.dialog.alert("Error", "Could not set wallpaper");
@@ -365,7 +510,6 @@ export class DesktopContextMenuManager {
                   isVideo ? FileKind.VIDEO : FileKind.IMAGE,
                   "@content"
                 );
-                os.notify.send(`"${fileName}" saved to wallpapers`);
               } catch (err) {
                 console.error("Save wallpaper error:", err);
                 os.dialog.alert("Error", "Could not save wallpaper");
@@ -389,6 +533,31 @@ export class DesktopContextMenuManager {
             "fa-paste"
           )
         );
+      }
+      menu.appendChild(hr());
+      menu.appendChild(
+        item(
+          "Create shortcut",
+          async () => {
+            await createDesktopShortcut(fileName, parseDesktopDir(filePath), this.desktopUI);
+          },
+          "fa-link"
+        )
+      );
+      if (isCursorFileName(fileName)) {
+        const cursorDir = parseDesktopDir(filePath);
+        menu.appendChild(
+          item(
+            "Set as mouse pointer",
+            async () => {
+              await setDesktopPointerFromFile(fileName, cursorDir);
+            },
+            "fa-mouse-pointer"
+          )
+        );
+      }
+      if (isCustomCursorActive()) {
+        menu.appendChild(item("Reset mouse pointer", () => resetDesktopPointerCursor(), "fa-undo"));
       }
       menu.appendChild(hr());
       menu.appendChild(item("Move to Trash", buildDeleteAction(selectedArray, this.desktopUI), "fa-trash-alt"));
@@ -468,7 +637,21 @@ export class DesktopContextMenuManager {
 
       menu.appendChild(item("Add file(s)", () => this.desktopUI.addFiles(), "fa-file-upload"));
       menu.appendChild(item("Open Explorer", () => this.desktopUI.explorerApp.open(), "fa-folder-open"));
-      menu.appendChild(item("Start Recording", () => os.app.launch("cameraApp"), "fa-circle"));
+      const screenshotService = getDesktopScreenshotService();
+      const recordingActive = isScreenshotRecording(screenshotService);
+      menu.appendChild(
+        item(
+          recordingActive ? "Stop recording" : "Start recording",
+          async () => {
+            try {
+              await toggleDesktopRecording();
+            } catch {
+              os.dialog.alert("Recording", "Could not change recording state");
+            }
+          },
+          recordingActive ? "fa-stop" : "fa-circle"
+        )
+      );
       menu.appendChild(
         item(
           "Customize",
@@ -756,7 +939,6 @@ export class DesktopContextMenuManager {
             preset.name,
             async () => {
               await SystemUtilities.setWallpaper(`vanta:${preset.id}`);
-              os.notify.send(`Desktop wallpaper set to "${preset.name}"`, { type: "info" });
             },
             "fa-palette"
           )
@@ -778,7 +960,6 @@ export class DesktopContextMenuManager {
             name,
             async () => {
               await SystemUtilities.setWallpaper(videoUrl);
-              os.notify.send(`Desktop wallpaper set to "${name}"`, { type: "info" });
             },
             "fa-film"
           )
@@ -857,11 +1038,9 @@ export class DesktopContextMenuManager {
         if (isFile) {
           await os.fs.write(["Desktop", name], "");
           await this.desktopUI.createDesktopFileIcon(name);
-          os.notify.send(`File "${name}" created`);
         } else {
           await os.fs.mkdir(["Desktop", name]);
           await this.desktopUI.createFolderIcon(name);
-          os.notify.send(`Folder "${name}" created`);
         }
         icon.remove();
       } catch (err) {
@@ -1015,7 +1194,6 @@ export class DesktopContextMenuManager {
             labelDiv.textContent = newName;
             labelDiv.title = newName;
           }
-          os.notify.send(`Folder renamed to "${newName}"`);
         } else if (icon.classList.contains("desktop-file-icon")) {
           const wasDesktop = currentName.endsWith(".desktop");
           if (wasDesktop && !newName.endsWith(".desktop")) {
@@ -1028,7 +1206,6 @@ export class DesktopContextMenuManager {
             labelDiv.textContent = displayName;
             labelDiv.title = displayName;
           }
-          os.notify.send(`File renamed to "${newName}"`);
         } else if (icon.dataset.app) {
           let newFile = newName;
           if (icon.dataset.fileName?.endsWith(".desktop") && !newFile.endsWith(".desktop")) {
@@ -1042,7 +1219,6 @@ export class DesktopContextMenuManager {
             labelDiv.textContent = newName;
             labelDiv.title = newName;
           }
-          os.notify.send(`Renamed to "${newName}"`);
         }
         const first = icon.firstElementChild;
         if (first && first !== labelDiv && !first.querySelector("i, img, svg") && first.textContent.trim()) {
@@ -1090,7 +1266,6 @@ export class DesktopContextMenuManager {
 
       if (result.success) {
         await this.desktopUI.createDesktopFileIcon(result.name);
-        os.notify.send(`"${result.name}" created`);
       } else {
         throw new Error(result.error || "Failed to create archive");
       }
@@ -1118,7 +1293,6 @@ export class DesktopContextMenuManager {
           const content = await os.fs.read(["Desktop", result.name], { encoding: "binary" });
           const blob = new Blob([content], { type: "application/zip" });
           downloadBlob(blob, result.name);
-          os.notify.send(`"${name}" downloaded as ZIP`);
           await os.fs.delete(["Desktop"], result.name);
         } else {
           throw new Error(result.error || "Failed to create archive");
@@ -1127,7 +1301,6 @@ export class DesktopContextMenuManager {
         const content = await os.fs.read(path, { encoding: "binary" });
         const blob = new Blob([content], { type: "application/octet-stream" });
         downloadBlob(blob, name);
-        os.notify.send(`"${name}" downloaded`);
       }
     } catch (err) {
       console.error("Download error:", err);

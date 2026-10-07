@@ -12,28 +12,16 @@ function toOwnedBytes(data) {
 let sevenZipModule = null;
 async function get7zip() {
   if (!sevenZipModule) {
-    if (__SINGLE_FILE__) {
-      const { default: SevenZip } = await import("7z-wasm");
-      sevenZipModule = await SevenZip({
-        locateFile: (path) => {
-          if (path.endsWith(".wasm")) {
-            return new URL("7z-wasm/7zz.wasm", import.meta.url).href;
-          }
-          return path;
+    const libUrl = getLibraryUrl("7z-wasm");
+    const sevenZipLoader = await import(/* @vite-ignore */ libUrl);
+    sevenZipModule = await sevenZipLoader.default({
+      locateFile: (path, prefix) => {
+        if (path.endsWith(".wasm")) {
+          return libUrl.replace("7zz.es6.js", "7zz.wasm");
         }
-      });
-    } else {
-      const libUrl = getLibraryUrl("7z-wasm");
-      const { default: SevenZip } = await import(/* @vite-ignore */ `${libUrl}`);
-      sevenZipModule = await SevenZip({
-        locateFile: (path, prefix) => {
-          if (path.endsWith(".wasm")) {
-            return libUrl.replace("7zz.es6.js", "7zz.wasm");
-          }
-          return prefix + path;
-        }
-      });
-    }
+        return prefix + path;
+      }
+    });
   }
   return sevenZipModule;
 }

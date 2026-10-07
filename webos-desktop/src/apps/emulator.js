@@ -2,7 +2,7 @@ import "../styles/emulator.css";
 import { CDN_CONFIG } from "../shared/cdnConfig.js";
 
 import { audioMixer } from "../audioMixer.js";
-import { BaseApp, os, $, createElement, ServiceKeys } from "../framework.js";
+import { BaseApp, os, $, createElement, setStyle, ServiceKeys } from "../framework.js";
 import { resolveIconUrl } from "../shared/assetResolver.js";
 import {
   normalizePath,
@@ -11,7 +11,16 @@ import {
   buildErrorHTML,
   setLog,
   renderEmulatorFileList,
-  handleEmulatorUpload
+  handleEmulatorUpload,
+  snapshotKeyForRom,
+  ensureSnapshotDir,
+  loadEmulatorSnapshots,
+  writeEmulatorSnapshot,
+  recordLastPlayedRom,
+  captureIframeScreenshot,
+  exportEmulatorSave,
+  buildEmulatorBridgeScript,
+  pollEmulatorContentSize
 } from "../shared/emulatorBase.js";
 const EMULATOR_ICON = "static/icons/emulator.webp";
 const ROMS_DIR = ["ROMs"];
@@ -99,6 +108,7 @@ export class EmulatorApp extends BaseApp {
 
   constructor(os) {
     super(os);
+    this.gameSessions = new Map();
   }
 
   get explorerApp() {
@@ -309,9 +319,9 @@ export class EmulatorApp extends BaseApp {
       <div id="${winId}-screen" class="emu-window-screen"></div>
     </div>`;
 
-    const inner = win.querySelector(`#${winId}-inner`);
-    const screenDiv = win.querySelector(`#${winId}-screen`);
-    const log = win.querySelector(`#${winId}-log`);
+    const inner = $(`#${winId}-inner`, win);
+    const screenDiv = $(`#${winId}-screen`, win);
+    const log = $(`#${winId}-log`, win);
 
     const showError = (msg) => {
       if (inner)
@@ -325,98 +335,139 @@ export class EmulatorApp extends BaseApp {
 
     try {
       setLog(log, "Detecting system…");
+      const resolved = this.resolveEmulatorCore(fileName, forcedCore);
+      setLog(log, `Starting ${resolved.system} core…`);
 
-      const extension = "." + fileName.toLowerCase().split(".").pop();
-
-      let emulatorSystem, emulatorCore;
-
-      if (forcedCore) {
-        emulatorSystem = forcedCore;
-        emulatorCore = cores[forcedCore]?.[0] ?? forcedCore;
-      } else {
-        let detectedSystem = null;
-
-        for (const [system, extensions] of Object.entries(supportedExtensions)) {
-          if (extensions.includes(extension)) {
-            detectedSystem = system;
-            break;
-          }
-        }
-
-        if (!detectedSystem) {
-          throw new Error(`Unsupported ROM type: ${extension}`);
-        }
-
-        const emulatorSystemMap = {
-          nes: "nes",
-          snes: "snes",
-          gb: "gb",
-          gba: "gba",
-          nds: "nds",
-          n64: "n64",
-          psx: "psx",
-          segaMD: "segaMD",
-          segaMS: "segaMS",
-          segaGG: "segaGG",
-          atari2600: "atari2600",
-          atari7800: "atari7800",
-          vb: "vb"
-        };
-
-        const emulatorCoreMap = {
-          nes: "fceumm",
-          snes: "snes9x",
-          gb: "gambatte",
-          gba: "mgba",
-          nds: "melonds",
-          n64: "mupen64plusnext",
-          psx: "pcsx_rearmed",
-          segaMD: "genesis_plus_gx",
-          segaMS: "genesis_plus_gx",
-          segaGG: "genesis_plus_gx",
-          atari2600: "stella2014",
-          atari7800: "prosystem",
-          vb: "beetle_vb"
-        };
-
-        emulatorSystem = emulatorSystemMap[detectedSystem];
-        emulatorCore = emulatorCoreMap[detectedSystem];
-
-        if (!emulatorSystem || !emulatorCore) {
-          throw new Error(`No emulator configured for ${detectedSystem}`);
-        }
-      }
-
-      setLog(log, `Starting ${emulatorSystem} core…`);
+      const key = snapshotKeyForRom(fileName);
+      await ensureSnapshotDir();
+      const snapshots = await loadEmulatorSnapshots(key);
 
       const romBlob = new Blob([romData]);
       const romUrl = URL.createObjectURL(romBlob);
 
-      inner.style.display = "none";
-      screenDiv.style.display = "block";
+      let saveUrl = null;
+      if (snapshots.saveBlob) {
+        try {
+          saveUrl = URL.createObjectURL(snapshots.saveBlob);
+        } catch {}
+      }
+      if (saveUrl) setLog(log, `Save found, resuming ${displayName}…`);
 
+      if (inner) inner.style.display = "none";
+      if (screenDiv) screenDiv.style.display = "block";
+
+      const saveLine = saveUrl ? `window.EJS_saveUrl = ${JSON.stringify(saveUrl)};` : "";
       const iframeDoc = `<!DOCTYPE html>
 <html><head><style>*{margin:0;padding:0;box-sizing:border-box;}html,body{width:100%;height:100%;background:#000;overflow:hidden;}</style></head>
 <body>
 <div id="game" style="width:100%;height:100%;"></div>
 <script>
 window.EJS_player = "#game";
-window.EJS_core = ${JSON.stringify(emulatorCore)};
+window.EJS_core = ${JSON.stringify(resolved.core)};
 window.EJS_gameUrl = ${JSON.stringify(romUrl)};
+${saveLine}
 window.EJS_pathtodata = ${JSON.stringify(CDN_CONFIG.libraries.emulatorjs.data)};
 window.EJS_startOnLoaded = true;
 window.EJS_color = "var(--brand)";
 <\/script>
+<script>${buildEmulatorBridgeScript()}<\/script>
 <script src=${JSON.stringify(CDN_CONFIG.libraries.emulatorjs.loader)}><\/script>
 </body></html>`;
 
       const iframe = createElement("iframe");
-      iframe.style.cssText = "width:100%;height:100%;border:none;display:block;";
+      setStyle(iframe, { width: "100%", height: "100%", border: "none", display: "block" });
       iframe.setAttribute("allow", "autoplay; fullscreen");
       iframe.srcdoc = iframeDoc;
       screenDiv.appendChild(iframe);
+
+      const state = { winId, key, fileName, displayName, iframe, romUrl, saveUrl, saved: false };
+      this.gameSessions.set(winId, state);
+      win.addEventListener("remove", () => {
+        this.gameSessions.delete(winId);
+        this.persistGameSession(state);
+      });
+      pollEmulatorContentSize(iframe, win, 10);
+      recordLastPlayedRom(fileName);
     } catch (e) {
       showError(`Failed to start: ${e.message}`);
+    }
+  }
+
+  resolveEmulatorCore(fileName, forcedCore = null) {
+    if (forcedCore) {
+      return { system: forcedCore, core: cores[forcedCore]?.[0] ?? forcedCore };
+    }
+    const extension = "." + fileName.toLowerCase().split(".").pop();
+    const emulatorSystemMap = {
+      nes: "nes",
+      snes: "snes",
+      gb: "gb",
+      gba: "gba",
+      nds: "nds",
+      n64: "n64",
+      psx: "psx",
+      segaMD: "segaMD",
+      segaMS: "segaMS",
+      segaGG: "segaGG",
+      atari2600: "atari2600",
+      atari7800: "atari7800",
+      vb: "vb"
+    };
+    const emulatorCoreMap = {
+      nes: "fceumm",
+      snes: "snes9x",
+      gb: "gambatte",
+      gba: "mgba",
+      nds: "melonds",
+      n64: "mupen64plusnext",
+      psx: "pcsx_rearmed",
+      segaMD: "genesis_plus_gx",
+      segaMS: "genesis_plus_gx",
+      segaGG: "genesis_plus_gx",
+      atari2600: "stella2014",
+      atari7800: "prosystem",
+      vb: "beetle_vb"
+    };
+    let detectedSystem = null;
+    for (const [system, extensions] of Object.entries(supportedExtensions)) {
+      if (extensions.includes(extension)) {
+        detectedSystem = system;
+        break;
+      }
+    }
+    if (!detectedSystem) throw new Error(`Unsupported ROM type: ${extension}`);
+    const system = emulatorSystemMap[detectedSystem];
+    const core = emulatorCoreMap[detectedSystem];
+    if (!system || !core) throw new Error(`No emulator configured for ${detectedSystem}`);
+    return { system, core };
+  }
+
+  async persistGameSession(state) {
+    if (!state || state.saved) return;
+    state.saved = true;
+    try {
+      await ensureSnapshotDir();
+      let stored = false;
+      const shot = await captureIframeScreenshot(state.iframe);
+      if (shot && (await writeEmulatorSnapshot(`${state.key}.png`, shot))) stored = true;
+      const save = await exportEmulatorSave(state.iframe);
+      if (save && (await writeEmulatorSnapshot(`${state.key}.sav`, save))) stored = true;
+      if (stored) {
+        recordLastPlayedRom(state.fileName);
+        os.notify.send("Emulator", `Progress saved for ${state.displayName}.`);
+      }
+    } catch {}
+    try {
+      if (state.romUrl) URL.revokeObjectURL(state.romUrl);
+      if (state.saveUrl) URL.revokeObjectURL(state.saveUrl);
+    } catch {}
+  }
+
+  onClose(winId) {
+    const state = this.gameSessions?.get(winId);
+    if (state) {
+      this.gameSessions.delete(winId);
+      this.persistGameSession(state);
     }
   }
 

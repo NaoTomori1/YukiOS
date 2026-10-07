@@ -372,8 +372,7 @@ export class FileSystemManager {
           await this.blobs.initBlobDB();
         }
         await this.ensureDefaults();
-        await this.trash.init();
-        await this.mountManager.init();
+        await Promise.allSettled([this.trash.init(), this.mountManager.init()]);
         this.restoreISOMounts();
       } catch (e) {
         console.error("FS initialization failed:", e);

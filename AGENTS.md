@@ -17,7 +17,9 @@ You are working under webos-desktop directory. when src is mentioned it means we
   `date`, optional `label`, and `sections` array. Each section has an `icon`, `title`, and `items` (array of
   `[icon, title, description]` triples). Descriptions must be under 15 words, active-voice, and punchy. Bad: 'First-time
   setup now includes a dedicated profile step...' Good: 'Choose your nickname and avatar during setup, with a quick
-  final preview!'. No punchlines or separating sentences with "—" or "-"
+  final preview!'. No punchlines or separating sentences with "—" or "-". Never use filler urgency words like
+  "instantly", "immediately", "now", "right away", "in seconds", or similar in news descriptions. Describe what the
+  feature does instead of how fast it feels.
 - Never use the "—" symbol anywhere in code, copy, or UI text. Never split punchlines or descriptions across a "-" or "—" divider. Write complete, direct sentences instead. This applies to all AI-generated text, comments, news entries, feature descriptions, and user-facing strings.
 - When adding a new app, add a `description` field to its manifest entry in `src/registry/AppManifest.js`
 - Always use StorageKeys from `src/StorageKeys.js` for localStorage access. Never hardcode localStorage key strings.
@@ -371,7 +373,7 @@ Session modes: `isActive(id)`, `getActiveModes()`, `enter(id)`, `exit(id)`, `exi
 
 ### Achievements API - `os.achievements`
 
-`trigger(id)`, `unlock(key)`, `incrementAppLaunched()`, `incrementGameLaunched()`, `incrementScreenshotTaken()`,
+`trigger(id)`, `unlock(key)`, `incrementAppLaunched()`, `incrementGameLaunched()`,
 `incrementCalculationDone()`, `incrementPowerProfileChange()`, `incrementSession()`, `incrementWallpaper()`,
 `incrementTerminalCmd()`, `incrementFileUploaded()`, `triggerCommandExecution(command)`
 

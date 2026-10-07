@@ -3,8 +3,9 @@ import logoImg from "./assets/logo.png";
 import versionStr from "../version.txt?raw";
 import "./styles/bootScreen.css";
 import { pickAnimation } from "./bootAnimations.js";
+import gsap from "gsap";
 import { KeybindManager } from "./keybindManager.js";
-import { $, $$, createElement, setStyle, addClass } from "./shared/domUtils.js";
+import { $, $$, bindEvent, createElement, setStyle, addClass } from "./shared/domUtils.js";
 import { parseBool } from "./utils/utils.js";
 import { isFunction } from "./shared/functionUtils.js";
 
@@ -43,7 +44,7 @@ export function showBootScreen() {
         <div class="boot-version">${versionStr}</div>
       </div>
     </div>
-    <div class="boot-skip-hint">Esc · Enter · Space to skip</div>
+    <div class="boot-skip-hint">Click · Esc · Enter · Space to skip</div>
   `;
   document.body.appendChild(div);
 
@@ -55,7 +56,6 @@ export function showBootScreen() {
   const version = $(".boot-version", div);
 
   const startTime = performance.now();
-  const gsap = typeof window !== "undefined" && window.gsap;
 
   const els = { overlay: div, container, logo, letters, version, extEls };
 
@@ -90,18 +90,29 @@ export function showBootScreen() {
 
   const isSkipKey = (e) => e.key === "Escape" || e.key === "Enter" || e.key === " " || e.key === "Spacebar";
 
+  const doSkip = () => {
+    if (hidden) return;
+    hidden = true;
+    document.removeEventListener("keydown", skipHandler, true);
+    div.removeEventListener("click", clickHandler);
+    if (showTl && showTl.kill) showTl.kill();
+    div.remove();
+  };
+
   const skipHandler = (e) => {
     if (!isSkipKey(e) && !KeybindManager.matches(e, "boot.skip")) return;
     e.preventDefault();
     e.stopPropagation();
     e.stopImmediatePropagation();
-    if (hidden) return;
-    hidden = true;
-    document.removeEventListener("keydown", skipHandler, true);
-    if (showTl && showTl.kill) showTl.kill();
-    div.remove();
+    doSkip();
   };
   document.addEventListener("keydown", skipHandler, true);
+
+  const clickHandler = (e) => {
+    if (e.button !== undefined && e.button !== 0) return;
+    doSkip();
+  };
+  bindEvent(div, "click", clickHandler);
 
   return {
     hide: () => {
@@ -111,6 +122,7 @@ export function showBootScreen() {
       return new Promise((resolve) => {
         const doHide = () => {
           document.removeEventListener("keydown", skipHandler, true);
+          div.removeEventListener("click", clickHandler);
           if (hidden) {
             resolve();
             return;
@@ -144,6 +156,72 @@ export function showBootScreen() {
   };
 }
 
+export function runLoopingBootPreview(anim) {
+  const lettersHTML = BRAND.split("")
+    .map((ch) => `<span class="boot-letter">${ch === " " ? "\u00A0" : ch}</span>`)
+    .join("");
+
+  const div = createElement("div", { className: "boot-overlay" });
+  div.innerHTML = `
+    <div class="boot-container">
+      <div class="boot-logo-wrap">
+        <img class="boot-logo" src="${logoImg}" alt="${BRAND}" fetchpriority="high" />
+        <div class="boot-brand">${lettersHTML}</div>
+      </div>
+    </div>
+    <div class="boot-skip-hint">Click or Esc to close preview</div>
+  `;
+  div.style.opacity = "1";
+  document.body.appendChild(div);
+
+  const extEls = anim.createExtra ? anim.createExtra(div) || {} : {};
+  const container = $(".boot-container", div);
+  const logo = $(".boot-logo", div);
+  const letters = $$(".boot-letter", div);
+  const version = createElement("div", { styles: { display: "none" } });
+  div.appendChild(version);
+  const els = { overlay: div, container, logo, letters, version, extEls };
+
+  let stopped = false;
+  let currentTl = null;
+  let timer = 0;
+
+  const play = () => {
+    if (stopped) return;
+    if (gsap && isFunction(gsap.to)) {
+      anim.setup(els);
+      currentTl = gsap.timeline({
+        onComplete: () => {
+          timer = setTimeout(play, 900);
+        }
+      });
+      anim.show(currentTl, els);
+    } else {
+      addClass(div, "boot-visible");
+    }
+  };
+  play();
+
+  const stop = () => {
+    if (stopped) return;
+    stopped = true;
+    clearTimeout(timer);
+    if (currentTl && currentTl.kill) currentTl.kill();
+    document.removeEventListener("keydown", onKey, true);
+    div.remove();
+  };
+  const onKey = (e) => {
+    if (e.key === "Escape" || e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      e.stopPropagation();
+      stop();
+    }
+  };
+  document.addEventListener("keydown", onKey, true);
+  bindEvent(div, "click", stop);
+  return stop;
+}
+
 export function runBootPreview(anim, onDone) {
   const lettersHTML = BRAND.split("")
     .map((ch) => `<span class="boot-letter">${ch === " " ? "\u00A0" : ch}</span>`)
@@ -168,7 +246,6 @@ export function runBootPreview(anim, onDone) {
   div.appendChild(version);
   const els = { overlay: div, container, logo, letters, version, extEls };
 
-  const gsap = typeof window !== "undefined" && window.gsap;
   if (gsap && isFunction(gsap.to)) {
     anim.setup(els);
     const showTl = gsap.timeline();

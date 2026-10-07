@@ -72,7 +72,7 @@
 
 .explorer-search-input {
   margin-left: auto;
-  padding: 4px 10px;
+  padding: 4px 36px 4px 10px;
   border-radius: 5px;
   border: 1px solid var(--glass-border);
   background: transparent;
@@ -93,7 +93,7 @@
 .explorer-path-wrap .explorer-win-path {
   flex: 1;
   min-width: 0;
-  padding-right: 24px;
+  padding-right: 36px;
 }
 
 .explorer-reload-icon {
@@ -608,9 +608,33 @@ body.pane-resizing {
 }
 
 .explorer-main.explorer-drop-active {
-  background: rgba(79, 158, 255, 0.06);
-  outline: 2px dashed var(--brand);
-  outline-offset: -4px;
+  background: color-mix(in srgb, var(--brand) 8%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--brand) 40%, transparent);
+  transition:
+    background 0.15s,
+    box-shadow 0.15s;
+}
+
+.file-item.explorer-drop-target {
+  background: color-mix(in srgb, var(--brand) 18%, transparent);
+  outline: 1px solid color-mix(in srgb, var(--brand) 55%, transparent);
+  outline-offset: -1px;
+  border-radius: 8px;
+  box-shadow: 0 0 12px color-mix(in srgb, var(--brand) 25%, transparent);
+  transition:
+    background 0.15s,
+    outline-color 0.15s,
+    box-shadow 0.15s;
+}
+
+.nav-item.explorer-drop-target {
+  background: color-mix(in srgb, var(--brand) 18%, transparent);
+  outline: 1px solid color-mix(in srgb, var(--brand) 55%, transparent);
+  outline-offset: -1px;
+  border-radius: 8px;
+  transition:
+    background 0.15s,
+    outline-color 0.15s;
 }
 
 .explorer-main::-webkit-scrollbar {
@@ -823,8 +847,8 @@ body.pane-resizing {
 .fd-dialog-body {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  margin-top: 8px;
+  gap: 16px;
+  margin-top: 12px;
 }
 
 .fd-field {
@@ -877,16 +901,22 @@ body.pane-resizing {
   font-size: 12px;
   color: var(--error);
   margin-top: 6px;
+  user-select: text;
+  -webkit-user-select: text;
+  cursor: text;
 }
 
 .fd-dialog-actions {
-  margin-top: 16px;
+  margin-top: 24px;
 }
 
 .fd-dialog-message {
-  font-size: 13px;
+  font-size: 14px;
   color: var(--text-secondary);
-  line-height: 1.5;
+  line-height: 1.6;
+  user-select: text;
+  -webkit-user-select: text;
+  cursor: text;
 }
 
 .fd-btn-confirm--danger {
@@ -1097,48 +1127,12 @@ body.pane-resizing {
 .overlay-dialog {
   background: var(--bg-secondary);
   border: 1px solid var(--glass-border);
-  border-radius: 10px;
-  padding: 24px 28px;
-  min-width: 340px;
-  max-width: 420px;
+  border-radius: 14px;
+  padding: 32px 36px;
+  min-width: 440px;
+  max-width: 540px;
   box-shadow: var(--shadow-lg);
   color: var(--text-primary);
-}
-
-.explorer-drag-ghost {
-  position: fixed;
-  pointer-events: none;
-  z-index: 100;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  background: var(--bg-secondary);
-  border: 1.5px solid var(--brand);
-  border-radius: 10px;
-  padding: 8px 12px;
-  gap: 4px;
-  backdrop-filter: blur(8px);
-  box-shadow: var(--shadow-md);
-  min-width: 80px;
-}
-
-.explorer-file-label {
-  color: var(--text-primary);
-  font-size: 11px;
-  text-align: center;
-  max-width: 100px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.explorer-ghost-icon {
-  width: 40px;
-  height: 40px;
-  object-fit: cover;
-  border-radius: 6px;
-  opacity: 0.9;
 }
 
 .overlay {
@@ -1266,11 +1260,17 @@ body.pane-resizing {
   color: var(--text-secondary);
   margin-bottom: 18px;
   line-height: var(--lh-body);
+  user-select: text;
+  -webkit-user-select: text;
+  cursor: text;
 }
 
 .conflict-file {
   color: var(--brand);
   font-weight: 500;
+  user-select: text;
+  -webkit-user-select: text;
+  cursor: text;
 }
 
 .conflict-actions {
@@ -1328,28 +1328,31 @@ body.pane-resizing {
 .fd-dialog {
   background: var(--bg-secondary);
   border: 1px solid var(--glass-border);
-  border-radius: 10px;
+  border-radius: 14px;
   box-shadow: var(--shadow-depth);
-  padding: 20px 24px 16px;
-  min-width: 300px;
-  max-width: 400px;
-  width: 90%;
+  padding: 28px 32px 24px;
+  min-width: 440px;
+  max-width: 540px;
+  width: 92%;
   animation: fdDialogIn 0.15s ease;
   color: var(--text-primary);
 }
 
 .fd-dialog-title {
-  font-size: 13px;
+  font-size: 17px;
   font-weight: 600;
-  margin-bottom: 14px;
+  margin-bottom: 18px;
   color: var(--text-primary);
 }
 
 .fd-dialog-label {
-  font-size: 13px;
+  font-size: 14px;
   color: var(--text-secondary);
-  margin-bottom: 6px;
+  margin-bottom: 8px;
   line-height: 1.5;
+  user-select: text;
+  -webkit-user-select: text;
+  cursor: text;
 }
 
 .fd-dialog-input {
@@ -1357,10 +1360,10 @@ body.pane-resizing {
   box-sizing: border-box;
   background: var(--glass);
   border: 1px solid var(--glass-border);
-  border-radius: 6px;
+  border-radius: 8px;
   color: var(--text-primary);
-  font-size: 13px;
-  padding: 7px 10px;
+  font-size: 14px;
+  padding: 11px 14px;
   outline: none;
   transition: border-color var(--transition-fast);
 }
@@ -1372,15 +1375,15 @@ body.pane-resizing {
 .fd-dialog-actions {
   display: flex;
   justify-content: flex-end;
-  gap: 8px;
-  margin-top: 16px;
+  gap: 10px;
+  margin-top: 24px;
 }
 
 .fd-btn {
-  font-size: 12px;
+  font-size: 14px;
   cursor: pointer;
-  border-radius: 5px;
-  padding: 6px 16px;
+  border-radius: 8px;
+  padding: 10px 22px;
   border: none;
   transition:
     background 0.12s,
@@ -1425,7 +1428,10 @@ body.pane-resizing {
   display: none;
   font-size: 13px;
   color: var(--error);
-  margin-top: 6px;
+  margin-top: 8px;
+  user-select: text;
+  -webkit-user-select: text;
+  cursor: text;
 }
 
 .fd-dialog-select {
@@ -1433,8 +1439,9 @@ body.pane-resizing {
   background: var(--bg-elev-1);
   color: var(--text-primary);
   border: 1px solid var(--glass-border);
-  padding: 5px;
-  border-radius: 6px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 14px;
 }
 
 .props-row {
@@ -1643,4 +1650,422 @@ html[data-theme-mode="light"] .explorer-win-path:focus {
   background: #26a0da;
   transition: width 0.3s ease;
   min-width: 0;
+}
+
+.explorer-container {
+  position: relative;
+}
+
+.explorer-tab-bar {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 8px 0;
+  background: var(--glass);
+  border-bottom: 1px solid var(--glass-border);
+  overflow-x: auto;
+  overflow-y: hidden;
+  flex-shrink: 0;
+  scrollbar-width: thin;
+}
+
+.explorer-tab-bar > .explorer-tab {
+  position: relative;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  max-width: 180px;
+  padding: 6px 10px;
+  font-size: 13px;
+  color: var(--text-muted);
+  background: color-mix(in srgb, var(--brand) 6%, transparent);
+  border: 1px solid transparent;
+  border-bottom: none;
+  border-radius: 8px 8px 0 0;
+  cursor: pointer;
+  touch-action: none;
+  flex-shrink: 0;
+  margin-bottom: 0;
+  transition:
+    background 0.15s,
+    color 0.15s,
+    border-color 0.15s;
+}
+
+.explorer-tab-bar > .explorer-tab:hover {
+  background: var(--glass-hover);
+  color: var(--text-primary);
+  transform: none;
+}
+
+.explorer-tab-bar > .explorer-tab.active {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border-color: var(--glass-border);
+  border-bottom-color: var(--bg-secondary);
+  border-radius: 8px 8px 0 0;
+  margin-bottom: -1px;
+  padding-bottom: 7px;
+}
+
+.explorer-tab-bar > .explorer-tab > .explorer-tab-icon {
+  width: 14px;
+  height: 14px;
+  font-size: 14px;
+  line-height: 14px;
+  text-align: center;
+  flex-shrink: 0;
+  opacity: 0.55;
+  transition:
+    opacity 0.15s,
+    color 0.15s;
+}
+
+.explorer-tab-bar > .explorer-tab:hover > .explorer-tab-icon {
+  opacity: 0.85;
+}
+
+.explorer-tab-bar > .explorer-tab.active > .explorer-tab-icon {
+  opacity: 1;
+  color: var(--brand);
+}
+
+.explorer-tab-bar > .explorer-tab > .explorer-tab-label {
+  flex: 1;
+  min-width: 0;
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.explorer-tab-bar > .explorer-tab > .explorer-tab-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 0;
+  height: 18px;
+  margin: 0;
+  margin-right: -4px;
+  padding: 0;
+  font-size: 12px;
+  line-height: 1;
+  overflow: hidden;
+  opacity: 0;
+  border-radius: 6px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition:
+    opacity 0.15s,
+    color 0.15s,
+    background 0.15s,
+    width 0.15s;
+}
+
+.explorer-tab-bar > .explorer-tab:hover > .explorer-tab-close,
+.explorer-tab-bar > .explorer-tab.active > .explorer-tab-close {
+  width: 18px;
+  margin-right: 0;
+  opacity: 0.65;
+}
+
+.explorer-tab-bar > .explorer-tab > .explorer-tab-close:hover {
+  opacity: 1;
+  color: var(--error);
+  background: var(--error-bg);
+}
+
+.explorer-tab-bar > button.explorer-tab-new {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  margin-bottom: 2px;
+  margin-left: 2px;
+  color: var(--text-secondary);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 50%;
+  font-size: 12px;
+  cursor: pointer;
+  flex-shrink: 0;
+  align-self: center;
+  transition:
+    background 0.15s,
+    color 0.15s,
+    border-color 0.15s;
+}
+
+.explorer-tab-bar > button.explorer-tab-new:hover {
+  background: color-mix(in srgb, var(--brand) 14%, transparent);
+  color: var(--brand);
+  border-color: color-mix(in srgb, var(--brand) 40%, transparent);
+  transform: none;
+}
+
+.explorer-split-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 26px;
+  color: var(--text-secondary);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  font-size: 12px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition:
+    background 0.15s,
+    color 0.15s,
+    border-color 0.15s,
+    box-shadow 0.15s;
+}
+
+.explorer-split-btn:hover {
+  background: var(--glass-hover);
+  color: var(--text-primary);
+  border-color: var(--glass-border);
+}
+
+.explorer-split-btn.active {
+  opacity: 1;
+  color: var(--brand);
+  background: color-mix(in srgb, var(--brand) 14%, transparent);
+  border-color: color-mix(in srgb, var(--brand) 40%, transparent);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--brand) 25%, transparent);
+}
+
+.explorer-container > .explorer-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.explorer-container.split-on .explorer-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.explorer-split-divider {
+  flex: none;
+  width: 7px;
+  min-width: 7px;
+  background: transparent;
+  cursor: ew-resize;
+  position: relative;
+  align-self: stretch;
+  border: none;
+  padding: 0;
+}
+
+.explorer-split-divider::after {
+  content: "";
+  position: absolute;
+  top: 14px;
+  bottom: 14px;
+  left: 50%;
+  width: 3px;
+  border-radius: 3px;
+  transform: translateX(-50%);
+  background: var(--glass-border);
+  transition:
+    background 0.15s,
+    box-shadow 0.15s;
+}
+
+.explorer-split-divider:hover::after {
+  background: color-mix(in srgb, var(--brand) 70%, transparent);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--brand) 45%, transparent);
+}
+
+.explorer-container > .explorer-split-pane {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  background: var(--bg-secondary);
+  border-left: 1px solid var(--glass-border);
+}
+
+.explorer-split-pane > .explorer-split-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 34px;
+  padding: 4px 8px;
+  background: var(--glass);
+  border-bottom: 1px solid var(--glass-border);
+  font-size: 12px;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+.explorer-split-header > .explorer-split-back,
+.explorer-split-header > .explorer-split-up {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 26px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition:
+    background 0.15s,
+    color 0.15s,
+    border-color 0.15s;
+}
+
+.explorer-split-header > .explorer-split-back:hover,
+.explorer-split-header > .explorer-split-up:hover {
+  background: var(--glass-hover);
+  color: var(--text-primary);
+  border-color: var(--glass-border);
+}
+
+.explorer-split-header > span.explorer-split-path {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.explorer-dock-zone {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 50%;
+  z-index: 60;
+  opacity: 0;
+  pointer-events: none;
+  background: color-mix(in srgb, var(--brand) 14%, transparent);
+  border: 1px dashed color-mix(in srgb, var(--brand) 45%, transparent);
+  transition:
+    opacity 0.15s,
+    background 0.15s,
+    border-color 0.15s;
+}
+
+.explorer-dock-zone[id$="dock-left"] {
+  left: 0;
+  right: auto;
+}
+
+.explorer-dock-zone[id$="dock-right"] {
+  right: 0;
+  left: auto;
+}
+
+.explorer-window.tab-dragging .explorer-dock-zone {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.explorer-dock-zone.active {
+  background: color-mix(in srgb, var(--brand) 28%, transparent);
+  border-color: var(--brand);
+  border-style: solid;
+}
+
+span.explorer-status-selected {
+  user-select: text;
+  -webkit-user-select: text;
+  cursor: text;
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+span.explorer-status-selected.selectable {
+  user-select: text;
+  -webkit-user-select: text;
+  cursor: text;
+}
+.window.explorer-window .window-header.explorer-tab-header {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-end;
+  gap: 8px;
+  padding: 4px 8px 0 8px;
+  height: auto;
+  min-height: 38px;
+  max-height: none;
+  overflow: hidden;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--glass-border);
+  cursor: grab;
+}
+.window.explorer-window .window-header.explorer-tab-header:active {
+  cursor: grabbing;
+}
+.window.explorer-window .explorer-tab-bar--header {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  background: transparent;
+  border: none;
+  border-bottom: none;
+  padding: 4px 4px 0;
+  margin: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+.window.explorer-window .explorer-tab-bar--header > .explorer-tab {
+  max-width: 160px;
+  padding: 6px 10px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  background: transparent;
+  border: 1px solid transparent;
+  border-bottom: none;
+}
+.window.explorer-window .explorer-tab-bar--header > .explorer-tab:hover {
+  background: var(--glass);
+  color: var(--text-primary);
+  transform: none;
+}
+.window.explorer-window .explorer-tab-bar--header > .explorer-tab.active {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border-color: var(--glass-border);
+  border-bottom-color: var(--bg-secondary);
+}
+.window.explorer-window .explorer-tab-bar--header > .explorer-tab > .explorer-tab-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+  color: inherit;
+}
+.window.explorer-window .explorer-tab-bar--header > .explorer-tab > .explorer-tab-icon {
+  color: var(--text-secondary);
+}
+.window.explorer-window .explorer-tab-bar--header > .explorer-tab.active > .explorer-tab-icon {
+  color: var(--brand);
+}
+.window.explorer-window .explorer-tab-bar--header > .explorer-tab > .explorer-tab-close:hover {
+  color: var(--error);
+  background: color-mix(in srgb, var(--error) 14%, transparent);
+}
+.window.explorer-window .window-header.explorer-tab-header > .window-controls {
+  flex-shrink: 0;
+  align-self: center;
+  display: flex;
+  align-items: center;
+  padding-bottom: 4px;
 }

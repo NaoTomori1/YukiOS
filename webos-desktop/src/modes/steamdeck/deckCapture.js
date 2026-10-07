@@ -59,7 +59,6 @@ export const deckCapture = {
       const source = getActiveSourceName();
       await os.fs.writeBinaryFile(SCREENSHOT_DIR, name, blob, "image", "@content");
       await os.fs.writeMeta(SCREENSHOT_DIR, name, { source, capturedAt: Date.now() });
-      os.app.incrementScreenshotTaken();
       os.notify.send("Screenshot", `Captured ${name} from ${source}`);
       os.events.emit(BusEvents.SCREENSHOT_CAPTURED, {});
     } catch {

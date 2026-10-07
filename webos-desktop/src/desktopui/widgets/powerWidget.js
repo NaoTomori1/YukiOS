@@ -1,4 +1,5 @@
 import { WidgetBase } from "../widgetManager.js";
+import { createAdaptiveInterval } from "../../shared/pollThrottle.js";
 import { $ } from "../../shared/domUtils.js";
 
 export class PowerWidget extends WidgetBase {
@@ -20,7 +21,7 @@ export class PowerWidget extends WidgetBase {
     `;
 
     this.update();
-    this.interval = setInterval(() => this.update(), 5000);
+    this.stopPoll = createAdaptiveInterval(() => this.update(), 5000, 30000);
   }
 
   async update() {
@@ -62,6 +63,7 @@ export class PowerWidget extends WidgetBase {
   }
 
   destroy() {
+    if (this.stopPoll) this.stopPoll();
     if (this.interval) clearInterval(this.interval);
     super.destroy();
   }

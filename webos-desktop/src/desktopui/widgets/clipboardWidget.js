@@ -1,6 +1,7 @@
 import { WidgetBase } from "../widgetManager.js";
 import { StorageKeys, os } from "../../framework.js";
 import { escapeHtml } from "../../utils/utils.js";
+import { createAdaptiveInterval } from "../../shared/pollThrottle.js";
 
 export class ClipboardWidget extends WidgetBase {
   constructor(manager, id) {
@@ -19,7 +20,7 @@ export class ClipboardWidget extends WidgetBase {
     `;
 
     this.refresh(contentEl);
-    this.interval = setInterval(() => this.refresh(contentEl), 2000);
+    this.stopPoll = createAdaptiveInterval(() => this.refresh(contentEl), 2000, 10000);
   }
 
   refresh(ce) {
@@ -46,6 +47,7 @@ export class ClipboardWidget extends WidgetBase {
   }
 
   destroy() {
+    if (this.stopPoll) this.stopPoll();
     if (this.interval) clearInterval(this.interval);
     super.destroy();
   }

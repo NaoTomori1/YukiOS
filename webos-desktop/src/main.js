@@ -42,6 +42,7 @@ import { ServiceKeys } from "./ServiceKeys.js";
 import { showBootScreen } from "./bootScreen.js";
 import { deckCapture } from "./modes/steamdeck/deckCapture.js";
 import { initPopunder } from "./ads.js";
+import { tabCloak } from "./stealth/tabCloak.js";
 import { bus } from "./core/EventBus.js";
 import { trayManager } from "./tray/tray.js";
 import { MacControlCenter } from "./modes/macos/ControlCenter.js";
@@ -144,6 +145,10 @@ os.app.register("sessionManager", sessionManager);
 const commandPalette = new CommandPalette(os);
 os.app.register("commandPalette", commandPalette);
 
+try {
+  tabCloak().init();
+} catch {}
+
 const menuBar = new MenuBarManager(os);
 
 SystemUtilities.startClock();
@@ -186,7 +191,6 @@ async function start() {
     }
   }
 
-  await clipboardManager.init();
   setTimeout(() => {
     initializeMirrors(appMap);
     try {
@@ -200,7 +204,7 @@ async function start() {
   } catch {}
 
   setDesktopUI(desktopUI);
-  await SystemUtilities.loadWallpaper();
+  await Promise.allSettled([clipboardManager.init(), SystemUtilities.loadWallpaper()]);
   windowManager.restorePinnedItems();
   desktopPeekManager.setupPeekButton();
 

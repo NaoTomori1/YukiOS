@@ -11,11 +11,14 @@
   <link
     href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap"
     rel="stylesheet" media="print" onload="this.media='all'" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" media="print" onload="this.media='all'" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" media="print"
+    onload="this.media='all'" />
   <link rel="preload" as="fetch" crossorigin href="/s/set.wasm" />
   <link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/@mercuryworkshop/epoxy-transport@3.0.1/dist/index.mjs" />
-  <link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/@mercuryworkshop/libcurl-transport@2.0.5/dist/index.mjs" />
+  <link rel="modulepreload"
+    href="https://cdn.jsdelivr.net/npm/@mercuryworkshop/libcurl-transport@2.0.5/dist/index.mjs" />
   <script src="/s/set.js" defer></script>
+  <script src="/s/adblock.js" defer></script>
   <script src="/s/controller.api.js" defer></script>
   <script type="module">
     import { default as EpoxyTransport } from "https://cdn.jsdelivr.net/npm/@mercuryworkshop/epoxy-transport@3.0.1/dist/index.mjs";
@@ -521,6 +524,32 @@
       box-shadow: inset 0 -3px 0 #3b82f6;
     }
 
+    .tab.split-hidden {
+      display: none;
+    }
+
+    .tab.split-tab {
+      width: 280px;
+    }
+
+    .tab.split-tab .tab-split-separator {
+      color: var(--text-muted);
+      font-size: 12px;
+      margin: 0 4px;
+      flex-shrink: 0;
+    }
+
+    .tab.split-tab .tab-secondary-title {
+      flex: 1;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      letter-spacing: -0.01em;
+    }
+
     .tab.dragging {
       opacity: 0.5;
       border-style: dashed;
@@ -675,7 +704,8 @@
       left: 12px;
       color: var(--text-dim);
       font-size: 11px;
-      pointer-events: none;
+      pointer-events: auto;
+      cursor: pointer;
       z-index: 1;
     }
 
@@ -830,9 +860,136 @@
       box-shadow: 0 0 0 1px var(--accent-glow);
     }
 
-    .main-menu-wrapper {
+    .adblock-popup-anchor {
       position: relative;
       display: flex;
+    }
+
+    .adblock-popup {
+      display: none;
+      position: absolute;
+      top: calc(100% + 6px);
+      right: 0;
+      width: 240px;
+      background: var(--surface);
+      border: 1px solid var(--glass-border);
+      border-radius: 12px;
+      box-shadow: 0 12px 36px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+      z-index: 999;
+      overflow: hidden;
+      animation: menuDropIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .adblock-popup.open {
+      display: block;
+    }
+
+    .adblock-popup-body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px 20px 16px;
+      gap: 14px;
+    }
+
+    .adblock-power-btn {
+      width: 72px;
+      height: 72px;
+      font-size: 28px;
+      background: rgba(34, 197, 94, 0.1);
+      border: 2px solid rgba(34, 197, 94, 0.3);
+      cursor: pointer;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--success);
+      transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .adblock-power-btn:hover {
+      transform: scale(1.06);
+    }
+
+    .adblock-power-btn:active {
+      transform: scale(0.96);
+    }
+
+    .adblock-page-row,
+    .adblock-total-row {
+      display: flex;
+      width: 100%;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13px;
+    }
+
+    .adblock-page-label,
+    .adblock-total-label {
+      color: var(--text-muted);
+    }
+
+    .adblock-page-num {
+      font-weight: 700;
+      font-size: 15px;
+      color: var(--text);
+      font-family: var(--font-mono);
+    }
+
+    .adblock-total-num {
+      font-weight: 600;
+      font-size: 13px;
+      color: var(--text);
+      font-family: var(--font-mono);
+    }
+
+    .adblock-total-pct {
+      font-size: 11px;
+      color: var(--text-dim);
+      margin-left: 4px;
+      font-family: var(--font-mono);
+    }
+
+    .adblock-popup-actions {
+      display: flex;
+      width: 100%;
+      gap: 8px;
+    }
+
+    .adblock-action-btn {
+      flex: 1;
+      height: 32px;
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm, 6px);
+      color: var(--text-muted);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+      font-family: var(--font-sans);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+    }
+
+    .adblock-action-btn:hover {
+      background: var(--surface-hover);
+      color: var(--text);
+      border-color: var(--border-light);
+    }
+
+    .adblock-popup-footer {
+      padding: 8px 20px;
+      border-top: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .adblock-footer-text {
+      font-size: 11px;
+      color: var(--text-dim);
+      font-family: var(--font-mono);
     }
 
     .main-menu-wrapper .browser-dropdown {
@@ -1480,24 +1637,29 @@
     }
 
     .yuki-settings-nav {
-      width: 190px;
+      width: 210px;
       flex-shrink: 0;
       background: var(--surface);
       border-right: 1px solid var(--border);
       overflow-y: auto;
-      padding: 8px 0;
+      padding: 12px 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      height: 100%;
     }
 
     .yuki-settings-nav-item {
       display: flex;
       align-items: center;
       gap: 10px;
-      padding: 8px 16px;
+      padding: 8px 12px;
       font-size: 13px;
+      font-weight: 500;
       color: var(--text-dim);
       cursor: pointer;
-      border-left: 2px solid transparent;
-      transition: all 0.12s;
+      border-radius: var(--radius-sm, 6px);
+      transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
       text-decoration: none;
     }
 
@@ -1507,21 +1669,23 @@
     }
 
     .yuki-settings-nav-item.selected {
-      background: var(--brand-dim, rgba(130, 87, 229, 0.12));
-      color: var(--brand);
-      border-left-color: var(--brand);
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text);
+      font-weight: 600;
     }
 
     .yuki-settings-nav-item i {
       width: 18px;
       text-align: center;
       font-size: 14px;
+      opacity: 0.75;
     }
 
     .yuki-settings-content {
       flex: 1;
       overflow-y: auto;
-      padding: 16px 20px;
+      padding: 20px 24px;
+      max-width: 800px;
     }
 
     .yuki-settings-section {
@@ -2369,24 +2533,21 @@
     .settings-section {
       background: rgba(255, 255, 255, 0.02);
       border: 1px solid var(--border);
-      border-left: 2px solid rgba(255, 255, 255, 0.08);
       border-radius: var(--radius-md);
-      padding: 20px 24px;
+      padding: 16px 20px;
       margin-bottom: 16px;
-      transition:
-        border-color 0.15s,
-        transform 0.2s;
+      transition: border-color 0.15s;
       animation: fadeSlideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
     }
 
     .settings-section:hover {
-      border-left-color: rgba(255, 255, 255, 0.18);
+      border-color: var(--border-light);
     }
 
     .settings-section-title {
-      font-size: 14px;
+      font-size: 13px;
       text-transform: uppercase;
-      letter-spacing: 0.1em;
+      letter-spacing: 0.06em;
       color: var(--text-muted);
       font-weight: 600;
       margin-bottom: 14px;
@@ -2394,11 +2555,13 @@
       display: flex;
       align-items: center;
       gap: 8px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
     }
 
     .settings-section-title i {
-      font-size: 12px;
-      opacity: 0.6;
+      font-size: 13px;
+      opacity: 0.8;
     }
 
     .settings-section:last-child {
@@ -2408,20 +2571,24 @@
     .settings-option-group {
       display: flex;
       flex-wrap: wrap;
-      gap: 10px;
+      gap: 8px;
     }
 
     .settings-option-pill {
-      padding: 9px 18px;
+      padding: 6px 14px;
+      height: 32px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
       background: var(--bg);
       border: 1px solid var(--border);
-      border-radius: 40px;
+      border-radius: 20px;
       color: var(--text-muted);
-      font-size: 17px;
+      font-size: 13px;
+      font-weight: 500;
       cursor: pointer;
       transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
       font-family: var(--font-sans);
-      letter-spacing: -0.01em;
     }
 
     .settings-option-pill:hover {
@@ -2430,21 +2597,29 @@
     }
 
     .settings-option-pill:active {
-      animation: btnBounce 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      transform: scale(0.97);
     }
 
     .settings-option-pill.active {
       border-color: rgba(255, 255, 255, 0.25);
-      background: rgba(255, 255, 255, 0.06);
+      background: rgba(255, 255, 255, 0.08);
       color: var(--text);
+      font-weight: 600;
     }
 
     .settings-field-row {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 14px;
-      min-height: 42px;
+      gap: 20px;
+      padding: 14px 0;
+      min-height: 48px;
+      box-sizing: border-box;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    }
+
+    .settings-field-row:last-child {
+      border-bottom: none;
     }
 
     .settings-layout-group {
@@ -2600,10 +2775,13 @@
     }
 
     .settings-field-label {
-      font-size: 18px;
+      font-size: 14px;
       font-weight: 500;
       color: var(--text);
       flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
 
     .settings-field-control {
@@ -2614,17 +2792,17 @@
     }
 
     .settings-value-text {
-      font-size: 18px;
+      font-size: 13px;
       font-family: var(--font-mono);
       color: var(--text-muted);
-      min-width: 60px;
+      min-width: 48px;
       text-align: right;
     }
 
     .toggle-switch {
       position: relative;
-      width: 58px;
-      height: 30px;
+      width: 38px;
+      height: 20px;
       cursor: pointer;
       flex-shrink: 0;
     }
@@ -2641,50 +2819,52 @@
       inset: 0;
       background: var(--surface-active);
       border: 1px solid var(--border);
-      border-radius: 15px;
-      transition: 0.2s;
+      border-radius: 12px;
+      transition: 0.2s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
     .toggle-slider::after {
       content: "";
       position: absolute;
-      width: 20px;
-      height: 20px;
-      left: 3px;
-      bottom: 3px;
+      width: 14px;
+      height: 14px;
+      left: 2px;
+      bottom: 2px;
       background: var(--text-dim);
-      border-radius: 25px;
-      transition: 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      border-radius: 50%;
+      transition: 0.2s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
     .toggle-switch input:checked+.toggle-slider {
-      background: rgba(255, 255, 255, 0.1);
+      background: rgba(255, 255, 255, 0.12);
       border-color: var(--border-light);
     }
 
     .toggle-switch input:checked+.toggle-slider::after {
-      left: 30px;
+      left: 20px;
       background: var(--text);
     }
 
     .toggle-switch:active .toggle-slider::after {
-      transform: scale(0.85);
-    }
-
-    .toggle-switch input:checked:active+.toggle-slider::after {
-      transform: scale(1.25);
+      transform: scale(0.9);
     }
 
     .settings-action-btn {
-      padding: 7px 18px;
+      padding: 0 14px;
+      height: 32px;
       background: transparent;
       border: 1px solid var(--border);
-      border-radius: 8px;
+      border-radius: var(--radius-sm, 6px);
       color: var(--text-muted);
-      font-size: 16px;
+      font-size: 13px;
+      font-weight: 500;
       cursor: pointer;
       transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
       font-family: var(--font-sans);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
     }
 
     .settings-action-btn:hover {
@@ -2694,7 +2874,7 @@
     }
 
     .settings-action-btn:active {
-      animation: btnBounce 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      transform: scale(0.97);
     }
 
     .settings-action-btn.danger {
@@ -2709,13 +2889,13 @@
 
     .settings-input {
       flex: 1;
-      height: 48px;
-      padding: 0 16px;
+      height: 34px;
+      padding: 0 12px;
       background: var(--bg);
       border: 1px solid var(--border);
-      border-radius: 8px;
+      border-radius: var(--radius-sm, 6px);
       color: var(--text);
-      font-size: 17px;
+      font-size: 13px;
       font-family: var(--font-mono);
       outline: none;
       transition: border-color 0.15s;
@@ -2730,18 +2910,18 @@
     }
 
     .settings-icon-btn {
-      height: 48px;
-      width: 48px;
+      height: 34px;
+      width: 34px;
       background: var(--surface);
       border: 1px solid var(--border);
-      border-radius: 8px;
+      border-radius: var(--radius-sm, 6px);
       color: var(--text-muted);
       cursor: pointer;
       transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 17px;
+      font-size: 13px;
       flex-shrink: 0;
     }
 
@@ -2756,11 +2936,10 @@
     }
 
     .settings-server-hint {
-      font-size: 14px;
+      font-size: 12px;
       font-family: var(--font-mono);
       color: var(--text-dim);
-      margin-top: 14px;
-      letter-spacing: -0.01em;
+      margin-top: 6px;
     }
 
     .flex {
@@ -3411,6 +3590,37 @@
     };
     const DEFAULT_TRANSPORT = "epoxy";
 
+    const DIRECT_LOAD_DOMAINS = ["reeyuki.github.io", "reeyuki.neocities.org"];
+    const DEFAULT_BOOKMARK_URL = "https://reeyuki.github.io/YukiOS-AlphaHistorical/desktop/";
+    const DEFAULT_BOOKMARK_NAME = "YukiOS Alpha Historical";
+
+    function getDirectLoadHostname(url) {
+      try {
+        return new URL(url).hostname.toLowerCase();
+      } catch {
+        return "";
+      }
+    }
+
+    function isDirectLoadUrl(url) {
+      const host = getDirectLoadHostname(url);
+      if (!host) return false;
+      return DIRECT_LOAD_DOMAINS.some((domain) => host === domain || host.endsWith("." + domain));
+    }
+
+    function seedDefaultBookmarkFirstRun() {
+      if (isIncognito || isEmbedded) return false;
+      try {
+        if (localStorage.getItem(STORAGE_KEYS.BOOKMARKS) !== null) return false;
+      } catch {
+        return false;
+      }
+      if (!Array.isArray(bookmarks)) bookmarks = [];
+      if (bookmarks.some((b) => b && b.url === DEFAULT_BOOKMARK_URL)) return false;
+      bookmarks.push({ name: DEFAULT_BOOKMARK_NAME, url: DEFAULT_BOOKMARK_URL });
+      return true;
+    }
+
     let hostWispUrl = null;
     let hostTransport = null;
 
@@ -3438,6 +3648,22 @@
 
     let scramjet;
     let tabs = [];
+    let pendingFallbackTabs = [];
+    let wispWaitTimedOut = false;
+    let proxyInitRunning = false;
+    window.__onWispReady = () => {
+      const queued = pendingFallbackTabs.slice();
+      pendingFallbackTabs.length = 0;
+      queued.forEach((pendingTab) => {
+        if (pendingTab.pending && scramjet) {
+          try { pendingTab.frame.element.remove(); } catch { }
+          const idx = tabs.indexOf(pendingTab);
+          if (idx >= 0) tabs.splice(idx, 1);
+          pendingTab.pending = false;
+          createTab(pendingTab.fallbackMakeActive, { url: pendingTab.queuedUrl || pendingTab.fallbackOpts.url });
+        }
+      });
+    };
     let activeTabId = null;
     let nextTabId = 1;
     let _newTabId = null;
@@ -3458,7 +3684,6 @@
     let searchSuggestionsEnabled = true;
     let clearOnExit = false;
     let defaultZoom = 1.0;
-    let tabBehaviorNext = true;
     let autoplayBlock = false;
     let searchRegion = "";
     let torEnabled = false;
@@ -3475,7 +3700,7 @@
       var bytes = Uint8Array.from(bin, function (c) { return c.charCodeAt(0); });
       return new TextDecoder().decode(bytes);
     }
-    let bundledNewTabHtml = decodeUtf8Base64("PCFkb2N0eXBlIGh0bWw+CjxodG1sIGxhbmc9ImVuIj4KICA8aGVhZD4KICAgIDxtZXRhIGNoYXJzZXQ9IlVURi04IiAvPgogICAgPHRpdGxlPk5ldyBUYWI8L3RpdGxlPgoKICAgIDxsaW5rIHJlbD0ic3R5bGVzaGVldCIgaHJlZj0iaHR0cHM6Ly9jZG5qcy5jbG91ZGZsYXJlLmNvbS9hamF4L2xpYnMvZm9udC1hd2Vzb21lLzYuNS4xL2Nzcy9hbGwubWluLmNzcyIgLz4KICAgIDxzdHlsZT4KICAgICAgQGltcG9ydCB1cmwoImh0dHBzOi8vZm9udHMuZ29vZ2xlYXBpcy5jb20vY3NzMj9mYW1pbHk9SW50ZXI6d2dodEA0MDA7NTAwOzYwMDs3MDAmZGlzcGxheT1zd2FwIik7CgogICAgICA6cm9vdCB7CiAgICAgICAgLyogQ29yZSBjb2xvcnMgKi8KICAgICAgICAtLWJnOiAjMGEwYTBhOwogICAgICAgIC0tc3VyZmFjZTogIzBmMGYwZjsKICAgICAgICAtLXN1cmZhY2UtaG92ZXI6ICMxYTFhMWE7CiAgICAgICAgLS1zdXJmYWNlLWFjdGl2ZTogIzI1MjUyNTsKICAgICAgICAtLWJvcmRlcjogIzFmMWYxZjsKICAgICAgICAtLWJvcmRlci1saWdodDogIzJhMmEyYTsKCiAgICAgICAgLyogVGV4dCAqLwogICAgICAgIC0tdGV4dDogI2U0ZTRlNzsKICAgICAgICAtLXRleHQtbXV0ZWQ6ICM3MTcxN2E7CiAgICAgICAgLS10ZXh0LWRpbTogIzUyNTI1YjsKCiAgICAgICAgLyogQWNjZW50ICovCiAgICAgICAgLS1hY2NlbnQ6ICNmZmZmZmY7CiAgICAgICAgLS1hY2NlbnQtZGltOiByZ2JhKDI1NSwgMjU1LCAyNTUsIDAuOCk7CiAgICAgICAgLS1hY2NlbnQtZ2xvdzogcmdiYSgyNTUsIDI1NSwgMjU1LCAwLjEpOwoKICAgICAgICAvKiBTdGF0dXMgY29sb3JzICovCiAgICAgICAgLS1zdWNjZXNzOiAjMjJjNTVlOwogICAgICAgIC0td2FybmluZzogI2Y1OWUwYjsKICAgICAgICAtLWVycm9yOiAjZWY0NDQ0OwogICAgICAgIC0taW5mbzogIzNiODJmNjsKCiAgICAgICAgLyogU2hhZG93cyAqLwogICAgICAgIC0tc2hhZG93LXNtOiAwIDFweCAycHggcmdiYSgwLCAwLCAwLCAwLjMpOwogICAgICAgIC0tc2hhZG93LW1kOiAwIDRweCAxMnB4IHJnYmEoMCwgMCwgMCwgMC40KTsKICAgICAgICAtLXNoYWRvdy1sZzogMCA4cHggMjRweCByZ2JhKDAsIDAsIDAsIDAuNSk7CiAgICAgICAgLS1zaGFkb3cteGw6IDAgMTZweCA0OHB4IHJnYmEoMCwgMCwgMCwgMC42KTsKCiAgICAgICAgLyogU3BhY2luZyAqLwogICAgICAgIC0tc3BhY2UteHM6IDRweDsKICAgICAgICAtLXNwYWNlLXNtOiA4cHg7CiAgICAgICAgLS1zcGFjZS1tZDogMTZweDsKICAgICAgICAtLXNwYWNlLWxnOiAyNHB4OwogICAgICAgIC0tc3BhY2UteGw6IDMycHg7CiAgICAgICAgLS1zcGFjZS0yeGw6IDQ4cHg7CgogICAgICAgIC8qIEJvcmRlciByYWRpdXMgKi8KICAgICAgICAtLXJhZGl1cy1zbTogNHB4OwogICAgICAgIC0tcmFkaXVzLW1kOiA4cHg7CiAgICAgICAgLS1yYWRpdXMtbGc6IDEycHg7CiAgICAgICAgLS1yYWRpdXMteGw6IDE2cHg7CiAgICAgICAgLS1yYWRpdXMtZnVsbDogOTk5OXB4OwoKICAgICAgICAvKiBUcmFuc2l0aW9ucyAqLwogICAgICAgIC0tdHJhbnNpdGlvbi1mYXN0OiAwLjFzIGVhc2U7CiAgICAgICAgLS10cmFuc2l0aW9uLW5vcm1hbDogMC4ycyBlYXNlOwogICAgICAgIC0tdHJhbnNpdGlvbi1zbG93OiAwLjNzIGVhc2U7CgogICAgICAgIC8qIFR5cG9ncmFwaHkgKi8KICAgICAgICAtLWZvbnQtc2FuczogIkludGVyIiwgc3lzdGVtLXVpLCAtYXBwbGUtc3lzdGVtLCBzYW5zLXNlcmlmOwogICAgICAgIC0tZm9udC1tb25vOiAiSmV0QnJhaW5zIE1vbm8iLCAiRmlyYSBDb2RlIiwgbW9ub3NwYWNlOwoKICAgICAgICAvKiBCYWNrZ3JvdW5kICovCiAgICAgICAgLS1iZy1pbWFnZTogbm9uZTsKICAgICAgfQoKICAgICAgKiB7CiAgICAgICAgYm94LXNpemluZzogYm9yZGVyLWJveDsKICAgICAgICBtYXJnaW46IDA7CiAgICAgICAgcGFkZGluZzogMDsKICAgICAgfQoKICAgICAgYm9keSB7CiAgICAgICAgZm9udC1mYW1pbHk6ICJJbnRlciIsIHN5c3RlbS11aSwgc2Fucy1zZXJpZjsKICAgICAgICBiYWNrZ3JvdW5kOiB2YXIoLS1iZyk7CiAgICAgICAgY29sb3I6IHZhcigtLXRleHQpOwogICAgICAgIG1pbi1oZWlnaHQ6IDEwMHZoOwogICAgICAgIGRpc3BsYXk6IGZsZXg7CiAgICAgICAgZmxleC1kaXJlY3Rpb246IGNvbHVtbjsKICAgICAgICBhbGlnbi1pdGVtczogY2VudGVyOwogICAgICAgIGp1c3RpZnktY29udGVudDogY2VudGVyOwogICAgICAgIHBhZGRpbmc6IDQwcHggMjBweDsKICAgICAgfQoKICAgICAgLmNsb2NrIHsKICAgICAgICBmb250LXNpemU6IDRyZW07CiAgICAgICAgZm9udC13ZWlnaHQ6IDYwMDsKICAgICAgICBsZXR0ZXItc3BhY2luZzogLTJweDsKICAgICAgICBtYXJnaW4tYm90dG9tOiA4cHg7CiAgICAgICAgY29sb3I6IHZhcigtLWFjY2VudCk7CiAgICAgbGluZS1oZWlnaHQ6NHJlbTtoZWlnaHQ6NHJlbTt9CgogICAgICAuZGF0ZSB7CiAgICAgICAgZm9udC1zaXplOiAxNHB4OwogICAgICAgIGNvbG9yOiB2YXIoLS10ZXh0LW11dGVkKTsKICAgICAgICBtYXJnaW4tYm90dG9tOiAzMnB4OwogICAgIGxpbmUtaGVpZ2h0OjE4cHg7bWluLWhlaWdodDoxOHB4O30KCiAgICAgIC5zZWFyY2gtYm94IHsKICAgICAgICBkaXNwbGF5OiBmbGV4OwogICAgICAgIGFsaWduLWl0ZW1zOiBjZW50ZXI7CiAgICAgICAgZ2FwOiA4cHg7CiAgICAgICAgYmFja2dyb3VuZDogdmFyKC0tc3VyZmFjZSk7CiAgICAgICAgYm9yZGVyOiAxcHggc29saWQgdmFyKC0tYm9yZGVyKTsKICAgICAgICBib3JkZXItcmFkaXVzOiAxMnB4OwogICAgICAgIHBhZGRpbmc6IDEycHggMTZweDsKICAgICAgICB3aWR0aDogMTAwJTsKICAgICAgICBtYXgtd2lkdGg6IDUwMHB4OwogICAgICAgIG1hcmdpbi1ib3R0b206IDQwcHg7CiAgICAgIH0KCiAgICAgIC5zZWFyY2gtYm94IGkgewogICAgICAgIGNvbG9yOiB2YXIoLS10ZXh0LW11dGVkKTsKICAgICAgICBmb250LXNpemU6IDE0cHg7CiAgICAgIH0KCiAgICAgIC5zZWFyY2gtYm94IGlucHV0IHsKICAgICAgICBmbGV4OiAxOwogICAgICAgIGJhY2tncm91bmQ6IHRyYW5zcGFyZW50OwogICAgICAgIGJvcmRlcjogbm9uZTsKICAgICAgICBvdXRsaW5lOiBub25lOwogICAgICAgIGNvbG9yOiB2YXIoLS10ZXh0KTsKICAgICAgICBmb250LXNpemU6IDE0cHg7CiAgICAgICAgZm9udC1mYW1pbHk6IGluaGVyaXQ7CiAgICAgIH0KCiAgICAgIC5zZWFyY2gtYm94IGlucHV0OjpwbGFjZWhvbGRlciB7CiAgICAgICAgY29sb3I6IHZhcigtLXRleHQtZGltKTsKICAgICAgfQoKICAgICAgLnNlYXJjaC1ib3ggc2VsZWN0IHsKICAgICAgICBiYWNrZ3JvdW5kOiB2YXIoLS1zdXJmYWNlLWhvdmVyKTsKICAgICAgICBib3JkZXI6IG5vbmU7CiAgICAgICAgYm9yZGVyLXJhZGl1czogNnB4OwogICAgICAgIGNvbG9yOiB2YXIoLS10ZXh0LW11dGVkKTsKICAgICAgICBwYWRkaW5nOiA2cHggMTBweDsKICAgICAgICBmb250LXNpemU6IDEycHg7CiAgICAgICAgY3Vyc29yOiBwb2ludGVyOwogICAgICAgIG91dGxpbmU6IG5vbmU7CiAgICAgIH0KCiAgICAgIC5zaG9ydGN1dHMgewogICAgICAgIGRpc3BsYXk6IGdyaWQ7CiAgICAgICAgZ3JpZC10ZW1wbGF0ZS1jb2x1bW5zOiByZXBlYXQoNSwgMWZyKTsKICAgICAgICBnYXA6IDE2cHg7CiAgICAgICAgbWF4LXdpZHRoOiA1MDBweDsKICAgICAgICB3aWR0aDogMTAwJTsKICAgICAgfQoKICAgICAgLnNob3J0Y3V0IHsKICAgICAgICBkaXNwbGF5OiBmbGV4OwogICAgICAgIGZsZXgtZGlyZWN0aW9uOiBjb2x1bW47CiAgICAgICAgYWxpZ24taXRlbXM6IGNlbnRlcjsKICAgICAgICBnYXA6IDhweDsKICAgICAgICB0ZXh0LWRlY29yYXRpb246IG5vbmU7CiAgICAgICAgY3Vyc29yOiBwb2ludGVyOwogICAgICB9CgogICAgICAuc2hvcnRjdXQtaWNvbiB7CiAgICAgICAgd2lkdGg6IDUycHg7CiAgICAgICAgaGVpZ2h0OiA1MnB4OwogICAgICAgIGJhY2tncm91bmQ6IHZhcigtLXN1cmZhY2UpOwogICAgICAgIGJvcmRlcjogMXB4IHNvbGlkIHZhcigtLWJvcmRlcik7CiAgICAgICAgYm9yZGVyLXJhZGl1czogMTJweDsKICAgICAgICBkaXNwbGF5OiBmbGV4OwogICAgICAgIGFsaWduLWl0ZW1zOiBjZW50ZXI7CiAgICAgICAganVzdGlmeS1jb250ZW50OiBjZW50ZXI7CiAgICAgICAgdHJhbnNpdGlvbjogYWxsIDAuMTVzOwogICAgICB9CgogICAgICAuc2hvcnRjdXQ6aG92ZXIgLnNob3J0Y3V0LWljb24gewogICAgICAgIGJhY2tncm91bmQ6IHZhcigtLXN1cmZhY2UtaG92ZXIpOwogICAgICAgIHRyYW5zZm9ybTogdHJhbnNsYXRlWSgtMnB4KTsKICAgICAgfQoKICAgICAgLnNob3J0Y3V0LWljb24gaW1nIHsKICAgICAgICB3aWR0aDogMjJweDsKICAgICAgICBoZWlnaHQ6IDIycHg7CiAgICAgICAgZmlsdGVyOiBicmlnaHRuZXNzKDApIGludmVydCgwLjcpOwogICAgICB9CgogICAgICAuc2hvcnRjdXQtaWNvbiBpIHsKICAgICAgICBmb250LXNpemU6IDIwcHg7CiAgICAgICAgY29sb3I6IHZhcigtLXRleHQtbXV0ZWQpOwogICAgICB9CgogICAgICAuc2hvcnRjdXQtY2xvc2UgewogICAgICAgIHBvc2l0aW9uOiBhYnNvbHV0ZTsKICAgICAgICB0b3A6IC02cHg7CiAgICAgICAgcmlnaHQ6IC02cHg7CiAgICAgICAgd2lkdGg6IDE4cHg7CiAgICAgICAgaGVpZ2h0OiAxOHB4OwogICAgICAgIGJvcmRlci1yYWRpdXM6IDUwJTsKICAgICAgICBiYWNrZ3JvdW5kOiB2YXIoLS1zdXJmYWNlLWFjdGl2ZSwgIzI1MjUyNSk7CiAgICAgICAgYm9yZGVyOiAxcHggc29saWQgdmFyKC0tYm9yZGVyLCAjMWYxZjFmKTsKICAgICAgICBjb2xvcjogdmFyKC0tdGV4dC1tdXRlZCwgIzcxNzE3YSk7CiAgICAgICAgZm9udC1zaXplOiAxMHB4OwogICAgICAgIGRpc3BsYXk6IG5vbmU7CiAgICAgICAgYWxpZ24taXRlbXM6IGNlbnRlcjsKICAgICAgICBqdXN0aWZ5LWNvbnRlbnQ6IGNlbnRlcjsKICAgICAgICBjdXJzb3I6IHBvaW50ZXI7CiAgICAgICAgei1pbmRleDogMjsKICAgICAgICBsaW5lLWhlaWdodDogMTsKICAgICAgICB0cmFuc2l0aW9uOgogICAgICAgICAgYmFja2dyb3VuZCAwLjFzLAogICAgICAgICAgY29sb3IgMC4xczsKICAgICAgfQogICAgICAuc2hvcnRjdXQtY2xvc2U6aG92ZXIgewogICAgICAgIGJhY2tncm91bmQ6ICNlZjQ0NDQ7CiAgICAgICAgY29sb3I6ICNmZmY7CiAgICAgICAgYm9yZGVyLWNvbG9yOiAjZWY0NDQ0OwogICAgICB9CiAgICAgIC5zaG9ydGN1dDpob3ZlciAuc2hvcnRjdXQtY2xvc2UgewogICAgICAgIGRpc3BsYXk6IGZsZXg7CiAgICAgIH0KICAgICAgLnNob3J0Y3V0IHsKICAgICAgICBwb3NpdGlvbjogcmVsYXRpdmU7CiAgICAgIH0KCiAgICAgIC5zaG9ydGN1dC1sYWJlbCB7CiAgICAgICAgZm9udC1zaXplOiAxMXB4OwogICAgICAgIGNvbG9yOiB2YXIoLS10ZXh0LW11dGVkKTsKICAgICAgICB0ZXh0LWFsaWduOiBjZW50ZXI7CiAgICAgICAgbWF4LXdpZHRoOiA2MHB4OwogICAgICAgIG92ZXJmbG93OiBoaWRkZW47CiAgICAgICAgdGV4dC1vdmVyZmxvdzogZWxsaXBzaXM7CiAgICAgICAgd2hpdGUtc3BhY2U6IG5vd3JhcDsKICAgICAgfQoKICAgICAgLnNob3J0Y3V0OmhvdmVyIC5zaG9ydGN1dC1sYWJlbCB7CiAgICAgICAgY29sb3I6IHZhcigtLXRleHQpOwogICAgICB9CgogICAgICAucXVvdGUgewogICAgICAgIHBvc2l0aW9uOiBmaXhlZDsKICAgICAgICBib3R0b206IDI0cHg7CiAgICAgICAgZm9udC1zaXplOiAxM3B4OwogICAgICAgIGNvbG9yOiB2YXIoLS10ZXh0LWRpbSk7CiAgICAgICAgbWF4LXdpZHRoOiA0MDBweDsKICAgICAgICB0ZXh0LWFsaWduOiBjZW50ZXI7CiAgICAgIH0KCiAgICAgIC5sb2FkZXIgewogICAgICAgIHBvc2l0aW9uOiBmaXhlZDsKICAgICAgICBpbnNldDogMDsKICAgICAgICBiYWNrZ3JvdW5kOiByZ2JhKDAsIDAsIDAsIDAuOSk7CiAgICAgICAgZGlzcGxheTogbm9uZTsKICAgICAgICBhbGlnbi1pdGVtczogY2VudGVyOwogICAgICAgIGp1c3RpZnktY29udGVudDogY2VudGVyOwogICAgICAgIHotaW5kZXg6IDEwMDsKICAgICAgfQoKICAgICAgLmxvYWRlci5zaG93IHsKICAgICAgICBkaXNwbGF5OiBmbGV4OwogICAgICB9CgogICAgICAuc3Bpbm5lciB7CiAgICAgICAgd2lkdGg6IDMycHg7CiAgICAgICAgaGVpZ2h0OiAzMnB4OwogICAgICAgIGJvcmRlcjogMnB4IHNvbGlkIHZhcigtLWJvcmRlcik7CiAgICAgICAgYm9yZGVyLXRvcC1jb2xvcjogdmFyKC0tYWNjZW50KTsKICAgICAgICBib3JkZXItcmFkaXVzOiA1MCU7CiAgICAgICAgYW5pbWF0aW9uOiBzcGluIDAuOHMgbGluZWFyIGluZmluaXRlOwogICAgICB9CgogICAgICBAa2V5ZnJhbWVzIHNwaW4gewogICAgICAgIHRvIHsKICAgICAgICAgIHRyYW5zZm9ybTogcm90YXRlKDM2MGRlZyk7CiAgICAgICAgfQogICAgICB9CgogICAgICAuaW5jb2duaXRvLWJhZGdlIHsKICAgICAgICBwb3NpdGlvbjogZml4ZWQ7CiAgICAgICAgdG9wOiAxNnB4OwogICAgICAgIGxlZnQ6IDUwJTsKICAgICAgICB0cmFuc2Zvcm06IHRyYW5zbGF0ZVgoLTUwJSk7CiAgICAgICAgZGlzcGxheTogZmxleDsKICAgICAgICBhbGlnbi1pdGVtczogY2VudGVyOwogICAgICAgIGdhcDogOHB4OwogICAgICAgIGJhY2tncm91bmQ6IHJnYmEoMjM5LCA2OCwgNjgsIDAuMTUpOwogICAgICAgIGJvcmRlcjogMXB4IHNvbGlkIHJnYmEoMjM5LCA2OCwgNjgsIDAuMyk7CiAgICAgICAgY29sb3I6ICNlZjQ0NDQ7CiAgICAgICAgcGFkZGluZzogOHB4IDE4cHg7CiAgICAgICAgYm9yZGVyLXJhZGl1czogOTk5OXB4OwogICAgICAgIGZvbnQtc2l6ZTogMTJweDsKICAgICAgICBmb250LXdlaWdodDogNTAwOwogICAgICAgIGxldHRlci1zcGFjaW5nOiAwLjAyZW07CiAgICAgIH0KICAgICAgOjotd2Via2l0LXNjcm9sbGJhciB7CiAgICAgICAgd2lkdGg6IDhweDsKICAgICAgfQogICAgICA6Oi13ZWJraXQtc2Nyb2xsYmFyLXRyYWNrIHsKICAgICAgICBiYWNrZ3JvdW5kOiB0cmFuc3BhcmVudDsKICAgICAgfQogICAgICA6Oi13ZWJraXQtc2Nyb2xsYmFyLXRodW1iIHsKICAgICAgICBiYWNrZ3JvdW5kOiByZ2JhKDI1NSwgMjU1LCAyNTUsIDAuMTIpOwogICAgICAgIGJvcmRlci1yYWRpdXM6IDRweDsKICAgICAgfQogICAgICA6Oi13ZWJraXQtc2Nyb2xsYmFyLXRodW1iOmhvdmVyIHsKICAgICAgICBiYWNrZ3JvdW5kOiByZ2JhKDI1NSwgMjU1LCAyNTUsIDAuMik7CiAgICAgIH0KICAgICAgKiB7CiAgICAgICAgc2Nyb2xsYmFyLXdpZHRoOiB0aGluOwogICAgICAgIHNjcm9sbGJhci1jb2xvcjogcmdiYSgyNTUsIDI1NSwgMjU1LCAwLjEyKSB0cmFuc3BhcmVudDsKICAgICAgfQoKICAgICAgLm50LW1vZGFsLW92ZXJsYXkgewogICAgICAgIHBvc2l0aW9uOiBmaXhlZDsKICAgICAgICBpbnNldDogMDsKICAgICAgICBiYWNrZ3JvdW5kOiByZ2JhKDAsIDAsIDAsIDAuNik7CiAgICAgICAgZGlzcGxheTogZmxleDsKICAgICAgICBhbGlnbi1pdGVtczogY2VudGVyOwogICAgICAgIGp1c3RpZnktY29udGVudDogY2VudGVyOwogICAgICAgIHotaW5kZXg6IDk5OTk7CiAgICAgICAgb3BhY2l0eTogMDsKICAgICAgICBwb2ludGVyLWV2ZW50czogbm9uZTsKICAgICAgICB0cmFuc2l0aW9uOiBvcGFjaXR5IDAuMTVzOwogICAgICB9CiAgICAgIC5udC1tb2RhbC1vdmVybGF5Lm9wZW4gewogICAgICAgIG9wYWNpdHk6IDE7CiAgICAgICAgcG9pbnRlci1ldmVudHM6IGF1dG87CiAgICAgIH0KICAgICAgLm50LW1vZGFsIHsKICAgICAgICBiYWNrZ3JvdW5kOiAjMWExYTFhOwogICAgICAgIGJvcmRlcjogMXB4IHNvbGlkICMzMzM7CiAgICAgICAgYm9yZGVyLXJhZGl1czogMTJweDsKICAgICAgICBwYWRkaW5nOiAyNHB4OwogICAgICAgIG1pbi13aWR0aDogMzIwcHg7CiAgICAgICAgbWF4LXdpZHRoOiA0MjBweDsKICAgICAgICBib3gtc2hhZG93OiAwIDI0cHggNjRweCByZ2JhKDAsIDAsIDAsIDAuNjUpOwogICAgICB9CiAgICAgIC5udC1tb2RhbC10aXRsZSB7CiAgICAgICAgZm9udC1zaXplOiAxNHB4OwogICAgICAgIGZvbnQtd2VpZ2h0OiA2MDA7CiAgICAgICAgbWFyZ2luLWJvdHRvbTogMTZweDsKICAgICAgICBjb2xvcjogI2U0ZTRlNzsKICAgICAgfQogICAgICAubnQtbW9kYWwtaW5wdXQgewogICAgICAgIHdpZHRoOiAxMDAlOwogICAgICAgIHBhZGRpbmc6IDEwcHggMTJweDsKICAgICAgICBib3JkZXItcmFkaXVzOiA4cHg7CiAgICAgICAgYm9yZGVyOiAxcHggc29saWQgIzMzMzsKICAgICAgICBiYWNrZ3JvdW5kOiAjMGYwZjBmOwogICAgICAgIGNvbG9yOiAjZTRlNGU3OwogICAgICAgIGZvbnQtc2l6ZTogMTNweDsKICAgICAgICBvdXRsaW5lOiBub25lOwogICAgICAgIG1hcmdpbi1ib3R0b206IDE2cHg7CiAgICAgICAgYm94LXNpemluZzogYm9yZGVyLWJveDsKICAgICAgfQogICAgICAubnQtbW9kYWwtaW5wdXQ6Zm9jdXMgewogICAgICAgIGJvcmRlci1jb2xvcjogIzY2NjsKICAgICAgfQogICAgICAubnQtbW9kYWwtYWN0aW9ucyB7CiAgICAgICAgZGlzcGxheTogZmxleDsKICAgICAgICBnYXA6IDhweDsKICAgICAgICBqdXN0aWZ5LWNvbnRlbnQ6IGZsZXgtZW5kOwogICAgICB9CiAgICAgIC5udC1tb2RhbC1idG4gewogICAgICAgIHBhZGRpbmc6IDhweCAxNnB4OwogICAgICAgIGJvcmRlci1yYWRpdXM6IDhweDsKICAgICAgICBib3JkZXI6IG5vbmU7CiAgICAgICAgZm9udC1zaXplOiAxM3B4OwogICAgICAgIGN1cnNvcjogcG9pbnRlcjsKICAgICAgICBmb250LXdlaWdodDogNTAwOwogICAgICAgIHRyYW5zaXRpb246IG9wYWNpdHkgMC4xczsKICAgICAgfQogICAgICAubnQtbW9kYWwtYnRuOmhvdmVyIHsKICAgICAgICBvcGFjaXR5OiAwLjg7CiAgICAgIH0KICAgICAgLm50LW1vZGFsLWJ0bi1wcmltYXJ5IHsKICAgICAgICBiYWNrZ3JvdW5kOiAjZTRlNGU3OwogICAgICAgIGNvbG9yOiAjMGEwYTBhOwogICAgICB9CiAgICAgIC5udC1tb2RhbC1idG4tc2Vjb25kYXJ5IHsKICAgICAgICBiYWNrZ3JvdW5kOiAjMmEyYTJhOwogICAgICAgIGNvbG9yOiAjYTFhMWFhOwogICAgICB9CiAgICAgIC5udC1tb2RhbC1tZXNzYWdlIHsKICAgICAgICBmb250LXNpemU6IDEzcHg7CiAgICAgICAgY29sb3I6ICNhMWExYWE7CiAgICAgICAgbWFyZ2luLWJvdHRvbTogMTZweDsKICAgICAgICBsaW5lLWhlaWdodDogMS40OwogICAgICB9CiAgICA8L3N0eWxlPgogIDwvaGVhZD4KCiAgPGJvZHk+CiAgICA8ZGl2IGNsYXNzPSJsb2FkZXIiIGlkPSJsb2FkZXIiPgogICAgICA8ZGl2IGNsYXNzPSJzcGlubmVyIj48L2Rpdj4KICAgIDwvZGl2PgoKICAgIDxkaXYgY2xhc3M9ImluY29nbml0by1iYWRnZSIgaWQ9ImluY29nbml0by1iYWRnZSIgc3R5bGU9ImRpc3BsYXk6IG5vbmUiPgogICAgICA8aSBjbGFzcz0iZmEtc29saWQgZmEtdXNlci1zZWNyZXQiPjwvaT4KICAgICAgPHNwYW4+WW91J3JlIGJyb3dzaW5nIHByaXZhdGVseTwvc3Bhbj4KICAgIDwvZGl2PgoKICAgIDxkaXYgY2xhc3M9ImNsb2NrIiBpZD0iY2xvY2siPjAwOjAwPC9kaXY+CiAgICA8ZGl2IGNsYXNzPSJkYXRlIiBpZD0iZGF0ZSI+PC9kaXY+CgogICAgPGZvcm0gY2xhc3M9InNlYXJjaC1ib3giIGlkPSJzZWFyY2hGb3JtIj4KICAgICAgPGkgY2xhc3M9ImZhLXNvbGlkIGZhLW1hZ25pZnlpbmctZ2xhc3MiPjwvaT4KICAgICAgPGlucHV0IHR5cGU9InRleHQiIGlkPSJzZWFyY2hJbnB1dCIgcGxhY2Vob2xkZXI9IlNlYXJjaCB0aGUgd2ViLi4uIiBhdXRvY29tcGxldGU9Im9mZiIgLz4KICAgICAgPHNlbGVjdCBpZD0iZW5naW5lIj4KICAgICAgICA8b3B0aW9uIHZhbHVlPSJodHRwczovL3NlYXJjaC5icmF2ZS5jb20vc2VhcmNoP3E9Ij5CcmF2ZTwvb3B0aW9uPgogICAgICAgIDxvcHRpb24gdmFsdWU9Imh0dHBzOi8vZHVja2R1Y2tnby5jb20vP3E9Ij5EdWNrRHVja0dvPC9vcHRpb24+CiAgICAgICAgPG9wdGlvbiB2YWx1ZT0iaHR0cHM6Ly93d3cuZ29vZ2xlLmNvbS9zZWFyY2g/cT0iPkdvb2dsZTwvb3B0aW9uPgogICAgICA8L3NlbGVjdD4KICAgIDwvZm9ybT4KCiAgICA8ZGl2IGNsYXNzPSJzaG9ydGN1dHMiIGlkPSJzaG9ydGN1dHMiPgogICAgICA8YSBjbGFzcz0ic2hvcnRjdXQgcHJlc2V0LXNob3J0Y3V0IiBkYXRhLXVybD0iaHR0cHM6Ly9yZWV5dWtpLm5lb2NpdGllcy5vcmciPgogICAgICAgIDxzcGFuIGNsYXNzPSJzaG9ydGN1dC1jbG9zZSIgZGF0YS11cmw9Imh0dHBzOi8vcmVleXVraS5uZW9jaXRpZXMub3JnIj4mdGltZXM7PC9zcGFuPgogICAgICAgIDxkaXYgY2xhc3M9InNob3J0Y3V0LWljb24iPgogICAgICAgICAgPGltZyBzcmM9Imh0dHBzOi8vcmVleXVraS5naXRodWIuaW8vc3RhdGljL2Zhdmljb24vZmF2aWNvbi0zMngzMi5wbmciIC8+CiAgICAgICAgPC9kaXY+CiAgICAgICAgPHNwYW4gY2xhc3M9InNob3J0Y3V0LWxhYmVsIj5SZWV5dWtpIFNpdGU8L3NwYW4+CiAgICAgIDwvYT4KICAgICAgPGEgY2xhc3M9InNob3J0Y3V0IHByZXNldC1zaG9ydGN1dCIgZGF0YS11cmw9Imh0dHBzOi8veW91dHViZS5jb20iPgogICAgICAgIDxzcGFuIGNsYXNzPSJzaG9ydGN1dC1jbG9zZSIgZGF0YS11cmw9Imh0dHBzOi8veW91dHViZS5jb20iPiZ0aW1lczs8L3NwYW4+CiAgICAgICAgPGRpdiBjbGFzcz0ic2hvcnRjdXQtaWNvbiI+CiAgICAgICAgICA8aW1nIHNyYz0iaHR0cHM6Ly9jZG4uanNkZWxpdnIubmV0L2doL3NpbXBsZS1pY29ucy9zaW1wbGUtaWNvbnMvaWNvbnMveW91dHViZS5zdmciIC8+CiAgICAgICAgPC9kaXY+CiAgICAgICAgPHNwYW4gY2xhc3M9InNob3J0Y3V0LWxhYmVsIj5Zb3VUdWJlPC9zcGFuPgogICAgICA8L2E+CiAgICAgIDxhIGNsYXNzPSJzaG9ydGN1dCBwcmVzZXQtc2hvcnRjdXQiIGRhdGEtdXJsPSJodHRwczovL2dpdGh1Yi5jb20iPgogICAgICAgIDxzcGFuIGNsYXNzPSJzaG9ydGN1dC1jbG9zZSIgZGF0YS11cmw9Imh0dHBzOi8vZ2l0aHViLmNvbSI+JnRpbWVzOzwvc3Bhbj4KICAgICAgICA8ZGl2IGNsYXNzPSJzaG9ydGN1dC1pY29uIj4KICAgICAgICAgIDxpbWcgc3JjPSJodHRwczovL2Nkbi5qc2RlbGl2ci5uZXQvZ2gvc2ltcGxlLWljb25zL3NpbXBsZS1pY29ucy9pY29ucy9naXRodWIuc3ZnIiAvPgogICAgICAgIDwvZGl2PgogICAgICAgIDxzcGFuIGNsYXNzPSJzaG9ydGN1dC1sYWJlbCI+R2l0SHViPC9zcGFuPgogICAgICA8L2E+CiAgICAgIDxhIGNsYXNzPSJzaG9ydGN1dCBwcmVzZXQtc2hvcnRjdXQiIGRhdGEtdXJsPSJodHRwczovL2Rpc2NvcmQuY29tIj4KICAgICAgICA8c3BhbiBjbGFzcz0ic2hvcnRjdXQtY2xvc2UiIGRhdGEtdXJsPSJodHRwczovL2Rpc2NvcmQuY29tIj4mdGltZXM7PC9zcGFuPgogICAgICAgIDxkaXYgY2xhc3M9InNob3J0Y3V0LWljb24iPgogICAgICAgICAgPGltZyBzcmM9Imh0dHBzOi8vY2RuLmpzZGVsaXZyLm5ldC9naC9zaW1wbGUtaWNvbnMvc2ltcGxlLWljb25zL2ljb25zL2Rpc2NvcmQuc3ZnIiAvPgogICAgICAgIDwvZGl2PgogICAgICAgIDxzcGFuIGNsYXNzPSJzaG9ydGN1dC1sYWJlbCI+RGlzY29yZDwvc3Bhbj4KICAgICAgPC9hPgogICAgICA8YSBjbGFzcz0ic2hvcnRjdXQgcHJlc2V0LXNob3J0Y3V0IiBkYXRhLXVybD0iaHR0cHM6Ly90d2l0dGVyLmNvbSI+CiAgICAgICAgPHNwYW4gY2xhc3M9InNob3J0Y3V0LWNsb3NlIiBkYXRhLXVybD0iaHR0cHM6Ly90d2l0dGVyLmNvbSI+JnRpbWVzOzwvc3Bhbj4KICAgICAgICA8ZGl2IGNsYXNzPSJzaG9ydGN1dC1pY29uIj4KICAgICAgICAgIDxpbWcgc3JjPSJodHRwczovL2Nkbi5qc2RlbGl2ci5uZXQvZ2gvc2ltcGxlLWljb25zL3NpbXBsZS1pY29ucy9pY29ucy94LnN2ZyIgLz4KICAgICAgICA8L2Rpdj4KICAgICAgICA8c3BhbiBjbGFzcz0ic2hvcnRjdXQtbGFiZWwiPlR3aXR0ZXI8L3NwYW4+CiAgICAgIDwvYT4KICAgICAgPGEgY2xhc3M9InNob3J0Y3V0IHByZXNldC1zaG9ydGN1dCIgZGF0YS11cmw9Imh0dHBzOi8vcGxheS5nZWZvcmNlbm93LmNvbS9tYWxsLyI+CiAgICAgICAgPHNwYW4gY2xhc3M9InNob3J0Y3V0LWNsb3NlIiBkYXRhLXVybD0iaHR0cHM6Ly9wbGF5LmdlZm9yY2Vub3cuY29tL21hbGwvIj4mdGltZXM7PC9zcGFuPgogICAgICAgIDxkaXYgY2xhc3M9InNob3J0Y3V0LWljb24iPgogICAgICAgICAgPGltZyBzcmM9Imh0dHBzOi8vY2RuLmpzZGVsaXZyLm5ldC9naC9zaW1wbGUtaWNvbnMvc2ltcGxlLWljb25zL2ljb25zL252aWRpYS5zdmciIC8+CiAgICAgICAgPC9kaXY+CiAgICAgICAgPHNwYW4gY2xhc3M9InNob3J0Y3V0LWxhYmVsIj5HZWZvcmNlIE5vdzwvc3Bhbj4KICAgICAgPC9hPgogICAgICA8YSBjbGFzcz0ic2hvcnRjdXQgcHJlc2V0LXNob3J0Y3V0IiBkYXRhLXVybD0iaHR0cHM6Ly9mcnV0aWdlcmFlcm9hcmNoaXZlLm9yZy9tdXNpY19wbGF5ZXJzL2xvY2FsIj4KICAgICAgICA8c3BhbiBjbGFzcz0ic2hvcnRjdXQtY2xvc2UiIGRhdGEtdXJsPSJodHRwczovL2ZydXRpZ2VyYWVyb2FyY2hpdmUub3JnL211c2ljX3BsYXllcnMvbG9jYWwiPiZ0aW1lczs8L3NwYW4+CiAgICAgICAgPGRpdiBjbGFzcz0ic2hvcnRjdXQtaWNvbiI+CiAgICAgICAgICA8aW1nIHNyYz0iaHR0cHM6Ly9mcnV0aWdlcmFlcm9hcmNoaXZlLm9yZy9pbWFnZXMvZmF2aWNvbi9mYXZpY29uLmljbz92PTEuMSIgLz4KICAgICAgICA8L2Rpdj4KICAgICAgICA8c3BhbiBjbGFzcz0ic2hvcnRjdXQtbGFiZWwiPlJlZXl1a2kgU2l0ZTwvc3Bhbj4KICAgICAgPC9hPgogICAgICA8YSBjbGFzcz0ic2hvcnRjdXQgcHJlc2V0LXNob3J0Y3V0IiBkYXRhLXVybD0iaHR0cHM6Ly9uZXRmbGl4LmNvbSI+CiAgICAgICAgPHNwYW4gY2xhc3M9InNob3J0Y3V0LWNsb3NlIiBkYXRhLXVybD0iaHR0cHM6Ly9uZXRmbGl4LmNvbSI+JnRpbWVzOzwvc3Bhbj4KICAgICAgICA8ZGl2IGNsYXNzPSJzaG9ydGN1dC1pY29uIj4KICAgICAgICAgIDxpbWcgc3JjPSJodHRwczovL2Nkbi5qc2RlbGl2ci5uZXQvZ2gvc2ltcGxlLWljb25zL3NpbXBsZS1pY29ucy9pY29ucy9uZXRmbGl4LnN2ZyIgLz4KICAgICAgICA8L2Rpdj4KICAgICAgICA8c3BhbiBjbGFzcz0ic2hvcnRjdXQtbGFiZWwiPk5ldGZsaXg8L3NwYW4+CiAgICAgIDwvYT4KICAgICAgPGEgY2xhc3M9InNob3J0Y3V0IHByZXNldC1zaG9ydGN1dCIgZGF0YS11cmw9Imh0dHBzOi8vdHdpdGNoLnR2Ij4KICAgICAgICA8c3BhbiBjbGFzcz0ic2hvcnRjdXQtY2xvc2UiIGRhdGEtdXJsPSJodHRwczovL3R3aXRjaC50diI+JnRpbWVzOzwvc3Bhbj4KICAgICAgICA8ZGl2IGNsYXNzPSJzaG9ydGN1dC1pY29uIj4KICAgICAgICAgIDxpbWcgc3JjPSJodHRwczovL2Nkbi5qc2RlbGl2ci5uZXQvZ2gvc2ltcGxlLWljb25zL3NpbXBsZS1pY29ucy9pY29ucy90d2l0Y2guc3ZnIiAvPgogICAgICAgIDwvZGl2PgogICAgICAgIDxzcGFuIGNsYXNzPSJzaG9ydGN1dC1sYWJlbCI+VHdpdGNoPC9zcGFuPgogICAgICA8L2E+CiAgICAgIDxkaXYgY2xhc3M9InNob3J0Y3V0IiBpZD0iYWRkU2hvcnRjdXQiPgogICAgICAgIDxkaXYgY2xhc3M9InNob3J0Y3V0LWljb24iPjxpIGNsYXNzPSJmYS1zb2xpZCBmYS1wbHVzIj48L2k+PC9kaXY+CiAgICAgICAgPHNwYW4gY2xhc3M9InNob3J0Y3V0LWxhYmVsIj5BZGQ8L3NwYW4+CiAgICAgIDwvZGl2PgogICAgPC9kaXY+CgogICAgPGRpdiBjbGFzcz0iYm9va21hcmtzLXNlY3Rpb24iIGlkPSJib29rbWFya3Mtc2VjdGlvbiIgc3R5bGU9Im1hcmdpbi10b3A6IDMycHgiPgogICAgICA8aDMKICAgICAgICBzdHlsZT0iCiAgICAgICAgICBjb2xvcjogdmFyKC0tdGV4dC1tdXRlZCk7CiAgICAgICAgICBmb250LXNpemU6IDEycHg7CiAgICAgICAgICB0ZXh0LXRyYW5zZm9ybTogdXBwZXJjYXNlOwogICAgICAgICAgbGV0dGVyLXNwYWNpbmc6IDAuMDdlbTsKICAgICAgICAgIG1hcmdpbi1ib3R0b206IDE2cHg7CiAgICAgICAgIgogICAgICA+CiAgICAgICAgQm9va21hcmtzCiAgICAgIDwvaDM+CiAgICAgIDxkaXYKICAgICAgICBjbGFzcz0ic2hvcnRjdXRzIgogICAgICAgIGlkPSJib29rbWFya3MtY29udGFpbmVyIgogICAgICAgIHN0eWxlPSJncmlkLXRlbXBsYXRlLWNvbHVtbnM6IHJlcGVhdChhdXRvLWZpbGwsIG1pbm1heCgxMDBweCwgMWZyKSkiCiAgICAgID48L2Rpdj4KICAgIDwvZGl2PgoKICAgIDxkaXYgY2xhc3M9InF1b3RlIiBpZD0icXVvdGUiPjwvZGl2PgoKICAgIDxkaXYgY2xhc3M9Im50LW1vZGFsLW92ZXJsYXkiIGlkPSJudE1vZGFsIj4KICAgICAgPGRpdiBjbGFzcz0ibnQtbW9kYWwiPgogICAgICAgIDxkaXYgY2xhc3M9Im50LW1vZGFsLXRpdGxlIiBpZD0ibnRNb2RhbFRpdGxlIj48L2Rpdj4KICAgICAgICA8ZGl2IGNsYXNzPSJudC1tb2RhbC1tZXNzYWdlIiBpZD0ibnRNb2RhbE1lc3NhZ2UiPjwvZGl2PgogICAgICAgIDxpbnB1dCBjbGFzcz0ibnQtbW9kYWwtaW5wdXQiIGlkPSJudE1vZGFsSW5wdXQiIHN0eWxlPSJkaXNwbGF5OiBub25lIiAvPgogICAgICAgIDxkaXYgY2xhc3M9Im50LW1vZGFsLWFjdGlvbnMiPgogICAgICAgICAgPGJ1dHRvbiBjbGFzcz0ibnQtbW9kYWwtYnRuIG50LW1vZGFsLWJ0bi1zZWNvbmRhcnkiIGlkPSJudE1vZGFsQ2FuY2VsIj5DYW5jZWw8L2J1dHRvbj4KICAgICAgICAgIDxidXR0b24gY2xhc3M9Im50LW1vZGFsLWJ0biBudC1tb2RhbC1idG4tcHJpbWFyeSIgaWQ9Im50TW9kYWxPayI+T0s8L2J1dHRvbj4KICAgICAgICA8L2Rpdj4KICAgICAgPC9kaXY+CiAgICA8L2Rpdj4KCiAgICA8c2NyaXB0PgogICAgICBjb25zdCAkID0gKHMpID0+IGRvY3VtZW50LnF1ZXJ5U2VsZWN0b3Iocyk7CgogICAgICAvLyBJbmNvZ25pdG8gZGV0ZWN0aW9uCiAgICAgIGNvbnN0IHVybFBhcmFtcyA9IG5ldyBVUkxTZWFyY2hQYXJhbXMod2luZG93LmxvY2F0aW9uLnNlYXJjaCk7CiAgICAgIGlmICh1cmxQYXJhbXMuZ2V0KCJpbmNvZ25pdG8iKSA9PT0gInRydWUiIHx8IHdpbmRvdy5udEluY29nbml0bykgewogICAgICAgIGRvY3VtZW50LmdldEVsZW1lbnRCeUlkKCJpbmNvZ25pdG8tYmFkZ2UiKS5zdHlsZS5kaXNwbGF5ID0gImZsZXgiOwogICAgICAgIGRvY3VtZW50LnRpdGxlID0gIk5ldyBUYWIgKFByaXZhdGUpIjsKICAgICAgfQoKICAgICAgY29uc3QgbmF2ID0gKHVybCkgPT4gewogICAgICAgICQoIiNsb2FkZXIiKS5jbGFzc0xpc3QuYWRkKCJzaG93Iik7CiAgICAgICAgd2luZG93LnBhcmVudD8ucG9zdE1lc3NhZ2UoeyB0eXBlOiAibmF2aWdhdGUiLCB1cmwgfSwgIioiKTsKICAgICAgfTsKCiAgICAgIC8vIERPTS1iYXNlZCBkaWFsb2dzIChzYW5kYm94LXNhZmUpCiAgICAgIGZ1bmN0aW9uIG50RGlhbG9nKHR5cGUsIHRpdGxlLCBkZWZhdWx0VmFsdWUpIHsKICAgICAgICByZXR1cm4gbmV3IFByb21pc2UoKHJlc29sdmUpID0+IHsKICAgICAgICAgIGNvbnN0IG92ZXJsYXkgPSBkb2N1bWVudC5nZXRFbGVtZW50QnlJZCgibnRNb2RhbCIpOwogICAgICAgICAgY29uc3QgdGl0bGVFbCA9IGRvY3VtZW50LmdldEVsZW1lbnRCeUlkKCJudE1vZGFsVGl0bGUiKTsKICAgICAgICAgIGNvbnN0IG1zZ0VsID0gZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoIm50TW9kYWxNZXNzYWdlIik7CiAgICAgICAgICBjb25zdCBpbnB1dEVsID0gZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoIm50TW9kYWxJbnB1dCIpOwogICAgICAgICAgY29uc3Qgb2tCdG4gPSBkb2N1bWVudC5nZXRFbGVtZW50QnlJZCgibnRNb2RhbE9rIik7CiAgICAgICAgICBjb25zdCBjYW5jZWxCdG4gPSBkb2N1bWVudC5nZXRFbGVtZW50QnlJZCgibnRNb2RhbENhbmNlbCIpOwoKICAgICAgICAgIHRpdGxlRWwudGV4dENvbnRlbnQgPSB0aXRsZTsKICAgICAgICAgIGlmICh0eXBlID09PSAicHJvbXB0IikgewogICAgICAgICAgICBtc2dFbC5zdHlsZS5kaXNwbGF5ID0gIm5vbmUiOwogICAgICAgICAgICBpbnB1dEVsLnN0eWxlLmRpc3BsYXkgPSAiIjsKICAgICAgICAgICAgaW5wdXRFbC52YWx1ZSA9IGRlZmF1bHRWYWx1ZSB8fCAiIjsKICAgICAgICAgICAgaW5wdXRFbC5mb2N1cygpOwogICAgICAgICAgICBpbnB1dEVsLm9ua2V5ZG93biA9IChlKSA9PiB7CiAgICAgICAgICAgICAgaWYgKGUua2V5ID09PSAiRW50ZXIiKSBva0J0bi5jbGljaygpOwogICAgICAgICAgICB9OwogICAgICAgICAgfSBlbHNlIGlmICh0eXBlID09PSAiY29uZmlybSIpIHsKICAgICAgICAgICAgbXNnRWwuc3R5bGUuZGlzcGxheSA9ICIiOwogICAgICAgICAgICBtc2dFbC50ZXh0Q29udGVudCA9IGRlZmF1bHRWYWx1ZSB8fCAiIjsKICAgICAgICAgICAgaW5wdXRFbC5zdHlsZS5kaXNwbGF5ID0gIm5vbmUiOwogICAgICAgICAgfSBlbHNlIHsKICAgICAgICAgICAgbXNnRWwuc3R5bGUuZGlzcGxheSA9ICIiOwogICAgICAgICAgICBtc2dFbC50ZXh0Q29udGVudCA9IGRlZmF1bHRWYWx1ZSB8fCAiIjsKICAgICAgICAgICAgaW5wdXRFbC5zdHlsZS5kaXNwbGF5ID0gIm5vbmUiOwogICAgICAgICAgICBjYW5jZWxCdG4uc3R5bGUuZGlzcGxheSA9ICJub25lIjsKICAgICAgICAgIH0KCiAgICAgICAgICBjb25zdCBjbGVhbnVwID0gKCkgPT4gewogICAgICAgICAgICBvdmVybGF5LmNsYXNzTGlzdC5yZW1vdmUoIm9wZW4iKTsKICAgICAgICAgICAgb2tCdG4ub25jbGljayA9IG51bGw7CiAgICAgICAgICAgIGNhbmNlbEJ0bi5vbmNsaWNrID0gbnVsbDsKICAgICAgICAgICAgY2FuY2VsQnRuLnN0eWxlLmRpc3BsYXkgPSAiIjsKICAgICAgICAgIH07CgogICAgICAgICAgb2tCdG4ub25jbGljayA9ICgpID0+IHsKICAgICAgICAgICAgY2xlYW51cCgpOwogICAgICAgICAgICByZXNvbHZlKHR5cGUgPT09ICJwcm9tcHQiID8gaW5wdXRFbC52YWx1ZSA6IHRydWUpOwogICAgICAgICAgfTsKICAgICAgICAgIGNhbmNlbEJ0bi5vbmNsaWNrID0gKCkgPT4gewogICAgICAgICAgICBjbGVhbnVwKCk7CiAgICAgICAgICAgIHJlc29sdmUodHlwZSA9PT0gInByb21wdCIgPyBudWxsIDogZmFsc2UpOwogICAgICAgICAgfTsKCiAgICAgICAgICBvdmVybGF5LmNsYXNzTGlzdC5hZGQoIm9wZW4iKTsKICAgICAgICB9KTsKICAgICAgfQogICAgICBjb25zdCBudFByb21wdCA9IChtc2csIHZhbCkgPT4gbnREaWFsb2coInByb21wdCIsIG1zZywgdmFsKTsKICAgICAgY29uc3QgbnRDb25maXJtID0gKG1zZykgPT4gbnREaWFsb2coImNvbmZpcm0iLCBtc2cpOwogICAgICBjb25zdCBudEFsZXJ0ID0gKG1zZykgPT4gbnREaWFsb2coImFsZXJ0IiwgbXNnKTsKCiAgICAgIC8vIENsb2NrCiAgICAgIGZ1bmN0aW9uIHVwZGF0ZUNsb2NrKCkgewogICAgICAgIGNvbnN0IG5vdyA9IG5ldyBEYXRlKCk7CiAgICAgICAgY29uc3QgY2xvY2tFbCA9IGRvY3VtZW50LmdldEVsZW1lbnRCeUlkKCJjbG9jayIpOwogICAgICAgIGNvbnN0IGRhdGVFbCA9IGRvY3VtZW50LmdldEVsZW1lbnRCeUlkKCJkYXRlIik7CiAgICAgICAgaWYgKGNsb2NrRWwpIHsKICAgICAgICAgIHRyeSB7CiAgICAgICAgICAgIGNsb2NrRWwudGV4dENvbnRlbnQgPSBub3cudG9Mb2NhbGVUaW1lU3RyaW5nKCJlbi1VUyIsIHsKICAgICAgICAgICAgICBob3VyOiAiMi1kaWdpdCIsCiAgICAgICAgICAgICAgbWludXRlOiAiMi1kaWdpdCIsCiAgICAgICAgICAgICAgaG91cjEyOiBmYWxzZQogICAgICAgICAgICB9KTsKICAgICAgICAgIH0gY2F0Y2ggewogICAgICAgICAgICBjbG9ja0VsLnRleHRDb250ZW50ID0KICAgICAgICAgICAgICBTdHJpbmcobm93LmdldEhvdXJzKCkpLnBhZFN0YXJ0KDIsICIwIikgKyAiOiIgKyBTdHJpbmcobm93LmdldE1pbnV0ZXMoKSkucGFkU3RhcnQoMiwgIjAiKTsKICAgICAgICAgIH0KICAgICAgICB9CiAgICAgICAgaWYgKGRhdGVFbCkgewogICAgICAgICAgdHJ5IHsKICAgICAgICAgICAgZGF0ZUVsLnRleHRDb250ZW50ID0gbm93LnRvTG9jYWxlRGF0ZVN0cmluZygiZW4tVVMiLCB7CiAgICAgICAgICAgICAgd2Vla2RheTogImxvbmciLAogICAgICAgICAgICAgIG1vbnRoOiAibG9uZyIsCiAgICAgICAgICAgICAgZGF5OiAibnVtZXJpYyIKICAgICAgICAgICAgfSk7CiAgICAgICAgICB9IGNhdGNoIHsKICAgICAgICAgICAgZGF0ZUVsLnRleHRDb250ZW50ID0gbm93LnRvRGF0ZVN0cmluZygpOwogICAgICAgICAgfQogICAgICAgIH0KICAgICAgfQogICAgICB1cGRhdGVDbG9jaygpOwogICAgICBzZXRJbnRlcnZhbCh1cGRhdGVDbG9jaywgMTAwMCk7CgogICAgICAvLyBTZWFyY2gKICAgICAgJCgiI3NlYXJjaEZvcm0iKS5vbnN1Ym1pdCA9IChlKSA9PiB7CiAgICAgICAgZS5wcmV2ZW50RGVmYXVsdCgpOwogICAgICAgIGNvbnN0IHEgPSAkKCIjc2VhcmNoSW5wdXQiKS52YWx1ZS50cmltKCk7CiAgICAgICAgaWYgKHEpIG5hdigkKCIjZW5naW5lIikudmFsdWUgKyBlbmNvZGVVUklDb21wb25lbnQocSkpOwogICAgICB9OwoKICAgICAgLy8gUG9wdWxhdGUgY3VzdG9tIHNlYXJjaCBlbmdpbmVzIGZyb20gbG9jYWxTdG9yYWdlCiAgICAgIGZ1bmN0aW9uIHBvcHVsYXRlQ3VzdG9tRW5naW5lcygpIHsKICAgICAgICB0cnkgewogICAgICAgICAgY29uc3QgY3VzdG9tID0gSlNPTi5wYXJzZShsb2NhbFN0b3JhZ2UuZ2V0SXRlbSgic2NyYW1qZXRfY3VzdG9tX2VuZ2luZXMiKSB8fCAiW10iKTsKICAgICAgICAgIGNvbnN0IHNlbCA9ICQoIiNlbmdpbmUiKTsKICAgICAgICAgIGN1c3RvbS5mb3JFYWNoKGZ1bmN0aW9uIChlbmcpIHsKICAgICAgICAgICAgY29uc3Qgb3B0ID0gZG9jdW1lbnQuY3JlYXRlRWxlbWVudCgib3B0aW9uIik7CiAgICAgICAgICAgIG9wdC52YWx1ZSA9IGVuZy51cmw7CiAgICAgICAgICAgIG9wdC50ZXh0Q29udGVudCA9IGVuZy5uYW1lOwogICAgICAgICAgICBzZWwuYXBwZW5kQ2hpbGQob3B0KTsKICAgICAgICAgIH0pOwogICAgICAgIH0gY2F0Y2ggKGUpIHt9CiAgICAgIH0KICAgICAgcG9wdWxhdGVDdXN0b21FbmdpbmVzKCk7CgogICAgICAvLyBDbG9zZSBidXR0b24gZm9yIHByZXNldCBzaG9ydGN1dHMKICAgICAgY29uc3QgUkVNT1ZFRF9QUkVTRVRTX0tFWSA9ICJzY3JhbWpldF9yZW1vdmVkX3ByZXNldHMiOwogICAgICBmdW5jdGlvbiBnZXRSZW1vdmVkUHJlc2V0cygpIHsKICAgICAgICB0cnkgewogICAgICAgICAgcmV0dXJuIEpTT04ucGFyc2UobG9jYWxTdG9yYWdlLmdldEl0ZW0oUkVNT1ZFRF9QUkVTRVRTX0tFWSkgfHwgIltdIik7CiAgICAgICAgfSBjYXRjaCB7CiAgICAgICAgICByZXR1cm4gW107CiAgICAgICAgfQogICAgICB9CiAgICAgIGZ1bmN0aW9uIGhpZGVQcmVzZXRTaG9ydGN1dCh1cmwpIHsKICAgICAgICBjb25zdCByZW1vdmVkID0gZ2V0UmVtb3ZlZFByZXNldHMoKTsKICAgICAgICBpZiAoIXJlbW92ZWQuaW5jbHVkZXModXJsKSkgcmVtb3ZlZC5wdXNoKHVybCk7CiAgICAgICAgbG9jYWxTdG9yYWdlLnNldEl0ZW0oUkVNT1ZFRF9QUkVTRVRTX0tFWSwgSlNPTi5zdHJpbmdpZnkocmVtb3ZlZCkpOwogICAgICAgIGNvbnN0IGVsID0gZG9jdW1lbnQucXVlcnlTZWxlY3RvcihgLnByZXNldC1zaG9ydGN1dFtkYXRhLXVybD0iJHt1cmx9Il1gKTsKICAgICAgICBpZiAoZWwpIGVsLnN0eWxlLmRpc3BsYXkgPSAibm9uZSI7CiAgICAgIH0KICAgICAgZ2V0UmVtb3ZlZFByZXNldHMoKS5mb3JFYWNoKCh1cmwpID0+IHsKICAgICAgICBjb25zdCBlbCA9IGRvY3VtZW50LnF1ZXJ5U2VsZWN0b3IoYC5wcmVzZXQtc2hvcnRjdXRbZGF0YS11cmw9IiR7dXJsfSJdYCk7CiAgICAgICAgaWYgKGVsKSBlbC5zdHlsZS5kaXNwbGF5ID0gIm5vbmUiOwogICAgICB9KTsKICAgICAgZG9jdW1lbnQucXVlcnlTZWxlY3RvckFsbCgiLnNob3J0Y3V0LWNsb3NlIikuZm9yRWFjaCgoYnRuKSA9PiB7CiAgICAgICAgYnRuLmFkZEV2ZW50TGlzdGVuZXIoImNsaWNrIiwgKGUpID0+IHsKICAgICAgICAgIGUucHJldmVudERlZmF1bHQoKTsKICAgICAgICAgIGUuc3RvcFByb3BhZ2F0aW9uKCk7CiAgICAgICAgICBoaWRlUHJlc2V0U2hvcnRjdXQoYnRuLmRhdGFzZXQudXJsKTsKICAgICAgICB9KTsKICAgICAgfSk7CgogICAgICAvLyBTaG9ydGN1dHMKICAgICAgJCgiI3Nob3J0Y3V0cyIpLm9uY2xpY2sgPSBhc3luYyAoZSkgPT4gewogICAgICAgIGlmIChlLnRhcmdldC5jbG9zZXN0KCIuc2hvcnRjdXQtY2xvc2UiKSkgcmV0dXJuOwogICAgICAgIGNvbnN0IHNob3J0Y3V0ID0gZS50YXJnZXQuY2xvc2VzdCgiLnNob3J0Y3V0W2RhdGEtdXJsXSIpOwogICAgICAgIGNvbnN0IGFkZEJ0biA9IGUudGFyZ2V0LmNsb3Nlc3QoIiNhZGRTaG9ydGN1dCIpOwoKICAgICAgICBpZiAoc2hvcnRjdXQpIHsKICAgICAgICAgIGUucHJldmVudERlZmF1bHQoKTsKICAgICAgICAgIG5hdihzaG9ydGN1dC5kYXRhc2V0LnVybCk7CiAgICAgICAgfSBlbHNlIGlmIChhZGRCdG4pIHsKICAgICAgICAgIGNvbnN0IG5hbWUgPSBhd2FpdCBudFByb21wdCgiU2hvcnRjdXQgbmFtZToiKTsKICAgICAgICAgIGlmICghbmFtZSkgcmV0dXJuOwogICAgICAgICAgbGV0IHVybCA9IGF3YWl0IG50UHJvbXB0KCJVUkw6Iik7CiAgICAgICAgICBpZiAoIXVybCkgcmV0dXJuOwogICAgICAgICAgaWYgKCF1cmwuc3RhcnRzV2l0aCgiaHR0cCIpKSB1cmwgPSAiaHR0cHM6Ly8iICsgdXJsOwoKICAgICAgICAgIGNvbnN0IHNob3J0Y3V0cyA9IEpTT04ucGFyc2UobG9jYWxTdG9yYWdlLmdldEl0ZW0oInNob3J0Y3V0cyIpIHx8ICJbXSIpOwogICAgICAgICAgc2hvcnRjdXRzLnB1c2goeyBuYW1lLCB1cmwgfSk7CiAgICAgICAgICBsb2NhbFN0b3JhZ2Uuc2V0SXRlbSgic2hvcnRjdXRzIiwgSlNPTi5zdHJpbmdpZnkoc2hvcnRjdXRzKSk7CiAgICAgICAgICByZW5kZXJDdXN0b20oKTsKICAgICAgICB9CiAgICAgIH07CgogICAgICBmdW5jdGlvbiByZW5kZXJDdXN0b20oKSB7CiAgICAgICAgZG9jdW1lbnQucXVlcnlTZWxlY3RvckFsbCgiLmN1c3RvbS1zaG9ydGN1dCIpLmZvckVhY2goKGUpID0+IGUucmVtb3ZlKCkpOwogICAgICAgIGNvbnN0IHNob3J0Y3V0cyA9IEpTT04ucGFyc2UobG9jYWxTdG9yYWdlLmdldEl0ZW0oInNob3J0Y3V0cyIpIHx8ICJbXSIpOwogICAgICAgIGNvbnN0IGFkZEJ0biA9ICQoIiNhZGRTaG9ydGN1dCIpOwoKICAgICAgICBzaG9ydGN1dHMuZm9yRWFjaCgocykgPT4gewogICAgICAgICAgY29uc3QgZGl2ID0gZG9jdW1lbnQuY3JlYXRlRWxlbWVudCgiZGl2Iik7CiAgICAgICAgICBkaXYuY2xhc3NOYW1lID0gInNob3J0Y3V0IGN1c3RvbS1zaG9ydGN1dCI7CiAgICAgICAgICBkaXYuZGF0YXNldC51cmwgPSBzLnVybDsKICAgICAgICAgIGRpdi5pbm5lckhUTUwgPSBgCiAgICAgICAgICA8ZGl2IGNsYXNzPSJzaG9ydGN1dC1pY29uIj48aSBjbGFzcz0iZmEtc29saWQgZmEtbGluayI+PC9pPjwvZGl2PgogICAgICAgICAgPHNwYW4gY2xhc3M9InNob3J0Y3V0LWxhYmVsIj4ke3MubmFtZX08L3NwYW4+CiAgICAgICAgYDsKICAgICAgICAgIGFkZEJ0bi5iZWZvcmUoZGl2KTsKICAgICAgICB9KTsKICAgICAgfQoKICAgICAgLy8gUmVuZGVyIGJvb2ttYXJrcwogICAgICBmdW5jdGlvbiByZW5kZXJCb29rbWFya3MoKSB7CiAgICAgICAgY29uc3QgY29udGFpbmVyID0gZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoImJvb2ttYXJrcy1jb250YWluZXIiKTsKICAgICAgICBpZiAoIWNvbnRhaW5lcikgcmV0dXJuOwoKICAgICAgICBjb25zdCBib29rbWFya3MgPSBKU09OLnBhcnNlKGxvY2FsU3RvcmFnZS5nZXRJdGVtKCJzY3JhbWpldF9ib29rbWFya3MiKSB8fCAiW10iKTsKICAgICAgICBjb250YWluZXIuaW5uZXJIVE1MID0gIiI7CgogICAgICAgIGlmIChib29rbWFya3MubGVuZ3RoID09PSAwKSB7CiAgICAgICAgICBkb2N1bWVudC5nZXRFbGVtZW50QnlJZCgiYm9va21hcmtzLXNlY3Rpb24iKS5zdHlsZS5kaXNwbGF5ID0gIm5vbmUiOwogICAgICAgICAgcmV0dXJuOwogICAgICAgIH0KCiAgICAgICAgZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoImJvb2ttYXJrcy1zZWN0aW9uIikuc3R5bGUuZGlzcGxheSA9ICJibG9jayI7CgogICAgICAgIGJvb2ttYXJrcy5mb3JFYWNoKChiKSA9PiB7CiAgICAgICAgICBjb25zdCBkaXYgPSBkb2N1bWVudC5jcmVhdGVFbGVtZW50KCJkaXYiKTsKICAgICAgICAgIGRpdi5jbGFzc05hbWUgPSAic2hvcnRjdXQgYm9va21hcmstc2hvcnRjdXQiOwogICAgICAgICAgZGl2LmRhdGFzZXQudXJsID0gYi51cmw7CiAgICAgICAgICBkaXYuaW5uZXJIVE1MID0gYAogICAgICAgICAgPGRpdiBjbGFzcz0ic2hvcnRjdXQtaWNvbiI+PGkgY2xhc3M9ImZhLXNvbGlkIGZhLXN0YXIiIHN0eWxlPSJjb2xvcjp2YXIoLS1hY2NlbnQpOyI+PC9pPjwvZGl2PgogICAgICAgICAgPHNwYW4gY2xhc3M9InNob3J0Y3V0LWxhYmVsIj4ke2IubmFtZX08L3NwYW4+CiAgICAgICAgYDsKICAgICAgICAgIGNvbnRhaW5lci5hcHBlbmRDaGlsZChkaXYpOwogICAgICAgIH0pOwogICAgICB9CgogICAgICAvLyBRdW90ZQogICAgICBpZiAod2luZG93LlFVT1RFUz8ubGVuZ3RoKSB7CiAgICAgICAgJCgiI3F1b3RlIikudGV4dENvbnRlbnQgPSB3aW5kb3cuUVVPVEVTW01hdGguZmxvb3IoTWF0aC5yYW5kb20oKSAqIHdpbmRvdy5RVU9URVMubGVuZ3RoKV07CiAgICAgIH0KCiAgICAgIHJlbmRlckN1c3RvbSgpOwogICAgICByZW5kZXJCb29rbWFya3MoKTsKCiAgICAgIC8vIEhhbmRsZSBib29rbWFyayBjbGlja3MKICAgICAgZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoImJvb2ttYXJrcy1jb250YWluZXIiKS5vbmNsaWNrID0gKGUpID0+IHsKICAgICAgICBjb25zdCBzaG9ydGN1dCA9IGUudGFyZ2V0LmNsb3Nlc3QoIi5zaG9ydGN1dFtkYXRhLXVybF0iKTsKICAgICAgICBpZiAoc2hvcnRjdXQpIHsKICAgICAgICAgIGUucHJldmVudERlZmF1bHQoKTsKICAgICAgICAgIG5hdihzaG9ydGN1dC5kYXRhc2V0LnVybCk7CiAgICAgICAgfQogICAgICB9OwogICAgPC9zY3JpcHQ+CiAgPC9ib2R5Pgo8L2h0bWw+Cg==");
+    let bundledNewTabHtml = decodeUtf8Base64("PCFkb2N0eXBlIGh0bWw+CjxodG1sIGxhbmc9ImVuIj4KICA8aGVhZD4KICAgIDxtZXRhIGNoYXJzZXQ9IlVURi04IiAvPgogICAgPHRpdGxlPk5ldyBUYWI8L3RpdGxlPgoKICAgIDxsaW5rIHJlbD0ic3R5bGVzaGVldCIgaHJlZj0iaHR0cHM6Ly9jZG5qcy5jbG91ZGZsYXJlLmNvbS9hamF4L2xpYnMvZm9udC1hd2Vzb21lLzYuNS4xL2Nzcy9hbGwubWluLmNzcyIgLz4KICAgIDxzdHlsZT4KICAgICAgQGltcG9ydCB1cmwoImh0dHBzOi8vZm9udHMuZ29vZ2xlYXBpcy5jb20vY3NzMj9mYW1pbHk9SW50ZXI6d2dodEA0MDA7NTAwOzYwMDs3MDAmZGlzcGxheT1zd2FwIik7CgogICAgICA6cm9vdCB7CiAgICAgICAgLyogQ29yZSBjb2xvcnMgKi8KICAgICAgICAtLWJnOiAjMGEwYTBhOwogICAgICAgIC0tc3VyZmFjZTogIzBmMGYwZjsKICAgICAgICAtLXN1cmZhY2UtaG92ZXI6ICMxYTFhMWE7CiAgICAgICAgLS1zdXJmYWNlLWFjdGl2ZTogIzI1MjUyNTsKICAgICAgICAtLWJvcmRlcjogIzFmMWYxZjsKICAgICAgICAtLWJvcmRlci1saWdodDogIzJhMmEyYTsKCiAgICAgICAgLyogVGV4dCAqLwogICAgICAgIC0tdGV4dDogI2U0ZTRlNzsKICAgICAgICAtLXRleHQtbXV0ZWQ6ICM3MTcxN2E7CiAgICAgICAgLS10ZXh0LWRpbTogIzUyNTI1YjsKCiAgICAgICAgLyogQWNjZW50ICovCiAgICAgICAgLS1hY2NlbnQ6ICNmZmZmZmY7CiAgICAgICAgLS1hY2NlbnQtZGltOiByZ2JhKDI1NSwgMjU1LCAyNTUsIDAuOCk7CiAgICAgICAgLS1hY2NlbnQtZ2xvdzogcmdiYSgyNTUsIDI1NSwgMjU1LCAwLjEpOwoKICAgICAgICAvKiBTdGF0dXMgY29sb3JzICovCiAgICAgICAgLS1zdWNjZXNzOiAjMjJjNTVlOwogICAgICAgIC0td2FybmluZzogI2Y1OWUwYjsKICAgICAgICAtLWVycm9yOiAjZWY0NDQ0OwogICAgICAgIC0taW5mbzogIzNiODJmNjsKCiAgICAgICAgLyogU2hhZG93cyAqLwogICAgICAgIC0tc2hhZG93LXNtOiAwIDFweCAycHggcmdiYSgwLCAwLCAwLCAwLjMpOwogICAgICAgIC0tc2hhZG93LW1kOiAwIDRweCAxMnB4IHJnYmEoMCwgMCwgMCwgMC40KTsKICAgICAgICAtLXNoYWRvdy1sZzogMCA4cHggMjRweCByZ2JhKDAsIDAsIDAsIDAuNSk7CiAgICAgICAgLS1zaGFkb3cteGw6IDAgMTZweCA0OHB4IHJnYmEoMCwgMCwgMCwgMC42KTsKCiAgICAgICAgLyogU3BhY2luZyAqLwogICAgICAgIC0tc3BhY2UteHM6IDRweDsKICAgICAgICAtLXNwYWNlLXNtOiA4cHg7CiAgICAgICAgLS1zcGFjZS1tZDogMTZweDsKICAgICAgICAtLXNwYWNlLWxnOiAyNHB4OwogICAgICAgIC0tc3BhY2UteGw6IDMycHg7CiAgICAgICAgLS1zcGFjZS0yeGw6IDQ4cHg7CgogICAgICAgIC8qIEJvcmRlciByYWRpdXMgKi8KICAgICAgICAtLXJhZGl1cy1zbTogNHB4OwogICAgICAgIC0tcmFkaXVzLW1kOiA4cHg7CiAgICAgICAgLS1yYWRpdXMtbGc6IDEycHg7CiAgICAgICAgLS1yYWRpdXMteGw6IDE2cHg7CiAgICAgICAgLS1yYWRpdXMtZnVsbDogOTk5OXB4OwoKICAgICAgICAvKiBUcmFuc2l0aW9ucyAqLwogICAgICAgIC0tdHJhbnNpdGlvbi1mYXN0OiAwLjFzIGVhc2U7CiAgICAgICAgLS10cmFuc2l0aW9uLW5vcm1hbDogMC4ycyBlYXNlOwogICAgICAgIC0tdHJhbnNpdGlvbi1zbG93OiAwLjNzIGVhc2U7CgogICAgICAgIC8qIFR5cG9ncmFwaHkgKi8KICAgICAgICAtLWZvbnQtc2FuczogIkludGVyIiwgc3lzdGVtLXVpLCAtYXBwbGUtc3lzdGVtLCBzYW5zLXNlcmlmOwogICAgICAgIC0tZm9udC1tb25vOiAiSmV0QnJhaW5zIE1vbm8iLCAiRmlyYSBDb2RlIiwgbW9ub3NwYWNlOwoKICAgICAgICAvKiBCYWNrZ3JvdW5kICovCiAgICAgICAgLS1iZy1pbWFnZTogbm9uZTsKICAgICAgfQoKICAgICAgKiB7CiAgICAgICAgYm94LXNpemluZzogYm9yZGVyLWJveDsKICAgICAgICBtYXJnaW46IDA7CiAgICAgICAgcGFkZGluZzogMDsKICAgICAgfQoKICAgICAgYm9keSB7CiAgICAgICAgZm9udC1mYW1pbHk6ICJJbnRlciIsIHN5c3RlbS11aSwgc2Fucy1zZXJpZjsKICAgICAgICBiYWNrZ3JvdW5kOiB2YXIoLS1iZyk7CiAgICAgICAgY29sb3I6IHZhcigtLXRleHQpOwogICAgICAgIG1pbi1oZWlnaHQ6IDEwMHZoOwogICAgICAgIGRpc3BsYXk6IGZsZXg7CiAgICAgICAgZmxleC1kaXJlY3Rpb246IGNvbHVtbjsKICAgICAgICBhbGlnbi1pdGVtczogY2VudGVyOwogICAgICAgIGp1c3RpZnktY29udGVudDogY2VudGVyOwogICAgICAgIHBhZGRpbmc6IDQwcHggMjBweDsKICAgICAgfQoKICAgICAgLmNsb2NrIHsKICAgICAgICBmb250LXNpemU6IDRyZW07CiAgICAgICAgZm9udC13ZWlnaHQ6IDYwMDsKICAgICAgICBsZXR0ZXItc3BhY2luZzogLTJweDsKICAgICAgICBtYXJnaW4tYm90dG9tOiA4cHg7CiAgICAgICAgY29sb3I6IHZhcigtLWFjY2VudCk7CiAgICAgbGluZS1oZWlnaHQ6NHJlbTtoZWlnaHQ6NHJlbTt9CgogICAgICAuZGF0ZSB7CiAgICAgICAgZm9udC1zaXplOiAxNHB4OwogICAgICAgIGNvbG9yOiB2YXIoLS10ZXh0LW11dGVkKTsKICAgICAgICBtYXJnaW4tYm90dG9tOiAzMnB4OwogICAgIGxpbmUtaGVpZ2h0OjE4cHg7bWluLWhlaWdodDoxOHB4O30KCiAgICAgIC5zZWFyY2gtYm94IHsKICAgICAgICBkaXNwbGF5OiBmbGV4OwogICAgICAgIGFsaWduLWl0ZW1zOiBjZW50ZXI7CiAgICAgICAgZ2FwOiA4cHg7CiAgICAgICAgYmFja2dyb3VuZDogdmFyKC0tc3VyZmFjZSk7CiAgICAgICAgYm9yZGVyOiAxcHggc29saWQgdmFyKC0tYm9yZGVyKTsKICAgICAgICBib3JkZXItcmFkaXVzOiAxMnB4OwogICAgICAgIHBhZGRpbmc6IDEycHggMTZweDsKICAgICAgICB3aWR0aDogMTAwJTsKICAgICAgICBtYXgtd2lkdGg6IDUwMHB4OwogICAgICAgIG1hcmdpbi1ib3R0b206IDQwcHg7CiAgICAgIH0KCiAgICAgIC5zZWFyY2gtYm94IGkgewogICAgICAgIGNvbG9yOiB2YXIoLS10ZXh0LW11dGVkKTsKICAgICAgICBmb250LXNpemU6IDE0cHg7CiAgICAgIH0KCiAgICAgIC5zZWFyY2gtYm94IGlucHV0IHsKICAgICAgICBmbGV4OiAxOwogICAgICAgIGJhY2tncm91bmQ6IHRyYW5zcGFyZW50OwogICAgICAgIGJvcmRlcjogbm9uZTsKICAgICAgICBvdXRsaW5lOiBub25lOwogICAgICAgIGNvbG9yOiB2YXIoLS10ZXh0KTsKICAgICAgICBmb250LXNpemU6IDE0cHg7CiAgICAgICAgZm9udC1mYW1pbHk6IGluaGVyaXQ7CiAgICAgIH0KCiAgICAgIC5zZWFyY2gtYm94IGlucHV0OjpwbGFjZWhvbGRlciB7CiAgICAgICAgY29sb3I6IHZhcigtLXRleHQtZGltKTsKICAgICAgfQoKICAgICAgLnNlYXJjaC1ib3ggc2VsZWN0IHsKICAgICAgICBiYWNrZ3JvdW5kOiB2YXIoLS1zdXJmYWNlLWhvdmVyKTsKICAgICAgICBib3JkZXI6IG5vbmU7CiAgICAgICAgYm9yZGVyLXJhZGl1czogNnB4OwogICAgICAgIGNvbG9yOiB2YXIoLS10ZXh0LW11dGVkKTsKICAgICAgICBwYWRkaW5nOiA2cHggMTBweDsKICAgICAgICBmb250LXNpemU6IDEycHg7CiAgICAgICAgY3Vyc29yOiBwb2ludGVyOwogICAgICAgIG91dGxpbmU6IG5vbmU7CiAgICAgIH0KCiAgICAgIC5zaG9ydGN1dHMgewogICAgICAgIGRpc3BsYXk6IGdyaWQ7CiAgICAgICAgZ3JpZC10ZW1wbGF0ZS1jb2x1bW5zOiByZXBlYXQoNSwgMWZyKTsKICAgICAgICBnYXA6IDE2cHg7CiAgICAgICAgbWF4LXdpZHRoOiA1MDBweDsKICAgICAgICB3aWR0aDogMTAwJTsKICAgICAgfQoKICAgICAgLnNob3J0Y3V0IHsKICAgICAgICBkaXNwbGF5OiBmbGV4OwogICAgICAgIGZsZXgtZGlyZWN0aW9uOiBjb2x1bW47CiAgICAgICAgYWxpZ24taXRlbXM6IGNlbnRlcjsKICAgICAgICBnYXA6IDhweDsKICAgICAgICB0ZXh0LWRlY29yYXRpb246IG5vbmU7CiAgICAgICAgY3Vyc29yOiBwb2ludGVyOwogICAgICB9CgogICAgICAuc2hvcnRjdXQtaWNvbiB7CiAgICAgICAgd2lkdGg6IDUycHg7CiAgICAgICAgaGVpZ2h0OiA1MnB4OwogICAgICAgIGJhY2tncm91bmQ6IHZhcigtLXN1cmZhY2UpOwogICAgICAgIGJvcmRlcjogMXB4IHNvbGlkIHZhcigtLWJvcmRlcik7CiAgICAgICAgYm9yZGVyLXJhZGl1czogMTJweDsKICAgICAgICBkaXNwbGF5OiBmbGV4OwogICAgICAgIGFsaWduLWl0ZW1zOiBjZW50ZXI7CiAgICAgICAganVzdGlmeS1jb250ZW50OiBjZW50ZXI7CiAgICAgICAgdHJhbnNpdGlvbjogYWxsIDAuMTVzOwogICAgICB9CgogICAgICAuc2hvcnRjdXQ6aG92ZXIgLnNob3J0Y3V0LWljb24gewogICAgICAgIGJhY2tncm91bmQ6IHZhcigtLXN1cmZhY2UtaG92ZXIpOwogICAgICAgIHRyYW5zZm9ybTogdHJhbnNsYXRlWSgtMnB4KTsKICAgICAgfQoKICAgICAgLnNob3J0Y3V0LWljb24gaW1nIHsKICAgICAgICB3aWR0aDogMjJweDsKICAgICAgICBoZWlnaHQ6IDIycHg7CiAgICAgICAgZmlsdGVyOiBicmlnaHRuZXNzKDApIGludmVydCgwLjcpOwogICAgICB9CgogICAgICAuc2hvcnRjdXQtaWNvbiBpIHsKICAgICAgICBmb250LXNpemU6IDIwcHg7CiAgICAgICAgY29sb3I6IHZhcigtLXRleHQtbXV0ZWQpOwogICAgICB9CgogICAgICAuc2hvcnRjdXQtY2xvc2UgewogICAgICAgIHBvc2l0aW9uOiBhYnNvbHV0ZTsKICAgICAgICB0b3A6IC02cHg7CiAgICAgICAgcmlnaHQ6IC02cHg7CiAgICAgICAgd2lkdGg6IDE4cHg7CiAgICAgICAgaGVpZ2h0OiAxOHB4OwogICAgICAgIGJvcmRlci1yYWRpdXM6IDUwJTsKICAgICAgICBiYWNrZ3JvdW5kOiB2YXIoLS1zdXJmYWNlLWFjdGl2ZSwgIzI1MjUyNSk7CiAgICAgICAgYm9yZGVyOiAxcHggc29saWQgdmFyKC0tYm9yZGVyLCAjMWYxZjFmKTsKICAgICAgICBjb2xvcjogdmFyKC0tdGV4dC1tdXRlZCwgIzcxNzE3YSk7CiAgICAgICAgZm9udC1zaXplOiAxMHB4OwogICAgICAgIGRpc3BsYXk6IG5vbmU7CiAgICAgICAgYWxpZ24taXRlbXM6IGNlbnRlcjsKICAgICAgICBqdXN0aWZ5LWNvbnRlbnQ6IGNlbnRlcjsKICAgICAgICBjdXJzb3I6IHBvaW50ZXI7CiAgICAgICAgei1pbmRleDogMjsKICAgICAgICBsaW5lLWhlaWdodDogMTsKICAgICAgICB0cmFuc2l0aW9uOgogICAgICAgICAgYmFja2dyb3VuZCAwLjFzLAogICAgICAgICAgY29sb3IgMC4xczsKICAgICAgfQogICAgICAuc2hvcnRjdXQtY2xvc2U6aG92ZXIgewogICAgICAgIGJhY2tncm91bmQ6ICNlZjQ0NDQ7CiAgICAgICAgY29sb3I6ICNmZmY7CiAgICAgICAgYm9yZGVyLWNvbG9yOiAjZWY0NDQ0OwogICAgICB9CiAgICAgIC5zaG9ydGN1dDpob3ZlciAuc2hvcnRjdXQtY2xvc2UgewogICAgICAgIGRpc3BsYXk6IGZsZXg7CiAgICAgIH0KICAgICAgLnNob3J0Y3V0IHsKICAgICAgICBwb3NpdGlvbjogcmVsYXRpdmU7CiAgICAgIH0KCiAgICAgIC5zaG9ydGN1dC1sYWJlbCB7CiAgICAgICAgZm9udC1zaXplOiAxMXB4OwogICAgICAgIGNvbG9yOiB2YXIoLS10ZXh0LW11dGVkKTsKICAgICAgICB0ZXh0LWFsaWduOiBjZW50ZXI7CiAgICAgICAgbWF4LXdpZHRoOiA2MHB4OwogICAgICAgIG92ZXJmbG93OiBoaWRkZW47CiAgICAgICAgdGV4dC1vdmVyZmxvdzogZWxsaXBzaXM7CiAgICAgICAgd2hpdGUtc3BhY2U6IG5vd3JhcDsKICAgICAgfQoKICAgICAgLnNob3J0Y3V0OmhvdmVyIC5zaG9ydGN1dC1sYWJlbCB7CiAgICAgICAgY29sb3I6IHZhcigtLXRleHQpOwogICAgICB9CgogICAgICAucXVvdGUgewogICAgICAgIHBvc2l0aW9uOiBmaXhlZDsKICAgICAgICBib3R0b206IDI0cHg7CiAgICAgICAgZm9udC1zaXplOiAxM3B4OwogICAgICAgIGNvbG9yOiB2YXIoLS10ZXh0LWRpbSk7CiAgICAgICAgbWF4LXdpZHRoOiA0MDBweDsKICAgICAgICB0ZXh0LWFsaWduOiBjZW50ZXI7CiAgICAgIH0KCiAgICAgIC5sb2FkZXIgewogICAgICAgIHBvc2l0aW9uOiBmaXhlZDsKICAgICAgICBpbnNldDogMDsKICAgICAgICBiYWNrZ3JvdW5kOiByZ2JhKDAsIDAsIDAsIDAuOSk7CiAgICAgICAgZGlzcGxheTogbm9uZTsKICAgICAgICBhbGlnbi1pdGVtczogY2VudGVyOwogICAgICAgIGp1c3RpZnktY29udGVudDogY2VudGVyOwogICAgICAgIHotaW5kZXg6IDEwMDsKICAgICAgfQoKICAgICAgLmxvYWRlci5zaG93IHsKICAgICAgICBkaXNwbGF5OiBmbGV4OwogICAgICB9CgogICAgICAuc3Bpbm5lciB7CiAgICAgICAgd2lkdGg6IDMycHg7CiAgICAgICAgaGVpZ2h0OiAzMnB4OwogICAgICAgIGJvcmRlcjogMnB4IHNvbGlkIHZhcigtLWJvcmRlcik7CiAgICAgICAgYm9yZGVyLXRvcC1jb2xvcjogdmFyKC0tYWNjZW50KTsKICAgICAgICBib3JkZXItcmFkaXVzOiA1MCU7CiAgICAgICAgYW5pbWF0aW9uOiBzcGluIDAuOHMgbGluZWFyIGluZmluaXRlOwogICAgICB9CgogICAgICBAa2V5ZnJhbWVzIHNwaW4gewogICAgICAgIHRvIHsKICAgICAgICAgIHRyYW5zZm9ybTogcm90YXRlKDM2MGRlZyk7CiAgICAgICAgfQogICAgICB9CgogICAgICAuaW5jb2duaXRvLWJhZGdlIHsKICAgICAgICBwb3NpdGlvbjogZml4ZWQ7CiAgICAgICAgdG9wOiAxNnB4OwogICAgICAgIGxlZnQ6IDUwJTsKICAgICAgICB0cmFuc2Zvcm06IHRyYW5zbGF0ZVgoLTUwJSk7CiAgICAgICAgZGlzcGxheTogZmxleDsKICAgICAgICBhbGlnbi1pdGVtczogY2VudGVyOwogICAgICAgIGdhcDogOHB4OwogICAgICAgIGJhY2tncm91bmQ6IHJnYmEoMjM5LCA2OCwgNjgsIDAuMTUpOwogICAgICAgIGJvcmRlcjogMXB4IHNvbGlkIHJnYmEoMjM5LCA2OCwgNjgsIDAuMyk7CiAgICAgICAgY29sb3I6ICNlZjQ0NDQ7CiAgICAgICAgcGFkZGluZzogOHB4IDE4cHg7CiAgICAgICAgYm9yZGVyLXJhZGl1czogOTk5OXB4OwogICAgICAgIGZvbnQtc2l6ZTogMTJweDsKICAgICAgICBmb250LXdlaWdodDogNTAwOwogICAgICAgIGxldHRlci1zcGFjaW5nOiAwLjAyZW07CiAgICAgIH0KICAgICAgOjotd2Via2l0LXNjcm9sbGJhciB7CiAgICAgICAgd2lkdGg6IDhweDsKICAgICAgfQogICAgICA6Oi13ZWJraXQtc2Nyb2xsYmFyLXRyYWNrIHsKICAgICAgICBiYWNrZ3JvdW5kOiB0cmFuc3BhcmVudDsKICAgICAgfQogICAgICA6Oi13ZWJraXQtc2Nyb2xsYmFyLXRodW1iIHsKICAgICAgICBiYWNrZ3JvdW5kOiByZ2JhKDI1NSwgMjU1LCAyNTUsIDAuMTIpOwogICAgICAgIGJvcmRlci1yYWRpdXM6IDRweDsKICAgICAgfQogICAgICA6Oi13ZWJraXQtc2Nyb2xsYmFyLXRodW1iOmhvdmVyIHsKICAgICAgICBiYWNrZ3JvdW5kOiByZ2JhKDI1NSwgMjU1LCAyNTUsIDAuMik7CiAgICAgIH0KICAgICAgKiB7CiAgICAgICAgc2Nyb2xsYmFyLXdpZHRoOiB0aGluOwogICAgICAgIHNjcm9sbGJhci1jb2xvcjogcmdiYSgyNTUsIDI1NSwgMjU1LCAwLjEyKSB0cmFuc3BhcmVudDsKICAgICAgfQoKICAgICAgLm50LW1vZGFsLW92ZXJsYXkgewogICAgICAgIHBvc2l0aW9uOiBmaXhlZDsKICAgICAgICBpbnNldDogMDsKICAgICAgICBiYWNrZ3JvdW5kOiByZ2JhKDAsIDAsIDAsIDAuNik7CiAgICAgICAgZGlzcGxheTogZmxleDsKICAgICAgICBhbGlnbi1pdGVtczogY2VudGVyOwogICAgICAgIGp1c3RpZnktY29udGVudDogY2VudGVyOwogICAgICAgIHotaW5kZXg6IDk5OTk7CiAgICAgICAgb3BhY2l0eTogMDsKICAgICAgICBwb2ludGVyLWV2ZW50czogbm9uZTsKICAgICAgICB0cmFuc2l0aW9uOiBvcGFjaXR5IDAuMTVzOwogICAgICB9CiAgICAgIC5udC1tb2RhbC1vdmVybGF5Lm9wZW4gewogICAgICAgIG9wYWNpdHk6IDE7CiAgICAgICAgcG9pbnRlci1ldmVudHM6IGF1dG87CiAgICAgIH0KICAgICAgLm50LW1vZGFsIHsKICAgICAgICBiYWNrZ3JvdW5kOiAjMWExYTFhOwogICAgICAgIGJvcmRlcjogMXB4IHNvbGlkICMzMzM7CiAgICAgICAgYm9yZGVyLXJhZGl1czogMTJweDsKICAgICAgICBwYWRkaW5nOiAyNHB4OwogICAgICAgIG1pbi13aWR0aDogMzIwcHg7CiAgICAgICAgbWF4LXdpZHRoOiA0MjBweDsKICAgICAgICBib3gtc2hhZG93OiAwIDI0cHggNjRweCByZ2JhKDAsIDAsIDAsIDAuNjUpOwogICAgICB9CiAgICAgIC5udC1tb2RhbC10aXRsZSB7CiAgICAgICAgZm9udC1zaXplOiAxNHB4OwogICAgICAgIGZvbnQtd2VpZ2h0OiA2MDA7CiAgICAgICAgbWFyZ2luLWJvdHRvbTogMTZweDsKICAgICAgICBjb2xvcjogI2U0ZTRlNzsKICAgICAgfQogICAgICAubnQtbW9kYWwtaW5wdXQgewogICAgICAgIHdpZHRoOiAxMDAlOwogICAgICAgIHBhZGRpbmc6IDEwcHggMTJweDsKICAgICAgICBib3JkZXItcmFkaXVzOiA4cHg7CiAgICAgICAgYm9yZGVyOiAxcHggc29saWQgIzMzMzsKICAgICAgICBiYWNrZ3JvdW5kOiAjMGYwZjBmOwogICAgICAgIGNvbG9yOiAjZTRlNGU3OwogICAgICAgIGZvbnQtc2l6ZTogMTNweDsKICAgICAgICBvdXRsaW5lOiBub25lOwogICAgICAgIG1hcmdpbi1ib3R0b206IDE2cHg7CiAgICAgICAgYm94LXNpemluZzogYm9yZGVyLWJveDsKICAgICAgfQogICAgICAubnQtbW9kYWwtaW5wdXQ6Zm9jdXMgewogICAgICAgIGJvcmRlci1jb2xvcjogIzY2NjsKICAgICAgfQogICAgICAubnQtbW9kYWwtYWN0aW9ucyB7CiAgICAgICAgZGlzcGxheTogZmxleDsKICAgICAgICBnYXA6IDhweDsKICAgICAgICBqdXN0aWZ5LWNvbnRlbnQ6IGZsZXgtZW5kOwogICAgICB9CiAgICAgIC5udC1tb2RhbC1idG4gewogICAgICAgIHBhZGRpbmc6IDhweCAxNnB4OwogICAgICAgIGJvcmRlci1yYWRpdXM6IDhweDsKICAgICAgICBib3JkZXI6IG5vbmU7CiAgICAgICAgZm9udC1zaXplOiAxM3B4OwogICAgICAgIGN1cnNvcjogcG9pbnRlcjsKICAgICAgICBmb250LXdlaWdodDogNTAwOwogICAgICAgIHRyYW5zaXRpb246IG9wYWNpdHkgMC4xczsKICAgICAgfQogICAgICAubnQtbW9kYWwtYnRuOmhvdmVyIHsKICAgICAgICBvcGFjaXR5OiAwLjg7CiAgICAgIH0KICAgICAgLm50LW1vZGFsLWJ0bi1wcmltYXJ5IHsKICAgICAgICBiYWNrZ3JvdW5kOiAjZTRlNGU3OwogICAgICAgIGNvbG9yOiAjMGEwYTBhOwogICAgICB9CiAgICAgIC5udC1tb2RhbC1idG4tc2Vjb25kYXJ5IHsKICAgICAgICBiYWNrZ3JvdW5kOiAjMmEyYTJhOwogICAgICAgIGNvbG9yOiAjYTFhMWFhOwogICAgICB9CiAgICAgIC5udC1tb2RhbC1tZXNzYWdlIHsKICAgICAgICBmb250LXNpemU6IDEzcHg7CiAgICAgICAgY29sb3I6ICNhMWExYWE7CiAgICAgICAgbWFyZ2luLWJvdHRvbTogMTZweDsKICAgICAgICBsaW5lLWhlaWdodDogMS40OwogICAgICB9CiAgICA8L3N0eWxlPgogIDwvaGVhZD4KCiAgPGJvZHk+CiAgICA8ZGl2IGNsYXNzPSJsb2FkZXIiIGlkPSJsb2FkZXIiPgogICAgICA8ZGl2IGNsYXNzPSJzcGlubmVyIj48L2Rpdj4KICAgIDwvZGl2PgoKICAgIDxkaXYgY2xhc3M9ImluY29nbml0by1iYWRnZSIgaWQ9ImluY29nbml0by1iYWRnZSIgc3R5bGU9ImRpc3BsYXk6IG5vbmUiPgogICAgICA8aSBjbGFzcz0iZmEtc29saWQgZmEtdXNlci1zZWNyZXQiPjwvaT4KICAgICAgPHNwYW4+WW91J3JlIGJyb3dzaW5nIHByaXZhdGVseTwvc3Bhbj4KICAgIDwvZGl2PgoKICAgIDxkaXYgY2xhc3M9ImNsb2NrIiBpZD0iY2xvY2siPjAwOjAwPC9kaXY+CiAgICA8ZGl2IGNsYXNzPSJkYXRlIiBpZD0iZGF0ZSI+PC9kaXY+CgogICAgPGZvcm0gY2xhc3M9InNlYXJjaC1ib3giIGlkPSJzZWFyY2hGb3JtIj4KICAgICAgPGkgY2xhc3M9ImZhLXNvbGlkIGZhLW1hZ25pZnlpbmctZ2xhc3MiPjwvaT4KICAgICAgPGlucHV0IHR5cGU9InRleHQiIGlkPSJzZWFyY2hJbnB1dCIgcGxhY2Vob2xkZXI9IlNlYXJjaCB0aGUgd2ViLi4uIiBhdXRvY29tcGxldGU9Im9mZiIgLz4KICAgICAgPHNlbGVjdCBpZD0iZW5naW5lIj4KICAgICAgICA8b3B0aW9uIHZhbHVlPSJodHRwczovL3NlYXJjaC5icmF2ZS5jb20vc2VhcmNoP3E9Ij5CcmF2ZTwvb3B0aW9uPgogICAgICAgIDxvcHRpb24gdmFsdWU9Imh0dHBzOi8vZHVja2R1Y2tnby5jb20vP3E9Ij5EdWNrRHVja0dvPC9vcHRpb24+CiAgICAgICAgPG9wdGlvbiB2YWx1ZT0iaHR0cHM6Ly93d3cuZ29vZ2xlLmNvbS9zZWFyY2g/cT0iPkdvb2dsZTwvb3B0aW9uPgogICAgICA8L3NlbGVjdD4KICAgIDwvZm9ybT4KCiAgICA8ZGl2IGNsYXNzPSJzaG9ydGN1dHMiIGlkPSJzaG9ydGN1dHMiPgogICAgICA8YSBjbGFzcz0ic2hvcnRjdXQgcHJlc2V0LXNob3J0Y3V0IiBkYXRhLXVybD0iaHR0cHM6Ly9yZWV5dWtpLm5lb2NpdGllcy5vcmciPgogICAgICAgIDxzcGFuIGNsYXNzPSJzaG9ydGN1dC1jbG9zZSIgZGF0YS11cmw9Imh0dHBzOi8vcmVleXVraS5uZW9jaXRpZXMub3JnIj4mdGltZXM7PC9zcGFuPgogICAgICAgIDxkaXYgY2xhc3M9InNob3J0Y3V0LWljb24iPgogICAgICAgICAgPGltZyBzcmM9Imh0dHBzOi8vcmVleXVraS5naXRodWIuaW8vc3RhdGljL2Zhdmljb24vZmF2aWNvbi0zMngzMi5wbmciIC8+CiAgICAgICAgPC9kaXY+CiAgICAgICAgPHNwYW4gY2xhc3M9InNob3J0Y3V0LWxhYmVsIj5SZWV5dWtpIFNpdGU8L3NwYW4+CiAgICAgIDwvYT4KICAgICAgPGEgY2xhc3M9InNob3J0Y3V0IHByZXNldC1zaG9ydGN1dCIgZGF0YS11cmw9Imh0dHBzOi8veW91dHViZS5jb20iPgogICAgICAgIDxzcGFuIGNsYXNzPSJzaG9ydGN1dC1jbG9zZSIgZGF0YS11cmw9Imh0dHBzOi8veW91dHViZS5jb20iPiZ0aW1lczs8L3NwYW4+CiAgICAgICAgPGRpdiBjbGFzcz0ic2hvcnRjdXQtaWNvbiI+CiAgICAgICAgICA8aW1nIHNyYz0iaHR0cHM6Ly9jZG4uanNkZWxpdnIubmV0L2doL3NpbXBsZS1pY29ucy9zaW1wbGUtaWNvbnMvaWNvbnMveW91dHViZS5zdmciIC8+CiAgICAgICAgPC9kaXY+CiAgICAgICAgPHNwYW4gY2xhc3M9InNob3J0Y3V0LWxhYmVsIj5Zb3VUdWJlPC9zcGFuPgogICAgICA8L2E+CiAgICAgIDxhIGNsYXNzPSJzaG9ydGN1dCBwcmVzZXQtc2hvcnRjdXQiIGRhdGEtdXJsPSJodHRwczovL2dpdGh1Yi5jb20iPgogICAgICAgIDxzcGFuIGNsYXNzPSJzaG9ydGN1dC1jbG9zZSIgZGF0YS11cmw9Imh0dHBzOi8vZ2l0aHViLmNvbSI+JnRpbWVzOzwvc3Bhbj4KICAgICAgICA8ZGl2IGNsYXNzPSJzaG9ydGN1dC1pY29uIj4KICAgICAgICAgIDxpbWcgc3JjPSJodHRwczovL2Nkbi5qc2RlbGl2ci5uZXQvZ2gvc2ltcGxlLWljb25zL3NpbXBsZS1pY29ucy9pY29ucy9naXRodWIuc3ZnIiAvPgogICAgICAgIDwvZGl2PgogICAgICAgIDxzcGFuIGNsYXNzPSJzaG9ydGN1dC1sYWJlbCI+R2l0SHViPC9zcGFuPgogICAgICA8L2E+CiAgICAgIDxhIGNsYXNzPSJzaG9ydGN1dCBwcmVzZXQtc2hvcnRjdXQiIGRhdGEtdXJsPSJodHRwczovL2Rpc2NvcmQuY29tIj4KICAgICAgICA8c3BhbiBjbGFzcz0ic2hvcnRjdXQtY2xvc2UiIGRhdGEtdXJsPSJodHRwczovL2Rpc2NvcmQuY29tIj4mdGltZXM7PC9zcGFuPgogICAgICAgIDxkaXYgY2xhc3M9InNob3J0Y3V0LWljb24iPgogICAgICAgICAgPGltZyBzcmM9Imh0dHBzOi8vY2RuLmpzZGVsaXZyLm5ldC9naC9zaW1wbGUtaWNvbnMvc2ltcGxlLWljb25zL2ljb25zL2Rpc2NvcmQuc3ZnIiAvPgogICAgICAgIDwvZGl2PgogICAgICAgIDxzcGFuIGNsYXNzPSJzaG9ydGN1dC1sYWJlbCI+RGlzY29yZDwvc3Bhbj4KICAgICAgPC9hPgogICAgICA8YSBjbGFzcz0ic2hvcnRjdXQgcHJlc2V0LXNob3J0Y3V0IiBkYXRhLXVybD0iaHR0cHM6Ly90d2l0dGVyLmNvbSI+CiAgICAgICAgPHNwYW4gY2xhc3M9InNob3J0Y3V0LWNsb3NlIiBkYXRhLXVybD0iaHR0cHM6Ly90d2l0dGVyLmNvbSI+JnRpbWVzOzwvc3Bhbj4KICAgICAgICA8ZGl2IGNsYXNzPSJzaG9ydGN1dC1pY29uIj4KICAgICAgICAgIDxpbWcgc3JjPSJodHRwczovL2Nkbi5qc2RlbGl2ci5uZXQvZ2gvc2ltcGxlLWljb25zL3NpbXBsZS1pY29ucy9pY29ucy94LnN2ZyIgLz4KICAgICAgICA8L2Rpdj4KICAgICAgICA8c3BhbiBjbGFzcz0ic2hvcnRjdXQtbGFiZWwiPlR3aXR0ZXI8L3NwYW4+CiAgICAgIDwvYT4KICAgICAgPGEgY2xhc3M9InNob3J0Y3V0IHByZXNldC1zaG9ydGN1dCIgZGF0YS11cmw9Imh0dHBzOi8vcGxheS5nZWZvcmNlbm93LmNvbS9tYWxsLyI+CiAgICAgICAgPHNwYW4gY2xhc3M9InNob3J0Y3V0LWNsb3NlIiBkYXRhLXVybD0iaHR0cHM6Ly9wbGF5LmdlZm9yY2Vub3cuY29tL21hbGwvIj4mdGltZXM7PC9zcGFuPgogICAgICAgIDxkaXYgY2xhc3M9InNob3J0Y3V0LWljb24iPgogICAgICAgICAgPGltZyBzcmM9Imh0dHBzOi8vY2RuLmpzZGVsaXZyLm5ldC9naC9zaW1wbGUtaWNvbnMvc2ltcGxlLWljb25zL2ljb25zL252aWRpYS5zdmciIC8+CiAgICAgICAgPC9kaXY+CiAgICAgICAgPHNwYW4gY2xhc3M9InNob3J0Y3V0LWxhYmVsIj5HZWZvcmNlIE5vdzwvc3Bhbj4KICAgICAgPC9hPgogICAgICA8YSBjbGFzcz0ic2hvcnRjdXQgcHJlc2V0LXNob3J0Y3V0IiBkYXRhLXVybD0iaHR0cHM6Ly9mcnV0aWdlcmFlcm9hcmNoaXZlLm9yZy9tdXNpY19wbGF5ZXJzL2xvY2FsIj4KICAgICAgICA8c3BhbiBjbGFzcz0ic2hvcnRjdXQtY2xvc2UiIGRhdGEtdXJsPSJodHRwczovL2ZydXRpZ2VyYWVyb2FyY2hpdmUub3JnL211c2ljX3BsYXllcnMvbG9jYWwiPiZ0aW1lczs8L3NwYW4+CiAgICAgICAgPGRpdiBjbGFzcz0ic2hvcnRjdXQtaWNvbiI+CiAgICAgICAgICA8aW1nIHNyYz0iaHR0cHM6Ly9mcnV0aWdlcmFlcm9hcmNoaXZlLm9yZy9pbWFnZXMvZmF2aWNvbi9mYXZpY29uLmljbz92PTEuMSIgLz4KICAgICAgICA8L2Rpdj4KICAgICAgICA8c3BhbiBjbGFzcz0ic2hvcnRjdXQtbGFiZWwiPlJlZXl1a2kgU2l0ZTwvc3Bhbj4KICAgICAgPC9hPgogICAgICA8YSBjbGFzcz0ic2hvcnRjdXQgcHJlc2V0LXNob3J0Y3V0IiBkYXRhLXVybD0iaHR0cHM6Ly9uZXRmbGl4LmNvbSI+CiAgICAgICAgPHNwYW4gY2xhc3M9InNob3J0Y3V0LWNsb3NlIiBkYXRhLXVybD0iaHR0cHM6Ly9uZXRmbGl4LmNvbSI+JnRpbWVzOzwvc3Bhbj4KICAgICAgICA8ZGl2IGNsYXNzPSJzaG9ydGN1dC1pY29uIj4KICAgICAgICAgIDxpbWcgc3JjPSJodHRwczovL2Nkbi5qc2RlbGl2ci5uZXQvZ2gvc2ltcGxlLWljb25zL3NpbXBsZS1pY29ucy9pY29ucy9uZXRmbGl4LnN2ZyIgLz4KICAgICAgICA8L2Rpdj4KICAgICAgICA8c3BhbiBjbGFzcz0ic2hvcnRjdXQtbGFiZWwiPk5ldGZsaXg8L3NwYW4+CiAgICAgIDwvYT4KICAgICAgPGEgY2xhc3M9InNob3J0Y3V0IHByZXNldC1zaG9ydGN1dCIgZGF0YS11cmw9Imh0dHBzOi8vdHdpdGNoLnR2Ij4KICAgICAgICA8c3BhbiBjbGFzcz0ic2hvcnRjdXQtY2xvc2UiIGRhdGEtdXJsPSJodHRwczovL3R3aXRjaC50diI+JnRpbWVzOzwvc3Bhbj4KICAgICAgICA8ZGl2IGNsYXNzPSJzaG9ydGN1dC1pY29uIj4KICAgICAgICAgIDxpbWcgc3JjPSJodHRwczovL2Nkbi5qc2RlbGl2ci5uZXQvZ2gvc2ltcGxlLWljb25zL3NpbXBsZS1pY29ucy9pY29ucy90d2l0Y2guc3ZnIiAvPgogICAgICAgIDwvZGl2PgogICAgICAgIDxzcGFuIGNsYXNzPSJzaG9ydGN1dC1sYWJlbCI+VHdpdGNoPC9zcGFuPgogICAgICA8L2E+CiAgICAgIDxkaXYgY2xhc3M9InNob3J0Y3V0IiBpZD0iYWRkU2hvcnRjdXQiPgogICAgICAgIDxkaXYgY2xhc3M9InNob3J0Y3V0LWljb24iPjxpIGNsYXNzPSJmYS1zb2xpZCBmYS1wbHVzIj48L2k+PC9kaXY+CiAgICAgICAgPHNwYW4gY2xhc3M9InNob3J0Y3V0LWxhYmVsIj5BZGQ8L3NwYW4+CiAgICAgIDwvZGl2PgogICAgPC9kaXY+CgogICAgPGRpdiBjbGFzcz0iYm9va21hcmtzLXNlY3Rpb24iIGlkPSJib29rbWFya3Mtc2VjdGlvbiIgc3R5bGU9Im1hcmdpbi10b3A6IDMycHgiPgogICAgICA8aDMKICAgICAgICBzdHlsZT0iCiAgICAgICAgICBjb2xvcjogdmFyKC0tdGV4dC1tdXRlZCk7CiAgICAgICAgICBmb250LXNpemU6IDEycHg7CiAgICAgICAgICB0ZXh0LXRyYW5zZm9ybTogdXBwZXJjYXNlOwogICAgICAgICAgbGV0dGVyLXNwYWNpbmc6IDAuMDdlbTsKICAgICAgICAgIG1hcmdpbi1ib3R0b206IDE2cHg7CiAgICAgICAgIgogICAgICA+CiAgICAgICAgQm9va21hcmtzCiAgICAgIDwvaDM+CiAgICAgIDxkaXYKICAgICAgICBjbGFzcz0ic2hvcnRjdXRzIgogICAgICAgIGlkPSJib29rbWFya3MtY29udGFpbmVyIgogICAgICAgIHN0eWxlPSJncmlkLXRlbXBsYXRlLWNvbHVtbnM6IHJlcGVhdChhdXRvLWZpbGwsIG1pbm1heCgxMDBweCwgMWZyKSkiCiAgICAgID48L2Rpdj4KICAgIDwvZGl2PgoKICAgIDxkaXYgY2xhc3M9InF1b3RlIiBpZD0icXVvdGUiPjwvZGl2PgoKICAgIDxkaXYgY2xhc3M9Im50LW1vZGFsLW92ZXJsYXkiIGlkPSJudE1vZGFsIj4KICAgICAgPGRpdiBjbGFzcz0ibnQtbW9kYWwiPgogICAgICAgIDxkaXYgY2xhc3M9Im50LW1vZGFsLXRpdGxlIiBpZD0ibnRNb2RhbFRpdGxlIj48L2Rpdj4KICAgICAgICA8ZGl2IGNsYXNzPSJudC1tb2RhbC1tZXNzYWdlIiBpZD0ibnRNb2RhbE1lc3NhZ2UiPjwvZGl2PgogICAgICAgIDxpbnB1dCBjbGFzcz0ibnQtbW9kYWwtaW5wdXQiIGlkPSJudE1vZGFsSW5wdXQiIHN0eWxlPSJkaXNwbGF5OiBub25lIiAvPgogICAgICAgIDxkaXYgY2xhc3M9Im50LW1vZGFsLWFjdGlvbnMiPgogICAgICAgICAgPGJ1dHRvbiBjbGFzcz0ibnQtbW9kYWwtYnRuIG50LW1vZGFsLWJ0bi1zZWNvbmRhcnkiIGlkPSJudE1vZGFsQ2FuY2VsIj5DYW5jZWw8L2J1dHRvbj4KICAgICAgICAgIDxidXR0b24gY2xhc3M9Im50LW1vZGFsLWJ0biBudC1tb2RhbC1idG4tcHJpbWFyeSIgaWQ9Im50TW9kYWxPayI+T0s8L2J1dHRvbj4KICAgICAgICA8L2Rpdj4KICAgICAgPC9kaXY+CiAgICA8L2Rpdj4KCiAgICA8c2NyaXB0PgogICAgICBjb25zdCAkID0gKHMpID0+IGRvY3VtZW50LnF1ZXJ5U2VsZWN0b3Iocyk7CgogICAgICAvLyBJbmNvZ25pdG8gZGV0ZWN0aW9uCiAgICAgIGNvbnN0IHVybFBhcmFtcyA9IG5ldyBVUkxTZWFyY2hQYXJhbXMod2luZG93LmxvY2F0aW9uLnNlYXJjaCk7CiAgICAgIGlmICh1cmxQYXJhbXMuZ2V0KCJpbmNvZ25pdG8iKSA9PT0gInRydWUiIHx8IHdpbmRvdy5udEluY29nbml0bykgewogICAgICAgIGRvY3VtZW50LmdldEVsZW1lbnRCeUlkKCJpbmNvZ25pdG8tYmFkZ2UiKS5zdHlsZS5kaXNwbGF5ID0gImZsZXgiOwogICAgICAgIGRvY3VtZW50LnRpdGxlID0gIk5ldyBUYWIgKFByaXZhdGUpIjsKICAgICAgfQoKICAgICAgY29uc3QgbmF2ID0gKHVybCkgPT4gewogICAgICAgICQoIiNsb2FkZXIiKS5jbGFzc0xpc3QuYWRkKCJzaG93Iik7CiAgICAgICAgc2V0VGltZW91dCgoKSA9PiB7IHRyeSB7ICQoIiNsb2FkZXIiKT8uY2xhc3NMaXN0LnJlbW92ZSgic2hvdyIpOyB9IGNhdGNoKGUpIHt9IH0sIDMwMDApOwogICAgICAgIHdpbmRvdy5wYXJlbnQ/LnBvc3RNZXNzYWdlKHsgdHlwZTogIm5hdmlnYXRlIiwgdXJsIH0sICIqIik7CiAgICAgIH07CgogICAgICAvLyBET00tYmFzZWQgZGlhbG9ncyAoc2FuZGJveC1zYWZlKQogICAgICBmdW5jdGlvbiBudERpYWxvZyh0eXBlLCB0aXRsZSwgZGVmYXVsdFZhbHVlKSB7CiAgICAgICAgcmV0dXJuIG5ldyBQcm9taXNlKChyZXNvbHZlKSA9PiB7CiAgICAgICAgICBjb25zdCBvdmVybGF5ID0gZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoIm50TW9kYWwiKTsKICAgICAgICAgIGNvbnN0IHRpdGxlRWwgPSBkb2N1bWVudC5nZXRFbGVtZW50QnlJZCgibnRNb2RhbFRpdGxlIik7CiAgICAgICAgICBjb25zdCBtc2dFbCA9IGRvY3VtZW50LmdldEVsZW1lbnRCeUlkKCJudE1vZGFsTWVzc2FnZSIpOwogICAgICAgICAgY29uc3QgaW5wdXRFbCA9IGRvY3VtZW50LmdldEVsZW1lbnRCeUlkKCJudE1vZGFsSW5wdXQiKTsKICAgICAgICAgIGNvbnN0IG9rQnRuID0gZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoIm50TW9kYWxPayIpOwogICAgICAgICAgY29uc3QgY2FuY2VsQnRuID0gZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoIm50TW9kYWxDYW5jZWwiKTsKCiAgICAgICAgICB0aXRsZUVsLnRleHRDb250ZW50ID0gdGl0bGU7CiAgICAgICAgICBpZiAodHlwZSA9PT0gInByb21wdCIpIHsKICAgICAgICAgICAgbXNnRWwuc3R5bGUuZGlzcGxheSA9ICJub25lIjsKICAgICAgICAgICAgaW5wdXRFbC5zdHlsZS5kaXNwbGF5ID0gIiI7CiAgICAgICAgICAgIGlucHV0RWwudmFsdWUgPSBkZWZhdWx0VmFsdWUgfHwgIiI7CiAgICAgICAgICAgIGlucHV0RWwuZm9jdXMoKTsKICAgICAgICAgICAgaW5wdXRFbC5vbmtleWRvd24gPSAoZSkgPT4gewogICAgICAgICAgICAgIGlmIChlLmtleSA9PT0gIkVudGVyIikgb2tCdG4uY2xpY2soKTsKICAgICAgICAgICAgfTsKICAgICAgICAgIH0gZWxzZSBpZiAodHlwZSA9PT0gImNvbmZpcm0iKSB7CiAgICAgICAgICAgIG1zZ0VsLnN0eWxlLmRpc3BsYXkgPSAiIjsKICAgICAgICAgICAgbXNnRWwudGV4dENvbnRlbnQgPSBkZWZhdWx0VmFsdWUgfHwgIiI7CiAgICAgICAgICAgIGlucHV0RWwuc3R5bGUuZGlzcGxheSA9ICJub25lIjsKICAgICAgICAgIH0gZWxzZSB7CiAgICAgICAgICAgIG1zZ0VsLnN0eWxlLmRpc3BsYXkgPSAiIjsKICAgICAgICAgICAgbXNnRWwudGV4dENvbnRlbnQgPSBkZWZhdWx0VmFsdWUgfHwgIiI7CiAgICAgICAgICAgIGlucHV0RWwuc3R5bGUuZGlzcGxheSA9ICJub25lIjsKICAgICAgICAgICAgY2FuY2VsQnRuLnN0eWxlLmRpc3BsYXkgPSAibm9uZSI7CiAgICAgICAgICB9CgogICAgICAgICAgY29uc3QgY2xlYW51cCA9ICgpID0+IHsKICAgICAgICAgICAgb3ZlcmxheS5jbGFzc0xpc3QucmVtb3ZlKCJvcGVuIik7CiAgICAgICAgICAgIG9rQnRuLm9uY2xpY2sgPSBudWxsOwogICAgICAgICAgICBjYW5jZWxCdG4ub25jbGljayA9IG51bGw7CiAgICAgICAgICAgIGNhbmNlbEJ0bi5zdHlsZS5kaXNwbGF5ID0gIiI7CiAgICAgICAgICB9OwoKICAgICAgICAgIG9rQnRuLm9uY2xpY2sgPSAoKSA9PiB7CiAgICAgICAgICAgIGNsZWFudXAoKTsKICAgICAgICAgICAgcmVzb2x2ZSh0eXBlID09PSAicHJvbXB0IiA/IGlucHV0RWwudmFsdWUgOiB0cnVlKTsKICAgICAgICAgIH07CiAgICAgICAgICBjYW5jZWxCdG4ub25jbGljayA9ICgpID0+IHsKICAgICAgICAgICAgY2xlYW51cCgpOwogICAgICAgICAgICByZXNvbHZlKHR5cGUgPT09ICJwcm9tcHQiID8gbnVsbCA6IGZhbHNlKTsKICAgICAgICAgIH07CgogICAgICAgICAgb3ZlcmxheS5jbGFzc0xpc3QuYWRkKCJvcGVuIik7CiAgICAgICAgfSk7CiAgICAgIH0KICAgICAgY29uc3QgbnRQcm9tcHQgPSAobXNnLCB2YWwpID0+IG50RGlhbG9nKCJwcm9tcHQiLCBtc2csIHZhbCk7CiAgICAgIGNvbnN0IG50Q29uZmlybSA9IChtc2cpID0+IG50RGlhbG9nKCJjb25maXJtIiwgbXNnKTsKICAgICAgY29uc3QgbnRBbGVydCA9IChtc2cpID0+IG50RGlhbG9nKCJhbGVydCIsIG1zZyk7CgogICAgICAvLyBDbG9jawogICAgICBmdW5jdGlvbiB1cGRhdGVDbG9jaygpIHsKICAgICAgICBjb25zdCBub3cgPSBuZXcgRGF0ZSgpOwogICAgICAgIGNvbnN0IGNsb2NrRWwgPSBkb2N1bWVudC5nZXRFbGVtZW50QnlJZCgiY2xvY2siKTsKICAgICAgICBjb25zdCBkYXRlRWwgPSBkb2N1bWVudC5nZXRFbGVtZW50QnlJZCgiZGF0ZSIpOwogICAgICAgIGlmIChjbG9ja0VsKSB7CiAgICAgICAgICB0cnkgewogICAgICAgICAgICBjbG9ja0VsLnRleHRDb250ZW50ID0gbm93LnRvTG9jYWxlVGltZVN0cmluZygiZW4tVVMiLCB7CiAgICAgICAgICAgICAgaG91cjogIjItZGlnaXQiLAogICAgICAgICAgICAgIG1pbnV0ZTogIjItZGlnaXQiLAogICAgICAgICAgICAgIGhvdXIxMjogZmFsc2UKICAgICAgICAgICAgfSk7CiAgICAgICAgICB9IGNhdGNoIHsKICAgICAgICAgICAgY2xvY2tFbC50ZXh0Q29udGVudCA9CiAgICAgICAgICAgICAgU3RyaW5nKG5vdy5nZXRIb3VycygpKS5wYWRTdGFydCgyLCAiMCIpICsgIjoiICsgU3RyaW5nKG5vdy5nZXRNaW51dGVzKCkpLnBhZFN0YXJ0KDIsICIwIik7CiAgICAgICAgICB9CiAgICAgICAgfQogICAgICAgIGlmIChkYXRlRWwpIHsKICAgICAgICAgIHRyeSB7CiAgICAgICAgICAgIGRhdGVFbC50ZXh0Q29udGVudCA9IG5vdy50b0xvY2FsZURhdGVTdHJpbmcoImVuLVVTIiwgewogICAgICAgICAgICAgIHdlZWtkYXk6ICJsb25nIiwKICAgICAgICAgICAgICBtb250aDogImxvbmciLAogICAgICAgICAgICAgIGRheTogIm51bWVyaWMiCiAgICAgICAgICAgIH0pOwogICAgICAgICAgfSBjYXRjaCB7CiAgICAgICAgICAgIGRhdGVFbC50ZXh0Q29udGVudCA9IG5vdy50b0RhdGVTdHJpbmcoKTsKICAgICAgICAgIH0KICAgICAgICB9CiAgICAgIH0KICAgICAgdXBkYXRlQ2xvY2soKTsKICAgICAgc2V0SW50ZXJ2YWwodXBkYXRlQ2xvY2ssIDEwMDApOwoKICAgICAgLy8gU2VhcmNoCiAgICAgICQoIiNzZWFyY2hGb3JtIikub25zdWJtaXQgPSAoZSkgPT4gewogICAgICAgIGUucHJldmVudERlZmF1bHQoKTsKICAgICAgICBjb25zdCBxID0gJCgiI3NlYXJjaElucHV0IikudmFsdWUudHJpbSgpOwogICAgICAgIGlmIChxKSBuYXYoJCgiI2VuZ2luZSIpLnZhbHVlICsgZW5jb2RlVVJJQ29tcG9uZW50KHEpKTsKICAgICAgfTsKCiAgICAgIC8vIFBvcHVsYXRlIGN1c3RvbSBzZWFyY2ggZW5naW5lcyBmcm9tIGxvY2FsU3RvcmFnZQogICAgICBmdW5jdGlvbiBwb3B1bGF0ZUN1c3RvbUVuZ2luZXMoKSB7CiAgICAgICAgdHJ5IHsKICAgICAgICAgIGNvbnN0IGN1c3RvbSA9IEpTT04ucGFyc2UobG9jYWxTdG9yYWdlLmdldEl0ZW0oInNjcmFtamV0X2N1c3RvbV9lbmdpbmVzIikgfHwgIltdIik7CiAgICAgICAgICBjb25zdCBzZWwgPSAkKCIjZW5naW5lIik7CiAgICAgICAgICBjdXN0b20uZm9yRWFjaChmdW5jdGlvbiAoZW5nKSB7CiAgICAgICAgICAgIGNvbnN0IG9wdCA9IGRvY3VtZW50LmNyZWF0ZUVsZW1lbnQoIm9wdGlvbiIpOwogICAgICAgICAgICBvcHQudmFsdWUgPSBlbmcudXJsOwogICAgICAgICAgICBvcHQudGV4dENvbnRlbnQgPSBlbmcubmFtZTsKICAgICAgICAgICAgc2VsLmFwcGVuZENoaWxkKG9wdCk7CiAgICAgICAgICB9KTsKICAgICAgICB9IGNhdGNoIChlKSB7fQogICAgICB9CiAgICAgIHBvcHVsYXRlQ3VzdG9tRW5naW5lcygpOwoKICAgICAgLy8gQ2xvc2UgYnV0dG9uIGZvciBwcmVzZXQgc2hvcnRjdXRzCiAgICAgIGNvbnN0IFJFTU9WRURfUFJFU0VUU19LRVkgPSAic2NyYW1qZXRfcmVtb3ZlZF9wcmVzZXRzIjsKICAgICAgZnVuY3Rpb24gZ2V0UmVtb3ZlZFByZXNldHMoKSB7CiAgICAgICAgdHJ5IHsKICAgICAgICAgIHJldHVybiBKU09OLnBhcnNlKGxvY2FsU3RvcmFnZS5nZXRJdGVtKFJFTU9WRURfUFJFU0VUU19LRVkpIHx8ICJbXSIpOwogICAgICAgIH0gY2F0Y2ggewogICAgICAgICAgcmV0dXJuIFtdOwogICAgICAgIH0KICAgICAgfQogICAgICBmdW5jdGlvbiBoaWRlUHJlc2V0U2hvcnRjdXQodXJsKSB7CiAgICAgICAgY29uc3QgcmVtb3ZlZCA9IGdldFJlbW92ZWRQcmVzZXRzKCk7CiAgICAgICAgaWYgKCFyZW1vdmVkLmluY2x1ZGVzKHVybCkpIHJlbW92ZWQucHVzaCh1cmwpOwogICAgICAgIGxvY2FsU3RvcmFnZS5zZXRJdGVtKFJFTU9WRURfUFJFU0VUU19LRVksIEpTT04uc3RyaW5naWZ5KHJlbW92ZWQpKTsKICAgICAgICBjb25zdCBlbCA9IGRvY3VtZW50LnF1ZXJ5U2VsZWN0b3IoYC5wcmVzZXQtc2hvcnRjdXRbZGF0YS11cmw9IiR7dXJsfSJdYCk7CiAgICAgICAgaWYgKGVsKSBlbC5zdHlsZS5kaXNwbGF5ID0gIm5vbmUiOwogICAgICB9CiAgICAgIGdldFJlbW92ZWRQcmVzZXRzKCkuZm9yRWFjaCgodXJsKSA9PiB7CiAgICAgICAgY29uc3QgZWwgPSBkb2N1bWVudC5xdWVyeVNlbGVjdG9yKGAucHJlc2V0LXNob3J0Y3V0W2RhdGEtdXJsPSIke3VybH0iXWApOwogICAgICAgIGlmIChlbCkgZWwuc3R5bGUuZGlzcGxheSA9ICJub25lIjsKICAgICAgfSk7CiAgICAgIGRvY3VtZW50LnF1ZXJ5U2VsZWN0b3JBbGwoIi5zaG9ydGN1dC1jbG9zZSIpLmZvckVhY2goKGJ0bikgPT4gewogICAgICAgIGJ0bi5hZGRFdmVudExpc3RlbmVyKCJjbGljayIsIChlKSA9PiB7CiAgICAgICAgICBlLnByZXZlbnREZWZhdWx0KCk7CiAgICAgICAgICBlLnN0b3BQcm9wYWdhdGlvbigpOwogICAgICAgICAgaGlkZVByZXNldFNob3J0Y3V0KGJ0bi5kYXRhc2V0LnVybCk7CiAgICAgICAgfSk7CiAgICAgIH0pOwoKICAgICAgLy8gU2hvcnRjdXRzCiAgICAgICQoIiNzaG9ydGN1dHMiKS5vbmNsaWNrID0gYXN5bmMgKGUpID0+IHsKICAgICAgICBpZiAoZS50YXJnZXQuY2xvc2VzdCgiLnNob3J0Y3V0LWNsb3NlIikpIHJldHVybjsKICAgICAgICBjb25zdCBzaG9ydGN1dCA9IGUudGFyZ2V0LmNsb3Nlc3QoIi5zaG9ydGN1dFtkYXRhLXVybF0iKTsKICAgICAgICBjb25zdCBhZGRCdG4gPSBlLnRhcmdldC5jbG9zZXN0KCIjYWRkU2hvcnRjdXQiKTsKCiAgICAgICAgaWYgKHNob3J0Y3V0KSB7CiAgICAgICAgICBlLnByZXZlbnREZWZhdWx0KCk7CiAgICAgICAgICBuYXYoc2hvcnRjdXQuZGF0YXNldC51cmwpOwogICAgICAgIH0gZWxzZSBpZiAoYWRkQnRuKSB7CiAgICAgICAgICBjb25zdCBuYW1lID0gYXdhaXQgbnRQcm9tcHQoIlNob3J0Y3V0IG5hbWU6Iik7CiAgICAgICAgICBpZiAoIW5hbWUpIHJldHVybjsKICAgICAgICAgIGxldCB1cmwgPSBhd2FpdCBudFByb21wdCgiVVJMOiIpOwogICAgICAgICAgaWYgKCF1cmwpIHJldHVybjsKICAgICAgICAgIGlmICghdXJsLnN0YXJ0c1dpdGgoImh0dHAiKSkgdXJsID0gImh0dHBzOi8vIiArIHVybDsKCiAgICAgICAgICBjb25zdCBzaG9ydGN1dHMgPSBKU09OLnBhcnNlKGxvY2FsU3RvcmFnZS5nZXRJdGVtKCJzaG9ydGN1dHMiKSB8fCAiW10iKTsKICAgICAgICAgIHNob3J0Y3V0cy5wdXNoKHsgbmFtZSwgdXJsIH0pOwogICAgICAgICAgbG9jYWxTdG9yYWdlLnNldEl0ZW0oInNob3J0Y3V0cyIsIEpTT04uc3RyaW5naWZ5KHNob3J0Y3V0cykpOwogICAgICAgICAgcmVuZGVyQ3VzdG9tKCk7CiAgICAgICAgfQogICAgICB9OwoKICAgICAgZnVuY3Rpb24gcmVuZGVyQ3VzdG9tKCkgewogICAgICAgIGRvY3VtZW50LnF1ZXJ5U2VsZWN0b3JBbGwoIi5jdXN0b20tc2hvcnRjdXQiKS5mb3JFYWNoKChlKSA9PiBlLnJlbW92ZSgpKTsKICAgICAgICBjb25zdCBzaG9ydGN1dHMgPSBKU09OLnBhcnNlKGxvY2FsU3RvcmFnZS5nZXRJdGVtKCJzaG9ydGN1dHMiKSB8fCAiW10iKTsKICAgICAgICBjb25zdCBhZGRCdG4gPSAkKCIjYWRkU2hvcnRjdXQiKTsKCiAgICAgICAgc2hvcnRjdXRzLmZvckVhY2goKHMpID0+IHsKICAgICAgICAgIGNvbnN0IGRpdiA9IGRvY3VtZW50LmNyZWF0ZUVsZW1lbnQoImRpdiIpOwogICAgICAgICAgZGl2LmNsYXNzTmFtZSA9ICJzaG9ydGN1dCBjdXN0b20tc2hvcnRjdXQiOwogICAgICAgICAgZGl2LmRhdGFzZXQudXJsID0gcy51cmw7CiAgICAgICAgICBkaXYuaW5uZXJIVE1MID0gYAogICAgICAgICAgPGRpdiBjbGFzcz0ic2hvcnRjdXQtaWNvbiI+PGkgY2xhc3M9ImZhLXNvbGlkIGZhLWxpbmsiPjwvaT48L2Rpdj4KICAgICAgICAgIDxzcGFuIGNsYXNzPSJzaG9ydGN1dC1sYWJlbCI+JHtzLm5hbWV9PC9zcGFuPgogICAgICAgIGA7CiAgICAgICAgICBhZGRCdG4uYmVmb3JlKGRpdik7CiAgICAgICAgfSk7CiAgICAgIH0KCiAgICAgIC8vIFJlbmRlciBib29rbWFya3MKICAgICAgZnVuY3Rpb24gcmVuZGVyQm9va21hcmtzKCkgewogICAgICAgIGNvbnN0IGNvbnRhaW5lciA9IGRvY3VtZW50LmdldEVsZW1lbnRCeUlkKCJib29rbWFya3MtY29udGFpbmVyIik7CiAgICAgICAgaWYgKCFjb250YWluZXIpIHJldHVybjsKCiAgICAgICAgY29uc3QgYm9va21hcmtzID0gSlNPTi5wYXJzZShsb2NhbFN0b3JhZ2UuZ2V0SXRlbSgic2NyYW1qZXRfYm9va21hcmtzIikgfHwgIltdIik7CiAgICAgICAgY29udGFpbmVyLmlubmVySFRNTCA9ICIiOwoKICAgICAgICBpZiAoYm9va21hcmtzLmxlbmd0aCA9PT0gMCkgewogICAgICAgICAgZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoImJvb2ttYXJrcy1zZWN0aW9uIikuc3R5bGUuZGlzcGxheSA9ICJub25lIjsKICAgICAgICAgIHJldHVybjsKICAgICAgICB9CgogICAgICAgIGRvY3VtZW50LmdldEVsZW1lbnRCeUlkKCJib29rbWFya3Mtc2VjdGlvbiIpLnN0eWxlLmRpc3BsYXkgPSAiYmxvY2siOwoKICAgICAgICBib29rbWFya3MuZm9yRWFjaCgoYikgPT4gewogICAgICAgICAgY29uc3QgZGl2ID0gZG9jdW1lbnQuY3JlYXRlRWxlbWVudCgiZGl2Iik7CiAgICAgICAgICBkaXYuY2xhc3NOYW1lID0gInNob3J0Y3V0IGJvb2ttYXJrLXNob3J0Y3V0IjsKICAgICAgICAgIGRpdi5kYXRhc2V0LnVybCA9IGIudXJsOwogICAgICAgICAgZGl2LmlubmVySFRNTCA9IGAKICAgICAgICAgIDxkaXYgY2xhc3M9InNob3J0Y3V0LWljb24iPjxpIGNsYXNzPSJmYS1zb2xpZCBmYS1zdGFyIiBzdHlsZT0iY29sb3I6dmFyKC0tYWNjZW50KTsiPjwvaT48L2Rpdj4KICAgICAgICAgIDxzcGFuIGNsYXNzPSJzaG9ydGN1dC1sYWJlbCI+JHtiLm5hbWV9PC9zcGFuPgogICAgICAgIGA7CiAgICAgICAgICBjb250YWluZXIuYXBwZW5kQ2hpbGQoZGl2KTsKICAgICAgICB9KTsKICAgICAgfQoKICAgICAgLy8gUXVvdGUKICAgICAgaWYgKHdpbmRvdy5RVU9URVM/Lmxlbmd0aCkgewogICAgICAgICQoIiNxdW90ZSIpLnRleHRDb250ZW50ID0gd2luZG93LlFVT1RFU1tNYXRoLmZsb29yKE1hdGgucmFuZG9tKCkgKiB3aW5kb3cuUVVPVEVTLmxlbmd0aCldOwogICAgICB9CgogICAgICByZW5kZXJDdXN0b20oKTsKICAgICAgcmVuZGVyQm9va21hcmtzKCk7CgogICAgICAvLyBIYW5kbGUgYm9va21hcmsgY2xpY2tzCiAgICAgIGRvY3VtZW50LmdldEVsZW1lbnRCeUlkKCJib29rbWFya3MtY29udGFpbmVyIikub25jbGljayA9IChlKSA9PiB7CiAgICAgICAgY29uc3Qgc2hvcnRjdXQgPSBlLnRhcmdldC5jbG9zZXN0KCIuc2hvcnRjdXRbZGF0YS11cmxdIik7CiAgICAgICAgaWYgKHNob3J0Y3V0KSB7CiAgICAgICAgICBlLnByZXZlbnREZWZhdWx0KCk7CiAgICAgICAgICBuYXYoc2hvcnRjdXQuZGF0YXNldC51cmwpOwogICAgICAgIH0KICAgICAgfTsKICAgIDwvc2NyaXB0PgogIDwvYm9keT4KPC9odG1sPgo=");
 
     const STORAGE_KEYS = {
       BOOKMARKS: "scramjet_bookmarks",
@@ -3493,18 +3718,85 @@
       SEARCH_SUGGESTIONS: "scramjet_search_suggestions",
       CLEAR_ON_EXIT: "scramjet_clear_on_exit",
       DEFAULT_ZOOM: "scramjet_default_zoom",
-      TAB_BEHAVIOR: "scramjet_tab_behavior",
       AUTOPLAY_BLOCK: "scramjet_autoplay_block",
       SEARCH_REGION: "scramjet_search_region",
       CUSTOM_SEARCH_ENGINES: "scramjet_custom_engines",
       TOR_ENABLED: "scramjet_tor_enabled",
+      ADBLOCK_ENABLED: "scramjet_adblock_enabled",
       SIDEBAR_TABS: "scramjet_sidebar_tabs",
       SIDEBAR_COLLAPSED: "scramjet_sidebar_collapsed",
       SIDEBAR_WIDTH: "scramjet_sidebar_width",
-      WINDOW_OPEN_NEWTAB: "scramjet_windowopen_newtab"
+      WINDOW_OPEN_NEWTAB: "scramjet_windowopen_newtab",
+      CLOAK_TITLE: "scramjet_cloak_title",
+      CLOAK_ICON: "scramjet_cloak_icon",
+      USER_AGENT: "scramjet_user_agent",
+      DNT_ENABLED: "scramjet_dnt_enabled",
+      FONT_FAMILY: "scramjet_font_family"
     };
 
     let isEmbedded = false;
+    let cloakTitle = "";
+    let cloakIcon = "";
+    let customUserAgent = "";
+    let dntEnabled = false;
+    let browserFontFamily = "Inter";
+
+    const PRESET_CLOAKS = [
+      { id: "none", name: "None (Default)", title: "", icon: "" },
+      { id: "gclassroom", name: "Google Classroom", title: "Classes - Google Classroom", icon: "https://ssl.gstatic.com/classroom/favicon.png" },
+      { id: "gdrive", name: "Google Drive", title: "My Drive - Google Drive", icon: "https://ssl.gstatic.com/images/branding/product/1x/drive_2020q4_32dp.png" },
+      { id: "google", name: "Google Search", title: "Google", icon: "https://www.google.com/favicon.ico" },
+      { id: "canvas", name: "Canvas", title: "Dashboard", icon: "https://du11hjcvx0uqb.cloudfront.net/dist/images/favicon-e10d657a73.ico" },
+      { id: "gmail", name: "Gmail", title: "Inbox (1) - Gmail", icon: "https://ssl.gstatic.com/ui/v1/icons/mail/rfr/gmail.ico" },
+      { id: "blooket", name: "Blooket", title: "Blooket", icon: "https://ac.blooket.com/dashboard/favicon.ico" },
+      { id: "kahoot", name: "Kahoot!", title: "Kahoot! | Enter Game PIN", icon: "https://assets-cdn.kahoot.it/builder/v2/favicon.ico" }
+    ];
+
+    const USER_AGENT_PRESETS = [
+      { id: "default", name: "Default", ua: "" },
+      { id: "chrome_win", name: "Chrome (Win 11)", ua: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36" },
+      { id: "firefox_mac", name: "Firefox (macOS)", ua: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:127.0) Gecko/20100101 Firefox/127.0" },
+      { id: "safari_ios", name: "Safari (iOS)", ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_5_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1" },
+      { id: "edge_win", name: "Edge (Win 11)", ua: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36 Edg/126.0.0.0" }
+    ];
+
+    function applyCloak(title, icon) {
+      if (title) {
+        document.title = title;
+        try { if (window.parent && window.parent !== window) window.parent.document.title = title; } catch (e) { }
+      } else {
+        document.title = "Yuki Browser";
+      }
+      if (icon) {
+        var link = document.querySelector("link[rel*='icon']") || document.createElement("link");
+        link.type = "image/x-icon";
+        link.rel = "shortcut icon";
+        link.href = icon;
+        document.getElementsByTagName("head")[0].appendChild(link);
+      }
+    }
+
+    function launchAboutBlank() {
+      var win = window.open("about:blank", "_blank");
+      if (!win) return;
+      var doc = win.document;
+      doc.title = cloakTitle || "Google Classroom";
+      var iframe = doc.createElement("iframe");
+      iframe.src = window.location.href;
+      iframe.style.width = "100vw";
+      iframe.style.height = "100vh";
+      iframe.style.border = "none";
+      iframe.style.position = "fixed";
+      iframe.style.top = "0";
+      iframe.style.left = "0";
+      doc.body.style.margin = "0";
+      doc.body.appendChild(iframe);
+    }
+    let adblockEnabled = true;
+    let adblockEngineReady = false;
+    let adblockBlockedCount = 0;
+    let adblockPageCount = 0;
+    let adblockTotalRequests = 0;
     let pendingTheme = null;
     let pendingBookmarks = null;
     let pendingHistory = null;
@@ -3568,7 +3860,7 @@
         else disableBrowserAds();
         if (typeof data.windowOpenInterceptEnabled === "boolean") {
           windowOpenInterceptEnabled = data.windowOpenInterceptEnabled;
-          try { localStorage.setItem(STORAGE_KEYS.WINDOW_OPEN_NEWTAB, windowOpenInterceptEnabled ? "true" : "false"); } catch (e) {}
+          try { localStorage.setItem(STORAGE_KEYS.WINDOW_OPEN_NEWTAB, windowOpenInterceptEnabled ? "true" : "false"); } catch (e) { }
         }
         if (isIncognito) return;
         if (Array.isArray(data.bookmarks)) {
@@ -3594,8 +3886,8 @@
       }
       if (data.type === "scram:windowOpenInterceptState") {
         windowOpenInterceptEnabled = !!data.enabled;
-        try { localStorage.setItem(STORAGE_KEYS.WINDOW_OPEN_NEWTAB, windowOpenInterceptEnabled ? "true" : "false"); } catch (e) {}
-        tabs.forEach(function(t){ try{ patchWindowForWindowOpen(t.frame.element.contentWindow,t); }catch(e){} });
+        try { localStorage.setItem(STORAGE_KEYS.WINDOW_OPEN_NEWTAB, windowOpenInterceptEnabled ? "true" : "false"); } catch (e) { }
+        tabs.forEach(function (t) { try { patchWindowForWindowOpen(t.frame.element.contentWindow, t); } catch (e) { } });
         var tgl = document.getElementById("yuki-set-windowopen-newtab") || document.getElementById("set-windowopen-newtab");
         if (tgl) tgl.checked = windowOpenInterceptEnabled;
       }
@@ -3632,7 +3924,7 @@
             slot.removeAttribute("data-ads-loaded");
             slot.innerHTML = "";
           }
-          try { sessionStorage.setItem("yukiBrowserAdDismissed", "1"); } catch (e) {}
+          try { sessionStorage.setItem("yukiBrowserAdDismissed", "1"); } catch (e) { }
           if (browserAdCloseTimer) { clearTimeout(browserAdCloseTimer); browserAdCloseTimer = null; }
         });
       }
@@ -3645,7 +3937,7 @@
       var bar = document.getElementById("browser-ad-bar");
       var slot = document.getElementById("browser-ad-slot");
       if (!bar || !slot) return;
-      try { if (sessionStorage.getItem("yukiBrowserAdDismissed") === "1") { bar.style.display = "none"; return; } } catch (e) {}
+      try { if (sessionStorage.getItem("yukiBrowserAdDismissed") === "1") { bar.style.display = "none"; return; } } catch (e) { }
       if (slot.getAttribute("data-ads-loaded") === "1") {
         bar.style.display = "flex";
         bindBrowserAdClose();
@@ -3688,13 +3980,13 @@
     function isWindowOpenInterceptEnabled() { return windowOpenInterceptEnabled !== false; }
     function setWindowOpenInterceptEnabled(enabled) {
       windowOpenInterceptEnabled = !!enabled;
-      try { localStorage.setItem(STORAGE_KEYS.WINDOW_OPEN_NEWTAB, windowOpenInterceptEnabled ? "true" : "false"); } catch (e) {}
+      try { localStorage.setItem(STORAGE_KEYS.WINDOW_OPEN_NEWTAB, windowOpenInterceptEnabled ? "true" : "false"); } catch (e) { }
       if (isEmbedded) {
-        try { sendToParent({ type: "scram:setWindowOpenIntercept", enabled: windowOpenInterceptEnabled }); } catch (e) {}
+        try { sendToParent({ type: "scram:setWindowOpenIntercept", enabled: windowOpenInterceptEnabled }); } catch (e) { }
       } else {
-        try { savePrefs(); } catch (e) {}
+        try { savePrefs(); } catch (e) { }
       }
-      tabs.forEach(function(t){ try{ patchWindowForWindowOpen(t.frame.element.contentWindow,t); }catch(e){} });
+      tabs.forEach(function (t) { try { patchWindowForWindowOpen(t.frame.element.contentWindow, t); } catch (e) { } });
       var t1 = document.getElementById("yuki-set-windowopen-newtab");
       if (t1) t1.checked = windowOpenInterceptEnabled;
       var t2 = document.getElementById("set-windowopen-newtab");
@@ -3707,71 +3999,149 @@
         if (!current) return;
         if (current.__yukiIsHandler) return;
         var orig = current;
-        var handler = function(url, name, specs) {
+        function toPlainPopupUrl(raw, baseHint) {
+          if (raw === null || raw === undefined) return null;
+          var text = String(raw).trim();
+          if (!text) return null;
+          var lower = text.toLowerCase();
+          if (lower.indexOf("javascript:") === 0) return null;
+          if (lower.indexOf("mailto:") === 0) return null;
+          if (lower.indexOf("about:") === 0) return text;
+          if (lower.indexOf("data:") === 0) return text;
+          if (lower.indexOf("blob:") === 0) return text;
+          var marker = "/s/scramjet/";
+          var pos = text.lastIndexOf(marker);
+          if (pos !== -1) {
+            text = text.substring(pos + marker.length);
+            var dropIdx = 0;
+            while (dropIdx < 2) {
+              var firstSlash = text.indexOf("/");
+              if (firstSlash === -1) break;
+              var rest = text.substring(firstSlash + 1);
+              if (rest.indexOf("/") === -1) break;
+              text = rest;
+              dropIdx = dropIdx + 1;
+            }
+            var iter = 0;
+            while (iter < 3) {
+              var lowCheck = text.toLowerCase();
+              var hasMarker = text.indexOf(marker) !== -1;
+              var hasEncSlash = lowCheck.indexOf("%2f") !== -1;
+              var hasEncColon = lowCheck.indexOf("%3a") !== -1;
+              if (!hasMarker && !hasEncSlash && !hasEncColon) break;
+              var decoded = text;
+              try {
+                decoded = decodeURIComponent(text);
+              } catch (decErr) {
+                break;
+              }
+              if (decoded === text) break;
+              text = decoded;
+              var rePos = text.lastIndexOf(marker);
+              if (rePos !== -1) {
+                text = text.substring(rePos + marker.length);
+                var redrop = 0;
+                while (redrop < 2) {
+                  var rs = text.indexOf("/");
+                  if (rs === -1) break;
+                  var rr = text.substring(rs + 1);
+                  if (rr.indexOf("/") === -1) break;
+                  text = rr;
+                  redrop = redrop + 1;
+                }
+              }
+              iter = iter + 1;
+            }
+          }
+          var base = baseHint;
+          if (!base) {
+            try {
+              if (targetWin && targetWin.location && targetWin.location.href) base = targetWin.location.href;
+              else base = location.href;
+            } catch (baseErr) {
+              try {
+                base = location.href;
+              } catch (baseErr2) {
+                base = "";
+              }
+            }
+          }
+          if (!base) return text;
+          try {
+            return new URL(text, base).href;
+          } catch (urlErr) {
+            return text;
+          }
+        }
+        function isPopupWindowRequest(name, specs) {
+          var nameStr = name == null ? "" : String(name);
+          var specText = specs == null ? "" : String(specs);
+          if (/\b(width|height|left|top|screenx|screeny|innerwidth|innerheight|popup)\s*=/i.test(specText)) return true;
+          if (nameStr !== "" && nameStr !== "_blank" && nameStr !== "_self" && nameStr !== "_parent" && nameStr !== "_top") return true;
+          return false;
+        }
+        var handler = function (url, name, specs) {
           try {
             var enabled = windowOpenInterceptEnabled;
             if (enabled === undefined) enabled = true;
             if (!enabled) return orig.apply(this, arguments);
             if (name === "_self" || name === "_parent" || name === "_top") {
               if (url) {
-                try { handleSubmit(String(url)); } catch (e2) { try { tabRef && tabRef.frame && tabRef.frame.go(String(url)); } catch (e3) {} }
+                try { handleSubmit(String(url)); } catch (e2) { try { tabRef && tabRef.frame && tabRef.frame.go(String(url)); } catch (e3) { } }
               }
               return targetWin;
             }
             var raw = url != null ? String(url) : "";
-            var resolved = raw.trim();
-            if (resolved && !/^(about|javascript|data|blob|mailto):/i.test(resolved)) {
-              try {
-                var baseForResolve = (tabRef && tabRef.url && !tabRef.url.startsWith("yuki://") && !tabRef.url.includes("NT.html")) ? tabRef.url : (targetWin.location ? targetWin.location.href : location.href);
-                resolved = new URL(resolved, baseForResolve).href;
-              } catch (e) { resolved = raw; }
-            }
+            var baseForResolve = (tabRef && tabRef.url && !tabRef.url.startsWith("yuki://") && !tabRef.url.includes("NT.html")) ? tabRef.url : (targetWin.location ? targetWin.location.href : location.href);
+            var resolved = toPlainPopupUrl(raw, baseForResolve); if (resolved === null) resolved = "";
             if (!resolved || resolved === "about:blank" || resolved === "" || resolved.startsWith("javascript:")) {
               var nt = createTab(true);
               try {
                 var cw = nt.frame.element.contentWindow;
                 if (cw) return cw;
-              } catch (e) {}
-              var fakeBlank = { closed: false, __yukiTabId: nt.id, focus: function(){ try{ switchTab(nt.id); }catch(e){} }, close: function(){ try{ closeTab(nt.id); }catch(e){} } };
+              } catch (e) { }
+              var fakeBlank = { closed: false, __yukiTabId: nt.id, focus: function () { try { switchTab(nt.id); } catch (e) { } }, close: function () { try { closeTab(nt.id); } catch (e) { } } };
               try {
                 Object.defineProperty(fakeBlank, "location", {
-                  get: function(){ try{ return nt.frame.element.contentWindow.location; }catch(e){ return { href: "about:blank" }; } },
-                  set: function(v){ try{ var u = String(v); try{ u = new URL(u, nt.url || location.href).href; }catch(e){} nt.frame.go(u); }catch(e){ try{ handleSubmit(String(v)); }catch(e2){} } },
+                  get: function () { try { return nt.frame.element.contentWindow.location; } catch (e) { return { href: "about:blank" }; } },
+                  set: function (v) { try { var u = String(v); try { u = new URL(u, nt.url || location.href).href; } catch (e) { } nt.frame.go(u); } catch (e) { try { handleSubmit(String(v)); } catch (e2) { } } },
                   configurable: true
                 });
                 Object.defineProperty(fakeBlank, "document", {
-                  get: function(){ try{ return nt.frame.element.contentWindow.document; }catch(e){ return null; } },
+                  get: function () { try { return nt.frame.element.contentWindow.document; } catch (e) { return null; } },
                   configurable: true
                 });
-              } catch (e) {}
+              } catch (e) { }
               return fakeBlank;
             }
+            var specsStr = specs == null ? "" : String(specs); var popupName = name == null ? "" : String(name);
+            if (isPopupWindowRequest(popupName, specsStr) && resolved && resolved !== "about:blank") { try { sendToParent({ type: "browser-popup-open", url: resolved, specs: specsStr, name: popupName, pageTitle: (tabRef && tabRef.title) || "" }); } catch (routeErr) { } try { var popupFake = { closed: false }; Object.defineProperty(popupFake, "location", { get: function () { return { href: resolved }; }, set: function (v) { try { var nu = toPlainPopupUrl(String(v), resolved) || String(v); sendToParent({ type: "browser-popup-open", url: nu, specs: specsStr, name: popupName, pageTitle: "" }); } catch (setErr) { } }, configurable: true }); } catch (fakeErr) { } return popupFake; }
             var nt2 = createTab(true, { url: resolved });
-            setTimeout(function(){
+            setTimeout(function () {
               try {
                 if (nt2 && nt2.frame && nt2.frame.go && nt2.url !== resolved && resolved !== "about:blank") {
                   var cur = "";
-                  try { cur = nt2.frame.element.contentWindow.location.href; } catch(e){}
+                  try { cur = nt2.frame.element.contentWindow.location.href; } catch (e) { }
                   if (!cur || cur === "about:blank" || cur.includes("NT.html") || nt2.url === "yuki://home") {
                     nt2.frame.go(resolved);
                   }
                 }
               } catch (e) {
-                try { handleSubmit(resolved); } catch(e2){}
+                try { handleSubmit(resolved); } catch (e2) { }
               }
             }, 60);
             try {
               var cw2 = nt2.frame.element.contentWindow;
               if (cw2) return cw2;
-            } catch (e) {}
-            var fake = { closed: false, __yukiTabId: nt2.id, focus: function(){ try{ switchTab(nt2.id); }catch(e){} }, close: function(){ try{ closeTab(nt2.id); }catch(e){} } };
+            } catch (e) { }
+            var fake = { closed: false, __yukiTabId: nt2.id, focus: function () { try { switchTab(nt2.id); } catch (e) { } }, close: function () { try { closeTab(nt2.id); } catch (e) { } } };
             try {
               Object.defineProperty(fake, "location", {
-                get: function(){ try{ return nt2.frame.element.contentWindow.location; }catch(e){ return { href: resolved }; } },
-                set: function(v){ try{ var u = String(v); try{ u = new URL(u, nt2.url || location.href).href; }catch(e){} nt2.frame.go(u); }catch(e){ try{ handleSubmit(String(v)); }catch(e2){} } },
+                get: function () { try { return nt2.frame.element.contentWindow.location; } catch (e) { return { href: resolved }; } },
+                set: function (v) { try { var u = String(v); try { u = new URL(u, nt2.url || location.href).href; } catch (e) { } nt2.frame.go(u); } catch (e) { try { handleSubmit(String(v)); } catch (e2) { } } },
                 configurable: true
               });
-            } catch (e) {}
+            } catch (e) { }
             return fake;
           } catch (e) {
             try { return orig.apply(this, arguments); } catch (e2) { return null; }
@@ -3781,22 +4151,22 @@
         handler.__yukiOriginal = orig;
         targetWin.__yukiOriginalOpen = orig;
         targetWin.__yukiWindowOpenPatched = true;
-        try { targetWin.open = handler; } catch (e) {}
+        try { targetWin.open = handler; } catch (e) { }
         try {
           if (targetWin.Window && targetWin.Window.prototype) {
             var proto = targetWin.Window.prototype;
             if (proto.open && !proto.open.__yukiIsHandler) {
-              try { proto.open = handler; } catch (e) {}
+              try { proto.open = handler; } catch (e) { }
             }
           }
-        } catch (e) {}
+        } catch (e) { }
         try {
           var desc = Object.getOwnPropertyDescriptor(targetWin, "open");
           if (desc && desc.configurable) {
-            try { Object.defineProperty(targetWin, "open", { value: handler, writable: true, configurable: true }); } catch (e) {}
+            try { Object.defineProperty(targetWin, "open", { value: handler, writable: true, configurable: true }); } catch (e) { }
           }
-        } catch (e) {}
-      } catch (e) {}
+        } catch (e) { }
+      } catch (e) { }
     }
     function patchAllSubframes(win, tabRef) {
       try {
@@ -3805,9 +4175,9 @@
             var f = win.frames[i];
             patchWindowForWindowOpen(f, tabRef);
             patchAllSubframes(f, tabRef);
-          } catch (e) {}
+          } catch (e) { }
         }
-      } catch (e) {}
+      } catch (e) { }
       try {
         var docs = win.document ? win.document.querySelectorAll("iframe") : [];
         for (var j = 0; j < docs.length; j++) {
@@ -3817,9 +4187,9 @@
               patchWindowForWindowOpen(w, tabRef);
               patchAllSubframes(w, tabRef);
             }
-          } catch (e) {}
+          } catch (e) { }
         }
-      } catch (e) {}
+      } catch (e) { }
     }
     function installWindowOpenInterceptorForTab(tab) {
       try {
@@ -3827,35 +4197,35 @@
         var cw = tab.frame.element.contentWindow;
         if (!cw) return;
         var attempts = 0;
-        var tryPatch = function() {
-          try { patchWindowForWindowOpen(cw, tab); } catch (e) {}
-          try { patchAllSubframes(cw, tab); } catch (e) {}
-          try { patchWindowForWindowOpen(window, null); } catch (e) {}
+        var tryPatch = function () {
+          try { patchWindowForWindowOpen(cw, tab); } catch (e) { }
+          try { patchAllSubframes(cw, tab); } catch (e) { }
+          try { patchWindowForWindowOpen(window, null); } catch (e) { }
         };
         tryPatch();
-        var iv = setInterval(function() {
+        var iv = setInterval(function () {
           tryPatch();
           attempts++;
           if (attempts > 60) clearInterval(iv);
         }, 100);
-        setTimeout(function() { try { clearInterval(iv); } catch (e) {} }, 6500);
+        setTimeout(function () { try { clearInterval(iv); } catch (e) { } }, 6500);
         try {
           var doc = cw.document;
           if (doc) {
-            var obs = new MutationObserver(function(){ tryPatch(); });
+            var obs = new MutationObserver(function () { tryPatch(); });
             obs.observe(doc, { childList: true, subtree: true });
             tab._yukiOpenObs = obs;
           }
-        } catch (e) {}
-        try { cw.addEventListener && cw.addEventListener("load", tryPatch); } catch (e) {}
-      } catch (e) {}
+        } catch (e) { }
+        try { cw.addEventListener && cw.addEventListener("load", tryPatch); } catch (e) { }
+      } catch (e) { }
     }
     window.patchWindowForWindowOpen = patchWindowForWindowOpen;
     window.installWindowOpenInterceptorForTab = installWindowOpenInterceptorForTab;
     window.isWindowOpenInterceptEnabled = isWindowOpenInterceptEnabled;
     window.setWindowOpenInterceptEnabled = setWindowOpenInterceptEnabled;
-    try { patchWindowForWindowOpen(window, null); } catch (e) {}
-    window.addEventListener("yuki:windowOpenInterceptChanged", function(e){ windowOpenInterceptEnabled = !!(e.detail && e.detail.enabled); });
+    try { patchWindowForWindowOpen(window, null); } catch (e) { }
+    window.addEventListener("yuki:windowOpenInterceptChanged", function (e) { windowOpenInterceptEnabled = !!(e.detail && e.detail.enabled); });
 
     function loadPrefs() {
       isIncognito = new URLSearchParams(window.location.search).get("incognito") === "true";
@@ -3877,10 +4247,16 @@
           searchSuggestionsEnabled = localStorage.getItem(STORAGE_KEYS.SEARCH_SUGGESTIONS) !== "false";
           clearOnExit = localStorage.getItem(STORAGE_KEYS.CLEAR_ON_EXIT) === "true";
           defaultZoom = parseFloat(localStorage.getItem(STORAGE_KEYS.DEFAULT_ZOOM)) || 1.0;
-          tabBehaviorNext = localStorage.getItem(STORAGE_KEYS.TAB_BEHAVIOR) !== "false";
           autoplayBlock = localStorage.getItem(STORAGE_KEYS.AUTOPLAY_BLOCK) === "true";
           searchRegion = localStorage.getItem(STORAGE_KEYS.SEARCH_REGION) || "";
           torEnabled = localStorage.getItem(STORAGE_KEYS.TOR_ENABLED) === "true";
+          adblockEnabled = localStorage.getItem(STORAGE_KEYS.ADBLOCK_ENABLED) !== "false";
+          cloakTitle = localStorage.getItem(STORAGE_KEYS.CLOAK_TITLE) || "";
+          cloakIcon = localStorage.getItem(STORAGE_KEYS.CLOAK_ICON) || "";
+          customUserAgent = localStorage.getItem(STORAGE_KEYS.USER_AGENT) || "";
+          dntEnabled = localStorage.getItem(STORAGE_KEYS.DNT_ENABLED) === "true";
+          browserFontFamily = localStorage.getItem(STORAGE_KEYS.FONT_FAMILY) || "Inter";
+          if (cloakTitle || cloakIcon) applyCloak(cloakTitle, cloakIcon);
           tabSidebar = localStorage.getItem(STORAGE_KEYS.SIDEBAR_TABS) === "true";
           sidebarCollapsed = localStorage.getItem(STORAGE_KEYS.SIDEBAR_COLLAPSED) === "true";
           sidebarWidth = parseInt(localStorage.getItem(STORAGE_KEYS.SIDEBAR_WIDTH)) || 250;
@@ -3895,7 +4271,7 @@
         try {
           var wv2 = localStorage.getItem(STORAGE_KEYS.WINDOW_OPEN_NEWTAB);
           if (wv2 !== null) windowOpenInterceptEnabled = wv2 !== "false";
-        } catch (e) {}
+        } catch (e) { }
       }
     }
 
@@ -3964,10 +4340,15 @@
         localStorage.setItem(STORAGE_KEYS.SEARCH_SUGGESTIONS, String(searchSuggestionsEnabled));
         localStorage.setItem(STORAGE_KEYS.CLEAR_ON_EXIT, String(clearOnExit));
         localStorage.setItem(STORAGE_KEYS.DEFAULT_ZOOM, String(defaultZoom));
-        localStorage.setItem(STORAGE_KEYS.TAB_BEHAVIOR, String(tabBehaviorNext));
         localStorage.setItem(STORAGE_KEYS.AUTOPLAY_BLOCK, String(autoplayBlock));
         localStorage.setItem(STORAGE_KEYS.SEARCH_REGION, searchRegion);
         localStorage.setItem(STORAGE_KEYS.TOR_ENABLED, String(torEnabled));
+        localStorage.setItem(STORAGE_KEYS.ADBLOCK_ENABLED, String(adblockEnabled));
+        localStorage.setItem(STORAGE_KEYS.CLOAK_TITLE, cloakTitle);
+        localStorage.setItem(STORAGE_KEYS.CLOAK_ICON, cloakIcon);
+        localStorage.setItem(STORAGE_KEYS.USER_AGENT, customUserAgent);
+        localStorage.setItem(STORAGE_KEYS.DNT_ENABLED, String(dntEnabled));
+        localStorage.setItem(STORAGE_KEYS.FONT_FAMILY, browserFontFamily);
         localStorage.setItem(STORAGE_KEYS.SIDEBAR_TABS, String(tabSidebar));
         localStorage.setItem(STORAGE_KEYS.SIDEBAR_COLLAPSED, String(sidebarCollapsed));
         localStorage.setItem(STORAGE_KEYS.SIDEBAR_WIDTH, String(sidebarWidth));
@@ -4038,7 +4419,7 @@
     let lastProxyErrors = [];
 
     const DEBUG = false;
-    function debugLog(...args) {}
+    function debugLog(...args) { }
 
     async function establishTransport(TransportClass, preferredWisp) {
       const candidates = [];
@@ -4107,34 +4488,36 @@
         try {
           const wispUrl = localStorage.getItem("proxServer") || "";
           window.parent.postMessage({ type: "browser-perf", ms: shellTotal, probeMs: 0, waitMs: 0, wispUrl, shellMs: __shellMs }, "*");
-        } catch {}
+        } catch { }
       }
 
-      (async () => {
-      if ("serviceWorker" in navigator) {
-        const regPromise = navigator.serviceWorker.register(basePath + "sw.js", { scope: basePath });
-        const transportType = hostTransport || localStorage.getItem("proxTransport") || DEFAULT_TRANSPORT;
+      async function initProxyTransport() {
+        if (proxyInitRunning) return;
+        proxyInitRunning = true;
+        if ("serviceWorker" in navigator) {
+          const regPromise = navigator.serviceWorker.register(basePath + "sw.js", { scope: basePath });
+          const transportType = hostTransport || localStorage.getItem("proxTransport") || DEFAULT_TRANSPORT;
 
-        let TransportClass;
-        if (transportType === "libcurl" && typeof LibcurlTransport !== "undefined") {
-          TransportClass = LibcurlTransport;
-        } else if (typeof EpoxyTransport !== "undefined") {
-          TransportClass = EpoxyTransport;
-        }
+          let TransportClass;
+          if (transportType === "libcurl" && typeof LibcurlTransport !== "undefined") {
+            TransportClass = LibcurlTransport;
+          } else if (typeof EpoxyTransport !== "undefined") {
+            TransportClass = EpoxyTransport;
+          }
 
-        let established = null;
-        let requestedWisp = null;
-        let __probeStart = performance.now();
-        if (TransportClass) {
-          let savedWisp = localStorage.getItem("proxServer");
-          requestedWisp = sanitizeWispUrl(hostWispUrl || savedWisp || DEFAULT_WISP);
-          established = await establishTransport(TransportClass, requestedWisp);
-        }
-        __probeMs = Math.round(performance.now() - __probeStart);
-        const reg = await regPromise;
-        await navigator.serviceWorker.ready;
-        const sw = reg.active || navigator.serviceWorker.controller;
-        if (established) {
+          let established = null;
+          let requestedWisp = null;
+          let __probeStart = performance.now();
+          if (TransportClass) {
+            let savedWisp = localStorage.getItem("proxServer");
+            requestedWisp = sanitizeWispUrl(hostWispUrl || savedWisp || DEFAULT_WISP);
+            established = await establishTransport(TransportClass, requestedWisp);
+          }
+          __probeMs = Math.round(performance.now() - __probeStart);
+          const reg = await regPromise;
+          await navigator.serviceWorker.ready;
+          const sw = reg.active || navigator.serviceWorker.controller;
+          if (established) {
             const { rawTransport, wispUrl } = established;
             if (requestedWisp && wispUrl !== requestedWisp) {
               localStorage.setItem("proxServer", wispUrl);
@@ -4190,7 +4573,7 @@
               scramjet.wait(),
               new Promise((resolve) =>
                 setTimeout(() => {
-                  scramjet = null;
+                  wispWaitTimedOut = true;
                   waitOutcome = "timeout";
                   resolve();
                 }, 15000)
@@ -4201,14 +4584,20 @@
             try {
               const wispUrl = localStorage.getItem("proxServer") || "";
               window.parent.postMessage({ type: "browser-wisp-ready", probeMs: __probeMs, waitMs: __waitMs, wispUrl }, "*");
-            } catch {}
-            if (typeof window.__onWispReady === "function") try { window.__onWispReady(); } catch {}
+            } catch { }
+            if (typeof window.__onWispReady === "function") try { window.__onWispReady(); } catch { }
           } else {
             scramjet = null;
+            wispWaitTimedOut = true;
             console.log(`[browser-perf-inner] wisp failed probe ${__probeMs}ms`);
           }
+        }
+        proxyInitRunning = false;
       }
-      })();
+      window.addEventListener("yuki:retry-proxy-init", () => {
+        initProxyTransport();
+      });
+      initProxyTransport();
       if (new URLSearchParams(window.location.search).get("embed") === "1") {
         const observer = new MutationObserver(() => {
           const els = document.querySelectorAll(".flex.tabs, .flex.nav, .loading-bar-container, .tab-sidebar");
@@ -4223,6 +4612,11 @@
 
     async function initializeBrowser() {
       loadPrefs();
+      if (seedDefaultBookmarkFirstRun()) {
+        try {
+          localStorage.setItem(STORAGE_KEYS.BOOKMARKS, JSON.stringify(bookmarks));
+        } catch {}
+      }
       debugLog("initializeBrowser start, scramjet present:", !!scramjet, "isEmbedded:", isEmbedded);
 
       if (torEnabled && isEmbedded) {
@@ -4264,7 +4658,7 @@
           </div>
           <div class="flex nav">
             <div class="address-wrapper">
-              <i class="fa-solid fa-lock address-icon"></i>
+              <i class="fa-solid fa-lock address-icon" data-tooltip="View connection details"></i>
               <input class="bar" id="address-bar" autocomplete="off" spellcheck="false" placeholder="Search or enter a URL" data-tooltip="Type a URL or search query. Use Enter to navigate, Ctrl+L to focus." />
               <button id="star-btn" data-tooltip="Bookmark or unbookmark the current page"><i class="fa-solid fa-star"></i></button>
               <button id="home-btn-nav" data-tooltip="Go to your configured homepage"><i class="fa-solid fa-house"></i></button>
@@ -4280,6 +4674,9 @@
               <button id="zoom-out-btn" data-tooltip="Zoom out to see more of the page at a smaller size" style="width:30px;"><i class="fa-solid fa-minus"></i></button>
               <span id="nav-zoom-label" data-tooltip="Current zoom level; click to reset to 100%" style="margin-top:10px;font-size:11px;color:var(--text-muted);min-width:30px;text-align:center;font-family:var(--font-mono);">100%</span>
               <button id="zoom-in-btn" data-tooltip="Zoom in to see page content closer and larger" style="width:30px;"><i class="fa-solid fa-plus"></i></button>
+              <div class="adblock-popup-anchor" id="adblock-popup-anchor">
+                <button id="adblock-btn" data-tooltip="Ad blocking is active. click to toggle"><i class="fa-solid fa-shield-halved"></i></button>
+              </div>
               <button id="wisp-settings-btn" data-tooltip="Open browser settings, proxy configuration, and preferences"><i class="fa-solid fa-gear"></i></button>
               <div class="main-menu-wrapper">
                 <button id="main-menu-btn" data-tooltip="Open the main browser menu with tabs, tools, and data options"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" fill="currentColor" width="18" height="18"><path d="M8 256a56 56 0 1 1 112 0A56 56 0 1 1 8 256zm160 0a56 56 0 1 1 112 0 56 56 0 1 1 -112 0zm216-56a56 56 0 1 1 0 112 56 56 0 1 1 0-112z"/></svg></button>
@@ -4296,7 +4693,7 @@
                   </div>
                   <div class="browser-dropdown-section">
                     <div class="browser-dropdown-item" data-action="toggle-bookmarkbar" data-tooltip="Show or hide the bookmark bar below the address bar"><i class="fa-solid fa-check di-icon" id="menu-bm-check"></i><span class="di-label">Show Bookmark Bar</span></div>
-                    <div class="browser-dropdown-item" data-action="reopen-tab" data-tooltip="Reopen the most recently closed tab"><i class="fa-solid fa-undo di-icon"></i><span class="di-label">Reopen Closed Tab</span><span class="di-badge" id="menu-rt-badge" style="display:none;"></span></div>
+                    <div class="browser-dropdown-item" data-action="reopen-tab" data-tooltip="View and reopen recently closed tabs"><i class="fa-solid fa-undo di-icon"></i><span class="di-label">Reopen Closed Tab</span><span class="di-badge" id="menu-rt-badge" style="display:none;"></span></div>
                   </div>
                   <div class="browser-dropdown-section">
                     <div class="browser-dropdown-item" data-action="save-page" data-tooltip="Bookmark the current page and save it to downloads"><i class="fa-solid fa-bookmark di-icon"></i><span class="di-label">Save Page</span></div>
@@ -4379,6 +4776,14 @@
         tab.frame.go(tab.navStack[tab.navIndex]);
         tab.navSuppressed = false;
       };
+      document.getElementById("back-btn").addEventListener("contextmenu", (e) => {
+        e.preventDefault();
+        openNavHistoryMenu(e.currentTarget, "back");
+      });
+      document.getElementById("fwd-btn").addEventListener("contextmenu", (e) => {
+        e.preventDefault();
+        openNavHistoryMenu(e.currentTarget, "forward");
+      });
       document.getElementById("reload-btn").onclick = () => {
         if (_yukiActive) { closeYukiPage(); return; }
         if (_localActive) { loadLocalPage(getActiveTab().url, { reload: true }); return; }
@@ -4392,12 +4797,45 @@
         else tab.frame.reload();
       };
       document.getElementById("star-btn").onclick = toggleBookmark;
+      document.querySelector(".address-icon")?.addEventListener("click", (e) => {
+        e.stopPropagation();
+        openConnectionPopup(e.currentTarget);
+      });
+      document.getElementById("adblock-btn").onclick = showAdblockPopup;
       document.getElementById("sidebar-btn").onclick = toggleTabSidebar;
       document.getElementById("palette-btn").onclick = toggleCommandPalette;
       document.getElementById("split-btn").onclick = toggleSplitView;
       document.getElementById("sidebar-collapse-btn").onclick = toggleSidebarCollapse;
       document.getElementById("newTabBtn").onclick = () => createTab(true);
       initSidebarResizer();
+      initTabScrollNav();
+
+      updateAdblockButton();
+
+      if (navigator.serviceWorker) {
+        navigator.serviceWorker.addEventListener("message", function (e) {
+          if (e.data && e.data.type === "adblock:ready") {
+            adblockEngineReady = true;
+            updateAdblockButton();
+          }
+          if (e.data && e.data.type === "adblock:stats") {
+            adblockBlockedCount = e.data.blockedCount || 0;
+            adblockPageCount = e.data.pageBlockedCount || 0;
+            adblockTotalRequests = e.data.totalRequests || 0;
+            adblockEngineReady = e.data.ready || adblockEngineReady;
+            updateAdblockButton();
+          }
+          if (e.data && e.data.type === "adblock:log") {
+            renderAdblockLogEntries(e.data.entries || []);
+          }
+        });
+        if (navigator.serviceWorker.controller) {
+          navigator.serviceWorker.controller.postMessage({
+            type: "adblock:init",
+            enabled: adblockEnabled
+          });
+        }
+      }
       document.getElementById("wisp-settings-btn").onclick = function () { navigateToYukiPage("settings"); };
       document.getElementById("zoom-out-btn").onclick = () => {
         zoomLevel = Math.max(0.3, parseFloat((zoomLevel - 0.1).toFixed(1)));
@@ -4478,7 +4916,7 @@
           else if (action === "history") openHistoryPanel();
           else if (action === "bookmarks") openBookmarksPanel();
           else if (action === "toggle-bookmarkbar") toggleBookmarkBar();
-          else if (action === "reopen-tab") reopenLastClosedTab();
+          else if (action === "reopen-tab") openClosedTabsMenu(document.getElementById("main-menu-btn"));
           else if (action === "save-page") savePage();
           else if (action === "screenshot") takeScreenshot();
           else if (action === "devtools") toggleDevTools();
@@ -4533,12 +4971,13 @@
       });
 
       window.addEventListener("message", (e) => {
-        if (e.data?.type === "navigate") handleSubmit(e.data.url);
+        const senderTab = tabs.find((t) => t.frame.element.contentWindow === e.source) || getActiveTab();
+        if (e.data?.type === "navigate") handleSubmit(e.data.url, senderTab);
         if (e.data?.type === "hide-chrome") {
           document.querySelectorAll(".flex.tabs, .flex.nav, .loading-bar-container, .bookmark-bar, .message-container, #tooltip, .tab-sidebar").forEach((el) => el.remove());
         }
         if (e.data?.type === "browser-audio-playing") {
-          const tab = getActiveTab();
+          const tab = senderTab;
           if (tab) {
             tab.isPlayingAudio = e.data.playing;
             updateTabsUI();
@@ -4552,7 +4991,7 @@
           }
         }
         if (e.data?.type === "scram-local-nav") {
-          handleSubmit(e.data.url);
+          handleSubmit(e.data.url, senderTab);
         }
       });
 
@@ -4578,7 +5017,7 @@
           id: nextTabId++,
           title: "Home",
           url: "yuki://home",
-          frame: { element: fallbackFrame, go: (url) => { try { fallbackFrame.srcdoc = bundledNewTabHtml; } catch {} if (opts.url) {} }, reload: () => {} },
+          frame: { element: fallbackFrame, go: (url) => { tab.queuedUrl = url; try { fallbackFrame.srcdoc = bundledNewTabHtml; } catch { } }, reload: () => { } },
           loading: false,
           favicon: DEFAULT_FAVICON,
           skipTimeout: null,
@@ -4590,24 +5029,21 @@
           navStack: [],
           navIndex: -1,
           navSuppressed: false,
-          pending: true
+          pending: true,
+          queuedUrl: opts.url || null,
+          fallbackMakeActive: makeActive,
+          fallbackOpts: opts
         };
         _newTabId = tab.id;
         tabs.push(tab);
+        pendingFallbackTabs.push(tab);
+        if (wispWaitTimedOut && !proxyInitRunning) {
+          window.dispatchEvent(new CustomEvent("yuki:retry-proxy-init"));
+        }
         document.getElementById("iframe-container").appendChild(fallbackFrame);
         if (makeActive) switchTab(tab.id);
         applySplitLayout();
         saveTabState();
-        window.__onWispReady = () => {
-          if (tab.pending && scramjet) {
-            try { fallbackFrame.remove(); } catch {}
-            const idx = tabs.indexOf(tab);
-            if (idx >= 0) tabs.splice(idx, 1);
-            tab.pending = false;
-            window.__onWispReady = null;
-            createTab(makeActive, opts);
-          }
-        };
         return tab;
       }
       debugLog("createTab", { makeActive, opts });
@@ -4652,8 +5088,9 @@
             t.title = "Home";
             t.url = "yuki://home";
             t.favicon = DEFAULT_FAVICON;
+            t.loading = false;
             renderNewTab(f.element, url.indexOf("incognito") >= 0);
-            if (t.id === activeTabId) showIframeLoading(false);
+            if (t.id === activeTabId || t.id === splitTabId) showIframeLoading(false, "", t);
             updateTabsUI();
             updateAddressBar();
             updateLoadingBar(t, 100);
@@ -4677,7 +5114,13 @@
               t.favicon = null;
             }
           }
-          if (t.id === activeTabId) showIframeLoading(true, t.url);
+          if (t.id === activeTabId && url && !url.includes("NT.html")) {
+            adblockPageCount = 0;
+            if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+              navigator.serviceWorker.controller.postMessage({ type: "adblock:pagechange" });
+            }
+          }
+          if (t.id === activeTabId || t.id === splitTabId) showIframeLoading(true, t.url, t);
           updateTabsUI();
           updateAddressBar();
           updateLoadingBar(t, 10);
@@ -4689,34 +5132,25 @@
             }
           }, 1000);
           f.element.removeAttribute("srcdoc");
+          if (isDirectLoadUrl(url)) {
+            try {
+              f.element.src = url;
+            } catch {
+              orig(url);
+            }
+            return;
+          }
           orig(url);
         };
       };
       wrapFrameGo(frame, tab);
-
-      if (opts.url && opts.url !== "yuki://home" && !opts.url.includes("NT.html")) {
-        tab.url = opts.url;
-        try {
-          const urlObj = new URL(opts.url);
-          tab.title = urlObj.hostname;
-          tab.favicon = getFaviconUrl(urlObj.hostname);
-        } catch {
-          tab.title = opts.url.split("/").pop() || opts.url;
-        }
-        frame.go(opts.url);
-      } else if (isIncognito) {
-        renderNewTab(frame.element, true);
-      } else {
-        renderNewTab(frame.element, false);
-      }
-
       frame.element.addEventListener("load", () => {
         debugLog("frame load fired:", tab.url);
         tab.loading = false;
         if (tab.skipTimeout) clearTimeout(tab.skipTimeout);
-        if (tab.id === activeTabId) showIframeLoading(false);
+        if (tab.id === activeTabId || tab.id === splitTabId) showIframeLoading(false, "", tab);
 
-        try { installWindowOpenInterceptorForTab(tab); } catch (e) {}
+        try { installWindowOpenInterceptorForTab(tab); } catch (e) { }
         injectAudioDetector(frame.element);
         if (autoplayBlock) injectAutoplayBlocker(frame.element);
         if (darkModeEnabled) applyDarkModeToTab(tab);
@@ -4738,10 +5172,11 @@
           const doc = frame.element.contentWindow.document;
           const bodyText = (doc.body ? doc.body.textContent || "" : "").trim();
           if (tab.url && !tab.url.includes("NT.html") && bodyText.indexOf("Internal Service Worker Error") === 0) {
+            frame.element.removeAttribute("src");
             frame.element.srcdoc = buildProxyOfflineHtml(tab.url);
             tab.title = "This site can't be reached";
             tab.loading = false;
-            if (tab.id === activeTabId) showIframeLoading(false);
+            if (tab.id === activeTabId || tab.id === splitTabId) showIframeLoading(false, "", tab);
             updateTabsUI();
             updateAddressBar();
             updateLoadingBar(tab, 100);
@@ -4775,18 +5210,28 @@
         }
       });
 
-      if (tabBehaviorNext && makeActive && activeTabId) {
-        const activeIdx = tabs.findIndex((t) => t.id === activeTabId);
-        if (activeIdx >= 0) tabs.splice(activeIdx + 1, 0, tab);
-        else tabs.push(tab);
+      if (opts.url && opts.url !== "yuki://home" && !opts.url.includes("NT.html")) {
+        tab.url = opts.url;
+        try {
+          const urlObj = new URL(opts.url);
+          tab.title = urlObj.hostname;
+          tab.favicon = getFaviconUrl(urlObj.hostname);
+        } catch {
+          tab.title = opts.url.split("/").pop() || opts.url;
+        }
+        frame.go(opts.url);
+      } else if (isIncognito) {
+        renderNewTab(frame.element, true);
       } else {
-        tabs.push(tab);
+        renderNewTab(frame.element, false);
       }
+
+      tabs.push(tab);
       document.getElementById("iframe-container").appendChild(frame.element);
-      try { installWindowOpenInterceptorForTab(tab); } catch (e) {}
+      try { installWindowOpenInterceptorForTab(tab); } catch (e) { }
       try {
-        frame.element.contentWindow.addEventListener("load", function(){ try{ installWindowOpenInterceptorForTab(tab); }catch(e){} });
-      } catch (e) {}
+        frame.element.contentWindow.addEventListener("load", function () { try { installWindowOpenInterceptorForTab(tab); } catch (e) { } });
+      } catch (e) { }
       if (defaultZoom !== 1.0) applyZoomToTab(tab);
       if (makeActive) switchTab(tab.id);
       applySplitLayout();
@@ -4799,7 +5244,10 @@
       const loader = document.getElementById("loading");
       const error = document.getElementById("error");
       const split = !!(splitTabId && container && container.classList.contains("split-mode") && !_localActive && !_yukiActive);
-      const left = split ? "0" : "";
+      const loadingTab = tabs.find((t) => t.loading && (t.id === activeTabId || t.id === splitTabId));
+      const targetTab = loadingTab || getActiveTab();
+      const isSecondary = split && targetTab && targetTab.id === splitTabId;
+      const left = split ? (isSecondary ? "50%" : "0") : "";
       const width = split ? "50%" : "";
       if (loader) {
         loader.style.left = left;
@@ -4811,7 +5259,7 @@
       }
     }
 
-    function showIframeLoading(show, url = "") {
+    function showIframeLoading(show, url = "", tab = null) {
       debugLog("showIframeLoading", show, url);
       const loader = document.getElementById("loading");
       const title = document.getElementById("loading-title");
@@ -4819,9 +5267,10 @@
       const skipBtn = document.getElementById("skip-btn");
 
       if (loader) {
-        loader.style.display = show ? "flex" : "none";
-        const tab = getActiveTab();
-        if (tab) tab.frame.element.classList.toggle("loading", show);
+        const targetTab = tab || getActiveTab();
+        if (targetTab) targetTab.frame.element.classList.toggle("loading", show);
+        const anyLoading = tabs.some((t) => t.loading && (t.id === activeTabId || (splitTabId && t.id === splitTabId)));
+        loader.style.display = anyLoading ? "flex" : "none";
         if (show) {
           title.textContent = "Connecting";
           urlText.textContent = url || "Loading content...";
@@ -4855,7 +5304,7 @@
         if (closedTabs.length > 20) closedTabs.shift();
       }
       if (closed.skipTimeout) clearTimeout(closed.skipTimeout);
-      try { if (closed._yukiOpenObs) closed._yukiOpenObs.disconnect(); } catch (e) {}
+      try { if (closed._yukiOpenObs) closed._yukiOpenObs.disconnect(); } catch (e) { }
 
       const tabEl = document.querySelector(`.tab[data-tab-id="${tabId}"]`);
       if (tabEl) {
@@ -4888,6 +5337,112 @@
         saveTabState();
         updateMenuBadges();
       }
+    }
+
+    function navHistoryDisplayParts(url) {
+      try {
+        const u = new URL(url);
+        return { label: u.hostname, sub: url };
+      } catch {
+        return { label: url, sub: url };
+      }
+    }
+
+    function jumpToNavIndex(tab, idx) {
+      if (!tab || !tab.navStack || idx == null || idx < 0 || idx >= tab.navStack.length) return;
+      tab.navIndex = idx;
+      tab.navSuppressed = true;
+      try {
+        tab.frame.go(tab.navStack[idx]);
+      } catch (e) {}
+      tab.navSuppressed = false;
+    }
+
+    function jumpToLocalIndex(tab, idx) {
+      if (!tab || !tab.localStack || idx == null || idx < 0 || idx >= tab.localStack.length) return;
+      tab.localIndex = idx;
+      loadLocalPage(tab.localStack[idx].url, { fromHistory: true, force: true });
+    }
+
+    function openNavHistoryMenu(anchorBtn, direction) {
+      document.querySelectorAll(".ctx-menu").forEach((m) => m.remove());
+      const tab = getActiveTab();
+      if (!tab || _yukiActive) return;
+      let items = [];
+      let onPick = null;
+      if (_localActive && tab.localStack && tab.localStack.length > 1) {
+        const cur = tab.localIndex || 0;
+        const idxs = tab.localStack
+          .map((_, i) => i)
+          .filter((i) => (direction === "back" ? i < cur : i > cur));
+        if (direction === "back") idxs.reverse();
+        items = idxs.slice(0, 12).map((i) => ({
+          label: tab.localStack[i].title || tab.localStack[i].url,
+          sub: tab.localStack[i].url,
+          index: i
+        }));
+        onPick = (i) => jumpToLocalIndex(tab, i);
+      } else if (!_localActive) {
+        if (!tab.navStack || tab.navStack.length < 2) return;
+        const cur = tab.navIndex;
+        const idxs = tab.navStack
+          .map((_, i) => i)
+          .filter((i) => (direction === "back" ? i < cur : i > cur));
+        if (direction === "back") idxs.reverse();
+        const picked = idxs.slice(0, 12);
+        if (picked.length === 0) return;
+        items = picked.map((i) => {
+          const parts = navHistoryDisplayParts(tab.navStack[i]);
+          return { label: parts.label, sub: parts.sub, index: i };
+        });
+        onPick = (i) => jumpToNavIndex(tab, i);
+      }
+      if (items.length === 0) return;
+      const rect = anchorBtn.getBoundingClientRect();
+      const menu = document.createElement("div");
+      menu.className = "ctx-menu";
+      menu.style.cssText =
+        "position:fixed;top:" +
+        (rect.bottom + 6) +
+        "px;left:" +
+        Math.max(8, rect.left - 40) +
+        "px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-md);padding:4px 0;min-width:280px;max-width:360px;max-height:320px;overflow-y:auto;z-index:10000;box-shadow:var(--shadow-lg);";
+      menu.innerHTML = items
+        .map(
+          (it) =>
+            '<div class="ctx-menu-item" data-idx="' +
+            it.index +
+            '" data-tooltip="' +
+            escapeAttr(it.sub) +
+            '" style="padding:8px 16px;cursor:pointer;color:var(--text);font-size:12px;display:flex;flex-direction:column;gap:2px;">' +
+            '<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' +
+            escapeHtml(it.label) +
+            '</span>' +
+            '<span style="font-size:10px;color:var(--text-dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' +
+            escapeHtml(it.sub) +
+            "</span></div>"
+        )
+        .join("");
+      menu.querySelectorAll(".ctx-menu-item").forEach((el) => {
+        el.addEventListener("click", (ev) => {
+          ev.stopPropagation();
+          onPick(Number(el.dataset.idx));
+          menu.remove();
+        });
+        el.addEventListener("mouseenter", () => (el.style.background = "var(--surface-hover)"));
+        el.addEventListener("mouseleave", () => (el.style.background = ""));
+      });
+      document.body.appendChild(menu);
+      const r = menu.getBoundingClientRect();
+      if (r.right > window.innerWidth - 8) menu.style.left = Math.max(8, window.innerWidth - r.width - 8) + "px";
+      if (r.bottom > window.innerHeight - 8) menu.style.top = Math.max(8, rect.top - r.height - 6) + "px";
+      const close = (ev) => {
+        if (!menu.contains(ev.target)) {
+          menu.remove();
+          document.removeEventListener("click", close);
+        }
+      };
+      setTimeout(() => document.addEventListener("click", close), 0);
     }
 
     function getFaviconUrl(hostname) {
@@ -4931,15 +5486,17 @@
     let dragSrcIdx = -1;
 
     function tabSignature(tab) {
-      return [tab.isPinned, tab.loading, tab.favicon, tab.title, tab.isPlayingAudio, tab.isMuted].join("|");
+      return [tab.isPinned, tab.loading, tab.favicon, tab.title, tab.isPlayingAudio, tab.isMuted, splitTabId && tab.id === activeTabId].join("|");
     }
 
     function buildTabElement(tab, idx) {
       const container = document.getElementById("tab-strip");
       const el = document.createElement("div");
-      el.className = `tab ${tab.id === activeTabId ? "active" : ""}`;
+      const isSplitActive = splitTabId && tab.id === activeTabId;
+      el.className = `tab ${tab.id === activeTabId ? "active" : ""} ${isSplitActive ? "split-tab" : ""}`;
       el.draggable = true;
-      el.dataset.tooltip = tab.title;
+      const secondary = isSplitActive ? tabs.find((t) => t.id === splitTabId) : null;
+      el.dataset.tooltip = isSplitActive ? `${tab.title} | ${secondary ? secondary.title : ""}` : tab.title;
       el.dataset.tabId = tab.id;
 
       let iconHtml = "";
@@ -4955,12 +5512,21 @@
         ? `<span class="tab-audio-icon" data-tab-id="${tab.id}" data-action="toggle-mute" style="font-size:10px;margin-left:4px;cursor:pointer;">${tab.isMuted ? "🔇" : "🔊"}</span>`
         : "";
 
-      var innerHtml = tab.isPinned ? iconHtml : (
-        iconHtml +
-        '<span class="tab-title">' + tab.title + '</span>' +
-        audioIcon +
-        '<span class="tab-close">&times;</span>'
-      );
+      var innerHtml;
+      if (tab.isPinned) {
+        innerHtml = iconHtml;
+      } else if (isSplitActive) {
+        innerHtml = iconHtml +
+          '<span class="tab-title">' + tab.title + '</span>' +
+          '<span class="tab-split-separator">|</span>' +
+          '<span class="tab-secondary-title">' + (secondary ? secondary.title : "") + '</span>' +
+          '<span class="tab-close">&times;</span>';
+      } else {
+        innerHtml = iconHtml +
+          '<span class="tab-title">' + tab.title + '</span>' +
+          audioIcon +
+          '<span class="tab-close">&times;</span>';
+      }
       el.innerHTML = innerHtml;
 
       el.onclick = () => switchTab(tab.id);
@@ -5038,16 +5604,19 @@
         const ref = Array.from(container.children).filter((c) => !c.classList.contains("new-tab") && !c.classList.contains("sidebar-resizer") && !c.classList.contains("nav-btn-group"))[idx];
         if (!el) {
           el = buildTabElement(tab, idx);
-          container.insertBefore(el, ref);
+          container.insertBefore(el, ref || null);
         } else if (el.__sig !== tabSignature(tab) || ref !== el) {
           const fresh = buildTabElement(tab, idx);
           el.replaceWith(fresh);
-          if (ref !== el) container.insertBefore(fresh, ref);
+          if (ref !== el) container.insertBefore(fresh, ref || null);
           el = fresh;
         } else {
           el.classList.toggle("active", tab.id === activeTabId);
-          el.dataset.tooltip = tab.title;
+          el.classList.toggle("split-tab", splitTabId && tab.id === activeTabId);
+          const secondary = splitTabId && tab.id === activeTabId ? tabs.find((t) => t.id === splitTabId) : null;
+          el.dataset.tooltip = secondary ? `${tab.title} | ${secondary.title}` : tab.title;
         }
+        el.classList.toggle("split-hidden", splitTabId && tab.id === splitTabId);
         els.delete(tab.id);
       });
 
@@ -5215,6 +5784,31 @@
         }
         window.addEventListener("mousemove", onMove);
         window.addEventListener("mouseup", onUp);
+      });
+    }
+
+    let tabScrollNavAt = 0;
+    function handleTabScrollNav(e) {
+      if (e.ctrlKey || e.metaKey) return;
+      if (tabs.length < 2) return;
+      const delta = (e.deltaY || 0) + (e.deltaX || 0);
+      if (!delta) return;
+      const now = Date.now();
+      if (now - tabScrollNavAt < 150) return;
+      tabScrollNavAt = now;
+      e.preventDefault();
+      const idx = tabs.findIndex((t) => t.id === activeTabId);
+      const base = idx === -1 ? 0 : idx;
+      const next = (base + (delta > 0 ? 1 : -1) + tabs.length) % tabs.length;
+      if (tabs[next] && tabs[next].id !== activeTabId) switchTab(tabs[next].id);
+    }
+
+    function initTabScrollNav() {
+      ["tab-strip", "tabs-container"].forEach((id) => {
+        const el = document.getElementById(id);
+        if (!el || el.dataset.scrollNav === "true") return;
+        el.dataset.scrollNav = "true";
+        el.addEventListener("wheel", handleTabScrollNav, { passive: false });
       });
     }
 
@@ -5455,9 +6049,9 @@
       return SEARCH_ENGINES.brave;
     }
 
-    function handleSubmit(url) {
+    function handleSubmit(url, targetTab = null) {
       closeInContentPanel();
-      const tab = getActiveTab();
+      const tab = targetTab || getActiveTab();
       let input = url || document.getElementById("address-bar").value.trim();
       debugLog("handleSubmit input:", input);
       if (!input) return;
@@ -5611,6 +6205,218 @@
       renderDarkExclusions();
       const tab = getActiveTab();
       if (tab) applyDarkModeToTab(tab);
+    }
+
+    function toggleAdblock(enabled) {
+      adblockEnabled = enabled !== undefined ? enabled : !adblockEnabled;
+      localStorage.setItem(STORAGE_KEYS.ADBLOCK_ENABLED, String(adblockEnabled));
+      if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+        navigator.serviceWorker.controller.postMessage({
+          type: "adblock:toggle",
+          enabled: adblockEnabled
+        });
+      }
+      updateAdblockButton();
+    }
+
+    function formatBlockCount(n) {
+      if (n >= 1000000) return (n / 1000000).toFixed(3).replace(/\.?0+$/, "") + "M";
+      if (n >= 1000) return n.toLocaleString();
+      return String(n);
+    }
+
+    function requestAdblockStats() {
+      if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+        navigator.serviceWorker.controller.postMessage({ type: "adblock:stats" });
+      }
+    }
+
+    function requestAdblockLog() {
+      if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+        navigator.serviceWorker.controller.postMessage({ type: "adblock:log" });
+      }
+    }
+
+    function showAdblockPopup() {
+      var existing = document.getElementById("adblock-popup");
+      if (existing) { existing.remove(); return; }
+
+      requestAdblockStats();
+
+      var popup = document.createElement("div");
+      popup.id = "adblock-popup";
+      popup.className = "adblock-popup";
+      popup.innerHTML =
+        '<div class="adblock-popup-body">' +
+        '<button class="adblock-power-btn" id="adblock-power-btn">' +
+        '<i class="fa-solid fa-power-off"></i>' +
+        '</button>' +
+        '<div class="adblock-page-row">' +
+        '<span class="adblock-page-label">Blocked on this page</span>' +
+        '<span class="adblock-page-num" id="adblock-page-count">0</span>' +
+        '</div>' +
+        '<div class="adblock-total-row">' +
+        '<span class="adblock-total-label">Blocked since install</span>' +
+        '<span class="adblock-total-num" id="adblock-total-count">0</span>' +
+        '<span class="adblock-total-pct" id="adblock-total-pct">(0%)</span>' +
+        '</div>' +
+        '<div class="adblock-popup-actions">' +
+        '<button class="adblock-action-btn" id="adblock-open-log"><i class="fa-solid fa-list"></i> Log</button>' +
+        '<button class="adblock-action-btn" id="adblock-open-settings"><i class="fa-solid fa-sliders"></i> Settings</button>' +
+        '</div>' +
+        '</div>' +
+        '<div class="adblock-popup-footer">' +
+        '<span class="adblock-footer-text">EasyList &amp; uAssets</span>' +
+        '</div>';
+
+      var anchor = document.getElementById("adblock-popup-anchor");
+      if (anchor) anchor.appendChild(popup);
+
+      refreshPopupStats();
+
+      var powerEl = popup.querySelector("#adblock-power-btn");
+      if (powerEl) {
+        powerEl.addEventListener("click", function () {
+          toggleAdblock(!adblockEnabled);
+          refreshPopupStats();
+        });
+
+        powerEl.addEventListener("mouseenter", function () {
+          if (!adblockEnabled) {
+            powerEl.style.background = "var(--surface-active)";
+            powerEl.style.borderColor = "var(--text-muted)";
+          } else {
+            powerEl.style.background = "rgba(34,197,94,0.18)";
+            powerEl.style.borderColor = "var(--success)";
+            powerEl.style.transform = "scale(1.06)";
+          }
+        });
+        powerEl.addEventListener("mouseleave", function () {
+          powerEl.style.transform = "";
+          if (!adblockEnabled) {
+            powerEl.style.background = "var(--surface-hover)";
+            powerEl.style.borderColor = "var(--border-light)";
+          } else {
+            powerEl.style.background = "rgba(34,197,94,0.1)";
+            powerEl.style.borderColor = "rgba(34,197,94,0.3)";
+          }
+        });
+      }
+
+      var logBtn = popup.querySelector("#adblock-open-log");
+      if (logBtn) {
+        logBtn.addEventListener("click", function () {
+          popup.remove();
+          navigateToYukiPage("blocking-log");
+        });
+      }
+
+      var setBtn = popup.querySelector("#adblock-open-settings");
+      if (setBtn) {
+        setBtn.addEventListener("click", function () {
+          popup.remove();
+          navigateToYukiPage("settings");
+        });
+      }
+
+      setTimeout(function () {
+        popup.classList.add("open");
+      }, 10);
+
+      function closePopup(e) {
+        if (!popup.contains(e.target) && e.target.id !== "adblock-btn") {
+          popup.remove();
+          document.removeEventListener("mousedown", closePopup);
+        }
+      }
+      setTimeout(function () { document.addEventListener("mousedown", closePopup); }, 0);
+    }
+
+    function refreshPopupStats() {
+      var powerBtn = document.getElementById("adblock-power-btn");
+      if (powerBtn) {
+        if (!adblockEnabled) {
+          powerBtn.style.color = "var(--text-muted)";
+          powerBtn.style.background = "var(--surface-hover)";
+          powerBtn.style.borderColor = "var(--border-light)";
+        } else {
+          powerBtn.style.color = "var(--success)";
+          powerBtn.style.background = "rgba(34,197,94,0.1)";
+          powerBtn.style.borderColor = "rgba(34,197,94,0.3)";
+        }
+      }
+      var pageNum = document.getElementById("adblock-page-count");
+      if (pageNum) pageNum.textContent = formatBlockCount(adblockPageCount);
+      var totalNum = document.getElementById("adblock-total-count");
+      if (totalNum && adblockTotalRequests > 0) {
+        totalNum.textContent = formatBlockCount(adblockBlockedCount);
+      }
+      var totalPct = document.getElementById("adblock-total-pct");
+      if (totalPct && adblockTotalRequests > 0) {
+        var pct = ((adblockBlockedCount / adblockTotalRequests) * 100);
+        totalPct.textContent = "(" + pct.toFixed(1) + "%)";
+      }
+    }
+
+    function updateAdblockButton() {
+      var btn = document.getElementById("adblock-btn");
+      if (!btn) return;
+      if (adblockEnabled && adblockEngineReady) {
+        btn.classList.add("active");
+        btn.classList.remove("inactive");
+        btn.setAttribute("data-tooltip", "Ad blocking is active. Blocked: " + adblockBlockedCount);
+      } else if (!adblockEnabled) {
+        btn.classList.remove("active");
+        btn.classList.add("inactive");
+        btn.setAttribute("data-tooltip", "Ad blocking is off");
+      } else {
+        btn.classList.remove("active");
+        btn.classList.remove("inactive");
+        btn.setAttribute("data-tooltip", "Ad blocking is loading...");
+      }
+      refreshPopupStats();
+    }
+
+    function renderAdblockLogEntries(entries) {
+      var container = document.getElementById("adblock-log-entries");
+      if (!container) return;
+
+      var pageNum = document.getElementById("log-page-count");
+      if (pageNum) pageNum.textContent = adblockPageCount;
+      var totalNum = document.getElementById("log-total-count");
+      if (totalNum) totalNum.textContent = formatBlockCount(adblockBlockedCount);
+      var rateEl = document.getElementById("log-block-rate");
+      if (rateEl && adblockTotalRequests > 0) {
+        rateEl.textContent = ((adblockBlockedCount / adblockTotalRequests) * 100).toFixed(1) + "%";
+      }
+
+      if (!entries || entries.length === 0) {
+        container.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-dim);font-size:13px;">No blocked requests yet.</div>';
+        return;
+      }
+
+      var html = "";
+      var len = entries.length;
+      for (var i = len - 1; i >= 0; i--) {
+        var entry = entries[i];
+        var url = entry.url || "";
+        var time = entry.time || 0;
+        var displayUrl = url.length > 80 ? url.slice(0, 80) + "..." : url;
+        var domain = "";
+        try { domain = new URL(url).hostname; } catch (e) { }
+        var timeStr = "";
+        if (time) {
+          var d = new Date(time);
+          timeStr = d.toLocaleTimeString();
+        }
+        html +=
+          '<div class="adblock-log-entry">' +
+          '<div class="adblock-log-entry-domain">' + (domain || "unknown") + '</div>' +
+          '<div class="adblock-log-entry-url" title="' + url.replace(/"/g, "&quot;") + '">' + displayUrl + '</div>' +
+          '<div class="adblock-log-entry-time">' + timeStr + '</div>' +
+          '</div>';
+      }
+      container.innerHTML = html;
     }
 
     var _yukiActive = false;
@@ -6146,15 +6952,17 @@
       var sections = [
         { id: "nav", icon: "fa-compass", label: "Navigation" },
         { id: "appearance", icon: "fa-palette", label: "Appearance" },
+        { id: "user-agent", icon: "fa-laptop-code", label: "User-Agent" },
         { id: "tabs", icon: "fa-gears", label: "Tabs" },
-        { id: "privacy", icon: "fa-shield", label: "Privacy" },
+        { id: "privacy", icon: "fa-shield", label: "Privacy & Security" },
         { id: "search-engines", icon: "fa-magnifying-glass", label: "Search Engines" },
-        { id: "data", icon: "fa-database", label: "Data" },
-        { id: "proxy", icon: "fa-server", label: "Proxy" },
+        { id: "data", icon: "fa-database", label: "Data & Storage" },
+        { id: "proxy", icon: "fa-server", label: "Proxy & Transport" },
         { id: "danger-zone", icon: "fa-triangle-exclamation", label: "Danger Zone" }
       ];
       return sections.map(function (s) {
-        return '<a class="yuki-settings-nav-item" data-section="' + s.id + '" onclick="showYukiSettingsSection(\'' + s.id + '\')"><i class="fa-solid ' + s.icon + '"></i><span>' + s.label + '</span></a>';
+        var isSelected = s.id === _yukiSettingsSection;
+        return '<a class="yuki-settings-nav-item' + (isSelected ? " selected" : "") + '" data-section="' + s.id + '" onclick="showYukiSettingsSection(\'' + s.id + '\')"><i class="fa-solid ' + s.icon + '"></i><span>' + s.label + '</span></a>';
       }).join("");
     }
 
@@ -6196,7 +7004,7 @@
         cont.innerHTML = '<iframe srcdoc="' + escapeAttr(bundledNewTabHtml) + '" style="width:100%;height:100%;border:none;"></iframe>';
         return;
       }
-      var iconMap = { settings: "fa-sliders", history: "fa-clock-rotate-left", bookmarks: "fa-star", downloads: "fa-download" };
+      var iconMap = { settings: "fa-sliders", history: "fa-clock-rotate-left", bookmarks: "fa-star", downloads: "fa-download", "blocking-log": "fa-list" };
       var icon = iconMap[page] || "fa-file";
       var title = page.charAt(0).toUpperCase() + page.slice(1).replace(/-/g, " ");
       var bodyHtml = getYukiBodyHTML(page);
@@ -6215,6 +7023,7 @@
       if (page === "bookmarks") return renderYukiBookmarks();
       if (page === "history") return renderYukiHistory();
       if (page === "downloads") return renderYukiDownloads();
+      if (page === "blocking-log") return renderYukiBlockingLog();
       return '<div class="yuki-page-empty">Page not found</div>';
     }
 
@@ -6225,18 +7034,26 @@
         var key = e[0], eng = e[1];
         return '<span class="settings-option-pill' + (key === searchEngineKey ? " active" : "") + '" onclick="setSearchEngine(\'' + key + '\')" data-tooltip="Use ' + eng.name + ' as the default search engine">' + eng.name + '</span>';
       }).join("");
+
+      var cloakPills = PRESET_CLOAKS.map(function (c) {
+        var isActive = cloakTitle === c.title && cloakIcon === c.icon;
+        return '<button class="settings-action-btn' + (isActive ? " active" : "") + '" data-cloak-id="' + c.id + '">' + c.name + '</button>';
+      }).join("");
+
+      var activeUaId = USER_AGENT_PRESETS.find(function (u) { return u.ua === customUserAgent; })?.id || "default";
+      var uaPills = USER_AGENT_PRESETS.map(function (u) {
+        var isActive = activeUaId === u.id;
+        return '<span class="settings-option-pill' + (isActive ? " active" : "") + '" data-ua-id="' + u.id + '">' + u.name + '</span>';
+      }).join("");
+
       return '<div class="yuki-settings-layout">' +
         '<div class="yuki-settings-nav">' + renderYukiSettingsNav() + '</div>' +
         '<div class="yuki-settings-content">' +
 
         '<div class="yuki-settings-section active" data-section="nav">' +
         '<div class="settings-section-title"><i class="fa-solid fa-compass"></i> Navigation</div>' +
-        '<div style="margin-bottom:10px;">' +
-        '<div style="margin-bottom:10px;font-size:14px;color:var(--text-dim);font-weight:500;">Search Engine</div>' +
-        '<div class="settings-option-group">' + allEnginePills + '</div>' +
-        '</div>' +
-        '<div style="margin-bottom:10px;">' +
-        '<div style="margin-bottom:10px;font-size:14px;color:var(--text-dim);font-weight:500;">Homepage</div>' +
+        '<div style="margin-bottom:12px;">' +
+        '<div style="margin-bottom:6px;font-size:13px;color:var(--text-dim);font-weight:500;">Homepage</div>' +
         '<div style="display:flex;gap:6px;">' +
         '<input class="settings-input" type="text" id="yuki-set-homepage-input" value="' + (homepageUrl === "NT.html" ? "" : homepageUrl) + '" placeholder="New Tab (home)" />' +
         '<button class="settings-icon-btn" id="yuki-set-homepage-btn" data-tooltip="Reset to New Tab"><i class="fa-solid fa-house"></i></button>' +
@@ -6279,6 +7096,22 @@
         '</div>' +
         '</div>' +
 
+        '<div class="yuki-settings-section" data-section="user-agent">' +
+        '<div class="settings-section-title"><i class="fa-solid fa-laptop-code"></i> User-Agent Header</div>' +
+        '<div style="margin-bottom:14px;">' +
+        '<div style="margin-bottom:8px;font-size:13px;color:var(--text-dim);font-weight:500;">Presets</div>' +
+        '<div class="settings-option-group" id="yuki-ua-presets">' + uaPills + '</div>' +
+        '</div>' +
+        '<div style="margin-bottom:14px;">' +
+        '<div style="margin-bottom:6px;font-size:13px;color:var(--text-dim);font-weight:500;">Custom User-Agent String</div>' +
+        '<input class="settings-input" type="text" id="yuki-set-ua-input" value="' + customUserAgent + '" placeholder="Leave empty for browser default" />' +
+        '</div>' +
+        '<div style="display:flex;gap:6px;">' +
+        '<button class="settings-action-btn" id="yuki-save-ua-btn"><i class="fa-solid fa-floppy-disk"></i> Save User-Agent</button>' +
+        '<button class="settings-action-btn" id="yuki-reset-ua-btn">Reset Default</button>' +
+        '</div>' +
+        '</div>' +
+
         '<div class="yuki-settings-section" data-section="tabs">' +
         '<div class="settings-section-title"><i class="fa-solid fa-gears"></i> Tabs</div>' +
         '<div class="settings-field-row">' +
@@ -6288,10 +7121,6 @@
         '<div class="settings-field-row">' +
         '<span class="settings-field-label">Confirm Close</span>' +
         '<label class="toggle-switch"><input type="checkbox" id="yuki-set-confirm-close" ' + (confirmCloseTabs ? "checked" : "") + ' /><span class="toggle-slider"></span></label>' +
-        '</div>' +
-        '<div class="settings-field-row">' +
-        '<span class="settings-field-label">New Tab Next to Current</span>' +
-        '<label class="toggle-switch"><input type="checkbox" id="yuki-set-tab-behavior" ' + (tabBehaviorNext ? "checked" : "") + ' /><span class="toggle-slider"></span></label>' +
         '</div>' +
         '<div class="settings-field-row">' +
         '<span class="settings-field-label">Block Auto-play Media</span>' +
@@ -6305,7 +7134,15 @@
         '</div>' +
 
         '<div class="yuki-settings-section" data-section="privacy">' +
-        '<div class="settings-section-title"><i class="fa-solid fa-shield"></i> Privacy</div>' +
+        '<div class="settings-section-title"><i class="fa-solid fa-shield"></i> Privacy &amp; Security</div>' +
+        '<div class="settings-field-row">' +
+        '<span class="settings-field-label">Ad &amp; Tracker Blocking <span style="font-size:10px;color:var(--text-dim);font-weight:400;margin-left:4px;">(blocks ads, analytics, tracking)</span></span>' +
+        '<label class="toggle-switch"><input type="checkbox" id="yuki-set-adblock" ' + (adblockEnabled ? "checked" : "") + ' /><span class="toggle-slider"></span></label>' +
+        '</div>' +
+        '<div class="settings-field-row">' +
+        '<span class="settings-field-label">Do Not Track (DNT) Header</span>' +
+        '<label class="toggle-switch"><input type="checkbox" id="yuki-set-dnt" ' + (dntEnabled ? "checked" : "") + ' /><span class="toggle-slider"></span></label>' +
+        '</div>' +
         '<div class="settings-field-row">' +
         '<span class="settings-field-label">Clear Data on Exit</span>' +
         '<label class="toggle-switch"><input type="checkbox" id="yuki-set-clear-on-exit" ' + (clearOnExit ? "checked" : "") + ' /><span class="toggle-slider"></span></label>' +
@@ -6318,25 +7155,29 @@
         '<div style="margin-bottom:8px;font-size:13px;color:var(--text-dim);font-weight:500;">Dark Mode Exclusions</div>' +
         '<div id="yuki-dark-exclusion-list"></div>' +
         '<div style="margin-top:8px;display:flex;gap:6px;">' +
-        '<button class="settings-action-btn" id="yuki-add-dark-exclusion" data-tooltip="Add the current site to the list of sites where dark mode is disabled">Exclude Current Site</button>' +
+        '<button class="settings-action-btn" id="yuki-add-dark-exclusion" data-tooltip="Add current site to dark mode exclusion list">Exclude Current Site</button>' +
         '</div>' +
         '</div>' +
         '</div>' +
 
         '<div class="yuki-settings-section" data-section="search-engines">' +
         '<div class="settings-section-title"><i class="fa-solid fa-magnifying-glass"></i> Search Engines</div>' +
+        '<div style="margin-bottom:16px;">' +
+        '<div style="margin-bottom:8px;font-size:13px;color:var(--text-dim);font-weight:500;">Default Search Engine</div>' +
+        '<div class="settings-option-group">' + allEnginePills + '</div>' +
+        '</div>' +
         '<div style="margin-bottom:8px;">' +
         '<div style="margin-bottom:8px;font-size:13px;color:var(--text-dim);font-weight:500;">Custom Search Engines</div>' +
         '<div id="yuki-custom-engine-list"></div>' +
         '<div style="margin-top:8px;">' +
-        '<button class="settings-action-btn" id="yuki-add-custom-engine" data-tooltip="Add a custom search engine by providing a name and URL template">Add Custom Engine</button>' +
+        '<button class="settings-action-btn" id="yuki-add-custom-engine" data-tooltip="Add custom search engine with URL template">Add Custom Engine</button>' +
         '</div>' +
         '</div>' +
         '</div>' +
 
         '<div class="yuki-settings-section" data-section="data">' +
-        '<div class="settings-section-title"><i class="fa-solid fa-database"></i> Data</div>' +
-        '<div style="display:flex;gap:5px;flex-wrap:wrap;">' +
+        '<div class="settings-section-title"><i class="fa-solid fa-database"></i> Data &amp; Storage</div>' +
+        '<div style="display:flex;gap:6px;flex-wrap:wrap;">' +
         '<button class="settings-action-btn" id="yuki-set-clear-history" data-tooltip="Delete all browsing history">Clear History</button>' +
         '<button class="settings-action-btn" id="yuki-set-clear-downloads" data-tooltip="Delete all download records">Clear Downloads</button>' +
         '<button class="settings-action-btn danger" id="yuki-set-clear-all" data-tooltip="Delete all history, downloads, and bookmarks">Clear All</button>' +
@@ -6344,23 +7185,27 @@
         '</div>' +
 
         '<div class="yuki-settings-section" data-section="proxy">' +
-        '<div class="settings-section-title"><i class="fa-solid fa-server"></i> Proxy</div>' +
+        '<div class="settings-section-title"><i class="fa-solid fa-server"></i> Proxy &amp; Transport</div>' +
         '<div style="margin-bottom:14px;">' +
-        '<div style="margin-bottom:10px;font-size:14px;color:var(--text-dim);font-weight:500;">Select Server</div>' +
+        '<div style="margin-bottom:6px;font-size:13px;color:var(--text-dim);font-weight:500;">Select Server</div>' +
         '<div class="server-list" id="yuki-server-list"></div>' +
         '</div>' +
         '<div>' +
-        '<div style="margin-bottom:10px;font-size:14px;color:var(--text-dim);font-weight:500;">Custom Server</div>' +
-        '<div style="display:flex;gap:10px;">' +
+        '<div style="margin-bottom:6px;font-size:13px;color:var(--text-dim);font-weight:500;">Custom Server</div>' +
+        '<div style="display:flex;gap:6px;">' +
         '<input class="settings-input" type="text" id="yuki-custom-wisp-input" placeholder="wss://your-server.com/wisp/" />' +
-        '<button class="settings-icon-btn" id="yuki-save-custom-wisp" data-tooltip="Add this custom proxy server to the list"><i class="fa-solid fa-plus"></i></button>' +
+        '<button class="settings-icon-btn" id="yuki-save-custom-wisp" data-tooltip="Add custom Wisp proxy server"><i class="fa-solid fa-plus"></i></button>' +
         '</div>' +
         '</div>' +
-        '<div style="margin-top:16px;">' +
-        '<div style="margin-bottom:10px;font-size:14px;color:var(--text-dim);font-weight:500;">Transport Protocol</div>' +
+        '<div style="margin-top:14px;">' +
+        '<div style="margin-bottom:6px;font-size:13px;color:var(--text-dim);font-weight:500;">Transport Protocol</div>' +
         '<div class="settings-option-group" id="yuki-transport-selector"></div>' +
         '</div>' +
-        '<div class="settings-server-hint">Lower ping = faster browsing</div>' +
+        '<div style="margin-top:14px;">' +
+        '<div style="margin-bottom:6px;font-size:13px;color:var(--text-dim);font-weight:500;">Repair</div>' +
+        '<button class="settings-action-btn" id="yuki-repair-proxy" data-tooltip="Re-register service worker and reset transport connection"><i class="fa-solid fa-wrench"></i> Repair Proxy</button>' +
+        '<div class="settings-server-hint" style="margin-top:6px;">Use this if the proxy stops working</div>' +
+        '</div>' +
         '</div>' +
 
         '<div class="yuki-settings-section" data-section="danger-zone">' +
@@ -6435,9 +7280,31 @@
       }).join("");
     }
 
+    function renderYukiBlockingLog() {
+      return '<div class="adblock-log-container" style="padding:0;">' +
+        '<div class="adblock-log-stats">' +
+        '<div class="adblock-log-stat"><span class="adblock-log-stat-num" id="log-page-count">' + adblockPageCount + '</span><span class="adblock-log-stat-label">this page</span></div>' +
+        '<div class="adblock-log-stat"><span class="adblock-log-stat-num" id="log-total-count">' + formatBlockCount(adblockBlockedCount) + '</span><span class="adblock-log-stat-label">total blocked</span></div>' +
+        '<div class="adblock-log-stat"><span class="adblock-log-stat-num" id="log-block-rate">' + (adblockTotalRequests > 0 ? ((adblockBlockedCount / adblockTotalRequests) * 100).toFixed(1) + "%" : "0%") + '</span><span class="adblock-log-stat-label">block rate</span></div>' +
+        '</div>' +
+        '<div class="adblock-log-entries" id="adblock-log-entries">' +
+        '<div style="padding:20px;text-align:center;color:var(--text-dim);font-size:13px;">Loading blocked requests...</div>' +
+        '</div>' +
+        '</div>';
+    }
+
+    function initYukiBlockingLog() {
+      requestAdblockLog();
+      var interval = setInterval(function () {
+        if (!document.getElementById("adblock-log-entries")) { clearInterval(interval); return; }
+        requestAdblockLog();
+      }, 2000);
+    }
+
     function attachYukiHandlers(page) {
       if (page === "settings") initYukiSettings();
       else if (page === "bookmarks" || page === "history") initYukiListPage(page);
+      else if (page === "blocking-log") initYukiBlockingLog();
     }
 
     function initYukiListPage(page) {
@@ -6468,7 +7335,7 @@
       var body = document.getElementById("yuki-page-body");
       if (!body) return;
 
-      showYukiSettingsSection("nav");
+      showYukiSettingsSection(_yukiSettingsSection);
 
       renderYukiServerList();
       renderTransportSection("yuki-transport-selector");
@@ -6516,10 +7383,6 @@
         confirmCloseTabs = this.checked;
         savePrefs();
       });
-      document.getElementById("yuki-set-tab-behavior")?.addEventListener("change", function () {
-        tabBehaviorNext = this.checked;
-        savePrefs();
-      });
       document.getElementById("yuki-set-autoplay-block")?.addEventListener("change", function () {
         autoplayBlock = this.checked;
         savePrefs();
@@ -6531,8 +7394,37 @@
         sidebarCollapsed = this.checked;
         applyTabLayout();
       });
-      document.getElementById("yuki-set-clear-on-exit")?.addEventListener("change", function () {
-        clearOnExit = this.checked;
+      document.getElementById("yuki-set-adblock")?.addEventListener("change", function () {
+        toggleAdblock(this.checked);
+      });
+      document.getElementById("yuki-set-dnt")?.addEventListener("change", function () {
+        dntEnabled = this.checked;
+        savePrefs();
+      });
+
+      document.querySelectorAll("#yuki-ua-presets [data-ua-id]").forEach(function (pill) {
+        pill.addEventListener("click", function () {
+          var id = pill.dataset.uaId;
+          var preset = USER_AGENT_PRESETS.find(function (u) { return u.id === id; });
+          if (!preset) return;
+          customUserAgent = preset.ua;
+          var input = document.getElementById("yuki-set-ua-input");
+          if (input) input.value = customUserAgent;
+          savePrefs();
+          renderYukiPage("settings");
+        });
+      });
+
+      document.getElementById("yuki-save-ua-btn")?.addEventListener("click", function () {
+        var input = document.getElementById("yuki-set-ua-input");
+        customUserAgent = input ? input.value.trim() : "";
+        savePrefs();
+      });
+
+      document.getElementById("yuki-reset-ua-btn")?.addEventListener("click", function () {
+        customUserAgent = "";
+        var input = document.getElementById("yuki-set-ua-input");
+        if (input) input.value = "";
         savePrefs();
       });
       document.getElementById("yuki-set-tor-enabled")?.addEventListener("change", function () {
@@ -6598,6 +7490,10 @@
         localStorage.setItem("customWisps", JSON.stringify(wisps));
         input.value = "";
         renderYukiServerList();
+      });
+
+      document.getElementById("yuki-repair-proxy")?.addEventListener("click", function () {
+        repairProxy();
       });
 
       initYukiSelect(body);
@@ -6804,13 +7700,6 @@
                 </label>
               </div>
               <div class="settings-field-row">
-                <span class="settings-field-label">New Tab Next to Current</span>
-                <label class="toggle-switch">
-                  <input type="checkbox" id="set-tab-behavior" ${tabBehaviorNext ? "checked" : ""} />
-                  <span class="toggle-slider"></span>
-                </label>
-              </div>
-              <div class="settings-field-row">
                 <span class="settings-field-label">Block Auto-play Media</span>
                 <label class="toggle-switch">
                   <input type="checkbox" id="set-autoplay-block" ${autoplayBlock ? "checked" : ""} />
@@ -6889,7 +7778,6 @@
                 <div style="margin-bottom:10px;font-size:14px;color:var(--text-dim);font-weight:500;">Transport Protocol</div>
                 <div class="settings-option-group" id="transport-selector"></div>
               </div>
-              <div class="settings-server-hint">Lower ping = faster browsing</div>
             </div>
 
             <div class="settings-section" style="border-left-color:rgba(239,68,68,0.2);">
@@ -6971,10 +7859,6 @@
             confirmCloseTabs = confirmToggle.checked;
             savePrefs();
           };
-        document.getElementById("set-tab-behavior")?.addEventListener("change", function () {
-          tabBehaviorNext = this.checked;
-          savePrefs();
-        });
         document.getElementById("set-autoplay-block")?.addEventListener("change", function () {
           autoplayBlock = this.checked;
           savePrefs();
@@ -7194,6 +8078,23 @@
       }
 
       setTimeout(() => location.reload(), 600);
+    }
+
+    async function repairProxy() {
+      const btn = document.getElementById("yuki-repair-proxy");
+      if (btn) btn.disabled = true;
+      try {
+        if ("serviceWorker" in navigator) {
+          const basePath = location.pathname.replace(/[^/]*$/, "");
+          await navigator.serviceWorker.register(basePath + "sw.js", { scope: basePath });
+          await navigator.serviceWorker.ready;
+        }
+        if (typeof Notify !== "undefined") Notify.success("Proxy Repaired", "Service worker re-registered.");
+      } catch (err) {
+        if (typeof Notify !== "undefined") Notify.error("Repair Failed", String(err?.message || err));
+      } finally {
+        if (btn) btn.disabled = false;
+      }
     }
 
     function toggleDevTools() {
@@ -8148,12 +9049,84 @@
     }
 
     function reopenLastClosedTab() {
+      reopenClosedTabAt();
+    }
+
+    function reopenClosedTabAt(listIndex) {
       if (closedTabs.length === 0) return;
-      const closed = closedTabs.pop();
+      const idx = listIndex == null ? closedTabs.length - 1 : listIndex;
+      const closed = closedTabs.splice(idx, 1)[0];
+      if (!closed) return;
       createTab(true);
       const tab = getActiveTab();
       if (tab) handleSubmit(closed.url);
       updateMenuBadges();
+    }
+
+    function openClosedTabsMenu(anchorEl) {
+      document.querySelectorAll(".ctx-menu").forEach((m) => m.remove());
+      const rect = anchorEl.getBoundingClientRect();
+      const menu = document.createElement("div");
+      menu.className = "ctx-menu";
+      menu.style.cssText =
+        "position:fixed;top:" +
+        (rect.bottom + 6) +
+        "px;left:" +
+        Math.max(8, rect.left - 300) +
+        "px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-md);padding:4px 0;min-width:300px;max-width:360px;max-height:320px;overflow-y:auto;z-index:10000;box-shadow:var(--shadow-lg);";
+      let body = "";
+      if (closedTabs.length === 0) {
+        body =
+          '<div style="padding:12px 16px;color:var(--text-dim);font-size:12px;">No recently closed tabs</div>';
+      } else {
+        body = closedTabs
+          .map((c, i) => ({ entry: c, index: i }))
+          .reverse()
+          .map(
+            (row) =>
+              '<div class="ctx-menu-item" data-idx="' +
+              row.index +
+              '" data-tooltip="' +
+              escapeAttr(row.entry.url) +
+              '" style="padding:8px 16px;cursor:pointer;color:var(--text);font-size:12px;display:flex;flex-direction:column;gap:2px;">' +
+              '<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' +
+              escapeHtml(row.entry.title || row.entry.url) +
+              '</span>' +
+              '<span style="font-size:10px;color:var(--text-dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' +
+              escapeHtml(row.entry.url) +
+              "</span></div>"
+          )
+          .join("");
+        body +=
+          '<div class="ctx-menu-sep" style="height:1px;background:var(--border);margin:4px 0;"></div>' +
+          '<div class="ctx-menu-item" data-action="clear" style="padding:8px 16px;cursor:pointer;color:var(--text);font-size:12px;display:flex;align-items:center;gap:8px;"><i class="fa-solid fa-trash-can" style="width:16px;opacity:0.6;"></i> Clear list</div>';
+      }
+      menu.innerHTML = body;
+      menu.querySelectorAll(".ctx-menu-item").forEach((el) => {
+        el.addEventListener("click", (ev) => {
+          ev.stopPropagation();
+          if (el.dataset.action === "clear") {
+            closedTabs.length = 0;
+            updateMenuBadges();
+          } else {
+            reopenClosedTabAt(Number(el.dataset.idx));
+          }
+          menu.remove();
+        });
+        el.addEventListener("mouseenter", () => (el.style.background = "var(--surface-hover)"));
+        el.addEventListener("mouseleave", () => (el.style.background = ""));
+      });
+      document.body.appendChild(menu);
+      const r = menu.getBoundingClientRect();
+      if (r.right > window.innerWidth - 8) menu.style.left = Math.max(8, window.innerWidth - r.width - 8) + "px";
+      if (r.bottom > window.innerHeight - 8) menu.style.top = Math.max(8, rect.top - r.height - 6) + "px";
+      const close = (ev) => {
+        if (!menu.contains(ev.target)) {
+          menu.remove();
+          document.removeEventListener("click", close);
+        }
+      };
+      setTimeout(() => document.addEventListener("click", close), 0);
     }
 
     function closeOtherTabs(tabId) {
@@ -8289,16 +9262,6 @@
       setTimeout(() => document.addEventListener("click", close), 0);
     }
 
-    const originalCloseTab = closeTab;
-    closeTab = function (tabId) {
-      const idx = tabs.findIndex((t) => t.id === tabId);
-      if (idx === -1) return;
-      const tab = tabs[idx];
-      closedTabs.push({ url: tab.url, title: tab.title });
-      if (closedTabs.length > 20) closedTabs.shift();
-      originalCloseTab(tabId);
-    };
-
     setupKeyboardShortcuts();
 
     function toggleBookmark() {
@@ -8313,6 +9276,108 @@
       }
       saveBookmarks();
       updateStarButton();
+    }
+
+    function cleanShareUrl(url) {
+      try {
+        const u = new URL(url);
+        ["utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content", "gclid", "fbclid", "msclkid", "mc_cid", "mc_eid", "igshid"].forEach((k) => u.searchParams.delete(k));
+        return u.href;
+      } catch {
+        return url;
+      }
+    }
+
+    function copyPopupText(text, btn) {
+      const done = () => {
+        const orig = btn.innerHTML;
+        btn.innerHTML =
+          '<i class="fa-solid fa-check" style="width:16px;color:var(--success);"></i> Copied';
+        setTimeout(() => {
+          btn.innerHTML = orig;
+        }, 1200);
+      };
+      const legacyCopy = () => {
+        try {
+          const ta = document.createElement("textarea");
+          ta.value = text;
+          document.body.appendChild(ta);
+          ta.select();
+          document.execCommand("copy");
+          ta.remove();
+          done();
+        } catch (e) {}
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done).catch(legacyCopy);
+      } else {
+        legacyCopy();
+      }
+    }
+
+    function openConnectionPopup(anchorEl) {
+      document.querySelectorAll(".ctx-menu").forEach((m) => m.remove());
+      const tab = getActiveTab();
+      const url = tab ? tab.url : "";
+      let host = url;
+      try {
+        if (url && !url.startsWith("yuki://")) host = new URL(url).hostname;
+      } catch {}
+      let wisp = DEFAULT_WISP;
+      let transport = DEFAULT_TRANSPORT;
+      try {
+        wisp = hostWispUrl || localStorage.getItem("proxServer") || DEFAULT_WISP;
+      } catch (e) {}
+      try {
+        transport = hostTransport || localStorage.getItem("proxTransport") || DEFAULT_TRANSPORT;
+      } catch (e) {}
+      let wispHost = wisp;
+      try {
+        wispHost = new URL(wisp).hostname;
+      } catch {}
+      const rect = anchorEl.getBoundingClientRect();
+      const menu = document.createElement("div");
+      menu.className = "ctx-menu";
+      menu.style.cssText =
+        "position:fixed;top:" +
+        (rect.bottom + 6) +
+        "px;left:" +
+        Math.max(8, rect.left - 8) +
+        "px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-md);padding:4px 0;min-width:300px;max-width:360px;z-index:10000;box-shadow:var(--shadow-lg);";
+      menu.innerHTML =
+        '<div style="padding:10px 16px 6px;display:flex;flex-direction:column;gap:2px;">' +
+        '<span style="font-size:13px;color:var(--text);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' +
+        escapeHtml(host) +
+        "</span>" +
+        '<span style="font-size:11px;color:var(--text-dim);">Proxied connection</span></div>' +
+        '<div style="padding:2px 16px 6px;font-size:11px;color:var(--text-muted);display:flex;flex-direction:column;gap:2px;">' +
+        "<span>Proxy: " +
+        escapeHtml(wispHost) +
+        "</span><span>Transport: " +
+        escapeHtml(transport) +
+        "</span></div>" +
+        '<div class="ctx-menu-sep" style="height:1px;background:var(--border);margin:4px 0;"></div>' +
+        '<div class="ctx-menu-item" data-action="copy" style="padding:8px 16px;cursor:pointer;color:var(--text);font-size:12px;display:flex;align-items:center;gap:8px;"><i class="fa-solid fa-link" style="width:16px;opacity:0.6;"></i> Copy link</div>' +
+        '<div class="ctx-menu-item" data-action="clean" style="padding:8px 16px;cursor:pointer;color:var(--text);font-size:12px;display:flex;align-items:center;gap:8px;"><i class="fa-solid fa-eraser" style="width:16px;opacity:0.6;"></i> Copy clean link</div>';
+      menu.querySelectorAll(".ctx-menu-item").forEach((el) => {
+        el.addEventListener("click", (ev) => {
+          ev.stopPropagation();
+          copyPopupText(el.dataset.action === "clean" ? cleanShareUrl(url) : url, el);
+        });
+        el.addEventListener("mouseenter", () => (el.style.background = "var(--surface-hover)"));
+        el.addEventListener("mouseleave", () => (el.style.background = ""));
+      });
+      document.body.appendChild(menu);
+      const r = menu.getBoundingClientRect();
+      if (r.right > window.innerWidth - 8) menu.style.left = Math.max(8, window.innerWidth - r.width - 8) + "px";
+      if (r.bottom > window.innerHeight - 8) menu.style.top = Math.max(8, rect.top - r.height - 6) + "px";
+      const close = (ev) => {
+        if (!menu.contains(ev.target)) {
+          menu.remove();
+          document.removeEventListener("click", close);
+        }
+      };
+      setTimeout(() => document.addEventListener("click", close), 0);
     }
 
     function updateStarButton() {
@@ -8464,4 +9529,5 @@
 
   <div id="app"></div>
 </body>
+
 </html>

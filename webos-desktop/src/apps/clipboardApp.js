@@ -2,6 +2,7 @@ import { $, createElement, setStyle, setText, setHTML } from "../shared/domUtils
 import { BaseApp, StorageKeys, os, MODES } from "../framework.js";
 import { isTaskbarTop } from "../utils/utils.js";
 import { getTrayPosition } from "../tray/tray.js";
+import { setTrayPinState } from "../shared/trayPin.js";
 class ClipboardManagerApp extends BaseApp {
   constructor(os) {
     super(os);
@@ -12,6 +13,7 @@ class ClipboardManagerApp extends BaseApp {
     this.saveHistoryAcrossSessions = os.storage.get(StorageKeys.clipboardSaveHistory) !== "false";
     this.historySize = os.storage.get(StorageKeys.clipboardHistorySize) || 50;
     this.popupVisible = false;
+    this.pinned = false;
     this.dialogOpen = false;
     this.suppressOutsideClick = false;
     this.initTray();
@@ -85,6 +87,7 @@ class ClipboardManagerApp extends BaseApp {
         <button id="clear-clipboard" class="clipboard-clear-btn">
           <i class="fas fa-trash"></i>
         </button>
+        <button class="tray-pin-btn" title="Pin"><i class="fas fa-thumbtack"></i></button>
       </div>
       <div class="clipboard-settings-section">
         <div class="clipboard-setting-row">
@@ -147,6 +150,7 @@ class ClipboardManagerApp extends BaseApp {
   }
 
   handleOutsideClick = (e) => {
+    if (this.pinned) return;
     if (this.dialogOpen) return;
     if (this.suppressOutsideClick) {
       this.suppressOutsideClick = false;
@@ -347,6 +351,7 @@ class ClipboardManagerApp extends BaseApp {
 
   bindEvents(popup, popupId) {
     const clearBtn = popup.querySelector("#clear-clipboard");
+    const pinBtn = popup.querySelector(".tray-pin-btn");
     const saveHistoryToggle = popup.querySelector("#save-history-toggle");
     const historySizeInput = popup.querySelector("#history-size-input");
 
@@ -354,6 +359,15 @@ class ClipboardManagerApp extends BaseApp {
       clearBtn.addEventListener("click", () => {
         this.clipboardManager.clear();
         this.renderHistory(popup, this.clipboardManager.getHistory(), this.clipboardManager.get());
+      });
+    }
+
+    if (pinBtn) {
+      setTrayPinState(popup, pinBtn, this.pinned);
+      pinBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        this.pinned = !this.pinned;
+        setTrayPinState(popup, pinBtn, this.pinned);
       });
     }
 

@@ -129,19 +129,14 @@ class OfficeModuleLoader {
 
   async html2canvas() {
     if (window.html2canvas) return window.html2canvas;
-    if (typeof __SINGLE_FILE__ !== "undefined" && __SINGLE_FILE__) {
-      const mod = await import("html2canvas-pro");
-      window.html2canvas = mod.default || mod;
-    } else {
-      const url = "https://cdn.jsdelivr.net/npm/html2canvas-pro@1.5.8/dist/html2canvas-pro.min.js";
-      await new Promise((resolve, reject) => {
-        const s = createElement("script", { attributes: { src: url } });
-        s.onload = resolve;
-        s.onerror = () => reject(new Error("html2canvas-pro failed to load"));
-        document.head.appendChild(s);
-      });
-      if (!window.html2canvas) throw new Error("html2canvas-pro failed to load");
-    }
+    const url = getLibraryUrl("html2canvasPro");
+    await new Promise((resolve, reject) => {
+      const s = createElement("script", { attributes: { src: url } });
+      s.onload = resolve;
+      s.onerror = () => reject(new Error("html2canvas-pro failed to load"));
+      document.head.appendChild(s);
+    });
+    if (!window.html2canvas) throw new Error("html2canvas-pro failed to load");
     return window.html2canvas;
   }
 }
@@ -864,61 +859,229 @@ class OdtViewer extends EditorStrategy {
   }
 }
 
+const ZOOM_STEPS = [0.25, 0.35, 0.5, 0.65, 0.8, 0.9, 1, 1.1, 1.25, 1.5, 1.75, 2, 2.5, 3, 3.5, 4, 5];
+const DEFAULT_ZOOM_INDEX = ZOOM_STEPS.indexOf(1.5);
+
 class PdfViewer extends EditorStrategy {
+  renderToken = 0;
+
   canHandle(ext) {
     return ext === ".pdf";
   }
 
-  async init(container, arrayBuffer, state) {
-    state.editorType = "pdf";
-    try {
-      const pdfjsLib = await modules.pdfjs();
-      const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(arrayBuffer) }).promise;
-      state.pdfDoc = pdf;
-      const viewer = createElement("div", { className: "office-pdf-viewer" });
-      const info = createElement("div", { className: "office-pdf-info", text: `PDF - ${pdf.numPages} page(s)` });
+  findNearestZoomIndex(targetScale) {
+    let bestIndex = DEFAULT_ZOOM_INDEX;
+    let bestDiff = Math.abs(ZOOM_STEPS[bestIndex] - targetScale);
+    for (let i = 0; i < ZOOM_STEPS.length; i++) {
+      const diff = Math.abs(ZOOM_STEPS[i] - targetScale);
+      if (diff < bestDiff) {
+        bestDiff = diff;
+        bestIndex = i;
+      }
+    }
+    return bestIndex;
+  }
+
+  updateZoomControls(state) {
+    const scale = ZOOM_STEPS[state.pdfZoomIndex];
+    if (state.pdfZoomLabel) state.pdfZoomLabel.textContent = `${Math.round(scale * 100)}%`;
+    if (state.pdfZoomOutBtn) state.pdfZoomOutBtn.disabled = state.pdfZoomIndex <= 0;
+    if (state.pdfZoomInBtn) state.pdfZoomInBtn.disabled = state.pdfZoomIndex >= ZOOM_STEPS.length - 1;
+  }
+
+  async renderPdfPages(pdf, pdfjsLib, state, token, isFirst) {
+    const viewer = state.pdfViewerEl;
+    const info = state.pdfInfoEl;
+    if (!viewer) return;
+    if (isFirst) {
+      try {
+        const firstPage = await pdf.getPage(1);
+        if (token !== this.renderToken) return;
+        const baseViewport = firstPage.getViewport({ scale: 1 });
+        const availableWidth = viewer.clientWidth - 20;
+        if (availableWidth > 0 && baseViewport.width > 0) {
+          const fitScale = availableWidth / baseViewport.width;
+          state.pdfZoomIndex = this.findNearestZoomIndex(fitScale);
+        }
+      } catch (fitError) {}
+    }
+    if (token !== this.renderToken) return;
+    const scale = ZOOM_STEPS[state.pdfZoomIndex];
+    this.updateZoomControls(state);
+    viewer.innerHTML = "";
+    if (info) {
+      info.textContent = `PDF - ${pdf.numPages} page(s)`;
       viewer.appendChild(info);
-      container.innerHTML = "";
-      container.appendChild(viewer);
-      const scale = 1.5;
+    }
+    for (let num = 1; num <= pdf.numPages; num++) {
+      if (token !== this.renderToken) return;
+      const page = await pdf.getPage(num);
+      if (token !== this.renderToken) return;
+      const viewport = page.getViewport({ scale });
+      const pageDiv = createElement("div", { className: "office-pdf-page" });
+      const canvas = createElement("canvas", { className: "office-pdf-canvas" });
+      canvas.width = viewport.width;
+      canvas.height = viewport.height;
+      await page.render({ canvasContext: canvas.getContext("2d"), viewport }).promise;
+      if (token !== this.renderToken) return;
+      pageDiv.appendChild(canvas);
+      const textContent = await page.getTextContent();
+      if (token !== this.renderToken) return;
+      const textLayer = createElement("div", { className: "office-pdf-text-layer" });
+      for (const item of textContent.items) {
+        if (!item.str) continue;
+        const tx = pdfjsLib.Util.transform(viewport.transform, item.transform);
+        const span = createElement("span", { className: "office-pdf-text-span", text: item.str });
+        span.style.left = `${tx[4]}px`;
+        span.style.top = `${tx[5]}px`;
+        span.style.fontSize = `${Math.abs(tx[0])}px`;
+        textLayer.appendChild(span);
+      }
+      pageDiv.appendChild(textLayer);
+      viewer.appendChild(pageDiv);
+      const label = createElement("div", {
+        className: "office-pdf-page-label",
+        text: `Page ${num} of ${pdf.numPages}`
+      });
+      viewer.appendChild(label);
+    }
+  }
+
+  async printPdf(state) {
+    const pdf = state.pdfDoc;
+    if (!pdf) {
+      os.notify.send("Print", "No PDF loaded to print");
+      return;
+    }
+    try {
+      const urls = [];
       for (let num = 1; num <= pdf.numPages; num++) {
         const page = await pdf.getPage(num);
-        const viewport = page.getViewport({ scale });
-        const pageDiv = createElement("div", { className: "office-pdf-page" });
-        setStyle(pageDiv, { width: `${viewport.width}px`, height: `${viewport.height}px` });
+        const viewport = page.getViewport({ scale: 2 });
         const canvas = createElement("canvas");
         canvas.width = viewport.width;
         canvas.height = viewport.height;
         await page.render({ canvasContext: canvas.getContext("2d"), viewport }).promise;
-        pageDiv.appendChild(canvas);
-        const textContent = await page.getTextContent();
-        const textLayer = createElement("div", { className: "office-pdf-text-layer" });
-        for (const item of textContent.items) {
-          if (!item.str) continue;
-          const tx = pdfjsLib.Util.transform(viewport.transform, item.transform);
-          const span = createElement("span", { text: item.str });
-          setStyle(span, {
-            position: "absolute",
-            left: `${tx[4]}px`,
-            top: `${tx[5]}px`,
-            fontSize: `${Math.abs(tx[0])}px`,
-            fontFamily: "sans-serif",
-            whiteSpace: "pre",
-            color: "transparent",
-            userSelect: "text"
-          });
-          textLayer.appendChild(span);
-        }
-        pageDiv.appendChild(textLayer);
-        const label = createElement("div", {
-          className: "office-pdf-page-label",
-          text: `Page ${num} of ${pdf.numPages}`
-        });
-        viewer.appendChild(pageDiv);
-        viewer.appendChild(label);
+        urls.push(canvas.toDataURL("image/png"));
       }
-      state.editor = viewer;
+      const printWin = window.open("", "", "width=800,height=600");
+      if (!printWin) {
+        os.notify.send("Print blocked", "Allow popups to print this PDF", { type: "warning" });
+        return;
+      }
+      const safeTitle = String(state.title || "PDF")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+      const images = urls.map((url) => `<img class="office-print-page" src="${url}">`).join("");
+      printWin.document.write(
+        `<!DOCTYPE html><html><head><title>${safeTitle}</title><style>body{margin:0}img.office-print-page{width:100%;display:block;margin:0 auto;page-break-after:always}</style></head><body>${images}<script>window.onload=function(){window.print();}<\/script></body></html>`
+      );
+      printWin.document.close();
+      printWin.focus();
+    } catch (printError) {
+      os.notify.send("Print failed", String(printError && printError.message ? printError.message : printError), {
+        type: "error"
+      });
+    }
+  }
+
+  async init(container, arrayBuffer, state) {
+    state.editorType = "pdf";
+    this.renderToken += 1;
+    const currentToken = this.renderToken;
+    if (state.pdfDoc) {
+      try {
+        await state.pdfDoc.destroy();
+      } catch (destroyError) {}
+      state.pdfDoc = null;
+    }
+    try {
+      const pdfjsLib = await modules.pdfjs();
+      if (currentToken !== this.renderToken) return;
+      const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(arrayBuffer) }).promise;
+      if (currentToken !== this.renderToken) {
+        try {
+          await pdf.destroy();
+        } catch (staleError) {}
+        return;
+      }
+      state.pdfDoc = pdf;
+      try {
+        const metadata = await pdf.getMetadata();
+        const metaTitle = metadata && metadata.info && metadata.info.Title;
+        if (metaTitle) {
+          state.title = metaTitle;
+          if (state.winId) os.window.setTitle(state.winId, `${metaTitle} - Office`);
+        }
+      } catch (metaError) {}
+      state.pdfZoomIndex = DEFAULT_ZOOM_INDEX;
+      container.innerHTML = "";
+      const root = createElement("div", { className: "office-pdf-root" });
+      const toolbar = createElement("div", { className: "office-pdf-toolbar" });
+      const zoomOutBtn = createElement("button", { className: "office-pdf-btn", text: "-" });
+      zoomOutBtn.title = "Zoom out";
+      zoomOutBtn.setAttribute("aria-label", "Zoom out");
+      const zoomLabel = createElement("span", { className: "office-pdf-zoom-label", text: "150%" });
+      const zoomInBtn = createElement("button", { className: "office-pdf-btn", text: "+" });
+      zoomInBtn.title = "Zoom in";
+      zoomInBtn.setAttribute("aria-label", "Zoom in");
+      const fitBtn = createElement("button", { className: "office-pdf-btn", text: "Fit" });
+      fitBtn.title = "Fit to width";
+      fitBtn.setAttribute("aria-label", "Fit to width");
+      const printBtn = createElement("button", { className: "office-pdf-btn", text: "Print" });
+      printBtn.title = "Print";
+      printBtn.setAttribute("aria-label", "Print");
+      toolbar.appendChild(zoomOutBtn);
+      toolbar.appendChild(zoomLabel);
+      toolbar.appendChild(zoomInBtn);
+      toolbar.appendChild(fitBtn);
+      toolbar.appendChild(printBtn);
+      const viewer = createElement("div", { className: "office-pdf-viewer" });
+      const info = createElement("div", { className: "office-pdf-info", text: `PDF - ${pdf.numPages} page(s)` });
+      viewer.appendChild(info);
+      root.appendChild(toolbar);
+      root.appendChild(viewer);
+      container.appendChild(root);
+      state.editor = root;
+      state.pdfViewerEl = viewer;
+      state.pdfInfoEl = info;
+      state.pdfZoomLabel = zoomLabel;
+      state.pdfZoomOutBtn = zoomOutBtn;
+      state.pdfZoomInBtn = zoomInBtn;
+      bindEvent(zoomOutBtn, "click", () => {
+        if (state.pdfZoomIndex > 0) {
+          state.pdfZoomIndex -= 1;
+          this.renderToken += 1;
+          this.renderPdfPages(pdf, pdfjsLib, state, this.renderToken, false);
+        }
+      });
+      bindEvent(zoomInBtn, "click", () => {
+        if (state.pdfZoomIndex < ZOOM_STEPS.length - 1) {
+          state.pdfZoomIndex += 1;
+          this.renderToken += 1;
+          this.renderPdfPages(pdf, pdfjsLib, state, this.renderToken, false);
+        }
+      });
+      bindEvent(fitBtn, "click", async () => {
+        try {
+          const fitPage = await pdf.getPage(1);
+          const baseViewport = fitPage.getViewport({ scale: 1 });
+          const availableWidth = viewer.clientWidth - 20;
+          if (availableWidth > 0 && baseViewport.width > 0) {
+            const fitScale = availableWidth / baseViewport.width;
+            state.pdfZoomIndex = this.findNearestZoomIndex(fitScale);
+            this.renderToken += 1;
+            this.renderPdfPages(pdf, pdfjsLib, state, this.renderToken, false);
+          }
+        } catch (fitError) {}
+      });
+      bindEvent(printBtn, "click", () => {
+        this.printPdf(state);
+      });
+      await this.renderPdfPages(pdf, pdfjsLib, state, currentToken, true);
     } catch (e) {
+      if (currentToken !== this.renderToken) return;
       container.innerHTML = `<div class="office-error-msg">Error rendering PDF: ${e.message}</div>`;
     }
   }

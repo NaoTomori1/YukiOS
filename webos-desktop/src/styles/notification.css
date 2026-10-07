@@ -251,6 +251,10 @@
   color: var(--error);
 }
 
+.ntf-panel__head .tray-pin-btn {
+  margin-right: 8px;
+}
+
 .ntf-panel__dismiss {
   background: none;
   border: none;

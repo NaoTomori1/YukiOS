@@ -2,6 +2,13 @@ import { SYSTEM_APPS } from "../AppRegistryConfig.js";
 import { parseBool } from "../utils/utils.js";
 import { StorageKeys, os, $ } from "../framework.js";
 
+const MEDIA_VIEWER_APP_ID = "mediaViewer";
+const MEDIA_WINDOW_PREFIX = "media-";
+
+function isMediaWindowId(id) {
+  return typeof id === "string" && id.startsWith(MEDIA_WINDOW_PREFIX);
+}
+
 export class AppRestorationService {
   constructor(windowManager) {
     this.wm = windowManager;
@@ -57,6 +64,8 @@ export class AppRestorationService {
   }
 
   findAppId(windowState) {
+    if (windowState.appId === MEDIA_VIEWER_APP_ID) return windowState.appId;
+    if (isMediaWindowId(windowState.id)) return MEDIA_VIEWER_APP_ID;
     if (windowState.appId) {
       if (this.appRegistry.has(windowState.appId)) return windowState.appId;
       if (this.wm.appLauncher?.appMap?.[windowState.appId]) return windowState.appId;
@@ -112,6 +121,22 @@ export class AppRestorationService {
           }
         }
       }
+    }
+
+    if (record.appId === MEDIA_VIEWER_APP_ID || isMediaWindowId(win.id)) {
+      record.appId = MEDIA_VIEWER_APP_ID;
+      win.dataset.appId = MEDIA_VIEWER_APP_ID;
+      let parsedPath = null;
+      try {
+        const parsed = JSON.parse(win.dataset.filePath);
+        if (Array.isArray(parsed)) parsedPath = parsed;
+      } catch {}
+      record.appStateSnapshot = {
+        name: win.dataset.fileName || record.title,
+        path: parsedPath,
+        kind: win.dataset.mediaKind || null,
+        storedIcon: win.dataset.storedIcon || null
+      };
     }
 
     if (this.wm.workspaceManager) {
@@ -245,7 +270,7 @@ export class AppRestorationService {
           this.logRestore(`Skipped: Unknown app for window ${state.id}`);
           continue;
         }
-        if (!this.appExists(appId)) {
+        if (appId !== MEDIA_VIEWER_APP_ID && !this.appExists(appId)) {
           this.logRestore(`Skipped: App '${appId}' not available for window ${state.id}`);
           continue;
         }
@@ -284,15 +309,10 @@ export class AppRestorationService {
 
   async restoreWindow(state, appId) {
     try {
-      if (this.launchedApps.has(appId)) {
-        this.logRestore(`Skipped: App already launched (${appId})`);
-        return;
-      }
+      const isMediaViewer = appId === MEDIA_VIEWER_APP_ID;
 
-      const serviceKey = SYSTEM_APPS[appId]?.serviceKey || appId;
-      const appInstance = this.wm.appLauncher.services?.[serviceKey];
-      if (!appInstance) {
-        this.logRestore(`Skipped: App instance '${appId}' not available`);
+      if (!isMediaViewer && this.launchedApps.has(appId)) {
+        this.logRestore(`Skipped: App already launched (${appId})`);
         return;
       }
 
@@ -301,26 +321,40 @@ export class AppRestorationService {
         this.wm.closeWindow(existingWin);
       }
 
-      const launchOptions = {
-        forceId: state.id,
-        position: state.snapZone ? undefined : { x: state.x, y: state.y },
-        width: state.snapZone ? undefined : state.width,
-        height: state.snapZone ? undefined : state.height,
-        allowManualPosition: true
-      };
+      let win = null;
 
-      try {
-        await this.wm.appLauncher.launch(appId, false, launchOptions);
-        this.launchedApps.add(appId);
-      } catch (e) {
-        this.logRestore(`Failed to open app '${appId}': ${e.message}`);
-        return;
-      }
+      if (isMediaViewer) {
+        win = await this.restoreMediaViewer(state);
+        if (!win) return;
+      } else {
+        const serviceKey = SYSTEM_APPS[appId]?.serviceKey || appId;
+        const appInstance = this.wm.appLauncher.services?.[serviceKey];
+        if (!appInstance) {
+          this.logRestore(`Skipped: App instance '${appId}' not available`);
+          return;
+        }
 
-      const win = $("#" + state.id);
-      if (!win) {
-        this.logRestore(`Failed: Window ${state.id} not created by ${appId}`);
-        return;
+        const launchOptions = {
+          forceId: state.id,
+          position: state.snapZone ? undefined : { x: state.x, y: state.y },
+          width: state.snapZone ? undefined : state.width,
+          height: state.snapZone ? undefined : state.height,
+          allowManualPosition: true
+        };
+
+        try {
+          await this.wm.appLauncher.launch(appId, false, launchOptions);
+          this.launchedApps.add(appId);
+        } catch (e) {
+          this.logRestore(`Failed to open app '${appId}': ${e.message}`);
+          return;
+        }
+
+        win = $("#" + state.id);
+        if (!win) {
+          this.logRestore(`Failed: Window ${state.id} not created by ${appId}`);
+          return;
+        }
       }
 
       win.dataset.appId = appId;
@@ -375,6 +409,33 @@ export class AppRestorationService {
       this.logRestore(`Error: Failed to restore ${state.id}: ${e.message}`);
       console.error(`Failed to restore window ${state.id}:`, e);
     }
+  }
+
+  async restoreMediaViewer(state) {
+    const snap = state.appStateSnapshot;
+    if (!snap || !snap.name || !Array.isArray(snap.path)) {
+      this.logRestore(`Skipped: No file reference for media window ${state.id}`);
+      return null;
+    }
+    try {
+      const { openMediaFile } = await import("../fileDisplay.js");
+      await openMediaFile(snap.name, snap.path, {
+        forceId: state.id,
+        width: state.width,
+        height: state.height,
+        x: state.x,
+        y: state.y
+      });
+    } catch (e) {
+      this.logRestore(`Failed to restore media window ${state.id}: ${e.message}`);
+      return null;
+    }
+    const win = $("#" + state.id);
+    if (!win) {
+      this.logRestore(`Failed: Media window ${state.id} not created`);
+      return null;
+    }
+    return win;
   }
 
   logRestore(message) {

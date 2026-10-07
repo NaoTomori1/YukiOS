@@ -20,6 +20,7 @@ import {
   setStyle
 } from "../shared/domUtils.js";
 import { StorageKeys, os } from "../framework.js";
+import { createAdaptiveInterval } from "../shared/pollThrottle.js";
 import { Achievements } from "../achievements.js";
 export class TaskbarSystem {
   constructor(manager) {
@@ -37,7 +38,7 @@ export class TaskbarSystem {
       this.renderPinnedItems();
       this.syncPinnedStates();
     });
-    this.audioIndicatorTimer = setInterval(() => this.updateAudioIndicators(), 600);
+    this.audioIndicatorStop = createAdaptiveInterval(() => this.updateAudioIndicators(), 600, 5000);
     os.events.on("icon-pack-changed", () => {
       this.renderPinnedItems?.();
       for (const [winId, entry] of this.manager?.openWindows || this.openWindows || new Map()) {
@@ -117,7 +118,12 @@ export class TaskbarSystem {
       reposition();
       update();
     });
-    mo.observe(taskbarWindows, { childList: true, subtree: true, attributes: true });
+    mo.observe(taskbarWindows, {
+      childList: true,
+      subtree: false,
+      attributes: true,
+      attributeFilter: ["class", "style"]
+    });
 
     requestAnimationFrame(() => {
       reposition();
@@ -584,7 +590,7 @@ export class TaskbarSystem {
           winId: "browser-pinned",
           appId: "browserApp",
           title: "Yuki Browser",
-          iconValue: resolveIconUrl("static/icons/firefox.webp"),
+          iconValue: resolveIconUrl("static/icons/chrome.webp"),
           color: null
         },
         {

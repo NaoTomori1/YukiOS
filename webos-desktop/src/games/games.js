@@ -159,7 +159,7 @@ export function getGameName(appId) {
   return appMap[appId]?.title || null;
 }
 
-const GAMES_APP_EXCLUDED = new Set(["TMNP", "vscode", "paint", "photopea", "liventcord"]);
+const GAMES_APP_EXCLUDED = new Set(["TMNP", "vscode", "paint", "photopea"]);
 
 export const HIGHLIGHTED_GAMES = new Set([
   "tabs",

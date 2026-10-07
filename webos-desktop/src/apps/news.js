@@ -18,14 +18,18 @@ const hashStringDjb2 = (text) => {
 };
 
 export const getNewsContentSignature = () => {
-  const minimal = NEWS_UPDATES.map((u) => ({
-    date: u.date,
-    sections: (u.sections || []).map((s) => ({
-      icon: s.icon,
-      title: s.title,
-      items: (s.items || []).map(([i, t, d]) => [i, t, d])
-    }))
-  }));
+  const minimal = (Array.isArray(NEWS_UPDATES) ? NEWS_UPDATES : [])
+    .filter((u) => u)
+    .map((u) => ({
+      date: u.date,
+      sections: (u.sections || [])
+        .filter((s) => s)
+        .map((s) => ({
+          icon: s.icon,
+          title: s.title,
+          items: (s.items || []).filter((entry) => Array.isArray(entry)).map(([i, t, d]) => [i, t, d])
+        }))
+    }));
   return hashStringDjb2(JSON.stringify(minimal));
 };
 
@@ -53,7 +57,8 @@ export class NewsApp extends BaseApp {
     const updates = NEWS_UPDATES;
 
     const renderSections = (sections) =>
-      sections
+      (Array.isArray(sections) ? sections : [])
+        .filter((section) => section && Array.isArray(section.items))
         .map(
           (section) => `
         <div class="news-section">
@@ -63,6 +68,7 @@ export class NewsApp extends BaseApp {
           </h2>
           <div class="news-items">
             ${section.items
+              .filter((item) => Array.isArray(item))
               .map(
                 ([icon, title, desc]) => `
               <div class="news-item">
@@ -83,7 +89,8 @@ export class NewsApp extends BaseApp {
         )
         .join("");
 
-    const updatesHtml = updates
+    const updatesHtml = (Array.isArray(updates) ? updates : [])
+      .filter((update) => update && update.date)
       .map(
         (update) => `
       <div class="news-update">

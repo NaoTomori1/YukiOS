@@ -23,6 +23,7 @@ import { TerminalRawMode, AltScreenManager, TerminalUIApp } from "../terminal/te
 import { renderPrompt } from "../terminal/prompt.js";
 import { Stream, collectStream } from "../terminal/stream.js";
 import { startVirtualHttpServer } from "../terminal/httpServer.js";
+import { createAdaptiveInterval } from "../shared/pollThrottle.js";
 
 const termStateMap = new WeakMap();
 
@@ -2596,7 +2597,7 @@ export class TerminalApp extends BaseApp {
       };
 
       sendData();
-      this.btopInterval = setInterval(sendData, 1000);
+      state.btopStop = createAdaptiveInterval(sendData, 1000, 5000);
 
       const killHandler = (e) => {
         if (e.data?.type === "btop-kill" && e.source === iframe.contentWindow) {
@@ -2623,6 +2624,10 @@ export class TerminalApp extends BaseApp {
     const state = this.activeState;
     if (!state || !state.btopActive) return;
     state.btopActive = false;
+    if (state.btopStop) {
+      state.btopStop();
+      state.btopStop = null;
+    }
     if (state.btopInterval) {
       clearInterval(state.btopInterval);
       state.btopInterval = null;

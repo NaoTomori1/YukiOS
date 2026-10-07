@@ -19,11 +19,12 @@ import { makeDraggable } from "../shared/dragUtils.js";
 
 import { $, $$, createElement, setHTML, setText, setStyle } from "../shared/domUtils.js";
 import { StorageKeys, os, MODES } from "../framework.js";
+import { isPhysicsChaosActive, notePhysicsDrag, releasePhysicsBody } from "../shared/desktopPhysics.js";
 
 const HARDCODED_DESKTOP_ICONS = [
   { app: "explorerApp", name: "Files", icon: "static/icons/file.webp" },
   { app: "systemAppsApp", name: "System Apps", icon: "papirus:apps/utilities-tweak-tool" },
-  { app: "browserApp", name: "Browser", icon: resolveIconUrl("static/icons/firefox.webp") },
+  { app: "browserApp", name: "Browser", icon: resolveIconUrl("static/icons/chrome.webp") },
   { app: "notepadApp", name: "Notepad", icon: "static/icons/notepad.webp" },
   { app: "room3dApp", name: "3D Room", icon: "static/icons/3dyukios.webp" },
   { app: "craxgptApp", name: "CraxGPT", icon: "papirus:apps/gnome-robots" },
@@ -35,7 +36,8 @@ const HARDCODED_DESKTOP_ICONS = [
     app: "infaredYoutubeApp",
     name: "Infared Youtube",
     icon: "https://cdn.jsdelivr.net/gh/NaoTomori1/yukios@main/static/icons/favicons/youtube.webp"
-  }
+  },
+  { app: "spriteFusionApp", name: "SpriteFusion Destroy", icon: "static/icons/spritefusion.ico" }
 ];
 
 export class IconManager {
@@ -126,8 +128,13 @@ export class IconManager {
 
     if (!this.dragDropManager) {
       return makeDraggable(icon, {
-        start: () => this.dragStart(),
-        move: (e, dx, dy) => this.dragMove(dx, dy),
+        start: () => {
+          this.dragStart();
+        },
+        move: (e, dx, dy) => {
+          this.dragMove(dx, dy);
+          if (isPhysicsChaosActive()) this.selectionManager.forEach((i) => notePhysicsDrag(i));
+        },
         end: () => this.dragEnd()
       });
     }
@@ -138,8 +145,15 @@ export class IconManager {
       },
       move: (e, dx, dy, clientX, clientY) => {
         this.dragDropManager.onDragMove({ dx, dy, clientX, clientY });
+        if (isPhysicsChaosActive()) this.selectionManager.forEach((i) => notePhysicsDrag(i));
       },
-      end: () => this.dragDropManager.onDragEnd()
+      end: () => {
+        if (isPhysicsChaosActive()) {
+          this.selectionManager.forEach((i) => releasePhysicsBody(i));
+          return;
+        }
+        this.dragDropManager.onDragEnd();
+      }
     });
   }
 
@@ -158,7 +172,13 @@ export class IconManager {
   }
 
   dragEnd() {
+    const chaos = isPhysicsChaosActive();
     this.selectionManager.forEach((icon) => {
+      if (chaos) {
+        releasePhysicsBody(icon);
+        setStyle(icon, { opacity: "1", zIndex: "1", cursor: "default" });
+        return;
+      }
       this.positionHelper.snap(icon);
       setStyle(icon, { opacity: "1", zIndex: "1", cursor: "default" });
       const leftRaw = parseFloat(icon.style.left);

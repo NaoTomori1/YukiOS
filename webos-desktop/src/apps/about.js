@@ -2,6 +2,7 @@ import "../styles/about.css";
 import { resolveIconUrl, resolveGhUrl } from "../shared/assetResolver.js";
 import { BaseApp, os, StorageKeys } from "../framework.js";
 import { bindEvent, $ } from "../shared/domUtils.js";
+import { renderCreditsSettings } from "../settings/settingRenderer.js";
 import versionTxt from "../../version.txt?raw";
 export const YUKIOS_VERSION = versionTxt.trim();
 
@@ -179,8 +180,8 @@ export class AboutApp extends BaseApp {
 
           </div>
 
-          <div class="abx-foot">
-            <span>Made by Reeyuki</span>
+          <div class="abx-foot" id="about-credits-section" style="cursor:pointer;">
+            ${renderCreditsSettings()}
           </div>
 
         </div>
@@ -203,6 +204,13 @@ export class AboutApp extends BaseApp {
           .catch(() => {
             os.dialog.alert("Monero Address", address);
           });
+      });
+    }
+
+    const creditsSection = $("#about-credits-section", win);
+    if (creditsSection) {
+      bindEvent(creditsSection, "click", () => {
+        os.app.launch("settingsApp", { section: "pane-about" });
       });
     }
   }

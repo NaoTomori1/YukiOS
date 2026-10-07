@@ -4,12 +4,14 @@ import { BaseApp, StorageKeys, os, $, createElement } from "../framework.js";
 import { isTaskbarTop } from "../utils/utils.js";
 import { getTrayPosition } from "../tray/tray.js";
 import { getEffectiveIcon } from "../shared/iconPack.js";
+import { setTrayPinState } from "../shared/trayPin.js";
 class NetworkTrayApp extends BaseApp {
   constructor(services) {
     super(services);
     this.winId = "network-tray-window";
     this.popupId = "network-tray-popup";
     this.popupVisible = false;
+    this.pinned = false;
     this.connecting = false;
     this.currentCdn = getCdnMirror();
     this.initTray();
@@ -143,6 +145,8 @@ class NetworkTrayApp extends BaseApp {
         <div class="network-header">
           ${this.getPopupIconHtml("papirus:status/network-wireless-connected-100")}
           <span>Network</span>
+          <button class="tray-pin-btn" title="Pin"><i class="fas fa-thumbtack"></i></button>
+          <button class="network-close-btn" title="Close"><i class="fas fa-times"></i></button>
         </div>
         <div class="network-list">
           ${cdnList}
@@ -183,6 +187,7 @@ class NetworkTrayApp extends BaseApp {
   }
 
   handleOutsideClick = (e) => {
+    if (this.pinned) return;
     const popup = $("#" + this.popupId);
     const trayEl = $("#app-tray");
     if (popup && !e.target.closest("#network-tray-popup") && !e.target.closest("#app-tray")) {
@@ -197,6 +202,21 @@ class NetworkTrayApp extends BaseApp {
   bindEvents(popup) {
     const networkItems = popup.querySelectorAll(".network-item");
     const settingsBtn = popup.querySelector("#network-settings-btn");
+    const closeBtn = popup.querySelector(".network-close-btn");
+    if (closeBtn) {
+      closeBtn.addEventListener("click", () => {
+        this.closePopup();
+      });
+    }
+    const pinBtn = popup.querySelector(".tray-pin-btn");
+    if (pinBtn) {
+      setTrayPinState(popup, pinBtn, this.pinned);
+      pinBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        this.pinned = !this.pinned;
+        setTrayPinState(popup, pinBtn, this.pinned);
+      });
+    }
 
     networkItems.forEach((item) => {
       item.addEventListener("click", () => {

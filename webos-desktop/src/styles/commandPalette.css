@@ -7,16 +7,6 @@
   align-items: flex-start;
   justify-content: center;
   padding-top: 12vh;
-  opacity: 0;
-  backdrop-filter: blur(0px);
-  transition:
-    opacity 0.2s ease,
-    backdrop-filter 0.2s ease;
-}
-
-.command-palette-overlay--show {
-  opacity: 1;
-  backdrop-filter: blur(4px);
 }
 
 .command-palette-root {
@@ -32,21 +22,7 @@
   border-radius: var(--r-lg);
   box-shadow: var(--shadow-depth);
   overflow: hidden;
-  transform: translateY(8px) scale(0.96);
-  opacity: 0;
-  filter: blur(2px);
   contain: paint;
-  transition:
-    transform 0.22s cubic-bezier(0.25, 0.46, 0.45, 0.94),
-    opacity 0.2s ease,
-    filter 0.2s ease;
-  will-change: transform, opacity, height;
-}
-
-.command-palette-overlay--show .command-palette-root {
-  transform: translateY(0) scale(1);
-  opacity: 1;
-  filter: blur(0);
 }
 
 .command-palette-header {
@@ -148,75 +124,6 @@
   flex-direction: column;
   content-visibility: auto;
   contain-intrinsic-size: auto 400px;
-  view-transition-name: palette-results;
-  animation: paletteFade 0.18s ease;
-}
-
-::view-transition-old(palette-results),
-::view-transition-new(palette-results) {
-  animation-duration: 0.14s;
-}
-
-@keyframes paletteFade {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .command-palette-root,
-  .command-palette-overlay,
-  .command-palette-results {
-    transition: none !important;
-    animation: none !important;
-    backdrop-filter: none !important;
-    filter: none !important;
-    view-transition-name: none !important;
-  }
-
-  .command-palette-results {
-    content-visibility: visible !important;
-  }
-
-  .command-palette-root {
-    transition:
-      height 0s !important,
-      max-height 0s !important;
-  }
-}
-
-html[data-performance="performance"] .command-palette-root,
-html[data-performance="performance"] .command-palette-overlay,
-html[data-performance="performance"] .command-palette-results {
-  transition: none !important;
-  animation: none !important;
-  backdrop-filter: none !important;
-  filter: none !important;
-  view-transition-name: none !important;
-}
-
-html[data-performance="performance"] .command-palette-results {
-  content-visibility: visible !important;
-}
-
-html[data-performance="performance"] .command-palette-root {
-  transition:
-    height 0s !important,
-    max-height 0s !important;
-}
-
-html[data-performance="balanced"] .command-palette-root {
-  transition-duration: 0.14s !important;
-  view-transition-name: none !important;
-}
-
-html[data-performance="balanced"] .command-palette-results {
-  animation-duration: 0.12s !important;
-  view-transition-name: none !important;
-  content-visibility: visible !important;
 }
 
 .command-palette-item {
@@ -225,7 +132,6 @@ html[data-performance="balanced"] .command-palette-results {
   align-items: center;
   gap: 14px;
   cursor: pointer;
-  transition: background 0.08s;
 }
 
 .command-palette-item:hover {

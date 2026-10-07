@@ -157,10 +157,6 @@ export class AppAPI {
     this.registry.get("achievementsApp")?.trigger(id);
   }
 
-  incrementScreenshotTaken() {
-    this.registry.get("achievementsApp")?.incrementScreenshotTaken();
-  }
-
   incrementCalculationDone() {
     this.registry.get("achievementsApp")?.incrementCalculationDone();
   }
@@ -441,10 +437,6 @@ export class AchievementsAPI {
 
   incrementGameLaunched() {
     this.registry.get("achievementsApp")?.incrementGameLaunched();
-  }
-
-  incrementScreenshotTaken() {
-    this.registry.get("achievementsApp")?.incrementScreenshotTaken();
   }
 
   incrementCalculationDone() {

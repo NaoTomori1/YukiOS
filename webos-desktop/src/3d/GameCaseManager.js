@@ -13,7 +13,7 @@ const TEXTURE_H = 440;
 const SPAWN_Y = 2.5;
 const BATCH_PER_FRAME = 4;
 const INITIAL_SPAWN = 20;
-const EXCLUDED = new Set(["TMNP", "vscode", "paint", "photopea", "liventcord", "nightInTheWoods"]);
+const EXCLUDED = new Set(["TMNP", "vscode", "paint", "photopea", "nightInTheWoods"]);
 
 const FIXED_POSITIONS = {
   seaSweeper: { x: -1.917, y: 0.02, z: 0.933, rx: -1.571, ry: 0, rz: 1.01 },

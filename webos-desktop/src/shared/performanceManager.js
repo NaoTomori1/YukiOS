@@ -29,8 +29,195 @@ class PerformanceManager {
     this.init();
   }
   init() {
+    this.maybeAutoEnableForChromebook();
     document.documentElement.setAttribute("data-performance", this.currentMode);
     this.applyPerformanceMode(this.currentMode);
+  }
+  detectChromeOS() {
+    let uaToken = false;
+    let clientHint = false;
+    let ua = "";
+    try {
+      ua = navigator.userAgent || "";
+      uaToken = /CrOS/i.test(ua);
+    } catch {}
+    try {
+      const platform = navigator.userAgentData ? navigator.userAgentData.platform || "" : "";
+      clientHint = /chrome\s*os/i.test(platform);
+    } catch {}
+    return { is: uaToken || clientHint, uaToken, clientHint };
+  }
+  probeSoftwareGL() {
+    try {
+      const canvas = document.createElement("canvas");
+      const gl = canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
+      if (!gl) return { weak: true, renderer: "no-webgl" };
+      const ext = gl.getExtension("WEBGL_debug_renderer_info");
+      const renderer = ext
+        ? String(gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) || "")
+        : String(gl.getParameter(gl.RENDERER) || "");
+      const weak = /swiftshader|llvmpipe|software|basic render|swangle|angle \(google.*(swiftshader|sw)/i.test(
+        renderer
+      );
+      return { weak, renderer: renderer || "unknown" };
+    } catch {
+      return { weak: false, renderer: "probe-failed" };
+    }
+  }
+  microBenchmark() {
+    try {
+      const size = 60000;
+      const data = new Float64Array(size);
+      for (let i = 0; i < size; i++) data[i] = i * 1.0001;
+      const start = performance.now();
+      let acc = 0;
+      for (let round = 0; round < 12; round++) {
+        for (let i = 0; i < size; i++) acc += Math.sqrt(data[i] + round);
+      }
+      const ms = performance.now() - start;
+      if (!Number.isFinite(acc)) return { ms: 0 };
+      return { ms: Math.round(ms) };
+    } catch {
+      return { ms: 0 };
+    }
+  }
+  collectDeviceVotes() {
+    const votes = [];
+    const cros = this.detectChromeOS();
+    if (cros.is) {
+      votes.push(`cros(ua=${cros.uaToken},hint=${cros.clientHint})`);
+    }
+    let cores = 8;
+    let memory = 8;
+    try {
+      cores = navigator.hardwareConcurrency || 8;
+      memory = navigator.deviceMemory || 8;
+    } catch {}
+    if (cores <= 4 && memory <= 4) {
+      votes.push(`low-spec(cores=${cores},mem=${memory})`);
+    }
+    const gl = this.probeSoftwareGL();
+    if (gl.weak) {
+      votes.push(`software-gl(${gl.renderer})`);
+    }
+    const bench = this.microBenchmark();
+    if (bench.ms >= 60) {
+      votes.push(`slow-bench(${bench.ms}ms)`);
+    }
+    let saver = false;
+    try {
+      const conn = navigator.connection || navigator.webkitConnection;
+      if (conn && (conn.saveData || /^(slow-2g|2g)$/i.test(conn.effectiveType || ""))) saver = true;
+    } catch {}
+    if (saver) {
+      votes.push("save-data");
+    }
+    return {
+      score: votes.length,
+      votes,
+      cores,
+      memory,
+      glRenderer: gl.renderer,
+      benchMs: bench.ms,
+      cros
+    };
+  }
+  isChromebookDevice() {
+    try {
+      const result = this.collectDeviceVotes();
+      const weak = result.cros.is || result.score >= 2;
+      this.chromebookReason =
+        `cros=${result.cros.is} score=${result.score}/6 [${result.votes.join(", ") || "no weak signals"}] ` +
+        `(cores=${result.cores}, mem=${result.memory}, gl=${result.glRenderer}, bench=${result.benchMs}ms)`;
+      console.log(
+        `[PerformanceManager] Chromebook check: ${weak ? "weak device" : "not weak"} ${this.chromebookReason}`
+      );
+      return weak;
+    } catch {}
+    return false;
+  }
+  watchJankThenDowngrade(reason) {
+    try {
+      const deltas = [];
+      const windowMs = 3000;
+      let rafId = 0;
+      let last = 0;
+      const finish = () => {
+        try {
+          if (rafId) cancelAnimationFrame(rafId);
+        } catch {}
+        const long = deltas.filter((d) => d > 50).length;
+        const total = deltas.length || 1;
+        const avg = Math.round(deltas.reduce((a, b) => a + b, 0) / total);
+        const ratio = long / total;
+        console.log(
+          `[PerformanceManager] Jank watch: frames=${total} avg=${avg}ms long=${long} ratio=${ratio.toFixed(2)} (${reason})`
+        );
+        if (total < 10 || (ratio < 0.2 && avg <= 34)) {
+          console.log("[PerformanceManager] Jank watch: smooth enough, staying Balanced");
+          return;
+        }
+        this.currentMode = "performance";
+        try {
+          os.storage.set(StorageKeys.performanceMode, "performance");
+          os.storage.set(StorageKeys.performanceAutoApplied, true);
+        } catch {}
+        try {
+          document.documentElement.setAttribute("data-performance", "performance");
+          this.applyPerformanceMode("performance");
+        } catch {}
+        console.log(`[PerformanceManager] Sending performance notification (reason: ${reason}, avg=${avg}ms)`);
+        try {
+          os.notify.send(
+            "Performance mode enabled",
+            "Slow frame rate detected, reduced effects for smoother speed. Change anytime in Settings.",
+            {
+              type: "info",
+              duration: 6000,
+              icon: "fa-bolt"
+            }
+          );
+        } catch {}
+      };
+      const tick = (now) => {
+        if (!last) last = now;
+        else deltas.push(now - last);
+        last = now;
+        if (now - startTime >= windowMs) finish();
+        else rafId = requestAnimationFrame(tick);
+      };
+      const startTime = performance.now();
+      const begin = () => {
+        last = 0;
+        rafId = requestAnimationFrame(tick);
+        setTimeout(() => {
+          try {
+            if (rafId) {
+              cancelAnimationFrame(rafId);
+              rafId = 0;
+              finish();
+            }
+          } catch {}
+        }, windowMs + 1500);
+      };
+      if (typeof requestIdleCallback === "function") requestIdleCallback(begin, { timeout: 4000 });
+      else setTimeout(begin, 2500);
+    } catch {}
+  }
+  maybeAutoEnableForChromebook() {
+    try {
+      if (this.currentMode === "performance") return;
+      if (os.storage.get(StorageKeys.performanceMode) != null) return;
+      if (os.storage.get(StorageKeys.performanceAutoApplied)) return;
+      const result = this.collectDeviceVotes();
+      const reason =
+        `cros=${result.cros.is} score=${result.score}/6 [${result.votes.join(", ") || "no weak signals"}] ` +
+        `(cores=${result.cores}, mem=${result.memory}, gl=${result.glRenderer}, bench=${result.benchMs}ms)`;
+      this.chromebookReason = reason;
+      console.log(`[PerformanceManager] Boot capability check (staying Balanced): ${reason}`);
+      if (result.score < 2) return;
+      this.watchJankThenDowngrade(reason);
+    } catch {}
   }
   getMode() {
     return this.currentMode;
@@ -48,6 +235,13 @@ class PerformanceManager {
     }
     if (prevMode === "performance" && mode !== "performance") {
       this.dismissPerfToast();
+      try {
+        const video = document.querySelector("#wallpaper-video");
+        if (video && video.dataset.performancePaused === "true") {
+          delete video.dataset.performancePaused;
+          import("../system.js").then(({ SystemUtilities }) => SystemUtilities.loadWallpaper()).catch(() => {});
+        }
+      } catch {}
     }
   }
 
@@ -58,6 +252,21 @@ class PerformanceManager {
         current = os.storage.get(StorageKeys.wallpaperKey);
       } catch {}
       if (!current || typeof current !== "string") return;
+      const { $ } = await import("./domUtils.js");
+      const video = $("#wallpaper-video");
+      if (video && !video.paused) {
+        video.pause();
+        try {
+          video.dataset.performancePaused = "true";
+        } catch {}
+      }
+      const vanta = $("#vanta-container");
+      if (vanta) {
+        try {
+          const { SystemUtilities } = await import("../system.js");
+          SystemUtilities.disableVantaWallpaper();
+        } catch {}
+      }
       const isVanta = current.startsWith("vanta:");
       if (!isVanta) return;
       try {

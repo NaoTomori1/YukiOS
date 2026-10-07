@@ -62,7 +62,7 @@ export class AppLauncher {
     this.adsManager = this.services.adsApp;
     this.brightnessApp = this.services.displayPerformanceApp;
 
-    this.TRANSPARENCY_ALLOWED_APP_IDS = new Set(["paint", "photopea", "vscode", "liventcord"]);
+    this.TRANSPARENCY_ALLOWED_APP_IDS = new Set(["paint", "photopea", "vscode"]);
 
     this.clippyPromise = initClippy();
 
@@ -454,7 +454,7 @@ export class AppLauncher {
 <head>
 <meta charset="UTF-8">
 <title>${gameName}</title>
-<script src="${getLibraryUrl("ruffle") || "https://unpkg.com/@ruffle-rs/ruffle/ruffle.js"}"></script>
+<script src="${getLibraryUrl("ruffle") || "https://cdn.jsdelivr.net/npm/@ruffle-rs/ruffle@0.2.0-nightly.2026.5.15/ruffle.js"}"></script>
 <style>html,body{margin:0;padding:0;width:100%;height:100%;background:${ruffleConfig.backgroundColor || "#000"};overflow:hidden;}#player{width:100%;height:100%;}</style>
 </head>
 <body>
@@ -507,12 +507,7 @@ player.load("${swfPath}");
       }
 
       if (typeof resolvedSource === "string" && resolvedSource.includes("static/apps/azahar")) {
-        const mirrors = [
-          "https://yukios.netlify.app/",
-          "https://yukios.pages.dev/",
-          "https://yukios.neocities.org/",
-          "https://yukios.vercel.app/"
-        ];
+        const mirrors = ["https://yukios.netlify.app/", "https://yukios.pages.dev/"];
 
         for (const mirror of mirrors) {
           try {
@@ -525,12 +520,7 @@ player.load("${swfPath}");
           } catch (e) {}
         }
       } else if (typeof resolvedSource === "string" && resolvedSource.includes("static/apps/kiwiirc")) {
-        const mirrors = [
-          "https://yukios.netlify.app/",
-          "https://yukios.pages.dev/",
-          "https://yukios.neocities.org/",
-          "https://yukios.vercel.app/"
-        ];
+        const mirrors = ["https://yukios.netlify.app/", "https://yukios.pages.dev/"];
 
         for (const mirror of mirrors) {
           try {
@@ -761,7 +751,7 @@ player.load("${swfPath}");
   createWindow(id, title, contentHtml, externalUrl = null, appId = null, appMeta = {}) {
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.has("game") && appId) {
-      document.title = sanitizeTitle(title);
+      if (window.__yukiCloakActive !== true) document.title = sanitizeTitle(title);
       document.head.insertAdjacentHTML(
         "beforeend",
         `<style>

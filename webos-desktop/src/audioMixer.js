@@ -5,6 +5,7 @@ import { StorageKeys } from "./StorageKeys.js";
 import { os, MODES } from "./framework.js";
 import { isTaskbarTop } from "./utils/utils.js";
 import { getTrayPosition } from "./tray/tray.js";
+import { createTrayPinButton, setTrayPinState } from "./shared/trayPin.js";
 export const SystemAudio = Object.freeze({
   SHUTDOWN: "static/audio/shutdown.opus",
   ERROR: "static/audio/error.opus",
@@ -29,6 +30,7 @@ class AudioMixer {
     this.panel = null;
     this.isOpen = false;
     this.justOpened = false;
+    this.pinned = false;
     this.load();
   }
 
@@ -195,6 +197,12 @@ class AudioMixer {
     if (!this.intensityValues) this.intensityValues = new Map();
 
     const loop = () => {
+      if (document.hidden) {
+        setTimeout(() => {
+          if (this.intensityLoopRunning) loop();
+        }, 2000);
+        return;
+      }
       if (this.analysers) {
         this.analysers.forEach((analyser, winId) => {
           analyser.getByteTimeDomainData(dataArray);
@@ -298,6 +306,10 @@ class AudioMixer {
 
     observer.observe(win, { childList: true, subtree: true });
     this.iframeObservers.set(winId, observer);
+    win.addEventListener("remove", () => {
+      observer.disconnect();
+      this.iframeObservers.delete(winId);
+    });
   }
 
   updateChannelMeta(winId, nowPlaying) {
@@ -368,7 +380,7 @@ class AudioMixer {
     this.startIntensityLoop();
 
     this.clickOutsideHandler = (e) => {
-      if (this.justOpened) return;
+      if (this.justOpened || this.pinned) return;
       if (this.isOpen && this.panel && !this.panel.contains(e.target)) {
         const btn = $('[data-win-id="audio-mixer"]');
         if (!btn || !btn.contains(e.target)) {
@@ -503,6 +515,11 @@ class AudioMixer {
     document.body.appendChild(this.panel);
 
     this.panel.querySelector(".am-close-btn").addEventListener("click", () => this.close());
+
+    const amCloseBtn = this.panel.querySelector(".am-close-btn");
+    const pinBtn = createTrayPinButton();
+    amCloseBtn.before(pinBtn);
+    pinBtn.addEventListener("click", () => this.togglePin());
 
     const masterSlider = this.panel.querySelector(".am-master-slider");
     masterSlider.addEventListener("input", (e) => {
@@ -666,6 +683,11 @@ class AudioMixer {
       console.error("[AudioMixer]", e);
     }
   }
+  togglePin() {
+    this.pinned = !this.pinned;
+    setTrayPinState(this.panel, this.panel.querySelector(".tray-pin-btn"), this.pinned);
+  }
+
   toggle() {
     if (this.isOpen) {
       this.close();

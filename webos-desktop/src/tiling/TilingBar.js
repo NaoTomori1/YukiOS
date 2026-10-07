@@ -7,6 +7,7 @@ import { trayManager } from "../tray/tray.js";
 import { BusEvents } from "../core/EventBus.js";
 import { audioMixer } from "../audioMixer.js";
 import { performanceManager } from "../shared/performanceManager.js";
+import { createAdaptiveInterval } from "../shared/pollThrottle.js";
 import { subscribeTimeTick } from "../services/timeWorker.js";
 import { resolveIconUrl } from "../shared/assetResolver.js";
 import { getEffectiveIcon } from "../shared/iconPack.js";
@@ -494,10 +495,14 @@ export class TilingBar {
   startVolumePoll() {
     this.stopVolumePoll();
     this.updateVolume();
-    this.volumePollId = setInterval(() => this.updateVolume(), VOLUME_POLL);
+    this.volumePollStop = createAdaptiveInterval(() => this.updateVolume(), VOLUME_POLL, 5000);
   }
 
   stopVolumePoll() {
+    if (this.volumePollStop) {
+      this.volumePollStop();
+      this.volumePollStop = null;
+    }
     if (this.volumePollId) {
       clearInterval(this.volumePollId);
       this.volumePollId = null;
@@ -556,10 +561,14 @@ export class TilingBar {
   startNowPlayingPoll() {
     this.stopNowPlayingPoll();
     this.updateNowPlaying();
-    this.nowPlayingId = setInterval(() => this.updateNowPlaying(), NOW_PLAYING_POLL);
+    this.nowPlayingStop = createAdaptiveInterval(() => this.updateNowPlaying(), NOW_PLAYING_POLL, 5000);
   }
 
   stopNowPlayingPoll() {
+    if (this.nowPlayingStop) {
+      this.nowPlayingStop();
+      this.nowPlayingStop = null;
+    }
     if (this.nowPlayingId) {
       clearInterval(this.nowPlayingId);
       this.nowPlayingId = null;
@@ -590,10 +599,14 @@ export class TilingBar {
   startSystemMonitor() {
     this.stopSystemMonitor();
     this.updateSystemMonitor();
-    this.sysMonId = setInterval(() => this.updateSystemMonitor(), SYS_MONITOR_POLL);
+    this.sysMonStop = createAdaptiveInterval(() => this.updateSystemMonitor(), SYS_MONITOR_POLL, 30000);
   }
 
   stopSystemMonitor() {
+    if (this.sysMonStop) {
+      this.sysMonStop();
+      this.sysMonStop = null;
+    }
     if (this.sysMonId) {
       clearInterval(this.sysMonId);
       this.sysMonId = null;

@@ -10,7 +10,6 @@ import { getLiveUserId, ensureLiveUserId } from "./social/userIdentity.js";
 import { reportAchievements } from "./social/socialApi.js";
 export const Achievements = {
   MultiTasker: "window_manager",
-  ArchiveHandler: "archive_handler",
   PersonalSpace: "personal_space",
   DesktopStylist: "desktop_stylist",
   AppCollector: "app_collector",
@@ -28,7 +27,6 @@ export const Achievements = {
   FontCustomizer: "font_customizer",
   WorkspaceWanderer: "workspace_wanderer",
   WorkspaceArchitect: "workspace_architect",
-  ScreenshotSavant: "screenshot_savant",
   MathWhiz: "math_whiz",
   NightPerson: "night_owl",
   PowerUser: "power_user",
@@ -40,8 +38,7 @@ export const Achievements = {
   MacroMaker: "macro_maker",
   GhostMode: "ghost_mode",
   PinCushion: "pin_cushion",
-  Sampler: "sampler",
-  BootStyler: "boot_styler"
+  Sampler: "sampler"
 };
 
 let sharedCatalog = null;
@@ -74,10 +71,9 @@ export class AchievementsApp extends BaseApp {
       ],
       wallpaper: [{ at: 5, key: Achievements.DesktopStylist }],
       session: [{ at: 5, key: Achievements.RegularUser }],
-      workspaceSwitched: [{ at: 25, key: Achievements.WorkspaceWanderer }],
+      workspaceSwitched: [{ at: 10, key: Achievements.WorkspaceWanderer }],
       workspaceAdded: [{ at: 3, key: Achievements.WorkspaceArchitect }],
-      screenshotTaken: [{ at: 10, key: Achievements.ScreenshotSavant }],
-      calculationDone: [{ at: 50, key: Achievements.MathWhiz }],
+      calculationDone: [{ at: 10, key: Achievements.MathWhiz }],
       powerProfileChange: [{ at: 5, key: Achievements.PowerUser }]
     };
     this.counters = {};
@@ -202,13 +198,6 @@ export class AchievementsApp extends BaseApp {
           rarity: "epic"
         },
         {
-          id: Achievements.ArchiveHandler,
-          title: "Unzipped",
-          desc: "Extract a compressed archive",
-          icon: "papirus:apps/ark",
-          rarity: "common"
-        },
-        {
           id: Achievements.PersonalSpace,
           title: "Personal Space",
           desc: "Upload a custom wallpaper",
@@ -309,7 +298,7 @@ export class AchievementsApp extends BaseApp {
         {
           id: Achievements.WorkspaceWanderer,
           title: "Workspace Wanderer",
-          desc: "Switch workspaces 25 times",
+          desc: "Switch workspaces 10 times",
           icon: "papirus:apps/utilities-tweak-tool",
           rarity: "rare"
         },
@@ -321,16 +310,9 @@ export class AchievementsApp extends BaseApp {
           rarity: "uncommon"
         },
         {
-          id: Achievements.ScreenshotSavant,
-          title: "Snip & Clip",
-          desc: "Take 10 screenshots",
-          icon: "papirus:apps/accessories-camera",
-          rarity: "rare"
-        },
-        {
           id: Achievements.MathWhiz,
           title: "Crunch Time",
-          desc: "Perform 50 calculations in the calculator",
+          desc: "Perform 10 calculations in the calculator",
           icon: "papirus:apps/accessories-calculator",
           rarity: "uncommon"
         },
@@ -409,13 +391,6 @@ export class AchievementsApp extends BaseApp {
           title: "Sampler",
           desc: "Sample a color with the color picker",
           icon: "papirus:actions/color-select",
-          rarity: "common"
-        },
-        {
-          id: Achievements.BootStyler,
-          title: "Boot Styler",
-          desc: "Choose a boot animation",
-          icon: "papirus:actions/media-playback-start",
           rarity: "common"
         }
       ];
@@ -781,9 +756,6 @@ export class AchievementsApp extends BaseApp {
   }
   incrementSession() {
     this.increment("session");
-  }
-  incrementScreenshotTaken() {
-    this.increment("screenshotTaken");
   }
   incrementCalculationDone() {
     this.increment("calculationDone");

@@ -3,6 +3,12 @@ import { StorageKeys, os, MODES } from "../framework.js";
 import { $, $$, createElement } from "../shared/domUtils.js";
 import { parseBool } from "../utils/utils.js";
 import { wobbleStart, wobbleMove, wobbleEnd, wobbleCancel } from "./AnimationSystem.js";
+import {
+  isPhysicsChaosActive,
+  grabPhysicsBody,
+  notePhysicsDrag,
+  releasePhysicsBody
+} from "../shared/desktopPhysics.js";
 import { updateMaximizeControls } from "./windowControls.js";
 import { BusEvents } from "../core/EventBus.js";
 const desktop = $("#desktop");
@@ -329,6 +335,7 @@ export function windowMakeDraggable(win, wm) {
     drag.newTop = newTop;
     win.style.left = `${newLeft}px`;
     win.style.top = `${newTop}px`;
+    if (isPhysicsChaosActive()) notePhysicsDrag(win);
 
     const dxm = clientX - drag.lastClientX;
     const dym = clientY - drag.lastClientY;
@@ -368,6 +375,7 @@ export function windowMakeDraggable(win, wm) {
 
   const endDrag = () => {
     if (!drag) return;
+    const chaos = isPhysicsChaosActive();
     wm.isDraggingWindow = false;
     document.body.classList.remove("is-dragging");
     win.classList.remove("dragging");
@@ -385,18 +393,22 @@ export function windowMakeDraggable(win, wm) {
           tiling.swapWindowWithTarget(win.id, targetWinId);
         }
       }
-    } else if (drag.activeZone) {
+    } else if (drag.activeZone && !chaos) {
       wm.applySnap(win, drag.activeZone);
     } else if (drag.moved) {
-      win.style.left = `${drag.newLeft}px`;
-      win.style.top = `${drag.newTop}px`;
-      const entry = wm.openWindows.get(win.id);
-      if (entry?.record) entry.record.setGeometry(drag.newLeft, drag.newTop);
+      if (chaos) {
+        releasePhysicsBody(win);
+      } else {
+        win.style.left = `${drag.newLeft}px`;
+        win.style.top = `${drag.newTop}px`;
+        const entry = wm.openWindows.get(win.id);
+        if (entry?.record) entry.record.setGeometry(drag.newLeft, drag.newTop);
+      }
     }
 
     wm.activeSnapZone = null;
     wm.hideSnapGhost();
-    if (wm.triggerSessionSave) wm.triggerSessionSave();
+    if (wm.triggerSessionSave && !chaos) wm.triggerSessionSave();
     drag = null;
   };
 
@@ -427,6 +439,7 @@ export function windowMakeDraggable(win, wm) {
 
           drag = initDragState(posX, posY);
           win.classList.add("dragging");
+          if (isPhysicsChaosActive()) grabPhysicsBody(win);
         },
 
         move(e, dx, dy, clientX, clientY) {
@@ -439,7 +452,7 @@ export function windowMakeDraggable(win, wm) {
       },
       {
         ignoreFrom:
-          "button, input, select, textarea, .browser-tab, .tab-close, .tab-new-btn, .steam-menu-item, .steam-user-profile, .steam-notifications, .app-menubar-item"
+          "button, input, select, textarea, .browser-tab, .tab-close, .tab-new-btn, .steam-menu-item, .steam-user-profile, .steam-notifications, .app-menubar-item, .explorer-tab, .explorer-tab-close, .explorer-tab-new"
       }
     );
 
@@ -452,7 +465,7 @@ export function windowMakeDraggable(win, wm) {
 
   const isInteractive = (target) => {
     return !!target.closest(
-      "button, input, select, textarea, .browser-tab, .tab-close, .tab-new-btn, .steam-menu-item, .steam-user-profile, .steam-notifications, .app-menubar-item"
+      "button, input, select, textarea, .browser-tab, .tab-close, .tab-new-btn, .steam-menu-item, .steam-user-profile, .steam-notifications, .app-menubar-item, .explorer-tab, .explorer-tab-close, .explorer-tab-new"
     );
   };
 

@@ -7,10 +7,11 @@ export const appMap = {
   },
   deltaruneCh5: {
     type: "game",
-    url: "https://cdn.jsdelivr.net/gh/NaoTomori1/yukios-games@main/html/deltarunefull.html",
+    url: "https://mollomm1.github.io/test",
     icon: "/static/icons/deltarune.png",
     title: "Deltarune CH1-5",
-    skipRewrite: true
+    skipRewrite: true,
+    scramjetEnabled: true
   },
   howToFish: {
     type: "game",
@@ -25,6 +26,12 @@ export const appMap = {
     icon: "/static/icons/pttr.webp",
     title: "Paint The Town Red",
     skipRewrite: true
+  },
+  hillClimbRacing: {
+    type: "game",
+    url: "https://cdn.jsdelivr.net/gh/NotRexed/HillClimbRacingPort@7467bb544dff9871a1a6dfd15407ecd48bd06bb9/index.html",
+    icon: "/static/icons/hcr.webp",
+    title: "Hill Climb Racing"
   },
   howToDateASleepParalysisDemon: {
     type: "game",
@@ -104,7 +111,7 @@ export const appMap = {
   },
   daddy: {
     type: "game",
-    url: "https://reeyuki.github.io/daddygame",
+    url: "https://cdn.jsdelivr.net/gh/Reeyuki/daddygame@main/index.html",
     icon: "/static/icons/daddy.webp",
     title: "Who's Your Daddy"
   },
@@ -309,6 +316,20 @@ export const appMap = {
     icon: "/static/icons/minusB.webp",
     title: "Minus B"
   },
+  gooberDash: {
+    type: "game",
+    url: "https://gooberdash.winterpixel.io/",
+    icon: "/static/icons/gooberDash.webp",
+    title: "Goober Dash",
+    scramjetEnabled: true
+  },
+  lolBeans: {
+    type: "game",
+    url: "https://lolbeans.io/",
+    icon: "/static/icons/lolBeans.webp",
+    title: "LolBeans",
+    scramjetEnabled: true
+  },
   fnafSl: {
     type: "game",
     url: "/static/games/fnaf/sl.html",
@@ -362,7 +383,8 @@ export const appMap = {
     type: "game",
     url: "https://truffled.lol/games/btd6/index.html",
     icon: "/static/icons/balloonstd6.webp",
-    title: "Balloons TD 6"
+    title: "Balloons TD 6",
+    scramjetEnabled: true
   },
   cutTheRope: {
     type: "game",
@@ -464,7 +486,8 @@ export const appMap = {
     type: "game",
     url: "https://truffled.lol/games/vicecity/index.html",
     icon: "/static/icons/gtavc.webp",
-    title: "GTA Vice City"
+    title: "GTA Vice City",
+    scramjetEnabled: true
   },
   garrysMod: {
     type: "game",
@@ -787,6 +810,18 @@ export const appMap = {
     url: "https://corporationincgame.com",
     icon: "/static/icons/corporation-inc.webp",
     title: "Corporation Inc"
+  },
+  clashRoyaleTrash: {
+    type: "game",
+    url: "https://cdn.jsdelivr.net/gh/mynamescrax/gamesforaetheris@main/trashclashroyale/single.html",
+    icon: "/static/icons/harold.webp",
+    title: "Trash Clash Royale"
+  },
+  rocketGoal: {
+    type: "game",
+    url: "https://cdn.jsdelivr.net/gh/mynamescrax/gamesforaetheris@main/rocketgoalio/single.html",
+    icon: "/static/icons/rocketgoal.webp",
+    title: "Rocket Goal"
   },
   isaac: {
     type: "game",
@@ -1170,7 +1205,8 @@ export const appMap = {
     type: "game",
     url: "https://truffled.lol/games/Starbound/index.html",
     icon: "/static/icons/starbound.webp",
-    title: "StarBound"
+    title: "StarBound",
+    scramjetEnabled: true
   },
   buckShot: {
     type: "game",
@@ -1442,6 +1478,12 @@ export const appMap = {
     icon: "/static/icons/amongUs.webp",
     title: "Among Us"
   },
+  amongUsWebport: {
+    type: "game",
+    url: "https://cdn.jsdelivr.net/gh/wasmdotrip/wasm.rip@main/files/amongus/latest/index.html",
+    icon: "/static/icons/amongUs.webp",
+    title: "Among Us Webport"
+  },
   gta3: {
     type: "game",
     url: "/static/games/wasm/gta3/index.html",
@@ -1557,65 +1599,33 @@ export const appMap = {
     icon: "https://cdn.jsdelivr.net/gh/freebuisness/covers@main/826.png",
     title: "Just Shapes & Beats"
   },
-  antonblast: {
-    type: "game",
-    url: "https://truffled.lol/games/antonblast/runner.html",
-    icon: "https://truffled.lol/png/games/anton.webp",
-    title: "Antonblast"
-  },
-  antonblast64: {
-    type: "game",
-    url: "https://truffled.lol/games/antonblast64/index.html",
-    icon: "https://truffled.lol/png/games/an64.webp",
-    title: "Antonblast 64"
-  },
   bitlife: {
     type: "game",
     url: "https://truffled.lol/games/bitlife/index.html",
-    icon: "https://truffled.lol/png/games/bit.webp",
-    title: "Bitlife"
+    icon: "/static/icons/bitlife.webp",
+    title: "Bitlife",
+    scramjetEnabled: true
   },
   adofai: {
     type: "game",
     url: "https://truffled.lol/games/a-dance-of-fire-and-ice/index.html",
-    icon: "https://truffled.lol/png/games/adofai.webp",
-    title: "A Dance of Fire and Ice"
+    icon: "/static/icons/adofai.webp",
+    title: "A Dance of Fire and Ice",
+    scramjetEnabled: true
   },
   aDifficultGameAboutClimbing: {
     type: "game",
     url: "https://truffled.lol/gamefile/adgac.html",
-    icon: "https://truffled.lol/png/games/adgac.webp",
-    title: "A Difficult Game About Climbing"
-  },
-  classOf09: {
-    type: "game",
-    url: "https://truffled.lol/games/C09/index.html",
-    icon: "https://truffled.lol/png/games/class.webp",
-    title: "Class Of 09"
-  },
-  classOf09Flipside: {
-    type: "game",
-    url: "https://truffled.lol/games/C09FS/index.html",
-    icon: "https://truffled.lol/png/games/flip.webp",
-    title: "Class Of 09 Flipside"
-  },
-  classOf09ReUp: {
-    type: "game",
-    url: "https://truffled.lol/games/C09RU/index.html",
-    icon: "https://truffled.lol/png/games/reup.webp",
-    title: "Class Of 09 Re-Up"
+    icon: "/static/icons/aDifficultGameAboutClimbing.webp",
+    title: "A Difficult Game About Climbing",
+    scramjetEnabled: true
   },
   vex: {
     type: "game",
     url: "https://truffled.lol/games/vex/index.html",
-    icon: "https://truffled.lol/png/games/vex.webp",
-    title: "Vex"
-  },
-  vex2: {
-    type: "game",
-    url: "https://truffled.lol/gamefile/vex2.html",
-    icon: "https://truffled.lol/png/games/vex2.webp",
-    title: "Vex 2"
+    icon: "/static/icons/vex.webp",
+    title: "Vex",
+    scramjetEnabled: true
   },
   vex3: {
     type: "game",
@@ -1674,20 +1684,23 @@ export const appMap = {
   ovo2: {
     type: "game",
     url: "https://truffled.lol/games/OvO2/index.html",
-    icon: "https://truffled.lol/png/games/ovo2.webp",
-    title: "OvO 2"
+    icon: "/static/icons/ovo2.webp",
+    title: "OvO 2",
+    scramjetEnabled: true
   },
   ovoDimensions: {
     type: "game",
     url: "https://truffled.lol/games/OvoDimensions/index.html",
-    icon: "https://truffled.lol/png/games/ovodi.webp",
-    title: "OvO Dimensions"
+    icon: "/static/icons/ovoDimensions.webp",
+    title: "OvO Dimensions",
+    scramjetEnabled: true
   },
   granny2: {
     type: "game",
     url: "https://truffled.lol/gamefile/Granny%202.html",
-    icon: "https://truffled.lol/png/games/gran2.webp",
-    title: "Granny 2"
+    icon: "/static/icons/granny2.webp",
+    title: "Granny 2",
+    scramjetEnabled: true
   },
   amandaTheAdventurer: {
     type: "game",
@@ -1753,6 +1766,148 @@ export const appMap = {
     url: "/static/games/html/rimworld.html",
     icon: "/static/icons/rimworld.webp",
     title: "RimWorld",
+    skipRewrite: true
+  },
+  intoSpace1: {
+    type: "swf",
+    url: "https://ubghyper.github.io/GameList.github.io/Into-Space-1/intospace.swf",
+    icon: "/static/icons/intoSpace1.webp",
+    title: "Into Space 1"
+  },
+  intoSpace2: {
+    type: "game",
+    url: "https://ubghyper.github.io/GameList.github.io/Into-Space-2/intospace2.swf",
+    icon: "/static/icons/intoSpace2.webp",
+    title: "Into Space 2"
+  },
+  intoSpace3: {
+    type: "game",
+    url: "https://ubghyper.github.io/GameList.github.io/Into-Space-3/intospace3.swf",
+    icon: "/static/icons/intoSpace3.webp",
+    title: "Into Space 3"
+  },
+  iwbtg: {
+    type: "game",
+    url: "https://truffled.lol/games/iwbtg/index.html",
+    icon: "/static/icons/iwbtg.webp",
+    title: "I Wanna Be The Guy Webport",
+    scramjetEnabled: true
+  },
+  knifeHit: {
+    type: "game",
+    url: "https://truffled.lol/games/knifehit/index.html",
+    icon: "/static/icons/knifeHit.webp",
+    title: "Knife Hit",
+    scramjetEnabled: true
+  },
+  laMadriguera: {
+    type: "game",
+    url: "https://truffled.lol/games/lamadriguera/index.html",
+    icon: "/static/icons/laMadriguera.webp",
+    title: "La Madriguera",
+    scramjetEnabled: true
+  },
+  lethalApe: {
+    type: "game",
+    url: "https://truffled.lol/games/lethalape/index.html",
+    icon: "/static/icons/lethalApe.webp",
+    title: "Lethal Ape Webport",
+    scramjetEnabled: true
+  },
+  machineParty: {
+    type: "game",
+    url: "https://truffled.lol/games/mp/index.html",
+    icon: "/static/icons/machineParty.webp",
+    title: "Machine Party",
+    scramjetEnabled: true
+  },
+  mtbh: {
+    type: "game",
+    url: "https://truffled.lol/games/mtbh/index.html",
+    icon: "/static/icons/mtbh.webp",
+    title: "My Talking Baby Hippo Webport",
+    scramjetEnabled: true
+  },
+  scpSecretLab: {
+    type: "game",
+    url: "https://truffled.lol/games/scp/scp.html",
+    icon: "/static/icons/scpSecretLab.webp",
+    title: "SCP: Secret Laboratory Webport",
+    scramjetEnabled: true
+  },
+  shrimpIo: {
+    type: "game",
+    url: "https://truffled.lol/games/shrimpio/index.html",
+    icon: "/static/icons/shrimpIo.webp",
+    title: "Shrimp.io Webport",
+    scramjetEnabled: true
+  },
+  skribblIo: {
+    type: "game",
+    url: "https://skribbl.io/",
+    icon: "/static/icons/skribblIo.webp",
+    title: "Skribbl.io",
+    scramjetEnabled: true
+  },
+  webdashers: {
+    type: "game",
+    url: "https://truffled.lol/gamefile/gd.html",
+    icon: "/static/icons/webdashers.webp",
+    title: "Webdashers",
+    scramjetEnabled: true
+  },
+  windowkill: {
+    type: "game",
+    url: "https://truffled.lol/games/windowkill/",
+    icon: "/static/icons/windowkill.webp",
+    title: "Windowkill Webport",
+    scramjetEnabled: true
+  },
+  worldsHardestGame4: {
+    type: "game",
+    url: "https://truffled.lol/games/worlds-hardest-game-4/index.html",
+    icon: "/static/icons/worldsHardestGame4.webp",
+    title: "Worlds Hardest Game 4",
+    scramjetEnabled: true
+  },
+  apotheon: {
+    type: "game",
+    url: "https://truffled.lol/games/Apotheon/index.html",
+    icon: "/static/icons/apotheon.webp",
+    title: "Apotheon Webport",
+    scramjetEnabled: true
+  },
+  blackHoleFishing: {
+    type: "game",
+    url: "https://truffled.lol/games/bhf/single.html",
+    icon: "/static/icons/blackHoleFishing.webp",
+    title: "Black Hole Fishing",
+    scramjetEnabled: true
+  },
+  scritchyScratchy: {
+    type: "game",
+    url: "https://cdn.jsdelivr.net/gh/c00lkiddtech/scratchy@main/scratchy.html",
+    icon: "/static/icons/scritchScratch.webp",
+    title: "Scritchy Scratchy"
+  },
+  keepTalkingAndNobodyExplodes: {
+    type: "game",
+    url: "https://cdn.jsdelivr.net/gh/squidward5/ktane-webport@main/singlefile.html",
+    icon: "/static/icons/ktane.webp",
+    title: "Keep Talking and Nobody Explodes"
+  },
+  horoKnight3d: {
+    type: "game",
+    url: "https://cdn.jsdelivr.net/gh/Reeyuki/BaldiModPorts@main/horo/index.html",
+    icon: "/static/icons/hollowKnight.webp",
+    title: "Horo Knight 3D",
+    skipRewrite: true
+  },
+  endacopia: {
+    type: "game",
+    url: "https://cdn.jsdelivr.net/gh/Reeyuki/BaldiModPorts@main/endacopia/index.html",
+    icon: "/static/icons/omori.webp",
+    title: "Endacopia",
     skipRewrite: true
   }
 };

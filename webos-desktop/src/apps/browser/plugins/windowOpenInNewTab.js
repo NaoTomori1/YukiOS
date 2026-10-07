@@ -1,4 +1,5 @@
 import { StorageKeys } from "../../../StorageKeys.js";
+import { buildPopupInterceptorScript } from "../../../core/ScramjetPopupManager.js";
 
 export const PLUGIN_ID = "windowOpenInNewTab";
 export const PLUGIN_NAME = "Open window.open in New Tab";
@@ -158,6 +159,10 @@ export function buildWindowOpenInterceptorScript() {
   };
   try{ patchWindow(window,null);}catch(e){}
 })();`;
+}
+
+export function buildPopupWindowInterceptorScript() {
+  return buildPopupInterceptorScript();
 }
 
 export class WindowOpenInNewTabPlugin {

@@ -3,6 +3,7 @@ import { $, $$, setStyle, createElement } from "../shared/domUtils.js";
 import { BaseApp, BusEvents, os, StorageKeys } from "../framework.js";
 import { Achievements } from "../achievements.js";
 import { KeybindManager } from "../keybindManager.js";
+import { getLibraryUrl } from "../shared/cdnConfig.js";
 
 export class ColorPickerApp extends BaseApp {
   singletonWindowIds = ["color-picker"];
@@ -216,13 +217,8 @@ export class ColorPickerApp extends BaseApp {
 
   async loadHtml2canvasPro() {
     if (window.html2canvas) return;
-    if (__SINGLE_FILE__) {
-      const mod = await import("html2canvas-pro");
-      window.html2canvas = mod.default || mod;
-      return;
-    }
     const s = createElement("script");
-    s.src = "https://cdn.jsdelivr.net/npm/html2canvas-pro@1.5.8/dist/html2canvas-pro.min.js";
+    s.src = getLibraryUrl("html2canvasPro");
     document.head.appendChild(s);
     await new Promise((resolve, reject) => {
       s.onload = resolve;

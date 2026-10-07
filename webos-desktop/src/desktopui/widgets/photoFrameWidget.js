@@ -1,4 +1,5 @@
 import { WidgetBase } from "../widgetManager.js";
+import { createAdaptiveInterval } from "../../shared/pollThrottle.js";
 import { os } from "../../framework.js";
 
 export class PhotoFrameWidget extends WidgetBase {
@@ -18,7 +19,7 @@ export class PhotoFrameWidget extends WidgetBase {
       </div>
     `;
     this.showImage(contentEl);
-    this.interval = setInterval(() => this.nextImage(), 10000);
+    this.stopPoll = createAdaptiveInterval(() => this.nextImage(), 10000, 60000);
   }
 
   getConfigFields() {
@@ -142,6 +143,7 @@ export class PhotoFrameWidget extends WidgetBase {
   }
 
   destroy() {
+    if (this.stopPoll) this.stopPoll();
     if (this.interval) clearInterval(this.interval);
     super.destroy();
   }

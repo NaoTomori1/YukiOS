@@ -82,7 +82,11 @@ const DEFAULT_EXT_MAP = {};
   assignDefaults("fontViewer", FONT_EXTS);
   assignDefaults("emulatorApp", ROM_EXTS);
   assignDefaults("ruffleApp", SWF_EXTS);
-  assignDefaults("jsDosApp", EXE_EXTS);
+  assignDefaults("boxedWineApp", ["exe"]);
+  assignDefaults(
+    "jsDosApp",
+    EXE_EXTS.filter((ext) => ext !== "exe")
+  );
   assignDefaults("v86app", DISK_EXTS);
   assignDefaults("browserApp", HTML_EXTS);
   assignDefaults("notepadApp", [...TEXT_EXTS, ...CODE_EXTS]);

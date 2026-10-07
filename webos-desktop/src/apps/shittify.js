@@ -44,7 +44,7 @@ const SHITTIFY_BRIDGE_SCRIPT = `
     var track = nameEl ? nameEl.textContent.trim() : '';
     var artist = artistEl ? artistEl.textContent.trim() : '';
     var artwork = imgEl ? (imgEl.src || '') : '';
-    post({ type: 'track', track: track, artist: artist, album: '', artwork: artwork, playbackState: state });
+    post({ type: 'track', track: track, artist: artist, album: '', artwork: artwork, playbackState: state, position: currentAudio ? currentAudio.currentTime : 0, duration: currentAudio ? currentAudio.duration : 0, volume: currentAudio ? currentAudio.volume : 1 });
   }
 
   var trackedAudios = new WeakSet();
@@ -57,6 +57,9 @@ const SHITTIFY_BRIDGE_SCRIPT = `
     audio.addEventListener('play', function() { setTimeout(function() { readPlayerDOM('playing'); }, 80); });
     audio.addEventListener('pause', function() { readPlayerDOM('paused'); });
     audio.addEventListener('ended', function() { readPlayerDOM('none'); });
+    audio.addEventListener('timeupdate', function() { readPlayerDOM(audio.paused ? 'paused' : 'playing'); });
+    audio.addEventListener('loadedmetadata', function() { readPlayerDOM(audio.paused ? 'paused' : 'playing'); });
+    audio.addEventListener('durationchange', function() { readPlayerDOM(audio.paused ? 'paused' : 'playing'); });
   }
 
   var OrigAudio = window.Audio;
@@ -71,6 +74,24 @@ const SHITTIFY_BRIDGE_SCRIPT = `
   };
   window.Audio.prototype = OrigAudio.prototype;
 
+  document.addEventListener('play', function(e) { if (e.target && (e.target.tagName === 'AUDIO' || e.target.tagName === 'VIDEO')) attachToAudio(e.target); }, true);
+
+  var origCreateElement = document.createElement.bind(document);
+  document.createElement = function(tagName) {
+    var el = arguments.length > 1 ? origCreateElement(arguments[0], arguments[1]) : origCreateElement(arguments[0]);
+    try {
+      var t = String(tagName).toLowerCase();
+      if (t === 'audio' || t === 'video') attachToAudio(el);
+    } catch(ex) {}
+    return el;
+  };
+
+  function attachExistingMedia() {
+    var list = document.querySelectorAll('audio,video');
+    for (var m = 0; m < list.length; m++) attachToAudio(list[m]);
+  }
+  attachExistingMedia();
+
   var obs = new MutationObserver(function(mutations) {
     for (var i = 0; i < mutations.length; i++) {
       var nodes = mutations[i].addedNodes;
@@ -78,6 +99,14 @@ const SHITTIFY_BRIDGE_SCRIPT = `
         var node = nodes[j];
         if (node && node.classList && node.classList.contains('song-player')) {
           setTimeout(function() { readPlayerDOM(currentAudio && !currentAudio.paused ? 'playing' : 'paused'); }, 150);
+        }
+        if (node && node.nodeType === 1) {
+          var tn = node.tagName || '';
+          if (tn === 'AUDIO' || tn === 'VIDEO') attachToAudio(node);
+          if (node.querySelectorAll) {
+            var found = node.querySelectorAll('audio,video');
+            for (var k = 0; k < found.length; k++) attachToAudio(found[k]);
+          }
         }
       }
     }
@@ -87,9 +116,11 @@ const SHITTIFY_BRIDGE_SCRIPT = `
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', function() {
       setTimeout(patchTextNodes, 100);
+      attachExistingMedia();
     });
   } else {
     setTimeout(patchTextNodes, 100);
+    attachExistingMedia();
   }
 
   window.addEventListener('message', function(e) {
@@ -126,13 +157,32 @@ const SHITTIFY_BRIDGE_SCRIPT = `
         return;
       }
       if (d.cmd === 'volume') {
-        var v = Math.max(0, Math.min(1, Number(d.value) || 0));
+        var rawV = (d.data && d.data.value != null) ? d.data.value : d.value;
+        var v = Math.max(0, Math.min(1, Number(rawV) || 0));
         if (currentAudio) currentAudio.volume = v;
         return;
       }
+      if (d.cmd === 'seek') {
+        var rawP = (d.data && d.data.position != null) ? d.data.position : d.position;
+        var pos = Number(rawP) || 0;
+        if (!currentAudio) {
+          var fallback = document.querySelector('audio,video');
+          if (fallback) attachToAudio(fallback);
+        }
+        if (currentAudio) {
+          try {
+            var dur = currentAudio.duration;
+            if (isFinite(dur) && dur > 0) pos = Math.max(0, Math.min(dur, pos));
+            else pos = Math.max(0, pos);
+            currentAudio.currentTime = pos;
+          } catch(ex) {}
+          setTimeout(function() { readPlayerDOM(currentAudio && !currentAudio.paused ? 'playing' : 'paused'); }, 120);
+        }
+        return;
+      }
       if (!currentAudio) return;
-      if (d.cmd === 'play') { try { currentAudio.play(); } catch(ex) { console.error("[Shittify]", ex); } }
-      else if (d.cmd === 'pause') { try { currentAudio.pause(); } catch(ex) { console.error("[Shittify]", ex); } }
+      if (d.cmd === 'play') { try { var r = currentAudio.play(); if (r && r.then) r.then(function() { setTimeout(function() { readPlayerDOM('playing'); }, 120); }, function(ex) {}); else setTimeout(function() { readPlayerDOM(currentAudio && !currentAudio.paused ? 'playing' : 'paused'); }, 120); } catch(ex) {} }
+      else if (d.cmd === 'pause') { try { currentAudio.pause(); } catch(ex) {} setTimeout(function() { readPlayerDOM('paused'); }, 80); }
       else if (d.cmd === 'nexttrack') { var nb = document.querySelector('.player-next'); if (nb) nb.click(); }
       else if (d.cmd === 'previoustrack') { var bb = document.querySelector('.player-back'); if (bb) bb.click(); }
     } catch(e) { console.error("[Shittify]", e); }
@@ -206,7 +256,7 @@ export class ShittifyApp extends BaseApp {
       "Evil Spotify",
       `<img src="${SHITTIFY_ICON}" style="width:14px;height:14px;border-radius:2px;object-fit:contain;vertical-align:middle;" />`
     );
-    audioMixer().setChannelCommandHandler(winId, (cmd) => this.sendCommand(cmd));
+    audioMixer().setChannelCommandHandler(winId, (cmd, data) => this.sendCommand(cmd, data));
     this.setupMessageBridge(winId);
 
     try {
@@ -263,15 +313,24 @@ export class ShittifyApp extends BaseApp {
     this.msgListener = (e) => {
       const d = e.data;
       if (!d || d.__shittify !== true || d.type !== "track") return;
-      if (d.track && d.artist) {
+      const last = this.lastTrackMeta || {};
+      if (
+        d.track &&
+        d.artist &&
+        (d.track !== last.track || d.artist !== last.artist || d.playbackState !== last.state)
+      ) {
         os.storage.set(StorageKeys.shittifyLastState, { track: d.track, artist: d.artist, state: d.playbackState });
       }
+      this.lastTrackMeta = { track: d.track, artist: d.artist, state: d.playbackState };
       audioMixer().updateChannelMeta(winId, {
         track: d.track || "",
         artist: d.artist || "",
         album: d.album || "",
         artwork: d.artwork || "",
-        playbackState: d.playbackState || "none"
+        playbackState: d.playbackState || "none",
+        position: Number(d.position) || 0,
+        duration: Number(d.duration) || 0,
+        volume: d.volume == null ? 1 : Number(d.volume)
       });
     };
     window.addEventListener("message", this.msgListener);

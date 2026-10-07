@@ -1,5 +1,6 @@
 import { WidgetBase } from "../widgetManager.js";
 import { getDateKey, getEventsForDate, loadEvents } from "../../shared/calendarUtils.js";
+import { createAdaptiveInterval } from "../../shared/pollThrottle.js";
 
 export class CalendarWidget extends WidgetBase {
   constructor(manager, id) {
@@ -32,7 +33,7 @@ export class CalendarWidget extends WidgetBase {
 
     this.events = loadEvents();
     this.render();
-    this.interval = setInterval(() => this.render(), 60000);
+    this.stopPoll = createAdaptiveInterval(() => this.render(), 60000, 300000);
   }
 
   render() {
@@ -102,6 +103,7 @@ export class CalendarWidget extends WidgetBase {
   }
 
   destroy() {
+    if (this.stopPoll) this.stopPoll();
     if (this.interval) clearInterval(this.interval);
     super.destroy();
   }

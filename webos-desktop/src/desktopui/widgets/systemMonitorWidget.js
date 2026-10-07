@@ -1,4 +1,5 @@
 import { WidgetBase } from "../widgetManager.js";
+import { createAdaptiveInterval } from "../../shared/pollThrottle.js";
 import { os } from "../../framework.js";
 import { StorageKeys } from "../../framework.js";
 import { getAppRegistry } from "../../appRegistry.js";
@@ -39,7 +40,7 @@ export class SystemMonitorWidget extends WidgetBase {
       </div>
     `;
     this.update();
-    this.interval = setInterval(() => this.update(), 5000);
+    this.stopPoll = createAdaptiveInterval(() => this.update(), 5000, 30000);
   }
 
   async update() {
@@ -117,6 +118,7 @@ export class SystemMonitorWidget extends WidgetBase {
   }
 
   destroy() {
+    if (this.stopPoll) this.stopPoll();
     if (this.interval) clearInterval(this.interval);
     super.destroy();
   }

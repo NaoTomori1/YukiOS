@@ -110,14 +110,7 @@
   top: 0;
   width: 80px;
   height: 100%;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(160, 120, 255, 0.4),
-    rgba(160, 120, 255, 0.6),
-    rgba(160, 120, 255, 0.4),
-    transparent
-  );
+  background: linear-gradient(90deg, transparent, var(--glass), var(--brand), var(--glass), transparent);
   pointer-events: none;
   z-index: 5;
   will-change: left, opacity;
@@ -132,7 +125,7 @@
 
 .boot-pixel-block {
   position: absolute;
-  background: linear-gradient(135deg, var(--brand), rgba(160, 120, 255, 0.6));
+  background: linear-gradient(135deg, var(--brand), var(--brand-glow));
   will-change: transform, opacity;
 }
 
@@ -155,6 +148,112 @@
   50% {
     opacity: 0;
   }
+}
+
+.boot-glitch {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  opacity: 0;
+  pointer-events: none;
+  mix-blend-mode: screen;
+}
+
+.boot-glitch-a {
+  filter: drop-shadow(-3px 0 0 var(--brand-glow));
+}
+
+.boot-glitch-b {
+  filter: hue-rotate(40deg) drop-shadow(3px 0 0 var(--brand-glow));
+}
+
+.boot-ring-holder {
+  position: absolute;
+  inset: -40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.boot-ring {
+  position: absolute;
+  width: 160px;
+  height: 160px;
+  border-radius: 50%;
+  border: 2px solid var(--brand);
+  box-shadow: 0 0 24px var(--brand-glow);
+}
+
+.boot-aurora-holder {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.boot-aurora {
+  position: absolute;
+  width: 44vmax;
+  height: 44vmax;
+  border-radius: 50%;
+  background: var(--brand);
+  opacity: 0.25;
+  filter: blur(90px);
+}
+
+.boot-aurora-0 {
+  left: 8%;
+  top: 12%;
+}
+
+.boot-aurora-1 {
+  right: 6%;
+  top: 42%;
+  opacity: 0.2;
+}
+
+.boot-aurora-2 {
+  left: 30%;
+  bottom: -12%;
+  opacity: 0.18;
+}
+
+.boot-crt-line {
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  top: 50%;
+  height: 3px;
+  background: var(--text-primary);
+  box-shadow: 0 0 24px var(--brand-glow);
+  pointer-events: none;
+}
+
+.boot-crt-flash {
+  position: absolute;
+  inset: 0;
+  background: var(--text-primary);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.boot-ember-holder {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.boot-ember {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--brand);
+  box-shadow: 0 0 10px var(--brand-glow);
 }
 
 .boot-skip-hint {

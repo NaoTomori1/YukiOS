@@ -1499,7 +1499,7 @@ function getGridItems() {
     { app: "shittifyApp", title: "Evil Spotify", icon: "papirus:apps/juk" },
     { app: "appCreatorApp", title: "AppCreator", icon: "papirus:apps/kjumpingcube" },
     { app: "systemAppsApp", title: "System Apps", icon: "papirus:apps/utilities-tweak-tool" },
-    { app: "taskManagerApp", title: "Task Manager", icon: "papirus:apps/application-default-icon-monitor" },
+    { app: "taskManagerApp", title: "Task Manager", icon: "papirus:apps/utilities-system-monitor" },
     { app: "terminal", title: "Terminal", icon: "papirus:apps/utilities-terminal" },
     { app: "aboutApp", title: "About YukiOS", icon: "papirus:actions/help-about" },
     { app: "achievementsApp", title: "Achievements", icon: "papirus:actions/games-achievements" }

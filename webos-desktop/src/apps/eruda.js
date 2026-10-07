@@ -1,4 +1,5 @@
 import { BaseApp, os, $ } from "../framework.js";
+import { getLibraryUrl } from "../shared/cdnConfig.js";
 
 export class ErudaApp extends BaseApp {
   constructor(services) {
@@ -30,6 +31,24 @@ export class ErudaApp extends BaseApp {
   async initEruda() {
     const container = $("#eruda-container");
     if (container) {
+      if (__SINGLE_FILE__) {
+        if (!window.eruda) {
+          const script = document.createElement("script");
+          script.src = getLibraryUrl("eruda");
+          document.head.appendChild(script);
+          await new Promise((resolve, reject) => {
+            script.onload = resolve;
+            script.onerror = () => reject(new Error("eruda failed to load"));
+          });
+        }
+        const erudaLib = window.eruda.default || window.eruda;
+        erudaLib.init({
+          container: container
+        });
+        erudaLib.show();
+        os.notify.send("Dev Tools", "Eruda debugging tool launched");
+        return;
+      }
       const eruda = await import("eruda");
       eruda.default.init({
         container: container

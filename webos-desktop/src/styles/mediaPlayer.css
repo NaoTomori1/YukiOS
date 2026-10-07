@@ -63,11 +63,6 @@
   color: var(--text-primary);
 }
 
-.mp-pin.mp-pinned,
-.mp-pin.active {
-  color: var(--brand);
-}
-
 .mp-artwork {
   position: relative;
   aspect-ratio: 16 / 9;
@@ -190,38 +185,10 @@
 .mp-seek-wrap {
   position: relative;
   clear: both;
-  height: 16px;
+  height: 22px;
   display: flex;
   align-items: center;
   margin-top: 2px;
-}
-
-.mp-seek-wrap::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 50%;
-  transform: translateY(-50%);
-  height: 6px;
-  background: var(--glass);
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  pointer-events: none;
-  z-index: 0;
-}
-
-.mp-seek-fill {
-  position: absolute;
-  left: 0;
-  top: 50%;
-  transform: translateY(-50%);
-  height: 4px;
-  width: 0%;
-  background: var(--brand);
-  border-radius: 4px;
-  pointer-events: none;
-  z-index: 1;
 }
 
 .mp-seek {
@@ -230,7 +197,7 @@
   top: 50%;
   transform: translateY(-50%);
   width: 100%;
-  height: 16px;
+  height: 22px;
   margin: 0;
   z-index: 2;
   appearance: none;
@@ -240,20 +207,24 @@
 }
 
 .mp-seek::-webkit-slider-runnable-track {
-  background: transparent;
-  height: 4px;
+  height: 8px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: linear-gradient(to right, var(--brand) 0 var(--p, 0%), var(--glass) var(--p, 0%));
 }
 
 .mp-seek::-moz-range-track {
-  background: transparent;
-  height: 4px;
-  border: none;
+  height: 8px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: linear-gradient(to right, var(--brand) 0 var(--p, 0%), var(--glass) var(--p, 0%));
 }
 
 .mp-seek::-webkit-slider-thumb {
   appearance: none;
-  width: 14px;
-  height: 14px;
+  width: 16px;
+  height: 16px;
+  margin-top: -6px;
   border-radius: 25px;
   background: var(--text-primary);
   border: 2px solid var(--window-bg);
@@ -267,8 +238,8 @@
 }
 
 .mp-seek::-moz-range-thumb {
-  width: 12px;
-  height: 12px;
+  width: 16px;
+  height: 16px;
   border-radius: 25px;
   background: var(--text-primary);
   border: 2px solid var(--window-bg);
@@ -321,8 +292,4 @@
 .mp-ctl.mp-play:hover {
   color: var(--text-on-brand);
   transform: scale(1.06);
-}
-
-.mp-metadata-mode .mp-progress {
-  display: none;
 }

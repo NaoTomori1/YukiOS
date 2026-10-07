@@ -4,121 +4,25 @@ import { BusEvents } from "../core/EventBus.js";
 import { os, createElement } from "../framework.js";
 import { openFileWith } from "../fileDisplay.js";
 import { parseBool } from "./utils.js";
+import {
+  detectCategory,
+  getFileExtension,
+  getFileNameWithoutExtension,
+  getTargetFormats,
+  csvToJson,
+  xmlToJson,
+  yamlToJson,
+  flattenJson,
+  convertImageBlob,
+  convertTextContent,
+  convertStructuredContent,
+  convertAudioBuffer,
+  buildVideoConvertArgs,
+  ensureFFmpegWasm,
+  ffmpegConvert
+} from "./converterCore.js";
 
 const conversionHistory = [];
-
-function getFileExtension(name) {
-  const parts = name.split(".");
-  return parts.length > 1 ? parts.pop().toLowerCase() : "";
-}
-
-function getFileNameWithoutExtension(name) {
-  const parts = name.split(".");
-  return parts.length > 1 ? parts.slice(0, -1).join(".") : name;
-}
-
-function detectCategory(ext) {
-  const images = [
-    "png",
-    "jpg",
-    "jpeg",
-    "webp",
-    "bmp",
-    "svg",
-    "gif",
-    "ico",
-    "tiff",
-    "tif",
-    "psd",
-    "raw",
-    "cr2",
-    "nef",
-    "arw",
-    "dng",
-    "heic",
-    "heif",
-    "avif",
-    "ai",
-    "eps",
-    "jxl",
-    "bpg",
-    "jp2"
-  ];
-  const texts = [
-    "txt",
-    "md",
-    "html",
-    "json",
-    "log",
-    "rtf",
-    "xml",
-    "yaml",
-    "yml",
-    "ini",
-    "cfg",
-    "conf",
-    "toml",
-    "tex",
-    "rst",
-    "adoc",
-    "org"
-  ];
-  const structured = ["json", "csv", "xml", "yaml", "yml", "tsv", "toml", "ini"];
-  const audio = [
-    "mp3",
-    "wav",
-    "ogg",
-    "flac",
-    "m4a",
-    "aac",
-    "wma",
-    "opus",
-    "aiff",
-    "au",
-    "ra",
-    "amr",
-    "3gp",
-    "mp4a",
-    "ac3",
-    "dts",
-    "ape",
-    "wv",
-    "tta",
-    "mka",
-    "caf",
-    "gsm"
-  ];
-  const video = [
-    "mp4",
-    "webm",
-    "mov",
-    "avi",
-    "mkv",
-    "flv",
-    "wmv",
-    "m4v",
-    "3gp",
-    "ogv",
-    "ts",
-    "mts",
-    "m2ts",
-    "vob",
-    "divx",
-    "xvid",
-    "rm",
-    "rmvb",
-    "asf",
-    "mxf",
-    "f4v"
-  ];
-
-  if (images.includes(ext)) return "image";
-  if (audio.includes(ext)) return "audio";
-  if (video.includes(ext)) return "video";
-  if (structured.includes(ext)) return "structured";
-  if (texts.includes(ext)) return "text";
-  return null;
-}
 
 async function readAsText(fs, path, name) {
   const content = await fs.getFileContent(path, name);
@@ -163,391 +67,16 @@ async function readAsBlob(fs, path, name) {
   return new Blob([]);
 }
 
-function mdToHtml(md) {
-  let html = md
-    .replace(/^### (.*$)/gim, "<h3>$1</h3>")
-    .replace(/^## (.*$)/gim, "<h2>$1</h2>")
-    .replace(/^# (.*$)/gim, "<h1>$1</h1>")
-    .replace(/\*\*(.*)\*\*/gim, "<strong>$1</strong>")
-    .replace(/\*(.*)\*/gim, "<em>$1</em>")
-    .replace(/`([^`]+)`/gim, "<code>$1</code>")
-    .replace(/\[([^\]]+)\]\(([^)]+)\)/gim, '<a href="$2" target="blank">$1</a>')
-    .replace(/^\s*\n/gm, "<br />")
-    .replace(/^ - (.*$)/gim, "<ul><li>$1</li></ul>")
-    .replace(/^ \* (.*$)/gim, "<ul><li>$1</li></ul>")
-    .replace(/<\/ul>\s*<ul>/gim, "")
-    .replace(/^\s*([0-9]+)\. (.*$)/gim, "<ol><li>$2</li></ol>")
-    .replace(/<\/ol>\s*<ol>/gim, "");
-  return html;
-}
-
-function htmlToMd(html) {
-  let md = html
-    .replace(/<h1>(.*?)<\/h1>/gim, "# $1\n")
-    .replace(/<h2>(.*?)<\/h2>/gim, "## $1\n")
-    .replace(/<h3>(.*?)<\/h3>/gim, "### $1\n")
-    .replace(/<strong>(.*?)<\/strong>/gim, "**$1**")
-    .replace(/<b>(.*?)<\/b>/gim, "**$1**")
-    .replace(/<em>(.*?)<\/em>/gim, "*$1*")
-    .replace(/<i>(.*?)<\/i>/gim, "*$1*")
-    .replace(/<code>(.*?)<\/code>/gim, "`$1`")
-    .replace(/<a href="([^"]+)"[^>]*>(.*?)<\/a>/gim, "[$2]($1)")
-    .replace(/<li>(.*?)<\/li>/gim, "- $1\n")
-    .replace(/<ul[^>]*>/gim, "")
-    .replace(/<\/ul>/gim, "\n")
-    .replace(/<ol[^>]*>/gim, "")
-    .replace(/<\/ol>/gim, "\n")
-    .replace(/<br\s*\/?>/gim, "\n")
-    .replace(/<p[^>]*>/gim, "")
-    .replace(/<\/p>/gim, "\n\n");
-
-  const temp = createElement("div");
-  temp.innerHTML = md;
-  return temp.textContent || temp.innerText || "";
-}
-
-function stripMd(md) {
-  return md
-    .replace(/^#+\s+/gm, "")
-    .replace(/\*\*([^*]+)\*\*/g, "$1")
-    .replace(/\*([^*]+)\*/g, "$1")
-    .replace(/`([^`]+)`/g, "$1")
-    .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
-    .replace(/^\s*[-*+]\s+/gm, "")
-    .replace(/^\s*\d+\.\s+/gm, "");
-}
-
-function flattenJson(obj, prefix = "") {
-  let result = {};
-  for (let [k, v] of Object.entries(obj)) {
-    const key = prefix ? `${prefix}.${k}` : k;
-    if (typeof v === "object" && v !== null && !Array.isArray(v)) {
-      Object.assign(result, flattenJson(v, key));
-    } else {
-      result[key] = v;
-    }
-  }
-  return result;
-}
-
-function jsonToCsv(json, delimiter = ",") {
-  let arr = Array.isArray(json) ? json : [json];
-  arr = arr.map((item) => (typeof item === "object" && item !== null ? flattenJson(item) : { value: item }));
-  const allKeys = [...new Set(arr.flatMap((item) => Object.keys(item)))];
-  const header = allKeys.map((k) => `"${String(k).replace(/"/g, '""')}"`).join(delimiter);
-  const rows = arr.map((item) => {
-    return allKeys
-      .map((k) => {
-        const val = item[k] === undefined || item[k] === null ? "" : item[k];
-        return `"${String(val).replace(/"/g, '""')}"`;
-      })
-      .join(delimiter);
-  });
-  return [header, ...rows].join("\n");
-}
-
-function csvToJson(csv, delimiter = ",") {
-  const lines = csv
-    .split("\n")
-    .map((l) => l.trim())
-    .filter(Boolean);
-  if (lines.length === 0) return [];
-
-  const parseRow = (line) => {
-    const result = [];
-    let current = "";
-    let inQuotes = false;
-    for (let i = 0; i < line.length; i++) {
-      const char = line[i];
-      if (char === '"') {
-        if (inQuotes && line[i + 1] === '"') {
-          current += '"';
-          i++;
-        } else {
-          inQuotes = !inQuotes;
-        }
-      } else if (char === delimiter && !inQuotes) {
-        result.push(current);
-        current = "";
-      } else {
-        current += char;
-      }
-    }
-    result.push(current);
-    return result;
-  };
-
-  const headers = parseRow(lines[0]);
-  const rows = [];
-  for (let i = 1; i < lines.length; i++) {
-    const values = parseRow(lines[i]);
-    const obj = {};
-    headers.forEach((h, idx) => {
-      let val = values[idx] === undefined ? "" : values[idx];
-      if (val.startsWith('"') && val.endsWith('"')) {
-        val = val.slice(1, -1).replace(/""/g, '"');
-      }
-      if (!isNaN(Number(val)) && val !== "") {
-        val = Number(val);
-      } else if (val.toLowerCase() === "true") {
-        val = parseBool(val);
-      } else if (val.toLowerCase() === "false") {
-        val = parseBool(val);
-      }
-      obj[h] = val;
-    });
-    rows.push(obj);
-  }
-  return rows;
-}
-
-function yamlToJson(yaml) {
-  const lines = yaml.split("\n");
-  const result = {};
-  const stack = [result];
-  const indents = [-1];
-
-  for (let line of lines) {
-    if (!line.trim() || line.trim().startsWith("#")) continue;
-    const indent = line.search(/\S/);
-    const cleanLine = line.trim();
-    const colonIndex = cleanLine.indexOf(":");
-    if (colonIndex === -1) continue;
-
-    const key = cleanLine.slice(0, colonIndex).trim();
-    let val = cleanLine.slice(colonIndex + 1).trim();
-
-    if (val.startsWith('"') && val.endsWith('"')) val = val.slice(1, -1);
-    else if (val.startsWith("'") && val.endsWith("'")) val = val.slice(1, -1);
-    else if (val.toLowerCase() === "true") val = parseBool(val);
-    else if (val.toLowerCase() === "false") val = parseBool(val);
-    else if (!isNaN(Number(val)) && val !== "") val = Number(val);
-
-    while (indent <= indents[indents.length - 1]) {
-      stack.pop();
-      indents.pop();
-    }
-
-    const parent = stack[stack.length - 1];
-    if (val === "") {
-      const newObj = {};
-      if (Array.isArray(parent)) {
-        parent.push({ [key]: newObj });
-      } else {
-        parent[key] = newObj;
-      }
-      stack.push(newObj);
-      indents.push(indent);
-    } else {
-      if (Array.isArray(parent)) {
-        parent.push({ [key]: val });
-      } else {
-        parent[key] = val;
-      }
-    }
-  }
-  return result;
-}
-
-function jsonToYaml(obj, depth = 0) {
-  let yaml = "";
-  const indent = "  ".repeat(depth);
-  if (Array.isArray(obj)) {
-    for (let item of obj) {
-      if (typeof item === "object" && item !== null) {
-        yaml += `${indent}-\n${jsonToYaml(item, depth + 1)}`;
-      } else {
-        yaml += `${indent}- ${item}\n`;
-      }
-    }
-  } else if (typeof obj === "object" && obj !== null) {
-    for (let [k, v] of Object.entries(obj)) {
-      if (typeof v === "object" && v !== null) {
-        yaml += `${indent}${k}:\n${jsonToYaml(v, depth + 1)}`;
-      } else {
-        yaml += `${indent}${k}: ${v}\n`;
-      }
-    }
-  } else {
-    yaml += `${indent}${obj}\n`;
-  }
-  return yaml;
-}
-
-function xmlToJson(xmlStr) {
-  const parser = new DOMParser();
-  const xmlDoc = parser.parseFromString(xmlStr, "text/xml");
-  const parseNode = (node) => {
-    if (node.nodeType === 3) return node.nodeValue.trim();
-    if (node.nodeType === 1) {
-      if (node.children.length === 0) return node.textContent.trim();
-      const obj = {};
-      for (let child of node.children) {
-        const parsedChild = parseNode(child);
-        if (obj[child.nodeName]) {
-          if (!Array.isArray(obj[child.nodeName])) {
-            obj[child.nodeName] = [obj[child.nodeName]];
-          }
-          obj[child.nodeName].push(parsedChild);
-        } else {
-          obj[child.nodeName] = parsedChild;
-        }
-      }
-      return obj;
-    }
-    return null;
-  };
-  return parseNode(xmlDoc.documentElement);
-}
-
-function jsonToXml(obj, rootName = "root") {
-  const parseObj = (val, key) => {
-    if (Array.isArray(val)) {
-      return val.map((item) => parseObj(item, key)).join("");
-    }
-    if (typeof val === "object" && val !== null) {
-      let inner = "";
-      for (let [k, v] of Object.entries(val)) {
-        inner += parseObj(v, k);
-      }
-      return `<${key}>${inner}</${key}>`;
-    }
-    return `<${key}>${val}</${key}>`;
-  };
-  return `<?xml version="1.0" encoding="UTF-8"?>\n${parseObj(obj, rootName)}`;
-}
-
-function audioBufferToWav(buffer) {
-  const numChannels = buffer.numberOfChannels;
-  const sampleRate = buffer.sampleRate;
-  const format = 1;
-  const bitDepth = 16;
-
-  const bytesPerSample = bitDepth / 8;
-  const blockAlign = numChannels * bytesPerSample;
-
-  const dataLength = buffer.length * blockAlign;
-  const bufferLength = 44 + dataLength;
-
-  const arrayBuffer = new ArrayBuffer(bufferLength);
-  const view = new DataView(arrayBuffer);
-
-  const writeString = (offset, string) => {
-    for (let i = 0; i < string.length; i++) {
-      view.setUint8(offset + i, string.charCodeAt(i));
-    }
-  };
-
-  writeString(0, "RIFF");
-  view.setUint32(4, bufferLength - 8, true);
-  writeString(8, "WAVE");
-  writeString(12, "fmt ");
-  view.setUint32(16, 16, true);
-  view.setUint16(20, format, true);
-  view.setUint16(22, numChannels, true);
-  view.setUint32(24, sampleRate, true);
-  view.setUint32(28, sampleRate * blockAlign, true);
-  view.setUint16(32, blockAlign, true);
-  view.setUint16(34, bitDepth, true);
-  writeString(36, "data");
-  view.setUint32(40, dataLength, true);
-
-  const channels = [];
-  for (let i = 0; i < numChannels; i++) {
-    channels.push(buffer.getChannelData(i));
-  }
-
-  let offset = 44;
-  for (let i = 0; i < buffer.length; i++) {
-    for (let ch = 0; ch < numChannels; ch++) {
-      const sample = Math.max(-1, Math.min(1, channels[ch][i]));
-      view.setInt16(offset, sample < 0 ? sample * 0x8000 : sample * 0x7fff, true);
-      offset += 2;
-    }
-  }
-
-  return arrayBuffer;
-}
-
-let ffmpegInstance = null;
-let ffmpegWasmLoading = false;
-let ffmpegWasmPromise = null;
-
 function isElectron() {
   return typeof window !== "undefined" && window.electronAPI && window.electronAPI.ffmpeg;
 }
 
-async function ensureFFmpegWasm() {
-  if (ffmpegInstance) return ffmpegInstance;
-  if (ffmpegWasmPromise) return ffmpegWasmPromise;
-  ffmpegWasmLoading = true;
-  ffmpegWasmPromise = (async () => {
-    const { createFFmpeg } = await import("https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.10/dist/esm/index.js");
-    const ffmpeg = createFFmpeg({
-      log: false,
-      corePath: "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/ffmpeg-core.js"
-    });
-    await ffmpeg.load();
-    ffmpegInstance = ffmpeg;
-    ffmpegWasmLoading = false;
-    return ffmpeg;
-  })();
-  return ffmpegWasmPromise;
-}
-
-async function ffmpegConvert(inputData, inputExt, outputExt, extraArgs = []) {
-  if (isElectron()) {
-    const data = inputData instanceof Blob ? new Uint8Array(await inputData.arrayBuffer()) : inputData;
+function getElectronRunner() {
+  if (!isElectron()) return null;
+  return async (data, inputExt, outputExt, extraArgs) => {
     const result = await window.electronAPI.ffmpeg.convert(data, inputExt, outputExt, extraArgs);
     return new Blob([result.data], { type: result.mime || "application/octet-stream" });
-  }
-
-  const ffmpeg = await ensureFFmpegWasm();
-  const inputName = `input.${inputExt}`;
-  const outputName = `output.${outputExt}`;
-
-  try {
-    ffmpeg.FS("unlink", inputName);
-  } catch (e) {}
-  try {
-    ffmpeg.FS("unlink", outputName);
-  } catch (e) {}
-
-  const data = inputData instanceof Blob ? new Uint8Array(await inputData.arrayBuffer()) : inputData;
-  ffmpeg.FS("writeFile", inputName, data);
-
-  await ffmpeg.run("-i", inputName, ...extraArgs, outputName);
-
-  const outData = ffmpeg.FS("readFile", outputName);
-  try {
-    ffmpeg.FS("unlink", inputName);
-  } catch (e) {}
-  try {
-    ffmpeg.FS("unlink", outputName);
-  } catch (e) {}
-
-  const mimeMap = {
-    mp3: "audio/mpeg",
-    wav: "audio/wav",
-    ogg: "audio/ogg",
-    flac: "audio/flac",
-    m4a: "audio/mp4",
-    aac: "audio/aac",
-    opus: "audio/opus",
-    mp4: "video/mp4",
-    webm: "video/webm",
-    mov: "video/quicktime",
-    avi: "video/x-msvideo",
-    mkv: "video/x-matroska",
-    gif: "image/gif",
-    png: "image/png",
-    jpg: "image/jpeg",
-    jpeg: "image/jpeg",
-    webp: "image/webp",
-    tiff: "image/tiff",
-    bmp: "image/bmp"
   };
-  return new Blob([outData.buffer], { type: mimeMap[outputExt] || "application/octet-stream" });
 }
 
 async function ffmpegProbe(inputData, inputExt) {
@@ -560,7 +89,9 @@ async function ffmpegProbe(inputData, inputExt) {
   const inputName = `input.${inputExt}`;
   try {
     ffmpeg.FS("unlink", inputName);
-  } catch (e) {}
+  } catch (probeErr) {
+    void probeErr;
+  }
 
   const data = inputData instanceof Blob ? new Uint8Array(await inputData.arrayBuffer()) : inputData;
   ffmpeg.FS("writeFile", inputName, data);
@@ -577,27 +108,6 @@ async function ffmpegProbe(inputData, inputExt) {
   return {};
 }
 
-async function convertAudioFormat(blob, targetFormat, bitrate) {
-  if (targetFormat === "wav") return blob;
-  const bitrateArg = bitrate ? [`-b:a`, `${Math.round(bitrate / 1000)}k`] : [];
-  return ffmpegConvert(blob, "wav", targetFormat, bitrateArg);
-}
-
-function getVideoMimeType(format, codec) {
-  const codecMap = {
-    h264: "avc1.42E01E",
-    vp9: "vp09.00.10.08",
-    av1: "av01.0.01M.08"
-  };
-  const codecStr = codecMap[codec] || codec;
-  if (format === "mp4") return `video/mp4; codecs="${codecStr}"`;
-  if (format === "webm") return `video/webm; codecs="${codecStr}"`;
-  if (format === "mov") return `video/quicktime`;
-  if (format === "avi") return `video/x-msvideo`;
-  if (format === "mkv") return `video/x-matroska`;
-  return `video/${format}`;
-}
-
 export function openFileConverter(fileName, currentPath, os, onComplete = null) {
   const fs = os.fs;
   const ext = getFileExtension(fileName);
@@ -610,109 +120,6 @@ export function openFileConverter(fileName, currentPath, os, onComplete = null) 
   }
 
   const winId = `converter-${Date.now()}`;
-
-  const formats = {
-    image: [
-      "png",
-      "jpg",
-      "jpeg",
-      "webp",
-      "bmp",
-      "svg",
-      "gif",
-      "ico",
-      "tiff",
-      "tif",
-      "avif",
-      "heic",
-      "heif",
-      "psd",
-      "raw",
-      "cr2",
-      "nef",
-      "arw",
-      "dng",
-      "ai",
-      "eps",
-      "jxl",
-      "bpg",
-      "jp2"
-    ],
-    text: [
-      "txt",
-      "md",
-      "html",
-      "json",
-      "rtf",
-      "xml",
-      "yaml",
-      "yml",
-      "log",
-      "ini",
-      "cfg",
-      "conf",
-      "toml",
-      "tex",
-      "rst",
-      "adoc",
-      "org"
-    ],
-    structured: ["json", "csv", "xml", "yaml", "yml", "tsv", "toml", "ini"],
-    audio: [
-      "mp3",
-      "wav",
-      "ogg",
-      "flac",
-      "m4a",
-      "aac",
-      "opus",
-      "webm",
-      "wma",
-      "aiff",
-      "au",
-      "ra",
-      "amr",
-      "3gp",
-      "mp4a",
-      "ac3",
-      "dts",
-      "ape",
-      "wv",
-      "tta",
-      "mka",
-      "caf",
-      "gsm",
-      "alac",
-      "mid",
-      "midi"
-    ],
-    video: [
-      "mp4",
-      "webm",
-      "mov",
-      "avi",
-      "mkv",
-      "ogv",
-      "flv",
-      "wmv",
-      "m4v",
-      "3gp",
-      "ts",
-      "mts",
-      "m2ts",
-      "vob",
-      "divx",
-      "xvid",
-      "rm",
-      "rmvb",
-      "asf",
-      "mxf",
-      "f4v",
-      "hevc",
-      "mpg",
-      "mpeg"
-    ]
-  };
 
   const optionsHTML = {
     image: `
@@ -908,7 +315,7 @@ export function openFileConverter(fileName, currentPath, os, onComplete = null) 
     `
   };
 
-  const availableFormats = formats[category].filter((f) => f !== ext);
+  const availableFormats = getTargetFormats(ext);
   const firstFormat = availableFormats[0] || ext;
 
   const formatOptions = availableFormats
@@ -1380,118 +787,45 @@ export function openFileConverter(fileName, currentPath, os, onComplete = null) 
         if (category === "image") {
           if (!originalImage) throw new Error("Image not fully loaded.");
 
-          const canvas = createElement("canvas");
-          const ctx = canvas.getContext("2d");
-
-          let w = parseInt(dom.width.value) || originalImage.naturalWidth;
-          let h = parseInt(dom.height.value) || originalImage.naturalHeight;
-          const scaleVal = parseFloat(dom.scale.value) || 100;
-
-          if (scaleVal !== 100) {
-            w = Math.round(w * (scaleVal / 100));
-            h = Math.round(h * (scaleVal / 100));
-          }
-
-          canvas.width = w;
-          canvas.height = h;
-
           dom.progressFill.style.width = "50%";
           dom.progressText.textContent = "Rendering onto Canvas...";
 
-          if (dom.alpha.checked) {
-            ctx.fillStyle = dom.bgcolor.value;
-            ctx.fillRect(0, 0, w, h);
-          }
-
-          ctx.drawImage(originalImage, 0, 0, w, h);
+          outputBlob = await convertImageBlob({
+            image: originalImage,
+            targetFormat,
+            options: {
+              width: dom.width.value,
+              height: dom.height.value,
+              scale: dom.scale.value,
+              quality: dom.quality.value,
+              flatten: dom.alpha.checked,
+              backgroundColor: dom.bgcolor.value,
+              canvasFactory: (w, h) => {
+                const canvas = createElement("canvas");
+                canvas.width = w;
+                canvas.height = h;
+                return canvas;
+              }
+            }
+          });
 
           dom.progressFill.style.width = "75%";
           dom.progressText.textContent = "Compressing & encoding...";
-
-          let mime = `image/${targetFormat}`;
-          if (targetFormat === "jpg") mime = "image/jpeg";
-          if (targetFormat === "svg") mime = "image/svg+xml";
-
-          const q = (parseInt(dom.quality.value) || 90) / 100;
-
-          outputBlob = await new Promise((resolve) => {
-            canvas.toBlob((b) => resolve(b), mime, q);
-          });
-
-          if (!outputBlob) throw new Error("Canvas encoding failed.");
         } else if (category === "text") {
-          let text = fileContentStr;
-          if (dom.cleanup.checked) {
-            text = text.replace(/\s+/g, " ").trim();
-          }
-
-          const target = targetFormat;
-          if (ext === "txt") {
-            if (target === "md") outputText = text;
-            else if (target === "html")
-              outputText = `<pre style="font-family:monospace;color:#fff;background:#1e1e24;padding:12px;border-radius:6px;overflow:auto;">${text}</pre>`;
-            else if (target === "json") outputText = JSON.stringify({ content: text }, null, 2);
-          } else if (ext === "md") {
-            if (target === "txt") outputText = stripMd(text);
-            else if (target === "html") outputText = mdToHtml(text);
-            else if (target === "json") outputText = JSON.stringify({ markdown: text, html: mdToHtml(text) }, null, 2);
-          } else if (ext === "html") {
-            if (target === "txt") {
-              const div = createElement("div");
-              div.innerHTML = text;
-              outputText = div.textContent || div.innerText || "";
-            } else if (target === "md") {
-              outputText = htmlToMd(text);
-            } else if (target === "json") {
-              outputText = JSON.stringify({ html: text }, null, 2);
-            }
-          } else if (ext === "json") {
-            if (target === "txt") {
-              outputText = text;
-            } else if (target === "html") {
-              outputText = `<pre>${text}</pre>`;
-            } else if (target === "md") {
-              try {
-                const parsed = JSON.parse(text);
-                outputText = `## JSON Data Export\n\n` + jsonToYaml(parsed);
-              } catch {
-                outputText = text;
-              }
-            }
-          }
+          outputText = convertTextContent({
+            sourceExt: ext,
+            targetFormat,
+            text: fileContentStr,
+            cleanup: dom.cleanup.checked
+          });
         } else if (category === "structured") {
-          let parsed = null;
-          if (ext === "json") {
-            parsed = JSON.parse(fileContentStr);
-          } else if (ext === "csv") {
-            parsed = csvToJson(fileContentStr, ",");
-          } else if (ext === "tsv") {
-            parsed = csvToJson(fileContentStr, "\t");
-          } else if (ext === "xml") {
-            parsed = xmlToJson(fileContentStr);
-          } else if (ext === "yaml" || ext === "yml") {
-            parsed = yamlToJson(fileContentStr);
-          }
-
-          if (!parsed) throw new Error("Failed to parse source file.");
-
-          let arr = Array.isArray(parsed) ? parsed : [parsed];
-          if (dom.flatten.checked) {
-            arr = arr.map((item) => (typeof item === "object" ? flattenJson(item) : item));
-          }
-
-          const target = targetFormat;
-          if (target === "json") {
-            outputText = JSON.stringify(arr, null, dom.pretty.checked ? 2 : 0);
-          } else if (target === "csv") {
-            outputText = jsonToCsv(arr, ",");
-          } else if (target === "tsv") {
-            outputText = jsonToCsv(arr, "\t");
-          } else if (target === "xml") {
-            outputText = jsonToXml(parsed, "root");
-          } else if (target === "yaml") {
-            outputText = jsonToYaml(parsed);
-          }
+          outputText = convertStructuredContent({
+            sourceExt: ext,
+            targetFormat,
+            text: fileContentStr,
+            pretty: dom.pretty.checked,
+            flatten: dom.flatten.checked
+          });
         } else if (category === "audio") {
           if (!audioBuffer && fileContentBlob) {
             const audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -1506,113 +840,38 @@ export function openFileConverter(fileName, currentPath, os, onComplete = null) 
           dom.progressFill.style.width = "50%";
           dom.progressText.textContent = "Processing audio...";
 
-          const targetSampleRate = parseInt(dom.audioSampleRate.value);
-          const targetChannels = parseInt(dom.audioChannels.value);
-          const volBoost = parseFloat(dom.audioVolBoost.value) || 0;
-          const normalize = dom.audioNormalize.checked;
-
-          const audioContext = new (window.OfflineAudioContext || window.webkitOfflineAudioContext)(
-            targetChannels,
-            audioBuffer.duration * targetSampleRate,
-            targetSampleRate
-          );
-
-          const source = audioContext.createBufferSource();
-          source.buffer = audioBuffer;
-
-          const gainNode = audioContext.createGain();
-          const boostGain = Math.pow(10, volBoost / 20);
-          gainNode.gain.value = boostGain;
-
-          source.connect(gainNode);
-          gainNode.connect(audioContext.destination);
-          source.start();
-
-          const renderedBuffer = await audioContext.startRendering();
-
-          if (normalize) {
-            const channelData = renderedBuffer.getChannelData(0);
-            let maxVal = 0;
-            for (let i = 0; i < channelData.length; i++) {
-              const absVal = Math.abs(channelData[i]);
-              if (absVal > maxVal) maxVal = absVal;
-            }
-            if (maxVal > 0) {
-              const normalizationFactor = 0.95 / maxVal;
-              for (let ch = 0; ch < renderedBuffer.numberOfChannels; ch++) {
-                const data = renderedBuffer.getChannelData(ch);
-                for (let i = 0; i < data.length; i++) {
-                  data[i] *= normalizationFactor;
-                }
-              }
-            }
-          }
+          outputBlob = await convertAudioBuffer({
+            audioBuffer,
+            targetFormat,
+            sampleRate: parseInt(dom.audioSampleRate.value),
+            channels: parseInt(dom.audioChannels.value),
+            bitrate: parseInt(dom.audioBitrate.value) * 1000,
+            volumeBoost: parseFloat(dom.audioVolBoost.value) || 0,
+            normalize: dom.audioNormalize.checked,
+            trim: dom.audioTrim.checked,
+            ffmpegRunner: getElectronRunner()
+          });
 
           dom.progressFill.style.width = "75%";
           dom.progressText.textContent = "Encoding audio...";
-
-          const wavBuffer = audioBufferToWav(renderedBuffer);
-          outputBlob = new Blob([wavBuffer], { type: "audio/wav" });
-
-          if (targetFormat !== "wav") {
-            outputBlob = await convertAudioFormat(outputBlob, targetFormat, parseInt(dom.audioBitrate.value) * 1000);
-          }
         } else if (category === "video") {
           if (!fileContentBlob) throw new Error("Video source not available.");
 
           dom.progressFill.style.width = "50%";
           dom.progressText.textContent = "Processing video...";
 
-          const resolution = dom.videoResolution.value;
-          const fps = dom.videoFps.value;
-          const bitrate = parseInt(dom.videoBitrate.value) * 1000000;
-          const codec = dom.videoCodec.value;
-          const audioCodec = dom.videoAudioCodec.value;
-          const mute = dom.videoMute.checked;
-
-          const args = [];
-
-          if (resolution !== "original") {
-            args.push("-vf", `scale=${resolution}`);
-          }
-
-          if (fps !== "original") {
-            args.push("-r", fps);
-          }
-
-          if (bitrate > 0) {
-            args.push("-b:v", `${bitrate}`);
-          }
-
-          if (mute || audioCodec === "none") {
-            args.push("-an");
-          } else {
-            args.push("-c:a", "aac", "-b:a", "128k");
-          }
-
-          let outputExt = targetFormat;
-          switch (codec) {
-            case "h264_nvenc":
-            case "h264_amf":
-              args.push("-c:v", "libx264");
-              break;
-            case "h264":
-              args.push("-c:v", "libx264");
-              break;
-            case "vp9":
-              args.push("-c:v", "libvpx-vp9");
-              outputExt = "webm";
-              break;
-            case "hevc":
-              args.push("-c:v", "libx265");
-              outputExt = "mp4";
-              break;
-            default:
-              args.push("-c:v", "libx264");
-          }
+          const built = buildVideoConvertArgs({
+            targetFormat,
+            resolution: dom.videoResolution.value,
+            fps: dom.videoFps.value,
+            bitrate: parseInt(dom.videoBitrate.value) * 1000000,
+            codec: dom.videoCodec.value,
+            audioCodec: dom.videoAudioCodec.value,
+            mute: dom.videoMute.checked
+          });
 
           dom.progressText.textContent = "Running FFmpeg conversion...";
-          outputBlob = await ffmpegConvert(fileContentBlob, sourceExt, outputExt, args);
+          outputBlob = await ffmpegConvert(fileContentBlob, ext, built.outputExt, built.args, getElectronRunner());
         }
 
         dom.progressFill.style.width = "90%";

@@ -205,7 +205,7 @@ export const FEATURE_DATA = {
     suggestedApps: [
       { id: "notepad", title: "Notepad", icon: "fas fa-file-alt" },
       { id: "terminal", title: "Terminal", icon: "fas fa-terminal" },
-      { id: "browser", title: "Browser", icon: "static/icons/firefox.webp" },
+      { id: "browser", title: "Browser", icon: "static/icons/chrome.webp" },
       { id: "explorer", title: "Explorer", icon: "fas fa-folder" },
       { id: "settings", title: "Settings", icon: "fas fa-cog" },
       { id: "yukiOsGuide", title: "YukiOS Guide", icon: "fas fa-book-open" }
@@ -408,12 +408,12 @@ export class SetupApp extends BaseApp {
         <div class="icon-pack-chooser" id="setup-iconpack-chooser" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%;">
           <button class="icon-pack-option ${isPapirus ? "active" : ""}" data-icon-pack="papirus" style="display:flex;flex-direction:column;align-items:center;padding:10px;border:1.5px solid ${isPapirus ? "var(--brand)" : "var(--glass-border)"};border-radius:8px;background:${isPapirus ? "color-mix(in srgb, var(--brand) 12%, transparent)" : "var(--glass)"};cursor:pointer;gap:6px;">
             <span style="font-weight:600;font-size:13px;"><i class="fas fa-palette" style="margin-right:6px;"></i>Papirus</span>
-            <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center;padding:8px;background:var(--bg-secondary,rgba(0,0,0,0.15));border-radius:6px;margin:4px 0;min-height:38px;align-items:center;">${papirusIcons}</div>
+            <div class="icon-pack-preview" style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center;padding:8px;background:var(--bg-secondary,rgba(0,0,0,0.15));border-radius:6px;margin:4px 0;min-height:38px;align-items:center;">${papirusIcons}</div>
             <span style="font-size:11px;color:var(--text-secondary)">Colorful detailed</span>
           </button>
           <button class="icon-pack-option ${!isPapirus ? "active" : ""}" data-icon-pack="fontawesome" style="display:flex;flex-direction:column;align-items:center;padding:10px;border:1.5px solid ${!isPapirus ? "var(--brand)" : "var(--glass-border)"};border-radius:8px;background:${!isPapirus ? "color-mix(in srgb, var(--brand) 12%, transparent)" : "var(--glass)"};cursor:pointer;gap:6px;">
             <span style="font-weight:600;font-size:13px;"><i class="fas fa-font" style="margin-right:6px;"></i>Font Awesome</span>
-            <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;padding:8px;background:var(--bg-secondary,rgba(0,0,0,0.15));border-radius:6px;margin:4px 0;min-height:38px;align-items:center;">${faIcons}</div>
+            <div class="icon-pack-preview" style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;padding:8px;background:var(--bg-secondary,rgba(0,0,0,0.15));border-radius:6px;margin:4px 0;min-height:38px;align-items:center;">${faIcons}</div>
             <span style="font-size:11px;color:var(--text-secondary)">Monochrome vector</span>
           </button>
         </div>

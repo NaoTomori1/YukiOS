@@ -12,6 +12,11 @@ const ELECTRON_USAGE_ENDPOINT = SOCIAL_BASE + "/api/electron-usage";
 const ANALYTICS_DISABLED = () => parseBool(os.storage.get(StorageKeys.analyticsDisabled));
 const FLUSH_INTERVAL_MS = 5000;
 const MAX_QUEUE_SIZE = 15;
+const SEND_FAIL_THRESHOLD = 5;
+const SEND_COOLDOWN_MS = 5 * 60 * 1000;
+
+let sendFailures = 0;
+let sendCoolUntil = 0;
 
 let cachedPlayCounts = null;
 let playCountsPromise = null;
@@ -54,17 +59,37 @@ function saveQueue(q) {
   os.storage.set(ANALYTICS_QUEUE_KEY, q);
 }
 
+function endpointCooling() {
+  return Date.now() < sendCoolUntil;
+}
+
+function recordSendOutcome(ok) {
+  if (ok) {
+    sendFailures = 0;
+    sendCoolUntil = 0;
+    return;
+  }
+  sendFailures += 1;
+  if (sendFailures >= SEND_FAIL_THRESHOLD) {
+    sendCoolUntil = Date.now() + SEND_COOLDOWN_MS;
+  }
+}
+
 function sendBatch(events) {
   if (!events.length) return;
-  const payload = JSON.stringify(events);
-  const sent = navigator.sendBeacon ? navigator.sendBeacon(ENDPOINT, payload) : false;
-  if (!sent) {
-    fetch(ENDPOINT, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: payload
-    }).catch(() => {});
+  if (endpointCooling()) {
+    saveQueue(events.slice(-MAX_QUEUE_SIZE));
+    return;
   }
+  fetch(ENDPOINT, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(events),
+    keepalive: true
+  }).then(
+    (res) => recordSendOutcome(res.ok),
+    () => recordSendOutcome(false)
+  );
 }
 
 function flushQueue() {
@@ -87,23 +112,11 @@ function queueEvent(event) {
   if (ANALYTICS_DISABLED()) return;
   const userId = getLiveUserId();
   if (userId) event.userId = userId;
-  if (navigator.sendBeacon) {
-    const single = JSON.stringify([event]);
-    if (navigator.sendBeacon(ENDPOINT, single)) return;
-  }
   const queue = loadQueue();
   queue.push(event);
-  if (queue.length >= MAX_QUEUE_SIZE) {
-    os.storage.remove(ANALYTICS_QUEUE_KEY);
-    sendBatch(queue);
-    if (flushTimer) {
-      clearTimeout(flushTimer);
-      flushTimer = null;
-    }
-  } else {
-    saveQueue(queue);
-    scheduleFlush();
-  }
+  while (queue.length > MAX_QUEUE_SIZE) queue.shift();
+  saveQueue(queue);
+  scheduleFlush();
 }
 
 export function initAnalytics() {

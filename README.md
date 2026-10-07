@@ -114,34 +114,34 @@ applications, file system, or workspace context. The UI layout engine morphs aro
 
 ```
                       ┌───────────────────────────────────────┐
-                     │        YukiOS Central Core            │
-                     │   (Application Registry & App Layer)  │
+                      │        YukiOS Central Core            │
+                      │   (Application Registry & App Layer)  │
                       └──────────────────┬────────────────────┘
                                          │
         ┌────────────────────────────────┼────────────────────────────────┐
         │                                │                                │
         ▼                                ▼                                ▼
 ┌─────────────────┐            ┌─────────────────┐            ┌─────────────────┐
-│   macOS Shell   │            │ Hyprland Shell  │            │  ChromeOS       │
-│ (Dock & TopBar) │            │ (BSP Tiling)    │            │  (Minimal shelf)│
+│ 🍎macOS Shell   │            │🔲Hyprland Shell │            │   🌐ChromeOS    │
+│ (Dock & TopBar) │            │ (BSP Tiling)    │            │ (ChromeOS Shelf)│
 └───────┬─────────┘            └────────┬────────┘            └────────┬────────┘
         │                               │                              │
         ├───────────────────────────────┼──────────────────────────────┤
         │                               │                              │
         ▼                               ▼                              ▼
 ┌─────────────────┐            ┌─────────────────┐            ┌─────────────────┐
-│  Yuki Deck UI   │            │ GNOME Shell     │            │Windows(Upcoming)│
-│ (Gamepad Focus) │            │   (Upcoming)    │            │ (XP/Win7/10/11) │
+│  🎮Yuki Deck    │            │ GNOME Shell 🧙‍♂️  │            │Windows(Upcoming)│
+│ (Gamepad Focus) │            │   (Upcoming)    │            │🪟(XP/Win7/10/11)│
 └───────┬─────────┘            └────────┬────────┘            └────────┬────────┘
         │                               │                              │
         └───────────────────────────────┼──────────────────────────────┘
                                         │
                                         ▼
                     ┌───────────────────────────────────────┐
-                     │         Window Manager               │
-                     │  (Mounted Apps · EventBus · VFS Layer)│
-                     ├───────────────────────────────────────┤
-                     │   IndexedDB / Blob Storage Persistence│
+                    │         Window Manager                │
+                    │  (Mounted Apps · EventBus · VFS Layer)│
+                    ├───────────────────────────────────────┤
+                    │   IndexedDB / Blob Storage Persistence│
                     └───────────────────────────────────────┘
 ```
 
@@ -260,6 +260,7 @@ applications, file system, or workspace context. The UI layout engine morphs aro
 - PWA install and offline caching
 - User accounts with multi-profile support
 - Lock screen, session management, and idle timeout
+- Boot animation picker with 12 effects and live looping previews, selectable from login screen settings
 - Power profiles (Turbo, Balanced, Quality) with tray controls
 - Brightness, contrast, gamma, and color temperature sliders
 - Custom cursor support (Miku default)
@@ -477,6 +478,7 @@ top.
 - [Ruffle](https://github.com/ruffle-rs/ruffle)
 - [Papirus Icon Pack](https://github.com/PapirusDevelopmentTeam/papirus-icon-theme)
 - [EmulatorJS](https://github.com/EmulatorJS/EmulatorJS)
+- [BoxedWine](https://github.com/danoon2/Boxedwine)
 - [Monaco Editor](https://github.com/microsoft/monaco-editor)
 - [three.js](https://github.com/mrdoob/three.js)
 - [PDF.js](https://github.com/mozilla/pdf.js)
@@ -493,12 +495,13 @@ top.
 - [Eruda](https://github.com/liriliri/eruda)
 - [Novnc](https://github.com/novnc/novnc)
 - [T-Rex Runner](https://github.com/wayou/t-rex-runner)
+- [Hatsune Miku Cursors](https://github.com/supermariofps/hatsune-miku-windows-linux-cursors) by supermariofps, based on the original set by [petit devil](https://petitcan.blog.shinobi.jp). Hatsune Miku (c) Crypton Future Media, Inc. 2007, used as non-commercial fan art.
 - [webtor-rs](https://github.com/igor53627/webtor-rs) WASM Tor client (Arti + Snowflake)
 - [isomorphic-git](https://github.com/isomorphic-git/isomorphic-git) (Git client via CORS proxy)
 - Scramjet / BareMux / Epoxy Transport
 - [Pyodide](https://github.com/pyodide/pyodide) (WASM Python runtime)
 - [WebContainers](https://github.com/stackblitz/webcontainer-core) (WASM Node.js runtime)
-
+- [Truffled](https://truffled.lol) (games)
 </details>
 
 ## Build tooling

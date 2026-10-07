@@ -267,3 +267,148 @@
   color: var(--text-secondary);
   font-size: 0.82rem;
 }
+
+#about-yukios .settings-credits-author {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  border-bottom: 1px solid var(--glass-border);
+}
+
+#about-yukios .settings-credits-avatar {
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  object-fit: cover;
+  object-position: center;
+  flex-shrink: 0;
+  border: 2px solid rgba(255, 255, 255, 0.14);
+  box-shadow:
+    0 4px 20px rgba(0, 0, 0, 0.4),
+    0 0 0 3px var(--brand-dim),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  background: var(--bg-secondary);
+}
+
+#about-yukios .settings-credits-author-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+
+#about-yukios .settings-credits-author-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  font-size: 13.5px;
+  line-height: 1.2;
+  color: var(--text-primary);
+}
+
+#about-yukios .settings-credits-author-name > i {
+  color: var(--error);
+  font-size: 12px;
+}
+
+#about-yukios .settings-credits-author-sub {
+  font-size: 12px;
+  line-height: 1.2;
+  color: var(--text-secondary);
+}
+
+#about-yukios .settings-credits-author-links {
+  display: flex;
+  gap: 8px;
+}
+
+#about-yukios .settings-credits-author-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-size: 13px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  transition:
+    color 0.15s ease,
+    background 0.15s ease,
+    border-color 0.15s ease;
+}
+
+#about-yukios .settings-credits-author-link:hover {
+  color: var(--brand);
+  background: var(--brand-dim);
+  border-color: var(--brand);
+}
+
+#about-yukios .settings-credits-license {
+  padding: 8px 12px 0;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: var(--text-secondary);
+  opacity: 0.85;
+}
+
+#about-yukios .settings-licenses {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px;
+}
+
+#about-yukios .settings-license-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  background: var(--surface-2);
+  border: 1px solid var(--glass-border);
+  text-decoration: none;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease;
+}
+
+#about-yukios .settings-license-item:hover {
+  background: var(--glass-hover);
+  border-color: var(--brand);
+}
+
+#about-yukios .settings-license-icon {
+  font-size: 14px;
+  color: var(--brand);
+  flex-shrink: 0;
+}
+
+#about-yukios .settings-license-name {
+  flex: 1;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+#about-yukios .settings-license-version {
+  font-size: 11px;
+  color: var(--text-secondary);
+  opacity: 0.8;
+}
+
+#about-yukios .settings-license-badge {
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: var(--brand-dim);
+  color: var(--brand);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}

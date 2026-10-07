@@ -20,6 +20,7 @@ import { SceneSerializer } from "../3d/editor/SceneSerializer.js";
 import { SceneAudio } from "../3d/SceneAudio.js";
 import { Achievements } from "../achievements.js";
 import { RoomAchievements } from "../3d/RoomAchievements.js";
+import { performanceManager } from "../shared/performanceManager.js";
 
 const ACHIEVEMENT_GATED = {
   "floor-lamp": Achievements.FirstGame,
@@ -201,6 +202,9 @@ export class Room3DApp extends BaseApp {
       graphics: { quality: "medium", bloom: true, shadows: true, dust: true, curtainSway: true }
     };
     this.roomSettings = { ...DEFAULT_ROOM_SETTINGS, ...rmStore.get("settings", {}) };
+    if (!rmStore.get("settings", null)?.graphics?.quality && performanceManager.isChromebookDevice()) {
+      this.roomSettings.graphics = { ...this.roomSettings.graphics, quality: "performance" };
+    }
     for (const k of Object.keys(DEFAULT_ROOM_SETTINGS)) {
       this.roomSettings[k] = { ...DEFAULT_ROOM_SETTINGS[k], ...this.roomSettings[k] };
     }
@@ -919,7 +923,7 @@ export class Room3DApp extends BaseApp {
           break;
         }
         case "settings_graphics_quality": {
-          const order = ["low", "medium", "high", "ultra"];
+          const order = ["low", "performance", "medium", "high", "ultra"];
           const cur = order.indexOf(this.roomSettings.graphics.quality);
           const next = (cur + 1) % order.length;
           const quality = order[next];

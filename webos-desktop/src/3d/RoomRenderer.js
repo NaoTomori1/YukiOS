@@ -1475,11 +1475,12 @@ export class RoomRenderer {
     const isUltra = level === "ultra";
     const isHigh = level === "high" || isUltra;
     const isLow = level === "low";
+    const isPerformance = level === "performance";
 
     if (this.monitorScreen) {
       this.monitorScreen.material.color.setHex(isUltra ? 0x557799 : isHigh ? 0x5a7799 : 0x6688aa);
     }
-    const mirrorRes = isLow ? 256 : isUltra ? 2048 : isHigh ? 1024 : 512;
+    const mirrorRes = isLow || isPerformance ? 256 : isUltra ? 2048 : isHigh ? 1024 : 512;
     if (mirrorRes !== this.mirrorRes) {
       this.mirrorRes = mirrorRes;
       this.rebuildMirror();
@@ -1487,11 +1488,11 @@ export class RoomRenderer {
     this.bloomPass.strength = isUltra ? 0.5 : 0.4;
     this.bloomPass.radius = isUltra ? 0.25 : 0.2;
     this.bloomPass.threshold = isUltra ? 0.08 : 0.1;
-    if (this.outlinePass) this.outlinePass.edgeThickness = isLow ? 1.5 : 2;
-    this.renderer.shadowMap.type = isLow ? THREE.PCFShadowMap : THREE.PCFSoftShadowMap;
+    if (this.outlinePass) this.outlinePass.edgeThickness = isLow || isPerformance ? 1.5 : 2;
+    this.renderer.shadowMap.type = isLow || isPerformance ? THREE.PCFShadowMap : THREE.PCFSoftShadowMap;
     this.renderer.toneMappingExposure = isLow ? 1.5 : isUltra ? 1.6 : isHigh ? 1.5 : 1.2;
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, isLow ? 1 : 2));
-    this.bloomResolutionMult = isLow ? 0.25 : isUltra ? 0.5 : isHigh ? 0.5 : 0.25;
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, isLow || isPerformance ? 1 : 2));
+    this.bloomResolutionMult = isLow || isPerformance ? 0.25 : isUltra ? 0.5 : isHigh ? 0.5 : 0.25;
     this.resize();
     this.applyBloomResolution();
 

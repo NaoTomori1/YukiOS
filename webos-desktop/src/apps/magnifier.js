@@ -1,18 +1,14 @@
 import "../styles/magnifier.css";
 import { $, setStyle, createElement } from "../shared/domUtils.js";
-import { BaseApp, os } from "../framework.js";
+import { BaseApp } from "../framework.js";
 import { KeybindManager } from "../keybindManager.js";
+import { createMagnifierEngine } from "../shared/magnifierEngine.js";
 
 export class MagnifierApp extends BaseApp {
   constructor(services) {
     super(services);
     this.panel = null;
-    this.zoom = 200;
-    this.desktop = null;
-    this.cursorX = 0;
-    this.cursorY = 0;
-    this.savedTransform = "";
-    this.savedOrigin = "";
+    this.engine = createMagnifierEngine();
     this.registerGlobalShortcut();
   }
 
@@ -45,7 +41,7 @@ export class MagnifierApp extends BaseApp {
     this.panel.querySelector(".magnifier-panel-header").appendChild(close);
 
     this.setupEvents();
-    this.startMagnifier();
+    this.engine.start();
   }
 
   buildUI() {
@@ -106,15 +102,15 @@ export class MagnifierApp extends BaseApp {
   setupEvents() {
     if (!this.panel) return;
     this.panel.querySelector("#magnifier-zoom-in").addEventListener("click", () => {
-      if (this.zoom < 400) this.setZoom(this.zoom + 25);
+      if (this.engine.zoom < 400) this.setZoom(this.engine.zoom + 25);
     });
     this.panel.querySelector("#magnifier-zoom-out").addEventListener("click", () => {
-      if (this.zoom > 100) this.setZoom(this.zoom - 25);
+      if (this.engine.zoom > 100) this.setZoom(this.engine.zoom - 25);
     });
   }
 
   close() {
-    this.stopMagnifier();
+    this.engine.stop();
     if (this.panel) {
       this.panel.remove();
       this.panel = null;
@@ -122,55 +118,9 @@ export class MagnifierApp extends BaseApp {
   }
 
   setZoom(level) {
-    this.zoom = level;
+    this.engine.setZoom(level);
     const label = $("#magnifier-zoom-level");
-    if (label) label.textContent = level + "%";
-    this.applyTransform();
-  }
-
-  startMagnifier() {
-    this.desktop = $("#desktop");
-    if (!this.desktop) return;
-
-    this.savedTransform = this.desktop.style.transform;
-    this.savedOrigin = this.desktop.style.transformOrigin;
-
-    this.applyTransform();
-    this.setupMouseTracking();
-  }
-
-  stopMagnifier() {
-    if (this.desktop) {
-      this.desktop.style.transform = this.savedTransform;
-      this.desktop.style.transformOrigin = this.savedOrigin;
-    }
-
-    this.savedTransform = "";
-    this.savedOrigin = "";
-
-    if (this.moveHandler) {
-      document.removeEventListener("mousemove", this.moveHandler);
-      this.moveHandler = null;
-    }
-
-    this.desktop = null;
-  }
-
-  applyTransform() {
-    if (!this.desktop) return;
-    this.desktop.style.transformOrigin = this.cursorX + "px " + this.cursorY + "px";
-    this.desktop.style.transform = "scale(" + this.zoom / 100 + ")";
-  }
-
-  setupMouseTracking() {
-    const handler = (e) => {
-      this.cursorX = e.clientX;
-      this.cursorY = e.clientY;
-      this.applyTransform();
-    };
-
-    document.addEventListener("mousemove", handler, { passive: true });
-    this.moveHandler = handler;
+    if (label) label.textContent = this.engine.zoom + "%";
   }
 
   onClose(winId) {

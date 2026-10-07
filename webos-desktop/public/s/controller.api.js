@@ -438,8 +438,10 @@ var $scramjetController;
         },
         request: async (e) => {
           let t = new URL(e.rawUrl).pathname,
-            r = this.frames.find((e) => t.startsWith(e.prefix));
-          if (!r) throw Error("No frame found for request");
+            r = null;
+          for (let c of this.frames) t.startsWith(c.prefix) && (!r || c.prefix.length > r.prefix.length) && (r = c);
+          if (!r)
+            throw Error("No frame found for request " + t + " known prefixes: " + this.frames.map((e) => e.prefix).join(", "));
           try {
             if ((await this.loadSavedCookies(), t === r.prefix + this.config.virtualWasmPath)) {
               if (!this.wasmPayload) {

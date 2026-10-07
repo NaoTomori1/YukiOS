@@ -1288,6 +1288,48 @@ html.mac-mode .desktop-peek-btn {
   gap: var(--spacing-md);
 }
 
+.display-performance-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px 6px;
+}
+
+.display-performance-header-title {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--text-primary);
+}
+
+.display-performance-header-title i {
+  color: var(--brand);
+}
+
+.display-performance-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.display-performance-close-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 12px;
+  padding: 4px 7px;
+  border-radius: 6px;
+  line-height: 1;
+}
+
+.display-performance-close-btn:hover {
+  background: var(--glass);
+  color: var(--text-primary);
+}
+
 .display-performance-section {
   display: flex;
   flex-direction: column;
@@ -2207,6 +2249,26 @@ html.mac-mode .desktop-peek-btn {
 .network-header span {
   font-size: var(--text-base);
   font-weight: 600;
+  color: var(--text-primary);
+}
+
+.network-header .tray-pin-btn {
+  margin-left: auto;
+}
+
+.network-close-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 12px;
+  padding: 4px 7px;
+  border-radius: 6px;
+  line-height: 1;
+}
+
+.network-close-btn:hover {
+  background: var(--glass);
   color: var(--text-primary);
 }
 
@@ -3176,4 +3238,39 @@ body.taskbar-drag-active {
 
 body.taskbar-drag-active * {
   cursor: grabbing !important;
+}
+
+.tray-pin-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 12px;
+  padding: 4px 7px;
+  border-radius: 6px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition:
+    background 0.12s,
+    color 0.12s;
+}
+
+.tray-pin-btn:hover {
+  background: var(--glass);
+  color: var(--text-primary);
+}
+
+.tray-pinned .tray-pin-btn,
+.tray-pin-btn.active {
+  background: var(--brand);
+  color: var(--text-on-brand);
+}
+
+.tray-pin-btn--corner {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 5;
 }

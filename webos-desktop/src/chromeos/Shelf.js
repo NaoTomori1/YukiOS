@@ -12,7 +12,7 @@ import { getEffectiveIcon } from "../shared/iconPack.js";
 
 const DEFAULT_SHELF_APPS = [
   { appId: "explorerApp", title: "Files", icon: "static/icons/file.webp" },
-  { appId: "browserApp", title: "Browser", icon: "static/icons/firefox.webp" },
+  { appId: "browserApp", title: "Browser", icon: "static/icons/chrome.webp" },
   { appId: "terminalApp", title: "Terminal", icon: "static/icons/terminal.webp" },
   { appId: "settingsApp", title: "Settings", icon: "papirus:actions/configure" }
 ];

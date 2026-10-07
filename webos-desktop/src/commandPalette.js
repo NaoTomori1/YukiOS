@@ -79,12 +79,7 @@ export class CommandPalette {
       </div>
     `;
 
-    requestAnimationFrame(() => {
-      overlay.classList.add("command-palette-overlay--show");
-      if (this.inputElement && document.activeElement !== this.inputElement) {
-        this.inputElement.focus();
-      }
-    });
+    overlay.classList.add("command-palette-overlay--show");
 
     this.inputElement = $("#command-palette-input", overlay);
     this.resultsContainer = $("#command-palette-results", overlay);
@@ -189,44 +184,16 @@ export class CommandPalette {
 
   renderResults() {
     if (!this.resultsContainer) return;
-    const root = this.resultsContainer.closest(".command-palette-root");
-    const startHeight = root ? root.getBoundingClientRect().height : 0;
-    const shouldAnimateHeight =
-      root &&
-      !window.matchMedia("(prefers-reduced-motion: reduce)").matches &&
-      document.documentElement.getAttribute("data-performance") !== "performance";
     const search = this.inputElement?.value.trim().toLowerCase() || "";
     this.resultsContainer.innerHTML = "";
-    const scheduleHeightAnimation = () => {
-      if (!shouldAnimateHeight || !root) return;
-      requestAnimationFrame(() => {
-        const endHeight = root.getBoundingClientRect().height;
-        if (Math.abs(endHeight - startHeight) < 3) return;
-        root.style.height = startHeight + "px";
-        root.style.overflow = "hidden";
-        root.getBoundingClientRect();
-        root.style.transition = "height 0.28s cubic-bezier(0.32, 0.72, 0, 1)";
-        root.style.height = endHeight + "px";
-        const cleanup = () => {
-          root.style.height = "";
-          root.style.transition = "";
-          root.style.overflow = "";
-          root.removeEventListener("transitionend", cleanup);
-        };
-        root.addEventListener("transitionend", cleanup, { once: true });
-        setTimeout(cleanup, 360);
-      });
-    };
 
     if (this.currentSubpalette === "wallpaper") {
       this.renderWallpaperSubpalette(search);
-      scheduleHeightAnimation();
       return;
     }
 
     if (this.currentSubpalette === "filesearch") {
       this.renderFileSearchSubpalette(search);
-      scheduleHeightAnimation();
       return;
     }
 
@@ -426,7 +393,7 @@ export class CommandPalette {
         title: "Stop Screen Recording",
         subtitle: "Stop the active screen recording",
         tag: "screenshot",
-        icon: "papirus:actions/media-playback-startback-stop",
+        icon: "papirus:actions/media-playback-stop",
         execute: () => {
           const app = os.app.getInstance(ServiceKeys.SCREENSHOT);
           if (app && app.recording) {
@@ -556,7 +523,6 @@ export class CommandPalette {
     }
 
     this.renderItems(items);
-    scheduleHeightAnimation();
   }
 
   renderItems(items) {
@@ -566,7 +532,6 @@ export class CommandPalette {
 
     if (this.results.length === 0) {
       this.resultsContainer.innerHTML = `<div class="command-palette-empty">No matching commands, apps, or files found.</div>`;
-      this.restartResultsAnimation();
       return;
     }
 
@@ -613,17 +578,7 @@ export class CommandPalette {
       this.resultsContainer.appendChild(el);
     });
 
-    this.restartResultsAnimation();
     requestAnimationFrame(() => this.scrollToActive());
-  }
-
-  restartResultsAnimation() {
-    if (!this.resultsContainer) return;
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    if (document.documentElement.getAttribute("data-performance") === "performance") return;
-    this.resultsContainer.style.animation = "none";
-    this.resultsContainer.offsetHeight;
-    this.resultsContainer.style.animation = "";
   }
 
   renderWallpaperSubpalette(search) {
@@ -742,7 +697,7 @@ export class CommandPalette {
         title: "Settings: Performance Mode",
         subtitle: "Switch between Quality, Balanced, and Performance",
         tag: "settings",
-        icon: "papirus:apps/application-default-icon-monitor",
+        icon: "papirus:apps/utilities-system-monitor",
         execute: () => go("pane-general", "sc-general")
       },
       {

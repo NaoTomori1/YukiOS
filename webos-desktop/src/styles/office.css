@@ -665,3 +665,66 @@ html[data-theme-mode="light"] .office-toolbar__select {
   font-family: var(--font-mono);
   font-size: 12px;
 }
+
+.office-pdf-root {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--bg-primary);
+}
+
+.office-pdf-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--glass-border);
+  flex-shrink: 0;
+}
+
+.office-pdf-btn {
+  cursor: pointer;
+  padding: 3px 10px;
+  background: var(--glass);
+  color: var(--text-primary);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--r-sm);
+  font-size: 12px;
+  min-width: 32px;
+  font-family: inherit;
+}
+
+.office-pdf-btn:hover {
+  background: var(--glass-hover);
+  border-color: var(--brand);
+}
+
+.office-pdf-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.office-pdf-zoom-label {
+  min-width: 52px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-primary);
+}
+
+.office-pdf-root .office-pdf-viewer {
+  flex: 1;
+  min-height: 0;
+}
+
+.office-pdf-canvas {
+  display: block;
+}
+
+.office-pdf-text-span {
+  position: absolute;
+  white-space: pre;
+  color: transparent;
+  user-select: text;
+  font-family: sans-serif;
+}

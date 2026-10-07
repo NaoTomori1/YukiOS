@@ -4,7 +4,8 @@ import { SystemUtilities } from "../system.js";
 import {
   WALLPAPER_NAME_URL_PAIRS,
   MAC_WALLPAPER_NAME_URL_PAIRS,
-  CHROME_OS_WALLPAPER_NAME_URL_PAIRS
+  CHROME_OS_WALLPAPER_NAME_URL_PAIRS,
+  DEFAULT_WALLPAPER_FILES
 } from "../wallpaperConfig.js";
 import { videos, videos2 } from "../wallpaperList.js";
 import { vantaPresets } from "../vantaPresets.js";
@@ -20,10 +21,13 @@ import { isBlobLike } from "../utils/utils.js";
 const WE_KEYS = {
   favorites: StorageKeys.wallpaperEngineFavorites,
   history: StorageKeys.wallpaperEngineHistory,
+  uploads: StorageKeys.wallpaperEngineUploads,
   shuffleInterval: StorageKeys.wallpaperEngineShuffleInterval,
   viewMode: StorageKeys.wallpaperEngineViewMode,
   colorFilter: StorageKeys.wallpaperEngineColorFilter
 };
+
+const SEEDED_WALLPAPER_NAMES = new Set(DEFAULT_WALLPAPER_FILES);
 
 const DEFAULT_FILTER = { brightness: 100, contrast: 100, saturate: 100, blur: 0 };
 
@@ -86,6 +90,7 @@ export class WallpaperEngineApp extends BaseApp {
     this.wallpaperItems = [];
     this.favorites = loadJSON(WE_KEYS.favorites, []);
     this.history = loadJSON(WE_KEYS.history, []);
+    this.uploadedNames = loadJSON(WE_KEYS.uploads, []);
     this.colorFilter = loadJSON(WE_KEYS.colorFilter, DEFAULT_FILTER);
     this.shuffleTimer = null;
     this.previewItem = null;
@@ -98,6 +103,9 @@ export class WallpaperEngineApp extends BaseApp {
   saveHistory() {
     saveJSON(WE_KEYS.history, this.history.slice(0, 50));
   }
+  saveUploads() {
+    saveJSON(WE_KEYS.uploads, this.uploadedNames);
+  }
   saveFilter() {
     saveJSON(WE_KEYS.colorFilter, this.colorFilter);
   }
@@ -106,6 +114,12 @@ export class WallpaperEngineApp extends BaseApp {
     this.history = this.history.filter((h) => h !== id);
     this.history.unshift(id);
     this.saveHistory();
+  }
+  trackUpload(name) {
+    if (!this.uploadedNames.includes(name)) {
+      this.uploadedNames.push(name);
+      this.saveUploads();
+    }
   }
 
   async open(opts) {
@@ -505,6 +519,7 @@ export class WallpaperEngineApp extends BaseApp {
       const folder = await this.fs.getFolder(["Pictures", "Wallpapers"]);
       for (const [name, data] of Object.entries(folder)) {
         if (data?.type !== "file") continue;
+        if (!this.uploadedNames.includes(name) && SEEDED_WALLPAPER_NAMES.has(name)) continue;
         const isVideo = data.kind === FileKind.VIDEO || isVideoFile(name);
         let thumbnail = null;
         if (isVideo) {
@@ -1044,6 +1059,8 @@ export class WallpaperEngineApp extends BaseApp {
   async deleteUserWallpaper(item, silent = false) {
     try {
       await this.fs.deleteItem(["Pictures", "Wallpapers"], item.userFileName);
+      this.uploadedNames = this.uploadedNames.filter((n) => n !== item.userFileName);
+      this.saveUploads();
       this.wallpaperItems = this.wallpaperItems.filter((i) => i.id !== item.id);
       this.renderGrid();
       this.updateStats();
@@ -1171,6 +1188,7 @@ export class WallpaperEngineApp extends BaseApp {
           fileKind,
           file.type.startsWith("video") ? "static/icons/file.webp" : "@content"
         );
+        this.trackUpload(file.name);
         count++;
       } catch {}
     }
@@ -1178,6 +1196,19 @@ export class WallpaperEngineApp extends BaseApp {
       this.notify(`Uploaded ${count} wallpaper${count > 1 ? "s" : ""}`);
       await this.loadAllWallpapers();
     }
+  }
+
+  async uploadAndSetWallpaper(files) {
+    if (!files || !files.length) return 0;
+    let setSucceeded = false;
+    try {
+      await SystemUtilities.setWallpaper(files[0]);
+      setSucceeded = true;
+    } catch {}
+    await this.handleUpload(files);
+    if (setSucceeded) this.notify("Desktop wallpaper updated");
+    else this.notify("Failed to set wallpaper");
+    return files.length;
   }
 
   showImportView() {
@@ -1221,6 +1252,7 @@ export class WallpaperEngineApp extends BaseApp {
           isVid ? FileKind.VIDEO : FileKind.IMAGE,
           isVid ? "static/icons/file.webp" : "@content"
         );
+        this.trackUpload(name);
         if (status)
           setHTML(
             status,

@@ -130,7 +130,7 @@ export const KEYBIND_DEFINITIONS = [
   },
   {
     id: "global.screenshot.deck",
-    defaultKeys: ["F12"],
+    defaultKeys: ["F9"],
     desc: "Capture screenshot and auto-save (game-tagged on Steam Deck)",
     cat: "global",
     icon: "papirus:apps/accessories-camera"
@@ -332,14 +332,14 @@ export const KEYBIND_DEFINITIONS = [
     defaultKeys: ["Ctrl", "="],
     desc: "Zoom in text editor",
     cat: "notepad",
-    icon: "papirus:actions/edit-find-in"
+    icon: "papirus:actions/zoom-in"
   },
   {
     id: "notepad.zoomOut",
     defaultKeys: ["Ctrl", "-"],
     desc: "Zoom out text editor",
     cat: "notepad",
-    icon: "papirus:actions/edit-find-out"
+    icon: "papirus:actions/zoom-out"
   },
   {
     id: "notepad.zoomReset",
@@ -547,7 +547,7 @@ export const KEYBIND_DEFINITIONS = [
     defaultKeys: ["Ctrl", "C"],
     desc: "Interrupt command in Terminal",
     cat: "terminal",
-    icon: "papirus:actions/media-playback-startback-stop",
+    icon: "papirus:actions/media-playback-stop",
     hidden: true
   },
   {
@@ -640,14 +640,14 @@ export const KEYBIND_DEFINITIONS = [
     defaultKeys: ["Ctrl", "="],
     desc: "Zoom in in Office",
     cat: "office",
-    icon: "papirus:actions/edit-find-in"
+    icon: "papirus:actions/zoom-in"
   },
   {
     id: "office.zoomOut",
     defaultKeys: ["Ctrl", "-"],
     desc: "Zoom out in Office",
     cat: "office",
-    icon: "papirus:actions/edit-find-out"
+    icon: "papirus:actions/zoom-out"
   },
   {
     id: "office.zoomReset",
@@ -1155,6 +1155,20 @@ export const KEYBIND_DEFINITIONS = [
     icon: "papirus:actions/object-group"
   },
   {
+    id: "desktop.selectAll",
+    defaultKeys: ["Ctrl", "A"],
+    desc: "Select all icons on the desktop",
+    cat: "desktop",
+    icon: "papirus:actions/object-group"
+  },
+  {
+    id: "desktop.physicsChaos",
+    defaultKeys: ["Alt", "G"],
+    desc: "Toggle desktop physics chaos",
+    cat: "desktop",
+    icon: "fa-burst"
+  },
+  {
     id: "explorer.navigateUp",
     defaultKeys: ["ArrowUp"],
     desc: "Navigate up in Explorer file list",
@@ -1184,6 +1198,83 @@ export const KEYBIND_DEFINITIONS = [
     desc: "Rename selected file in Explorer",
     cat: "desktop",
     icon: "papirus:actions/edit"
+  },
+  {
+    id: "explorer.closeTab",
+    defaultKeys: ["Alt", "W"],
+    desc: "Close active tab in Explorer",
+    cat: "desktop",
+    icon: "fa-times"
+  },
+  {
+    id: "explorer.toggleSplit",
+    defaultKeys: ["Ctrl", "Shift", "D"],
+    desc: "Toggle split view in Explorer",
+    cat: "desktop",
+    icon: "fa-columns"
+  },
+  {
+    id: "explorer.tab1",
+    defaultKeys: ["Alt", "1"],
+    desc: "Switch to Explorer tab 1",
+    cat: "desktop",
+    icon: "fa-clone"
+  },
+  {
+    id: "explorer.tab2",
+    defaultKeys: ["Alt", "2"],
+    desc: "Switch to Explorer tab 2",
+    cat: "desktop",
+    icon: "fa-clone"
+  },
+  {
+    id: "explorer.tab3",
+    defaultKeys: ["Alt", "3"],
+    desc: "Switch to Explorer tab 3",
+    cat: "desktop",
+    icon: "fa-clone"
+  },
+  {
+    id: "explorer.tab4",
+    defaultKeys: ["Alt", "4"],
+    desc: "Switch to Explorer tab 4",
+    cat: "desktop",
+    icon: "fa-clone"
+  },
+  {
+    id: "explorer.tab5",
+    defaultKeys: ["Alt", "5"],
+    desc: "Switch to Explorer tab 5",
+    cat: "desktop",
+    icon: "fa-clone"
+  },
+  {
+    id: "explorer.tab6",
+    defaultKeys: ["Alt", "6"],
+    desc: "Switch to Explorer tab 6",
+    cat: "desktop",
+    icon: "fa-clone"
+  },
+  {
+    id: "explorer.tab7",
+    defaultKeys: ["Alt", "7"],
+    desc: "Switch to Explorer tab 7",
+    cat: "desktop",
+    icon: "fa-clone"
+  },
+  {
+    id: "explorer.tab8",
+    defaultKeys: ["Alt", "8"],
+    desc: "Switch to Explorer tab 8",
+    cat: "desktop",
+    icon: "fa-clone"
+  },
+  {
+    id: "explorer.tab9",
+    defaultKeys: ["Alt", "9"],
+    desc: "Switch to Explorer tab 9",
+    cat: "desktop",
+    icon: "fa-clone"
   },
   {
     id: "calendar.prevYear",
@@ -1390,7 +1481,7 @@ export const KEYBIND_DEFINITIONS = [
     defaultKeys: ["Meta", "Shift", "H"],
     desc: "Go to Home folder",
     cat: "mac",
-    icon: "papirus:places/folder-blue-home",
+    icon: "papirus:places/user-home",
     hidden: true
   },
   {
@@ -1430,77 +1521,77 @@ export const KEYBIND_DEFINITIONS = [
     defaultKeys: ["Alt", "1"],
     desc: "Launch or focus dock item 1",
     cat: "dock",
-    icon: "papirus:apps/gitkrakenle-music"
+    icon: "papirus:apps/rocketchat"
   },
   {
     id: "dock.launch2",
     defaultKeys: ["Alt", "2"],
     desc: "Launch or focus dock item 2",
     cat: "dock",
-    icon: "papirus:apps/gitkrakenle-music"
+    icon: "papirus:apps/rocketchat"
   },
   {
     id: "dock.launch3",
     defaultKeys: ["Alt", "3"],
     desc: "Launch or focus dock item 3",
     cat: "dock",
-    icon: "papirus:apps/gitkrakenle-music"
+    icon: "papirus:apps/rocketchat"
   },
   {
     id: "dock.launch4",
     defaultKeys: ["Alt", "4"],
     desc: "Launch or focus dock item 4",
     cat: "dock",
-    icon: "papirus:apps/gitkrakenle-music"
+    icon: "papirus:apps/rocketchat"
   },
   {
     id: "dock.launch5",
     defaultKeys: ["Alt", "5"],
     desc: "Launch or focus dock item 5",
     cat: "dock",
-    icon: "papirus:apps/gitkrakenle-music"
+    icon: "papirus:apps/rocketchat"
   },
   {
     id: "dock.launch6",
     defaultKeys: ["Alt", "6"],
     desc: "Launch or focus dock item 6",
     cat: "dock",
-    icon: "papirus:apps/gitkrakenle-music"
+    icon: "papirus:apps/rocketchat"
   },
   {
     id: "dock.launch7",
     defaultKeys: ["Alt", "7"],
     desc: "Launch or focus dock item 7",
     cat: "dock",
-    icon: "papirus:apps/gitkrakenle-music"
+    icon: "papirus:apps/rocketchat"
   },
   {
     id: "dock.launch8",
     defaultKeys: ["Alt", "8"],
     desc: "Launch or focus dock item 8",
     cat: "dock",
-    icon: "papirus:apps/gitkrakenle-music"
+    icon: "papirus:apps/rocketchat"
   },
   {
     id: "dock.launch9",
     defaultKeys: ["Alt", "9"],
     desc: "Launch or focus dock item 9",
     cat: "dock",
-    icon: "papirus:apps/gitkrakenle-music"
+    icon: "papirus:apps/rocketchat"
   },
   {
     id: "global.magnifier",
     defaultKeys: ["Ctrl", "M"],
     desc: "Toggle screen magnifier",
     cat: "global",
-    icon: "papirus:actions/edit-find-in"
+    icon: "papirus:actions/zoom-in"
   },
   {
     id: "dock.launch10",
     defaultKeys: ["Alt", "0"],
     desc: "Launch or focus dock item 10",
     cat: "dock",
-    icon: "papirus:apps/gitkrakenle-music"
+    icon: "papirus:apps/rocketchat"
   },
   {
     id: "steamdeck.openQuickAccess",

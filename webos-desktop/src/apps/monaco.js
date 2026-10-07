@@ -1708,7 +1708,6 @@ export class MonacoApp extends BaseApp {
         editorData.title = uniqueName;
         editorData.isDirty = false;
         this.updateTabTitle(editorData.tabId, uniqueName, false);
-        os.notify.send("Saved", `Saved: ${uniqueName}`);
         speak("Code saved successfully!", ClippyAnimation.Greeting);
         return;
       }
@@ -1719,7 +1718,6 @@ export class MonacoApp extends BaseApp {
 
     editorData.isDirty = false;
     this.updateTabTitle(editorData.tabId, editorData.title, false);
-    os.notify.send("Saved", `Saved: ${editorData.title}`);
     speak("Code saved successfully!", ClippyAnimation.Greeting);
   }
 
@@ -1757,7 +1755,6 @@ export class MonacoApp extends BaseApp {
             editorData.isDirty = false;
             this.updateTabTitle(editorData.tabId, uniqueName, false);
             const pathStr = path.length ? `/${path.join("/")}/${uniqueName}` : `/${uniqueName}`;
-            os.notify.send("Saved", `Saved: ${pathStr}`);
             speak("Code saved successfully!", ClippyAnimation.Greeting);
             return;
           }
@@ -1771,7 +1768,6 @@ export class MonacoApp extends BaseApp {
         editorData.isDirty = false;
         this.updateTabTitle(editorData.tabId, fileName, false);
         const pathStr = path.length ? `/${path.join("/")}/${fileName}` : `/${fileName}`;
-        os.notify.send("Saved", `Saved: ${pathStr}`);
         speak("Code saved successfully!", ClippyAnimation.Greeting);
       } catch (e) {
         os.notify.send("Save error", "Couldn't save that file");

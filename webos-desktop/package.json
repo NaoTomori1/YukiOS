@@ -12,7 +12,7 @@
     "dev": "vite",
     "prebuild": "node scripts/validateRegistry.js && node scripts/generateAppList.js && node scripts/fetchFavicons.js",
     "build": "vite build",
-    "build:dev": "VITE_DEV_BUILD=true vite build",
+    "build:dev": "cross-env VITE_DEV_BUILD=true vite build",
     "build:single": "cross-env VITE_SINGLE_FILE=true vite build",
     "build:electron": "cross-env VITE_SINGLE_FILE=false VITE_ELECTRON=true vite build",
     "build:dev:single": "cross-env VITE_SINGLE_FILE=true VITE_DEV_BUILD=true vite build",
@@ -22,7 +22,7 @@
     "bf": "pnpm format && pnpm build:dev && cp -r dist/* ../desktop/",
     "build-win": "vite build",
     "preview": "vite preview",
-    "format": "git diff --name-only HEAD --diff-filter=ACMR | grep '^webos-desktop/' | sed 's#^webos-desktop/##' | grep -E '\\.(js|jsx|css|json|html)$' | xargs -r pnpm exec prettier --write --cache --cache-location=.prettier-cache",
+    "format": "node scripts/formatChanged.js",
     "lint": "eslint . --ext .js,.jsx --fix",
     "electron:dev": "pnpm build:electron && node -e \"require('fs').existsSync('dist/favicon.ico')&&require('fs').unlinkSync('dist/favicon.ico')\" && electron .",
     "electron:build": "pnpm build:electron && node -e \"require('fs').existsSync('dist/favicon.ico')&&require('fs').unlinkSync('dist/favicon.ico')\" && electron-builder --config",
@@ -82,10 +82,17 @@
     "xlsx": "^0.18.5"
   },
   "packageManager": "pnpm@11.6.0+sha512.9a36518224080c6fe5165afdcfe79bfa118c29be703f3f462b1e32efe1e98e47e8750b148e08286250aad4113cc7993ca413c4e2cd447752708c2ee5751bc95f",
+  "pnpm": {
+    "ignoredBuiltDependencies": [
+      "canvas",
+      "electron"
+    ]
+  },
   "build": {
     "npmRebuild": false,
     "appId": "app.yukios.desktop",
     "productName": "YukiOS",
+    "artifactName": "${productName}-${version}-${os}-${arch}.${ext}",
     "directories": {
       "output": "release"
     },

@@ -113,6 +113,21 @@ function sendJson(res, payload) {
   res.end(JSON.stringify(payload));
 }
 
+function isSameOriginRequest(req) {
+  const site = req.headers["sec-fetch-site"];
+  if (site && site !== "same-origin" && site !== "none") return false;
+
+  const origin = req.headers.origin;
+  if (origin) {
+    try {
+      return new URL(origin).host === req.headers.host;
+    } catch {
+      return false;
+    }
+  }
+  return true;
+}
+
 export function systemLibraryPlugin() {
   return {
     name: "yukios-system-library",
@@ -155,11 +170,15 @@ export function systemLibraryPlugin() {
         const requestUrl = req.url || "";
         if (!requestUrl.startsWith(OVERRIDES_ROUTE)) return next();
         const routePath = requestUrl.slice(OVERRIDES_ROUTE.length);
-        if (routePath && routePath !== "/" ) return next();
+        if (routePath && routePath !== "/") return next();
 
         if (req.method === "GET") {
           sendJson(res, { overrides: Object.fromEntries(overrideStore) });
           return;
+        }
+
+        if (!isSameOriginRequest(req)) {
+          return sendJson(res, 403, { ok: false, error: "cross-origin request rejected" });
         }
 
         const body = await readJsonBody(req);

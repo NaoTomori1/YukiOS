@@ -46,6 +46,7 @@ export class AIAssistantApp extends BaseApp {
       selectedModel: "fast",
       webGPUEnabled: true,
       showReasoning: false,
+      responseMode: "text",
       chatHistory: [],
       chats: {},
       activeChatId: null,
@@ -194,6 +195,9 @@ export class AIAssistantApp extends BaseApp {
             </div>
           </div>
           <div class="ai-controls">
+            <button id="ai-mode-toggle" class="ai-toggle ${state.responseMode === "image" ? "active" : ""}">
+              <i class="${state.responseMode === "image" ? "fas fa-image" : "fas fa-comments"}"></i> ${state.responseMode === "image" ? "Image Gen" : "Text Chat"}
+            </button>
             <button id="ai-webgpu-toggle" class="ai-toggle ${state.webGPUEnabled ? "active" : ""}">
               <i class="fas fa-microchip"></i> WebGPU
             </button>
@@ -503,6 +507,7 @@ export class AIAssistantApp extends BaseApp {
     state.selectedModel = prefs.selectedModel || "fast";
     state.webGPUEnabled = prefs.webGPUEnabled !== false;
     state.showReasoning = prefs.showReasoning || false;
+    state.responseMode = prefs.responseMode || "text";
     state.backendType = prefs.backendType || "local";
     state.remoteEndpoint = prefs.remoteEndpoint || "";
     state.remoteApiKey = prefs.remoteApiKey || "";
@@ -609,6 +614,20 @@ export class AIAssistantApp extends BaseApp {
       this.memory.setPreference("showReasoning", state.showReasoning);
     });
 
+    const modeToggle = $("#ai-mode-toggle", win);
+    if (modeToggle) {
+      modeToggle.addEventListener("click", () => {
+        state.responseMode = state.responseMode === "image" ? "text" : "image";
+        this.memory.setPreference("responseMode", state.responseMode);
+        toggleClass(modeToggle, "active", state.responseMode === "image");
+        setHTML(
+          modeToggle,
+          `<i class="${state.responseMode === "image" ? "fas fa-image" : "fas fa-comments"}"></i> ${state.responseMode === "image" ? "Image Gen" : "Text Chat"}`
+        );
+        this.renderRuntimeUI(win, state);
+      });
+    }
+
     const sendMessage = async () => {
       const message = input.value.trim();
       if (!message || state.engineLoading || state.isGenerating) return;
@@ -660,6 +679,10 @@ export class AIAssistantApp extends BaseApp {
   }
 
   async processMessage(message, state, win) {
+    if (state.responseMode === "image") {
+      await this.processImageMessage(message, state, win);
+      return;
+    }
     this.addMessageToChat("user", message, state, win);
     state.chatHistory.push({ role: "user", content: message });
     const activeChat = state.chats[state.activeChatId];
@@ -715,6 +738,64 @@ export class AIAssistantApp extends BaseApp {
       this.renderChatList(state, win);
     } catch (error) {
       console.error("[AI Assistant] processMessage error:", error);
+      this.removePendingAssistantMessage(win, state);
+      this.addMessageToChat("system", `Error: ${error.message}`, state, win);
+      this.setRuntimeState(state, {
+        statusTone: "error",
+        statusText: "Generation failed",
+        statusDetail: error.message,
+        progress: 0,
+        progressText: ""
+      });
+    } finally {
+      state.isGenerating = false;
+      this.renderRuntimeUI(win, state);
+    }
+  }
+
+  async processImageMessage(message, state, win) {
+    this.addMessageToChat("user", message, state, win);
+    state.chatHistory.push({ role: "user", content: message });
+    const activeChat = state.chats[state.activeChatId];
+    if (activeChat && activeChat.title === "New Chat") {
+      activeChat.title = this.memory.buildChatTitle(state.chatHistory);
+    }
+
+    try {
+      state.isGenerating = true;
+      state.pendingMessageId = this.appendPendingAssistantMessage(win, "Generating image with Pollinations AI...");
+      this.setRuntimeState(state, {
+        statusTone: "busy",
+        statusText: "Generating Image",
+        statusDetail: "Generating image via Pollinations AI",
+        progress: 0,
+        progressText: ""
+      });
+      this.renderRuntimeUI(win, state);
+
+      const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(message)}`;
+      await new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => resolve(imageUrl);
+        img.onerror = () => reject(new Error("Failed to load image from Pollinations AI"));
+        img.src = imageUrl;
+      });
+
+      this.removePendingAssistantMessage(win, state);
+      const imageCardHtml = `<div class="ai-generated-image-card"><img src="${imageUrl}" alt="${escapeHtml(message)}" class="ai-generated-image" /><div class="ai-generated-image-prompt">${escapeHtml(message)}</div></div>`;
+      this.addMessageToChat("assistant", imageCardHtml, state, win);
+      state.chatHistory.push({ role: "assistant", content: imageCardHtml });
+      this.setRuntimeState(state, {
+        statusTone: "ready",
+        statusText: "Ready",
+        statusDetail: "Image generated successfully",
+        progress: 0,
+        progressText: ""
+      });
+      await this.memory.saveChats(state.chats, state.activeChatId);
+      this.renderChatList(state, win);
+    } catch (error) {
+      console.error("[AI Assistant] processImageMessage error:", error);
       this.removePendingAssistantMessage(win, state);
       this.addMessageToChat("system", `Error: ${error.message}`, state, win);
       this.setRuntimeState(state, {
@@ -1110,6 +1191,9 @@ Say what you're about to do before running an action. If it could be destructive
   }
 
   formatMessage(content) {
+    if (typeof content === "string" && (content.includes("ai-generated-image-card") || content.includes("<img"))) {
+      return content;
+    }
     return content.replace(/\n/g, "<br>").replace(/```json\n?([\s\S]*?)```/g, '<pre class="ai-json-block">$1</pre>');
   }
 
@@ -1313,18 +1397,24 @@ Say what you're about to do before running an action. If it could be destructive
     }
 
     if (input) {
-      input.disabled = !state.engineInitialized || state.engineLoading || state.isGenerating;
+      input.disabled =
+        state.engineLoading || state.isGenerating || (state.responseMode !== "image" && !state.engineInitialized);
       input.placeholder = state.engineLoading
         ? "Loading the model..."
         : state.isGenerating
-          ? "Thinking..."
-          : state.engineInitialized
-            ? "Ask me anything..."
-            : "Start the AI engine to begin chatting";
+          ? state.responseMode === "image"
+            ? "Generating image..."
+            : "Thinking..."
+          : state.responseMode === "image"
+            ? "Describe an image to generate..."
+            : state.engineInitialized
+              ? "Ask me anything..."
+              : "Start the AI engine to begin chatting";
     }
 
     if (sendBtn) {
-      sendBtn.disabled = !state.engineInitialized || state.engineLoading || state.isGenerating;
+      sendBtn.disabled =
+        state.engineLoading || state.isGenerating || (state.responseMode !== "image" && !state.engineInitialized);
       setHTML(
         sendBtn,
         state.isGenerating ? '<i class="fas fa-spinner fa-spin"></i>' : '<i class="fas fa-paper-plane"></i>'

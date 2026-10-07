@@ -322,8 +322,6 @@ export const descriptionMap = {
     "Obama Alien Defense is a 2010 satirical tower-defense game where Barack Obama defends Earth from an alien invasion using upgradeable weapons and Secret Service tactics.",
   angryGranToss:
     "Angry Gran Toss is a 2011 launcher game by Ace Viral. Players punch, kick, and launch an angry grandma as far as possible across the level using upgrades earned mid-flight.",
-  liventcord:
-    "LiventCord is an open-source Discord-like chat client offering real-time messaging, voice channels, and customizable communities in a lightweight web interface.",
   roads:
     "Slow Roads is a 2022 endless driving simulator created by Anslo. Players cruise through procedurally generated landscapes with calming visuals and minimal gameplay pressure.",
   repo: "R.E.P.O. is a co-op horror extraction game where players work as employees of a shady company, retrieving valuable items from haunted environments while avoiding monsters.",

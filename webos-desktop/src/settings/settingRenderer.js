@@ -4,6 +4,7 @@ import { YUKIOS_VERSION } from "../apps/about.js";
 import { getBasicThemes, getCustomThemes, getSpecialThemes } from "../shared/themeEngine.js";
 import { StorageKeys, os, MODES, createElement } from "../framework.js";
 import { renderSelectMenu } from "../shared/selectMenu.js";
+import { CLOAK_PRESETS, PANIC_PRESETS, DEFAULT_DECOY } from "../stealth/tabCloak.js";
 import { renderRangeSlider } from "../shared/rangeSlider.js";
 import { renderAccountsSettings } from "./accountsPanel.js";
 import { renderTilingSettings } from "./pane-tiling.js";
@@ -241,6 +242,7 @@ export function buildSettingsHTML(settings, wm) {
           ${renderGeneralBehaviorSettings(settings)}
           ${renderSystemSettings(settings)}
           ${renderPrivacySettings(settings)}
+          ${renderCloakSettings()}
           ${renderNotificationsSettings(settings)}
           ${renderDesktopSettings(settings)}
           ${renderShortcutsSettings()}
@@ -312,7 +314,7 @@ function renderIconPackChooser(currentPack, prefix = "quick") {
         </div>
         <div class="icon-pack-chooser" id="iconpack-${prefix}" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px;width:100%;">
           <button class="icon-pack-option ${isPapirus ? "active" : ""}" data-icon-pack="papirus" data-pack-target="${prefix}" style="display:flex;flex-direction:column;align-items:center;padding:10px;border:1.5px solid ${isPapirus ? "var(--brand)" : "var(--glass-border)"};border-radius:8px;background:${isPapirus ? "color-mix(in srgb, var(--brand) 12%, transparent)" : "var(--glass)"};cursor:pointer;gap:6px;">
-            <span class="icon-pack-label" style="font-weight:600;font-size:13px;"><i class="fas fa-palette" style="margin-right:6px;"></i>Papirus</span>
+            <span class="icon-pack-label" style="font-weight:600;font-size:13px;"><svg style="width:1em;height:1em;margin-right:6px;vertical-align:middle;" viewBox="0 0 512 512" fill="currentColor"><path d="M512 256c0 .9 0 1.8 0 2.7c-.4 36.5-33.6 61.3-70.1 61.3H344c-26.5 0-48 21.5-48 48c0 3.4 .4 6.7 1 9.9c2.1 10.2 6.5 20 10.8 29.9c6.1 13.8 12.1 27.5 12.1 42c0 31.8-21.6 60.7-53.4 62c-3.5 .1-7 .2-10.6 .2C114.6 512 0 397.4 0 256S114.6 0 256 0S512 114.6 512 256zM128 288a32 32 0 1 0 -64 0 32 32 0 1 0 64 0zm0-96a32 32 0 1 0 0-64 32 32 0 1 0 0 64zM288 96a32 32 0 1 0 -64 0 32 32 0 1 0 64 0zm96 96a32 32 0 1 0 0-64 32 32 0 1 0 0 64z"></path></svg>Papirus</span>
             <div class="icon-pack-preview" style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center;padding:8px;background:var(--bg-secondary,rgba(0,0,0,0.15));border-radius:6px;margin:4px 0;min-height:38px;align-items:center;">${papirusIcons}</div>
             <span class="icon-pack-desc" style="font-size:11px;color:var(--text-secondary)">Colorful detailed</span>
           </button>
@@ -373,6 +375,7 @@ export function renderQuickSettings(s) {
     { label: "Keyboard", icon: "fas fa-keyboard", pane: "pane-shortcuts" },
     { label: "Remote Desktop", icon: "fas fa-desktop", launch: "remoteHostApp" },
     { label: "Notifications", icon: "fas fa-bell", pane: "pane-notifications" },
+    { label: "Tab Cloak & Panic", icon: "fas fa-user-secret", pane: "pane-cloak" },
     { label: "Window Management", icon: "fas fa-border-all", pane: "pane-desktop", target: "sc-layout" },
     { label: "Display & Monitor", icon: "fas fa-desktop", pane: "pane-appearance", target: "sc-display" }
   ];
@@ -434,6 +437,13 @@ export function renderQuickSettings(s) {
             <input type="checkbox" id="settingsQuickSound" ${s.soundEnabled ? "checked" : ""}/>
             <span class="settings-track"><span class="settings-thumb"></span></span>
           </label>
+        </div>
+        <div class="settings-row">
+          <div class="settings-label-group">
+            <span class="settings-label-title">Physics Chaos</span>
+            <span class="settings-label-desc">Drop every icon and window with gravity</span>
+          </div>
+          <button class="settings-btn" id="settingsQuickChaos"><i class="fas fa-burst"></i> Chaos</button>
         </div>
       </div>
 
@@ -602,6 +612,131 @@ export function renderPrivacySettings(s) {
             <span class="settings-label-desc">Immediately lock your session</span>
           </div>
           <button class="settings-btn" id="settingsLockScreen"><i class="fas fa-lock"></i> Lock now</button>
+        </div>
+      </div>
+
+    </div>
+  `;
+}
+
+export function renderCloakSettings() {
+  return `
+    <div id="pane-cloak" class="settings-category-pane">
+      <div class="settings-category-header">Tab Cloak &amp; Panic</div>
+
+      <div class="settings-card" id="sc-cloak" style="margin-top: 16px;">
+        <div class="settings-card-header"><i class="fas fa-user-secret"></i> Tab Cloak &amp; Panic</div>
+        <div class="settings-row">
+          <div class="settings-label-group">
+            <span class="settings-label-title">Tab Cloak</span>
+            <span class="settings-label-desc">Disguise the tab title and icon</span>
+          </div>
+          ${renderSelectMenu(
+            "settingsCloakPreset",
+            Object.entries(CLOAK_PRESETS).map(([value, p]) => ({
+              value,
+              label: value === "none" ? "None" : p.label
+            })),
+            (() => {
+              try {
+                return os.storage.get(StorageKeys.tabCloak) || "none";
+              } catch {
+                return "none";
+              }
+            })()
+          )}
+        </div>
+        <div class="settings-row">
+          <div class="settings-label-group">
+            <span class="settings-label-title">Open in about:blank</span>
+            <span class="settings-label-desc">Reopen YukiOS in a blank tab behind a decoy page</span>
+          </div>
+          <button class="settings-btn" id="settingsAboutBlankNow"><i class="fas fa-external-link-alt"></i> Open now</button>
+        </div>
+        <div class="settings-row settings-row--stacked">
+          <div class="settings-label-group">
+            <span class="settings-label-title">Decoy URL</span>
+            <span class="settings-label-desc">Page shown in this tab afterwards</span>
+          </div>
+          <input type="text" class="settings-input" id="settingsAboutBlankDecoy" placeholder="${DEFAULT_DECOY}" value="${(() => {
+            try {
+              return (os.storage.get(StorageKeys.tabCloakDecoy) || "").replace(/"/g, "&quot;");
+            } catch {
+              return "";
+            }
+          })()}" spellcheck="false"/>
+        </div>
+        <div class="settings-row">
+          <div class="settings-label-group">
+            <span class="settings-label-title">Prevent tab close</span>
+            <span class="settings-label-desc">Ask before the tab can be closed</span>
+          </div>
+          <label class="settings-toggle">
+            <input type="checkbox" id="settingsBeforeunload" ${(() => {
+              try {
+                return os.storage.get(StorageKeys.beforeunloadProtect) === "true" ? "checked" : "";
+              } catch {
+                return "";
+              }
+            })()}/>
+            <span class="settings-track"><span class="settings-thumb"></span></span>
+          </label>
+        </div>
+        <div class="settings-row">
+          <div class="settings-label-group">
+            <span class="settings-label-title">Auto Cloak on Boot</span>
+            <span class="settings-label-desc">Instantly open about:blank on load and redirect tab</span>
+          </div>
+          <label class="settings-toggle">
+            <input type="checkbox" id="settingsAutoCloakOnBoot" ${(() => {
+              try {
+                return os.storage.get(StorageKeys.autoCloakOnBoot) === "true" ||
+                  os.storage.get(StorageKeys.autoCloakOnBoot) === "1"
+                  ? "checked"
+                  : "";
+              } catch {
+                return "";
+              }
+            })()}/>
+            <span class="settings-track"><span class="settings-thumb"></span></span>
+          </label>
+        </div>
+        <div class="settings-row">
+          <div class="settings-label-group">
+            <span class="settings-label-title">Panic key</span>
+            <span class="settings-label-desc">Press to instantly leave YukiOS</span>
+          </div>
+          <button class="settings-btn" id="settingsPanicKey"><i class="fas fa-keyboard"></i> <span>${(() => {
+            try {
+              return os.storage.get(StorageKeys.panicKey) || "Not set";
+            } catch {
+              return "Not set";
+            }
+          })()}</span></button>
+        </div>
+        <div class="settings-row">
+          <div class="settings-label-group">
+            <span class="settings-label-title">Panic destination</span>
+            <span class="settings-label-desc">Where the panic key takes you</span>
+          </div>
+          ${renderSelectMenu(
+            "settingsPanicPreset",
+            Object.entries(PANIC_PRESETS).map(([value, p]) => ({ value, label: p.label })),
+            "classroom"
+          )}
+        </div>
+        <div class="settings-row settings-row--stacked">
+          <div class="settings-label-group">
+            <span class="settings-label-title">Custom panic URL</span>
+            <span class="settings-label-desc">Used when destination is Custom…</span>
+          </div>
+          <input type="text" class="settings-input" id="settingsPanicUrl" placeholder="https://…" value="${(() => {
+            try {
+              return (os.storage.get(StorageKeys.panicUrl) || "").replace(/"/g, "&quot;");
+            } catch {
+              return "";
+            }
+          })()}" spellcheck="false"/>
         </div>
       </div>
 
@@ -997,6 +1132,13 @@ export function renderDesktopSettings(s) {
             <span id="settingsDockAnimationSpeedValue" class="settings-range-value">${s.dockAnimationSpeed}s</span>
           </div>
         </div>
+        <div class="settings-row">
+          <div class="settings-label-group">
+            <span class="settings-label-title">Physics Chaos</span>
+            <span class="settings-label-desc">Drops every icon and window with gravity (also works with alt + g)</span>
+          </div>
+          <button class="settings-btn" id="settingsPhysicsChaos">Physics Chaos</button>
+        </div>
       </div>
 
     </div>
@@ -1073,6 +1215,7 @@ export function renderAppearanceSettings(s) {
           <button class="settings-btn" id="settingsOpenWallpaperEngine" style="margin-left: auto;">
             <i class="fas fa-external-link-alt"></i> Open in window
           </button>
+          <button class="settings-btn" id="settingsUploadWallpaper"><i class="fas fa-upload"></i> Upload Wallpaper</button>
         </div>
         <div class="settings-row">
           <div class="settings-label-group">
@@ -1775,7 +1918,7 @@ export function renderAudioSettings(s) {
   `;
 }
 
-function renderCreditsSettings() {
+export function renderCreditsSettings() {
   const licenses = typeof __PACKAGE_LICENSES__ !== "undefined" ? __PACKAGE_LICENSES__ : [];
   const items = licenses
     .map((p) => {
@@ -1783,6 +1926,7 @@ function renderCreditsSettings() {
       const attrs = p.repo ? `href="${p.repo}" target="_blank" rel="noopener noreferrer"` : "";
       return `
         <${tag} class="settings-license-item" ${attrs}>
+          <i class="fas fa-cube settings-license-icon"></i>
           <span class="settings-license-name">${p.name}</span>
           <span class="settings-license-version">${p.version}</span>
           <span class="settings-license-badge" title="${p.license}">${p.license}</span>
@@ -1790,6 +1934,7 @@ function renderCreditsSettings() {
       `;
     })
     .join("");
+
   return `
     <div class="settings-card settings-licenses-card">
       <div class="settings-card-header"><i class="fas fa-scale-balanced"></i> Credits</div>
@@ -1799,9 +1944,12 @@ function renderCreditsSettings() {
           <span class="settings-credits-author-name"><i class="fas fa-heart"></i> Made by Reeyuki</span>
           <span class="settings-credits-author-sub">Creator of YukiOS</span>
         </div>
-        <a class="settings-credits-author-link" href="https://github.com/reeyuki" target="_blank" rel="noopener noreferrer"><i class="fab fa-github"></i> GitHub</a>
+        <div class="settings-credits-author-links">
+          <a class="settings-credits-author-link" href="https://github.com/reeyuki" target="_blank" rel="noopener noreferrer"><i class="fab fa-github"></i> GitHub</a>
+          <a class="settings-credits-author-link" href="https://reeyuki.neocities.org" target="_blank" rel="noopener noreferrer"><i class="fas fa-globe"></i> Website</a>
+        </div>
       </div>
-      <div class="settings-credits-license">MIT Licensed</div>
+      <div class="settings-credits-license">YukiOS is MIT Licensed</div>
       <div class="settings-licenses">${items}</div>
     </div>
   `;

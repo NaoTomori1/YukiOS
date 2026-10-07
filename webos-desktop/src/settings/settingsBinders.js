@@ -7,6 +7,7 @@ import { audioMixer, SystemAudio } from "../audioMixer.js";
 import { applyTrayEnabled } from "./settingsApply.js";
 import {
   applyTheme,
+  applySound,
   applyWindowTransparency,
   applyTransparentUI,
   applyTransparencyParts,
@@ -34,11 +35,14 @@ import { buildThemeContract, sanitizeThemeContract } from "../shared/themeContra
 import { applyThemeEffects } from "../shared/themeEffects.js";
 import { openThemeCreator, refreshCustomThemesUI } from "./themeCreator.js";
 import { bindAccountsCategory } from "./accountsPanel.js";
+import { tabCloak, DEFAULT_DECOY, PANIC_PRESETS } from "../stealth/tabCloak.js";
 import { bindDisks } from "./pane-disks.js";
 import { loadStartupApps, renderStartupAppList } from "../shared/startupApps.js";
 import { taskbarPositionManager } from "../desktopui/taskbarPositionManager.js";
+import { getStoredCustomColors } from "../shared/customColorsDialog.js";
 import { applyAnimationSettings } from "../windowManager/AnimationSystem.js";
 import { getResolutionLabel } from "../resolution/resolutionManager.js";
+import { downloadPage } from "../utils/utils.js";
 export function bindNavigation(win) {
   const layout = $(".yuki-settings-layout", win);
   const navItems = $$(".yuki-settings-nav li[data-target]", win);
@@ -279,6 +283,93 @@ export function bindSystemCategory(win, save, settings, notificationCenter, show
   if (lockBtn) {
     bindEvent(lockBtn, "click", () => {
       os.app.lockSession?.();
+    });
+  }
+
+  const cloakPreset = $("#settingsCloakPreset", win);
+  if (cloakPreset) {
+    bindEvent(cloakPreset, "change", () => {
+      tabCloak().applyCloak(getSelectMenuValue("settingsCloakPreset", win) || "none");
+      showSaved();
+    });
+  }
+
+  const decoyInput = $("#settingsAboutBlankDecoy", win);
+  const aboutBlankNow = $("#settingsAboutBlankNow", win);
+  if (aboutBlankNow) {
+    bindEvent(aboutBlankNow, "click", () => {
+      const raw = decoyInput?.value?.trim() || "";
+      const decoy = raw || DEFAULT_DECOY;
+      try {
+        os.storage.set(StorageKeys.tabCloakDecoy, decoy);
+      } catch {
+        /* ignore */
+      }
+      tabCloak().openAboutBlank(decoy);
+    });
+  }
+  if (decoyInput) {
+    bindEvent(decoyInput, "change", () => {
+      try {
+        os.storage.set(StorageKeys.tabCloakDecoy, decoyInput.value.trim());
+      } catch {
+        /* ignore */
+      }
+      showSaved();
+    });
+  }
+
+  const beforeunloadToggle = $("#settingsBeforeunload", win);
+  if (beforeunloadToggle) {
+    bindEvent(beforeunloadToggle, "change", () => {
+      tabCloak().setBeforeunloadProtect(beforeunloadToggle.checked);
+      showSaved();
+    });
+  }
+
+  const autoCloakToggle = $("#settingsAutoCloakOnBoot", win);
+  if (autoCloakToggle) {
+    bindEvent(autoCloakToggle, "change", () => {
+      tabCloak().setAutoCloakOnBoot(autoCloakToggle.checked);
+      showSaved();
+    });
+  }
+
+  const panicKeyBtn = $("#settingsPanicKey", win);
+  if (panicKeyBtn) {
+    const label = panicKeyBtn.querySelector("span") || panicKeyBtn;
+    const renderKey = (code) => setText(label, code || "Not set");
+    bindEvent(panicKeyBtn, "click", () => {
+      setText(label, "Press any key…");
+      const capture = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        document.removeEventListener("keydown", capture, true);
+        tabCloak().setPanicKey(e.code || "");
+        renderKey(e.code || "");
+        showSaved();
+      };
+      document.addEventListener("keydown", capture, true);
+    });
+  }
+
+  const panicPreset = $("#settingsPanicPreset", win);
+  const panicUrlInput = $("#settingsPanicUrl", win);
+  if (panicPreset) {
+    bindEvent(panicPreset, "change", () => {
+      const val = getSelectMenuValue("settingsPanicPreset", win) || "classroom";
+      if (val !== "custom") {
+        const url = PANIC_PRESETS[val]?.url || "";
+        tabCloak().setPanicUrl(url);
+        if (panicUrlInput) panicUrlInput.value = url;
+        showSaved();
+      }
+    });
+  }
+  if (panicUrlInput) {
+    bindEvent(panicUrlInput, "change", () => {
+      tabCloak().setPanicUrl(panicUrlInput.value.trim());
+      showSaved();
     });
   }
 
@@ -584,6 +675,24 @@ export function bindDesktopCategory(win, save, settings, showSaved) {
       applyDockAnimationSpeed(val);
       showSaved();
       os.events.emit(BusEvents.SETTINGS_CHANGED, settings);
+    });
+  }
+
+  const physicsChaosBtn = $("#settingsPhysicsChaos", win);
+  if (physicsChaosBtn) {
+    const syncPhysicsChaosBtn = async () => {
+      try {
+        const mod = await import("../shared/desktopPhysics.js");
+        toggleClass(physicsChaosBtn, "active", mod.isPhysicsChaosActive());
+      } catch {}
+    };
+    syncPhysicsChaosBtn();
+    bindEvent(physicsChaosBtn, "click", async () => {
+      try {
+        const mod = await import("../shared/desktopPhysics.js");
+        mod.togglePhysicsChaos();
+        toggleClass(physicsChaosBtn, "active", mod.isPhysicsChaosActive());
+      } catch {}
     });
   }
 }
@@ -1049,6 +1158,24 @@ export function bindAppearanceCategory(
     });
   }
 
+  const uploadWallpaperBtn = $("#settingsUploadWallpaper", win);
+  if (uploadWallpaperBtn) {
+    bindEvent(uploadWallpaperBtn, "click", () => {
+      const app = os.app.getInstance("wallpaperEngineApp");
+      if (!app || typeof app.uploadAndSetWallpaper !== "function") return;
+      const input = createElement("input");
+      input.type = "file";
+      input.accept = "image/*,video/*,.gif";
+      input.onchange = async (e) => {
+        const files = e.target.files;
+        if (!files || !files.length) return;
+        await app.uploadAndSetWallpaper(files);
+        showSaved();
+      };
+      input.click();
+    });
+  }
+
   mountWallpaperEngine(win);
 
   bindCursorControls(win, settings, showSaved, normalizeCursorDataUrl);
@@ -1187,66 +1314,15 @@ function bindCursorControls(win, settings, showSaved, normalizeCursorDataUrl) {
 
 export function bindDataCategory(win, save, settings, fs, showStatus, showSaved) {
   bindEvent($("#btnExportData", win), "click", () => exportData(fs, showStatus));
+
   bindEvent($("#btnImportData", win), "click", () => importData(fs, showStatus));
+
   bindEvent($("#btnDeleteAllData", win), "click", () => deleteAllData());
 
   const downloadPageBtn = $("#settingsDownloadPageBtn", win);
 
   if (downloadPageBtn) {
-    bindEvent(downloadPageBtn, "click", async () => {
-      const u = "Reeyuki";
-      const r = "YukiOsSingleHtml";
-      const b = "main";
-      const p = "index.html";
-      const f = "";
-
-      const gitMirrors = [
-        `https://cdn.jsdelivr.net/gh/${u}/${r}@${b}/${p}${f}`,
-        `https://quantil.jsdelivr.net/gh/${u}/${r}@${b}/${p}${f}`,
-        `https://originfastly.jsdelivr.net/gh/${u}/${r}@${b}/${p}${f}`,
-        `https://gcore.jsdelivr.net/gh/${u}/${r}@${b}/${p}${f}`,
-        `https://esm.sh/gh/${u}/${r}@${b}/${p}${f}`,
-        `https://cdn.statically.io/gh/${u}/${r}@${b}/${p}${f}`,
-        `https://cdn.staticdelivr.com/gh/${u}/${r}/${b}/${p}${f}`
-      ];
-
-      let htmlContent = null;
-
-      for (const url of gitMirrors) {
-        try {
-          const res = await fetch(url + "?v=" + Date.now());
-          if (res.ok) {
-            htmlContent = await res.text();
-            break;
-          }
-        } catch (e) {}
-      }
-
-      if (!htmlContent) {
-        console.error("All sources failed.");
-        showStatus("Download failed");
-        return;
-      }
-
-      try {
-        const blob = new Blob([htmlContent], { type: "text/html" });
-        const downloadUrl = URL.createObjectURL(blob);
-
-        const link = createElement("a", {
-          attributes: { href: downloadUrl, download: "yukios.html" }
-        });
-
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-
-        URL.revokeObjectURL(downloadUrl);
-        showStatus("Download started");
-      } catch (error) {
-        console.error("Download failed:", error);
-        showStatus("Download failed");
-      }
-    });
+    bindEvent(downloadPageBtn, "click", () => downloadPage(showStatus));
   }
 
   bindEvent($("#btnResetSaved", win), "click", () => {
@@ -1586,6 +1662,24 @@ export function bindQuickSettings(win, settings, notificationCenter, showSaved) 
       applySound(enabled, settings.masterVolume);
       const other = $("#settingsSoundEnabled", win);
       if (other) other.checked = enabled;
+    });
+  }
+
+  const chaosBtn = $("#settingsQuickChaos", win);
+  if (chaosBtn) {
+    const syncChaosBtn = async () => {
+      try {
+        const mod = await import("../shared/desktopPhysics.js");
+        toggleClass(chaosBtn, "active", mod.isPhysicsChaosActive());
+      } catch {}
+    };
+    syncChaosBtn();
+    bindEvent(chaosBtn, "click", async () => {
+      try {
+        const mod = await import("../shared/desktopPhysics.js");
+        mod.togglePhysicsChaos();
+        toggleClass(chaosBtn, "active", mod.isPhysicsChaosActive());
+      } catch {}
     });
   }
 

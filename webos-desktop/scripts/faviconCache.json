@@ -286,5 +286,13 @@
     "fetchedAt": "2026-09-12T18:21:06.359Z",
     "bytes": 48950,
     "status": "cached"
+  },
+  {
+    "slug": "eaglercraft",
+    "url": "https://redflamz.github.io/Eaglercraft-Launcher/",
+    "sourceUrl": "https://redflamz.github.io/Eaglercraft-Launcher/assets/images/logo.png",
+    "fetchedAt": "2026-09-27T22:54:38.836Z",
+    "bytes": 3764,
+    "status": "ok"
   }
 ]

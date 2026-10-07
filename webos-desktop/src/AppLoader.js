@@ -51,6 +51,7 @@ import { IntroTourApp } from "./apps/introTour.js";
 import { ModeSwitcherApp } from "./apps/modeSwitcher.js";
 import { AquariumApp } from "./apps/aquarium.js";
 import { InfaredYoutubeApp } from "./apps/infraredYoutube.js";
+import { BoxedWineApp } from "./apps/boxedWine.js";
 
 const APP_CLASS_MAP = {
   terminalApp: TerminalApp,
@@ -99,11 +100,13 @@ const APP_CLASS_MAP = {
   modeSwitcherApp: ModeSwitcherApp,
   aquariumApp: AquariumApp,
   infaredYoutubeApp: InfaredYoutubeApp,
+
   lavatApp: LavatApp,
   btopApp: BtopApp,
   cmatrixApp: CmatrixApp,
   magnifierApp: MagnifierApp,
-  remoteHostApp: RemoteHostApp
+  remoteHostApp: RemoteHostApp,
+  boxedWineApp: BoxedWineApp
 };
 
 const APP_DEFINITIONS = APP_MANIFESTS.map((manifest) => {

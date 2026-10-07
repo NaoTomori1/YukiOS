@@ -19,7 +19,9 @@ import {
   renderStorePage,
   renderRequestsPanel,
   renderSocialDisabledPage,
-  openStatusPicker
+  openStatusPicker,
+  toggleFriendFavorite,
+  isFriendFavorite
 } from "./steamSocial.js";
 import { fetchFriends, fetchMessages, removeFriend, sendMessage } from "../social/friendsApi.js";
 import { $, $$, bindEvent, setText, setHTML, createElement } from "../shared/domUtils.js";
@@ -1170,15 +1172,7 @@ export class GameUI {
             <div class="friends-status"><span class="friends-status-text ${statusCls}">${statusText}</span></div>
           </div>
         </div>
-        ${
-          bannerDismissed
-            ? ""
-            : `
-        <div class="steam-friends-banner">
-          <span>Drag friends &amp; favorites here for quick access</span>
-          <button type="button" class="steam-friends-banner-gotit" data-friends-banner-close>GOT IT!</button>
-        </div>`
-        }
+        <div class="steam-friends-favorites-slot" data-friends-favorites-panel></div>
         <div class="steam-friends-head">
           <div class="steam-friends-head-row">
             <span class="steam-friends-title">FRIENDS</span>
@@ -1272,14 +1266,6 @@ export class GameUI {
         }, 220);
       });
     }
-    const bannerClose = win.querySelector("[data-friends-banner-close]");
-    if (bannerClose) {
-      bindEvent(bannerClose, "click", () => {
-        os.storage.set(StorageKeys.steamFriendsBannerDismissed, "true");
-        const banner = win.querySelector(".steam-friends-banner");
-        if (banner) banner.remove();
-      });
-    }
     const searchToggle = win.querySelector("[data-friends-search-toggle]");
     const searchWrap = win.querySelector("[data-friends-search]");
     const searchInput = win.querySelector("[data-friends-search-input]");
@@ -1362,9 +1348,16 @@ export class GameUI {
   }
 
   showFriendContextMenu(event, friend) {
+    const isFavorite = isFriendFavorite(friend.userId);
     const items = [
       { id: "friend-chat", label: "Send Message", icon: "fa-comment-dots", action: "chat" },
       { id: "friend-profile", label: "View Profile", icon: "fa-id-badge", action: "profile" },
+      {
+        id: "friend-favorite",
+        label: isFavorite ? "Remove from Favorites" : "Add to Favorites",
+        icon: "fa-star",
+        action: "favorite"
+      },
       "hr",
       { id: "friend-remove", label: "Remove Friend", icon: "fa-user-slash", action: "remove" }
     ];
@@ -1379,6 +1372,13 @@ export class GameUI {
       },
       profile: () => {
         os.app.launch("steamApp", { steamPage: "profile", steamUserId: friend.userId });
+      },
+      favorite: () => {
+        toggleFriendFavorite(friend.userId);
+        const win = $("#steam-friends-win");
+        if (!win) return;
+        const queryInput = win.querySelector("[data-friends-search-input]");
+        this.loadFriendsPanel(win, queryInput ? queryInput.value : undefined);
       },
       remove: async () => {
         const confirmed = await os.dialog.confirm(

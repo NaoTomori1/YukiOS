@@ -130,6 +130,7 @@ export const SETTINGS_GROUPS = [
     icon: "fas fa-shield-halved",
     items: [
       { id: "application-permissions", title: "Privacy & Analytics", icon: "fas fa-user-shield", pane: "pane-privacy" },
+      { id: "tab-cloak-panic", title: "Tab Cloak & Panic", icon: "fas fa-user-secret", pane: "pane-cloak" },
       { id: "recent-files", title: "Recent Files", icon: "fas fa-clock-rotate-left", pane: "pane-recent-files" }
     ]
   },

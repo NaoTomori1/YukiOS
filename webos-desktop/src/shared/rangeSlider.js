@@ -3,8 +3,13 @@ import { KeybindManager } from "../keybindManager.js";
 
 let activeSlider = null;
 
+function displayPct(clamped, min, max) {
+  const pct = ((clamped - min) / (max - min)) * 100;
+  return min > 0 ? Math.max(pct, 3) : pct;
+}
+
 export function renderRangeSlider(id, min, max, step, value, disabled = false) {
-  const pct = ((value - min) / (max - min)) * 100;
+  const pct = displayPct(value, min, max);
   return `<div class="range-slider${disabled ? " range-slider--disabled" : ""}" id="${id}" data-min="${min}" data-max="${max}" data-step="${step}" data-value="${value}" tabindex="0" role="slider" aria-valuemin="${min}" aria-valuemax="${max}" aria-valuenow="${value}">
     <div class="range-slider__track">
       <div class="range-slider__fill" style="width: ${pct}%"></div>
@@ -27,7 +32,7 @@ export function setRangeSliderValue(id, value, root = document) {
   const clamped = clampValue(value, min, max, step);
   el.dataset.value = String(clamped);
   el.setAttribute("aria-valuenow", String(clamped));
-  const pct = ((clamped - min) / (max - min)) * 100;
+  const pct = displayPct(clamped, min, max);
   const fill = $(".range-slider__fill", el);
   const thumb = $(".range-slider__thumb", el);
   if (fill) fill.style.width = `${pct}%`;
@@ -61,7 +66,7 @@ function updateSliderValue(slider, value, dispatch = true) {
   const prev = Number(slider.dataset.value);
   slider.dataset.value = String(clamped);
   slider.setAttribute("aria-valuenow", String(clamped));
-  const pct = ((clamped - min) / (max - min)) * 100;
+  const pct = displayPct(clamped, min, max);
   const fill = $(".range-slider__fill", slider);
   const thumb = $(".range-slider__thumb", slider);
   if (fill) fill.style.width = `${pct}%`;

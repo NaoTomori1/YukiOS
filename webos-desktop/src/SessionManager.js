@@ -13,11 +13,17 @@ import { taskbarPositionManager } from "./desktopui/taskbarPositionManager.js";
 import { fetchLiveStats } from "./analytics.js";
 import { liveActivityManager } from "./social/liveActivityManager.js";
 import { modeManager, MODES } from "./modeManager.js";
+import { createAdaptiveInterval, isReducedActivity } from "./shared/pollThrottle.js";
 import { applyMacSettings, disableMacSettings } from "./modes/macos/session.js";
 import { applyTilingSettings, disableTilingSettings } from "./modes/tiling/session.js";
 import { applyChromeOsSettings, disableChromeOsSettings } from "./modes/chromeos/session.js";
 import { applySteamDeckSettings, disableSteamDeckSettings } from "./modes/steamdeck/session.js";
 import { getRecentNews } from "./apps/news.js";
+import { pickLoginTip } from "./shared/loginTips.js";
+import { BOOT_ANIMATIONS, pickAnimation } from "./bootAnimations.js";
+import { runLoopingBootPreview } from "./bootScreen.js";
+import gsap from "gsap";
+import logoImg from "./assets/logo.png";
 import { setDeckBootVideoSkip } from "./modes/steamdeck/deckBootVideo.js";
 
 export class SessionManager {
@@ -42,6 +48,7 @@ export class SessionManager {
     this.boundResetIdle = this.handleActivity.bind(this);
     this.signingIn = false;
     this.onSessionComplete = null;
+    this.loginTipTimer = null;
   }
 
   ensureUserId() {
@@ -327,31 +334,39 @@ export class SessionManager {
           }
         </div>
 
+        <div class="login-tip" id="login-tip">
+          <i class="fas fa-lightbulb" aria-hidden="true"></i>
+          <span class="login-tip-text" id="login-tip-text"></span>
+          <button class="login-tip-close" id="login-tip-close" title="Dismiss tip" type="button">
+            <i class="fas fa-times" aria-hidden="true"></i>
+          </button>
+        </div>
+
         <div class="session-selector" id="session-selector">
           <div class="session-modes" id="session-modes">
             <div class="session-modes-grid">
               <button type="button" class="session-mode-btn" data-mode="reset">
-                <img src="https://cdn.jsdelivr.net/gh/PapirusDevelopmentTeam/papirus-icon-theme@master/Papirus/48x48/status/weather-snow.svg" class="papirus-icon papirus-icon--22" alt="" />
+                <img src="https://cdn.jsdelivr.net/gh/PapirusDevelopmentTeam/papirus-icon-theme@master/Papirus/48x48/status/weather-snow.svg" class="papirus-icon papirus-icon--32" alt="" />
                 <span>YukiOS</span>
               </button>
               <button type="button" class="session-mode-btn" data-mode="mac">
-                <img src="https://cdn.jsdelivr.net/gh/PapirusDevelopmentTeam/papirus-icon-theme@master/Papirus/22x22/apps/apple-music.svg" class="papirus-icon papirus-icon--22" alt="" />
+                <img src="https://cdn.jsdelivr.net/gh/PapirusDevelopmentTeam/papirus-icon-theme@master/Papirus/22x22/apps/apple-music.svg" class="papirus-icon papirus-icon--32" alt="" />
                 <span>Mac</span>
               </button>
               <button type="button" class="session-mode-btn" data-mode="chromeos">
-                <img src="https://cdn.jsdelivr.net/gh/PapirusDevelopmentTeam/papirus-icon-theme@master/Papirus/22x22/apps/google-chrome.svg" class="papirus-icon papirus-icon--22" alt="" />
+                <img src="https://cdn.jsdelivr.net/gh/PapirusDevelopmentTeam/papirus-icon-theme@master/Papirus/22x22/apps/google-chrome.svg" class="papirus-icon papirus-icon--32" alt="" />
                 <span>Chrome OS</span>
               </button>
               <button type="button" class="session-mode-btn" data-mode="tiling">
-                <img src="https://cdn.jsdelivr.net/gh/PapirusDevelopmentTeam/papirus-icon-theme@master/Papirus/22x22/actions/view-grid.svg" class="papirus-icon papirus-icon--22" alt="" />
+                <img src="https://cdn.jsdelivr.net/gh/PapirusDevelopmentTeam/papirus-icon-theme@master/Papirus/22x22/actions/view-grid.svg" class="papirus-icon papirus-icon--32" alt="" />
                 <span>Tiling</span>
               </button>
               <button type="button" class="session-mode-btn" data-mode="steamdeck">
-                <img src="https://cdn.jsdelivr.net/gh/PapirusDevelopmentTeam/papirus-icon-theme@master/Papirus/22x22/apps/steam.svg" class="papirus-icon papirus-icon--22" alt="" />
+                <img src="https://cdn.jsdelivr.net/gh/PapirusDevelopmentTeam/papirus-icon-theme@master/Papirus/22x22/apps/steam.svg" class="papirus-icon papirus-icon--32" alt="" />
                 <span>Deck</span>
               </button>
               <button type="button" class="session-mode-btn" data-mode="3d">
-                <img src="https://cdn.jsdelivr.net/gh/PapirusDevelopmentTeam/papirus-icon-theme@master/Papirus/22x22/apps/kjumpingcube.svg" class="papirus-icon papirus-icon--22" alt="" />
+                <img src="https://cdn.jsdelivr.net/gh/PapirusDevelopmentTeam/papirus-icon-theme@master/Papirus/22x22/apps/kjumpingcube.svg" class="papirus-icon papirus-icon--32" alt="" />
                 <span>3D Fps Game</span>
               </button>
             </div>
@@ -407,6 +422,10 @@ export class SessionManager {
             </button>
           </div>
           <div class="modal-body">
+            <div class="settings-card">
+              <div class="settings-card-header"><img src="https://cdn.jsdelivr.net/gh/PapirusDevelopmentTeam/papirus-icon-theme@master/Papirus/22x22/actions/media-playback-start.svg" class="papirus-icon papirus-icon--22" alt="" /> Boot Animation</div>
+              <div class="boot-anim-grid" id="boot-anim-grid"></div>
+            </div>
             <div class="settings-card">
               <div class="settings-card-header"><img src="https://cdn.jsdelivr.net/gh/PapirusDevelopmentTeam/papirus-icon-theme@master/Papirus/22x22/apps/preferences-system-time.svg" class="papirus-icon papirus-icon--22" alt="" /> Clock</div>
               <div class="settings-row">
@@ -653,6 +672,7 @@ export class SessionManager {
     };
     setDeckBootVideoSkip(false);
     await this.initializeSession();
+    this.stopLoginTips();
     this.container.classList.add("exit");
     await new Promise((resolve) => setTimeout(resolve, 500));
     this.container.remove();
@@ -745,6 +765,7 @@ export class SessionManager {
 
   startUptimeCounter() {
     this.uptimeInterval = setInterval(() => {
+      if (isReducedActivity()) return;
       if (!this.container) {
         clearInterval(this.uptimeInterval);
         return;
@@ -821,23 +842,58 @@ export class SessionManager {
     if (!container) return;
 
     const gearBtn = container.querySelector("#session-settings-btn");
+    if (!gearBtn) return;
+    gearBtn.addEventListener("click", () => this.openSettingsModal());
+
     const modal = container.querySelector("#session-settings-modal");
-    if (!gearBtn || !modal) return;
+    if (modal) this.bindSettingsModalEvents(modal);
+  }
 
-    const openModal = () => {
-      modal.classList.add("open");
-      this.syncSettingsUI();
+  openSettingsModal() {
+    const container = this.container;
+    if (!container) return;
+    let modal = container.querySelector("#session-settings-modal");
+    if (!modal) {
+      modal = this.settingsModalEl;
+      if (!modal) return;
+      container.appendChild(modal);
+    }
+    modal.classList.add("open");
+    this.renderBootAnimGrid(modal);
+    this.syncSettingsUI();
+    this.settingsModalEscHandler = (e) => {
+      if (e.key === "Escape") this.closeSettingsModal();
     };
-    const closeModal = () => {
-      modal.classList.remove("open");
-    };
+    document.addEventListener("keydown", this.settingsModalEscHandler, true);
+  }
 
-    gearBtn.addEventListener("click", openModal);
+  closeSettingsModal() {
+    const modal = this.container?.querySelector("#session-settings-modal");
+    this.destroyBootAnimPreviews(modal);
+    if (this.settingsModalEscHandler) {
+      document.removeEventListener("keydown", this.settingsModalEscHandler, true);
+      this.settingsModalEscHandler = null;
+    }
+    if (!modal) return;
+    modal.classList.remove("open");
+    this.settingsModalEl = modal;
+    modal.remove();
+  }
+
+  destroyBootAnimPreviews(modal) {
+    if (this.bootMiniTls) this.bootMiniTls.forEach((tl) => tl.kill && tl.kill());
+    this.bootMiniTls = [];
+    const grid = modal?.querySelector("#boot-anim-grid");
+    if (grid) grid.innerHTML = "";
+  }
+
+  bindSettingsModalEvents(modal) {
+    const container = this.container;
 
     const closeBtn = modal.querySelector("#session-settings-close");
-    if (closeBtn) closeBtn.addEventListener("click", closeModal);
+    if (closeBtn) closeBtn.addEventListener("click", () => this.closeSettingsModal());
     modal.addEventListener("click", (e) => {
-      if (e.target === modal) closeModal();
+      if (e.target === modal) this.closeSettingsModal();
     });
 
     ["data-clock-12h", "data-clock-24h"].forEach((attr) => {
@@ -890,6 +946,69 @@ export class SessionManager {
     }
   }
 
+  renderBootAnimGrid(modal) {
+    const grid = modal.querySelector("#boot-anim-grid");
+    if (!grid) return;
+    if (this.bootMiniTls) this.bootMiniTls.forEach((tl) => tl.kill && tl.kill());
+    this.bootMiniTls = [];
+    const savedId = os.storage.get(StorageKeys.selectedBootAnimation) || "";
+    const brandLetters = "YukiOS"
+      .split("")
+      .map((ch) => `<span class="boot-letter">${ch}</span>`)
+      .join("");
+    const miniStage = `
+      <div class="boot-mini-stage">
+        <div class="boot-logo-wrap">
+          <img class="boot-logo" src="${logoImg}" alt="" />
+          <div class="boot-brand">${brandLetters}</div>
+          <div class="boot-version">preview</div>
+        </div>
+      </div>`;
+    const tiles = [{ id: "", label: "Random" }, ...BOOT_ANIMATIONS.map((a) => ({ id: a.id, label: a.label }))];
+    grid.innerHTML = tiles
+      .map(
+        (t) => `
+        <button type="button" class="boot-anim-tile${t.id === savedId || (!t.id && !savedId) ? " active" : ""}" data-boot-anim="${t.id}">
+          ${t.id ? miniStage : `<div class="boot-mini-stage boot-mini-random"><span class="boot-letter">?</span></div>`}
+          <span class="boot-anim-name">${t.label}</span>
+          <span class="boot-anim-hint">Preview and apply</span>
+        </button>`
+      )
+      .join("");
+    grid.querySelectorAll("[data-boot-anim]").forEach((tile) => {
+      const id = tile.dataset.bootAnim;
+      if (id) {
+        const anim = BOOT_ANIMATIONS.find((a) => a.id === id);
+        const stage = tile.querySelector(".boot-mini-stage");
+        if (anim && stage) {
+          try {
+            const extEls = anim.createExtra ? anim.createExtra(stage) || {} : {};
+            const els = {
+              overlay: stage,
+              container: stage.querySelector(".boot-logo-wrap"),
+              logo: stage.querySelector(".boot-logo"),
+              letters: Array.from(stage.querySelectorAll(".boot-letter")),
+              version: stage.querySelector(".boot-version"),
+              extEls
+            };
+            anim.setup(els);
+            const loop = gsap.timeline({ repeat: -1, repeatDelay: 0.9, onRepeat: () => anim.setup(els) });
+            anim.show(loop, els);
+            this.bootMiniTls.push(loop);
+          } catch {}
+        }
+      }
+      tile.addEventListener("click", () => {
+        if (id) os.storage.set(StorageKeys.selectedBootAnimation, id);
+        else os.storage.remove(StorageKeys.selectedBootAnimation);
+        grid.querySelectorAll("[data-boot-anim]").forEach((el) => {
+          el.classList.toggle("active", el.dataset.bootAnim === id);
+        });
+        runLoopingBootPreview(pickAnimation(id || undefined));
+      });
+    });
+  }
+
   syncSettingsUI() {
     const modal = this.container?.querySelector("#session-settings-modal");
     if (!modal) return;
@@ -913,6 +1032,10 @@ export class SessionManager {
     if (socialCb) socialCb.checked = prefs.showSocial;
     const bannerCb = modal.querySelector("[data-banner-toggle]");
     if (bannerCb) bannerCb.checked = prefs.showBanner;
+    const savedId = os.storage.get(StorageKeys.selectedBootAnimation) || "";
+    modal.querySelectorAll("[data-boot-anim]").forEach((el) => {
+      el.classList.toggle("active", el.dataset.bootAnim === savedId);
+    });
   }
 
   formatUptime(ms) {
@@ -967,9 +1090,14 @@ export class SessionManager {
   }
 
   startOnlineUsersPolling() {
-    this.onlineUsersInterval = setInterval(() => {
-      this.fetchOnlineUsersCount();
-    }, 60000);
+    if (this.onlineUsersStop) this.onlineUsersStop();
+    this.onlineUsersStop = createAdaptiveInterval(
+      () => {
+        this.fetchOnlineUsersCount();
+      },
+      60000,
+      300000
+    );
   }
 
   async loadSessionActivity() {
@@ -989,9 +1117,14 @@ export class SessionManager {
   }
 
   startSessionActivityPolling() {
-    this.sessionActivityInterval = setInterval(() => {
-      this.loadSessionActivity();
-    }, 60000);
+    if (this.sessionActivityStop) this.sessionActivityStop();
+    this.sessionActivityStop = createAdaptiveInterval(
+      () => {
+        this.loadSessionActivity();
+      },
+      60000,
+      300000
+    );
   }
 
   disableContextMenu() {
@@ -1152,6 +1285,66 @@ export class SessionManager {
 
     this.keyboardHandler = (e) => this.handleKeyboardNav(e, handleAction);
     document.addEventListener("keydown", this.keyboardHandler);
+    this.startLoginTips();
+  }
+
+  startLoginTips() {
+    try {
+      this.stopLoginTips();
+      const tipText = this.container ? this.container.querySelector("#login-tip-text") : null;
+      const tipBox = this.container ? this.container.querySelector("#login-tip") : null;
+      if (!tipText || !tipBox) return;
+      const tipClose = this.container.querySelector("#login-tip-close");
+      if (tipClose) {
+        tipClose.addEventListener("click", (e) => {
+          e.stopPropagation();
+          this.dismissLoginTip();
+        });
+      }
+      tipBox.addEventListener("dblclick", (e) => {
+        e.stopPropagation();
+        showTip();
+        this.stopLoginTips();
+      });
+      const showTip = () => {
+        const tip = pickLoginTip();
+        tipText.classList.remove("login-tip-enter");
+        void tipText.offsetWidth;
+        tipText.textContent = "";
+        if (typeof tip === "string") {
+          tipText.textContent = tip;
+        } else {
+          tipText.textContent = tip.text + " ";
+          const link = createElement("a");
+          link.href = tip.linkUrl;
+          link.target = "_blank";
+          link.rel = "noopener";
+          link.className = "login-tip-link";
+          link.textContent = tip.linkLabel;
+          tipText.append(link);
+        }
+        tipText.classList.add("login-tip-enter");
+      };
+      showTip();
+      this.loginTipTimer = setInterval(showTip, 8000);
+    } catch {}
+  }
+
+  stopLoginTips() {
+    try {
+      if (this.loginTipTimer) {
+        clearInterval(this.loginTipTimer);
+        this.loginTipTimer = null;
+      }
+    } catch {}
+  }
+
+  dismissLoginTip() {
+    try {
+      this.stopLoginTips();
+      const tipBox = this.container ? this.container.querySelector("#login-tip") : null;
+      if (tipBox) tipBox.classList.add("login-tip-hidden");
+    } catch {}
   }
 
   async handleElectronDownload() {
@@ -1465,6 +1658,7 @@ export class SessionManager {
   unlockSession() {
     if (!this.isLocked) return;
     this.isLocked = false;
+    this.stopLoginTips();
 
     if (this.container) {
       this.container.classList.add("exit");

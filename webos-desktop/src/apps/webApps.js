@@ -12,7 +12,9 @@ APP_MANIFESTS.forEach((manifest) => {
       targetUrl: manifest.targetUrl,
       appIcon: manifest.icon,
       windowSize: manifest.windowSize || ["90vw", "85vh"],
-      trayOptions: manifest.trayOptions || null
+      trayOptions: manifest.trayOptions || null,
+      musicUrl: manifest.musicUrl || null,
+      startMaximized: manifest.startMaximized || false
     });
   }
 });

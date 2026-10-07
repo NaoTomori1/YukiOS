@@ -1,3 +1,4 @@
+import { getLibraryUrl } from "../shared/cdnConfig.js";
 let containerInstance = null;
 let bootPromise = null;
 let fallbackMode = false;
@@ -12,6 +13,11 @@ async function tryBootWebContainer() {
     return null;
   }
   try {
+    if (__SINGLE_FILE__) {
+      const { WebContainer } = await import(/* @vite-ignore */ getLibraryUrl("webcontainer"));
+      const instance = await WebContainer.boot();
+      return instance;
+    }
     const { WebContainer } = await import("@webcontainer/api");
     const instance = await WebContainer.boot();
     return instance;

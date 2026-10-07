@@ -256,6 +256,65 @@ export function downloadBlob(blob, filename) {
   URL.revokeObjectURL(url);
 }
 
+export async function downloadPage(showStatus) {
+  const u = "Reeyuki";
+  const r = "YukiOsSingleHtml";
+  const b = "main";
+  const p = "index.html";
+  const f = "";
+
+  const gitMirrors = [
+    `https://cdn.jsdelivr.net/gh/${u}/${r}@${b}/${p}${f}`,
+    `https://quantil.jsdelivr.net/gh/${u}/${r}@${b}/${p}${f}`,
+    `https://originfastly.jsdelivr.net/gh/${u}/${r}@${b}/${p}${f}`,
+    `https://gcore.jsdelivr.net/gh/${u}/${r}@${b}/${p}${f}`,
+    `https://esm.sh/gh/${u}/${r}@${b}/${p}${f}`,
+    `https://cdn.statically.io/gh/${u}/${r}@${b}/${p}${f}`,
+    `https://cdn.staticdelivr.com/gh/${u}/${r}/${b}/${p}${f}`
+  ];
+
+  let htmlContent = null;
+
+  for (const url of gitMirrors) {
+    try {
+      const res = await fetch(url + "?v=" + Date.now());
+
+      if (res.ok) {
+        htmlContent = await res.text();
+        break;
+      }
+    } catch (e) {}
+  }
+
+  if (!htmlContent) {
+    console.error("All sources failed.");
+    showStatus("Download failed");
+    return;
+  }
+
+  try {
+    const blob = new Blob([htmlContent], { type: "text/html" });
+    const downloadUrl = URL.createObjectURL(blob);
+
+    const link = createElement("a", {
+      attributes: {
+        href: downloadUrl,
+        download: "yukios.html"
+      }
+    });
+
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    URL.revokeObjectURL(downloadUrl);
+    showStatus("Download started");
+  } catch (error) {
+    console.error("Download failed:", error);
+    showStatus("Download failed");
+  }
+}
+
 export function base64ToBlob(dataUrl) {
   const [meta, b64] = dataUrl.split(",");
   const mimeMatch = meta.match(/data:([^;]+)/);

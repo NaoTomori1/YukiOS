@@ -3,7 +3,9 @@ import { os, MODES } from "./framework.js";
 import { audioMixer } from "./audioMixer.js";
 import { isTaskbarTop } from "./utils/utils.js";
 import { getTrayPosition } from "./tray/tray.js";
+import { createTrayPinButton, setTrayPinState } from "./shared/trayPin.js";
 import { BusEvents } from "./core/EventBus.js";
+import { createAdaptiveInterval } from "./shared/pollThrottle.js";
 import "./styles/mediaPlayer.css";
 
 const TRAY_WIN_ID = "media-player-tray";
@@ -75,12 +77,16 @@ class MediaPlayerTray {
     this.mediaDurationHandler = null;
     this.windowClosedHandler = null;
     this.clickOutsideHandler = null;
+    this.progressTimer = null;
+    this.lastMeta = null;
+    this.isSeeking = false;
+    this.pendingPct = null;
   }
 
   init() {
     this.createPanel();
     this.attachListeners();
-    this.interval = setInterval(() => this.reconcile(), 1000);
+    this.stopReconcile = createAdaptiveInterval(() => this.reconcile(), 1000, 5000);
   }
 
   attachListeners() {
@@ -155,6 +161,7 @@ class MediaPlayerTray {
     if (this.windowClosedHandler) os.events.off(BusEvents.WINDOW_CLOSED, this.windowClosedHandler);
     if (this.clickOutsideHandler) document.removeEventListener("click", this.clickOutsideHandler);
     if (this.interval) clearInterval(this.interval);
+    this.stopProgressTimer();
     this.unregisterTray();
     if (this.panel) this.panel.remove();
   }
@@ -240,13 +247,21 @@ class MediaPlayerTray {
     }
   }
 
+  getLiveChannel(winId) {
+    try {
+      return audioMixer().channels.get(winId) || this.metadataSources.get(winId) || null;
+    } catch {
+      return null;
+    }
+  }
+
   getActiveSource() {
     if (this.activeType === "element" && this.activeId) {
       const s = this.mediaSources.get(this.activeId);
       if (s) return { type: "element", winId: this.activeId, element: s.element };
     }
     if (this.activeType === "metadata" && this.activeId) {
-      const ch = this.metadataSources.get(this.activeId);
+      const ch = this.getLiveChannel(this.activeId);
       if (ch) return { type: "metadata", winId: this.activeId, channel: ch };
     }
     const elEntry = this.mediaSources.entries().next().value;
@@ -259,7 +274,7 @@ class MediaPlayerTray {
     if (metaEntry) {
       this.activeType = "metadata";
       this.activeId = metaEntry[0];
-      return { type: "metadata", winId: metaEntry[0], channel: metaEntry[1] };
+      return { type: "metadata", winId: metaEntry[0], channel: this.getLiveChannel(metaEntry[0]) || metaEntry[1] };
     }
     return null;
   }
@@ -309,9 +324,10 @@ class MediaPlayerTray {
           <i class="fas fa-chevron-left"></i>
         </button>
         <span class="mp-title"><i class="fas fa-circle-play"></i><span>Media Player</span></span>
-        <button class="mp-icon-btn mp-pin" title="Pin">
+        <button class="mp-icon-btn tray-pin-btn" title="Pin">
           <i class="fas fa-thumbtack"></i>
         </button>
+        <button class="mp-icon-btn mp-close" title="Close"><i class="fas fa-times"></i></button>
       </div>
       <div class="mp-artwork">
         <img class="mp-artwork-img" alt="">
@@ -326,7 +342,6 @@ class MediaPlayerTray {
       <div class="mp-progress">
         <span class="mp-time mp-elapsed">0:00</span>
         <div class="mp-seek-wrap">
-          <div class="mp-seek-fill"></div>
           <input type="range" class="mp-seek" min="0" max="1000" value="0">
         </div>
         <span class="mp-time mp-remaining">0:00</span>
@@ -342,8 +357,35 @@ class MediaPlayerTray {
     document.body.appendChild(this.panel);
 
     this.panel.querySelector(".mp-collapse").addEventListener("click", () => this.close());
-    this.panel.querySelector(".mp-pin").addEventListener("click", () => this.togglePin());
-    this.panel.querySelector(".mp-seek").addEventListener("input", (e) => this.handleSeek(e));
+    this.panel.querySelector(".mp-close").addEventListener("click", () => this.close());
+    this.panel.querySelector(".tray-pin-btn").addEventListener("click", () => this.togglePin());
+    const seekEl = this.panel.querySelector(".mp-seek");
+    seekEl.addEventListener("pointerdown", () => {
+      this.isSeeking = true;
+    });
+    seekEl.addEventListener("input", (e) => {
+      const pct = Math.min(1, Math.max(0, parseInt(e.target.value, 10) / 1000));
+      if (!Number.isFinite(pct)) return;
+      this.isSeeking = true;
+      this.pendingPct = pct;
+      const src = this.getActiveSource();
+      if (!src) return;
+      if (src.type === "element") {
+        const dur = Number(src.element.duration) || 0;
+        if (!(dur > 0)) return;
+        setText(this.panel.querySelector(".mp-elapsed"), formatTime(pct * dur));
+        setText(this.panel.querySelector(".mp-remaining"), `-${formatTime(Math.max(0, dur - pct * dur))}`);
+        e.target.style.setProperty("--p", `${pct * 100}%`);
+        return;
+      }
+      const live = this.getLiveChannel(src.winId) || src.channel;
+      const dur = Number(live?.nowPlaying?.duration) || 0;
+      if (!(dur > 0)) return;
+      setText(this.panel.querySelector(".mp-elapsed"), formatTime(pct * dur));
+      setText(this.panel.querySelector(".mp-remaining"), `-${formatTime(Math.max(0, dur - pct * dur))}`);
+      e.target.style.setProperty("--p", `${pct * 100}%`);
+    });
+    seekEl.addEventListener("change", (e) => this.handleSeek(e));
     this.panel.querySelector(".mp-repeat").addEventListener("click", (e) => this.toggleRepeat(e));
     this.panel.querySelector(".mp-prev").addEventListener("click", (e) => this.sendControl(e, "prev"));
     this.panel.querySelector(".mp-next").addEventListener("click", (e) => this.sendControl(e, "next"));
@@ -353,16 +395,41 @@ class MediaPlayerTray {
 
   togglePin() {
     this.pinned = !this.pinned;
-    this.panel.classList.toggle("mp-pinned", this.pinned);
-    this.panel.querySelector(".mp-pin").title = this.pinned ? "Unpin" : "Pin";
+    setTrayPinState(this.panel, this.panel.querySelector(".tray-pin-btn"), this.pinned);
   }
 
   handleSeek(e) {
     const src = this.getActiveSource();
-    if (!src || src.type !== "element" || !Number.isFinite(src.element.duration)) return;
-    const pct = parseInt(e.target.value) / 1000;
-    src.element.currentTime = pct * src.element.duration;
-    this.updateProgress();
+    if (!src) {
+      this.isSeeking = false;
+      this.pendingPct = null;
+      return;
+    }
+    let pct = this.pendingPct;
+    if (!Number.isFinite(pct)) pct = Math.min(1, Math.max(0, parseInt(e.target.value, 10) / 1000));
+    this.isSeeking = false;
+    this.pendingPct = null;
+    if (!Number.isFinite(pct)) return;
+    if (src.type === "element") {
+      if (!Number.isFinite(src.element.duration)) return;
+      src.element.currentTime = pct * src.element.duration;
+      this.updateProgress();
+      return;
+    }
+    const live = this.getLiveChannel(src.winId) || src.channel;
+    const dur = Number(live?.nowPlaying?.duration) || 0;
+    if (!(dur > 0)) {
+      return;
+    }
+    if (live?.sendCommand) {
+      try {
+        live.sendCommand("seek", { position: pct * dur });
+      } catch {
+        void 0;
+      }
+      this.lastMeta = { pos: pct * dur, dur, playing: live?.nowPlaying?.playbackState === "playing", at: Date.now() };
+      this.updateProgress();
+    }
   }
 
   toggleRepeat(e) {
@@ -411,18 +478,21 @@ class MediaPlayerTray {
         }
       }
       this.updatePlayState();
-    } else if (src.channel && src.channel.sendCommand) {
-      const cmd =
-        kind === "playpause"
-          ? src.channel.nowPlaying?.playbackState === "playing"
-            ? "pause"
-            : "play"
-          : kind === "prev"
-            ? "previoustrack"
-            : kind === "next"
-              ? "nexttrack"
-              : null;
-      if (cmd) src.channel.sendCommand(cmd);
+    } else {
+      const live = this.getLiveChannel(this.activeId) || src.channel;
+      if (live && live.sendCommand) {
+        const cmd =
+          kind === "playpause"
+            ? live.nowPlaying?.playbackState === "playing"
+              ? "pause"
+              : "play"
+            : kind === "prev"
+              ? "previoustrack"
+              : kind === "next"
+                ? "nexttrack"
+                : null;
+        if (cmd) live.sendCommand(cmd);
+      }
     }
   }
 
@@ -450,28 +520,94 @@ class MediaPlayerTray {
   updateProgress() {
     if (!this.panel || !this.isOpen) return;
     const src = this.getActiveSource();
-    if (!src || src.type !== "element") return;
-    const el = src.element;
+    if (!src) return;
     const elapsedEl = this.panel.querySelector(".mp-elapsed");
     const remainingEl = this.panel.querySelector(".mp-remaining");
     const seekEl = this.panel.querySelector(".mp-seek");
-    const fillEl = this.panel.querySelector(".mp-seek-fill");
     const progressEl = this.panel.querySelector(".mp-progress");
-    if (!seekEl || !fillEl) return;
+    if (!seekEl) return;
 
+    if (src.type === "metadata") {
+      const np = src.channel?.nowPlaying || {};
+      const dur = Number(np.duration) || 0;
+      const pos = Number(np.position) || 0;
+      if (!this.isSeeking) this.lastMeta = { pos, dur, playing: np.playbackState === "playing", at: Date.now() };
+      if (dur > 0) {
+        setText(
+          elapsedEl,
+          formatTime(this.isSeeking && Number.isFinite(this.pendingPct) ? this.pendingPct * dur : pos)
+        );
+        setText(
+          remainingEl,
+          `-${formatTime(Math.max(0, dur - (this.isSeeking && Number.isFinite(this.pendingPct) ? this.pendingPct * dur : pos)))}`
+        );
+        seekEl.disabled = false;
+        if (!this.isSeeking) {
+          seekEl.value = Math.round(Math.min(1, pos / dur) * 1000);
+          seekEl.style.setProperty("--p", `${Math.min(100, (pos / dur) * 100)}%`);
+        }
+        progressEl.classList.remove("mp-live");
+      } else {
+        setText(elapsedEl, formatTime(0));
+        setText(remainingEl, formatTime(0));
+        if (!this.isSeeking) {
+          seekEl.disabled = true;
+          seekEl.value = 0;
+          seekEl.style.setProperty("--p", "0%");
+        }
+        progressEl.classList.remove("mp-live");
+      }
+      return;
+    }
+    const el = src.element;
     const finite = Number.isFinite(el.duration) && el.duration > 0;
+    if (this.isSeeking) return;
     setText(elapsedEl, formatTime(el.currentTime));
     if (finite) {
       setText(remainingEl, `-${formatTime(el.duration - el.currentTime)}`);
       const pct = Math.min(100, (el.currentTime / el.duration) * 100);
       seekEl.value = Math.round((el.currentTime / el.duration) * 1000);
-      fillEl.style.width = `${pct}%`;
+      seekEl.style.setProperty("--p", `${pct}%`);
     } else {
       setText(remainingEl, "Live");
       seekEl.disabled = true;
-      fillEl.style.width = "0%";
+      seekEl.style.setProperty("--p", "0%");
     }
     progressEl.classList.toggle("mp-live", !finite);
+  }
+
+  startProgressTimer() {
+    if (this.progressTimer) return;
+    this.progressTimer = setInterval(() => {
+      if (!this.isOpen) return;
+      if (this.isSeeking) {
+        return;
+      }
+      const src = this.getActiveSource();
+      if (!src) return;
+      if (src.type === "element") {
+        this.updateProgress();
+        return;
+      }
+      const meta = this.lastMeta;
+      if (!meta || !meta.playing || !(meta.dur > 0)) return;
+      const pos = Math.min(meta.dur, meta.pos + (Date.now() - meta.at) / 1000);
+      const elapsedEl = this.panel.querySelector(".mp-elapsed");
+      const remainingEl = this.panel.querySelector(".mp-remaining");
+      const seekEl = this.panel.querySelector(".mp-seek");
+      if (!seekEl) return;
+      setText(elapsedEl, formatTime(pos));
+      setText(remainingEl, `-${formatTime(Math.max(0, meta.dur - pos))}`);
+      seekEl.value = Math.round(Math.min(1, pos / meta.dur) * 1000);
+      seekEl.style.setProperty("--p", `${Math.min(100, (pos / meta.dur) * 100)}%`);
+    }, 500);
+  }
+
+  stopProgressTimer() {
+    if (this.progressTimer) {
+      clearInterval(this.progressTimer);
+      this.progressTimer = null;
+    }
   }
 
   open() {
@@ -488,6 +624,7 @@ class MediaPlayerTray {
     this.panel.classList.remove("closing");
     this.panel.classList.toggle("mp-metadata-mode", src.type === "metadata");
     this.panel.style.display = "flex";
+    this.startProgressTimer();
     const btn = $(`[data-win-id="${TRAY_WIN_ID}"]`);
     if (btn) btn.classList.add("active");
     this.positionPanel();
@@ -495,6 +632,9 @@ class MediaPlayerTray {
 
   close() {
     if (!this.panel) return;
+    this.isSeeking = false;
+    this.pendingPct = null;
+    this.stopProgressTimer();
     this.isOpen = false;
     this.panel.classList.add("closing");
     const btn = $(`[data-win-id="${TRAY_WIN_ID}"]`);
@@ -510,6 +650,7 @@ class MediaPlayerTray {
   }
 
   reactivate() {
+    if (this.isSeeking) return;
     const src = this.getActiveSource();
     if (src && this.panel && this.isOpen) {
       this.renderActive(src);
@@ -546,8 +687,9 @@ class MediaPlayerTray {
       sourceEl.style.display = "";
       setText(qualityEl, "");
       qualityEl.style.display = "none";
-      progressEl.style.display = "none";
+      progressEl.style.display = "";
       this.updatePlayState();
+      this.updateProgress();
       return;
     }
 

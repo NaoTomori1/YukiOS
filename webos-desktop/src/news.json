@@ -1,12 +1,260 @@
 [
   {
+    "date": "October 7, 2026",
+    "label": "YukiOS V5.0.0",
+    "sections": [
+      {
+        "icon": "fa-gamepad",
+        "title": "New Games Added",
+        "items": [
+          [
+            "fa-gamepad",
+            "New Games",
+            "Added Lethal Company, Rimworld, Azerun(Wow), Horo Knight3D, Goober Dash, EaglerCraft, LolBeans, Gamble With Your Friends, Into Space 1, Into Space 2, Into Space 3, I Wanna Be The Guy, Knife Hit, La Madriguera, Lethal Ape, Machine Party, My Talking Baby Hippo, Portal 2, SCP Secret Laboratory, Shrimp.io, Skribbl.io, Webdashers, Windowkill, Worlds Hardest Game 4, Apotheon, Black Hole Fishing, Celeste, Celeste 3D, Celeste 64, Call of Duty 4, Endacopia, Endoparasitic and Endoparasitic 2."
+          ],
+          ["fa-bomb", "SpriteFusion Destroy", "Smash sprites while battle music loops in the background."]
+        ]
+      },
+      {
+        "icon": "fa-cubes",
+        "title": "Eaglercraft Launcher",
+        "items": [
+          ["fa-gamepad", "Play Minecraft in Browser", "Launch Eaglercraft versions and mods from your desktop."]
+        ]
+      },
+      {
+        "icon": "fa-globe",
+        "title": "New Web Apps",
+        "items": [
+          [
+            "fa-earth-americas",
+            "GeoGuessr + Chess.com",
+            "Guess real-world locations from street views, play chess online, solve puzzles, and compete globally."
+          ],
+          ["fa-wine-glass", "BoxedWine", "Run 16 and 32 bit Windows EXE files."]
+        ]
+      },
+      {
+        "icon": "fa-globe",
+        "title": "Browser Fixed",
+        "items": [["fa-check-circle", "Pages Load Reliably", "Proxied pages and navigation work every time."]]
+      },
+      {
+        "icon": "fa-burst",
+        "title": "Desktop Physics Chaos",
+        "items": [["fa-keyboard", "Gravity Shortcut", "Press Alt+G to drop every icon and window with gravity."]]
+      },
+      {
+        "icon": "fa-user-secret",
+        "title": "Tab Cloak",
+        "items": [
+          ["fa-mask", "Tab Cloaker", "Disguise your tab with Google Classroom or custom titles and icons."],
+          [
+            "fa-shield-halved",
+            "Automatic Boot Stealth",
+            "Launch YukiOS in a clean about:blank tab automatically on boot."
+          ],
+          ["fa-bolt", "Panic Key Escape", "Tap one key or send the original tab to your chosen decoy page."],
+          ["fa-lock", "Block Accidental Close", "Require confirmation before closing your session."]
+        ]
+      },
+
+      {
+        "icon": "fa-folder-open",
+        "title": "Explorer Tabs, Split and Drag and Drop",
+        "items": [
+          ["fa-plus", "Tabbed Browsing", "Open folders in tabs and switch between them."],
+          ["fa-columns", "Split View", "Show two folders side by side at once."],
+          ["fa-keyboard", "Tab Shortcuts", "Find every tab shortcut under Desktop and Explorer Shortcuts."],
+          ["fa-folder-open", "Drop Into Folders", "Drag files onto folders to move them inside."],
+          ["fa-star", "Drop Onto Quick Access", "Drag files onto sidebar places to move them there."],
+          ["fa-trash", "Drop Onto Trash", "Drag files onto Trash to discard them."],
+          ["fa-copy", "Hold Ctrl To Copy", "Hold Ctrl while dropping to copy instead of moving."]
+        ]
+      },
+      {
+        "icon": "fa-columns",
+        "title": "Browser Tabs",
+        "items": [
+          [
+            "fa-table-columns",
+            "Unified Split Tabs",
+            "Split view now shows both pages in a single tab with dual titles."
+          ],
+          ["fa-spinner", "Independent Split Loading", "Navigating one split panel no longer freezes the other panel."],
+          ["fa-arrows-left-right", "Scroll to Switch Tabs", "Hover the tab strip and scroll to flip tabs."]
+        ]
+      },
+      {
+        "icon": "fa-keyboard",
+        "title": "Desktop and Explorer Shortcuts",
+        "items": [
+          ["fa-rectangle-list", "Ctrl+A Desktop Selection", "Press Ctrl+A to select all desktop icons at once."],
+          ["fa-plus", "New Explorer Tab", "Press Ctrl+Alt+T to open a fresh Explorer tab."],
+          ["fa-times", "Close Explorer Tab", "Press Alt+W to close the active tab."],
+          ["fa-arrow-right", "Cycle Explorer Tabs", "Press Ctrl+PageUp or Ctrl+PageDown to move between tabs."],
+          ["fa-columns", "Split View Toggle", "Press Ctrl+Shift+D to show two folders side by side."],
+          ["fa-clone", "Jump to Tab by Number", "Press Alt plus 1 through 9 to jump straight there."]
+        ]
+      },
+      {
+        "icon": "fa-shield-halved",
+        "title": "Browser Improvements",
+        "items": [
+          ["fa-ban", "SW-Level Ad Blocker", "Block ads and trackers on proxied pages before they ever load."],
+          ["fa-laptop-code", "User-Agent Spoofing", "Switch browser user-agents across desktop and mobile presets."]
+        ]
+      },
+      {
+        "icon": "fa-image",
+        "title": "AI Image Generation Mode",
+        "items": [
+          [
+            "fa-wand-magic-sparkles",
+            "Pollinations AI Integrationfor ai assistant",
+            "Generate images directly from your text prompts in ai assistant app.."
+          ]
+        ]
+      },
+      {
+        "icon": "fa-window-restore",
+        "title": "Popup Windows Stay Inside",
+        "items": [
+          ["fa-external-link-alt", "Links Open as Windows", "External app links open as titled YukiOS windows."],
+          ["fa-clone", "Titled App Sub Windows", "Popups carry the parent app name automatically."]
+        ]
+      },
+      {
+        "icon": "fa-user-friends",
+        "title": "Friend Favorites",
+        "items": [["fa-hand-pointer", "Drag to Favorites", "Drag friends into the favorites strip for quick access."]]
+      },
+      {
+        "icon": "fa-circle-play",
+        "title": "Shittify Media Support",
+        "items": [["fa-sliders-h", "Seek Shittify Tracks", "Scrub Shittify tracks from the Media Player."]]
+      },
+      {
+        "icon": "fa-thumbtack",
+        "title": "Pin Every Tray Panel",
+        "items": [
+          ["fa-thumbtack", "Pin Any Popup", "Pin audio, network, clipboard, calendar and notification panels open."]
+        ]
+      },
+      {
+        "icon": "fa-window-maximize",
+        "title": "Cleaner Dialogs",
+        "items": [
+          ["fa-expand", "Bigger Clearer Dialogs", "Read and complete Explorer prompts with ease."],
+          ["fa-i-cursor", "Selectable Dialog Text", "Copy messages and filenames directly from prompts."]
+        ]
+      },
+      {
+        "icon": "fa-file-export",
+        "title": "Explorer Quick Convert",
+        "items": [
+          [
+            "fa-wand-magic-sparkles",
+            "Convert From Right Click",
+            "Convert files directly from Explorer and desktop menus."
+          ]
+        ]
+      },
+      {
+        "icon": "fa-folder-open",
+        "title": "Files and Shortcuts",
+        "items": [
+          ["fa-link", "Create Shortcuts", "Create double clickable shortcut files from any menu."],
+          ["fa-mouse-pointer", "Custom Cursor Files", "Apply cursor files as your pointer from right click."]
+        ]
+      },
+      {
+        "icon": "fa-gamepad",
+        "title": "Emulator Auto Resume",
+        "items": [["fa-play", "Games Resume Automatically", "Retro games reopen saves and last played ROM."]]
+      },
+      {
+        "icon": "fa-table-cells-large",
+        "title": "ChromeOS Shelf Refresh",
+        "items": [
+          ["fa-grip", "Clearer Quick Settings", "Reach WiFi, Bluetooth, Cast and Focus from tiled grid."],
+          ["fa-pen", "Screen Drawing", "Draw over any window with pens and eraser."],
+          ["fa-camera", "Quick Capture", "Snap full screen or regions from the menu."],
+          ["fa-search-plus", "Magnifier", "Enlarge screen areas around your pointer."]
+        ]
+      },
+      {
+        "icon": "fa-keyboard",
+        "title": "Palette",
+        "items": [["fa-bolt", "Palette animations removed", "Command palette animations are removed"]]
+      },
+      {
+        "icon": "fa-desktop",
+        "title": "Machines and Wallpapers",
+        "items": [["fa-computer", "XP Reborn Machine", "Boot a new Windows XP Reborn virtual machine."]]
+      },
+      {
+        "icon": "fa-rocket",
+        "title": "Fresh Boot and About",
+        "items": [
+          ["fa-pointer", "Click To Skip Boot", "Dismiss the boot screen with a click."],
+          ["fa-font", "New Login Typeface", "Login screens use the new font."],
+          ["fa-circle-info", "Full Credits Page", "About lists authors and licenses in settings and about app"]
+        ]
+      },
+      {
+        "icon": "fa-battery-full",
+        "title": "Performance and Battery",
+        "items": [
+          ["fa-gauge-high", "Auto Speed Mode", "Weak machines enable Performance mode with a notice."],
+          ["fa-pause", "Wallpaper Pauses Hidden", "Videos and effects pause when tab hides."]
+        ]
+      },
+      {
+        "icon": "fa-list",
+        "title": "Catalog Cleanup",
+        "items": [["fa-trash", "Retired Game Listings", "Antonblast, Class Of 09, Flipside, Re-Up and Vex 2 left."]]
+      },
+      {
+        "icon": "fa-play",
+        "title": "Boot Animations",
+        "items": [
+          [
+            "fa-wand-magic-sparkles",
+            "New Boot Animations",
+            "Pick Glitch Slice, Ring Pulse, Aurora Bloom, CRT Power and Ember Ignite."
+          ],
+          ["fa-table-cells", "Live Preview Grid", "Watch every animation loop inside its own tile."]
+        ]
+      },
+      {
+        "icon": "fa-gauge-high",
+        "title": "Optimize Site and Reduce App Size",
+        "items": [
+          ["fa-rocket", "Faster Loads", "Optimized builds ship smaller bundles and faster loads."],
+          [
+            "fa-microchip",
+            "Smart Low Power Mode",
+            "Trimmed background work keeps overhead low and weak machines enable Performance mode."
+          ]
+        ]
+      }
+    ]
+  },
+  {
     "date": "September 13, 2026",
     "label": "Papirus Icons",
     "sections": [
       {
         "icon": "papirus:apps/com.github.cassidyjames.palette",
         "title": "Papirus Icon Pack",
-        "items": [["papirus:apps/com.github.cassidyjames.palette", "Papirus Icons Live", "Add Papirus icon pack and changed all web app icons."]]
+        "items": [
+          [
+            "papirus:apps/com.github.cassidyjames.palette",
+            "Papirus Icons Live",
+            "Add Papirus icon pack and changed all web app icons."
+          ]
+        ]
       }
     ]
   },
@@ -60,8 +308,6 @@
         "title": "Fixed Games",
         "items": [
           ["fa-gamepad", "Deltarune CH1-5", "Fixed scramjet launch for Deltarune chapters."],
-          ["fa-gamepad", "Mario + 2048 + Isaac + Doom 2", "Enabled scramjet for four classic titles."],
-          ["fa-gamepad", "Jetpack Joyride + Fruit Ninja", "Enabled scramjet for mobile arcade hits."],
           ["fa-gamepad", "Geometry Dash + Minus B", "Updated Geometry Dash and Minus B URLs."],
           ["fa-gamepad", "Cut The Rope 2", "Refreshed Cut The Rope 2 source link."],
           ["fa-mountain", "PEAK Update", "Swapped PEAK WIP for stable PEAK port."]

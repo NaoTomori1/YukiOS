@@ -293,7 +293,6 @@ export class DragDropManager {
           saved[this.positionStore.getKey(icon)] = { col, row };
           this.positionStore.save(saved);
         }
-        os.notify.send(`"${finalName}" moved to Desktop`);
       } catch {
         os.notify.send(`Could not move "${name}" to Desktop`);
       }
@@ -355,7 +354,6 @@ export class DragDropManager {
           saved[this.positionStore.getKey(icon)] = { col, row };
           this.positionStore.save(saved);
         }
-        os.notify.send(`"${name}" folder moved to Desktop`);
       } catch {
         os.notify.send(`Could not move "${name}" to Desktop`);
       }

@@ -16,6 +16,8 @@ import { showConflictDialog } from "../../shared/conflictDialog.js";
 import { showConfirmDialog as showConfirmDialogDlg } from "./dialogs.js";
 import { speak, ClippyAnimation } from "../../ai/clippy.js";
 import { openFileConverter } from "../../utils/fileConverter.js";
+import { getTargetFormats, detectCategory, convertFileBlob } from "../../utils/converterCore.js";
+import { showTransferDialog } from "../../shared/transferDialog.js";
 import { pasteToPath, downloadItems, createArchiveFromItems } from "./transfer.js";
 import { startInlineRename, spawnInlineItem } from "./inlineRename.js";
 import { SystemUtilities } from "../../system.js";
@@ -25,6 +27,78 @@ import { triggerFileUpload, handleFileUpload } from "./upload.js";
 async function resolveConflictAction(name, applyToAllAction) {
   if (applyToAllAction) return { action: applyToAllAction, applyToAll: false };
   return showConflictDialog(name);
+}
+
+function isCursorFile(fileName) {
+  const lower = fileName.toLowerCase();
+  return lower.endsWith(".ani") || lower.endsWith(".cur");
+}
+
+function isCustomCursorActive() {
+  return Boolean(os.storage.get(StorageKeys.cursorKey));
+}
+
+function blobToDataUrl(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+}
+
+async function readCursorBlob(itemName, currentPath, fsRef) {
+  try {
+    const blob = await os.fs.readBinaryFile(currentPath, itemName);
+    if (blob && blob.size) return blob;
+  } catch {}
+  const content = await fsRef.getFileContent(currentPath, itemName);
+  if (content instanceof Blob && content.size) return content;
+  return null;
+}
+
+async function readCursorDataUrl(itemName, currentPath, fsRef) {
+  const blob = await readCursorBlob(itemName, currentPath, fsRef);
+  if (!blob) return null;
+  return blobToDataUrl(blob);
+}
+
+function applyPointerCursor(dataUrl) {
+  os.storage.set(StorageKeys.cursorKey, dataUrl);
+  document.body.style.cursor = `url("${dataUrl}"), auto`;
+}
+
+function resetPointerCursor() {
+  os.storage.remove(StorageKeys.cursorKey);
+  document.body.style.cursor = "";
+}
+
+async function setPointerFromFile(itemName, currentPath, fsRef) {
+  try {
+    const dataUrl = await readCursorDataUrl(itemName, currentPath, fsRef);
+    if (!dataUrl) throw new Error("empty cursor");
+    applyPointerCursor(dataUrl);
+  } catch {
+    os.dialog.alert("Error", "Could not set mouse pointer");
+  }
+}
+
+function buildShortcutPayload(targetPath, targetName) {
+  return JSON.stringify({ targetPath, targetName });
+}
+
+async function createItemShortcut(explorer, itemName, inst) {
+  try {
+    const targetPath = [...inst.currentPath, itemName].join("/");
+    const payload = buildShortcutPayload(targetPath, itemName);
+    const baseName = `${itemName}.shortcut.json`;
+    const shortcutName = await os.fs.getUniqueFileName(inst.currentPath, baseName);
+    await os.fs.write([...inst.currentPath, shortcutName], payload);
+    await explorer.renderInstance(inst);
+    os.notify.send(`Shortcut created for "${itemName}"`);
+  } catch {
+    os.dialog.alert("Error", "Could not create shortcut");
+  }
 }
 
 function showConfirmDialog({ title, message, confirmText, onConfirm }) {
@@ -73,6 +147,134 @@ async function openTextInNotepad(explorer, fileName, inst) {
   } catch (err) {
     os.notify.send(`Failed to open "${fileName}"`);
     console.error("Error opening file in notepad:", err);
+  }
+}
+
+function getConvertExtension(fileName) {
+  const parts = fileName.split(".");
+  return parts.length > 1 ? parts.pop().toLowerCase() : "";
+}
+
+function getConvertBaseName(fileName) {
+  const idx = fileName.lastIndexOf(".");
+  return idx > 0 ? fileName.slice(0, idx) : fileName;
+}
+
+function getConvertDefaults(category) {
+  if (category === "image") return { quality: 90 };
+  if (category === "audio") return { bitrate: "192k", channels: 2 };
+  if (category === "video") return { videoCodec: "h264", audioCodec: "aac" };
+  return {};
+}
+
+function toConvertBlob(content) {
+  if (content instanceof Blob) return content;
+  if (typeof content === "string") return new Blob([content]);
+  return new Blob([]);
+}
+
+async function readConvertSource(explorer, dirParts, fileName) {
+  try {
+    const blob = await explorer.fs.readBinaryFile(dirParts, fileName);
+    if (blob && blob.size) return blob;
+  } catch {}
+  try {
+    const content = await explorer.fs.getFileContent(dirParts, fileName);
+    if (content instanceof Blob && content.size) return content;
+    if (typeof content === "string" && content.length) return new Blob([content]);
+  } catch {}
+  try {
+    const blob = await os.fs.readBinaryFile(dirParts, fileName);
+    if (blob && blob.size) return blob;
+  } catch {}
+  const fallback = await os.fs.getFileContent(dirParts, fileName);
+  return toConvertBlob(fallback);
+}
+
+async function writeConvertResult(explorer, dirParts, baseName, targetFormat, result) {
+  const candidate = `${baseName}.${targetFormat}`;
+  let uniqueName = candidate;
+  try {
+    uniqueName = await os.fs.getUniqueFileName(dirParts, candidate);
+  } catch {}
+  if (result instanceof Blob) {
+    try {
+      await explorer.fs.writeBinaryFile(dirParts, uniqueName, result);
+    } catch {
+      await os.fs.writeBinaryFile(dirParts, uniqueName, result);
+    }
+  } else if (typeof result === "string") {
+    try {
+      await explorer.fs.createFile(dirParts, uniqueName, result);
+    } catch {
+      await os.fs.createFile(dirParts, uniqueName, result);
+    }
+  } else {
+    throw new Error("Empty conversion result");
+  }
+  return uniqueName;
+}
+
+async function quickConvertSingle(explorer, dirParts, fileName, targetFormat) {
+  const ext = getConvertExtension(fileName);
+  const source = await readConvertSource(explorer, dirParts, fileName);
+  const category = detectCategory(ext);
+  let text = null;
+  if (category === "text" || category === "structured") {
+    try {
+      text = source instanceof Blob ? await source.text() : String(source);
+    } catch {
+      text = String(source);
+    }
+  }
+  const out = await convertFileBlob({
+    blob: source,
+    text,
+    sourceExt: ext,
+    targetFormat,
+    options: getConvertDefaults(category)
+  });
+  const result = out instanceof Blob || typeof out === "string" ? out : out.blob || out.text;
+  return writeConvertResult(explorer, dirParts, getConvertBaseName(fileName), targetFormat, result);
+}
+
+async function quickConvertItems(explorer, inst, items, targetFormat) {
+  const label = targetFormat.toUpperCase();
+  const dialog = showTransferDialog({ title: `Converting to ${label}`, total: items.length });
+  let doneCount = 0;
+  let okCount = 0;
+  const failedNames = [];
+  const fallbackNames = [];
+  for (const entryName of items) {
+    dialog.update(doneCount, entryName);
+    try {
+      await quickConvertSingle(explorer, inst.currentPath, entryName, targetFormat);
+      okCount += 1;
+    } catch {
+      const entryCategory = detectCategory(getConvertExtension(entryName));
+      if (entryCategory === "audio" || entryCategory === "video") {
+        fallbackNames.push(entryName);
+        openFileConverter(entryName, inst.currentPath, os, () => explorer.renderInstance(inst));
+      } else {
+        failedNames.push(entryName);
+      }
+    }
+    doneCount += 1;
+    dialog.update(doneCount, doneCount >= items.length ? "Finishing" : entryName);
+  }
+  dialog.complete();
+  await explorer.renderInstance(inst);
+  if (failedNames.length === 0) {
+    os.notify.send("Convert to", `Converted ${okCount} ${okCount === 1 ? "file" : "files"} to ${label}`, {
+      type: "success"
+    });
+  } else if (okCount === 0 && fallbackNames.length === 0) {
+    os.dialog.alert(
+      "Convert to",
+      `Could not convert ${failedNames.length} ${failedNames.length === 1 ? "file" : "files"}.`
+    );
+  } else {
+    os.notify.send("Convert to", `Converted ${okCount} of ${items.length} files to ${label}`, { type: "info" });
   }
 }
 
@@ -194,44 +396,44 @@ export function showFileContextMenu(explorer, e, itemName, isFile, inst) {
 
     const effectiveItems =
       inst.selectedItems.size > 1 && inst.selectedItems.has(itemName) ? [...inst.selectedItems] : [itemName];
-    const convertableItems = effectiveItems.filter((item) => {
-      const ext = item.split(".").pop().toLowerCase();
-      return [
-        "png",
-        "jpg",
-        "jpeg",
-        "webp",
-        "bmp",
-        "svg",
-        "gif",
-        "txt",
-        "md",
-        "html",
-        "json",
-        "log",
-        "csv",
-        "xml",
-        "yaml",
-        "yml",
-        "tsv"
-      ].includes(ext);
-    });
+    const convertableItems = effectiveItems.filter((entryName) => detectCategory(getConvertExtension(entryName)));
 
     if (isFile && convertableItems.length > 0) {
-      menu.appendChild(
-        item(
-          convertableItems.length > 1 ? `Convert ${convertableItems.length} items...` : "Convert / Transform...",
-          async () => {
-            convertableItems.forEach((convertItem) => {
-              openFileConverter(convertItem, inst.currentPath, os, () => {
-                explorer.renderInstance(inst);
-              });
-            });
-          },
-          "fa-exchange-alt"
-        )
-      );
-      menu.appendChild(hr());
+      const firstExt = getConvertExtension(convertableItems[0]);
+      const rawTargets = getTargetFormats(firstExt);
+      const convertTargets = Array.isArray(rawTargets) ? rawTargets.filter((target) => target !== firstExt) : [];
+      if (convertTargets.length > 0) {
+        menu.appendChild(
+          submenu(
+            convertableItems.length > 1 ? `Convert ${convertableItems.length} items to` : "Convert to",
+            (subMenuEl, subItem, subHr) => {
+              for (const target of convertTargets) {
+                subMenuEl.appendChild(
+                  subItem(target.toUpperCase(), () => {
+                    quickConvertItems(explorer, inst, convertableItems, target);
+                  })
+                );
+              }
+              subMenuEl.appendChild(subHr());
+              subMenuEl.appendChild(
+                subItem(
+                  "Convert / Transform...",
+                  () => {
+                    convertableItems.forEach((convertItem) => {
+                      openFileConverter(convertItem, inst.currentPath, os, () => {
+                        explorer.renderInstance(inst);
+                      });
+                    });
+                  },
+                  "fa-exchange-alt"
+                )
+              );
+            },
+            "fa-exchange-alt"
+          )
+        );
+        menu.appendChild(hr());
+      }
     }
 
     menu.appendChild(item("Copy", () => explorer.clipboardAction("copy", inst, itemName, isFile), "fa-copy"));
@@ -358,7 +560,6 @@ export function showFileContextMenu(explorer, e, itemName, isFile, inst) {
             try {
               const content = await getContent();
               await SystemUtilities.setWallpaper(content);
-              os.notify.send(`Wallpaper set to "${itemName}"`);
             } catch (err) {
               console.error("Set wallpaper error:", err);
               os.dialog.alert("Error", "Could not set wallpaper");
@@ -375,7 +576,6 @@ export function showFileContextMenu(explorer, e, itemName, isFile, inst) {
               const content = await getContent();
               const kind = fileKindFromName(itemName);
               await saveToWallpapers(explorer, itemName, content, kind, "@content");
-              os.notify.send(`"${itemName}" saved to wallpapers`);
             } catch (err) {
               console.error("Save wallpaper error:", err);
               os.dialog.alert("Error", "Could not save wallpaper");
@@ -415,7 +615,6 @@ export function showFileContextMenu(explorer, e, itemName, isFile, inst) {
               os.storage.set(StorageKeys.customFont, customFontData);
               applyFontFamily("custom", customFontData);
               os.events.emit(BusEvents.ACHIEVEMENT_TRIGGER, { achievementId: Achievements.FontCustomizer });
-              os.notify.send(`System font set to "${fontFamily}"`);
             } catch (err) {
               console.error("Set system font error:", err);
               os.dialog.alert("Error", "Could not set system font");
@@ -433,7 +632,6 @@ export function showFileContextMenu(explorer, e, itemName, isFile, inst) {
           "Extract Here",
           () => {
             const cb = () => {
-              if (window.achievements) window.achievements.trigger(Achievements.ArchiveHandler);
               explorer.renderInstance(inst);
             };
             if (isISOFile(itemName)) {
@@ -445,6 +643,32 @@ export function showFileContextMenu(explorer, e, itemName, isFile, inst) {
           "fa-box-open"
         )
       );
+    }
+
+    menu.appendChild(
+      item(
+        "Create shortcut",
+        () => {
+          createItemShortcut(explorer, itemName, inst);
+        },
+        "fa-link"
+      )
+    );
+
+    if (isFile && isCursorFile(itemName)) {
+      menu.appendChild(
+        item(
+          "Set as mouse pointer",
+          () => {
+            setPointerFromFile(itemName, inst.currentPath, explorer.fs);
+          },
+          "fa-mouse-pointer"
+        )
+      );
+    }
+
+    if (isCustomCursorActive()) {
+      menu.appendChild(item("Reset mouse pointer", () => resetPointerCursor(), "fa-undo"));
     }
 
     menu.appendChild(
@@ -723,7 +947,6 @@ export function showSidebarItemContextMenu(explorer, e, path, label, inst) {
         () => {
           const fullPath = "/" + path.split("/").filter(Boolean).join("/");
           navigator.clipboard.writeText(fullPath).catch(() => {});
-          os.notify.send(`Path copied: ${fullPath}`);
         },
         "fa-copy"
       )

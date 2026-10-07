@@ -1,4 +1,5 @@
 import { setStyle, os, StorageKeys, MODES, $, createElement } from "../framework.js";
+import { handlePopupMessage, handlePopupTitleMessage } from "../core/ScramjetPopupManager.js";
 import { ScramjetBaseApp } from "../core/ScramjetBaseApp.js";
 import { SYSTEM_APPS } from "../AppRegistryConfig.js";
 
@@ -64,6 +65,27 @@ export class DiscordApp extends ScramjetBaseApp {
     setStyle(win, { opacity: "0" });
 
     await this.initScramjet(null, null, win, {});
+
+    const popupIframe = win.querySelector(`#${this.getAppId()}-iframe`);
+    if (popupIframe && !win.dataset.popupBridgeBound) {
+      win.dataset.popupBridgeBound = "true";
+      const popupHandler = (event) => {
+        try {
+          const meta = { parentAppId: this.getAppId(), parentName: this.getAppName(), parentIcon: this.getAppIcon() };
+          if (handlePopupTitleMessage(event)) {
+            return;
+          }
+          handlePopupMessage(event, popupIframe, meta);
+        } catch {}
+      };
+      this.popupMessageHandler = popupHandler;
+      window.addEventListener("message", popupHandler);
+      win.addEventListener("remove", () => {
+        try {
+          window.removeEventListener("message", popupHandler);
+        } catch {}
+      });
+    }
 
     const cleanup = () => this.removeSplash();
     const closeObserver = new MutationObserver(() => {

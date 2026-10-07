@@ -705,6 +705,12 @@ export class WindowManager {
       entry.title = title;
       if (entry.record) entry.record.title = title;
     }
+
+    try {
+      this.utils?.reassertCloak?.();
+    } catch {
+      /* ignore */
+    }
   }
 
   getWindowTitle(winId) {

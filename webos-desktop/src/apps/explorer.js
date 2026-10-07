@@ -69,13 +69,40 @@ function explorerIcon(papirusIcon, size = 14, extraStyle = "", extraClass = "", 
   return `<i class="${combined}" style="${style}"${idAttr}${titleAttr}></i>`;
 }
 
-const sharedDragState = {
-  active: false,
-  items: [],
-  fileTypes: {},
-  sourcePath: null,
-  sourceWinId: null
-};
+const EXPLORER_DRAG_TYPE = "application/x-yukios-explorer";
+const EXPLORER_TAB_TYPE = "application/x-yukios-tab";
+
+function hasTabPayload(e) {
+  return [...(e.dataTransfer?.types || [])].includes(EXPLORER_TAB_TYPE);
+}
+
+function readTabPayload(e) {
+  try {
+    const raw = e.dataTransfer.getData(EXPLORER_TAB_TYPE);
+    if (!raw) return null;
+    const payload = JSON.parse(raw);
+    if (!payload || !payload.winId || !payload.tabId) return null;
+    return payload;
+  } catch {
+    return null;
+  }
+}
+
+function hasExplorerPayload(e) {
+  return [...(e.dataTransfer?.types || [])].includes(EXPLORER_DRAG_TYPE);
+}
+
+function readExplorerPayload(e) {
+  try {
+    const raw = e.dataTransfer.getData(EXPLORER_DRAG_TYPE);
+    if (!raw) return null;
+    const payload = JSON.parse(raw);
+    if (!payload || !Array.isArray(payload.items) || !payload.items.length) return null;
+    return payload;
+  } catch {
+    return null;
+  }
+}
 
 export class ExplorerApp extends BaseApp {
   get viewMode() {
@@ -122,10 +149,682 @@ export class ExplorerApp extends BaseApp {
       sortDir: "asc",
       lastClickedIndex: -1,
       searchContentCache: new Map(),
-      recSearchView: false
+      recSearchView: false,
+      split: false,
+      splitTabId: null
     };
+    if (inst.mode === "browse") {
+      const firstTab = {
+        id: "tab-1",
+        currentPath: [],
+        history: [[]],
+        historyIndex: 0,
+        selectedFile: null,
+        selectedItems: new Set(),
+        isTrashView: false,
+        isDiskView: false,
+        sortBy: "name",
+        sortDir: "asc",
+        lastClickedIndex: -1,
+        searchContentCache: new Map(),
+        cachedFolder: null
+      };
+      inst.tabs = [firstTab];
+      inst.activeTabId = firstTab.id;
+      inst.tabSeq = 1;
+    } else {
+      inst.tabs = null;
+      inst.activeTabId = null;
+      inst.tabSeq = 0;
+    }
     this.instances.set(winId, inst);
     return inst;
+  }
+
+  getActiveTab(inst) {
+    if (!inst.tabs) return null;
+    return inst.tabs.find((t) => t.id === inst.activeTabId) || null;
+  }
+
+  getSplitTab(inst) {
+    if (!inst.tabs || !inst.splitTabId) return null;
+    return inst.tabs.find((t) => t.id === inst.splitTabId) || null;
+  }
+
+  saveTabState(inst) {
+    if (!inst.tabs) return;
+    const tab = this.getActiveTab(inst);
+    if (!tab) return;
+    tab.currentPath = [...inst.currentPath];
+    tab.history = inst.history.map((h) => [...h]);
+    tab.historyIndex = inst.historyIndex;
+    tab.selectedFile = inst.selectedFile;
+    tab.selectedItems = new Set(inst.selectedItems);
+    tab.isTrashView = inst.isTrashView;
+    tab.isDiskView = inst.isDiskView;
+    tab.sortBy = inst.sortBy;
+    tab.sortDir = inst.sortDir;
+    tab.lastClickedIndex = inst.lastClickedIndex;
+    tab.searchContentCache = inst.searchContentCache;
+    tab.cachedFolder = inst.cachedFolder || null;
+  }
+
+  loadTabState(inst, tab) {
+    if (!inst.tabs || !tab) return;
+    inst.currentPath = [...tab.currentPath];
+    inst.history = tab.history.map((h) => [...h]);
+    inst.historyIndex = tab.historyIndex;
+    inst.selectedFile = tab.selectedFile;
+    inst.selectedItems = new Set(tab.selectedItems);
+    inst.isTrashView = tab.isTrashView;
+    inst.isDiskView = tab.isDiskView;
+    inst.sortBy = tab.sortBy;
+    inst.sortDir = tab.sortDir;
+    inst.lastClickedIndex = tab.lastClickedIndex;
+    inst.searchContentCache = tab.searchContentCache || new Map();
+    inst.cachedFolder = tab.cachedFolder || null;
+    inst.activeTabId = tab.id;
+  }
+
+  clearSearchInput(inst) {
+    const win = $(`#${inst.winId}`);
+    const searchInput = win && $(`#${inst.winId}-search`, win);
+    if (searchInput) searchInput.value = "";
+  }
+
+  async newTab(inst, path = []) {
+    if (!inst.tabs) return;
+    this.saveTabState(inst);
+    inst.tabSeq += 1;
+    const fresh = {
+      id: `tab-${inst.tabSeq}`,
+      currentPath: [...path],
+      history: [[...path]],
+      historyIndex: 0,
+      selectedFile: null,
+      selectedItems: new Set(),
+      isTrashView: false,
+      isDiskView: false,
+      sortBy: "name",
+      sortDir: "asc",
+      lastClickedIndex: -1,
+      searchContentCache: new Map(),
+      cachedFolder: null
+    };
+    inst.tabs.push(fresh);
+    this.loadTabState(inst, fresh);
+    this.clearSearchInput(inst);
+    await this.renderInstance(inst);
+    this.renderTabs(inst);
+  }
+
+  async closeTab(inst, tabId) {
+    if (!inst.tabs) return;
+    if (inst.tabs.length === 1) {
+      this.closeWindow(inst.winId);
+      return;
+    }
+    const closingActive = tabId === inst.activeTabId;
+    if (closingActive) this.saveTabState(inst);
+    const idx = inst.tabs.findIndex((t) => t.id === tabId);
+    if (idx < 0) return;
+    const wasSplitTab = tabId === inst.splitTabId;
+    inst.tabs.splice(idx, 1);
+    if (wasSplitTab) {
+      inst.split = false;
+      inst.splitTabId = null;
+      this.renderSplitChrome(inst);
+      const splitWin = $(`#${inst.winId}`);
+      const splitBtn = splitWin && $(`#${inst.winId}-split`, splitWin);
+      if (splitBtn) removeClass(splitBtn, "active");
+    }
+    if (closingActive) {
+      const neighbor = inst.tabs[Math.min(idx, inst.tabs.length - 1)];
+      this.loadTabState(inst, neighbor);
+      this.clearSearchInput(inst);
+    }
+    this.renderTabs(inst);
+    await this.renderInstance(inst);
+  }
+
+  async switchTab(inst, tabId) {
+    if (!inst.tabs) return;
+    if (tabId === inst.activeTabId) return;
+    const target = inst.tabs.find((t) => t.id === tabId);
+    if (!target) return;
+    this.saveTabState(inst);
+    this.loadTabState(inst, target);
+    this.clearSearchInput(inst);
+    await this.renderInstance(inst);
+    this.renderTabs(inst);
+  }
+
+  tabLabelFor(tab) {
+    if (tab.isTrashView) return "Trash";
+    if (tab.isDiskView) return "Local Disk";
+    if (!tab.currentPath || tab.currentPath.length === 0) return "Home";
+    return tab.currentPath[tab.currentPath.length - 1];
+  }
+
+  renderTabs(inst) {
+    if (!inst.tabs) return;
+    const win = $(`#${inst.winId}`);
+    if (!win) return;
+    const bar = $(`#${inst.winId}-tabs`, win);
+    if (!bar) return;
+    this.saveTabState(inst);
+    setHTML(bar, "");
+    inst.tabs.forEach((tab) => {
+      const label = this.tabLabelFor(tab);
+      const tabEl = createElement("div", { className: "explorer-tab" });
+      if (tab.id === inst.activeTabId) addClass(tabEl, "active");
+      const title = tab.isTrashView || tab.isDiskView ? label : "/" + tab.currentPath.join("/");
+      tabEl.setAttribute("title", title);
+      let tabIconName = "papirus:places/folder-blue";
+      if (tab.isTrashView) tabIconName = "papirus:places/user-trash";
+      else if (tab.isDiskView) tabIconName = "papirus:devices/drive-harddisk";
+      else if (!tab.currentPath || tab.currentPath.length === 0) tabIconName = "papirus:places/user-blue-home";
+      setHTML(tabEl, explorerIcon(tabIconName, 14, "", "explorer-tab-icon"));
+      const labelEl = createElement("span", { className: "explorer-tab-label" });
+      setText(labelEl, label);
+      labelEl.setAttribute("title", title);
+      tabEl.appendChild(labelEl);
+      const closeEl = createElement("i", { className: "explorer-tab-close" });
+      setText(closeEl, "×");
+      tabEl.appendChild(closeEl);
+      tabEl.draggable = true;
+      bindEvent(tabEl, "dragstart", (e) => {
+        try {
+          e.dataTransfer.setData(EXPLORER_TAB_TYPE, JSON.stringify({ winId: inst.winId, tabId: tab.id }));
+          e.dataTransfer.effectAllowed = "move";
+        } catch {}
+        const tabWin = $(`#${inst.winId}`);
+        if (tabWin) addClass(tabWin, "tab-dragging");
+      });
+      bindEvent(tabEl, "dragend", () => {
+        $$(".explorer-window").forEach((el) => removeClass(el, "tab-dragging"));
+        $$(".explorer-dock-zone").forEach((el) => removeClass(el, "active"));
+      });
+      let pressInfo = null;
+      const endPointerTabDrag = (dock, cx, cy) => {
+        if (!pressInfo) return;
+        pressInfo = null;
+        document.removeEventListener("pointermove", onPointerTabMove);
+        document.removeEventListener("pointerup", onPointerTabUp);
+        document.removeEventListener("pointercancel", onPointerTabCancel);
+        $$(".explorer-dock-zone").forEach((el) => removeClass(el, "active"));
+        $$(".explorer-window").forEach((el) => removeClass(el, "tab-dragging"));
+        if (!dock) return;
+        inst.suppressTabClickUntil = Date.now() + 400;
+        const tabWin = $(`#${inst.winId}`);
+        let matched = null;
+        if (tabWin) {
+          $$(".explorer-dock-zone", tabWin).forEach((zone) => {
+            const rect = zone.getBoundingClientRect();
+            if (cx >= rect.left && cx <= rect.right && cy >= rect.top && cy <= rect.bottom) matched = zone;
+          });
+        }
+        if (matched) {
+          const side = matched.id.endsWith("dock-left") ? "left" : "right";
+          this.dockTab(inst, tab.id, side);
+        }
+      };
+      const onPointerTabMove = (e) => {
+        if (!pressInfo || e.pointerId !== pressInfo.pointerId) return;
+        if (e.pointerType === "mouse" && e.buttons === 0) {
+          endPointerTabDrag(false);
+          return;
+        }
+        if (!pressInfo.dragging) {
+          const dx = e.clientX - pressInfo.x;
+          const dy = e.clientY - pressInfo.y;
+          if (Math.hypot(dx, dy) < 6) return;
+          pressInfo.dragging = true;
+          try {
+            tabEl.setPointerCapture(e.pointerId);
+          } catch {}
+          const tabWin = $(`#${inst.winId}`);
+          if (tabWin) addClass(tabWin, "tab-dragging");
+        }
+        const tabWin = $(`#${inst.winId}`);
+        if (!tabWin) return;
+        $$(".explorer-dock-zone", tabWin).forEach((zone) => {
+          const rect = zone.getBoundingClientRect();
+          if (e.clientX >= rect.left && e.clientX <= rect.right && e.clientY >= rect.top && e.clientY <= rect.bottom)
+            addClass(zone, "active");
+          else removeClass(zone, "active");
+        });
+      };
+      const onPointerTabUp = (e) => {
+        if (!pressInfo || e.pointerId !== pressInfo.pointerId) return;
+        const wasDragging = pressInfo.dragging;
+        endPointerTabDrag(wasDragging, e.clientX, e.clientY);
+      };
+      const onPointerTabCancel = () => {
+        endPointerTabDrag(false);
+      };
+      bindEvent(tabEl, "pointerdown", (e) => {
+        if (e.button !== undefined && e.button !== 0) return;
+        if (e.target.closest?.(".explorer-tab-close")) return;
+        pressInfo = { x: e.clientX, y: e.clientY, dragging: false, pointerId: e.pointerId };
+        document.addEventListener("pointermove", onPointerTabMove);
+        document.addEventListener("pointerup", onPointerTabUp);
+        document.addEventListener("pointercancel", onPointerTabCancel);
+      });
+      bindEvent(tabEl, "click", () => {
+        if (inst.suppressTabClickUntil && Date.now() < inst.suppressTabClickUntil) return;
+        this.switchTab(inst, tab.id);
+      });
+      bindEvent(closeEl, "click", (e) => {
+        e.stopPropagation();
+        this.closeTab(inst, tab.id);
+      });
+      bindEvent(tabEl, "auxclick", (e) => {
+        if (e.button === 1) this.closeTab(inst, tab.id);
+      });
+      bar.appendChild(tabEl);
+    });
+    const newBtn = createElement("button", { className: "explorer-tab-new" });
+    setText(newBtn, "+");
+    newBtn.setAttribute("title", "New tab");
+    bindEvent(newBtn, "click", () => this.newTab(inst));
+    bar.appendChild(newBtn);
+    bar.ondblclick = (e) => {
+      if (e.target === bar) this.newTab(inst);
+    };
+  }
+
+  async toggleSplit(inst) {
+    if (!inst.tabs) return;
+    if (!inst.split) {
+      this.saveTabState(inst);
+      inst.tabSeq += 1;
+      const fresh = {
+        id: `tab-${inst.tabSeq}`,
+        currentPath: [...inst.currentPath],
+        history: inst.history.map((h) => [...h]),
+        historyIndex: inst.historyIndex,
+        selectedFile: null,
+        selectedItems: new Set(),
+        isTrashView: false,
+        isDiskView: false,
+        sortBy: inst.sortBy,
+        sortDir: inst.sortDir,
+        lastClickedIndex: -1,
+        searchContentCache: new Map(),
+        cachedFolder: null
+      };
+      inst.tabs.push(fresh);
+      inst.split = true;
+      inst.splitTabId = fresh.id;
+      this.renderTabs(inst);
+      this.renderSplitChrome(inst);
+      await this.renderInstance(inst);
+      await this.renderSplitPane(inst);
+    } else {
+      inst.split = false;
+      inst.splitTabId = null;
+      this.renderSplitChrome(inst);
+      await this.renderInstance(inst);
+    }
+    const win = $(`#${inst.winId}`);
+    const splitBtn = win && $(`#${inst.winId}-split`, win);
+    if (splitBtn) {
+      if (inst.split) addClass(splitBtn, "active");
+      else removeClass(splitBtn, "active");
+    }
+  }
+
+  async dockTab(inst, tabId, side) {
+    if (!inst.tabs) return;
+    const tab = inst.tabs.find((t) => t.id === tabId);
+    if (!tab) return;
+    if (tab.isTrashView || tab.isDiskView) return;
+    const win = $(`#${inst.winId}`);
+    const splitBtn = win && $(`#${inst.winId}-split`, win);
+    if (inst.tabs.length < 2) {
+      const companion = {
+        id: `tab-${++inst.tabSeq}`,
+        currentPath: [...tab.currentPath],
+        history: tab.history.map((h) => [...h]),
+        historyIndex: tab.historyIndex,
+        selectedFile: null,
+        selectedItems: new Set(),
+        isTrashView: false,
+        isDiskView: false,
+        sortBy: tab.sortBy,
+        sortDir: tab.sortDir,
+        lastClickedIndex: -1,
+        searchContentCache: new Map(),
+        cachedFolder: null
+      };
+      inst.tabs.push(companion);
+      inst.split = true;
+      inst.splitTabId = companion.id;
+      this.saveTabState(inst);
+      this.renderTabs(inst);
+      this.renderSplitChrome(inst);
+      await this.renderInstance(inst);
+      await this.renderSplitPane(inst);
+      if (splitBtn) addClass(splitBtn, "active");
+      return;
+    }
+    if (side === "left") {
+      if (tabId === inst.activeTabId) return;
+      if (inst.split && tabId === inst.splitTabId) {
+        inst.split = false;
+        inst.splitTabId = null;
+        this.renderSplitChrome(inst);
+        if (splitBtn) removeClass(splitBtn, "active");
+        await this.switchTab(inst, tabId);
+        return;
+      }
+      if (!inst.split) {
+        const prevActiveId = inst.activeTabId;
+        await this.switchTab(inst, tabId);
+        inst.split = true;
+        inst.splitTabId = prevActiveId;
+        this.renderSplitChrome(inst);
+        await this.renderSplitPane(inst);
+        if (splitBtn) addClass(splitBtn, "active");
+        return;
+      }
+      await this.switchTab(inst, tabId);
+      if (splitBtn) addClass(splitBtn, "active");
+      return;
+    }
+    if (tabId === inst.activeTabId) return;
+    inst.split = true;
+    inst.splitTabId = tabId;
+    this.saveTabState(inst);
+    this.renderTabs(inst);
+    this.renderSplitChrome(inst);
+    await this.renderInstance(inst);
+    await this.renderSplitPane(inst);
+    if (splitBtn) addClass(splitBtn, "active");
+  }
+
+  ensureSplitDivider(win, inst) {
+    const container = $(".explorer-container", win);
+    const wrapper = $(`#${inst.winId}-view-split-wrap`, win);
+    const mainView = $(`#${inst.winId}-view`, win);
+    if (!container || !wrapper || !mainView) return;
+    let divider = $(".explorer-split-divider", container);
+    if (!divider) {
+      divider = createElement("div", { className: "explorer-split-divider" });
+      container.insertBefore(divider, wrapper);
+      bindEvent(divider, "pointerdown", (e) => {
+        try {
+          divider.setPointerCapture(e.pointerId);
+        } catch {}
+        const moveHandler = (ev) => {
+          if (!ev.buttons) return;
+          const rect = container.getBoundingClientRect();
+          if (!rect || !rect.width) return;
+          const pct = Math.min(80, Math.max(20, ((ev.clientX - rect.left) / rect.width) * 100));
+          const target = $(`#${inst.winId}-view`, win);
+          if (!target) return;
+          setStyle(target, { width: `calc(${pct}% - 3px)` });
+        };
+        const endHandler = () => {
+          divider.removeEventListener("pointermove", moveHandler);
+          divider.removeEventListener("pointerup", endHandler);
+          divider.removeEventListener("pointercancel", endHandler);
+        };
+        divider.addEventListener("pointermove", moveHandler);
+        divider.addEventListener("pointerup", endHandler);
+        divider.addEventListener("pointercancel", endHandler);
+      });
+    }
+    setStyle(mainView, { width: "calc(50% - 3px)" });
+  }
+
+  removeSplitDivider(win, inst) {
+    const container = $(".explorer-container", win);
+    if (container) {
+      const divider = $(".explorer-split-divider", container);
+      if (divider) divider.remove();
+    }
+    const mainView = win && $(`#${inst.winId}-view`, win);
+    if (mainView) setStyle(mainView, { width: "" });
+  }
+
+  bindDockZones(win, inst) {
+    if (!win) return;
+    if (win.dataset.dockBound) return;
+    win.dataset.dockBound = "1";
+    const left = createElement("div", { className: "explorer-dock-zone" });
+    left.id = `${inst.winId}-dock-left`;
+    const right = createElement("div", { className: "explorer-dock-zone" });
+    right.id = `${inst.winId}-dock-right`;
+    win.appendChild(left);
+    win.appendChild(right);
+    const zones = [
+      { el: left, side: "left" },
+      { el: right, side: "right" }
+    ];
+    zones.forEach(({ el, side }) => {
+      bindEvent(el, "dragover", (e) => {
+        if (!hasTabPayload(e)) return;
+        e.preventDefault();
+        e.stopPropagation();
+        e.dataTransfer.dropEffect = "move";
+        addClass(el, "active");
+        const sibling = side === "left" ? right : left;
+        if (sibling) removeClass(sibling, "active");
+      });
+      bindEvent(el, "dragleave", (e) => {
+        if (el.contains(e.relatedTarget)) return;
+        removeClass(el, "active");
+      });
+      bindEvent(el, "drop", (e) => {
+        e.preventDefault();
+        const payload = readTabPayload(e);
+        $$(".explorer-dock-zone").forEach((z) => removeClass(z, "active"));
+        $$(".explorer-window").forEach((w) => removeClass(w, "tab-dragging"));
+        if (!payload) return;
+        if (payload.winId !== inst.winId) return;
+        this.dockTab(inst, payload.tabId, side);
+      });
+    });
+  }
+
+  renderSplitChrome(inst) {
+    const win = $(`#${inst.winId}`);
+    if (!win) return;
+    const container = $(".explorer-container", win);
+    if (!container) return;
+    if (inst.split) addClass(container, "split-on");
+    else removeClass(container, "split-on");
+    let wrapper = $(`#${inst.winId}-view-split-wrap`, win);
+    if (inst.split) {
+      const splitTab = this.getSplitTab(inst);
+      if (!splitTab) return;
+      if (!wrapper) {
+        wrapper = createElement("div", { className: "explorer-split-pane" });
+        wrapper.id = `${inst.winId}-view-split-wrap`;
+        const header = createElement("div", { className: "explorer-split-header" });
+        const backBtn = createElement("div", { className: "back-btn explorer-split-back" });
+        backBtn.setAttribute("title", "Back");
+        setText(backBtn, "<");
+        const upBtn = createElement("div", { className: "back-btn explorer-split-up" });
+        upBtn.setAttribute("title", "Up");
+        setText(upBtn, "^");
+        const pathLabel = createElement("span", { className: "explorer-split-path" });
+        header.appendChild(backBtn);
+        header.appendChild(upBtn);
+        header.appendChild(pathLabel);
+        const splitView = createElement("div", { className: "explorer-main" });
+        splitView.id = `${inst.winId}-view-split`;
+        wrapper.appendChild(header);
+        wrapper.appendChild(splitView);
+        container.appendChild(wrapper);
+        bindEvent(backBtn, "click", async () => {
+          const st = this.getSplitTab(inst);
+          if (!st || st.historyIndex <= 0) return;
+          st.historyIndex -= 1;
+          st.currentPath = [...st.history[st.historyIndex]];
+          st.selectedFile = null;
+          st.selectedItems = new Set();
+          await this.renderSplitPane(inst);
+        });
+        bindEvent(upBtn, "click", async () => {
+          const st = this.getSplitTab(inst);
+          if (!st || !st.currentPath.length) return;
+          this.splitNavigate(inst, st.currentPath.slice(0, -1));
+        });
+        bindEvents(splitView, {
+          dragover: (e) => {
+            if (!hasExplorerPayload(e)) return;
+            if (e.target.closest?.(".file-item")) return;
+            e.preventDefault();
+            e.stopPropagation();
+            e.dataTransfer.dropEffect = e.ctrlKey ? "copy" : "move";
+            addClass(splitView, "explorer-drop-active");
+          },
+          dragleave: (e) => {
+            if (!splitView.contains(e.relatedTarget)) removeClass(splitView, "explorer-drop-active");
+          },
+          drop: async (e) => {
+            removeClass(splitView, "explorer-drop-active");
+            if (!hasExplorerPayload(e)) return;
+            if (e.target.closest?.(".file-item")) return;
+            e.preventDefault();
+            const payload = readExplorerPayload(e);
+            const destTab = this.getSplitTab(inst);
+            if (!payload || !destTab) return;
+            if (payload.sourcePath.join("/") === destTab.currentPath.join("/")) return;
+            const sourceInst = this.instances.get(payload.winId);
+            if (sourceInst && (sourceInst.isTrashView || sourceInst.isDiskView)) return;
+            await this.moveDraggedItems(
+              payload.items,
+              payload.fileTypes || {},
+              payload.sourcePath,
+              [...destTab.currentPath],
+              sourceInst || inst,
+              e.ctrlKey,
+              inst,
+              payload.pane || 0,
+              1
+            );
+          }
+        });
+      }
+      this.ensureSplitDivider(win, inst);
+    } else if (wrapper) {
+      wrapper.remove();
+      this.removeSplitDivider(win, inst);
+    }
+  }
+
+  async renderSplitPane(inst) {
+    const splitTab = this.getSplitTab(inst);
+    if (!inst.split || !splitTab) return;
+    const win = $(`#${inst.winId}`);
+    if (!win) return;
+    const splitView = $(`#${inst.winId}-view-split`, win);
+    if (!splitView) return;
+    const st = splitTab;
+    setHTML(splitView, "");
+    removeClass(splitView, "explorer-view-grid");
+    removeClass(splitView, "explorer-view-list");
+    addClass(splitView, `explorer-view-${this.viewMode}`);
+    let folder = {};
+    try {
+      folder = await os.fs.readdir(st.currentPath);
+    } catch {
+      folder = {};
+    }
+    const entries = Object.entries(folder).filter(([name]) => {
+      if (name === "system" && st.currentPath.length === 0) return false;
+      if (name === ".trash" && st.currentPath.length === 0) return false;
+      return true;
+    });
+    const built = [];
+    for (const [name, itemData] of entries) {
+      const isFile = itemData?.type === "file";
+      let iconEl = "";
+      try {
+        iconEl = await this.buildItemIconHTML(name, isFile, itemData, {
+          currentPath: st.currentPath,
+          thumbnailCache: this.thumbnailCache
+        });
+      } catch {
+        iconEl = buildFileIconHTML(name, { isFolder: !isFile });
+      }
+      built.push({ name, isFile, iconEl, itemData });
+    }
+    let list = built;
+    if (this.viewMode === "list") {
+      const header = createElement("div", { className: "explorer-list-header" });
+      const nameCol = createElement("span", { className: "list-h-name" });
+      setText(nameCol, "Name");
+      const dateCol = createElement("span", { className: "list-h-date" });
+      setText(dateCol, "Date modified");
+      const typeCol = createElement("span", { className: "list-h-type" });
+      setText(typeCol, "Type");
+      const sizeCol = createElement("span", { className: "list-h-size" });
+      setText(sizeCol, "Size");
+      header.appendChild(nameCol);
+      header.appendChild(dateCol);
+      header.appendChild(typeCol);
+      header.appendChild(sizeCol);
+      splitView.appendChild(header);
+      list = this.sortItems(built, st.sortBy, st.sortDir, folder, {});
+    }
+    for (const { name, isFile, iconEl } of list) {
+      const item = createElement("div", { className: "file-item" });
+      item.dataset.isFile = isFile ? "true" : "false";
+      if (st.selectedItems.has(name)) addClass(item, "explorer-selected");
+      if (this.viewMode === "list") {
+        setHTML(
+          item,
+          `${iconEl}<span class="file-item-name">${name}</span><span class="file-col-date">-</span><span class="file-col-type">${isFile ? "File" : "File Folder"}</span><span class="file-col-size"></span>`
+        );
+      } else {
+        setHTML(item, `${iconEl}<span class="file-item-name">${name}</span>`);
+      }
+      bindEvent(item, "click", () => {
+        $$(".file-item.explorer-selected", splitView).forEach((el) => removeClass(el, "explorer-selected"));
+        st.selectedItems = new Set([name]);
+        st.selectedFile = name;
+        addClass(item, "explorer-selected");
+      });
+      bindEvent(item, "dblclick", () => {
+        if (!isFile) this.splitNavigate(inst, [...st.currentPath, name]);
+        else this.openItemForInstance({ ...inst, currentPath: [...st.currentPath] }, name, true);
+      });
+      bindEvent(item, "mouseenter", (e) => scheduleFileTooltip(e, st.currentPath, name, !isFile));
+      bindEvent(item, "mouseleave", () => hideFileTooltip());
+      item.draggable = true;
+      bindEvent(item, "dragstart", (e) => this.handleItemDragStart(e, item, name, isFile, inst, 1));
+      bindEvent(item, "dragend", () => this.clearDropHighlights());
+      if (!isFile) {
+        bindEvent(item, "dragover", (e) => this.handleFolderDragOver(e, item));
+        bindEvent(item, "dragleave", (e) => {
+          if (!item.contains(e.relatedTarget)) removeClass(item, "explorer-drop-target");
+        });
+        bindEvent(item, "drop", (e) => this.handleFolderDrop(e, item, name, inst));
+      }
+      splitView.appendChild(item);
+    }
+    const pathLabel = $(".explorer-split-path", win);
+    if (pathLabel) setText(pathLabel, "/" + st.currentPath.join("/"));
+  }
+
+  async splitNavigate(inst, path) {
+    const st = this.getSplitTab(inst);
+    if (!st) return;
+    const next = Array.isArray(path) ? [...path] : [];
+    st.history = st.history.slice(0, st.historyIndex + 1);
+    st.history.push([...next]);
+    st.historyIndex = st.history.length - 1;
+    st.currentPath = [...next];
+    st.selectedFile = null;
+    st.selectedItems = new Set();
+    st.lastClickedIndex = -1;
+    await this.renderSplitPane(inst);
+    this.renderTabs(inst);
   }
 
   getInstance(winId) {
@@ -340,7 +1039,6 @@ export class ExplorerApp extends BaseApp {
                 "Copy Path",
                 () => {
                   navigator.clipboard.writeText("/" + mountPoint).catch(() => {});
-                  os.notify.send(`Path copied: /${mountPoint}`);
                 },
                 "fa-copy"
               )
@@ -388,6 +1086,33 @@ export class ExplorerApp extends BaseApp {
         }
       };
     });
+
+    const sidebar = win.querySelector(".explorer-sidebar");
+    if (sidebar && !sidebar.dataset.dropBound) {
+      sidebar.dataset.dropBound = "1";
+      sidebar.addEventListener("dragover", (e) => {
+        const navItem = e.target.closest?.(".nav-item");
+        if (!navItem || !hasExplorerPayload(e)) return;
+        if (navItem.dataset.path === "__disk__") return;
+        e.preventDefault();
+        e.dataTransfer.dropEffect = e.ctrlKey ? "copy" : "move";
+        $$(".nav-item.explorer-drop-target", sidebar).forEach((el) => {
+          if (el !== navItem) removeClass(el, "explorer-drop-target");
+        });
+        addClass(navItem, "explorer-drop-target");
+      });
+      sidebar.addEventListener("dragleave", (e) => {
+        if (!sidebar.contains(e.relatedTarget)) {
+          $$(".nav-item.explorer-drop-target", sidebar).forEach((el) => removeClass(el, "explorer-drop-target"));
+        }
+      });
+      sidebar.addEventListener("drop", (e) => {
+        const navItem = e.target.closest?.(".nav-item");
+        if (!navItem || !hasExplorerPayload(e)) return;
+        e.preventDefault();
+        this.handleSidebarDrop(e, navItem, inst);
+      });
+    }
   }
 
   renderMountsInSidebar(win, inst) {
@@ -465,15 +1190,18 @@ export class ExplorerApp extends BaseApp {
     const title = isSelector ? "Select File" : "Explorer";
     const win = os.window.create(winId, title, options.width || "700px", options.height || "500px", {
       ...options,
-      icon: "static/icons/file.webp"
+      icon: "static/icons/file.webp",
+      skipHeader: true
     });
     addClass(win, "explorer-window");
 
     win.innerHTML = `
+      <div class="window-header explorer-tab-header"><div class="explorer-tab-bar explorer-tab-bar--header" id="${winId}-tabs"></div>${os.window.getWindowControls()}</div>
       <div class="explorer-nav">
-        <div class="back-btn" id="${winId}-back" title="Back">${explorerIcon("papirus:actions/go-previous", 12)}</div>
-        <div class="back-btn" id="${winId}-next" title="Next">${explorerIcon("papirus:actions/go-next", 12)}</div>
-        <div class="back-btn" id="${winId}-up" title="Up">${explorerIcon("papirus:actions/go-up", 12)}</div>
+        <div class="back-btn" id="${winId}-back" title="Back">${explorerIcon("papirus:actions/go-previous", 16)}</div>
+        <div class="back-btn" id="${winId}-next" title="Next">${explorerIcon("papirus:actions/go-next", 16)}</div>
+        <div class="back-btn" id="${winId}-up" title="Up">${explorerIcon("papirus:actions/go-up", 16)}</div>
+        <div class="back-btn explorer-split-btn" id="${winId}-split" title="Split view">${explorerIcon("papirus:actions/view-dual", 16)}</div>
         <div class="explorer-path-wrap">
           <input
             type="text"
@@ -481,7 +1209,7 @@ export class ExplorerApp extends BaseApp {
             id="${winId}-path"
             spellcheck="false"
           >
-          ${explorerIcon("papirus:actions/view-refresh", 12, "", "explorer-reload-icon", winId + "-reload")}
+          ${explorerIcon("papirus:actions/view-refresh", 24, "", "explorer-reload-icon", winId + "-reload")}
         </div>
         <div class="explorer-search-wrap">
           <input
@@ -491,7 +1219,7 @@ export class ExplorerApp extends BaseApp {
             placeholder="Search..."
             spellcheck="false"
           >
-          ${explorerIcon("papirus:actions/edit-find", 12, "", "explorer-search-icon")}
+          ${explorerIcon("papirus:actions/edit-find", 24, "", "explorer-search-icon")}
         </div>
       </div>
       <div class="explorer-container">
@@ -526,11 +1254,17 @@ export class ExplorerApp extends BaseApp {
 
     this.setupExplorerControls(win, winId);
     this.navigateInstance(inst, path);
+    if (inst.tabs) {
+      this.renderTabs(inst);
+      const splitBtn = $(`#${winId}-split`, win);
+      if (splitBtn) bindEvent(splitBtn, "click", () => this.toggleSplit(inst));
+    }
   }
 
   async openTrash() {
     const winId = `explorer-trash-${Date.now()}`;
     const inst = this.createInstance(winId, null, null, "browse");
+    inst.tabs = null;
     const win = os.window.create(winId, "Trash", "700px", "500px", {
       icon: getEffectiveIcon("papirus:places/user-trash")
     });
@@ -538,16 +1272,16 @@ export class ExplorerApp extends BaseApp {
 
     win.innerHTML = `
       <div class="explorer-nav">
-        <div class="back-btn" id="${winId}-back" title="Back">${explorerIcon("papirus:actions/go-previous", 12)}</div>
-        <div class="back-btn" id="${winId}-next" title="Next">${explorerIcon("papirus:actions/go-next", 12)}</div>
-        <div class="back-btn" id="${winId}-up" title="Up">${explorerIcon("papirus:actions/go-up", 12)}</div>
+        <div class="back-btn" id="${winId}-back" title="Back">${explorerIcon("papirus:actions/go-previous", 16)}</div>
+        <div class="back-btn" id="${winId}-next" title="Next">${explorerIcon("papirus:actions/go-next", 16)}</div>
+        <div class="back-btn" id="${winId}-up" title="Up">${explorerIcon("papirus:actions/go-up", 16)}</div>
         <div class="explorer-path-wrap">
           <input type="text" class="explorer-win-path" id="${winId}-path" spellcheck="false" value="/Trash">
-          ${explorerIcon("papirus:actions/view-refresh", 12, "", "explorer-reload-icon", winId + "-reload")}
+          ${explorerIcon("papirus:actions/view-refresh", 24, "", "explorer-reload-icon", winId + "-reload")}
         </div>
         <div class="explorer-search-wrap">
           <input type="text" id="${winId}-search" class="explorer-search-input" placeholder="Search..." spellcheck="false">
-          ${explorerIcon("papirus:actions/edit-find", 12, "", "explorer-search-icon")}
+          ${explorerIcon("papirus:actions/edit-find", 24, "", "explorer-search-icon")}
         </div>
       </div>
       <div class="explorer-container">
@@ -564,8 +1298,8 @@ export class ExplorerApp extends BaseApp {
       </div>
       <div class="explorer-upload-progress" id="${winId}-upload-progress">Uploading...</div>
     `;
-
     this.initExplorerView(win, winId);
+
     this.watchWindowRemoval(winId);
     this.setupExplorerControls(win, winId);
     await showTrashView(this, inst);
@@ -583,7 +1317,7 @@ export class ExplorerApp extends BaseApp {
 
     win.innerHTML = `
       <div class="explorer-nav">
-        <div class="back-btn" id="${winId}-back" title="Back">${explorerIcon("papirus:actions/go-previous", 12)}</div>
+        <div class="back-btn" id="${winId}-back" title="Back">${explorerIcon("papirus:actions/go-previous", 16)}</div>
         <input
           type="text"
           class="explorer-win-path"
@@ -663,7 +1397,7 @@ export class ExplorerApp extends BaseApp {
 
     win.innerHTML = `
       <div class="explorer-nav">
-        <div class="back-btn" id="${winId}-back" title="Back">${explorerIcon("papirus:actions/go-previous", 12)}</div>
+        <div class="back-btn" id="${winId}-back" title="Back">${explorerIcon("papirus:actions/go-previous", 16)}</div>
         <input
           type="text"
           class="explorer-win-path"
@@ -724,6 +1458,7 @@ export class ExplorerApp extends BaseApp {
 
   setupExplorerControls(win, winId) {
     const inst = this.getInstance(winId);
+    this.bindDockZones(win, inst);
 
     this.bindBackButton(win, inst);
     this.setupPathInput(win, inst);
@@ -987,13 +1722,52 @@ export class ExplorerApp extends BaseApp {
         this.clipboardAction("cut", inst);
         return;
       }
+      if (inst.tabs) {
+        if (KeybindManager.matches(e, "explorer.closeTab")) {
+          e.preventDefault();
+          this.closeTab(inst, inst.activeTabId);
+          return;
+        }
+        if (KeybindManager.matches(e, "explorer.toggleSplit")) {
+          e.preventDefault();
+          this.toggleSplit(inst);
+          return;
+        }
+        for (let n = 1; n <= 9; n++) {
+          if (KeybindManager.matches(e, `explorer.tab${n}`)) {
+            e.preventDefault();
+            const target = inst.tabs[n - 1];
+            if (target) this.switchTab(inst, target.id);
+            return;
+          }
+        }
+      }
       return;
     };
     document.addEventListener("keydown", explorerKeyHandler);
 
     this.setupSelectionBox(win, winId);
     this.setupDropZone(win, winId);
+    this.bindDesktopNativeDrop();
     this.attachPaneResizer(win);
+    this.bindSelectableStatus(win, inst);
+  }
+
+  bindSelectableStatus(win, inst) {
+    const statusEl = $(`#${inst.winId}-status-selected`, win);
+    if (!statusEl) return;
+    statusEl.setAttribute("title", "Click to select all");
+    bindEvent(statusEl, "click", () => {
+      if (inst.mode !== "browse") return;
+      const view = $(`#${inst.winId}-view`, win);
+      if (!view) return;
+      $$(".file-item", view).forEach((el) => {
+        addClass(el, "explorer-selected");
+        const name = el.querySelector("span")?.textContent;
+        if (name) inst.selectedItems.add(name);
+      });
+      this.updateStatusBar(inst, inst.cachedFolder);
+    });
   }
 
   setupPathInput(win, inst) {
@@ -1010,7 +1784,6 @@ export class ExplorerApp extends BaseApp {
             () => {
               const fullPath = "/" + inst.currentPath.join("/");
               navigator.clipboard.writeText(fullPath).catch(() => {});
-              os.notify.send(`Path copied: ${fullPath}`);
             },
             "fa-copy"
           )
@@ -1226,6 +1999,7 @@ export class ExplorerApp extends BaseApp {
       if (dataPath !== "__disk__" && inst.isDiskView) isMatch = false;
       item.classList.toggle("nav-item--active", isMatch);
     });
+    if (inst.tabs) this.renderTabs(inst);
   }
 
   setupSelectionBox(win, winId) {
@@ -1318,9 +2092,18 @@ export class ExplorerApp extends BaseApp {
   }
 
   setupDropZone(win, winId) {
+    const inst = this.getInstance(winId);
     const view = $(`#${winId}-view`, win);
     bindEvents(view, {
       dragover: (e) => {
+        if (hasExplorerPayload(e)) {
+          if (e.target.closest?.(".file-item")) return;
+          e.preventDefault();
+          e.stopPropagation();
+          e.dataTransfer.dropEffect = e.ctrlKey ? "copy" : "move";
+          addClass(view, "explorer-drop-active");
+          return;
+        }
         if (![...(e.dataTransfer?.items || [])].some((i) => i.kind === "file")) return;
         e.preventDefault();
         e.stopPropagation();
@@ -1329,7 +2112,28 @@ export class ExplorerApp extends BaseApp {
       dragleave: (e) => {
         if (!view.contains(e.relatedTarget)) removeClass(view, "explorer-drop-active");
       },
-      drop: () => removeClass(view, "explorer-drop-active")
+      drop: async (e) => {
+        removeClass(view, "explorer-drop-active");
+        if (!hasExplorerPayload(e)) return;
+        if (e.target.closest?.(".file-item")) return;
+        e.preventDefault();
+        const payload = readExplorerPayload(e);
+        if (!payload || !inst || inst.isTrashView || inst.isDiskView) return;
+        if (payload.sourcePath.join("/") === inst.currentPath.join("/")) return;
+        const sourceInst = this.instances.get(payload.winId);
+        if (sourceInst && (sourceInst.isTrashView || sourceInst.isDiskView)) return;
+        await this.moveDraggedItems(
+          payload.items,
+          payload.fileTypes || {},
+          payload.sourcePath,
+          inst.currentPath,
+          sourceInst || inst,
+          e.ctrlKey,
+          inst,
+          payload.pane || 0,
+          0
+        );
+      }
     });
   }
 
@@ -1470,6 +2274,8 @@ export class ExplorerApp extends BaseApp {
       if (inst.mode === "select") this.bindSelectBarButton(inst);
       await this.updateStorageIndicator(win, inst);
       this.updateActiveSidebar(inst);
+      if (inst.tabs) this.renderTabs(inst);
+      if (inst.split) await this.renderSplitPane(inst);
 
       const cb = this.getClipboard();
       if (cb && cb.action === "cut") {
@@ -1608,7 +2414,16 @@ export class ExplorerApp extends BaseApp {
       };
       item.ondblclick = () => this.openItemForInstance(inst, name, isFile);
       item.oncontextmenu = (e) => showFileContextMenu(this, e, name, isFile, inst);
-      this.setupExplorerItemDrag(item, name, isFile, inst);
+      item.draggable = true;
+      item.addEventListener("dragstart", (e) => this.handleItemDragStart(e, item, name, isFile, inst));
+      item.addEventListener("dragend", () => this.clearDropHighlights());
+      if (!isFile) {
+        item.addEventListener("dragover", (e) => this.handleFolderDragOver(e, item));
+        item.addEventListener("dragleave", (e) => {
+          if (!item.contains(e.relatedTarget)) removeClass(item, "explorer-drop-target");
+        });
+        item.addEventListener("drop", (e) => this.handleFolderDrop(e, item, name, inst));
+      }
     }
 
     item.addEventListener("mouseenter", (e) => {
@@ -1648,9 +2463,52 @@ export class ExplorerApp extends BaseApp {
     if (inst) await this.openItemForInstance(inst, name, isFile);
   }
 
+  isShortcutName(name) {
+    return name.toLowerCase().endsWith(".shortcut.json");
+  }
+
+  parseShortcutPayload(raw) {
+    try {
+      return JSON.parse(raw);
+    } catch {
+      return null;
+    }
+  }
+
+  async openShortcutForInstance(inst, name) {
+    try {
+      const raw = await os.fs.read([...inst.currentPath, name]);
+      const payload = this.parseShortcutPayload(raw);
+      if (!payload || !payload.targetPath) throw new Error("invalid shortcut");
+      const parts = String(payload.targetPath).split("/").filter(Boolean);
+      const targetName = payload.targetName || parts[parts.length - 1];
+      const targetDir = parts.slice(0, -1);
+      let entries = null;
+      try {
+        entries = await os.fs.readdir(targetDir);
+      } catch {}
+      const entry = entries ? entries[targetName] : null;
+      if (entry && entry.type !== "file") {
+        this.navigateInstance(inst, [...targetDir, targetName]);
+        return true;
+      }
+      triggerCursorEffect();
+      await openFileWith({ name: targetName, path: targetDir });
+      return true;
+    } catch {
+      os.dialog.alert("Shortcut", "Shortcut target is not available");
+      return true;
+    }
+  }
+
   async openItemForInstance(inst, name, isFile) {
     if (!isFile) {
       this.navigateInstance(inst, [...inst.currentPath, name]);
+      return;
+    }
+
+    if (this.isShortcutName(name)) {
+      await this.openShortcutForInstance(inst, name);
       return;
     }
 
@@ -1817,200 +2675,277 @@ export class ExplorerApp extends BaseApp {
     if (inst.mode === "browse") this.updateStatusBar(inst, inst.cachedFolder);
   }
 
-  setupExplorerItemDrag(itemEl, name, isFile, inst) {
-    itemEl.addEventListener("mousedown", (e) => {
-      if (e.button !== 0 || e.target.tagName === "INPUT") return;
+  resolveSidebarDest(sidebarEl) {
+    if (!sidebarEl) return null;
+    const mountPoint = sidebarEl.dataset.mount;
+    if (mountPoint) return { path: mountPoint.split("/").filter(Boolean), kind: "folder" };
+    const rawPath = sidebarEl.dataset.path;
+    if (rawPath === "__trash__") return { path: null, kind: "trash" };
+    if (rawPath === "__disk__") return null;
+    if (rawPath === undefined) return null;
+    return { path: rawPath.split("/").filter(Boolean), kind: "folder" };
+  }
 
-      const startX = e.clientX;
-      const startY = e.clientY;
-      let ghost = null;
-      let dragging = false;
-      let dragRafId = null;
-      let activeDropTarget = null;
-
-      const onMouseMove = (ev) => {
-        const dx = ev.clientX - startX;
-        const dy = ev.clientY - startY;
-
-        if (!dragging && Math.sqrt(dx * dx + dy * dy) > 6) {
-          dragging = true;
-          if (!inst.selectedItems.has(name)) this.selectExplorerItem(inst, name, itemEl, false);
-
-          const win = $(`#${inst.winId}`);
-          const view = win?.querySelector(`#${inst.winId}-view`);
-          const selectedEls = view ? [...view.querySelectorAll(".file-item.explorer-selected")] : [itemEl];
-
-          ghost = createElement("div");
-          ghost.className = "explorer-drag-ghost";
-          const iconEl = (selectedEls[0] || itemEl).querySelector("img")?.cloneNode() || createElement("div");
-          iconEl.className = "explorer-ghost-icon";
-          const label = createElement("div");
-          label.className = "explorer-file-label";
-          label.textContent = selectedEls.length > 1 ? `${selectedEls.length} items` : name;
-          ghost.appendChild(iconEl);
-          ghost.appendChild(label);
-          setStyle(ghost, { left: ev.clientX - 50 + "px", top: ev.clientY - 30 + "px" });
-          document.body.appendChild(ghost);
-
-          const selectedNames = inst.selectedItems.size > 0 ? [...inst.selectedItems] : [name];
-          sharedDragState.active = true;
-          sharedDragState.items = selectedNames;
-          sharedDragState.sourcePath = inst.currentPath;
-          sharedDragState.sourceWinId = inst.winId;
-          sharedDragState.fileTypes = {};
-          if (view) {
-            view.querySelectorAll(".file-item").forEach((el) => {
-              const n = el.querySelector("span")?.textContent;
-              if (n) sharedDragState.fileTypes[n] = el.dataset.isFile === "true";
-            });
+  async moveDraggedItems(
+    items,
+    nameToIsFile,
+    sourcePath,
+    destPath,
+    sourceInst,
+    copyOnly,
+    targetInst,
+    sourcePane = 0,
+    destPane = 0
+  ) {
+    const sourceStr = sourcePath.join("/");
+    const destStr = destPath.join("/");
+    if (sourceStr === destStr) return 0;
+    let count = 0;
+    for (const itemName of items) {
+      const srcItemStr = [...sourcePath, itemName].join("/");
+      if (destStr === srcItemStr || destStr.startsWith(srcItemStr + "/")) {
+        os.notify.send(`Cannot move "${itemName}" into itself`);
+        continue;
+      }
+      try {
+        const itemIsFile = nameToIsFile[itemName] ?? true;
+        await copyItem(this, itemName, itemIsFile, sourcePath, destPath);
+        if (!copyOnly) {
+          try {
+            await os.fs.delete(sourcePath, itemName);
+          } catch {
+            await os.fs.delete([...sourcePath, itemName]);
           }
         }
-
-        if (dragging && ghost) {
-          setStyle(ghost, { left: ev.clientX - 50 + "px", top: ev.clientY - 30 + "px" });
-
-          if (dragRafId) return;
-          dragRafId = requestAnimationFrame(() => {
-            dragRafId = null;
-            const explorerWin = $(`#${inst.winId}`);
-            const overDesktop = !explorerWin?.contains(document.elementFromPoint(ev.clientX, ev.clientY));
-
-            const el = document.elementFromPoint(ev.clientX, ev.clientY);
-            const targetView = el?.closest(".explorer-main");
-            const overOtherExplorer = targetView && targetView.id !== `${inst.winId}-view`;
-
-            if (activeDropTarget && activeDropTarget !== targetView) {
-              removeClass(activeDropTarget, "explorer-drop-active");
-            }
-            if (overOtherExplorer) {
-              addClass(targetView, "explorer-drop-active");
-              activeDropTarget = targetView;
-            } else {
-              activeDropTarget = null;
-            }
-
-            setStyle(ghost, {
-              borderColor: overOtherExplorer
-                ? "rgba(255,200,79,0.7)"
-                : overDesktop
-                  ? "rgba(79,255,120,0.7)"
-                  : "rgba(79,158,255,0.55)",
-              boxShadow:
-                overDesktop || overOtherExplorer
-                  ? "0 8px 32px rgba(0,0,0,0.5),0 0 0 1px rgba(79,255,120,0.3)"
-                  : "0 8px 32px rgba(0,0,0,0.5)"
-            });
-          });
+        count++;
+      } catch {
+        os.notify.send(`Could not move "${itemName}"`);
+      }
+    }
+    const win = $(`#${sourceInst.winId}`);
+    const view = win && $(`#${sourceInst.winId}-view`, win);
+    const sourceSplit = this.getSplitTab(sourceInst);
+    if (sourcePane === 1 && sourceSplit) {
+      const splitView = win && $(`#${sourceInst.winId}-view-split`, win);
+      if (splitView)
+        $$(".file-item.explorer-selected", splitView).forEach((el) => removeClass(el, "explorer-selected"));
+      sourceSplit.selectedItems = new Set();
+      sourceSplit.selectedFile = null;
+    } else {
+      if (view) $$(".file-item.explorer-selected", view).forEach((el) => removeClass(el, "explorer-selected"));
+      sourceInst.selectedItems = new Set();
+      sourceInst.selectedFile = null;
+    }
+    await this.renderInstance(sourceInst);
+    if (targetInst && targetInst !== sourceInst) {
+      const targetStr = targetInst.currentPath.join("/");
+      if (targetStr === destStr) await this.renderInstance(targetInst);
+    } else if (!targetInst) {
+      for (const other of this.instances.values()) {
+        if (
+          other !== sourceInst &&
+          !other.isTrashView &&
+          !other.isDiskView &&
+          other.currentPath.join("/") === destStr
+        ) {
+          await this.renderInstance(other);
         }
-      };
+      }
+    }
+    if (sourceInst.split) await this.renderSplitPane(sourceInst);
+    if (targetInst && targetInst.split && targetInst !== sourceInst) await this.renderSplitPane(targetInst);
+    return count;
+  }
 
-      const onMouseUp = async (ev) => {
-        document.removeEventListener("mousemove", onMouseMove);
-        document.removeEventListener("mouseup", onMouseUp);
-        if (ghost) ghost.remove();
+  async trashDraggedItems(items, sourcePath, sourceInst, sourcePane = 0) {
+    let count = 0;
+    for (const itemName of items) {
+      try {
+        await os.fs.trashFile(sourcePath, itemName);
+        count++;
+      } catch {
+        os.notify.send(`Could not move "${itemName}" to trash`);
+      }
+    }
+    if (count > 0) os.notify.send(`${count} ${pluralize(count, "item")} moved to trash`);
+    const trashSplit = this.getSplitTab(sourceInst);
+    if (sourcePane === 1 && trashSplit) {
+      const win = $(`#${sourceInst.winId}`);
+      const splitView = win && $(`#${sourceInst.winId}-view-split`, win);
+      if (splitView)
+        $$(".file-item.explorer-selected", splitView).forEach((el) => removeClass(el, "explorer-selected"));
+      trashSplit.selectedItems = new Set();
+      trashSplit.selectedFile = null;
+    } else {
+      sourceInst.selectedItems = new Set();
+      sourceInst.selectedFile = null;
+    }
+    await this.renderInstance(sourceInst);
+    if (sourceInst.split) await this.renderSplitPane(sourceInst);
+    return count;
+  }
 
-        if (activeDropTarget) {
-          removeClass(activeDropTarget, "explorer-drop-active");
-          activeDropTarget = null;
+  handleItemDragStart(e, itemEl, name, isFile, inst, pane = 0) {
+    if (inst.mode !== "browse" || inst.isTrashView || inst.isDiskView) {
+      e.preventDefault();
+      return;
+    }
+    const win = $(`#${inst.winId}`);
+    const dragSplit = this.getSplitTab(inst);
+    if (pane === 1 && dragSplit) {
+      const splitView = win && $(`#${inst.winId}-view-split`, win);
+      if (!dragSplit.selectedItems.has(name)) {
+        if (splitView)
+          $$(".file-item.explorer-selected", splitView).forEach((el) => removeClass(el, "explorer-selected"));
+        dragSplit.selectedItems = new Set([name]);
+        dragSplit.selectedFile = name;
+        addClass(itemEl, "explorer-selected");
+      }
+    } else if (!inst.selectedItems.has(name)) {
+      this.selectExplorerItem(inst, name, itemEl, false, false);
+    }
+    const viewId = pane === 1 ? `#${inst.winId}-view-split` : `#${inst.winId}-view`;
+    const view = win && $(viewId, win);
+    const fileTypes = {};
+    if (view) {
+      $$(".file-item", view).forEach((el) => {
+        const itemName = el.querySelector(".file-item-name")?.textContent || el.querySelector("span")?.textContent;
+        if (itemName) fileTypes[itemName] = el.dataset.isFile === "true";
+      });
+    }
+    const selSet = pane === 1 && dragSplit ? dragSplit.selectedItems : inst.selectedItems;
+    const srcPath = pane === 1 && dragSplit ? dragSplit.currentPath : inst.currentPath;
+    const items = selSet.size > 0 ? [...selSet] : [name];
+    try {
+      e.dataTransfer.setData(
+        EXPLORER_DRAG_TYPE,
+        JSON.stringify({ winId: inst.winId, pane, sourcePath: srcPath, items, fileTypes })
+      );
+      e.dataTransfer.effectAllowed = "copyMove";
+    } catch {
+      e.preventDefault();
+    }
+  }
+
+  clearDropHighlights() {
+    $$(".explorer-drop-target").forEach((el) => removeClass(el, "explorer-drop-target"));
+    $$(".explorer-main.explorer-drop-active").forEach((el) => removeClass(el, "explorer-drop-active"));
+  }
+
+  handleFolderDragOver(e, itemEl) {
+    if (!hasExplorerPayload(e)) return;
+    e.preventDefault();
+    e.stopPropagation();
+    e.dataTransfer.dropEffect = e.ctrlKey ? "copy" : "move";
+    addClass(itemEl, "explorer-drop-target");
+  }
+
+  async handleFolderDrop(e, itemEl, folderName, inst) {
+    e.preventDefault();
+    e.stopPropagation();
+    removeClass(itemEl, "explorer-drop-target");
+    const payload = readExplorerPayload(e);
+    if (!payload) return;
+    if (inst.mode !== "browse" || inst.isTrashView || inst.isDiskView) return;
+    const splitMain = itemEl.closest?.(".explorer-main");
+    const inSplit = splitMain && splitMain.id === `${inst.winId}-view-split`;
+    const dropSplit = this.getSplitTab(inst);
+    if (inSplit && dropSplit) {
+      if (payload.sourcePath.join("/") === dropSplit.currentPath.join("/") && payload.items.includes(folderName))
+        return;
+      const sourceInst = this.instances.get(payload.winId);
+      if (sourceInst && (sourceInst.isTrashView || sourceInst.isDiskView)) return;
+      await this.moveDraggedItems(
+        payload.items,
+        payload.fileTypes || {},
+        payload.sourcePath,
+        [...dropSplit.currentPath, folderName],
+        sourceInst || inst,
+        e.ctrlKey,
+        inst,
+        payload.pane || 0,
+        1
+      );
+      return;
+    }
+    if (payload.sourcePath.join("/") === inst.currentPath.join("/") && payload.items.includes(folderName)) return;
+    const sourceInst = this.instances.get(payload.winId);
+    if (sourceInst && (sourceInst.isTrashView || sourceInst.isDiskView)) return;
+    await this.moveDraggedItems(
+      payload.items,
+      payload.fileTypes || {},
+      payload.sourcePath,
+      [...inst.currentPath, folderName],
+      sourceInst || inst,
+      e.ctrlKey,
+      inst,
+      payload.pane || 0,
+      0
+    );
+  }
+
+  async handleSidebarDrop(e, navItem, inst) {
+    removeClass(navItem, "explorer-drop-target");
+    const payload = readExplorerPayload(e);
+    if (!payload) return;
+    if (inst.mode !== "browse" || inst.isTrashView || inst.isDiskView) return;
+    const dest = this.resolveSidebarDest(navItem);
+    if (!dest) return;
+    const sourceInst = this.instances.get(payload.winId);
+    if (sourceInst && (sourceInst.isTrashView || sourceInst.isDiskView)) return;
+    if (dest.kind === "trash") {
+      if (e.ctrlKey) return;
+      await this.trashDraggedItems(payload.items, payload.sourcePath, sourceInst || inst, payload.pane || 0);
+      return;
+    }
+    await this.moveDraggedItems(
+      payload.items,
+      payload.fileTypes || {},
+      payload.sourcePath,
+      dest.path,
+      sourceInst || inst,
+      e.ctrlKey,
+      null
+    );
+  }
+
+  bindDesktopNativeDrop() {
+    if (this.desktopNativeDropBound) return;
+    const desktopEl = $("#desktop");
+    if (!desktopEl) return;
+    this.desktopNativeDropBound = true;
+    desktopEl.addEventListener("dragover", (e) => {
+      if (e.target.closest?.(".window")) return;
+      if (!hasExplorerPayload(e)) return;
+      e.preventDefault();
+      e.dataTransfer.dropEffect = e.ctrlKey ? "copy" : "move";
+    });
+    desktopEl.addEventListener("drop", async (e) => {
+      if (e.target.closest?.(".window")) return;
+      if (!hasExplorerPayload(e)) return;
+      const payload = readExplorerPayload(e);
+      if (!payload) return;
+      e.preventDefault();
+      if (!this.desktopUI?.dropFromExplorer) return;
+      for (const itemName of payload.items) {
+        const itemIsFile = payload.fileTypes?.[itemName] ?? true;
+        try {
+          await this.desktopUI.dropFromExplorer(itemName, itemIsFile, payload.sourcePath, e.clientX, e.clientY);
+        } catch {}
+      }
+      const sourceInst = this.instances.get(payload.winId);
+      if (sourceInst) {
+        const nativeSplit = this.getSplitTab(sourceInst);
+        if ((payload.pane || 0) === 1 && nativeSplit) {
+          nativeSplit.selectedItems = new Set();
+          nativeSplit.selectedFile = null;
+        } else {
+          sourceInst.selectedItems = new Set();
+          sourceInst.selectedFile = null;
         }
-        document
-          .querySelectorAll(".explorer-main.explorer-drop-active")
-          .forEach((el) => removeClass(el, "explorer-drop-active"));
-        sharedDragState.active = false;
-
-        if (!dragging) return;
-
-        const explorerWin = $(`#${inst.winId}`);
-        const droppedOnExplorer = explorerWin?.contains(document.elementFromPoint(ev.clientX, ev.clientY));
-        if (droppedOnExplorer) return;
-
-        const dropTargets = document.elementsFromPoint(ev.clientX, ev.clientY);
-        const targetView = dropTargets.find(
-          (el) => el.classList.contains("explorer-main") && el.id !== `${inst.winId}-view`
-        );
-        if (targetView) {
-          const targetWinId = targetView.id.replace("-view", "");
-          const targetInst = this.instances.get(targetWinId);
-          if (targetInst) {
-            const isMove = ev.ctrlKey;
-            const itemsToMove = inst.selectedItems.size > 0 ? [...inst.selectedItems] : [name];
-
-            const win = $(`#${inst.winId}`);
-            const view = win?.querySelector(`#${inst.winId}-view`);
-
-            const nameToIsFile = {};
-            if (view) {
-              view.querySelectorAll(".file-item").forEach((el) => {
-                const n = el.querySelector("span")?.textContent;
-                if (n) nameToIsFile[n] = el.dataset.isFile === "true";
-              });
-            }
-
-            let count = 0;
-            for (const itemName of itemsToMove) {
-              const iF = nameToIsFile[itemName] ?? isFile;
-              try {
-                await copyItem(this, itemName, iF, inst.currentPath, targetInst.currentPath);
-                if (isMove) await os.fs.delete(inst.currentPath, itemName);
-                count++;
-              } catch {
-                os.notify.send(`Could not move/copy "${itemName}"`);
-              }
-            }
-
-            if (count > 0) {
-              os.notify.send(`${count} ${pluralize(count, "item")} ${isMove ? "moved" : "copied"}`);
-            }
-
-            view
-              ?.querySelectorAll(".file-item.explorer-selected")
-              .forEach((el) => el.classList.remove("explorer-selected"));
-            inst.selectedItems = new Set();
-            inst.selectedFile = null;
-            await this.renderInstance(inst);
-            if (targetInst !== inst) await this.renderInstance(targetInst);
-            return;
-          }
-        }
-
-        if (!this.desktopUI?.dropFromExplorer) return;
-
-        const desktopEl = $("#desktop");
-        if (!desktopEl) return;
-        const dRect = desktopEl.getBoundingClientRect();
-        const overDesktop =
-          ev.clientX >= dRect.left &&
-          ev.clientX <= dRect.right &&
-          ev.clientY >= dRect.top &&
-          ev.clientY <= dRect.bottom;
-        if (!overDesktop) return;
-
-        const win = $(`#${inst.winId}`);
-        const view = win?.querySelector(`#${inst.winId}-view`);
-        const nameToIsFile = {};
-        if (view) {
-          [...view.querySelectorAll(".file-item")].forEach((el) => {
-            const n = el.querySelector("span")?.textContent;
-            if (n) nameToIsFile[n] = el.dataset.isFile === "true";
-          });
-        }
-
-        const itemsToMove = inst.selectedItems.size > 0 ? [...inst.selectedItems] : [name];
-        for (const itemName of itemsToMove) {
-          const iF = itemName === name ? isFile : (nameToIsFile[itemName] ?? isFile);
-          await this.desktopUI.dropFromExplorer(itemName, iF, inst.currentPath, ev.clientX, ev.clientY);
-        }
-
-        view
-          ?.querySelectorAll(".file-item.explorer-selected")
-          .forEach((el) => el.classList.remove("explorer-selected"));
-        inst.selectedItems = new Set();
-        inst.selectedFile = null;
-        await this.renderInstance(inst);
-      };
-
-      document.addEventListener("mousemove", onMouseMove);
-      document.addEventListener("mouseup", onMouseUp);
+        await this.renderInstance(sourceInst);
+        if (sourceInst.split) await this.renderSplitPane(sourceInst);
+      }
     });
   }
 

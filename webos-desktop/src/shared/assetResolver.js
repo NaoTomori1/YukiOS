@@ -1,7 +1,7 @@
 import { os } from "../os/index.js";
 import { $, $$ } from "./domUtils.js";
 import { StorageKeys } from "../StorageKeys.js";
-import { PAPIRUS_SYMLINKS as PAPIRUS_SYMLINKS_FALLBACK } from "./papirusDataLoader.js";
+import { PAPIRUS_AVAILABLE, PAPIRUS_SYMLINKS as PAPIRUS_SYMLINKS_FALLBACK } from "./papirusDataLoader.js";
 
 const PAPIRUS_TO_FA = {
   "papirus:apps/accessories-camera": "fas fa-camera",
@@ -92,7 +92,12 @@ const PAPIRUS_TO_FA = {
   "papirus:apps/preferences-desktop-gaming": "far fa-gamepad",
   "papirus:places/folder-blue": "fas fa-folder",
   "papirus:apps/utilities-tweak-tool": "fa fa-wrench",
-  "papirus:actions/configure": "fas fa-cog"
+  "papirus:actions/configure": "fas fa-cog",
+  "papirus:apps/utilities-system-monitor": "fas fa-chart-line",
+  "papirus:actions/zoom-out": "fas fa-search-minus",
+  "papirus:actions/edit-find": "fas fa-search",
+  "papirus:actions/media-playback-stop": "fas fa-stop",
+  "papirus:places/user-home": "fas fa-house"
 };
 
 const PAPIRUS_CDN_BASE = "https://cdn.jsdelivr.net/gh/PapirusDevelopmentTeam/papirus-icon-theme@master";
@@ -110,11 +115,15 @@ export function resolvePapirusUrl(papirusIcon, size = 48) {
     context = parts.join("/") || "apps";
   }
   let key = `${context}/${name}`;
-  if (PAPIRUS_SYMLINKS_FALLBACK[key]) {
+  const seenKeys = new Set([key]);
+  for (let hops = 0; hops < 10; hops++) {
     const resolved = PAPIRUS_SYMLINKS_FALLBACK[key];
+    if (!resolved || seenKeys.has(resolved)) break;
+    seenKeys.add(resolved);
     const parts = resolved.split("/");
     name = parts.pop();
     context = parts.join("/") || context;
+    key = `${context}/${name}`;
   }
   let bucket = [16, 22, 24, 32, 48, 64].reduce(
     (best, s) => (Math.abs(s - size) < Math.abs(best - size) ? s : best),
@@ -141,6 +150,21 @@ export function resolvePapirusUrl(papirusIcon, size = 48) {
     const valid = [16, 22, 24, 32, 48, 64];
     if (!valid.includes(bucket))
       bucket = valid.reduce((best, s) => (Math.abs(s - size) < Math.abs(best - size) ? s : best), 48);
+  }
+  const availableSizes = PAPIRUS_AVAILABLE[key];
+  if (availableSizes && availableSizes.length > 0) {
+    let nearest = bucket;
+    let nearestDiff = Infinity;
+    for (const entry of availableSizes) {
+      const parsed = parseInt(String(entry).split("x")[0], 10);
+      if (!Number.isFinite(parsed)) continue;
+      const diff = Math.abs(parsed - size);
+      if (diff < nearestDiff) {
+        nearestDiff = diff;
+        nearest = parsed;
+      }
+    }
+    bucket = nearest;
   }
   const url = `${PAPIRUS_CDN_BASE}/Papirus/${bucket}x${bucket}/${context}/${name}.svg`;
   return resolveGhUrl(url);

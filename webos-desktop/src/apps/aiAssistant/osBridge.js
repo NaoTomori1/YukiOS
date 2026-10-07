@@ -550,7 +550,6 @@ export class OSBridge {
   async takeScreenshot(target, params) {
     try {
       os.app.takeScreenshot(true);
-      os.achievements.incrementScreenshotTaken();
       return { success: true, message: "Screenshot captured" };
     } catch (error) {
       throw new Error(`Failed to take screenshot: ${error.message}`);

@@ -5,6 +5,7 @@ import { audioMixer, SystemAudio } from "./audioMixer.js";
 import { $, createElement, setHTML, toggleClass, addClass, removeClass } from "./shared/domUtils.js";
 import { getSetting, parseBool, timeAgo, escapeHtml } from "./utils/utils.js";
 import { resolveIconUrl } from "./shared/assetResolver.js";
+import { createTrayPinButton, setTrayPinState } from "./shared/trayPin.js";
 import { APP_MANIFESTS, StorageKeys, os } from "./framework.js";
 
 const APP_SOURCE_TO_APP_MAP_KEY = APP_MANIFESTS.reduce(
@@ -25,10 +26,12 @@ export class NotificationCenter {
     this.notifications = [];
     this.snoozedNotifications = [];
     this.isOpen = false;
+    this.pinned = false;
     this.maxNotifications = 50;
     this.notificationId = 0;
     this.doNotDisturb = this.loadDoNotDisturb();
     this.lastNotification = new Map();
+    this.suppressOutsideClick = false;
     this.createNotificationCenterUI();
     this.initTrayEntry();
     this.updateDoNotDisturbUI();
@@ -82,6 +85,14 @@ export class NotificationCenter {
 
     $(".ntf-panel__dismiss", centerContainer).addEventListener("click", () => {
       this.closeCenter();
+    });
+
+    const dismissBtn = $(".ntf-panel__dismiss", centerContainer);
+    const pinBtn = createTrayPinButton();
+    dismissBtn.parentNode.insertBefore(pinBtn, dismissBtn);
+    setTrayPinState(centerContainer, pinBtn, this.pinned);
+    pinBtn.addEventListener("click", () => {
+      this.togglePin();
     });
 
     $(".ntf-panel__dnd", centerContainer).addEventListener("click", () => {
@@ -450,12 +461,24 @@ export class NotificationCenter {
   }
 
   handleOutsideClick = (e) => {
+    if (this.pinned) return;
+    if (this.suppressOutsideClick) {
+      this.suppressOutsideClick = false;
+      return;
+    }
     const panel = $("#ntf-panel");
     const trayEl = $("#app-tray");
     if (panel && !e.target.closest("#ntf-panel") && !e.target.closest("#app-tray")) {
       this.closeCenter();
     }
   };
+
+  togglePin() {
+    this.pinned = !this.pinned;
+    const panel = $("#ntf-panel");
+    const btn = panel ? $(".tray-pin-btn", panel) : null;
+    setTrayPinState(panel, btn, this.pinned);
+  }
 
   toggleCenter() {
     if (this.isOpen) {
@@ -473,6 +496,7 @@ export class NotificationCenter {
     center.offsetHeight;
     addClass(center, "open");
     this.isOpen = true;
+    this.suppressOutsideClick = true;
 
     this.updateTrayActiveState();
     document.addEventListener("click", this.handleOutsideClick);

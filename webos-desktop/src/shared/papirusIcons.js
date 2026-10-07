@@ -1,10 +1,5 @@
 import { resolveGhUrl } from "./assetResolver.js";
-import {
-  PAPIRUS_AVAILABLE,
-  PAPIRUS_SYMLINKS,
-  papirusReady,
-  ensurePapirusData
-} from "./papirusDataLoader.js";
+import { PAPIRUS_AVAILABLE, PAPIRUS_SYMLINKS, papirusReady, ensurePapirusData } from "./papirusDataLoader.js";
 
 export { PAPIRUS_AVAILABLE, PAPIRUS_SYMLINKS, papirusReady, ensurePapirusData };
 
@@ -37,8 +32,6 @@ export function getPapirusName(icon) {
   return icon.slice(8);
 }
 
-
-
 function pickAvailableSize(requestedBucket, availableSizes) {
   if (!availableSizes || availableSizes.length === 0) return requestedBucket;
   const req = `${requestedBucket}x${requestedBucket}`;
@@ -62,12 +55,15 @@ export function resolvePapirusUrl(name, { size = 48, context = "apps", variant =
     ctx = parts.join("/") || context;
   }
   let key = `${ctx}/${iconName}`;
-  let resolvedKey = PAPIRUS_SYMLINKS[key] || key;
-  if (resolvedKey !== key) {
+  const seenKeys = new Set([key]);
+  for (let hops = 0; hops < 10; hops++) {
+    const resolvedKey = PAPIRUS_SYMLINKS[key];
+    if (!resolvedKey || seenKeys.has(resolvedKey)) break;
+    seenKeys.add(resolvedKey);
     const parts = resolvedKey.split("/");
     iconName = parts.pop();
     ctx = parts.join("/") || ctx;
-    key = resolvedKey;
+    key = `${ctx}/${iconName}`;
   }
   const requestedBucket = getPapirusSizeFor(size);
   const available = PAPIRUS_AVAILABLE[key] || PAPIRUS_AVAILABLE[`${ctx}/${iconName.toLowerCase()}`];
@@ -277,7 +273,12 @@ export const FA_TO_PAPIRUS = {
   "fas fa-folder": "places/folder-blue",
   "fa fa-wrench": "apps/utilities-tweak-tool",
   "fas fa-cogs": "actions/configure",
-  "fas fa-cog": "actions/configure"
+  "fas fa-cog": "actions/configure",
+  "fas fa-chart-line": "apps/utilities-system-monitor",
+  "fas fa-search-minus": "actions/zoom-out",
+  "fas fa-search": "actions/edit-find",
+  "fas fa-stop": "actions/media-playback-stop",
+  "fas fa-house": "places/user-home"
 };
 
 export function papirusForFa(faClass) {

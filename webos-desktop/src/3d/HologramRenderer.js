@@ -1,5 +1,6 @@
 import { resolveIconUrl } from "../shared/assetResolver.js";
 import { createElement } from "../shared/domUtils.js";
+import { createAdaptiveInterval } from "../shared/pollThrottle.js";
 
 export class HologramRenderer {
   constructor(pixelScale = 2) {
@@ -44,7 +45,7 @@ export class HologramRenderer {
     this.goToPage(0);
     this.loadAllIcons();
 
-    this.intervalId = setInterval(() => this.update(), 100);
+    this.stopPoll = createAdaptiveInterval(() => this.update(), 100, 1000);
     this.update();
   }
 
@@ -83,6 +84,10 @@ export class HologramRenderer {
 
   stop() {
     this.running = false;
+    if (this.stopPoll) {
+      this.stopPoll();
+      this.stopPoll = null;
+    }
     if (this.intervalId) {
       clearInterval(this.intervalId);
       this.intervalId = null;

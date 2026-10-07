@@ -7,6 +7,7 @@ import { parseBool } from "../../utils/utils.js";
 import { StorageKeys, os, MODES, $, createElement } from "../../framework.js";
 import { SystemUtilities } from "../../system.js";
 import { MAC_WALLPAPER_NAME_URL_PAIRS } from "../../wallpaperConfig.js";
+import { createTrayPinButton, setTrayPinState } from "../../shared/trayPin.js";
 
 const ACCENT_COLORS = [
   { label: "Blue", value: "#3b82f6" },
@@ -22,6 +23,7 @@ class MacControlCenter {
     this.winId = "mac-control-center";
     this.popupId = "mac-control-center-popup";
     this.popupVisible = false;
+    this.pinned = false;
     this.registered = false;
 
     this.brightness = parseInt(os.storage.get(StorageKeys.brightness), 10) || 100;
@@ -221,6 +223,15 @@ class MacControlCenter {
 
     document.body.appendChild(popup);
 
+    const pinBtn = createTrayPinButton();
+    pinBtn.classList.add("tray-pin-btn--corner");
+    pinBtn.addEventListener("click", () => {
+      this.pinned = !this.pinned;
+      setTrayPinState(popup, pinBtn, this.pinned);
+    });
+    popup.appendChild(pinBtn);
+    setTrayPinState(popup, pinBtn, this.pinned);
+
     const pos = getTrayPosition();
     popup.style.left = pos.left;
     popup.style.right = pos.right;
@@ -244,6 +255,7 @@ class MacControlCenter {
   }
 
   handleOutsideClick = (e) => {
+    if (this.pinned) return;
     const popup = $("#" + this.popupId);
     if (popup && !e.target.closest(`#${this.popupId}`) && !e.target.closest("#app-tray")) {
       this.closePopup();
