@@ -7,6 +7,15 @@ on:
   issues:
   issue_comment:
   workflow_dispatch:
+    inputs:
+      sha:
+        description: Commit SHA to announce and build
+        required: false
+        default: ""
+      message:
+        description: Override announcement message
+        required: false
+        default: ""
   release:
   watch:
 
@@ -84,14 +93,17 @@ jobs:
 
           send_discord() {
             local content="$1"
+            if [ "${#content}" -gt 1800 ]; then
+              content="${content:0:1797}..."
+            fi
             local payload
             payload=$(jq -n --arg content "$content" '{content: $content}')
-            curl -H "Content-Type: application/json" -d "$payload" "$DISCORD_WEBHOOK"
+            curl -sS -f -H "Content-Type: application/json" -d "$payload" "$DISCORD_WEBHOOK"
           }
 
           send_discord_embed() {
             local payload="$1"
-            curl -H "Content-Type: application/json" \
+            curl -sS -f -H "Content-Type: application/json" \
               -d "$payload" \
               "$DISCORD_WEBHOOK"
           }
@@ -99,16 +111,18 @@ jobs:
           if [ "$EVENT" = "push" ]; then
             if [ "${{ github.actor }}" = "Reeyuki" ]; then
               SHORT_SHA="${GITHUB_SHA::7}"
+              COMMIT_SHORT="$(printf '%s' "$COMMIT_MESSAGE" | tr '\n' ' ' | head -c 300)"
               payload=$(jq -n \
                 --arg name "Reeyuki" \
                 --arg icon "https://cdn.discordapp.com/avatars/452491822871085066/5cfc60e7dcf86a9eadee0bf2e84f1cf7.webp?size=160" \
-                --arg value "\`${SHORT_SHA}\` - ${COMMIT_MESSAGE}" \
+                --arg value "\`${SHORT_SHA}\` - ${COMMIT_SHORT}" \
                 '{embeds: [{author: {name: $name, icon_url: $icon}, fields: [{name: "Commit", value: $value, inline: false}]}]}')
               send_discord_embed "$payload"
             else
+              PUSH_SHORT="$(printf '%s' "$COMMIT_MESSAGE" | tr '\n' ' ' | head -c 500)"
               send_discord "[push] ${{ github.actor }} on ${{ github.repository }}
             Branch: ${{ github.ref_name }}
-            Commit: $COMMIT_MESSAGE
+            Commit: $PUSH_SHORT
             ${{ github.event.head_commit.url }}"
             fi
 
@@ -161,6 +175,8 @@ jobs:
         shell: bash
         env:
           COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
+          INPUT_SHA: ${{ inputs.sha }}
+          INPUT_MESSAGE: ${{ inputs.message }}
         run: |
           cd webos-desktop
 
@@ -171,32 +187,70 @@ jobs:
           pnpm build:single
           mv dist dist-single
 
-          SHA="${GITHUB_SHA::7}"
-          SUBJECT="$COMMIT_MESSAGE"
+          if [ -n "$INPUT_SHA" ]; then
+            git fetch origin "$INPUT_SHA" --depth 1 || true
+            SHA="${INPUT_SHA:0:7}"
+          else
+            SHA="${GITHUB_SHA::7}"
+          fi
+          if [ -n "$INPUT_MESSAGE" ]; then
+            RAW_SUBJECT="$INPUT_MESSAGE"
+          elif [ -n "$COMMIT_MESSAGE" ]; then
+            RAW_SUBJECT="$COMMIT_MESSAGE"
+          else
+            RAW_SUBJECT="$(git log -1 --format=%s "$SHA" 2>/dev/null || git log -1 --format=%s)"
+          fi
+          SUBJECT="$(printf '%s' "$RAW_SUBJECT" | tr '\n' ' ' | head -c 300)"
+
+          build_content() {
+            local prefix="$1"
+            local text="${prefix} from ${SHA} (${SUBJECT})"
+            if [ "${#text}" -gt 1800 ]; then
+              text="${text:0:1797}..."
+            fi
+            printf '%s' "$text"
+          }
 
           upload_file() {
             local file="$1"
             local type="$2"
             local content="$3"
+            if [ "${#content}" -gt 1800 ]; then
+              content="${content:0:1797}..."
+            fi
             local payload
-            payload=$(jq -n \
-              --arg sha "$SHA" \
-              --arg subject "$SUBJECT" \
-              --arg content "$content" \
-              '{content: $content}')
-            curl -s -F "payload_json=$payload" \
+            payload=$(jq -n --arg content "$content" '{content: $content}')
+            local response
+            response=$(curl -sS -w "\n%{http_code}" -F "payload_json=$payload" \
                  -F "file1=@${file};type=$type" \
-                 "${{ secrets.DISCORD_BUILD_WEBHOOK }}"
+                 "${{ secrets.DISCORD_BUILD_WEBHOOK }}")
+            local code
+            code="$(printf '%s' "$response" | tail -n 1)"
+            local body
+            body="$(printf '%s' "$response" | head -n -1)"
+            printf '%s' "$body"
+            if [ "$code" -lt 200 ] || [ "$code" -ge 300 ]; then
+              if printf '%s' "$body" | grep -q 'Must be 2000 or fewer'; then
+                local fallback
+                fallback=$(jq -n --arg sha "$SHA" '{content: $sha}')
+                curl -sS -F "payload_json=$fallback" \
+                  -F "file1=@${file};type=$type" \
+                  "${{ secrets.DISCORD_BUILD_WEBHOOK }}"
+                return 0
+              fi
+              echo "Discord upload failed (HTTP $code): $body" >&2
+              return 1
+            fi
           }
 
           SINGLE_HTML="dist-single/index.html"
           if [ -f "$SINGLE_HTML" ]; then
-            RESPONSE=$(upload_file "$SINGLE_HTML" "text/html" "🚀 Single-file HTML for YukiOS from $SHA ($SUBJECT)")
+            RESPONSE=$(upload_file "$SINGLE_HTML" "text/html" "$(build_content "🚀 Single-file HTML for YukiOS")")
             if echo "$RESPONSE" | grep -q '40005\|Request entity too large'; then
               echo "Single HTML exceeds Discord upload limit, uploading zipped instead"
               (cd dist-single && zip ../yukios-single.zip index.html)
               if [ -f "yukios-single.zip" ]; then
-                upload_file "yukios-single.zip" "application/zip" "📄 Single-file HTML (zipped) for YukiOS from $SHA ($SUBJECT)"
+                upload_file "yukios-single.zip" "application/zip" "$(build_content "📄 Single-file HTML (zipped) for YukiOS")"
               fi
             fi
           fi
@@ -220,7 +274,7 @@ jobs:
           EOF
             echo "Successfully converted $INPUT_FILE to $OUTPUT_FILE"
             if [ -f "$OUTPUT_FILE" ]; then
-              upload_file "$OUTPUT_FILE" "image/svg+xml" "🖼️ SVG variant for YukiOS from $SHA ($SUBJECT)"
+              upload_file "$OUTPUT_FILE" "image/svg+xml" "$(build_content "🖼️ SVG variant for YukiOS")"
             fi
           fi
 
@@ -229,7 +283,7 @@ jobs:
             zip -r "$ZIP_FILE" dist-web -x "dist-web/wasm/*" -x "dist-web/class/*"
 
             if [ -f "$ZIP_FILE" ]; then
-              upload_file "$ZIP_FILE" "application/zip" "📦 Build archive for YukiOS from $SHA ($SUBJECT)"
+              upload_file "$ZIP_FILE" "application/zip" "$(build_content "📦 Build archive for YukiOS")"
             fi
           fi
 
