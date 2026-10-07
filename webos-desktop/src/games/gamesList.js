@@ -1770,19 +1770,19 @@ export const appMap = {
   },
   intoSpace1: {
     type: "swf",
-    url: "https://ubghyper.github.io/GameList.github.io/Into-Space-1/intospace.swf",
+    swf: "https://ubghyper.github.io/GameList.github.io/Into-Space-1/intospace.swf",
     icon: "/static/icons/intoSpace1.webp",
     title: "Into Space 1"
   },
   intoSpace2: {
-    type: "game",
-    url: "https://ubghyper.github.io/GameList.github.io/Into-Space-2/intospace2.swf",
+    type: "swf",
+    swf: "https://ubghyper.github.io/GameList.github.io/Into-Space-2/intospace2.swf",
     icon: "/static/icons/intoSpace2.webp",
     title: "Into Space 2"
   },
   intoSpace3: {
-    type: "game",
-    url: "https://ubghyper.github.io/GameList.github.io/Into-Space-3/intospace3.swf",
+    type: "swf",
+    swf: "https://ubghyper.github.io/GameList.github.io/Into-Space-3/intospace3.swf",
     icon: "/static/icons/intoSpace3.webp",
     title: "Into Space 3"
   },

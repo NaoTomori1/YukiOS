@@ -283,7 +283,8 @@ export class AppLauncher {
     }
 
     const handlers = {
-      swf: () => this.openIframeApp({ appId: app, type: "swf", source: info.swf, originalName: app, ...appExtra }),
+      swf: () =>
+        this.openIframeApp({ appId: app, type: "swf", source: info.swf || info.url, originalName: app, ...appExtra }),
       gba: () => this.openIframeApp({ appId: app, type: "gba", source: info.url, originalName: app, ...appExtra }),
       psp: () => this.openIframeApp({ appId: app, type: "psp", source: info.url, originalName: app, ...appExtra }),
       nds: () => this.openIframeApp({ appId: app, type: "nds", source: info.url, originalName: app, ...appExtra }),
@@ -441,6 +442,10 @@ export class AppLauncher {
     let externalUrl = null;
 
     if (type === "swf") {
+      if (typeof source !== "string" || !source) {
+        console.error(`SWF source missing for app ${appId}.`);
+        return;
+      }
       id = source.replace(/[^a-zA-Z0-9]/g, "");
       if (this.bringToFrontIfExists(id)) return;
 
