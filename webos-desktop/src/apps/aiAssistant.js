@@ -2,10 +2,23 @@ import { AICore } from "./aiAssistant/aiCore.js";
 import { ActionParser } from "./aiAssistant/actionParser.js";
 import { OSBridge } from "./aiAssistant/osBridge.js";
 import { AIMemory } from "./aiAssistant/memory.js";
-import { $, $$, createElement, setText, setHTML, toggleClass, setStyle } from "../shared/domUtils.js";
+import {
+  $,
+  $$,
+  createElement,
+  setText,
+  setHTML,
+  toggleClass,
+  setStyle,
+} from "../shared/domUtils.js";
 import { escapeHtml } from "../utils/utils.js";
 import "./aiAssistant/aiAssistant.css";
-import { renderSelectMenu, bindSelectMenu, getSelectMenuValue, setSelectMenuValue } from "../shared/selectMenu.js";
+import {
+  renderSelectMenu,
+  bindSelectMenu,
+  getSelectMenuValue,
+  setSelectMenuValue,
+} from "../shared/selectMenu.js";
 import { BaseApp, StorageKeys, os, MODES } from "../framework.js";
 import { buildWindowHeader } from "../shared/windowHeader.js";
 
@@ -33,12 +46,12 @@ export class AIAssistantApp extends BaseApp {
     if (this.enabled && !os.modes.isActive(MODES.MAC)) {
       await this.registerTray(this.winId, "fas fa-robot", "Yuki AI", {
         resident: true,
-        showInTray: true
+        showInTray: true,
       });
     }
 
     const win = os.window.create(winId, "Yuki AI Assistant", "800px", "600px", {
-      icon: "fas fa-robot"
+      icon: "fas fa-robot",
     });
     this.windows.set(winId, win);
 
@@ -66,7 +79,7 @@ export class AIAssistantApp extends BaseApp {
       remoteModel: "",
       autoAppendV1: true,
       savedBackends: [],
-      remoteModels: []
+      remoteModels: [],
     };
 
     win.innerHTML = this.buildSetupUI(state);
@@ -79,7 +92,9 @@ export class AIAssistantApp extends BaseApp {
 
   buildSetupUI(state) {
     const initialEndpoint =
-      state.backendType === "craxgpt" ? AICore.REMOTE_DEFAULT_ENDPOINT : state.remoteEndpoint || "";
+      state.backendType === "craxgpt"
+        ? AICore.REMOTE_DEFAULT_ENDPOINT
+        : state.remoteEndpoint || "";
     const initialPreview = `${this.aiCore.buildEndpointUrl(initialEndpoint, state.autoAppendV1)}/chat/completions`;
 
     return `
@@ -92,7 +107,7 @@ export class AIAssistantApp extends BaseApp {
             </div>
             <h2>Yuki AI Assistant</h2>
             <p class="ai-setup-description">
-              Choose a backend: run locally with WebGPU, use CraxGPT cloud, or connect your own OpenAI-compatible endpoint.
+              Choose a backend: run locally with WebGPU, use CraxGPT cloud, try Pollinations free text, or connect your own OpenAI-compatible endpoint.
             </p>
 
             <div class="ai-backend-select">
@@ -107,6 +122,11 @@ export class AIAssistantApp extends BaseApp {
                   <span class="ai-backend-icon"><i class="fas fa-robot"></i></span>
                   <span class="ai-backend-title">CraxGPT</span>
                   <small>Cloud backend at gpt.crax.lol</small>
+                </button>
+                <button type="button" class="ai-backend-card ${state.backendType === "pollinations" ? "active" : ""}" data-backend="pollinations">
+                  <span class="ai-backend-icon"><i class="fas fa-cloud"></i></span>
+                  <span class="ai-backend-title">Pollinations</span>
+                  <small>Free cloud text, no key needed</small>
                 </button>
                 <button type="button" class="ai-backend-card ${state.backendType === "custom" ? "active" : ""}" data-backend="custom">
                   <span class="ai-backend-icon"><i class="fas fa-plug"></i></span>
@@ -128,11 +148,11 @@ export class AIAssistantApp extends BaseApp {
             </div>
 
             <div id="ai-remote-options" class="ai-remote-options" style="${state.backendType === "local" ? "display:none" : ""}">
-              <div id="ai-endpoint-field" class="ai-remote-field" style="${state.backendType === "craxgpt" ? "display:none" : ""}">
+              <div id="ai-endpoint-field" class="ai-remote-field" style="${state.backendType === "craxgpt" || state.backendType === "pollinations" ? "display:none" : ""}">
                 <label for="ai-endpoint-input">Endpoint URL</label>
                 <input type="text" id="ai-endpoint-input" value="${initialEndpoint}" placeholder="https://your-openai-endpoint.com" />
               </div>
-              <div id="ai-apikey-field" class="ai-remote-field" style="${state.backendType === "craxgpt" ? "display:none" : ""}">
+              <div id="ai-apikey-field" class="ai-remote-field" style="${state.backendType === "craxgpt" || state.backendType === "pollinations" ? "display:none" : ""}">
                 <label for="ai-apikey-input">API Key (optional)</label>
                 <input type="password" id="ai-apikey-input" value="${state.remoteApiKey || ""}" placeholder="sk-..." />
               </div>
@@ -143,7 +163,7 @@ export class AIAssistantApp extends BaseApp {
                     "ai-remote-model-select",
                     this.buildRemoteModelOptions(state),
                     state.remoteModel || AICore.REMOTE_DEFAULT_MODEL,
-                    "ai-remote-model-select"
+                    "ai-remote-model-select",
                   )}
                 </div>
                 <button id="ai-fetch-models-btn" class="ai-fetch-models-btn">
@@ -158,7 +178,8 @@ export class AIAssistantApp extends BaseApp {
                 <input type="checkbox" id="ai-append-v1" ${state.autoAppendV1 ? "checked" : ""} />
                 <span>Append /v1 to endpoint</span>
               </label>
-              <div id="ai-url-preview-wrap" class="ai-url-preview" style="${state.backendType === "craxgpt" ? "display:none" : ""}">Preview: <span id="ai-url-preview">${initialPreview}</span></div>
+              <div id="ai-url-preview-wrap" class="ai-url-preview" style="${state.backendType === "craxgpt" || state.backendType === "pollinations" ? "display:none" : ""}">Preview: <span id="ai-url-preview">${initialPreview}</span></div>
+              <div id="ai-pollinations-note" class="ai-url-preview" style="${state.backendType === "pollinations" ? "" : "display:none"}">Public free relay. Prompts may be logged by its operator. No uptime guarantee.</div>
               <div id="ai-saved-backends" class="ai-saved-backends"></div>
             </div>
 
@@ -205,7 +226,7 @@ export class AIAssistantApp extends BaseApp {
               "ai-model-select",
               this.buildModelOptions(state),
               this.currentModelValue(state),
-              "ai-model-select"
+              "ai-model-select",
             )}
             <button id="ai-reasoning-toggle" class="ai-toggle ${state.showReasoning ? "active" : ""}">
               <i class="fas fa-brain"></i> Reasoning
@@ -277,6 +298,7 @@ export class AIAssistantApp extends BaseApp {
     const apiKeyField = $("#ai-apikey-field", win);
     const endpointField = $("#ai-endpoint-field", win);
     const previewWrap = $("#ai-url-preview-wrap", win);
+    const pollinationsNote = $("#ai-pollinations-note", win);
 
     bindSelectMenu(win);
     this.renderRemoteModelSelect(win, state);
@@ -289,12 +311,27 @@ export class AIAssistantApp extends BaseApp {
     });
 
     const syncBackendVisibility = () => {
-      setStyle(localOptions, { display: state.backendType === "local" ? "" : "none" });
-      setStyle(remoteOptions, { display: state.backendType === "local" ? "none" : "" });
-      setStyle(customNameField, { display: state.backendType === "custom" ? "" : "none" });
-      setStyle(apiKeyField, { display: state.backendType === "custom" ? "" : "none" });
-      setStyle(endpointField, { display: state.backendType === "custom" ? "" : "none" });
-      setStyle(previewWrap, { display: state.backendType === "custom" ? "" : "none" });
+      setStyle(localOptions, {
+        display: state.backendType === "local" ? "" : "none",
+      });
+      setStyle(remoteOptions, {
+        display: state.backendType === "local" ? "none" : "",
+      });
+      setStyle(customNameField, {
+        display: state.backendType === "custom" ? "" : "none",
+      });
+      setStyle(apiKeyField, {
+        display: state.backendType === "custom" ? "" : "none",
+      });
+      setStyle(endpointField, {
+        display: state.backendType === "custom" ? "" : "none",
+      });
+      setStyle(previewWrap, {
+        display: state.backendType === "custom" ? "" : "none",
+      });
+      setStyle(pollinationsNote, {
+        display: state.backendType === "pollinations" ? "" : "none",
+      });
       this.renderSavedBackends(state, win);
       this.updateUrlPreview(win, state);
     };
@@ -304,8 +341,16 @@ export class AIAssistantApp extends BaseApp {
         backendCards.forEach((c) => toggleClass(c, "active", c === card));
         state.backendType = card.dataset.backend;
         if (state.backendType === "craxgpt") {
-          if (endpointInput) endpointInput.value = AICore.REMOTE_DEFAULT_ENDPOINT;
+          if (endpointInput)
+            endpointInput.value = AICore.REMOTE_DEFAULT_ENDPOINT;
           if (apiKeyInput) apiKeyInput.value = "";
+        }
+        if (state.backendType === "pollinations") {
+          if (endpointInput) endpointInput.value = AICore.POLLINATIONS_ENDPOINT;
+          if (apiKeyInput) apiKeyInput.value = "";
+          state.remoteModels = [AICore.POLLINATIONS_MODEL];
+          state.remoteModel = AICore.POLLINATIONS_MODEL;
+          this.renderRemoteModelSelect(win, state);
         }
         syncBackendVisibility();
       });
@@ -323,19 +368,37 @@ export class AIAssistantApp extends BaseApp {
         const endpointValue = endpointInput ? endpointInput.value.trim() : "";
         const apiKeyValue = apiKeyInput ? apiKeyInput.value.trim() : "";
         if (!endpointValue) {
-          this.setInitStatus(initStatus, "Enter an endpoint URL before fetching models.", "error");
+          this.setInitStatus(
+            initStatus,
+            "Enter an endpoint URL before fetching models.",
+            "error",
+          );
           return;
         }
         fetchModelsBtn.disabled = true;
-        fetchModelsBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Fetching...';
+        fetchModelsBtn.innerHTML =
+          '<i class="fas fa-spinner fa-spin"></i> Fetching...';
         try {
-          const models = await this.aiCore.listRemoteModels({ endpoint: endpointValue, apiKey: apiKeyValue });
+          const models = await this.aiCore.listRemoteModels({
+            endpoint: endpointValue,
+            apiKey: apiKeyValue,
+          });
           state.remoteModels = models;
-          state.remoteModel = models.length ? models[0] : state.remoteModel || AICore.REMOTE_DEFAULT_MODEL;
+          state.remoteModel = models.length
+            ? models[0]
+            : state.remoteModel || AICore.REMOTE_DEFAULT_MODEL;
           this.renderRemoteModelSelect(win, state);
-          this.setInitStatus(initStatus, `Found ${models.length} model${models.length === 1 ? "" : "s"}.`, "success");
+          this.setInitStatus(
+            initStatus,
+            `Found ${models.length} model${models.length === 1 ? "" : "s"}.`,
+            "success",
+          );
         } catch (error) {
-          this.setInitStatus(initStatus, `Failed to fetch models: ${error.message}`, "error");
+          this.setInitStatus(
+            initStatus,
+            `Failed to fetch models: ${error.message}`,
+            "error",
+          );
         } finally {
           fetchModelsBtn.disabled = false;
           fetchModelsBtn.innerHTML = '<i class="fas fa-list"></i> Fetch Models';
@@ -352,14 +415,18 @@ export class AIAssistantApp extends BaseApp {
       if (state.backendType !== "local") {
         state.engineLoading = true;
         initBtn.disabled = true;
-        initBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Connecting...';
+        initBtn.innerHTML =
+          '<i class="fas fa-spinner fa-spin"></i> Connecting...';
         initProgress.style.display = "block";
 
         try {
           const endpointValue = endpointInput ? endpointInput.value.trim() : "";
           const apiKeyValue = apiKeyInput ? apiKeyInput.value.trim() : "";
-          const modelValue = getSelectMenuValue("ai-remote-model-select", win) || "";
-          const appendV1Value = appendV1 ? appendV1.checked : state.autoAppendV1;
+          const modelValue =
+            getSelectMenuValue("ai-remote-model-select", win) || "";
+          const appendV1Value = appendV1
+            ? appendV1.checked
+            : state.autoAppendV1;
           const nameInput = $("#ai-backend-name-input", win);
           const nameValue = nameInput ? nameInput.value.trim() : "";
           const finalModel = modelValue || AICore.REMOTE_DEFAULT_MODEL;
@@ -369,7 +436,9 @@ export class AIAssistantApp extends BaseApp {
             apiKey: apiKeyValue,
             model: finalModel,
             autoAppendV1: appendV1Value,
-            forceProxy: state.backendType === "craxgpt"
+            forceProxy: state.backendType === "craxgpt",
+            chatPath:
+              state.backendType === "pollinations" ? "" : "/chat/completions",
           });
           this.memory.setPreference("backendType", state.backendType);
           this.memory.setPreference("remoteEndpoint", endpointValue);
@@ -378,13 +447,15 @@ export class AIAssistantApp extends BaseApp {
           this.memory.setPreference("autoAppendV1", appendV1Value);
 
           if (state.backendType === "custom") {
-            const existingIndex = state.savedBackends.findIndex((entry) => entry.endpoint === endpointValue);
+            const existingIndex = state.savedBackends.findIndex(
+              (entry) => entry.endpoint === endpointValue,
+            );
             const entry = {
               name: nameValue || "Custom",
               endpoint: endpointValue,
               apiKey: apiKeyValue,
               model: finalModel,
-              autoAppendV1: appendV1Value
+              autoAppendV1: appendV1Value,
             };
             if (existingIndex >= 0) {
               state.savedBackends[existingIndex] = entry;
@@ -402,9 +473,13 @@ export class AIAssistantApp extends BaseApp {
             statusText: "Ready",
             statusDetail: `Connected to ${new URL(endpointValue).host} · ${finalModel}`,
             progress: 100,
-            progressText: "Ready"
+            progressText: "Ready",
           });
-          this.setInitStatus(initStatus, "Connected to remote backend!", "success");
+          this.setInitStatus(
+            initStatus,
+            "Connected to remote backend!",
+            "success",
+          );
 
           setTimeout(() => {
             this.transitionToMainUI(win, state);
@@ -412,14 +487,19 @@ export class AIAssistantApp extends BaseApp {
         } catch (error) {
           state.engineLoading = false;
           initBtn.disabled = false;
-          initBtn.innerHTML = '<i class="fas fa-play"></i> Initialize AI Engine';
-          this.setInitStatus(initStatus, `Failed to connect: ${error.message}`, "error");
+          initBtn.innerHTML =
+            '<i class="fas fa-play"></i> Initialize AI Engine';
+          this.setInitStatus(
+            initStatus,
+            `Failed to connect: ${error.message}`,
+            "error",
+          );
           this.setRuntimeState(state, {
             statusTone: "error",
             statusText: "Connect failed",
             statusDetail: error.message,
             progress: 0,
-            progressText: ""
+            progressText: "",
           });
         }
         return;
@@ -431,10 +511,11 @@ export class AIAssistantApp extends BaseApp {
         statusText: "Loading engine",
         statusDetail: "Preparing local model runtime.",
         progress: 0,
-        progressText: "Starting..."
+        progressText: "Starting...",
       });
       initBtn.disabled = true;
-      initBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Initializing...';
+      initBtn.innerHTML =
+        '<i class="fas fa-spinner fa-spin"></i> Initializing...';
       initProgress.style.display = "block";
 
       const progressCallback = (report) => {
@@ -447,7 +528,7 @@ export class AIAssistantApp extends BaseApp {
             statusText: "Loading engine",
             statusDetail: report.text || "Downloading model files.",
             progress: percent,
-            progressText: report.text || "Loading..."
+            progressText: report.text || "Loading...",
           });
         }
         if (report.error) {
@@ -459,14 +540,19 @@ export class AIAssistantApp extends BaseApp {
             statusText: "Load failed",
             statusDetail: report.error,
             progress: 0,
-            progressText: ""
+            progressText: "",
           });
           initBtn.disabled = false;
-          initBtn.innerHTML = '<i class="fas fa-play"></i> Initialize AI Engine';
+          initBtn.innerHTML =
+            '<i class="fas fa-play"></i> Initialize AI Engine';
         }
       };
 
-      const success = await this.aiCore.initialize(state.selectedModel, state.webGPUEnabled, progressCallback);
+      const success = await this.aiCore.initialize(
+        state.selectedModel,
+        state.webGPUEnabled,
+        progressCallback,
+      );
 
       if (success) {
         state.engineInitialized = true;
@@ -477,7 +563,7 @@ export class AIAssistantApp extends BaseApp {
           statusText: "Ready",
           statusDetail: this.describeLoadedModel(this.aiCore.model),
           progress: 100,
-          progressText: "Ready"
+          progressText: "Ready",
         });
         initStatus.textContent = "Engine initialized successfully!";
         initStatus.className = "ai-init-status success";
@@ -489,14 +575,16 @@ export class AIAssistantApp extends BaseApp {
         state.engineLoading = false;
         initBtn.disabled = false;
         initBtn.innerHTML = '<i class="fas fa-play"></i> Initialize AI Engine';
-        initStatus.textContent = "Failed to initialize. WebGPU may not be available or browser not supported.";
+        initStatus.textContent =
+          "Failed to initialize. WebGPU may not be available or browser not supported.";
         initStatus.className = "ai-init-status error";
         this.setRuntimeState(state, {
           statusTone: "error",
           statusText: "Load failed",
-          statusDetail: "WebGPU may not be available or the selected model is incompatible.",
+          statusDetail:
+            "WebGPU may not be available or the selected model is incompatible.",
           progress: 0,
-          progressText: ""
+          progressText: "",
         });
       }
     });
@@ -520,7 +608,9 @@ export class AIAssistantApp extends BaseApp {
         apiKey: state.remoteApiKey,
         model: state.remoteModel,
         autoAppendV1: state.autoAppendV1,
-        forceProxy: state.backendType === "craxgpt"
+        forceProxy: state.backendType === "craxgpt",
+        chatPath:
+          state.backendType === "pollinations" ? "" : "/chat/completions",
       });
     }
 
@@ -529,12 +619,21 @@ export class AIAssistantApp extends BaseApp {
     state.activeChatId = chatData.activeChatId;
     if (!state.activeChatId || !state.chats[state.activeChatId]) {
       const chatId = this.memory.createChatId();
-      state.chats[chatId] = { id: chatId, title: "New Chat", createdAt: Date.now(), messages: [] };
+      state.chats[chatId] = {
+        id: chatId,
+        title: "New Chat",
+        createdAt: Date.now(),
+        messages: [],
+      };
       state.activeChatId = chatId;
     }
     state.chatHistory = state.chats[state.activeChatId].messages;
-    state.engineInitialized = state.backendType !== "local" ? state.engineInitialized : this.aiCore.isInitialized;
-    state.currentModelId = state.backendType !== "local" ? state.remoteModel : this.aiCore.model;
+    state.engineInitialized =
+      state.backendType !== "local"
+        ? state.engineInitialized
+        : this.aiCore.isInitialized;
+    state.currentModelId =
+      state.backendType !== "local" ? state.remoteModel : this.aiCore.model;
 
     if (state.engineInitialized) {
       const statusDetail =
@@ -546,7 +645,7 @@ export class AIAssistantApp extends BaseApp {
         statusText: "Ready",
         statusDetail,
         progress: 0,
-        progressText: ""
+        progressText: "",
       });
     }
 
@@ -568,7 +667,10 @@ export class AIAssistantApp extends BaseApp {
     const quickBtns = $$(".ai-quick-btn", win);
     const quickFilter = $("#ai-quick-filter", win);
     const newChatBtn = $("#ai-new-chat-btn", win);
-    if (newChatBtn) newChatBtn.addEventListener("click", () => this.createNewChat(state, win));
+    if (newChatBtn)
+      newChatBtn.addEventListener("click", () =>
+        this.createNewChat(state, win),
+      );
     bindSelectMenu(win);
 
     const modelSelect = $("#ai-model-select", win);
@@ -602,7 +704,7 @@ export class AIAssistantApp extends BaseApp {
         state,
         state.webGPUEnabled
           ? "WebGPU enabled. Reinitializing local model."
-          : "WebGPU disabled. Reinitializing local model."
+          : "WebGPU disabled. Reinitializing local model.",
       );
     });
 
@@ -610,7 +712,8 @@ export class AIAssistantApp extends BaseApp {
       state.showReasoning = !state.showReasoning;
       toggleClass(reasoningToggle, "active", state.showReasoning);
       const reasoningPanel = $("#ai-reasoning-panel", win);
-      if (reasoningPanel) toggleClass(reasoningPanel, "visible", state.showReasoning);
+      if (reasoningPanel)
+        toggleClass(reasoningPanel, "visible", state.showReasoning);
       this.memory.setPreference("showReasoning", state.showReasoning);
     });
 
@@ -622,7 +725,7 @@ export class AIAssistantApp extends BaseApp {
         toggleClass(modeToggle, "active", state.responseMode === "image");
         setHTML(
           modeToggle,
-          `<i class="${state.responseMode === "image" ? "fas fa-image" : "fas fa-comments"}"></i> ${state.responseMode === "image" ? "Image Gen" : "Text Chat"}`
+          `<i class="${state.responseMode === "image" ? "fas fa-image" : "fas fa-comments"}"></i> ${state.responseMode === "image" ? "Image Gen" : "Text Chat"}`,
         );
         this.renderRuntimeUI(win, state);
       });
@@ -652,7 +755,8 @@ export class AIAssistantApp extends BaseApp {
       quickFilter.addEventListener("input", () => {
         const query = quickFilter.value.trim().toLowerCase();
         quickBtns.forEach((btn) => {
-          const haystack = `${btn.dataset.label || ""} ${btn.dataset.desc || ""}`.toLowerCase();
+          const haystack =
+            `${btn.dataset.label || ""} ${btn.dataset.desc || ""}`.toLowerCase();
           btn.style.display = !query || haystack.includes(query) ? "" : "none";
         });
       });
@@ -695,7 +799,10 @@ export class AIAssistantApp extends BaseApp {
 
     try {
       state.isGenerating = true;
-      state.pendingMessageId = this.appendPendingAssistantMessage(win, "Generating response...");
+      state.pendingMessageId = this.appendPendingAssistantMessage(
+        win,
+        "Generating response...",
+      );
       this.setRuntimeState(state, {
         statusTone: "busy",
         statusText: "Generating",
@@ -704,13 +811,21 @@ export class AIAssistantApp extends BaseApp {
             ? `Running ${state.remoteModel || "remote model"} via ${this.getRemoteHost(state.remoteEndpoint)}.`
             : `Running ${this.getModelProfileLabel(state.selectedModel)} model locally.`,
         progress: 0,
-        progressText: ""
+        progressText: "",
       });
       this.renderRuntimeUI(win, state);
       const response =
         state.backendType !== "local"
-          ? await this.aiCore.generateRemote(message, systemPrompt, state.chatHistory)
-          : await this.aiCore.generate(message, systemPrompt, state.chatHistory);
+          ? await this.aiCore.generateRemote(
+              message,
+              systemPrompt,
+              state.chatHistory,
+            )
+          : await this.aiCore.generate(
+              message,
+              systemPrompt,
+              state.chatHistory,
+            );
       this.removePendingAssistantMessage(win, state);
       this.addMessageToChat("assistant", response.text, state, win);
       state.chatHistory.push({ role: "assistant", content: response.text });
@@ -722,7 +837,7 @@ export class AIAssistantApp extends BaseApp {
             ? `Connected to ${this.getRemoteHost(state.remoteEndpoint)} · ${state.remoteModel}`
             : this.describeLoadedModel(this.aiCore.model),
         progress: 0,
-        progressText: ""
+        progressText: "",
       });
 
       if (response.reasoning && state.showReasoning) {
@@ -745,7 +860,7 @@ export class AIAssistantApp extends BaseApp {
         statusText: "Generation failed",
         statusDetail: error.message,
         progress: 0,
-        progressText: ""
+        progressText: "",
       });
     } finally {
       state.isGenerating = false;
@@ -763,13 +878,16 @@ export class AIAssistantApp extends BaseApp {
 
     try {
       state.isGenerating = true;
-      state.pendingMessageId = this.appendPendingAssistantMessage(win, "Generating image with Pollinations AI...");
+      state.pendingMessageId = this.appendPendingAssistantMessage(
+        win,
+        "Generating image with Pollinations AI...",
+      );
       this.setRuntimeState(state, {
         statusTone: "busy",
         statusText: "Generating Image",
         statusDetail: "Generating image via Pollinations AI",
         progress: 0,
-        progressText: ""
+        progressText: "",
       });
       this.renderRuntimeUI(win, state);
 
@@ -777,7 +895,8 @@ export class AIAssistantApp extends BaseApp {
       await new Promise((resolve, reject) => {
         const img = new Image();
         img.onload = () => resolve(imageUrl);
-        img.onerror = () => reject(new Error("Failed to load image from Pollinations AI"));
+        img.onerror = () =>
+          reject(new Error("Failed to load image from Pollinations AI"));
         img.src = imageUrl;
       });
 
@@ -790,7 +909,7 @@ export class AIAssistantApp extends BaseApp {
         statusText: "Ready",
         statusDetail: "Image generated successfully",
         progress: 0,
-        progressText: ""
+        progressText: "",
       });
       await this.memory.saveChats(state.chats, state.activeChatId);
       this.renderChatList(state, win);
@@ -803,7 +922,7 @@ export class AIAssistantApp extends BaseApp {
         statusText: "Generation failed",
         statusDetail: error.message,
         progress: 0,
-        progressText: ""
+        progressText: "",
       });
     } finally {
       state.isGenerating = false;
@@ -820,7 +939,9 @@ export class AIAssistantApp extends BaseApp {
         apiKey: state.remoteApiKey,
         model: state.remoteModel,
         autoAppendV1: state.autoAppendV1,
-        forceProxy: state.backendType === "craxgpt"
+        forceProxy: state.backendType === "craxgpt",
+        chatPath:
+          state.backendType === "pollinations" ? "" : "/chat/completions",
       });
       state.engineInitialized = true;
       state.engineLoading = false;
@@ -830,7 +951,7 @@ export class AIAssistantApp extends BaseApp {
         statusText: "Ready",
         statusDetail: `Connected to ${this.getRemoteHost(state.remoteEndpoint)} · ${state.remoteModel}`,
         progress: 0,
-        progressText: ""
+        progressText: "",
       });
       this.renderRuntimeUI(win, state);
       return;
@@ -843,7 +964,7 @@ export class AIAssistantApp extends BaseApp {
       statusText: "Reloading engine",
       statusDetail: detailText,
       progress: 0,
-      progressText: ""
+      progressText: "",
     });
     this.renderRuntimeUI(win, state);
 
@@ -857,7 +978,7 @@ export class AIAssistantApp extends BaseApp {
             statusText: "Reloading engine",
             statusDetail: report.text || detailText,
             progress: Math.round(report.progress * 100),
-            progressText: report.text || ""
+            progressText: report.text || "",
           });
           this.renderRuntimeUI(win, state);
         }
@@ -867,12 +988,12 @@ export class AIAssistantApp extends BaseApp {
             statusText: "Reload failed",
             statusDetail: report.error,
             progress: 0,
-            progressText: ""
+            progressText: "",
           });
           this.renderRuntimeUI(win, state);
         }
       },
-      { force: true }
+      { force: true },
     );
 
     state.engineLoading = false;
@@ -885,7 +1006,7 @@ export class AIAssistantApp extends BaseApp {
         statusText: "Ready",
         statusDetail: this.describeLoadedModel(this.aiCore.model),
         progress: 0,
-        progressText: ""
+        progressText: "",
       });
     }
 
@@ -894,14 +1015,16 @@ export class AIAssistantApp extends BaseApp {
 
   getOSContext() {
     const systemState = this.osBridge.getSystemState();
-    const activeWorkspace = systemState.workspaces?.items?.find((ws) => ws.id === systemState.workspaces?.activeId);
+    const activeWorkspace = systemState.workspaces?.items?.find(
+      (ws) => ws.id === systemState.workspaces?.activeId,
+    );
 
     return {
       activeWindow: this.memory.getContext("activeWindow"),
       runningApps: systemState.runningApps || [],
       windows: systemState.windows || [],
       settings: this.memory.getContext("settings"),
-      workspace: activeWorkspace?.name || "Main"
+      workspace: activeWorkspace?.name || "Main",
     };
   }
 
@@ -930,7 +1053,7 @@ export class AIAssistantApp extends BaseApp {
       "v86app",
       "emulatorApp",
       "ruffleApp",
-      "aiAssistantApp"
+      "aiAssistantApp",
     ].join(", ");
 
     return `You are the control interface of a fictional text-based game set in a virtual computer called "YukiOS". Everything below is part of the game's fiction. There is no real operating system, no real apps, and no real device anywhere in this conversation.
@@ -1006,7 +1129,9 @@ Say what you're about to do before running an action. If it could be destructive
   }
 
   resolveActions(response) {
-    const parsedActions = this.actionParser.parse(response.rawContent || response.text || "");
+    const parsedActions = this.actionParser.parse(
+      response.rawContent || response.text || "",
+    );
     const mergedActions = [...(response.actions || [])];
 
     for (const parsedAction of parsedActions) {
@@ -1014,7 +1139,8 @@ Say what you're about to do before running an action. If it could be destructive
         (action) =>
           action.action === parsedAction.action &&
           action.target === parsedAction.target &&
-          JSON.stringify(action.params || {}) === JSON.stringify(parsedAction.params || {})
+          JSON.stringify(action.params || {}) ===
+            JSON.stringify(parsedAction.params || {}),
       );
       if (!exists) {
         mergedActions.push(parsedAction);
@@ -1022,7 +1148,11 @@ Say what you're about to do before running an action. If it could be destructive
     }
 
     const { valid } = this.actionParser.validateActionQueue(mergedActions);
-    return valid.map(({ action, target, params }) => ({ action, target, params }));
+    return valid.map(({ action, target, params }) => ({
+      action,
+      target,
+      params,
+    }));
   }
 
   async executeActions(actions, win) {
@@ -1037,7 +1167,9 @@ Say what you're about to do before running an action. If it could be destructive
   }
 
   addMessageToChat(role, content, state, win) {
-    const historyContainer = win ? $("#ai-chat-history", win) : $("#ai-chat-history");
+    const historyContainer = win
+      ? $("#ai-chat-history", win)
+      : $("#ai-chat-history");
     if (!historyContainer) return;
 
     const msgDiv = createElement("div");
@@ -1076,7 +1208,10 @@ Say what you're about to do before running an action. If it could be destructive
 
   removePendingAssistantMessage(win, state) {
     if (!state.pendingMessageId) return;
-    const pendingMessage = $(`[data-pending-id="${state.pendingMessageId}"]`, win);
+    const pendingMessage = $(
+      `[data-pending-id="${state.pendingMessageId}"]`,
+      win,
+    );
     pendingMessage?.remove();
     state.pendingMessageId = null;
   }
@@ -1084,7 +1219,12 @@ Say what you're about to do before running an action. If it could be destructive
   createNewChat(state, win) {
     if (state.isGenerating) return;
     const chatId = this.memory.createChatId();
-    const chat = { id: chatId, title: "New Chat", createdAt: Date.now(), messages: [] };
+    const chat = {
+      id: chatId,
+      title: "New Chat",
+      createdAt: Date.now(),
+      messages: [],
+    };
     state.chats[chatId] = chat;
     state.activeChatId = chatId;
     state.chatHistory = chat.messages;
@@ -1110,7 +1250,10 @@ Say what you're about to do before running an action. If it could be destructive
     if (state.isGenerating) return;
     const chat = state.chats[chatId];
     if (!chat) return;
-    const confirmed = await os.dialog.confirm("Delete Chat", `Delete "${chat.title}"?`);
+    const confirmed = await os.dialog.confirm(
+      "Delete Chat",
+      `Delete "${chat.title}"?`,
+    );
     if (!confirmed) return;
     delete state.chats[chatId];
     if (state.activeChatId === chatId) {
@@ -1119,7 +1262,12 @@ Say what you're about to do before running an action. If it could be destructive
         state.activeChatId = remaining[remaining.length - 1];
       } else {
         const newChatId = this.memory.createChatId();
-        state.chats[newChatId] = { id: newChatId, title: "New Chat", createdAt: Date.now(), messages: [] };
+        state.chats[newChatId] = {
+          id: newChatId,
+          title: "New Chat",
+          createdAt: Date.now(),
+          messages: [],
+        };
         state.activeChatId = newChatId;
       }
       state.chatHistory = state.chats[state.activeChatId].messages;
@@ -1132,7 +1280,11 @@ Say what you're about to do before running an action. If it could be destructive
   async renameChat(chatId, state, win) {
     const chat = state.chats[chatId];
     if (!chat) return;
-    const title = await os.dialog.prompt("Rename Chat", "Enter a new chat name", chat.title);
+    const title = await os.dialog.prompt(
+      "Rename Chat",
+      "Enter a new chat name",
+      chat.title,
+    );
     if (title && title.trim()) {
       chat.title = title.trim();
       this.memory.saveChats(state.chats, state.activeChatId);
@@ -1155,7 +1307,9 @@ Say what you're about to do before running an action. If it could be destructive
           <button class="ai-chat-delete" title="Delete"><i class="fas fa-trash"></i></button>
         </span>
       `;
-      item.addEventListener("click", () => this.switchChat(chat.id, state, win));
+      item.addEventListener("click", () =>
+        this.switchChat(chat.id, state, win),
+      );
       list.appendChild(item);
     });
     $$(".ai-chat-rename", list).forEach((btn) => {
@@ -1175,7 +1329,8 @@ Say what you're about to do before running an action. If it could be destructive
   }
 
   renderChatHistory(state, win) {
-    const historyContainer = $("#ai-chat-history", win) || $("#ai-chat-history");
+    const historyContainer =
+      $("#ai-chat-history", win) || $("#ai-chat-history");
     if (!historyContainer) return;
     setHTML(historyContainer, "");
     state.chatHistory.forEach((msg) => {
@@ -1191,10 +1346,18 @@ Say what you're about to do before running an action. If it could be destructive
   }
 
   formatMessage(content) {
-    if (typeof content === "string" && (content.includes("ai-generated-image-card") || content.includes("<img"))) {
+    if (
+      typeof content === "string" &&
+      (content.includes("ai-generated-image-card") || content.includes("<img"))
+    ) {
       return content;
     }
-    return content.replace(/\n/g, "<br>").replace(/```json\n?([\s\S]*?)```/g, '<pre class="ai-json-block">$1</pre>');
+    return content
+      .replace(/\n/g, "<br>")
+      .replace(
+        /```json\n?([\s\S]*?)```/g,
+        '<pre class="ai-json-block">$1</pre>',
+      );
   }
 
   getActionPrompt(action) {
@@ -1210,7 +1373,8 @@ Say what you're about to do before running an action. If it could be destructive
       open_task_manager: "Open the Task Manager app",
       open_notepad: "Open the Notepad app",
       read_info_file: "Read Documents/INFO.txt",
-      show_windows: "Show me my running windows and suggest workspace organization",
+      show_windows:
+        "Show me my running windows and suggest workspace organization",
       set_dark_theme: "Change theme to dark",
       set_light_theme: "Change theme to light",
       toggle_dnd: "Toggle Do Not Disturb setting",
@@ -1225,7 +1389,7 @@ Say what you're about to do before running an action. If it could be destructive
       list_themes: "List available themes",
       list_apps: "List available apps",
       list_games: "List available games",
-      get_news: "Show me the latest YukiOS news"
+      get_news: "Show me the latest YukiOS news",
     };
     return prompts[action] || "";
   }
@@ -1235,54 +1399,174 @@ Say what you're about to do before running an action. If it could be destructive
       {
         title: "Apps",
         items: [
-          ["opensettings", "Open Settings", "Change theme and system preferences.", "fas fa-cog"],
-          ["open_terminal", "Open Terminal", "Launch command line tools.", "fas fa-terminal"],
-          ["openexplorer", "Open Explorer", "Browse and manage files.", "fas fa-folder-open"],
-          ["open_browser", "Open Browser", "Launch Yuki Browser.", "fas fa-globe"],
-          ["open_notepad", "Open Notepad", "Quick notes and text edits.", "fas fa-note-sticky"],
-          ["open_task_manager", "Open Task Manager", "View running windows and resources.", "fas fa-list-check"]
-        ]
+          [
+            "opensettings",
+            "Open Settings",
+            "Change theme and system preferences.",
+            "fas fa-cog",
+          ],
+          [
+            "open_terminal",
+            "Open Terminal",
+            "Launch command line tools.",
+            "fas fa-terminal",
+          ],
+          [
+            "openexplorer",
+            "Open Explorer",
+            "Browse and manage files.",
+            "fas fa-folder-open",
+          ],
+          [
+            "open_browser",
+            "Open Browser",
+            "Launch Yuki Browser.",
+            "fas fa-globe",
+          ],
+          [
+            "open_notepad",
+            "Open Notepad",
+            "Quick notes and text edits.",
+            "fas fa-note-sticky",
+          ],
+          [
+            "open_task_manager",
+            "Open Task Manager",
+            "View running windows and resources.",
+            "fas fa-list-check",
+          ],
+        ],
       },
       {
         title: "System",
         items: [
-          ["switch_workspace", "Switch Workspace", "Move to the next workspace.", "fas fa-desktop"],
-          ["show_windows", "Show Running Windows", "Get active window summary.", "fas fa-window-restore"],
-          ["set_dark_theme", "Set Dark Theme", "Switch to dark appearance.", "fas fa-moon"],
-          ["set_light_theme", "Set Light Theme", "Switch to light appearance.", "fas fa-sun"],
-          ["toggle_dnd", "Toggle DND", "Enable or disable notifications.", "fas fa-bell-slash"],
+          [
+            "switch_workspace",
+            "Switch Workspace",
+            "Move to the next workspace.",
+            "fas fa-desktop",
+          ],
+          [
+            "show_windows",
+            "Show Running Windows",
+            "Get active window summary.",
+            "fas fa-window-restore",
+          ],
+          [
+            "set_dark_theme",
+            "Set Dark Theme",
+            "Switch to dark appearance.",
+            "fas fa-moon",
+          ],
+          [
+            "set_light_theme",
+            "Set Light Theme",
+            "Switch to light appearance.",
+            "fas fa-sun",
+          ],
+          [
+            "toggle_dnd",
+            "Toggle DND",
+            "Enable or disable notifications.",
+            "fas fa-bell-slash",
+          ],
           ["lock_session", "Lock Session", "Lock the screen.", "fas fa-lock"],
-          ["show_desktop", "Show Desktop", "Minimize all windows.", "fas fa-border-all"]
-        ]
+          [
+            "show_desktop",
+            "Show Desktop",
+            "Minimize all windows.",
+            "fas fa-border-all",
+          ],
+        ],
       },
       {
         title: "Media",
         items: [
-          ["volume_up", "Volume Up", "Raise system volume.", "fas fa-volume-high"],
-          ["volume_down", "Volume Down", "Lower system volume.", "fas fa-volume-low"],
-          ["volume_mute", "Mute Audio", "Silence all sound.", "fas fa-volume-xmark"],
-          ["set_wallpaper", "Change Wallpaper", "Pick a new desktop wallpaper.", "fas fa-image"],
-          ["take_screenshot", "Take Screenshot", "Capture the screen.", "fas fa-camera"]
-        ]
+          [
+            "volume_up",
+            "Volume Up",
+            "Raise system volume.",
+            "fas fa-volume-high",
+          ],
+          [
+            "volume_down",
+            "Volume Down",
+            "Lower system volume.",
+            "fas fa-volume-low",
+          ],
+          [
+            "volume_mute",
+            "Mute Audio",
+            "Silence all sound.",
+            "fas fa-volume-xmark",
+          ],
+          [
+            "set_wallpaper",
+            "Change Wallpaper",
+            "Pick a new desktop wallpaper.",
+            "fas fa-image",
+          ],
+          [
+            "take_screenshot",
+            "Take Screenshot",
+            "Capture the screen.",
+            "fas fa-camera",
+          ],
+        ],
       },
       {
         title: "Files",
         items: [
-          ["list_files", "List Documents", "Show files in Documents folder.", "fas fa-folder"],
-          ["read_info_file", "Read INFO.txt", "Open default onboarding document.", "fas fa-file-lines"]
-        ]
+          [
+            "list_files",
+            "List Documents",
+            "Show files in Documents folder.",
+            "fas fa-folder",
+          ],
+          [
+            "read_info_file",
+            "Read INFO.txt",
+            "Open default onboarding document.",
+            "fas fa-file-lines",
+          ],
+        ],
       },
       {
         title: "Discover",
         items: [
-          ["open_news", "Open What's New", "See latest YukiOS updates.", "fas fa-newspaper"],
-          ["open_weather", "Open Weather", "Check current forecast.", "fas fa-cloud-sun"],
-          ["list_themes", "List Themes", "Browse available themes.", "fas fa-palette"],
+          [
+            "open_news",
+            "Open What's New",
+            "See latest YukiOS updates.",
+            "fas fa-newspaper",
+          ],
+          [
+            "open_weather",
+            "Open Weather",
+            "Check current forecast.",
+            "fas fa-cloud-sun",
+          ],
+          [
+            "list_themes",
+            "List Themes",
+            "Browse available themes.",
+            "fas fa-palette",
+          ],
           ["list_apps", "List Apps", "See all installed apps.", "fas fa-th"],
-          ["list_games", "List Games", "Browse the game library.", "fas fa-gamepad"],
-          ["get_news", "Latest News", "Read recent YukiOS updates.", "fas fa-newspaper"]
-        ]
-      }
+          [
+            "list_games",
+            "List Games",
+            "Browse the game library.",
+            "fas fa-gamepad",
+          ],
+          [
+            "get_news",
+            "Latest News",
+            "Read recent YukiOS updates.",
+            "fas fa-newspaper",
+          ],
+        ],
+      },
     ];
 
     return sections
@@ -1298,7 +1582,7 @@ Say what you're about to do before running an action. If it could be destructive
                 </span>
                 <span class="ai-quick-tag">Prompt</span>
               </button>
-            `
+            `,
           )
           .join("");
         return `
@@ -1326,7 +1610,7 @@ Say what you're about to do before running an action. If it could be destructive
     const labels = {
       low: "Low Quality",
       fast: "Low Quality",
-      smart: "High Quality"
+      smart: "High Quality",
     };
     return labels[modelType] || "Custom";
   }
@@ -1334,21 +1618,22 @@ Say what you're about to do before running an action. If it could be destructive
   buildModelOptions(state) {
     const options = [
       { value: "local:fast", label: "Local · Low Quality (1B-1.5B)" },
-      { value: "local:smart", label: "Local · High Quality (8B)" }
+      { value: "local:smart", label: "Local · High Quality (8B)" },
     ];
     const hasRemote = Boolean(state.remoteEndpoint || state.remoteModel);
     if (hasRemote) {
       const modelId = state.remoteModel || AICore.REMOTE_DEFAULT_MODEL;
       options.push({
         value: `remote:${modelId}`,
-        label: `${this.getRemoteHost(state.remoteEndpoint) || "Remote"} · ${modelId}`
+        label: `${this.getRemoteHost(state.remoteEndpoint) || "Remote"} · ${modelId}`,
       });
     }
     return options;
   }
 
   currentModelValue(state) {
-    if (state.backendType === "local") return `local:${state.selectedModel || "fast"}`;
+    if (state.backendType === "local")
+      return `local:${state.selectedModel || "fast"}`;
     const modelId = state.remoteModel || AICore.REMOTE_DEFAULT_MODEL;
     return `remote:${modelId}`;
   }
@@ -1378,7 +1663,8 @@ Say what you're about to do before running an action. If it could be destructive
     }
 
     if (runtimeProgress && runtimeProgressFill) {
-      const showProgress = state.engineLoading && typeof state.progress === "number";
+      const showProgress =
+        state.engineLoading && typeof state.progress === "number";
       toggleClass(runtimeProgress, "visible", showProgress);
       runtimeProgressFill.style.width = `${showProgress ? state.progress : 0}%`;
     }
@@ -1392,13 +1678,15 @@ Say what you're about to do before running an action. If it could be destructive
           ? state.progressText || "Loading local model..."
           : state.isGenerating
             ? "Generating response..."
-            : "Idle"
+            : "Idle",
       );
     }
 
     if (input) {
       input.disabled =
-        state.engineLoading || state.isGenerating || (state.responseMode !== "image" && !state.engineInitialized);
+        state.engineLoading ||
+        state.isGenerating ||
+        (state.responseMode !== "image" && !state.engineInitialized);
       input.placeholder = state.engineLoading
         ? "Loading the model..."
         : state.isGenerating
@@ -1414,16 +1702,22 @@ Say what you're about to do before running an action. If it could be destructive
 
     if (sendBtn) {
       sendBtn.disabled =
-        state.engineLoading || state.isGenerating || (state.responseMode !== "image" && !state.engineInitialized);
+        state.engineLoading ||
+        state.isGenerating ||
+        (state.responseMode !== "image" && !state.engineInitialized);
       setHTML(
         sendBtn,
-        state.isGenerating ? '<i class="fas fa-spinner fa-spin"></i>' : '<i class="fas fa-paper-plane"></i>'
+        state.isGenerating
+          ? '<i class="fas fa-spinner fa-spin"></i>'
+          : '<i class="fas fa-paper-plane"></i>',
       );
     }
 
     if (webgpuToggle) {
       webgpuToggle.disabled = state.engineLoading || state.isGenerating;
-      setStyle(webgpuToggle, { display: state.backendType === "local" ? "" : "none" });
+      setStyle(webgpuToggle, {
+        display: state.backendType === "local" ? "" : "none",
+      });
     }
 
     const modelSelect = $("#ai-model-select", win);
@@ -1440,7 +1734,10 @@ Say what you're about to do before running an action. If it could be destructive
 
   buildRemoteModelOptions(state) {
     const currentModel = state.remoteModel || AICore.REMOTE_DEFAULT_MODEL;
-    const models = state.remoteModels && state.remoteModels.length ? state.remoteModels : [currentModel];
+    const models =
+      state.remoteModels && state.remoteModels.length
+        ? state.remoteModels
+        : [currentModel];
     if (!models.includes(currentModel)) models.push(currentModel);
     return models.map((modelId) => ({ value: modelId, label: modelId }));
   }
@@ -1455,8 +1752,8 @@ Say what you're about to do before running an action. If it could be destructive
         "ai-remote-model-select",
         this.buildRemoteModelOptions(state),
         currentModel,
-        "ai-remote-model-select"
-      )
+        "ai-remote-model-select",
+      ),
     );
     setSelectMenuValue("ai-remote-model-select", currentModel, win);
   }
@@ -1476,7 +1773,9 @@ Say what you're about to do before running an action. If it could be destructive
     if (!endpointInput || !preview) return;
     const endpointValue = endpointInput.value.trim();
     const appendV1Value = appendV1 ? appendV1.checked : state.autoAppendV1;
-    preview.textContent = `${this.aiCore.buildEndpointUrl(endpointValue, appendV1Value)}/chat/completions`;
+    const suffix =
+      state.backendType === "pollinations" ? "" : "/chat/completions";
+    preview.textContent = `${this.aiCore.buildEndpointUrl(endpointValue, appendV1Value)}${suffix}`;
   }
 
   renderSavedBackends(state, win) {
@@ -1499,9 +1798,9 @@ Say what you're about to do before running an action. If it could be destructive
                 </div>
                 <button type="button" class="ai-saved-backend-use" data-index="${index}">Use</button>
               </div>
-            `
+            `,
           )
-          .join("")
+          .join(""),
     );
     $$(".ai-saved-backend-use", container).forEach((btn) => {
       btn.addEventListener("click", () => {

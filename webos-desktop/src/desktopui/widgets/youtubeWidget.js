@@ -23,13 +23,17 @@ export class YouTubeWidget extends WidgetBase {
       </div>
     `;
 
-    contentEl.querySelector(`#w-yt-btn-${this.id}`).addEventListener("click", () => {
-      this.loadVideo(contentEl);
-    });
+    contentEl
+      .querySelector(`#w-yt-btn-${this.id}`)
+      .addEventListener("click", () => {
+        this.loadVideo(contentEl);
+      });
 
-    contentEl.querySelector(`#w-yt-input-${this.id}`).addEventListener("keypress", (e) => {
-      if (e.key === "Enter") this.loadVideo(contentEl);
-    });
+    contentEl
+      .querySelector(`#w-yt-input-${this.id}`)
+      .addEventListener("keypress", (e) => {
+        if (e.key === "Enter") this.loadVideo(contentEl);
+      });
   }
 
   loadVideo(contentEl) {
@@ -40,7 +44,10 @@ export class YouTubeWidget extends WidgetBase {
 
     const videoId = this.extractId(url);
     if (!videoId) {
-      os.notify.send("Invalid YouTube URL", "Paste a valid YouTube link or 11-character video ID");
+      os.notify.send(
+        "Invalid YouTube URL",
+        "Paste a valid YouTube link or 11-character video ID",
+      );
       return;
     }
 
@@ -61,7 +68,7 @@ export class YouTubeWidget extends WidgetBase {
       /(?:youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/,
       /(?:youtube\.com\/shorts\/)([a-zA-Z0-9_-]{11})/,
       /(?:youtube\.com\/watch\?.*v=)([a-zA-Z0-9_-]{11})/,
-      /(?:m\.youtube\.com\/watch\?v=)([a-zA-Z0-9_-]{11})/
+      /(?:m\.youtube\.com\/watch\?v=)([a-zA-Z0-9_-]{11})/,
     ];
     for (const p of patterns) {
       const m = trimmed.match(p);

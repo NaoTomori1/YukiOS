@@ -1,7 +1,14 @@
 import { Achievements } from "../achievements.js";
 import { zipSync } from "fflate";
 
-import { setStyle, BusEvents, BaseApp, os, createElement, ServiceKeys } from "../framework.js";
+import {
+  setStyle,
+  BusEvents,
+  BaseApp,
+  os,
+  createElement,
+  ServiceKeys,
+} from "../framework.js";
 import {
   normalizePath,
   fileNameToDisplayName,
@@ -9,7 +16,7 @@ import {
   buildErrorHTML,
   setLog,
   renderEmulatorFileList,
-  handleEmulatorUpload
+  handleEmulatorUpload,
 } from "../shared/emulatorBase.js";
 const GAMES_DIR = ["Games"];
 
@@ -21,13 +28,14 @@ export class JsDosApp extends BaseApp {
   }
 
   get explorerApp() {
-    if (!this.explorerAppService) this.explorerAppService = this.getService(ServiceKeys.EXPLORER);
+    if (!this.explorerAppService)
+      this.explorerAppService = this.getService(ServiceKeys.EXPLORER);
     return this.explorerAppService;
   }
 
   async open() {
     const win = os.window.create("jsdos-win", "JsDos", "600px", "560px", {
-      icon: "static/icons/jsdos.webp"
+      icon: "static/icons/jsdos.webp",
     });
     win.innerHTML = `
       <div class="window-content jsdos-container emu-shell">
@@ -62,12 +70,20 @@ export class JsDosApp extends BaseApp {
 
   generateGameCards() {
     const games = [
-      { file: "dn3d.jsdos", name: "Duke Nukem 3D", icon: "fa-solid fa-crosshairs" },
+      {
+        file: "dn3d.jsdos",
+        name: "Duke Nukem 3D",
+        icon: "fa-solid fa-crosshairs",
+      },
       { file: "doom.jsdos", name: "DOOM", icon: "fa-solid fa-skull" },
-      { file: "wolfenstein.jsdos", name: "Wolfenstein", icon: "fa-solid fa-skull" },
+      {
+        file: "wolfenstein.jsdos",
+        name: "Wolfenstein",
+        icon: "fa-solid fa-skull",
+      },
       { file: "jazz.jsdos", name: "Jazz Jackrabbit", icon: "fa-solid fa-drum" },
       { file: "raptor.jsdos", name: "Raptor", icon: "fa-solid fa-jet-fighter" },
-      { file: "skyroads.jsdos", name: "SkyRoads", icon: "fa-solid fa-rocket" }
+      { file: "skyroads.jsdos", name: "SkyRoads", icon: "fa-solid fa-rocket" },
     ];
 
     return games
@@ -77,7 +93,7 @@ export class JsDosApp extends BaseApp {
         <i class="${game.icon} jsdos-game-icon emu-card-icon"></i>
         <div class="jsdos-game-title emu-card-title">${game.name}</div>
       </div>
-    `
+    `,
       )
       .join("");
   }
@@ -135,7 +151,7 @@ export class JsDosApp extends BaseApp {
       errorHTML: (msg) =>
         `<i class="fa-solid fa-triangle-exclamation jsdos-error-icon"></i><div class="jsdos-error-text">${msg}</div>`,
       onSaved: () => os.notify.send("JsDos", `Saved ${file.name} to Games.`),
-      onReload: () => this.loadUserGames(win)
+      onReload: () => this.loadUserGames(win),
     });
   }
 
@@ -146,7 +162,8 @@ export class JsDosApp extends BaseApp {
     renderEmulatorFileList({
       container,
       dir: GAMES_DIR,
-      filter: (f) => f.endsWith(".jsdos") || f.endsWith(".exe") || f.endsWith(".com"),
+      filter: (f) =>
+        f.endsWith(".jsdos") || f.endsWith(".exe") || f.endsWith(".com"),
       emptyHTML: `<div class="jsdos-empty-text">No uploaded games yet.</div>`,
       cardHTML: (f) => `
         <div class="jsdos-game-card jsdos-user-card emu-card emu-card--removable" data-user-file="${f}">
@@ -159,26 +176,30 @@ export class JsDosApp extends BaseApp {
       deleteBtnSelector: ".jsdos-delete-btn",
       deleteAction: (name) => os.fs.deleteBinaryFile(GAMES_DIR, name),
       onCardClick: (fileName) => this.launchExe(fileName, GAMES_DIR),
-      onReload: () => this.loadUserGames(win)
+      onReload: () => this.loadUserGames(win),
     });
   }
 
   async launchGame(fileName, displayName) {
     const winId = `jsdos-${Date.now()}`;
     const win = os.window.create(winId, displayName, "800px", "600px", {
-      icon: "static/icons/jsdos.webp"
+      icon: "static/icons/jsdos.webp",
     });
-    os.events.emit(BusEvents.ACHIEVEMENT_TRIGGER, { achievementId: Achievements.RetroPlayer });
+    os.events.emit(BusEvents.ACHIEVEMENT_TRIGGER, {
+      achievementId: Achievements.RetroPlayer,
+    });
 
     win.innerHTML = `
     <div class="window-content jsdos-game-window emu-window">
       ${buildLoadingStateHTML({
         winId,
-        iconClass: "fa-solid fa-compact-disc jsdos-loading-spinner emu-state-icon",
-        wrapperClass: "yuki-loading-indicator jsdos-loading emu-window-screen emu-load-wrap",
+        iconClass:
+          "fa-solid fa-compact-disc jsdos-loading-spinner emu-state-icon",
+        wrapperClass:
+          "yuki-loading-indicator jsdos-loading emu-window-screen emu-load-wrap",
         textClass: "jsdos-game-loading-text emu-state-text",
         logClass: "jsdos-game-log emu-log",
-        displayName
+        displayName,
       })}
     </div>`;
 
@@ -189,8 +210,9 @@ export class JsDosApp extends BaseApp {
         inner.innerHTML = buildErrorHTML({
           msg,
           wrapperClass: "jsdos-error emu-error",
-          iconClass: "fa-solid fa-triangle-exclamation jsdos-error-icon emu-state-icon",
-          textClass: "jsdos-error-msg emu-state-text emu-state-text--error"
+          iconClass:
+            "fa-solid fa-triangle-exclamation jsdos-error-icon emu-state-icon",
+          textClass: "jsdos-error-msg emu-state-text emu-state-text--error",
         });
     };
 
@@ -226,7 +248,9 @@ export class JsDosApp extends BaseApp {
       setLog(log, "Launching…");
 
       const iframeHTML = this.buildIframeHTML(bundleUrl);
-      const iframeBlobUrl = URL.createObjectURL(new Blob([iframeHTML], { type: "text/html" }));
+      const iframeBlobUrl = URL.createObjectURL(
+        new Blob([iframeHTML], { type: "text/html" }),
+      );
       iframePageUrl = iframeBlobUrl;
 
       inner.innerHTML = "";
@@ -234,7 +258,12 @@ export class JsDosApp extends BaseApp {
 
       iframeEl = createElement("iframe");
       iframeEl.src = iframeBlobUrl;
-      setStyle(iframeEl, { width: "100%", height: "100%", border: "none", display: "block" });
+      setStyle(iframeEl, {
+        width: "100%",
+        height: "100%",
+        border: "none",
+        display: "block",
+      });
       iframeEl.setAttribute("allowfullscreen", "");
       inner.appendChild(iframeEl);
     } catch (e) {
@@ -290,13 +319,13 @@ export class JsDosApp extends BaseApp {
       "[autoexec]",
       `mount c /`,
       `c:`,
-      `${name}`
+      `${name}`,
     ].join("\n");
     const zipEntries = {
       ".jsdos": {
-        "dosbox.conf": new TextEncoder().encode(conf)
+        "dosbox.conf": new TextEncoder().encode(conf),
       },
-      [name]: new Uint8Array(arrayBuffer)
+      [name]: new Uint8Array(arrayBuffer),
     };
     const zipped = zipSync(zipEntries);
     return new Blob([zipped.buffer], { type: "application/zip" });
@@ -305,9 +334,11 @@ export class JsDosApp extends BaseApp {
   async launchExe(name, path) {
     const winId = `jsdos-${Date.now()}`;
     const win = os.window.create(winId, name, "800px", "600px", {
-      icon: "static/icons/jsdos.webp"
+      icon: "static/icons/jsdos.webp",
     });
-    os.events.emit(BusEvents.ACHIEVEMENT_TRIGGER, { achievementId: Achievements.RetroPlayer });
+    os.events.emit(BusEvents.ACHIEVEMENT_TRIGGER, {
+      achievementId: Achievements.RetroPlayer,
+    });
     win.innerHTML = `
     <div class="window-content jsdos-game-window">
       ${buildLoadingStateHTML({
@@ -316,7 +347,7 @@ export class JsDosApp extends BaseApp {
         wrapperClass: "yuki-loading-indicator jsdos-loading",
         textClass: "jsdos-game-loading-text",
         logClass: "jsdos-game-log",
-        displayName: name
+        displayName: name,
       })}
     </div>`;
 
@@ -328,7 +359,7 @@ export class JsDosApp extends BaseApp {
           msg,
           wrapperClass: "jsdos-error jsdos-error-inline",
           iconClass: "fa-solid fa-triangle-exclamation jsdos-error-icon",
-          textClass: "jsdos-error-msg"
+          textClass: "jsdos-error-msg",
         });
     };
 
@@ -353,7 +384,11 @@ export class JsDosApp extends BaseApp {
       const blob = await os.fs.readBinaryFile(normalizedPath, name);
 
       if (!blob || blob.size === 0) {
-        console.error("jsdos: Failed to read file - blob is empty or null", { blob, name, normalizedPath });
+        console.error("jsdos: Failed to read file - blob is empty or null", {
+          blob,
+          name,
+          normalizedPath,
+        });
         showError("Failed to read file.");
         return;
       }
@@ -372,7 +407,9 @@ export class JsDosApp extends BaseApp {
       setLog(log, "Launching…");
 
       const iframeHTML = this.buildIframeHTML(bundleUrl);
-      const iframeBlobUrl = URL.createObjectURL(new Blob([iframeHTML], { type: "text/html" }));
+      const iframeBlobUrl = URL.createObjectURL(
+        new Blob([iframeHTML], { type: "text/html" }),
+      );
       iframePageUrl = iframeBlobUrl;
 
       inner.innerHTML = "";
@@ -381,7 +418,12 @@ export class JsDosApp extends BaseApp {
 
       iframeEl = createElement("iframe");
       iframeEl.src = iframeBlobUrl;
-      setStyle(iframeEl, { width: "100%", height: "100%", border: "none", display: "block" });
+      setStyle(iframeEl, {
+        width: "100%",
+        height: "100%",
+        border: "none",
+        display: "block",
+      });
       iframeEl.setAttribute("allowfullscreen", "");
       inner.appendChild(iframeEl);
     } catch (e) {

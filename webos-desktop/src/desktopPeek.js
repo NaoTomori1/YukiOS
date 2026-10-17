@@ -91,7 +91,12 @@ export class DesktopPeekManager {
       if (this.peekActive) return;
       this.wm.openWindows.forEach((entry, id) => {
         const win = $("#" + id);
-        if (win && win.style.display !== "none" && entry.record && !entry.record.minimized) {
+        if (
+          win &&
+          win.style.display !== "none" &&
+          entry.record &&
+          !entry.record.minimized
+        ) {
           this.hoverWindows.push(win);
           win.classList.add("desktop-peek-hidden");
         }

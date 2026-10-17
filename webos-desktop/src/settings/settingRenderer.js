@@ -1,24 +1,51 @@
-import { CDN_MIRRORS, resolveIconUrl, resolveGhUrl, resolvePapirusUrl } from "../shared/assetResolver.js";
+import {
+  CDN_MIRRORS,
+  resolveIconUrl,
+  resolveGhUrl,
+  resolvePapirusUrl,
+} from "../shared/assetResolver.js";
 import { audioMixer } from "../audioMixer.js";
 import { YUKIOS_VERSION } from "../apps/about.js";
-import { getBasicThemes, getCustomThemes, getSpecialThemes } from "../shared/themeEngine.js";
+import {
+  getBasicThemes,
+  getCustomThemes,
+  getSpecialThemes,
+} from "../shared/themeEngine.js";
 import { StorageKeys, os, MODES, createElement } from "../framework.js";
 import { renderSelectMenu } from "../shared/selectMenu.js";
-import { CLOAK_PRESETS, PANIC_PRESETS, DEFAULT_DECOY } from "../stealth/tabCloak.js";
+import {
+  CLOAK_PRESETS,
+  PANIC_PRESETS,
+  DEFAULT_DECOY,
+} from "../stealth/tabCloak.js";
 import { renderRangeSlider } from "../shared/rangeSlider.js";
 import { renderAccountsSettings } from "./accountsPanel.js";
 import { renderTilingSettings } from "./pane-tiling.js";
 import { renderShortcutsSettings } from "./pane-shortcuts.js";
 import { renderChromeOsSettings } from "../modes/chromeos/settings.js";
-import { RESOLUTION_PRESETS, getViewportLabel } from "../resolution/resolutionManager.js";
+import { renderWin11Settings } from "../modes/win11/settings.js";
+import {
+  RESOLUTION_PRESETS,
+  getViewportLabel,
+} from "../resolution/resolutionManager.js";
 import { WISP_SERVERS } from "../shared/wispConfig.js";
 import { SETTINGS_GROUPS, QUICK_SETTINGS_ID } from "./settingsNav.js";
 import { renderDisksPane } from "./pane-disks.js";
 import { renderRecentFilesPane } from "./pane-recentFiles.js";
 import { renderRuffleSettings } from "./pane-ruffle.js";
 import { renderGamingSettings } from "./pane-gaming.js";
-import { getAvailableHeaderStyles, buildHeaderForStyle, buildControlsForStyle } from "../windowManager/headerStyles.js";
-import { getIconPack, ICON_PACKS, SAMPLE_ICONS, getEffectiveIcon } from "../shared/iconPack.js";
+import {
+  getAvailableHeaderStyles,
+  buildHeaderForStyle,
+  buildControlsForStyle,
+} from "../windowManager/headerStyles.js";
+import {
+  getIconPack,
+  ICON_PACKS,
+  SAMPLE_ICONS,
+  getEffectiveIcon,
+} from "../shared/iconPack.js";
+import { CM_STYLES, getContextMenuStyle } from "../shared/contextMenuStyle.js";
 
 function getBrowserInfo() {
   const ua = navigator.userAgent;
@@ -83,12 +110,21 @@ function getOSInfo() {
     version = "XP";
   } else if (/Mac OS X/.test(ua)) {
     name = "macOS";
-    const raw = (ua.match(/Mac OS X ([\d_]+)/) || [])[1]?.replace(/_/g, ".") || "";
+    const raw =
+      (ua.match(/Mac OS X ([\d_]+)/) || [])[1]?.replace(/_/g, ".") || "";
     const verNum = parseFloat(raw);
-    const codenames = { 10.15: "Catalina", 11: "Big Sur", 12: "Monterey", 13: "Ventura", 14: "Sonoma", 15: "Sequoia" };
+    const codenames = {
+      10.15: "Catalina",
+      11: "Big Sur",
+      12: "Monterey",
+      13: "Ventura",
+      14: "Sonoma",
+      15: "Sequoia",
+    };
     version = raw;
     if (codenames[verNum]) version += ` (${codenames[verNum]})`;
-    else if (codenames[Math.floor(verNum)]) version += ` (${codenames[Math.floor(verNum)]})`;
+    else if (codenames[Math.floor(verNum)])
+      version += ` (${codenames[Math.floor(verNum)]})`;
   } else if (/Linux/.test(ua) && /Android/.test(ua)) {
     name = "Android";
     version = (ua.match(/Android ([\d.]+)/) || [])[1] || "";
@@ -109,7 +145,8 @@ function getGraphicsInfo() {
   const unavailable = { vendor: "Unavailable", renderer: "Unavailable" };
   try {
     const canvas = createElement("canvas");
-    const gl = canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
+    const gl =
+      canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
     if (!gl) return unavailable;
     const ext = gl.getExtension("WEBGL_debug_rendererinfo");
     if (ext) {
@@ -126,20 +163,25 @@ function getGraphicsInfo() {
   }
 }
 function getConnectionInfo() {
-  const c = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+  const c =
+    navigator.connection ||
+    navigator.mozConnection ||
+    navigator.webkitConnection;
   if (c) {
     return {
       type: c.effectiveType || "Unknown",
       downlink: c.downlink != null ? `${c.downlink} Mbps` : "Unknown",
       rtt: c.rtt != null ? `${c.rtt} ms` : "Unknown",
-      saveData: c.saveData ? "On" : "Off"
+      saveData: c.saveData ? "On" : "Off",
     };
   }
   return null;
 }
 
 function sysinfoRow(label, value, monospace) {
-  const valClass = monospace ? ' class="sysinfo-val sysinfo-mono"' : ' class="sysinfo-val"';
+  const valClass = monospace
+    ? ' class="sysinfo-val sysinfo-mono"'
+    : ' class="sysinfo-val"';
   return `<div class="sysinfo-row"><span class="sysinfo-lbl">${label}</span><span${valClass}>${value}</span></div>`;
 }
 
@@ -161,36 +203,60 @@ function renderSystemInfo() {
   const screen = window.screen || {};
   const lang = navigator.language || navigator.userLanguage || "Unknown";
   const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || "Unknown";
-  const mem = navigator.deviceMemory != null ? `${navigator.deviceMemory} GB` : "Unavailable";
-  const cores = navigator.hardwareConcurrency ? `${navigator.hardwareConcurrency} logical` : "Unavailable";
+  const mem =
+    navigator.deviceMemory != null
+      ? `${navigator.deviceMemory} GB`
+      : "Unavailable";
+  const cores = navigator.hardwareConcurrency
+    ? `${navigator.hardwareConcurrency} logical`
+    : "Unavailable";
   const touch = "ontouchstart" in window ? "Yes" : "No";
-  const doNotTrack = navigator.doNotTrack || navigator.msDoNotTrack || window.doNotTrack || "Unspecified";
+  const doNotTrack =
+    navigator.doNotTrack ||
+    navigator.msDoNotTrack ||
+    window.doNotTrack ||
+    "Unspecified";
   const online = navigator.onLine ? "Online" : "Offline";
 
   const hardwareRows = [
     sysinfoRow("CPU (Logical Cores)", cores),
     sysinfoRow("RAM", mem),
-    sysinfoRow("Screen Resolution", `${screen.width || "?"} × ${screen.height || "?"}`),
-    sysinfoRow("Available Screen", `${screen.availWidth || "?"} × ${screen.availHeight || "?"}`),
-    sysinfoRow("Color Depth", screen.colorDepth ? `${screen.colorDepth}-bit` : "Unknown"),
-    sysinfoRow("Pixel Ratio", window.devicePixelRatio ? `${window.devicePixelRatio.toFixed(2)}x` : "1x"),
+    sysinfoRow(
+      "Screen Resolution",
+      `${screen.width || "?"} × ${screen.height || "?"}`,
+    ),
+    sysinfoRow(
+      "Available Screen",
+      `${screen.availWidth || "?"} × ${screen.availHeight || "?"}`,
+    ),
+    sysinfoRow(
+      "Color Depth",
+      screen.colorDepth ? `${screen.colorDepth}-bit` : "Unknown",
+    ),
+    sysinfoRow(
+      "Pixel Ratio",
+      window.devicePixelRatio ? `${window.devicePixelRatio.toFixed(2)}x` : "1x",
+    ),
     sysinfoRow("Touch Support", touch),
-    sysinfoRow("Window Size", `${window.innerWidth} × ${window.innerHeight}`)
+    sysinfoRow("Window Size", `${window.innerWidth} × ${window.innerHeight}`),
   ];
 
   const browserRows = [
     sysinfoRow("Browser", `${browser.name} ${browser.version}`),
     sysinfoRow("Engine", `${browser.engine} ${browser.engineVersion}`),
-    sysinfoRow("Language", `${lang}${navigator.languages ? ` (preferred: ${navigator.languages.join(", ")})` : ""}`),
+    sysinfoRow(
+      "Language",
+      `${lang}${navigator.languages ? ` (preferred: ${navigator.languages.join(", ")})` : ""}`,
+    ),
     sysinfoRow("Cookies Enabled", navigator.cookieEnabled ? "Yes" : "No"),
     sysinfoRow("Do Not Track", doNotTrack),
-    sysinfoRow("User Agent", browser.ua, true)
+    sysinfoRow("User Agent", browser.ua, true),
   ];
 
   const osRows = [
     sysinfoRow("Operating System", `${os.name} ${os.version}`.trim()),
     sysinfoRow("Platform", os.platform),
-    sysinfoRow("Time Zone", tz)
+    sysinfoRow("Time Zone", tz),
   ];
 
   const networkRows = conn
@@ -199,11 +265,17 @@ function renderSystemInfo() {
         sysinfoRow("Downlink Speed", conn.downlink),
         sysinfoRow("Round-Trip Time", conn.rtt),
         sysinfoRow("Data Saver", conn.saveData),
-        sysinfoRow("Status", online)
+        sysinfoRow("Status", online),
       ]
-    : [sysinfoRow("Status", online), sysinfoRow("Network Info API", "Not available in this browser")];
+    : [
+        sysinfoRow("Status", online),
+        sysinfoRow("Network Info API", "Not available in this browser"),
+      ];
 
-  const gfxRows = [sysinfoRow("WebGL Vendor", gfx.vendor, true), sysinfoRow("WebGL Renderer", gfx.renderer, true)];
+  const gfxRows = [
+    sysinfoRow("WebGL Vendor", gfx.vendor, true),
+    sysinfoRow("WebGL Renderer", gfx.renderer, true),
+  ];
 
   const html = `
     <div style="margin-top: 16px;">
@@ -222,6 +294,7 @@ function renderSystemInfo() {
 export function buildSettingsHTML(settings, wm) {
   const tilingActive = os.modes.isActive(MODES.TILING);
   const chromeOsActive = os.modes.isActive(MODES.CHROME_OS);
+  const win11Active = os.modes.isActive(MODES.WIN11);
   return `
   <div class="window-header">
     <span><i class="fas fa-cog" style="color:white;margin-right:6px;font-size:25px;vertical-align:middle;"></i>Settings</span>
@@ -234,7 +307,7 @@ export function buildSettingsHTML(settings, wm) {
           <input type="text" id="settingsSearch" placeholder="Find a setting...">
         </div>
         <ul class="yuki-settings-nav ${settings.sidebarCompact === false ? "flat" : ""}">
-          ${renderNavList(tilingActive, chromeOsActive, settings.sidebarCompact !== false)}
+          ${renderNavList(tilingActive, chromeOsActive, settings.sidebarCompact !== false, win11Active)}
         </ul>
       </div>
         <div class="yuki-settings-content">
@@ -250,6 +323,7 @@ export function buildSettingsHTML(settings, wm) {
           ${renderDisksPane()}
           ${tilingActive ? renderTilingSettings() : ""}
           ${chromeOsActive ? renderChromeOsSettings() : ""}
+          ${win11Active ? renderWin11Settings() : ""}
           ${renderDataSettings()}
           ${renderAutostartSettings()}
           ${renderNetworkSettings(settings)}
@@ -274,7 +348,12 @@ function navIconHtml(icon) {
   return `<i class="${eff}"></i>`;
 }
 
-function renderNavList(tilingActive, chromeOsActive, compact) {
+function renderNavList(
+  tilingActive,
+  chromeOsActive,
+  compact,
+  win11Active = false,
+) {
   let html = `<li class="active yuki-settings-quick" data-target="${QUICK_SETTINGS_ID}">${navIconHtml("fas fa-cog")}<span>Quick Settings</span></li>`;
   SETTINGS_GROUPS.forEach((group, gi) => {
     const key = `g${gi}`;
@@ -295,15 +374,22 @@ function renderNavList(tilingActive, chromeOsActive, compact) {
     html += `<li class="yuki-settings-nav-group ${compact ? "" : "expanded"}" data-group="g-chromeos"><i class="fab fa-chrome"></i><span>Chrome OS</span><i class="fas fa-chevron-right yuki-nav-group-chevron"></i></li>`;
     html += `<ul class="yuki-settings-sublist" data-group="g-chromeos"><li class="yuki-settings-nav-item" data-group="g-chromeos" data-target="pane-chromeos"><i class="fab fa-chrome"></i><span>Chrome OS</span></li></ul>`;
   }
+  if (win11Active) {
+    html += `<li class="yuki-settings-nav-group ${compact ? "" : "expanded"}" data-group="g-win11"><i class="fab fa-windows"></i><span>Windows 11</span><i class="fas fa-chevron-right yuki-nav-group-chevron"></i></li>`;
+    html += `<ul class="yuki-settings-sublist" data-group="g-win11"><li class="yuki-settings-nav-item" data-group="g-win11" data-target="pane-win11"><i class="fab fa-windows"></i><span>Windows 11</span></li></ul>`;
+  }
   return html;
 }
 
 function renderIconPackChooser(currentPack, prefix = "quick") {
   const isPapirus = currentPack === ICON_PACKS.PAPIRUS;
   const papirusIcons = SAMPLE_ICONS.map(
-    (s) => `<img src="${resolvePapirusUrl(s.papirus, 22)}" class="papirus-icon papirus-icon--22" alt="" />`
+    (s) =>
+      `<img src="${resolvePapirusUrl(s.papirus, 22)}" class="papirus-icon papirus-icon--22" alt="" />`,
   ).join("");
-  const faIcons = SAMPLE_ICONS.map((s) => `<i class="${s.fa}" style="font-size:18px;"></i>`).join("");
+  const faIcons = SAMPLE_ICONS.map(
+    (s) => `<i class="${s.fa}" style="font-size:18px;"></i>`,
+  ).join("");
   return `
     <div class="settings-card" id="sc-iconpack-${prefix}" style="margin-top:12px;">
       <div class="settings-card-header"><i class="fas fa-icons"></i> Icon Pack</div>
@@ -322,6 +408,44 @@ function renderIconPackChooser(currentPack, prefix = "quick") {
             <span class="icon-pack-label" style="font-weight:600;font-size:13px;"><i class="fas fa-font" style="margin-right:6px;"></i>Font Awesome</span>
             <div class="icon-pack-preview" style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;padding:8px;background:var(--bg-secondary,rgba(0,0,0,0.15));border-radius:6px;margin:4px 0;min-height:38px;align-items:center;">${faIcons}</div>
             <span class="icon-pack-desc" style="font-size:11px;color:var(--text-secondary)">Monochrome vector</span>
+          </button>
+        </div>
+      </div>
+    </div>`;
+}
+
+function renderContextMenuChooser() {
+  const current = getContextMenuStyle();
+  const isWin11 = current === CM_STYLES.WIN11;
+  const isYukios = !isWin11;
+  const mock = (style) => `
+      <div class="cm-preview" data-cmstyle="${style}">
+        <div class="context-menu">
+          <div><i class="fas fa-copy"></i><span>Copy</span></div>
+          <div class="cm-focused"><i class="fas fa-paste"></i><span>Paste</span></div>
+          <div><i class="fas fa-pen"></i><span>Rename</span></div>
+          <hr>
+          <div><i class="fas fa-share-nodes"></i><span>Share</span><span class="submenu-arrow"><i class="fas fa-chevron-right"></i></span></div>
+        </div>
+      </div>`;
+  return `
+    <div class="settings-card" id="sc-contextmenu" style="margin-top:12px;">
+      <div class="settings-card-header"><i class="fas fa-list-ul"></i> Context Menu</div>
+      <div class="settings-row settings-row--stacked">
+        <div class="settings-label-group">
+          <span class="settings-label-title">Choose Context Menu Style</span>
+          <span class="settings-label-desc">Preview each style live. Click a style to apply it across desktop menus.</span>
+        </div>
+        <div class="cm-style-chooser" id="cmstyle-appearance" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px;width:100%;">
+          <button class="cm-style-option ${isYukios ? "active" : ""}" data-cm-style="${CM_STYLES.YUKIOS}" style="display:flex;flex-direction:column;align-items:center;padding:10px;border:1.5px solid ${isYukios ? "var(--brand)" : "var(--glass-border)"};border-radius:8px;background:${isYukios ? "color-mix(in srgb, var(--brand) 12%, transparent)" : "var(--glass)"};cursor:pointer;gap:6px;">
+            <span class="cm-style-label" style="font-weight:600;font-size:13px;"><i class="fas fa-desktop" style="margin-right:6px;"></i>YukiOS CM Style</span>
+            ${mock(CM_STYLES.YUKIOS)}
+            <span class="cm-style-desc" style="font-size:11px;color:var(--text-secondary)">Rounded glass menu</span>
+          </button>
+          <button class="cm-style-option ${isWin11 ? "active" : ""}" data-cm-style="${CM_STYLES.WIN11}" style="display:flex;flex-direction:column;align-items:center;padding:10px;border:1.5px solid ${isWin11 ? "var(--brand)" : "var(--glass-border)"};border-radius:8px;background:${isWin11 ? "color-mix(in srgb, var(--brand) 12%, transparent)" : "var(--glass)"};cursor:pointer;gap:6px;">
+            <span class="cm-style-label" style="font-weight:600;font-size:13px;"><i class="fab fa-windows" style="margin-right:6px;"></i>Win 11 CM Style</span>
+            ${mock(CM_STYLES.WIN11)}
+            <span class="cm-style-desc" style="font-size:11px;color:var(--text-secondary)">Fluent acrylic menu</span>
           </button>
         </div>
       </div>
@@ -349,14 +473,25 @@ export function renderQuickSettings(s) {
   const ANIM_DEFAULT = 1.0;
   const ANIM_FAST = 0.05;
   const speedFromIdx = (idx) => {
-    if (idx <= ANIM_DEFAULT_IDX) return ANIM_SLOW - (idx / ANIM_DEFAULT_IDX) * (ANIM_SLOW - ANIM_DEFAULT);
-    return ANIM_DEFAULT - ((idx - ANIM_DEFAULT_IDX) / (ANIM_STEPS - 1 - ANIM_DEFAULT_IDX)) * (ANIM_DEFAULT - ANIM_FAST);
+    if (idx <= ANIM_DEFAULT_IDX)
+      return ANIM_SLOW - (idx / ANIM_DEFAULT_IDX) * (ANIM_SLOW - ANIM_DEFAULT);
+    return (
+      ANIM_DEFAULT -
+      ((idx - ANIM_DEFAULT_IDX) / (ANIM_STEPS - 1 - ANIM_DEFAULT_IDX)) *
+        (ANIM_DEFAULT - ANIM_FAST)
+    );
   };
   const idxFromSpeed = (speed) => {
-    if (speed >= ANIM_DEFAULT) return Math.round(((ANIM_SLOW - speed) / (ANIM_SLOW - ANIM_DEFAULT)) * ANIM_DEFAULT_IDX);
+    if (speed >= ANIM_DEFAULT)
+      return Math.round(
+        ((ANIM_SLOW - speed) / (ANIM_SLOW - ANIM_DEFAULT)) * ANIM_DEFAULT_IDX,
+      );
     return (
       ANIM_DEFAULT_IDX +
-      Math.round(((ANIM_DEFAULT - speed) / (ANIM_DEFAULT - ANIM_FAST)) * (ANIM_STEPS - 1 - ANIM_DEFAULT_IDX))
+      Math.round(
+        ((ANIM_DEFAULT - speed) / (ANIM_DEFAULT - ANIM_FAST)) *
+          (ANIM_STEPS - 1 - ANIM_DEFAULT_IDX),
+      )
     );
   };
   const animIdxFromStored = () => {
@@ -370,14 +505,37 @@ export function renderQuickSettings(s) {
 
   const quickLinks = [
     { label: "Wallpaper", icon: "fas fa-images", launch: "wallpaperEngineApp" },
-    { label: "Global Theme", icon: "fas fa-palette", pane: "pane-appearance", target: "sc-style" },
+    {
+      label: "Global Theme",
+      icon: "fas fa-palette",
+      pane: "pane-appearance",
+      target: "sc-style",
+    },
     { label: "Default Apps", icon: "fas fa-cubes", launch: "defaultApps" },
     { label: "Keyboard", icon: "fas fa-keyboard", pane: "pane-shortcuts" },
-    { label: "Remote Desktop", icon: "fas fa-desktop", launch: "remoteHostApp" },
+    {
+      label: "Remote Desktop",
+      icon: "fas fa-desktop",
+      launch: "remoteHostApp",
+    },
     { label: "Notifications", icon: "fas fa-bell", pane: "pane-notifications" },
-    { label: "Tab Cloak & Panic", icon: "fas fa-user-secret", pane: "pane-cloak" },
-    { label: "Window Management", icon: "fas fa-border-all", pane: "pane-desktop", target: "sc-layout" },
-    { label: "Display & Monitor", icon: "fas fa-desktop", pane: "pane-appearance", target: "sc-display" }
+    {
+      label: "Tab Cloak & Panic",
+      icon: "fas fa-user-secret",
+      pane: "pane-cloak",
+    },
+    {
+      label: "Window Management",
+      icon: "fas fa-border-all",
+      pane: "pane-desktop",
+      target: "sc-layout",
+    },
+    {
+      label: "Display & Monitor",
+      icon: "fas fa-desktop",
+      pane: "pane-appearance",
+      target: "sc-display",
+    },
   ];
   const linkHtml = quickLinks
     .map((l) => {
@@ -635,7 +793,7 @@ export function renderCloakSettings() {
             "settingsCloakPreset",
             Object.entries(CLOAK_PRESETS).map(([value, p]) => ({
               value,
-              label: value === "none" ? "None" : p.label
+              label: value === "none" ? "None" : p.label,
             })),
             (() => {
               try {
@@ -643,7 +801,7 @@ export function renderCloakSettings() {
               } catch {
                 return "none";
               }
-            })()
+            })(),
           )}
         </div>
         <div class="settings-row">
@@ -660,7 +818,10 @@ export function renderCloakSettings() {
           </div>
           <input type="text" class="settings-input" id="settingsAboutBlankDecoy" placeholder="${DEFAULT_DECOY}" value="${(() => {
             try {
-              return (os.storage.get(StorageKeys.tabCloakDecoy) || "").replace(/"/g, "&quot;");
+              return (os.storage.get(StorageKeys.tabCloakDecoy) || "").replace(
+                /"/g,
+                "&quot;",
+              );
             } catch {
               return "";
             }
@@ -674,7 +835,10 @@ export function renderCloakSettings() {
           <label class="settings-toggle">
             <input type="checkbox" id="settingsBeforeunload" ${(() => {
               try {
-                return os.storage.get(StorageKeys.beforeunloadProtect) === "true" ? "checked" : "";
+                return os.storage.get(StorageKeys.beforeunloadProtect) ===
+                  "true"
+                  ? "checked"
+                  : "";
               } catch {
                 return "";
               }
@@ -721,8 +885,11 @@ export function renderCloakSettings() {
           </div>
           ${renderSelectMenu(
             "settingsPanicPreset",
-            Object.entries(PANIC_PRESETS).map(([value, p]) => ({ value, label: p.label })),
-            "classroom"
+            Object.entries(PANIC_PRESETS).map(([value, p]) => ({
+              value,
+              label: p.label,
+            })),
+            "classroom",
           )}
         </div>
         <div class="settings-row settings-row--stacked">
@@ -732,7 +899,10 @@ export function renderCloakSettings() {
           </div>
           <input type="text" class="settings-input" id="settingsPanicUrl" placeholder="https://…" value="${(() => {
             try {
-              return (os.storage.get(StorageKeys.panicUrl) || "").replace(/"/g, "&quot;");
+              return (os.storage.get(StorageKeys.panicUrl) || "").replace(
+                /"/g,
+                "&quot;",
+              );
             } catch {
               return "";
             }
@@ -822,9 +992,9 @@ export function renderNotificationsSettings(s) {
               { value: "bottom-right", label: "Bottom Right (Default)" },
               { value: "bottom-left", label: "Bottom Left" },
               { value: "top-right", label: "Top Right" },
-              { value: "top-left", label: "Top Left" }
+              { value: "top-left", label: "Top Left" },
             ],
-            s.notificationsPosition
+            s.notificationsPosition,
           )}
         </div>
       </div>
@@ -1008,9 +1178,9 @@ export function renderDesktopSettings(s) {
             "settingsWindowSwitcherMode",
             [
               { value: "mru", label: "Most Recently Used (MRU)" },
-              { value: "stack", label: "Cycle / Stack Order" }
+              { value: "stack", label: "Cycle / Stack Order" },
             ],
-            s.windowSwitcherMode
+            s.windowSwitcherMode,
           )}
         </div>
         <div class="settings-row">
@@ -1021,10 +1191,13 @@ export function renderDesktopSettings(s) {
           ${renderSelectMenu(
             "settingsWindowSwitcherUI",
             [
-              { value: "overlay", label: "App Switcher Overlay (shows previews)" },
-              { value: "direct", label: "Fast Switching (no visual UI)" }
+              {
+                value: "overlay",
+                label: "App Switcher Overlay (shows previews)",
+              },
+              { value: "direct", label: "Fast Switching (no visual UI)" },
             ],
-            s.windowSwitcherUI
+            s.windowSwitcherUI,
           )}
         </div>
         <div class="settings-row">
@@ -1154,7 +1327,7 @@ export function renderAppearanceSettings(s) {
       <button class="settings-btn theme-preview-btn ${s.theme === theme.value ? "active" : ""}" data-theme-val="${theme.value}" style="height: 56px; background: ${theme.preview || "#8b5cf6"}; color: ${theme.textColor || "#fff"};">
         <span>${theme.label}</span>
       </button>
-    `
+    `,
     )
     .join("");
 
@@ -1164,7 +1337,7 @@ export function renderAppearanceSettings(s) {
       <button class="settings-btn theme-preview-btn ${s.theme === theme.value ? "active" : ""}" data-theme-val="${theme.value}" data-custom-theme="${theme.value}" style="height: 56px; background: ${theme.preview || "#8b5cf6"}; color: ${theme.textColor || "#fff"};">
         <span>${theme.label}</span>
       </button>
-    `
+    `,
     )
     .join("");
 
@@ -1172,17 +1345,21 @@ export function renderAppearanceSettings(s) {
   const featuredButtons = specialThemes
     .map(
       (theme) =>
-        `<button class="settings-btn theme-preview-btn ${s.theme === theme.value ? "active" : ""}" data-featured-theme="${theme.value}" style="height:56px;background:${theme.preview};color:${theme.textColor || "#fff"};"><span>${theme.label}</span></button>`
+        `<button class="settings-btn theme-preview-btn ${s.theme === theme.value ? "active" : ""}" data-featured-theme="${theme.value}" style="height:56px;background:${theme.preview};color:${theme.textColor || "#fff"};"><span>${theme.label}</span></button>`,
     )
     .join("");
 
   const viewportLabel = getViewportLabel();
-  const resolutionOptions = RESOLUTION_PRESETS.map((p) => ({ value: p.value, label: p.label }));
+  const resolutionOptions = RESOLUTION_PRESETS.map((p) => ({
+    value: p.value,
+    label: p.label,
+  }));
 
   return `
     <div id="pane-appearance" class="settings-category-pane">
       <div class="settings-category-header">Appearance</div>
       ${renderIconPackChooser(getIconPack(), "appearance")}
+      ${renderContextMenuChooser()}
 
       <div class="settings-card" id="sc-sidebar" style="margin-top: 16px;">
         <div class="settings-card-header"><i class="fas fa-bars"></i> Sidebar</div>
@@ -1333,7 +1510,7 @@ export function renderAppearanceSettings(s) {
                 </div>
                 <span class="header-style-preview-name">${style.label}</span>
               </div>
-            `
+            `,
               )
               .join("")}
           </div>
@@ -1361,9 +1538,9 @@ export function renderAppearanceSettings(s) {
               { value: "elasticBounce", label: "Elastic Bounce" },
               { value: "blurReveal", label: "Blur Reveal" },
               { value: "perspective3D", label: "Perspective 3D" },
-              { value: "cornerUnfold", label: "Corner Unfold" }
+              { value: "cornerUnfold", label: "Corner Unfold" },
             ],
-            os.storage.get(StorageKeys.windowOpenAnimation) || "scaleCenter"
+            os.storage.get(StorageKeys.windowOpenAnimation) || "scaleCenter",
           )}
         </div>
         <div class="settings-row">
@@ -1383,9 +1560,10 @@ export function renderAppearanceSettings(s) {
               { value: "burn", label: "Window Burn Close" },
               { value: "shrinkToPoint", label: "Shrink to Point" },
               { value: "dissolveBlur", label: "Dissolve with Blur" },
-              { value: "fallApart", label: "Fall Apart" }
+              { value: "fallApart", label: "Fall Apart" },
             ],
-            os.storage.get(StorageKeys.windowCloseAnimation) || "scaleDownCenter"
+            os.storage.get(StorageKeys.windowCloseAnimation) ||
+              "scaleDownCenter",
           )}
         </div>
         <div class="settings-row">
@@ -1402,9 +1580,10 @@ export function renderAppearanceSettings(s) {
               { value: "magicLamp", label: "Magic Lamp Warp" },
               { value: "fadeToTaskbar", label: "Fade to Taskbar" },
               { value: "elasticStretch", label: "Elastic Stretch" },
-              { value: "spiralDown", label: "Spiral Down" }
+              { value: "spiralDown", label: "Spiral Down" },
             ],
-            os.storage.get(StorageKeys.windowMinimizeAnimation) || "taskbarShrink"
+            os.storage.get(StorageKeys.windowMinimizeAnimation) ||
+              "taskbarShrink",
           )}
         </div>
         <div class="settings-row">
@@ -1420,9 +1599,9 @@ export function renderAppearanceSettings(s) {
               { value: "fade", label: "Fade In" },
               { value: "slideUp", label: "Slide Up" },
               { value: "genieFromDock", label: "Genie From Dock" },
-              { value: "instant", label: "Instant (No Animation)" }
+              { value: "instant", label: "Instant (No Animation)" },
             ],
-            os.storage.get(StorageKeys.windowRestoreAnimation) || "fromTaskbar"
+            os.storage.get(StorageKeys.windowRestoreAnimation) || "fromTaskbar",
           )}
         </div>
         <div class="settings-row">
@@ -1437,9 +1616,9 @@ export function renderAppearanceSettings(s) {
               { value: 1.8, label: "Slow" },
               { value: 1.0, label: "Normal" },
               { value: 0.4, label: "Fast" },
-              { value: 0.1, label: "Very Fast" }
+              { value: 0.1, label: "Very Fast" },
             ],
-            os.storage.get(StorageKeys.windowAnimationSpeed) || 1.0
+            os.storage.get(StorageKeys.windowAnimationSpeed) || 1.0,
           )}
         </div>
         <div class="settings-row">
@@ -1793,7 +1972,7 @@ export function renderNetworkSettings(s) {
           ${renderSelectMenu(
             "settingsCdnMirror",
             CDN_MIRRORS.map((m) => ({ value: m.id, label: m.name })),
-            s.cdnMirror
+            s.cdnMirror,
           )}
         </div>
       </div>
@@ -1807,8 +1986,11 @@ export function renderNetworkSettings(s) {
           </div>
           ${renderSelectMenu(
             "settingsWispServer",
-            [...wispServers.map((w) => ({ value: w.url, label: w.name })), { value: "custom", label: "Custom..." }],
-            currentWisp
+            [
+              ...wispServers.map((w) => ({ value: w.url, label: w.name })),
+              { value: "custom", label: "Custom..." },
+            ],
+            currentWisp,
           )}
         </div>
         <div class="settings-row ${isCustomWisp ? "" : "hidden"}" id="settingsCustomWispRow">
@@ -1839,8 +2021,11 @@ export function renderNetworkSettings(s) {
 function renderTransportPills(current, name) {
   const types = {
     epoxy: { name: "Epoxy (Wisp)", desc: "Default WebSocket-based transport" },
-    libcurl: { name: "libcurl (Wisp)", desc: "Alternative WebSocket-based transport" },
-    bare: { name: "Bare Server", desc: "HTTP-based proxy transport" }
+    libcurl: {
+      name: "libcurl (Wisp)",
+      desc: "Alternative WebSocket-based transport",
+    },
+    bare: { name: "Bare Server", desc: "HTTP-based proxy transport" },
   };
   return Object.entries(types)
     .map(function (entry) {
@@ -1861,8 +2046,12 @@ function renderTransportPills(current, name) {
     .join("");
 }
 export function renderAudioSettings(s) {
-  const vol = Math.round((s.soundEnabled ? s.masterVolume : audioMixer().masterVolume) * 100);
-  const sysVol = Math.round((s.systemAudioEnabled ? s.systemVolume : audioMixer().systemVolume) * 100);
+  const vol = Math.round(
+    (s.soundEnabled ? s.masterVolume : audioMixer().masterVolume) * 100,
+  );
+  const sysVol = Math.round(
+    (s.systemAudioEnabled ? s.systemVolume : audioMixer().systemVolume) * 100,
+  );
   return `
     <div id="pane-audio" class="settings-category-pane">
       <div class="settings-category-header">Audio</div>
@@ -1918,12 +2107,103 @@ export function renderAudioSettings(s) {
   `;
 }
 
+export const EXTERNAL_SERVICES = [
+  {
+    name: "Infared",
+    detail: "Alternative YouTube frontend",
+    credit: "by maacy",
+    contact: "ihatecamouflage@hotmail.com",
+    url: "https://youtube-liard-ten.vercel.app/",
+    icon: "static/icons/favicons/youtube.webp",
+  },
+  {
+    name: "CraxGPT",
+    detail: "Free AI chat backend",
+    credit: "by Crax",
+    url: "https://gpt.crax.lol",
+    icon: "static/icons/favicons/craxgpt.svg",
+  },
+  {
+    name: "Nodium Roblox Studio",
+    detail: "Roblox Studio webport",
+    credit: "by Nodium",
+    url: "https://studio.nodium.lol",
+    icon: "static/icons/roblox-studio.webp",
+  },
+  {
+    name: "Nodium Roblox Player",
+    detail: "Roblox player webport",
+    credit: "by Nodium",
+    url: "https://player.nodium.lol",
+    icon: "static/icons/roblox.webp",
+  },
+  {
+    name: "Azerun",
+    detail: "World of Warcraft in browser",
+    credit: "by Azerun",
+    url: "https://azerun.com/play/",
+    icon: "static/icons/worldOfWarcraft.webp",
+  },
+  {
+    name: "Eaglercraft Launcher",
+    detail: "Minecraft web launcher",
+    credit: "by redflamz",
+    url: "https://redflamz.github.io/Eaglercraft-Launcher/",
+    icon: "static/icons/favicons/eaglercraft.webp",
+  },
+  {
+    name: "JSPaint",
+    detail: "Classic paint remade for web",
+    credit: "by Isaiah Odhner",
+    url: "https://jspaint.app",
+    icon: "static/icons/paint.webp",
+  },
+  {
+    name: "LibreSprite",
+    detail: "Pixel art editor",
+    credit: "by LibreSprite",
+    url: "https://libresprite.github.io/online",
+    icon: "static/icons/libresprite.webp",
+  },
+  {
+    name: "Emupedia",
+    detail: "Retro games and web ports",
+    credit: "by Emupedia",
+    url: "https://emupedia.net",
+    icon: "static/icons/emupedia.svg",
+  },
+  {
+    name: "Truffled",
+    detail: "Browser game ports",
+    credit: "by Truffled",
+    url: "https://truffled.lol",
+    icon: "static/icons/truffled.png",
+  },
+  {
+    name: "Aether",
+    detail: "Movie streaming frontend",
+    credit: "by Aether",
+    url: "https://aether.ist/",
+    icon: "static/icons/favicons/movies.webp",
+  },
+  {
+    name: "Famelack",
+    detail: "Live TV streaming frontend",
+    credit: "by Famelack",
+    url: "https://famelack.com",
+    icon: "static/icons/favicons/tv-streaming.webp",
+  },
+];
+
 export function renderCreditsSettings() {
-  const licenses = typeof __PACKAGE_LICENSES__ !== "undefined" ? __PACKAGE_LICENSES__ : [];
+  const licenses =
+    typeof __PACKAGE_LICENSES__ !== "undefined" ? __PACKAGE_LICENSES__ : [];
   const items = licenses
     .map((p) => {
       const tag = p.repo ? "a" : "div";
-      const attrs = p.repo ? `href="${p.repo}" target="_blank" rel="noopener noreferrer"` : "";
+      const attrs = p.repo
+        ? `href="${p.repo}" target="_blank" rel="noopener noreferrer"`
+        : "";
       return `
         <${tag} class="settings-license-item" ${attrs}>
           <i class="fas fa-cube settings-license-icon"></i>
@@ -1934,6 +2214,16 @@ export function renderCreditsSettings() {
       `;
     })
     .join("");
+  const externalItems = EXTERNAL_SERVICES.map((s) => {
+    return `
+        <a class="settings-service-card" href="${s.url}" target="_blank" rel="noopener noreferrer">
+          ${s.icon ? `<img class="settings-service-icon" src="${resolveIconUrl(s.icon)}" alt="" loading="lazy" onerror="this.style.display='none'" />` : `<i class="fas fa-cube settings-service-icon-fallback"></i>`}
+          <span class="settings-service-name">${s.name}</span>
+          <span class="settings-service-detail">${s.detail}</span>
+          <span class="settings-service-credit" title="${s.contact ? `${s.credit} ${s.contact}` : s.credit}">${s.credit}</span>
+        </a>
+      `;
+  }).join("");
 
   return `
     <div class="settings-card settings-licenses-card">
@@ -1950,6 +2240,9 @@ export function renderCreditsSettings() {
         </div>
       </div>
       <div class="settings-credits-license">YukiOS is MIT Licensed</div>
+      <div class="settings-card-header"><i class="fas fa-plug"></i> External Services</div>
+      <div class="settings-services-grid">${externalItems}</div>
+      <div class="settings-card-header"><i class="fas fa-box-open"></i> Libraries Used</div>
       <div class="settings-licenses">${items}</div>
     </div>
   `;

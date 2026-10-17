@@ -9,7 +9,7 @@ const PROTECTED_APPS = new Set([
   "terminal",
   "notepadApp",
   "settingsApp",
-  "taskManagerApp"
+  "taskManagerApp",
 ]);
 
 export class AppRegistry {
@@ -173,7 +173,7 @@ export class AppRegistry {
         url: appData.url || null,
         swf: appData.swf || null,
         html: appData.html || null,
-        action: appData.action || null
+        action: appData.action || null,
       });
     }
     return apps;

@@ -22,7 +22,7 @@ export class MarkdownApp extends BaseApp {
         breaks: true,
         gfm: true,
         headerIds: true,
-        mangle: false
+        mangle: false,
       });
     } catch (error) {
       console.error("Failed to load marked.js:", error);
@@ -41,7 +41,8 @@ export class MarkdownApp extends BaseApp {
 
     const link = createElement("link");
     link.rel = "stylesheet";
-    link.href = "https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.8.1/github-markdown-dark.min.css";
+    link.href =
+      "https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.8.1/github-markdown-dark.min.css";
     link.setAttribute("data-markdown-css", "true");
     document.head.appendChild(link);
     this.cssLoaded = true;
@@ -66,7 +67,7 @@ export class MarkdownApp extends BaseApp {
       const winId = opts.forceId || `markdown-${Date.now()}`;
       os.window.create(winId, "Markdown", "750px", "550px", {
         icon: "fab fa-markdown",
-        iconColor: "#519aba"
+        iconColor: "#519aba",
       });
       const win = $(`#${winId}`);
       if (win) {
@@ -75,14 +76,18 @@ export class MarkdownApp extends BaseApp {
             <article class="markdown-body" id="${winId}-content"></article>
           </div>`;
       }
-      this.windowStates.set(winId, { fileName: "Markdown", content: "", filePath: null });
+      this.windowStates.set(winId, {
+        fileName: "Markdown",
+        content: "",
+        filePath: null,
+      });
       return;
     }
 
     const winId = `markdown-${Date.now()}`;
     const win = os.window.create(winId, fileName, "750px", "550px", {
       icon: "fab fa-markdown",
-      iconColor: "#519aba"
+      iconColor: "#519aba",
     });
     win.innerHTML = `
       <div class="window-content markdown-container">
@@ -93,7 +98,9 @@ export class MarkdownApp extends BaseApp {
       await this.renderContent(winId, content);
       this.windowStates.set(winId, { fileName, content, filePath });
     } catch (e) {
-      os.notify.send("Markdown renderer unavailable.", "", { icon: "fab fa-markdown" });
+      os.notify.send("Markdown renderer unavailable.", "", {
+        icon: "fab fa-markdown",
+      });
     }
   }
 
@@ -110,7 +117,9 @@ export class MarkdownApp extends BaseApp {
       try {
         await this.renderContent(winId, snapshot.content);
       } catch (e) {
-        os.notify.send("Markdown renderer unavailable.", "", { icon: "fab fa-markdown" });
+        os.notify.send("Markdown renderer unavailable.", "", {
+          icon: "fab fa-markdown",
+        });
       }
     }
   }

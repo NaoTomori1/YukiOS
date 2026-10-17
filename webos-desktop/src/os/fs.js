@@ -1,4 +1,8 @@
-import { isSystemPath, requireLibraryEntry, syncSystemOverrideAfterWrite } from "../fs/SystemLibrary.js";
+import {
+  isSystemPath,
+  requireLibraryEntry,
+  syncSystemOverrideAfterWrite,
+} from "../fs/SystemLibrary.js";
 
 export class FileSystemAPI {
   constructor(fileSystemManager) {
@@ -40,7 +44,7 @@ export class FileSystemAPI {
     if (options.kind || options.icon) {
       await this.fs.writeMeta(dir, this.fs.basename(pathStr), {
         kind: options.kind,
-        icon: options.icon
+        icon: options.icon,
       });
     }
 
@@ -235,7 +239,9 @@ export class FileSystemAPI {
   async trashFile(path, name) {
     const pathStr = await this.resolve(path);
     const targetPath = name ? this.fs.paths.join(pathStr, name) : pathStr;
-    if (isSystemPath(this.fs.resolveUserPath(targetPath), this.fs.CONFIG.ROOT)) {
+    if (
+      isSystemPath(this.fs.resolveUserPath(targetPath), this.fs.CONFIG.ROOT)
+    ) {
       throw new Error("Protected system library file");
     }
     if (name) {

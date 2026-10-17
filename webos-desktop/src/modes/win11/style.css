@@ -1,0 +1,3396 @@
+html.win11-mode {
+  --win11-acrylic-dark: rgba(32, 32, 32, 0.75);
+  --win11-acrylic-light: rgba(243, 243, 243, 0.85);
+  --win11-hover-dark: rgba(255, 255, 255, 0.1);
+  --win11-hover-light: rgba(255, 255, 255, 0.67);
+  --win11-segoe: "Segoe UI Variable", "Segoe UI", system-ui, sans-serif;
+}
+
+html.win11-mode #taskbar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  top: auto;
+  width: 100%;
+  height: 48px;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  background: var(--win11-acrylic-dark);
+  -webkit-backdrop-filter: saturate(3) blur(20px);
+  backdrop-filter: saturate(3) blur(20px);
+  border: none;
+  box-shadow: none;
+}
+
+html.win11-mode #taskbar-windows {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  flex: 1;
+  height: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 0 4px;
+}
+
+html.win11-mode .taskbar-item {
+  position: relative;
+  width: 38px;
+  height: 38px;
+  min-width: 38px;
+  min-height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  margin: auto 3px;
+  border-radius: 4px;
+  background: transparent;
+  transition: background 0.2s ease;
+}
+
+html.win11-mode .taskbar-item::after {
+  content: "";
+  position: absolute;
+  top: auto;
+  bottom: 1px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 3px;
+  border-radius: 4px;
+  background: #858585;
+  transition:
+    width 0.2s ease-in-out,
+    background 0.2s ease-in-out;
+}
+
+html.win11-mode .taskbar-item.running::after {
+  width: 6px;
+}
+
+html.win11-mode .taskbar-item.active {
+  background: var(--win11-hover-dark);
+  transform: none;
+}
+
+html.win11-mode .taskbar-item.active::after {
+  width: 12px;
+  background: var(--brand);
+}
+
+html.win11-mode .taskbar-item:hover {
+  background: var(--win11-hover-dark);
+  transform: none;
+}
+
+html.win11-mode .taskbar-item img,
+html.win11-mode .taskbar-item svg {
+  width: 22px;
+  height: 22px;
+}
+
+html.win11-mode #taskbar-windows .tsIcon,
+html.win11-mode #taskbar .tsbar .tsIcon {
+  width: 38px;
+  height: 38px;
+  min-width: 38px;
+  margin: auto 3px;
+  box-sizing: border-box;
+  border-radius: 4px;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  order: -1;
+}
+
+html.win11-mode #taskbar-windows .tsIcon:hover,
+html.win11-mode #taskbar .tsbar .tsIcon:hover {
+  background: var(--win11-hover-dark);
+}
+
+html[data-theme="light"].win11-mode #taskbar-windows .tsIcon:hover,
+html[data-theme="light"].win11-mode #taskbar .tsbar .tsIcon:hover {
+  background: var(--win11-hover-light);
+}
+
+html.win11-mode #taskbar-windows .tsIcon > div,
+html.win11-mode #taskbar .tsbar .tsIcon > div {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+html.win11-mode #taskbar-windows .tsIcon img,
+html.win11-mode #taskbar .tsbar .tsIcon img {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+html.win11-mode #taskbar .taskcont {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+html.win11-mode #taskbar .tasksCont {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+html.win11-mode #taskbar .tasksCont[data-side="center"] {
+  align-items: center;
+}
+
+html.win11-mode #taskbar .tasksCont[data-side="center"] .widget {
+  position: absolute;
+  left: 8px;
+}
+
+html.win11-mode #taskbar .tasksCont[data-side="left"] {
+  align-items: flex-start;
+}
+
+html.win11-mode #taskbar .tsbar {
+  width: auto;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  transition: all ease-in-out 200ms;
+}
+
+html.win11-mode #taskbar .tsbar .tsIcon {
+  position: relative;
+  transform-origin: center;
+  animation: win11PopIntro 800ms ease-in-out;
+  transition: all 0.2s ease;
+}
+
+html.win11-mode #taskbar .tsbar .tsIcon::after {
+  content: "";
+  position: absolute;
+  display: block;
+  bottom: 0;
+  width: 0;
+  height: 3px;
+  border-radius: 4px;
+  background: #858585;
+  transition: all 0.2s ease-in-out;
+}
+
+html.win11-mode #taskbar .tsbar .tsIcon[data-open="true"]::after {
+  width: 6px;
+}
+
+html.win11-mode #taskbar .tsbar .tsIcon[data-active="true"]::after {
+  width: 12px;
+  background: var(--brand);
+}
+
+html.win11-mode #taskbar .tsbar .tsIcon[data-active="true"] {
+  background: var(--win11-hover-dark);
+}
+
+html[data-theme="light"].win11-mode
+  #taskbar
+  .tsbar
+  .tsIcon[data-active="true"] {
+  background: var(--win11-hover-light);
+}
+
+@keyframes win11PopIntro {
+  0% {
+    transform: scale(0);
+  }
+  40% {
+    transform: scale(1.125);
+  }
+  70% {
+    transform: scale(0.725);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+html.win11-mode #taskbar .taskright {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: auto;
+  height: 100%;
+  margin-left: 10px;
+  display: flex;
+}
+
+html.win11-mode #taskbar .taskIcon {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  width: 24px;
+}
+
+html.win11-mode #taskbar .taskIcon svg {
+  color: var(--text-primary);
+}
+
+html.win11-mode #taskbar .searchIcon img {
+  filter: invert(1);
+}
+
+html.win11-mode #taskbar .taskIcon {
+  color: #fff;
+}
+
+html.win11-mode
+  #taskbar
+  .taskright
+  :is(.uicon, .taskIcon, .taskDate, .graybd, .battery) {
+  background-color: transparent;
+  border-color: transparent;
+  outline: none;
+}
+
+html.win11-mode #taskbar .searchIcon svg {
+  filter: none;
+  color: #fff;
+}
+
+html[data-theme="light"].win11-mode #taskbar .searchIcon img {
+  filter: none;
+}
+
+html[data-theme="light"].win11-mode #taskbar .taskIcon {
+  color: var(--text-primary);
+}
+
+html[data-theme="light"].win11-mode #taskbar .searchIcon svg {
+  filter: none;
+  color: var(--text-primary);
+}
+
+html.win11-mode #taskbar .taskDate {
+  display: flex;
+  padding: 0 8px;
+  font-size: 12px;
+  flex-direction: column;
+  justify-content: center;
+}
+
+html.win11-mode #taskbar .taskDate div {
+  width: 100%;
+  text-align: center;
+  font-weight: 400;
+}
+
+html.win11-mode #taskbar .graybd {
+  border: solid 1px transparent;
+  height: 1rem;
+}
+
+html.win11-mode #taskbar .graybd:hover {
+  border: solid 1px #a1a1a1;
+  border-width: 0 0 0 2px;
+}
+
+html.win11-mode #taskbar .uicon {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+html.win11-mode #taskbar .uicon img {
+  display: block;
+}
+
+html.win11-mode #taskbar .prtclk * {
+  pointer-events: none;
+}
+
+html.win11-mode #taskbar .handcr {
+  cursor: pointer;
+}
+
+html.win11-mode #taskbar .hvlight:hover {
+  background: var(--win11-hover-dark);
+  transition: all 200ms ease-in-out;
+}
+
+html[data-theme="light"].win11-mode #taskbar .hvlight:hover {
+  background: var(--win11-hover-light);
+}
+
+html.win11-mode #taskbar .flex {
+  display: flex;
+  align-items: center;
+}
+
+html.win11-mode #taskbar .rounded {
+  border-radius: 4px;
+}
+
+html.win11-mode #taskbar .px-2 {
+  padding: 0 8px;
+}
+
+html.win11-mode #taskbar .px-1 {
+  padding: 0 4px;
+}
+
+html.win11-mode #taskbar .my-1 {
+  margin: 4px 0;
+}
+
+html.win11-mode #taskbar .m-1 {
+  margin: 4px;
+}
+
+html.win11-mode #taskbar .my-4 {
+  margin: 16px 0;
+}
+
+html.win11-mode #taskbar .battery {
+  display: flex;
+  position: relative;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-primary);
+}
+
+html.win11-mode #taskbar .battery > svg {
+  width: 20px;
+  height: 20px;
+  display: block;
+}
+
+html.win11-mode #taskbar .charger {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+html.win11-mode #taskbar .charger svg {
+  position: absolute;
+  z-index: 1;
+  width: 12px;
+  height: 12px;
+  display: block;
+}
+
+html.win11-mode #taskbar .btFull {
+  overflow: hidden;
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  z-index: 0;
+  display: flex;
+  align-items: center;
+}
+
+html.win11-mode #taskbar .btFull svg {
+  width: 20px;
+  height: 20px;
+  max-width: none;
+  display: block;
+  flex-shrink: 0;
+}
+
+html.win11-mode #taskbar .battery svg path {
+  fill: #fff;
+}
+
+html.win11-mode #taskbar .battery .charger svg path {
+  fill: rgba(0, 0, 0, 0.85);
+  stroke: none;
+}
+
+html[data-theme="light"].win11-mode #taskbar .battery svg path {
+  fill: #000;
+}
+
+html[data-theme="light"].win11-mode #taskbar .battery .charger svg path {
+  fill: rgba(255, 255, 255, 0.9);
+  stroke: none;
+}
+
+html.win11-mode #mac-menu-bar,
+html.win11-mode #start-button,
+html.win11-mode #taskbar-windows,
+html.win11-mode #system-tray,
+html.win11-mode .win11-taskbar-btn,
+html.win11-mode #win11-start-tsicon {
+  display: none !important;
+}
+
+html.win11-mode #start-button {
+  width: 38px;
+  height: 38px;
+  min-width: 38px;
+  min-height: 38px;
+  flex-shrink: 0;
+  border-radius: 4px;
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s ease;
+}
+
+html.win11-mode #start-button.win11-start {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%230078D4' d='M3 5.5 10.5 4.4v7.1H3zM11.6 4.2 21 2.8v8.7h-9.4zM3 12.5h7.5v7.1L3 18.5zM11.6 12.5H21v8.7l-9.4-1.4z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 22px 22px;
+}
+
+html.win11-mode #start-button:hover {
+  background-color: var(--win11-hover-dark);
+  filter: none;
+}
+
+html.win11-mode .win11-taskbar-btn {
+  width: 38px;
+  height: 38px;
+  min-width: 38px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text-primary);
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  margin: auto 2px;
+  transition: background 0.15s ease;
+}
+
+html.win11-mode .win11-taskbar-btn:hover {
+  background: var(--win11-hover-dark);
+}
+
+@keyframes win11MenuIn {
+  from {
+    opacity: 0;
+    transform: translateY(100px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes win11MenuOut {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(100px);
+  }
+}
+html.win11-mode .start-menu {
+  left: 50% !important;
+  right: auto !important;
+  bottom: 60px !important;
+  top: auto !important;
+  width: 640px !important;
+  max-width: calc(100vw - 24px) !important;
+  height: min(720px, calc(100vh - 120px)) !important;
+  max-height: calc(100vh - 120px) !important;
+  transform: translateX(-50%) !important;
+  border-radius: 8px !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(36, 36, 36, 0.8);
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.55);
+  font-family: var(--win11-segoe);
+  animation: none;
+}
+html.win11-mode .start-menu.closing {
+  animation: none;
+}
+html.win11-mode .start-menu .start-sidebar {
+  display: none !important;
+}
+html.win11-mode .start-menu .start-content > .search-input-wrapper,
+html.win11-mode .start-menu .start-content > .start-page {
+  display: none !important;
+}
+html.win11-mode .start-menu .start-cat-list {
+  display: none !important;
+}
+html.win11-mode .start-menu .start-content {
+  display: flex !important;
+  flex-direction: column !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  flex: 1;
+  min-height: 0;
+}
+html.win11-mode #start-menu {
+  left: 50% !important;
+  right: auto !important;
+  bottom: 10px !important;
+  top: auto !important;
+  width: 640px !important;
+  max-width: calc(100vw - 24px) !important;
+  height: 720px !important;
+  max-height: calc(100vh - 120px) !important;
+  transform: translateX(-50%) !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  overflow: visible !important;
+}
+html.win11-mode .startMenu {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  color: var(--text-primary);
+  background:
+    linear-gradient(
+      160deg,
+      rgba(255, 255, 255, 0.07),
+      rgba(255, 255, 255, 0.02) 38%,
+      rgba(160, 190, 255, 0.05)
+    ),
+    rgba(22, 22, 26, 0.92);
+  -webkit-backdrop-filter: blur(32px) saturate(1.6) brightness(1.1);
+  backdrop-filter: blur(32px) saturate(1.6) brightness(1.1);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.14),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.2),
+    0 24px 64px rgba(0, 0, 0, 0.55);
+  border-radius: 8px;
+  overflow: hidden;
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease;
+  animation: win11MenuIn 200ms cubic-bezier(0.79, 0.14, 0.15, 0.86) both;
+  will-change: transform, opacity;
+  z-index: 9999;
+  font-family: var(--win11-segoe);
+  text-align: left;
+}
+html.win11-mode .start-menu.closing .startMenu {
+  animation: win11MenuOut 200ms cubic-bezier(0.79, 0.14, 0.15, 0.86) both;
+}
+html.win11-mode .startMenu[data-align="center"] {
+  text-align: left;
+}
+html.win11-mode .startMenu[data-align="left"] {
+  text-align: left;
+}
+html.win11-mode .startMenu[data-hide="true"] {
+  transform: translateY(100px);
+  opacity: 0;
+  pointer-events: none;
+}
+html.win11-mode .startMenu .blueicon {
+  filter: brightness(4);
+}
+html.win11-mode .startMenu .stmenu,
+html.win11-mode .startMenu .allCont {
+  position: relative;
+  height: calc(100% - 64px);
+  flex: 1;
+  min-height: 0;
+}
+html.win11-mode .startMenu .stmenu[data-allapps="false"],
+html.win11-mode .startMenu .allCont[data-allapps="false"] {
+  opacity: 0;
+  transition: cubic-bezier(0, 0.58, 0.42, 1) 300ms;
+}
+html.win11-mode .startMenu .stmenu[data-allapps="true"],
+html.win11-mode .startMenu .allCont[data-allapps="true"] {
+  transform: translateX(-640px);
+  transition: cubic-bezier(0, 0.58, 0.42, 1) 300ms;
+}
+html.win11-mode .startMenu .stmenu[data-allapps="false"] {
+  opacity: 1;
+}
+html.win11-mode .startMenu .stmenu[data-allapps="true"] {
+  opacity: 0;
+}
+html.win11-mode .startMenu .allCont {
+  top: 0;
+  position: absolute;
+  left: 100%;
+  overflow: hidden;
+  width: 100%;
+}
+html.win11-mode .startMenu .menuUp {
+  padding: 32px;
+  box-sizing: border-box;
+  max-height: 100%;
+  overflow-y: auto;
+}
+html.win11-mode .startMenu .stAcbar {
+  display: flex;
+  justify-content: space-between;
+  padding: 0 32px;
+}
+html.win11-mode .startMenu .appCont .stAcbar {
+  padding-right: 64px;
+}
+html.win11-mode .startMenu .gpname {
+  font-weight: 500;
+  font-size: 14px;
+  color: var(--text-primary);
+}
+html.win11-mode .startMenu .gpbtn {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 0 8px 2px;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  border-radius: 3px;
+  box-shadow: 1px 1px 2px rgba(34, 34, 34, 0.25);
+  cursor: pointer;
+  color: var(--text-primary);
+}
+html.win11-mode .startMenu .gpbtn svg {
+  margin-left: 4px;
+  padding-top: 2px;
+  color: var(--text-secondary);
+}
+html.win11-mode .startMenu .gpbtn .chevLeft svg {
+  margin-left: 0;
+  margin-right: 4px;
+}
+html.win11-mode .startMenu .pnApps {
+  min-height: 150px;
+  padding: 20px 0;
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  grid-auto-rows: 84px;
+  gap: 4px;
+}
+html.win11-mode .startMenu .pnApp {
+  width: 100%;
+  height: 84px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  border-radius: 4px;
+  transition: all ease-in-out 100ms;
+  cursor: pointer;
+  box-sizing: border-box;
+  padding: 6px 2px;
+}
+html.win11-mode .startMenu .pnApp:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+html.win11-mode .startMenu .pnApp img,
+html.win11-mode .startMenu .pnApp svg {
+  width: 32px;
+  height: 32px;
+  max-width: 32px;
+  max-height: 32px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+html.win11-mode .startMenu .pnApp .appName {
+  width: 80px;
+  max-height: 28px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: calc(2);
+  -webkit-box-orient: vertical;
+  color: var(--text-primary);
+  margin-top: 4px;
+  font-size: 12px;
+  line-height: 1.2;
+  text-align: center;
+  white-space: normal;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: default;
+}
+html.win11-mode .startMenu .pnEmpty {
+  pointer-events: none;
+}
+html.win11-mode .startMenu .recApps {
+  position: static;
+  overflow: visible;
+  max-height: none;
+  width: 100%;
+  margin-top: 80px;
+  box-sizing: border-box;
+}
+html.win11-mode .startMenu .reApps {
+  margin: 12px 0 24px 0;
+  width: 100%;
+  padding: 0 20px;
+  box-sizing: border-box;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+}
+html.win11-mode .startMenu .rnApp {
+  width: calc(50% - 10px);
+  height: 56px;
+  display: flex;
+  align-items: center;
+  border-radius: 4px;
+  cursor: pointer;
+}
+html.win11-mode .startMenu .rnApp:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+html.win11-mode .startMenu .pnIcon {
+  margin: 0 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+html.win11-mode .startMenu .pnIcon img,
+html.win11-mode .startMenu .pnIcon svg {
+  width: 32px;
+  height: 32px;
+  max-width: 32px;
+  max-height: 32px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+html.win11-mode .startMenu .allApp img,
+html.win11-mode .startMenu .allApp svg {
+  width: 24px;
+  height: 24px;
+  max-width: 24px;
+  max-height: 24px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+html.win11-mode .startMenu .searchBar .searchIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 12px;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+html.win11-mode .startMenu .acInfo {
+  width: 100px;
+  text-align: left;
+}
+html.win11-mode .startMenu .acInfo .appName {
+  color: var(--text-primary);
+  font-size: 13px;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+html.win11-mode .startMenu .timeUsed {
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 500;
+}
+html.win11-mode .startMenu .appCont {
+  position: relative;
+  padding: 32px;
+  padding-right: 0;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+}
+html.win11-mode .startMenu .allApps {
+  margin-top: 16px;
+  padding: 0 16px;
+  height: 100%;
+  overflow: auto;
+  transition: all ease-in-out 200ms;
+  transform-origin: center;
+}
+html.win11-mode .startMenu .allApps[data-alpha="true"] {
+  transform: scale(0);
+  opacity: 0;
+  pointer-events: none;
+}
+html.win11-mode .startMenu .allApp {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 536px;
+  max-width: 100%;
+  height: 42px;
+  box-sizing: border-box;
+  padding-left: 12px;
+  z-index: 1;
+  border-radius: 4px;
+  cursor: pointer;
+  color: var(--text-primary);
+}
+html.win11-mode .startMenu .allApp:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+html.win11-mode .startMenu .ltName {
+  width: 22px;
+  text-align: center;
+  font-size: 14px;
+  color: var(--text-primary);
+}
+html.win11-mode .startMenu .allApp .appName {
+  text-align: left;
+  padding-left: 16px;
+  color: var(--text-primary);
+  font-size: 12px;
+}
+html.win11-mode .startMenu .alphaBox {
+  position: absolute;
+  top: 14%;
+  width: 94%;
+  height: 80%;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  transform-origin: center;
+  transition: all ease-in-out 200ms;
+}
+html.win11-mode .startMenu .alphaBox[data-alpha="false"] {
+  opacity: 0;
+  transform: scale(2);
+  pointer-events: none;
+}
+html.win11-mode .startMenu .alphaCont {
+  margin-left: -48px;
+  width: 160px;
+  height: 280px;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-rows: repeat(7, minmax(0, 1fr));
+  color: var(--text-primary);
+  cursor: pointer;
+}
+html.win11-mode .startMenu .alphaCont .allApp {
+  display: grid;
+  place-items: center;
+  width: auto;
+  padding-left: 0;
+}
+html.win11-mode .startMenu .dullApp {
+  cursor: default;
+  color: var(--text-secondary);
+}
+html.win11-mode .startMenu .menuBar {
+  box-sizing: border-box;
+  width: 100%;
+  height: 64px;
+  margin-top: auto;
+  flex-shrink: 0;
+  padding: 0 48px;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.04);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+html.win11-mode .startMenu .profile {
+  padding: 0.6em 0.8em;
+  display: flex;
+  align-items: center;
+  border-radius: 4px;
+  cursor: pointer;
+}
+html.win11-mode .startMenu .profile:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+html.win11-mode .startMenu .usName {
+  margin-left: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+html.win11-mode .startMenu .powerMenu {
+  height: 2.5rem;
+  width: 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  cursor: pointer;
+  color: var(--text-primary);
+  position: relative;
+}
+html.win11-mode .startMenu .powerMenu:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+html.win11-mode .startMenu .powerCont {
+  position: absolute;
+  top: -100px;
+  left: -36px;
+  width: 108px;
+  font-size: 12px;
+  background: rgba(36, 36, 36, 0.95);
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 4px 6px;
+  border-radius: 6px;
+  box-shadow: 2px 2px 12px rgba(46, 40, 40, 0.25);
+  opacity: 0;
+  transform: translateY(20px);
+  pointer-events: none;
+  transition: all 200ms ease-in-out;
+  color: var(--text-primary);
+  box-sizing: border-box;
+}
+html.win11-mode .startMenu .powerCont[data-vis="true"] {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+html.win11-mode .startMenu .powerCont .flex {
+  padding: 4px 6px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+html.win11-mode .startMenu .powerCont .flex:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+html.win11-mode .startMenu .powerCont .uicon {
+  margin-right: 8px;
+}
+html.win11-mode .startMenu .searchMenu {
+  flex: 1;
+  min-height: 0;
+  max-height: 100%;
+  overflow-y: auto;
+  padding: 32px;
+  text-align: left;
+  box-sizing: border-box;
+}
+html.win11-mode .startMenu .backRow {
+  display: flex;
+  align-items: center;
+  margin-bottom: 16px;
+}
+html.win11-mode .startMenu .backBtn {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 0 8px 2px;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  border-radius: 3px;
+  box-shadow: 1px 1px 2px rgba(34, 34, 34, 0.25);
+  cursor: pointer;
+  color: var(--text-primary);
+  height: 28px;
+}
+html.win11-mode .startMenu .searchBar {
+  height: 30px;
+  border-bottom: solid 2px var(--brand);
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
+}
+html.win11-mode .startMenu .searchBar .uicon {
+  filter: brightness(0.6);
+  margin-right: 12px;
+}
+html.win11-mode .startMenu .searchBar input {
+  width: 100%;
+  background: inherit;
+  border: none;
+  outline: none;
+  color: var(--text-primary);
+  font-size: 13px;
+}
+html.win11-mode .startMenu .searchBar input::placeholder {
+  color: var(--text-secondary);
+}
+html.win11-mode .startMenu .smatch {
+  background: rgba(255, 255, 255, 0.1);
+}
+html.win11-mode .startMenu .opts {
+  color: var(--text-secondary);
+  display: flex;
+  gap: 16px;
+  font-size: 13px;
+}
+html.win11-mode .startMenu .opts div {
+  border: solid 0 var(--brand);
+  cursor: pointer;
+}
+html.win11-mode .startMenu .opts div[value="true"] {
+  border-bottom-width: 2px;
+  color: var(--text-primary);
+}
+html.win11-mode .startMenu .leftSide {
+  width: 100%;
+}
+html.win11-mode .startMenu .leftSide[data-width="true"] {
+  width: 32%;
+}
+html.win11-mode .startMenu .rightSide {
+  margin: 8px;
+  height: 560px;
+  background: rgba(255, 255, 255, 0.1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  border-radius: 8px;
+}
+html.win11-mode .startMenu .rightSide .hline {
+  width: 90%;
+  height: 1px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.1);
+}
+html.win11-mode .startMenu .topApps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  width: 100%;
+  padding: 12px 0;
+  box-sizing: border-box;
+}
+html.win11-mode .startMenu .topApp {
+  background: rgba(255, 255, 255, 0.1);
+  width: 19%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  border-radius: 4px;
+  padding: 12px 4px;
+  cursor: pointer;
+  color: var(--text-primary);
+  font-size: 12px;
+  box-sizing: border-box;
+}
+html.win11-mode .startMenu .topApp:hover {
+  filter: brightness(0.9);
+}
+html.win11-mode .startMenu .quickSearches {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+  padding: 12px 0;
+  box-sizing: border-box;
+}
+html.win11-mode .startMenu .qksrch {
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  cursor: pointer;
+  color: var(--text-primary);
+  font-size: 13px;
+}
+html.win11-mode .startMenu .qksrch .uicon {
+  font-size: 20px;
+}
+html.win11-mode .startMenu .qksrch:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+html[data-theme="light"].win11-mode .startMenu {
+  background:
+    linear-gradient(
+      160deg,
+      rgba(255, 255, 255, 0.3),
+      rgba(255, 255, 255, 0.08) 40%,
+      rgba(200, 220, 255, 0.12)
+    ),
+    rgba(243, 243, 243, 0.92);
+  -webkit-backdrop-filter: blur(32px) saturate(1.6) brightness(1);
+  backdrop-filter: blur(32px) saturate(1.6) brightness(1);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.6),
+    0 24px 64px rgba(0, 0, 0, 0.2);
+  color: var(--text-primary);
+}
+html[data-theme="light"].win11-mode .startMenu .blueicon {
+  filter: none;
+}
+html[data-theme="light"].win11-mode .startMenu .gpbtn,
+html[data-theme="light"].win11-mode .startMenu .pnApp:hover,
+html[data-theme="light"].win11-mode .startMenu .rnApp:hover,
+html[data-theme="light"].win11-mode .startMenu .allApp:hover,
+html[data-theme="light"].win11-mode .startMenu .profile:hover,
+html[data-theme="light"].win11-mode .startMenu .powerMenu:hover,
+html[data-theme="light"].win11-mode .startMenu .powerCont .flex:hover,
+html[data-theme="light"].win11-mode .startMenu .qksrch:hover,
+html[data-theme="light"].win11-mode .startMenu .smatch {
+  background: rgba(255, 255, 255, 0.9);
+}
+html[data-theme="light"].win11-mode .startMenu .menuBar {
+  background: rgba(255, 255, 255, 0.4);
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+}
+html[data-theme="light"].win11-mode .startMenu .powerCont {
+  background: rgba(242, 242, 242, 0.95);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+html[data-theme="light"].win11-mode .startMenu .searchBar,
+html[data-theme="light"].win11-mode .startMenu .rightSide,
+html[data-theme="light"].win11-mode .startMenu .topApp {
+  background: rgba(255, 255, 255, 0.9);
+}
+
+html.win11-mode .window {
+  border-radius: 8px;
+  overflow: hidden;
+  font-family: var(--win11-segoe);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.55);
+}
+
+html.win11-mode .window-header {
+  height: 32px;
+  min-height: 32px;
+  max-height: 32px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 0 0 12px;
+  flex-direction: row;
+  justify-content: flex-start;
+  font-family: var(--win11-segoe);
+  font-size: 12px;
+}
+html.win11-mode .window-header > span {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+html.win11-mode .window-header .window-controls {
+  margin-left: auto;
+  display: flex;
+  align-items: stretch;
+  height: 100%;
+  flex-shrink: 0;
+}
+
+html.win11-mode .icon.selectable {
+  width: 76px;
+  padding: 6px 4px;
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  font-size: 12px;
+  border: 1px solid transparent;
+}
+
+html.win11-mode .icon.selectable:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+html.win11-mode .context-menu,
+html.win11-mode .context-menu-glass,
+html.win11-mode #context-menu {
+  border-radius: 8px;
+  background: rgba(36, 36, 36, 0.85);
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+  font-size: 13px;
+}
+
+html.win11-mode .notification {
+  border-radius: 8px;
+  background: rgba(36, 36, 36, 0.85);
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+  font-size: 13px;
+}
+
+html.win11-mode #notification-container,
+html.win11-mode .notification-container {
+  right: 12px;
+  bottom: 60px;
+}
+
+html.win11-mode .calendar-popup,
+html.win11-mode #calendar-popup {
+  border-radius: 8px;
+  background: rgba(36, 36, 36, 0.85);
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+  font-size: 13px;
+}
+
+html.win11-mode #system-tray {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 100%;
+  flex-shrink: 0;
+}
+
+html.win11-mode #system-tray #clock,
+html.win11-mode #system-tray #date {
+  display: block;
+  text-align: center;
+  line-height: 1.25;
+  font-size: 12px;
+}
+
+html.win11-mode #mac-menu-bar {
+  display: none !important;
+}
+
+html.win11-mode .mac-dock,
+html.win11-mode #dock {
+  display: none !important;
+}
+
+html[data-theme="light"].win11-mode #taskbar {
+  background: var(--win11-acrylic-light);
+  border: none;
+  box-shadow: none;
+}
+
+html[data-theme="light"].win11-mode .taskbar-item:hover,
+html[data-theme="light"].win11-mode .taskbar-item.active {
+  background: var(--win11-hover-light);
+}
+
+html[data-theme="light"].win11-mode #start-button:hover,
+html[data-theme="light"].win11-mode .win11-taskbar-btn:hover {
+  background-color: var(--win11-hover-light);
+}
+
+html[data-theme="light"].win11-mode .start-menu {
+  background: rgba(242, 242, 242, 0.9);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.25);
+}
+
+html[data-theme="light"].win11-mode .context-menu,
+html[data-theme="light"].win11-mode .context-menu-glass,
+html[data-theme="light"].win11-mode #context-menu,
+html[data-theme="light"].win11-mode .notification,
+html[data-theme="light"].win11-mode .calendar-popup,
+html[data-theme="light"].win11-mode #calendar-popup {
+  background: rgba(242, 242, 242, 0.92);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2);
+}
+
+html[data-theme="light"].win11-mode .icon.selectable:hover {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+html.win11-mode .startMenu .win11-credit {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 22px;
+  height: 22px;
+  min-width: 22px;
+  min-height: 22px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.12);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  color: var(--text-primary);
+  font-size: 12px;
+  line-height: 1;
+  cursor: pointer;
+  z-index: 20;
+}
+
+html.win11-mode .startMenu .win11-credit:hover {
+  background: rgba(255, 255, 255, 0.24);
+}
+
+html.win11-mode .startMenu .win11-credit-close {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 14px;
+  height: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(32, 32, 32, 0.8);
+  color: var(--text-primary);
+  font-size: 12px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+html[data-theme="light"].win11-mode .startMenu .win11-credit {
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  color: var(--text-primary);
+}
+
+html[data-theme="light"].win11-mode .startMenu .win11-credit:hover {
+  background: rgba(255, 255, 255, 0.95);
+}
+
+html[data-theme="light"].win11-mode .startMenu .win11-credit-close {
+  background: rgba(242, 242, 242, 0.95);
+  border: 1px solid rgba(0, 0, 0, 0.12);
+}
+
+html.win11-mode .win11-credit-panel {
+  position: fixed;
+  inset: 0;
+  z-index: 60000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  box-sizing: border-box;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+html.win11-mode .win11-credit-panel .aboutApp {
+  --bg1: #202020;
+  --bg2: #2b2b2b;
+  --dark-txt: #fff;
+  --alt-txt: #000;
+  --comp-txt: #222;
+  --clrPrm: #4cc2ff;
+  position: relative;
+  top: auto;
+  left: auto;
+  width: 28rem;
+  max-width: 100%;
+  max-height: calc(100vh - 32px);
+  height: auto;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  border-radius: 6px;
+  color: var(--dark-txt);
+  background: var(--bg1);
+  font-size: 14px;
+  box-shadow: 0 0 6px rgba(0, 0, 0, 0.25);
+  box-sizing: border-box;
+}
+
+html.win11-mode .win11-credit-panel .aboutApp a {
+  color: var(--clrPrm);
+  font-weight: 500;
+}
+
+html.win11-mode .win11-credit-panel .aboutApp .content {
+  background: var(--bg2);
+  overflow-y: auto;
+}
+
+html.win11-mode .win11-credit-panel .aboutApp .content.p-6 {
+  padding: 1.5rem;
+}
+
+html.win11-mode .win11-credit-panel .aboutApp .content .text-xl {
+  font-size: 1.25rem;
+  line-height: 1.75rem;
+}
+
+html.win11-mode .win11-credit-panel .aboutApp .content .font-semibold {
+  font-weight: 600;
+}
+
+html.win11-mode .win11-credit-panel .aboutApp .content .pl-4 {
+  padding-left: 1rem;
+}
+
+html.win11-mode .win11-credit-panel .aboutApp .content p {
+  margin: 0 0 1em 0;
+}
+
+html.win11-mode .win11-credit-panel .aboutApp .content p:last-child {
+  margin-bottom: 0;
+}
+
+html.win11-mode .win11-credit-panel .aboutApp .okbtn {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  border-top: 1px solid var(--comp-txt);
+}
+
+html.win11-mode .win11-credit-panel .aboutApp .okbtn.px-6 {
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+}
+
+html.win11-mode .win11-credit-panel .aboutApp .okbtn.py-4 {
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+}
+
+html.win11-mode .win11-credit-panel .aboutApp .okbtn div {
+  background: var(--clrPrm);
+  color: var(--alt-txt);
+  border: 1px solid transparent;
+  font-weight: 500;
+  padding: 6px 24px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+html.win11-mode .win11-credit-panel .aboutApp .okbtn div[data-allow="false"] {
+  background: var(--bg2);
+  color: #777;
+  border: 1px solid;
+  cursor: not-allowed;
+}
+
+html[data-theme="light"].win11-mode .win11-credit-panel .aboutApp {
+  --bg1: #f3f3f3;
+  --bg2: #fff;
+  --dark-txt: #000;
+  --alt-txt: #fff;
+  --comp-txt: #ddd;
+  --clrPrm: #0067c0;
+}
+
+html.win11-mode .window.explorer-window {
+  background: rgba(32, 32, 34, 0.78);
+  -webkit-backdrop-filter: saturate(1.8) blur(40px);
+  backdrop-filter: saturate(1.8) blur(40px);
+  border: 1px solid var(--glass-border);
+  border-radius: 8px;
+  font-family: var(--win11-segoe);
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.55);
+  overflow: hidden;
+}
+html[data-theme="light"].win11-mode .window.explorer-window {
+  background: rgba(243, 243, 243, 0.8);
+  -webkit-backdrop-filter: saturate(1.8) blur(40px);
+  backdrop-filter: saturate(1.8) blur(40px);
+  border: 1px solid var(--glass-border);
+  border-radius: 8px;
+  font-family: var(--win11-segoe);
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.25);
+}
+html.win11-mode .window.explorer-window .msfiles {
+  background: transparent;
+  color: var(--text-primary);
+}
+html.win11-mode .window.explorer-window .msribbon {
+  display: flex;
+  align-items: center;
+  padding: 1em 1em 0.6em 0;
+  box-sizing: border-box;
+  border: solid 0 var(--glass-border);
+  border-bottom-width: 1px;
+  width: auto;
+}
+html.win11-mode .window.explorer-window .restWindow {
+  background: transparent;
+}
+html.win11-mode .window.explorer-window .ribsec {
+  display: flex;
+  color: var(--text-primary);
+  font-size: 12px;
+  align-items: center;
+  box-sizing: border-box;
+  border: solid 0 var(--text-muted);
+  border-right-width: 1px;
+  padding: 0.4em 0.8em;
+}
+html.win11-mode .window.explorer-window .ribsec > .uicon {
+  margin: 0 0.5em;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+html.win11-mode .window.explorer-window .drdwcont {
+  margin: 0 0.4em;
+}
+html.win11-mode .window.explorer-window .ribsec > .uicon,
+html.win11-mode .window.explorer-window .ribsec .drdwcont {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 4px 6px;
+  border-radius: 4px;
+  cursor: pointer;
+  user-select: none;
+  color: var(--text-secondary);
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease,
+    transform 0.15s ease;
+}
+html.win11-mode .window.explorer-window .ribsec > .uicon img,
+html.win11-mode .window.explorer-window .ribsec > .uicon i,
+html.win11-mode .window.explorer-window .ribsec > .uicon svg,
+html.win11-mode .window.explorer-window .ribsec .drdwcont img,
+html.win11-mode .window.explorer-window .ribsec .drdwcont i,
+html.win11-mode .window.explorer-window .ribsec .drdwcont svg {
+  transition: transform 0.15s ease;
+}
+html.win11-mode .window.explorer-window .ribsec > .uicon:hover,
+html.win11-mode .window.explorer-window .ribsec .drdwcont:hover {
+  background: var(--glass-hover);
+  color: var(--text-primary);
+}
+html.win11-mode .window.explorer-window .ribsec > .uicon:hover img,
+html.win11-mode .window.explorer-window .ribsec > .uicon:hover i,
+html.win11-mode .window.explorer-window .ribsec > .uicon:hover svg,
+html.win11-mode .window.explorer-window .ribsec .drdwcont:hover img,
+html.win11-mode .window.explorer-window .ribsec .drdwcont:hover i,
+html.win11-mode .window.explorer-window .ribsec .drdwcont:hover svg {
+  transform: scale(1.12);
+}
+html.win11-mode .window.explorer-window .ribsec > .uicon:active,
+html.win11-mode .window.explorer-window .ribsec .drdwcont:active {
+  transform: scale(0.92);
+}
+html.win11-mode .window.explorer-window .ribsec > .uicon:focus-visible,
+html.win11-mode .window.explorer-window .ribsec .drdwcont:focus-visible {
+  outline: 1px solid var(--brand);
+  outline-offset: 1px;
+}
+html.win11-mode .window.explorer-window .dropdownmenu {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+html.win11-mode .window.explorer-window .dropdownmenu .droptitle {
+  display: flex;
+  margin: 2.5px 0;
+  padding-left: 4px;
+  padding-right: 4px;
+  align-items: center;
+  position: relative;
+  border-radius: 4px;
+  cursor: pointer;
+  min-height: 28px;
+  box-sizing: border-box;
+}
+html.win11-mode .window.explorer-window .dropdownmenu .droptitle:hover::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 1.4em;
+  min-height: 24px;
+  border-radius: 4px;
+  background: var(--glass-hover);
+}
+html.win11-mode
+  .window.explorer-window
+  .dropdownmenu
+  .droptitle:hover
+  .arrUi
+  svg {
+  color: var(--text-primary) !important;
+}
+html.win11-mode .window.explorer-window .dropdownmenu .droptitle .arrUi {
+  margin-right: 0.4em;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  color: var(--text-secondary);
+}
+html.win11-mode
+  .window.explorer-window
+  .dropdownmenu
+  .droptitle
+  .fa-chevron-right {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+html.win11-mode .window.explorer-window .dropdownmenu .droptitle .navtitle {
+  flex-grow: 1;
+  font-size: 12.5px;
+  padding: 2px 0;
+  align-items: center;
+  position: relative;
+  font-weight: 400;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+html.win11-mode .window.explorer-window .dropdownmenu .droptitle .pinUi {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
+  color: var(--text-secondary);
+  opacity: 0;
+  flex-shrink: 0;
+  cursor: pointer;
+  font-size: 12px;
+}
+html.win11-mode .window.explorer-window .dropdownmenu .droptitle:hover .pinUi,
+html.win11-mode
+  .window.explorer-window
+  .dropdownmenu
+  .droptitle
+  .pinUi[data-pinned="true"] {
+  opacity: 1;
+}
+html.win11-mode .window.explorer-window .dropdownmenu .droptitle .pinUi:hover {
+  background: var(--glass-hover);
+  color: var(--text-primary);
+}
+html.win11-mode .window.explorer-window .disableIt {
+  color: var(--text-muted) !important;
+}
+html.win11-mode .window.explorer-window .dropcontent .dropdownmenu {
+  padding-left: 0.6em;
+}
+html.win11-mode .window.explorer-window .navtitle {
+  flex-grow: 1;
+  font-size: 12.5px;
+  padding: 2px 0;
+  align-items: center;
+  position: relative;
+  font-weight: 400;
+  color: var(--text-primary);
+}
+html.win11-mode .window.explorer-window .sec1 {
+  display: flex;
+  align-items: center;
+  padding: 0.5em 0.5em 0.5em 0;
+}
+html.win11-mode .window.explorer-window .sec1 .navIcon {
+  color: var(--text-secondary);
+  padding: 0 0.5em;
+  margin-left: 0.5em;
+  border-radius: 4px;
+  transition: all 200ms ease-in-out;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  min-height: 28px;
+  cursor: pointer;
+  font-size: 12px;
+}
+html.win11-mode .window.explorer-window .sec1 .navIcon:hover {
+  background: var(--glass-hover);
+  color: var(--text-primary);
+}
+html.win11-mode .window.explorer-window .sec1 .path-bar {
+  flex-grow: 1;
+  overflow: scroll;
+  margin: 0 0.6em;
+  padding: 0 0.6em;
+  font-size: 12px;
+  color: var(--text-secondary);
+  border: 1px solid var(--glass-border);
+  border-radius: 4px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-height: 28px;
+  background: transparent;
+  scrollbar-width: thin;
+}
+html.win11-mode .window.explorer-window .sec1 .path-bar .dirfbox {
+  position: absolute;
+  top: 0;
+  left: 0.6em;
+  bottom: 0;
+  width: max-content;
+  max-width: 100%;
+  padding-right: 1em;
+  display: flex;
+  align-items: center;
+}
+html.win11-mode .window.explorer-window .sec1 .path-bar .dirfbox .dirCont {
+  display: flex;
+  align-items: center;
+  height: 100%;
+}
+html.win11-mode
+  .window.explorer-window
+  .sec1
+  .path-bar
+  .dirfbox
+  .dirCont:hover
+  .dirchev,
+html.win11-mode
+  .window.explorer-window
+  .sec1
+  .path-bar
+  .dirfbox
+  .dirCont:hover
+  .dncont {
+  background: var(--glass-hover);
+}
+html.win11-mode .window.explorer-window .sec1 .path-bar .dirfbox .dncont {
+  padding: 0 0.25em;
+  padding-bottom: 2px;
+  color: var(--text-secondary);
+  height: 100%;
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  border-radius: 4px;
+  cursor: pointer;
+  white-space: nowrap;
+  font-size: 12px;
+}
+html.win11-mode .window.explorer-window .sec1 .path-bar .dirfbox .dirchev {
+  padding: 0 2px;
+  margin-left: 1px;
+  height: 100%;
+  display: inline-flex;
+  align-items: center;
+  border-radius: 4px;
+  cursor: pointer;
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+html.win11-mode .window.explorer-window .sec1 .path-bar .path-field {
+  font-size: inherit;
+  background: transparent;
+  color: var(--text-secondary);
+  letter-spacing: 1px;
+  box-sizing: border-box;
+  padding-bottom: 4px;
+  width: 100%;
+  height: 100%;
+  display: none;
+  border: none;
+  outline: none;
+}
+html.win11-mode .window.explorer-window .sec1 .path-bar .path-field:active,
+html.win11-mode .window.explorer-window .sec1 .path-bar .path-field:focus {
+  display: block;
+  background: transparent;
+  color: var(--text-primary);
+}
+html.win11-mode
+  .window.explorer-window
+  .sec1
+  .path-bar
+  .path-field:active
+  + .dirfbox,
+html.win11-mode
+  .window.explorer-window
+  .sec1
+  .path-bar
+  .path-field:focus
+  + .dirfbox {
+  display: none;
+}
+html.win11-mode .window.explorer-window .sec1 .path-bar:focus .dirfbox {
+  display: none;
+}
+html.win11-mode .window.explorer-window .sec1 .path-bar:focus .path-field {
+  display: block;
+}
+html.win11-mode .window.explorer-window .sec1 .path-bar:focus-within {
+  border-color: var(--brand);
+}
+html.win11-mode .window.explorer-window .sec1 .srchbar {
+  width: 20%;
+  min-width: 140px;
+  margin-left: auto;
+  flex-shrink: 0;
+  padding: 0.6em 0.2em;
+  font-size: 12px;
+  color: var(--text-primary);
+  border: 1px solid var(--glass-border);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  background: transparent;
+  box-sizing: border-box;
+}
+html.win11-mode .window.explorer-window .sec1 .srchbar:focus-within {
+  border-color: var(--brand);
+}
+html.win11-mode .window.explorer-window .sec1 .srchbar .searchIcon {
+  margin: 0 1em;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+  font-size: 12px;
+}
+html.win11-mode .window.explorer-window .sec1 .srchbar input {
+  width: 100%;
+  min-width: 0;
+  font-size: inherit;
+  background: transparent;
+  color: var(--text-secondary);
+  border: none;
+  outline: none;
+}
+html.win11-mode .window.explorer-window .sec1 .srchbar input::placeholder {
+  color: var(--text-secondary);
+}
+html.win11-mode .window.explorer-window .sec2 {
+  width: 100%;
+  height: 100%;
+  flex: 1;
+  min-height: 0;
+  box-sizing: border-box;
+  display: flex;
+  background: transparent;
+}
+html.win11-mode .window.explorer-window .sec2 .navpane {
+  width: 180px;
+  min-width: 180px;
+  max-width: 180px;
+  flex: 1 1 auto;
+  flex-shrink: 0;
+  min-height: 0;
+  height: auto;
+  max-height: none;
+  padding: 0.4em 2px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  border: 0 solid var(--glass-border);
+  border-right-width: medium;
+  position: relative;
+  background: transparent;
+  scrollbar-width: thin;
+}
+html.win11-mode .window.explorer-window .sec2 .contentarea {
+  height: 100%;
+  flex-grow: 1;
+  min-width: 0;
+  min-height: 0;
+  background: transparent;
+}
+html.win11-mode .window.explorer-window .extcont {
+  position: relative;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: max-content;
+}
+html.win11-mode .window.explorer-window .extcont > .dropdownmenu {
+  margin-bottom: 0.5em;
+}
+html.win11-mode .window.explorer-window .contentarea {
+  display: flex;
+  flex-direction: column;
+}
+html.win11-mode .window.explorer-window .contentarea:focus {
+  outline: none;
+}
+html.win11-mode .window.explorer-window .contentarea .contentwrap {
+  flex-grow: 1;
+  overflow-x: hidden;
+  overflow-y: scroll;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  scrollbar-width: thin;
+}
+html.win11-mode .window.explorer-window .contentarea .gridshow {
+  position: absolute;
+  top: 0;
+  left: 0;
+  box-sizing: border-box;
+  width: 100%;
+  display: grid;
+  padding: 0 1em;
+  font-size: 12px;
+  font-weight: 400;
+  grid-template-columns: repeat(auto-fill, var(--cwidth, 8.6em));
+  justify-content: space-between;
+  align-items: flex-end;
+}
+html.win11-mode .window.explorer-window .contentarea .gridshow[data-size="lg"] {
+  --cwidth: 8.6em;
+  grid-column-gap: 1em;
+}
+html.win11-mode
+  .window.explorer-window
+  .contentarea
+  .gridshow[data-size="lg"]
+  .conticon {
+  padding: 0.2em;
+  margin: 0.6em 0;
+}
+html.win11-mode .window.explorer-window .contentarea .gridshow .conticon {
+  align-self: flex-start;
+}
+html.win11-mode .window.explorer-window .contentarea .conticon {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  text-align: center;
+  padding: 8px 6px;
+  border-radius: 4px;
+  border: 1px solid transparent;
+  font-size: 12px;
+  color: var(--text-primary);
+  cursor: pointer;
+  box-sizing: border-box;
+}
+html.win11-mode .window.explorer-window .contentarea .conticon:hover {
+  background: var(--glass-hover);
+}
+html.win11-mode
+  .window.explorer-window
+  .contentarea
+  .conticon[data-focus="true"] {
+  background: var(--brand-dim);
+  color: var(--text-primary);
+}
+html.win11-mode .window.explorer-window .contentarea .conticon img,
+html.win11-mode .window.explorer-window .contentarea .conticon svg {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+html.win11-mode .window.explorer-window .contentarea .conticon span {
+  width: 100%;
+  max-height: 32px;
+  text-align: center;
+  word-wrap: break-word;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  font-size: 12px;
+  line-height: 1.3;
+}
+html.win11-mode .window.explorer-window .sec3 {
+  background: var(--glass);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 2px 4px 2px 8px;
+  border-top: 1px solid var(--glass-border);
+  min-height: 28px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+html.win11-mode .window.explorer-window .sec3 .item-count {
+  box-sizing: border-box;
+  padding: 0 8px;
+  height: 60%;
+  min-height: 18px;
+  display: flex;
+  align-items: center;
+  border: 0 solid var(--text-secondary);
+  border-right-width: 1px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+html.win11-mode .window.explorer-window .sec3 .view-opts {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin-left: auto;
+}
+html.win11-mode .window.explorer-window .sec3 .view-opts .viewicon {
+  width: 28px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 12px;
+  cursor: pointer;
+}
+html.win11-mode .window.explorer-window .sec3 .view-opts .viewicon:hover {
+  background: var(--glass-hover);
+  color: var(--text-primary);
+}
+html.win11-mode
+  .window.explorer-window
+  .sec3
+  .view-opts
+  .viewicon[data-open="true"] {
+  background: var(--brand-dim);
+  color: var(--brand);
+}
+html.win11-mode .window.explorer-window .hvtheme:hover {
+  background: var(--glass-hover);
+}
+html.win11-mode .window.explorer-window .explorer-sidebar {
+  background: transparent;
+  border: none;
+  border-right: none;
+  padding: 0;
+  width: auto;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+html.win11-mode .window.explorer-window .explorer-sidebar::after {
+  display: none;
+  content: none;
+}
+html.win11-mode .window.explorer-window .explorer-nav {
+  background: transparent;
+  border: none;
+  border-bottom: none;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+html.win11-mode .window.explorer-window .explorer-nav::after {
+  display: none;
+  content: none;
+}
+html.win11-mode .window.explorer-window .explorer-container {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+html.win11-mode .window.explorer-window .explorer-path-wrap {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+html.win11-mode .window.explorer-window .explorer-status-bar {
+  background: transparent;
+  border: none;
+  border-top: none;
+  box-shadow: none;
+}
+html.win11-mode .window.explorer-window .explorer-search-wrap {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+html.win11-mode .window.explorer-window .flex {
+  display: flex;
+}
+html.win11-mode .window.explorer-window .flex-col {
+  display: flex;
+  flex-direction: column;
+}
+html.win11-mode .window.explorer-window .flex-grow {
+  flex-grow: 1;
+}
+html.win11-mode .window.explorer-window .items-center {
+  align-items: center;
+}
+html.win11-mode .window.explorer-window .text-xs {
+  font-size: 12px;
+}
+html.win11-mode .window.explorer-window .mr-1 {
+  margin-right: 4px;
+}
+html.win11-mode .window.explorer-window .p-1 {
+  padding: 4px;
+}
+html.win11-mode .window.explorer-window .opacity-0 {
+  opacity: 0;
+}
+html.win11-mode .window.explorer-window .h-full {
+  height: 100%;
+}
+html[data-theme="light"].win11-mode .window.explorer-window .msribbon {
+  border-bottom-color: var(--glass-border);
+}
+html[data-theme="light"].win11-mode .window.explorer-window .hvtheme:hover {
+  background: var(--win11-hover-light);
+}
+html[data-theme="light"].win11-mode .window.explorer-window .ribsec > .uicon,
+html[data-theme="light"].win11-mode .window.explorer-window .ribsec .drdwcont {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 4px 6px;
+  border-radius: 4px;
+  cursor: pointer;
+  user-select: none;
+  color: var(--text-secondary);
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease,
+    transform 0.15s ease;
+}
+html[data-theme="light"].win11-mode
+  .window.explorer-window
+  .ribsec
+  > .uicon
+  img,
+html[data-theme="light"].win11-mode .window.explorer-window .ribsec > .uicon i,
+html[data-theme="light"].win11-mode
+  .window.explorer-window
+  .ribsec
+  > .uicon
+  svg,
+html[data-theme="light"].win11-mode
+  .window.explorer-window
+  .ribsec
+  .drdwcont
+  img,
+html[data-theme="light"].win11-mode .window.explorer-window .ribsec .drdwcont i,
+html[data-theme="light"].win11-mode
+  .window.explorer-window
+  .ribsec
+  .drdwcont
+  svg {
+  transition: transform 0.15s ease;
+}
+html[data-theme="light"].win11-mode
+  .window.explorer-window
+  .ribsec
+  > .uicon:hover,
+html[data-theme="light"].win11-mode
+  .window.explorer-window
+  .ribsec
+  .drdwcont:hover {
+  background: var(--glass-hover);
+  color: var(--text-primary);
+}
+html[data-theme="light"].win11-mode
+  .window.explorer-window
+  .ribsec
+  > .uicon:hover
+  img,
+html[data-theme="light"].win11-mode
+  .window.explorer-window
+  .ribsec
+  > .uicon:hover
+  i,
+html[data-theme="light"].win11-mode
+  .window.explorer-window
+  .ribsec
+  > .uicon:hover
+  svg,
+html[data-theme="light"].win11-mode
+  .window.explorer-window
+  .ribsec
+  .drdwcont:hover
+  img,
+html[data-theme="light"].win11-mode
+  .window.explorer-window
+  .ribsec
+  .drdwcont:hover
+  i,
+html[data-theme="light"].win11-mode
+  .window.explorer-window
+  .ribsec
+  .drdwcont:hover
+  svg {
+  transform: scale(1.12);
+}
+html[data-theme="light"].win11-mode
+  .window.explorer-window
+  .ribsec
+  > .uicon:active,
+html[data-theme="light"].win11-mode
+  .window.explorer-window
+  .ribsec
+  .drdwcont:active {
+  transform: scale(0.92);
+}
+html[data-theme="light"].win11-mode
+  .window.explorer-window
+  .ribsec
+  > .uicon:focus-visible,
+html[data-theme="light"].win11-mode
+  .window.explorer-window
+  .ribsec
+  .drdwcont:focus-visible {
+  outline: 1px solid var(--brand);
+  outline-offset: 1px;
+}
+html[data-theme="light"].win11-mode
+  .window.explorer-window
+  .sec1
+  .navIcon:hover {
+  background: var(--win11-hover-light);
+}
+html[data-theme="light"].win11-mode
+  .window.explorer-window
+  .sec1
+  .path-bar
+  .dirfbox
+  .dirCont:hover
+  .dirchev,
+html[data-theme="light"].win11-mode
+  .window.explorer-window
+  .sec1
+  .path-bar
+  .dirfbox
+  .dirCont:hover
+  .dncont {
+  background: var(--win11-hover-light);
+}
+html[data-theme="light"].win11-mode
+  .window.explorer-window
+  .dropdownmenu
+  .droptitle:hover::before {
+  background: var(--win11-hover-light);
+}
+html[data-theme="light"].win11-mode
+  .window.explorer-window
+  .contentarea
+  .conticon:hover {
+  background: var(--win11-hover-light);
+}
+html[data-theme="light"].win11-mode
+  .window.explorer-window
+  .dropdownmenu
+  .droptitle
+  .pinUi:hover {
+  background: var(--win11-hover-light);
+}
+html[data-theme="light"].win11-mode .window.explorer-window .sec3 {
+  background: rgba(255, 255, 255, 0.4);
+}
+html[data-theme="light"].win11-mode
+  .window.explorer-window
+  .sec3
+  .view-opts
+  .viewicon:hover {
+  background: var(--win11-hover-light);
+}
+html.win11-mode .window.explorer-window .explorer-tab-bar {
+  background: transparent;
+  border-bottom: 1px solid var(--glass-border);
+  padding: 6px 8px 0;
+  gap: 4px;
+}
+html.win11-mode .window.explorer-window .explorer-tab-bar > .explorer-tab {
+  border-radius: 6px 6px 0 0;
+  font-size: 12px;
+  color: var(--text-secondary);
+  background: transparent;
+  border: 1px solid transparent;
+  border-bottom: none;
+}
+html.win11-mode
+  .window.explorer-window
+  .explorer-tab-bar
+  > .explorer-tab:hover {
+  background: var(--win11-hover-dark);
+  color: var(--text-primary);
+}
+html.win11-mode
+  .window.explorer-window
+  .explorer-tab-bar
+  > .explorer-tab.active {
+  background: rgba(32, 32, 34, 0.5);
+  color: var(--text-primary);
+  border-color: var(--glass-border);
+}
+html[data-theme="light"].win11-mode
+  .window.explorer-window
+  .explorer-tab-bar
+  > .explorer-tab:hover {
+  background: var(--win11-hover-light);
+}
+html[data-theme="light"].win11-mode
+  .window.explorer-window
+  .explorer-tab-bar
+  > .explorer-tab.active {
+  background: rgba(255, 255, 255, 0.7);
+}
+
+html.win11-mode #win11-widgets-board.widPaneCont {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  bottom: 60px;
+  width: 760px;
+  max-width: 50vw;
+  border-radius: 8px;
+  overflow: hidden;
+  transform: translateX(0);
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.55);
+  transition: transform 0.3s cubic-bezier(0.77, 0, 0.18, 1);
+  z-index: 9000;
+  font-family: var(--win11-segoe);
+  font-size: 14px;
+  color: var(--text-primary);
+  box-sizing: border-box;
+}
+html.win11-mode #win11-widgets-board.widPaneCont[data-hide="true"] {
+  transform: translateX(-110%);
+  transition: transform 0.6s cubic-bezier(0.77, 0, 0.18, 1);
+}
+html.win11-mode #win11-widgets-board.widPaneCont .WidPane {
+  width: 100%;
+  height: 100%;
+  color: var(--text-primary);
+  background: rgba(31, 31, 31, 0.25);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow-x: hidden;
+  overflow-y: scroll;
+  box-sizing: border-box;
+  padding-bottom: 16px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.12) transparent;
+}
+html.win11-mode #win11-widgets-board.widPaneCont .WidPane::-webkit-scrollbar {
+  width: 8px;
+}
+html.win11-mode
+  #win11-widgets-board.widPaneCont
+  .WidPane::-webkit-scrollbar-track {
+  background: transparent;
+}
+html.win11-mode
+  #win11-widgets-board.widPaneCont
+  .WidPane::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 4px;
+}
+html.win11-mode
+  #win11-widgets-board.widPaneCont
+  .WidPane::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.5);
+}
+html.win11-mode #win11-widgets-board.widPaneCont .WidPane.win11Scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.12) transparent;
+}
+html.win11-mode
+  #win11-widgets-board.widPaneCont
+  .WidPane.win11Scroll::-webkit-scrollbar {
+  width: 8px;
+}
+html.win11-mode
+  #win11-widgets-board.widPaneCont
+  .WidPane.win11Scroll::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 4px;
+}
+html.win11-mode
+  #win11-widgets-board.widPaneCont
+  .win11Scroll::-webkit-scrollbar {
+  width: 8px;
+}
+html.win11-mode
+  #win11-widgets-board.widPaneCont
+  .win11Scroll::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 4px;
+}
+html.win11-mode #win11-widgets-board.widPaneCont .widtop {
+  width: 96%;
+  display: flex;
+  padding: 18px 28px 0 0;
+  box-sizing: border-box;
+  justify-content: flex-end;
+  color: var(--text-primary);
+  font-size: 12px;
+}
+html.win11-mode #win11-widgets-board.widPaneCont .widTime {
+  display: flex;
+  justify-content: center;
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--text-primary);
+}
+html.win11-mode #win11-widgets-board.widPaneCont .widgetCont {
+  width: 80%;
+}
+html.win11-mode #win11-widgets-board.widPaneCont .topWidgets {
+  margin-top: 24px;
+  display: flex;
+  justify-content: space-between;
+}
+html.win11-mode #win11-widgets-board.widPaneCont .weatherCont {
+  width: 50%;
+  margin: 4px;
+  min-height: 240px;
+  padding: 12px 14px;
+  border-radius: 6px;
+  box-sizing: border-box;
+  background: linear-gradient(to bottom right, #534f88 0%, #1b2257 80%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: var(--text-primary);
+}
+html.win11-mode #win11-widgets-board.widPaneCont .wthtop {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  font-size: 12px;
+  color: var(--text-primary);
+}
+html.win11-mode #win11-widgets-board.widPaneCont .wthtop .uicon {
+  margin-right: 0.5em;
+}
+html.win11-mode #win11-widgets-board.widPaneCont .wthtop span {
+  padding-bottom: 2px;
+}
+html.win11-mode #win11-widgets-board.widPaneCont .wthcity {
+  width: 50%;
+  display: flex;
+  font-size: 12px;
+  margin-top: 8px;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+html.win11-mode #win11-widgets-board.widPaneCont .wthcity * {
+  margin: 0 2px;
+}
+html.win11-mode #win11-widgets-board.widPaneCont .wthInfo {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+}
+html.win11-mode #win11-widgets-board.widPaneCont .wthTemp {
+  display: flex;
+  align-items: flex-end;
+}
+html.win11-mode #win11-widgets-board.widPaneCont .wthTemp .uicon {
+  padding-bottom: 4px;
+}
+html.win11-mode #win11-widgets-board.widPaneCont .wthTemp * {
+  margin: 0 3px;
+}
+html.win11-mode #win11-widgets-board.widPaneCont .wthdeg {
+  font-size: 32px;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--text-primary);
+}
+html.win11-mode #win11-widgets-board.widPaneCont .wthunit {
+  margin: 0 2px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  padding-bottom: 6px;
+}
+html.win11-mode #win11-widgets-board.widPaneCont .moreWinfo {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  padding-top: 2px;
+}
+html.win11-mode #win11-widgets-board.widPaneCont .wcontext {
+  font-size: 12px;
+  margin-bottom: 4px;
+  color: var(--text-primary);
+}
+html.win11-mode #win11-widgets-board.widPaneCont .rainProb {
+  display: flex;
+}
+html.win11-mode #win11-widgets-board.widPaneCont .chanceOfRain {
+  display: flex;
+  font-size: 12px;
+  margin-left: 12px;
+  color: var(--text-primary);
+}
+html.win11-mode #win11-widgets-board.widPaneCont .chanceOfRain .uicon {
+  margin-right: 2px;
+  color: var(--text-secondary);
+}
+html.win11-mode #win11-widgets-board.widPaneCont .weekWthCont {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  margin-top: 12px;
+}
+html.win11-mode #win11-widgets-board.widPaneCont .weekDay {
+  width: 23%;
+  border-radius: 4px;
+  padding: 4px 0 12px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  color: var(--text-primary);
+}
+html.win11-mode #win11-widgets-board.widPaneCont .weekDay:hover {
+  background: rgba(255, 255, 255, 0.5);
+}
+html.win11-mode #win11-widgets-board.widPaneCont .weekDay:focus-visible {
+  outline: 2px solid var(--brand-dim);
+  outline-offset: 2px;
+}
+html.win11-mode #win11-widgets-board.widPaneCont .weekDay .uicon {
+  margin: 8px 0;
+}
+html.win11-mode #win11-widgets-board.widPaneCont .tempCont {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+html.win11-mode #win11-widgets-board.widPaneCont .shortCont {
+  width: 50%;
+  min-height: 250px;
+  display: flex;
+  flex-direction: column;
+}
+html.win11-mode #win11-widgets-board.widPaneCont .short0,
+html.win11-mode #win11-widgets-board.widPaneCont .short1 {
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  margin: 4px 4px 6px;
+  background: #1b2257;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  padding: 8px 12px 0;
+  overflow: hidden;
+}
+html.win11-mode #win11-widgets-board.widPaneCont .short0 .shName,
+html.win11-mode #win11-widgets-board.widPaneCont .short1 .shName {
+  width: 100%;
+  font-size: 12px;
+  letter-spacing: 1px;
+  color: var(--text-secondary);
+  margin-bottom: 16px;
+  display: flex;
+  justify-content: space-between;
+}
+html.win11-mode #win11-widgets-board.widPaneCont .shEntry {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+html.win11-mode #win11-widgets-board.widPaneCont .stockName {
+  display: flex;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+html.win11-mode #win11-widgets-board.widPaneCont .stockName .uicon {
+  margin-right: 6px;
+}
+html.win11-mode #win11-widgets-board.widPaneCont .stName {
+  color: var(--text-secondary);
+  padding-top: 1px;
+}
+html.win11-mode #win11-widgets-board.widPaneCont .stockValue {
+  font-size: 12px;
+  font-weight: 600;
+  display: flex;
+  color: var(--text-primary);
+}
+html.win11-mode #win11-widgets-board.widPaneCont .stRes {
+  width: 52px;
+  text-align: center;
+  padding: 1px 0;
+  border-radius: 2px;
+  margin-left: 8px;
+  font-size: 12px;
+  background: #eb3535;
+  color: #fefefe;
+}
+html.win11-mode #win11-widgets-board.widPaneCont .stRes[data-pos="true"] {
+  background: #09d031;
+}
+html.win11-mode #win11-widgets-board.widPaneCont .short1 {
+  position: relative;
+  background-color: transparent;
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center;
+  z-index: 1;
+}
+html.win11-mode #win11-widgets-board.widPaneCont .short1::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: var(--afterBack);
+  background-repeat: no-repeat;
+  background-size: contain;
+  background-position: center;
+  filter: brightness(0.72);
+  z-index: -1;
+}
+html.win11-mode #win11-widgets-board.widPaneCont .short1::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  -webkit-backdrop-filter: brightness(0.8);
+  backdrop-filter: brightness(0.8);
+  filter: blur(10px);
+  z-index: -2;
+}
+html.win11-mode #win11-widgets-board.widPaneCont .short1 .shName {
+  margin-bottom: 4px;
+  color: #eee;
+}
+html.win11-mode
+  #win11-widgets-board.widPaneCont
+  .short1
+  .shName
+  div:nth-child(2) {
+  font-weight: 600;
+}
+html.win11-mode #win11-widgets-board.widPaneCont .infotextCont {
+  position: absolute;
+  bottom: 6px;
+  padding-right: 10px;
+  display: flex;
+  flex-direction: column;
+}
+html.win11-mode #win11-widgets-board.widPaneCont .dayInfo {
+  max-height: 64px;
+  font-size: 12px;
+  color: #ddd;
+  margin-top: auto;
+  line-height: 14px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  text-align: justify;
+  transition: all 200ms ease-in-out;
+  padding: 4px;
+}
+html.win11-mode #win11-widgets-board.widPaneCont .dayInfo:hover {
+  cursor: none;
+  background: rgba(0, 0, 0, 0.65);
+}
+html.win11-mode #win11-widgets-board.widPaneCont .short1 a,
+html.win11-mode #win11-widgets-board.widPaneCont .wikiref {
+  text-decoration: none;
+  font-size: 12px;
+  color: #c3c3c3;
+  text-align: right;
+  display: block;
+}
+html.win11-mode #win11-widgets-board.widPaneCont .newsCont {
+  width: 100%;
+  margin-top: 18px;
+  padding: 6px;
+  box-sizing: border-box;
+}
+html.win11-mode #win11-widgets-board.widPaneCont .newsCont * {
+  cursor: default;
+}
+html.win11-mode #win11-widgets-board.widPaneCont .topStories {
+  position: relative;
+  border-radius: 4px;
+  padding: 12px;
+  background: linear-gradient(to bottom right, #35264c 0%, var(--glass) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+html.win11-mode #win11-widgets-board.widPaneCont .topNewsText {
+  color: var(--text-primary);
+  font-size: 12px;
+  font-weight: 600;
+}
+html.win11-mode #win11-widgets-board.widPaneCont .topNewsCont {
+  width: 100%;
+  display: grid;
+  padding-bottom: 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-rows: repeat(2, minmax(0, 1fr));
+}
+html.win11-mode #win11-widgets-board.widPaneCont .topNewsCont .tpNews {
+  padding: 16px 12px 0 0;
+}
+html.win11-mode #win11-widgets-board.widPaneCont .topStories .tpSource {
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+html.win11-mode #win11-widgets-board.widPaneCont .topStories .tpArticle {
+  margin: 4px 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  height: 48px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  text-align: justify;
+}
+html.win11-mode #win11-widgets-board.widPaneCont .tpNews:focus-visible {
+  outline: 2px solid var(--brand-dim);
+  outline-offset: 2px;
+}
+html.win11-mode #win11-widgets-board.widPaneCont .allNewsCont {
+  margin-top: 12px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-column-gap: 10px;
+  grid-row-gap: 10px;
+}
+html.win11-mode #win11-widgets-board.widPaneCont .articleCont {
+  position: relative;
+  height: 220px;
+  padding: 0 12px;
+  border-radius: 6px;
+  overflow: hidden;
+  background-color: var(--glass);
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  cursor: pointer;
+  box-sizing: border-box;
+}
+html.win11-mode #win11-widgets-board.widPaneCont .articleCont::before {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(transparent 50%, rgba(0, 0, 0, 0.8) 90%);
+  z-index: 0;
+}
+html.win11-mode #win11-widgets-board.widPaneCont .articleCont:hover {
+  filter: brightness(0.9);
+  cursor: pointer;
+}
+html.win11-mode #win11-widgets-board.widPaneCont .articleCont:focus-visible {
+  outline: 2px solid var(--brand-dim);
+  outline-offset: 2px;
+}
+html.win11-mode #win11-widgets-board.widPaneCont .articleCont .tpNews {
+  position: absolute;
+  bottom: 0;
+  padding: 0 12px 12px 0;
+}
+html.win11-mode #win11-widgets-board.widPaneCont .articleCont .tpSource {
+  color: var(--text-primary);
+  font-size: 12px;
+  font-weight: 500;
+  text-shadow: 0 0 4px rgba(0, 0, 0, 0.6);
+}
+html.win11-mode #win11-widgets-board.widPaneCont .articleCont .tpArticle {
+  margin-top: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  max-height: 56px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  text-align: justify;
+}
+html.win11-mode #win11-widgets-board.widPaneCont .articleCont:nth-child(5n) {
+  grid-column-start: 1;
+  grid-column-end: 3;
+  background-size: contain;
+  background-position-x: 160px;
+}
+html.win11-mode
+  #win11-widgets-board.widPaneCont
+  .articleCont:nth-child(5n)::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(to left, transparent 0%, rgba(0, 0, 0, 0.8) 60%);
+  z-index: 0;
+}
+html.win11-mode
+  #win11-widgets-board.widPaneCont
+  .articleCont:nth-child(5n)
+  .tpNews {
+  width: 45%;
+  position: relative;
+  padding: 16px 0;
+}
+html.win11-mode
+  #win11-widgets-board.widPaneCont
+  .articleCont:nth-child(5n)
+  .tpSource {
+  margin-bottom: 24px;
+}
+html.win11-mode
+  #win11-widgets-board.widPaneCont
+  .articleCont:nth-child(5n)
+  .tpArticle {
+  margin-bottom: 8px;
+}
+html.win11-mode #win11-widgets-board.widPaneCont .articleCont .tpdesc {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--text-secondary);
+  max-height: 90px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 5;
+  -webkit-box-orient: vertical;
+  text-align: justify;
+}
+html.win11-mode #win11-widgets-board.widPaneCont .ltShad {
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.18);
+  border-radius: 6px;
+}
+html[data-theme="light"].win11-mode #win11-widgets-board.widPaneCont {
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.2);
+}
+html[data-theme="light"].win11-mode #win11-widgets-board.widPaneCont .WidPane {
+  background: rgba(234, 234, 234, 0.25);
+}
+html[data-theme="light"].win11-mode
+  #win11-widgets-board.widPaneCont
+  .WidPane::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.18);
+}
+html[data-theme="light"].win11-mode
+  #win11-widgets-board.widPaneCont
+  .WidPane.win11Scroll,
+html[data-theme="light"].win11-mode
+  #win11-widgets-board.widPaneCont
+  .win11Scroll {
+  scrollbar-color: rgba(0, 0, 0, 0.18) transparent;
+}
+html[data-theme="light"].win11-mode
+  #win11-widgets-board.widPaneCont
+  .weatherCont {
+  background: linear-gradient(to bottom right, #fefefe 0%, #fff3be 80%);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+html[data-theme="light"].win11-mode #win11-widgets-board.widPaneCont .weekDay {
+  background: rgba(255, 255, 255, 0.5);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+html[data-theme="light"].win11-mode #win11-widgets-board.widPaneCont .short0,
+html[data-theme="light"].win11-mode #win11-widgets-board.widPaneCont .short1 {
+  background: #fff3be;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+html[data-theme="light"].win11-mode #win11-widgets-board.widPaneCont .short1 {
+  background-color: transparent;
+}
+html[data-theme="light"].win11-mode
+  #win11-widgets-board.widPaneCont
+  .topStories {
+  background: linear-gradient(
+    to bottom right,
+    #c6a0ff 0%,
+    rgba(255, 255, 255, 0.7) 100%
+  );
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+html[data-theme="light"].win11-mode
+  #win11-widgets-board.widPaneCont
+  .articleCont {
+  background-color: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+@media (max-width: 900px) {
+  html.win11-mode #win11-widgets-board.widPaneCont {
+    width: 420px;
+    max-width: calc(100vw - 24px);
+  }
+  html.win11-mode #win11-widgets-board.widPaneCont .widgetCont {
+    width: 88%;
+  }
+  html.win11-mode #win11-widgets-board.widPaneCont .topWidgets {
+    flex-direction: column;
+  }
+  html.win11-mode #win11-widgets-board.widPaneCont .weatherCont {
+    width: 100%;
+    margin: 4px 0;
+  }
+  html.win11-mode #win11-widgets-board.widPaneCont .shortCont {
+    width: 100%;
+  }
+  html.win11-mode #win11-widgets-board.widPaneCont .topNewsCont {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: none;
+  }
+  html.win11-mode #win11-widgets-board.widPaneCont .allNewsCont {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  html.win11-mode #win11-widgets-board.widPaneCont .articleCont:nth-child(5n) {
+    grid-column-start: auto;
+    grid-column-end: auto;
+    background-position: center;
+    background-size: cover;
+  }
+  html.win11-mode
+    #win11-widgets-board.widPaneCont
+    .articleCont:nth-child(5n)
+    .tpNews {
+    width: auto;
+  }
+}
+html.win11-mode #win11-widgets-board.widPaneCont .yukiNewsHead {
+  margin: 12px 0 0;
+  padding: 0 2px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+html.win11-mode #win11-widgets-board.widPaneCont .yukiNewsRow {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 10px;
+  margin-bottom: 6px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--glass-border);
+  border-radius: 6px;
+  cursor: pointer;
+}
+html.win11-mode #win11-widgets-board.widPaneCont .yukiNewsRow:hover {
+  background: var(--bg-secondary);
+  filter: brightness(1.25);
+}
+html.win11-mode #win11-widgets-board.widPaneCont .yukiNewsRow .tpSource {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+html.win11-mode #win11-widgets-board.widPaneCont .yukiNewsRow .tpArticle {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: normal;
+  overflow: visible;
+  overflow-wrap: break-word;
+  text-overflow: clip;
+}
+html.win11-mode #win11-widgets-board.widPaneCont .yukiNewsRow .yukiNewsDesc {
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  white-space: normal;
+  overflow: visible;
+  overflow-wrap: break-word;
+}
+html[data-theme="light"].win11-mode
+  #win11-widgets-board.widPaneCont
+  .yukiNewsHead {
+  color: var(--text-secondary);
+}
+html[data-theme="light"].win11-mode
+  #win11-widgets-board.widPaneCont
+  .yukiNewsRow:hover {
+  background: var(--bg-secondary);
+  filter: brightness(0.95);
+}
+html[data-theme="light"].win11-mode
+  #win11-widgets-board.widPaneCont
+  .yukiNewsRow
+  .tpSource {
+  color: var(--text-secondary);
+}
+html[data-theme="light"].win11-mode
+  #win11-widgets-board.widPaneCont
+  .yukiNewsRow
+  .tpArticle {
+  color: var(--text-primary);
+}
+html[data-theme="light"].win11-mode
+  #win11-widgets-board.widPaneCont
+  .yukiNewsRow
+  .yukiNewsDesc {
+  color: var(--text-secondary);
+}
+html.win11-mode #win11-sidepane.sidePane {
+  --clrPrm: var(--brand);
+  --bg1: #1c1c1c;
+  --bg2: #242424;
+  --bg3: #313131;
+  --bg4: rgb(255 255 255 / 5%);
+  --sliderThumbClr: #454545;
+  position: fixed;
+  bottom: 50px;
+  right: 12px;
+  width: 360px;
+  max-width: calc(100vw - 24px);
+  border-radius: 8px;
+  color: var(--text-primary);
+  background: var(--bg1);
+  overflow: hidden;
+  transition: cubic-bezier(0.62, 0, 0.32, 1) 250ms;
+  z-index: 9999;
+  transform: translateY(0);
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.55);
+  font-size: 12px;
+  box-sizing: border-box;
+}
+html.win11-mode #win11-sidepane.sidePane.bd-blur {
+  --bg1: rgb(36 36 36 / 85%);
+  --bg2: rgb(255 255 255 / 3.33%);
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+}
+html.win11-mode #win11-sidepane.sidePane[data-hide="true"] {
+  transform: translateY(110%);
+  animation: overflow-hider 0s ease-in-out 150ms forwards;
+  transition: all cubic-bezier(0.62, 0, 0.32, 1) 150ms;
+}
+html.win11-mode #win11-sidepane.sidePane .quickSettings {
+  background: var(--bg2);
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  box-sizing: border-box;
+}
+html.win11-mode #win11-sidepane.sidePane .qkCont {
+  width: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+}
+html.win11-mode #win11-sidepane.sidePane .qkGrp {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+html.win11-mode #win11-sidepane.sidePane .qkbtn {
+  width: 6rem;
+  height: 3rem;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-bottom-color: rgba(0, 0, 0, 0.2);
+  background: var(--bg3);
+  border: solid 0.1px rgba(17, 17, 17, 0.1);
+  transition: all 0.1s ease;
+  cursor: pointer;
+  color: var(--text-primary);
+}
+html.win11-mode #win11-sidepane.sidePane .qkbtn[data-state="true"] {
+  background: var(--brand);
+}
+html.win11-mode #win11-sidepane.sidePane .qktext {
+  width: max-content;
+  font-size: 12px;
+  margin: 8px 0 21px 0;
+  color: var(--text-secondary);
+}
+html.win11-mode #win11-sidepane.sidePane .quickIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-primary);
+}
+html.win11-mode #win11-sidepane.sidePane .quickIcon i {
+  font-size: 14px;
+  line-height: 1;
+}
+html.win11-mode #win11-sidepane.sidePane .sliderCont {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+html.win11-mode #win11-sidepane.sidePane .sliderCont i,
+html.win11-mode #win11-sidepane.sidePane .sliderCont svg {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-primary);
+  flex-shrink: 0;
+}
+html.win11-mode #win11-sidepane.sidePane .sliders {
+  width: 100%;
+  height: 4px;
+}
+html.win11-mode #win11-sidepane.sidePane .sliders[type="range"] {
+  --track-color: linear-gradient(90deg, var(--clrPrm) 100%, #888888 100%);
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+}
+html.win11-mode
+  #win11-sidepane.sidePane
+  .sliders[type="range"]::-webkit-slider-runnable-track {
+  width: 100%;
+  height: 4px;
+  background: var(--track-color);
+  border-radius: 10px;
+  border: 0;
+}
+html.win11-mode
+  #win11-sidepane.sidePane
+  .sliders[type="range"]::-webkit-slider-thumb {
+  border: 4px solid var(--sliderThumbClr);
+  height: 18px;
+  width: 18px;
+  border-radius: 10px;
+  background: var(--clrPrm);
+  -webkit-appearance: none;
+  margin-top: -8px;
+  transition: all 0.1s;
+}
+html.win11-mode
+  #win11-sidepane.sidePane
+  .sliders[type="range"]::-webkit-slider-thumb:hover {
+  border: 3px solid var(--sliderThumbClr);
+}
+html.win11-mode
+  #win11-sidepane.sidePane
+  .sliders[type="range"]::-webkit-slider-thumb:active {
+  border: 5px solid var(--sliderThumbClr);
+}
+html.win11-mode
+  #win11-sidepane.sidePane
+  .sliders[type="range"]:focus::-webkit-slider-runnable-track {
+  background: var(--track-color);
+}
+html.win11-mode
+  #win11-sidepane.sidePane
+  .sliders[type="range"]::-moz-range-track {
+  width: 100%;
+  height: 4px;
+  background: var(--track-color);
+  border-radius: 10px;
+  border: 0;
+}
+html.win11-mode
+  #win11-sidepane.sidePane
+  .sliders[type="range"]::-moz-range-thumb {
+  border: 4px solid var(--sliderThumbClr);
+  height: 18px;
+  width: 18px;
+  border-radius: 10px;
+  background: var(--clrPrm);
+}
+html.win11-mode
+  #win11-sidepane.sidePane
+  .sliders[type="range"]::-moz-range-thumb:hover {
+  border: 3px solid var(--sliderThumbClr);
+}
+html.win11-mode
+  #win11-sidepane.sidePane
+  .sliders[type="range"]::-moz-range-thumb:active {
+  border: 5px solid var(--sliderThumbClr);
+}
+html.win11-mode #win11-sidepane.sidePane .bottomBar {
+  box-sizing: border-box;
+  border-top: 1px solid var(--bg4);
+  height: 3rem;
+  display: flex;
+  align-items: center;
+}
+html.win11-mode #win11-sidepane.sidePane .battery-sidepane {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  border-radius: 4px;
+  font-size: 12px;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+html.win11-mode #win11-sidepane.sidePane .battery-sidepane:hover {
+  background: var(--bg4);
+}
+html[data-theme="light"].win11-mode #win11-sidepane.sidePane {
+  --bg1: #dae2f2;
+  --bg2: #e6edf8;
+  --bg3: #fbfbfb;
+  --bg4: rgb(0 0 0 / 5%);
+  --sliderThumbClr: white;
+}
+html[data-theme="light"].win11-mode #win11-sidepane.sidePane.bd-blur {
+  --bg1: rgb(242 242 242 / 90%);
+  --bg2: rgb(255 255 255 / 20%);
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+}
+html.win11-mode #win11-sidepane.sidePane .uicon {
+  position: relative;
+  display: grid;
+  place-items: center;
+  filter: invert(1);
+}
+html.win11-mode #win11-sidepane.sidePane .uicon img {
+  transform-origin: center;
+  transition: 400ms ease-in-out;
+}
+html.win11-mode #win11-sidepane.sidePane .uicon img[data-invert="true"] {
+  filter: invert(1);
+}
+html.win11-mode #win11-sidepane.sidePane .prtclk * {
+  pointer-events: none;
+}
+html.win11-mode #win11-sidepane.sidePane .handcr {
+  cursor: pointer;
+}
+html.win11-mode #win11-sidepane.sidePane .p-5 {
+  padding: 20px;
+}
+html.win11-mode #win11-sidepane.sidePane .pb-8 {
+  padding-bottom: 32px;
+}
+html.win11-mode #win11-sidepane.sidePane .p-1 {
+  padding: 4px;
+}
+html.win11-mode #win11-sidepane.sidePane .px-3 {
+  padding-left: 12px;
+  padding-right: 12px;
+}
+html.win11-mode #win11-sidepane.sidePane .mx-2 {
+  margin: 0 8px;
+}
+html.win11-mode #win11-sidepane.sidePane .text-xs {
+  font-size: 12px;
+}
+html.win11-mode #win11-sidepane.sidePane .battery {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+html.win11-mode #win11-sidepane.sidePane .btFull {
+  position: absolute;
+  overflow: hidden;
+  z-index: 0;
+}
+html.win11-mode #win11-sidepane.sidePane .charger svg {
+  position: absolute;
+  z-index: 1;
+}
+html[data-theme="light"].win11-mode #win11-sidepane.sidePane .uicon {
+  filter: none;
+}
+html[data-theme="light"].win11-mode
+  #win11-sidepane.sidePane
+  .uicon
+  img[data-invert="true"] {
+  filter: invert(1);
+}
+@keyframes overflow-hider {
+  100% {
+    width: 0;
+  }
+}
+html.win11-mode #win11-bootscreen.bootscreen {
+  position: fixed;
+  inset: 0;
+  background: #010001;
+  z-index: 99999;
+  display: grid;
+  place-items: center;
+  cursor: progress;
+  transition: opacity 400ms ease;
+}
+html.win11-mode #win11-bootscreen.bootscreen[data-done="true"] {
+  opacity: 0;
+  pointer-events: none;
+}
+html.win11-mode #win11-bootscreen.bootscreen #loader {
+  position: relative;
+  top: 0;
+  left: 0;
+  display: grid;
+  text-align: center;
+  align-items: center;
+  justify-content: center;
+}
+html.win11-mode #win11-bootscreen.bootscreen .progressRing circle {
+  stroke: white;
+  fill: none;
+  stroke-width: 2px;
+  stroke-linecap: round;
+  transform-origin: 50% 50%;
+  transition: all 0.2s ease-in-out 0s;
+  animation: 2s linear 0s infinite normal none running spin-infinite;
+}
+html.win11-mode #win11-bootscreen.bootscreen .mt-48 {
+  margin-top: 192px;
+}
+@keyframes spin-infinite {
+  0% {
+    stroke-dasharray: 0.01px, 43.97px;
+    transform: rotate(0deg);
+  }
+  50% {
+    stroke-dasharray: 21.99px, 21.99px;
+    transform: rotate(450deg);
+  }
+  100% {
+    stroke-dasharray: 0.01px, 43.97px;
+    transform: rotate(1080deg);
+  }
+}

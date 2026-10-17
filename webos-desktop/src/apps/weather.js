@@ -39,7 +39,7 @@ export async function detectUserLocation() {
     city: data.city,
     country: data.country_name,
     latitude: data.latitude,
-    longitude: data.longitude
+    longitude: data.longitude,
   };
   setCache(cacheKey, loc);
   return loc;
@@ -56,7 +56,7 @@ export class WeatherApp extends BaseApp {
 
   async open(opts) {
     const win = os.window.create("weather-win", "Weather", "420px", "560px", {
-      icon: "fas fa-cloud"
+      icon: "fas fa-cloud",
     });
     win.innerHTML = `
       <div class="window-content">
@@ -81,13 +81,15 @@ export class WeatherApp extends BaseApp {
       if (city) await this.doSearch($("#wx-body"), city);
     });
 
-    win.querySelector("#wx-search-input")?.addEventListener("keydown", async (e) => {
-      if (e.key === "Enter") {
-        const searchInput = $("#wx-search-input");
-        const city = searchInput ? searchInput.value.trim() : "";
-        if (city) await this.doSearch($("#wx-body"), city);
-      }
-    });
+    win
+      .querySelector("#wx-search-input")
+      ?.addEventListener("keydown", async (e) => {
+        if (e.key === "Enter") {
+          const searchInput = $("#wx-search-input");
+          const city = searchInput ? searchInput.value.trim() : "";
+          if (city) await this.doSearch($("#wx-body"), city);
+        }
+      });
 
     win.querySelector("#wx-unit-btn")?.addEventListener("click", async () => {
       this.unit = this.unit === "metric" ? "imperial" : "metric";
@@ -109,7 +111,9 @@ export class WeatherApp extends BaseApp {
   async fetchWeatherByCoords(latitude, longitude, cityName, country) {
     const tempUnit = this.unit === "imperial" ? "fahrenheit" : "celsius";
     const windUnit = this.unit === "imperial" ? "mph" : "kmh";
-    const cacheKey = StorageKeys.weatherCachePrefix + `${latitude.toFixed(2)}_${longitude.toFixed(2)}_${this.unit}`;
+    const cacheKey =
+      StorageKeys.weatherCachePrefix +
+      `${latitude.toFixed(2)}_${longitude.toFixed(2)}_${this.unit}`;
     const cached = getCached(cacheKey);
     if (cached) return { ...cached, cityName, country };
 
@@ -144,7 +148,9 @@ export class WeatherApp extends BaseApp {
   getDayName(dateStr, index) {
     if (index === 0) return "Today";
     if (index === 1) return "Tomorrow";
-    return new Date(dateStr + "T00:00:00").toLocaleDateString("en-US", { weekday: "short" });
+    return new Date(dateStr + "T00:00:00").toLocaleDateString("en-US", {
+      weekday: "short",
+    });
   }
   renderWeather(container, data) {
     const cur = data.current;
@@ -208,11 +214,14 @@ export class WeatherApp extends BaseApp {
         ${forecastHTML}
       </div>
     </div>
-  `
+  `,
     );
   }
   renderError(container, message) {
-    setHTML(container, `<div class="wx-error"><i class="fas fa-circle-exclamation"></i> ${message}</div>`);
+    setHTML(
+      container,
+      `<div class="wx-error"><i class="fas fa-circle-exclamation"></i> ${message}</div>`,
+    );
   }
 
   renderPlaceholder(container, message = "Check the Weather") {
@@ -228,12 +237,15 @@ export class WeatherApp extends BaseApp {
         <div class="wx-tip"><i class="fas fa-magnifying-glass"></i> Or search for any city manually</div>
       </div>
     </div>
-  `
+  `,
     );
   }
 
   renderLoading(container, message = "Fetching weather...") {
-    setHTML(container, `<div class="wx-loading"><div class="wx-spinner"></div><span>${message}</span></div>`);
+    setHTML(
+      container,
+      `<div class="wx-loading"><div class="wx-spinner"></div><span>${message}</span></div>`,
+    );
   }
 
   async doAutoLocate(container, searchInput) {
@@ -243,7 +255,12 @@ export class WeatherApp extends BaseApp {
       this.currentCoords = { latitude: loc.latitude, longitude: loc.longitude };
       this.currentCity = loc.city;
       searchInput.value = loc.city;
-      const data = await this.fetchWeatherByCoords(loc.latitude, loc.longitude, loc.city, loc.country);
+      const data = await this.fetchWeatherByCoords(
+        loc.latitude,
+        loc.longitude,
+        loc.city,
+        loc.country,
+      );
       this.renderWeather(container, data);
     } catch (e) {
       this.renderError(container, e.message);
@@ -257,7 +274,13 @@ export class WeatherApp extends BaseApp {
       this.renderWeather(container, data);
     } catch (e) {
       this.renderError(container, e.message || "Failed to load weather.");
-      this.notify("Weather", `City not found: ${city}`, "error", 4000, "fas fa-search");
+      this.notify(
+        "Weather",
+        `City not found: ${city}`,
+        "error",
+        4000,
+        "fas fa-search",
+      );
     }
   }
 
@@ -269,7 +292,7 @@ export class WeatherApp extends BaseApp {
           this.currentCoords.latitude,
           this.currentCoords.longitude,
           this.currentCity,
-          ""
+          "",
         );
         this.renderWeather(container, data);
       } catch (e) {
@@ -283,7 +306,10 @@ export class WeatherApp extends BaseApp {
     const cachedLoc = getCached(locCacheKey, LOCATION_CACHE_TTL);
 
     if (cachedLoc) {
-      this.currentCoords = { latitude: cachedLoc.latitude, longitude: cachedLoc.longitude };
+      this.currentCoords = {
+        latitude: cachedLoc.latitude,
+        longitude: cachedLoc.longitude,
+      };
       this.currentCity = cachedLoc.city;
       searchInput.value = cachedLoc.city;
 
@@ -293,7 +319,11 @@ export class WeatherApp extends BaseApp {
       const cachedAppData = getCached(appCacheKey);
 
       if (cachedAppData) {
-        this.renderWeather(container, { ...cachedAppData, cityName: cachedLoc.city, country: cachedLoc.country });
+        this.renderWeather(container, {
+          ...cachedAppData,
+          cityName: cachedLoc.city,
+          country: cachedLoc.country,
+        });
         return;
       }
     }

@@ -16,8 +16,8 @@ export class WeatherWidget extends WidgetBase {
         label: "City (leave empty for auto-detect)",
         type: "text",
         value: this.cityOverride,
-        default: ""
-      }
+        default: "",
+      },
     ];
   }
 
@@ -46,7 +46,7 @@ export class WeatherWidget extends WidgetBase {
       let weatherData = getCached(cacheKey);
       if (!weatherData) {
         const res = await fetch(
-          `https://api.open-meteo.com/v1/forecast?latitude=${loc.latitude}&longitude=${loc.longitude}&current=temperature_2m,weather_code,relative_humidity_2m,wind_speed_10m`
+          `https://api.open-meteo.com/v1/forecast?latitude=${loc.latitude}&longitude=${loc.longitude}&current=temperature_2m,weather_code,relative_humidity_2m,wind_speed_10m`,
         );
         weatherData = await res.json();
         setCache(cacheKey, weatherData);
@@ -66,7 +66,11 @@ export class WeatherWidget extends WidgetBase {
       if (iconEl) iconEl.innerHTML = `<i class="${info.icon}"></i>`;
       if (tempEl) tempEl.textContent = `${temp}°C`;
       if (descEl) descEl.textContent = `${info.label} - ${city}`;
-      if (detailsEl && cur.relative_humidity_2m != null && cur.wind_speed_10m != null) {
+      if (
+        detailsEl &&
+        cur.relative_humidity_2m != null &&
+        cur.wind_speed_10m != null
+      ) {
         detailsEl.textContent = `Humidity: ${cur.relative_humidity_2m}%  Wind: ${cur.wind_speed_10m} km/h`;
       }
     } catch {

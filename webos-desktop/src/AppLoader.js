@@ -50,8 +50,9 @@ import { RemoteHostApp } from "./apps/RemoteHostApp.js";
 import { IntroTourApp } from "./apps/introTour.js";
 import { ModeSwitcherApp } from "./apps/modeSwitcher.js";
 import { AquariumApp } from "./apps/aquarium.js";
-import { InfaredYoutubeApp } from "./apps/infraredYoutube.js";
+import { InfaredYoutubeApp } from "./apps/infaredYoutube.js";
 import { BoxedWineApp } from "./apps/boxedWine.js";
+import { CodeRedApp } from "./apps/codeRed.js";
 
 const APP_CLASS_MAP = {
   terminalApp: TerminalApp,
@@ -106,7 +107,8 @@ const APP_CLASS_MAP = {
   cmatrixApp: CmatrixApp,
   magnifierApp: MagnifierApp,
   remoteHostApp: RemoteHostApp,
-  boxedWineApp: BoxedWineApp
+  boxedWineApp: BoxedWineApp,
+  codeRedApp: CodeRedApp,
 };
 
 const APP_DEFINITIONS = APP_MANIFESTS.map((manifest) => {
@@ -122,7 +124,7 @@ const APP_DEFINITIONS = APP_MANIFESTS.map((manifest) => {
 
   const definition = {
     serviceKey: manifest.serviceKey,
-    AppClass
+    AppClass,
   };
 
   if (manifest.onLoad) {
@@ -135,7 +137,11 @@ const APP_DEFINITIONS = APP_MANIFESTS.map((manifest) => {
 export function loadApps(os, preloaded = {}) {
   const applySingletonWrapper = (instance) => {
     const singletonIds = instance.singletonWindowIds;
-    if (Array.isArray(singletonIds) && singletonIds.length > 0 && typeof instance.open === "function") {
+    if (
+      Array.isArray(singletonIds) &&
+      singletonIds.length > 0 &&
+      typeof instance.open === "function"
+    ) {
       const openAppInstance = instance.open.bind(instance);
       instance.open = async (openOptions = {}) => {
         for (const singletonWinId of singletonIds) {
@@ -166,10 +172,12 @@ export function loadApps(os, preloaded = {}) {
   };
   const lazyRoom3D = {
     open: (...a) => ensureRoom3D().then((i) => i.open(...a)),
-    launchSystemMode: (...a) => ensureRoom3D().then((i) => i.launchSystemMode(...a)),
-    exitSystemMode: (...a) => (room3dInst ? room3dInst.exitSystemMode(...a) : undefined),
+    launchSystemMode: (...a) =>
+      ensureRoom3D().then((i) => i.launchSystemMode(...a)),
+    exitSystemMode: (...a) =>
+      room3dInst ? room3dInst.exitSystemMode(...a) : undefined,
     closeRoom: (...a) => (room3dInst ? room3dInst.closeRoom(...a) : undefined),
-    onClose: (...a) => (room3dInst ? room3dInst.onClose(...a) : undefined)
+    onClose: (...a) => (room3dInst ? room3dInst.onClose(...a) : undefined),
   };
   preloaded.room3dApp = lazyRoom3D;
   os.app.register("room3dApp", lazyRoom3D);

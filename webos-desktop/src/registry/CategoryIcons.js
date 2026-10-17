@@ -10,5 +10,5 @@ export const START_CATEGORY_ICONS = {
   development: "papirus:apps/vscode",
   system: "papirus:apps/utilities-tweak-tool",
   help: "papirus:actions/help-about",
-  places: "papirus:places/folder-blue"
+  places: "papirus:places/folder-blue",
 };

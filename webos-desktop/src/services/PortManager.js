@@ -20,6 +20,9 @@ export class PortManager {
   }
 
   list() {
-    return Array.from(this.ports.entries()).map(([port, entry]) => ({ port, root: entry.root }));
+    return Array.from(this.ports.entries()).map(([port, entry]) => ({
+      port,
+      root: entry.root,
+    }));
   }
 }

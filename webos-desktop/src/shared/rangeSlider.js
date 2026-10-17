@@ -78,9 +78,14 @@ function updateSliderValue(slider, value, dispatch = true) {
 
 export function bindRangeSlider(root = document) {
   bindEvent(root, "mousedown", (e) => {
-    const slider = e.target.closest(".range-slider:not(.range-slider--disabled)");
+    const slider = e.target.closest(
+      ".range-slider:not(.range-slider--disabled)",
+    );
     if (!slider) return;
-    if (e.target.closest(".range-slider__thumb") || e.target.closest(".range-slider__track")) {
+    if (
+      e.target.closest(".range-slider__thumb") ||
+      e.target.closest(".range-slider__track")
+    ) {
       activeSlider = slider;
       const value = sliderValueFromEvent(slider, e.clientX);
       updateSliderValue(slider, value, true);
@@ -102,17 +107,25 @@ export function bindRangeSlider(root = document) {
   });
 
   bindEvent(root, "keydown", (e) => {
-    const slider = e.target.closest(".range-slider:not(.range-slider--disabled)");
+    const slider = e.target.closest(
+      ".range-slider:not(.range-slider--disabled)",
+    );
     if (!slider) return;
     const min = Number(slider.dataset.min);
     const max = Number(slider.dataset.max);
     const step = Number(slider.dataset.step);
     const current = Number(slider.dataset.value);
     let newVal = current;
-    if (KeybindManager.matches(e, "rangeSlider.increment") || e.key === "ArrowUp") {
+    if (
+      KeybindManager.matches(e, "rangeSlider.increment") ||
+      e.key === "ArrowUp"
+    ) {
       newVal = Math.min(max, current + step);
       e.preventDefault();
-    } else if (KeybindManager.matches(e, "rangeSlider.decrement") || e.key === "ArrowDown") {
+    } else if (
+      KeybindManager.matches(e, "rangeSlider.decrement") ||
+      e.key === "ArrowDown"
+    ) {
       newVal = Math.max(min, current - step);
       e.preventDefault();
     } else if (KeybindManager.matches(e, "rangeSlider.min")) {

@@ -31,7 +31,8 @@ export class MonacoApp extends BaseApp {
   }
 
   get explorerApp() {
-    if (!this.explorerAppService) this.explorerAppService = this.getService(ServiceKeys.EXPLORER);
+    if (!this.explorerAppService)
+      this.explorerAppService = this.getService(ServiceKeys.EXPLORER);
     return this.explorerAppService;
   }
 
@@ -68,7 +69,7 @@ export class MonacoApp extends BaseApp {
 
       loaderScript.onload = () => {
         require.config({
-          paths: { vs: getLibraryUrl("monaco", "vs") }
+          paths: { vs: getLibraryUrl("monaco", "vs") },
         });
 
         require(["vs/editor/editor.main"], () => {
@@ -400,7 +401,9 @@ export class MonacoApp extends BaseApp {
     tab.className = "monaco-tab";
     tab.dataset.tabId = tabId;
 
-    const dirtyIndicator = isDirty ? '<span class="monaco-tab-dirty">●</span>' : "";
+    const dirtyIndicator = isDirty
+      ? '<span class="monaco-tab-dirty">●</span>'
+      : "";
 
     tab.innerHTML = `
       <span class="monaco-tab-label">${dirtyIndicator}${title}</span>
@@ -426,7 +429,7 @@ export class MonacoApp extends BaseApp {
   createNewWindow() {
     const winId = `monaco-window-${Date.now()}`;
     const win = os.window.create(winId, "Yuki Code", "900px", "650px", {
-      icon: "fas fa-code"
+      icon: "fas fa-code",
     });
 
     win.innerHTML = `
@@ -470,9 +473,11 @@ export class MonacoApp extends BaseApp {
       this.createNewTab();
     });
 
-    win.querySelector(".monaco-terminal-close").addEventListener("click", () => {
-      this.toggleTerminalPanel();
-    });
+    win
+      .querySelector(".monaco-terminal-close")
+      .addEventListener("click", () => {
+        this.toggleTerminalPanel();
+      });
 
     document.addEventListener("click", () => this.closeAllMenus(win));
 
@@ -492,7 +497,9 @@ export class MonacoApp extends BaseApp {
   }
 
   toggleTerminalPanel() {
-    const terminalPanel = this.currentWindow.querySelector(".monaco-terminal-panel");
+    const terminalPanel = this.currentWindow.querySelector(
+      ".monaco-terminal-panel",
+    );
     if (!terminalPanel) return;
 
     const isHidden = terminalPanel.style.display === "none";
@@ -626,7 +633,10 @@ export class MonacoApp extends BaseApp {
   async executeTerminalCommand(command) {
     if (!this.terminalOutput) return;
 
-    this.printToTerminalSync(`${this.shell.currentPath.join("/")} $ ${command}`, "var(--brand)");
+    this.printToTerminalSync(
+      `${this.shell.currentPath.join("/")} $ ${command}`,
+      "var(--brand)",
+    );
 
     const outputCallback = (text, color = "var(--text-primary)") => {
       this.printToTerminalSync(text, color);
@@ -659,12 +669,15 @@ export class MonacoApp extends BaseApp {
         zIndex: "10000",
         display: "flex",
         flexDirection: "column",
-        backdropFilter: "blur(32px)"
-      }
+        backdropFilter: "blur(32px)",
+      },
     });
 
     const input = createElement("input", {
-      attributes: { type: "text", placeholder: "Type '>' for commands, or search actions..." },
+      attributes: {
+        type: "text",
+        placeholder: "Type '>' for commands, or search actions...",
+      },
       styles: {
         background: "var(--surface-1)",
         border: "none",
@@ -674,25 +687,31 @@ export class MonacoApp extends BaseApp {
         fontSize: "14px",
         fontFamily: "inherit",
         outline: "none",
-        borderRadius: "8px 8px 0 0"
-      }
+        borderRadius: "8px 8px 0 0",
+      },
     });
 
     const list = createElement("div", {
       styles: {
         flex: "1",
         overflowY: "auto",
-        padding: "8px 0"
-      }
+        padding: "8px 0",
+      },
     });
 
     const commands = [
       {
         category: "Terminal",
         items: [
-          { label: "Toggle Terminal", action: () => this.toggleTerminalPanel() },
-          { label: "New Terminal Window", action: () => this.spawnTerminalWindow() }
-        ]
+          {
+            label: "Toggle Terminal",
+            action: () => this.toggleTerminalPanel(),
+          },
+          {
+            label: "New Terminal Window",
+            action: () => this.spawnTerminalWindow(),
+          },
+        ],
       },
       {
         category: "File",
@@ -700,8 +719,8 @@ export class MonacoApp extends BaseApp {
           { label: "New File", action: () => this.createNewTab() },
           { label: "Open File", action: () => this.openFileDialog() },
           { label: "Save", action: () => this.executeAction("save") },
-          { label: "Save As", action: () => this.executeAction("saveAs") }
-        ]
+          { label: "Save As", action: () => this.executeAction("saveAs") },
+        ],
       },
       {
         category: "Edit",
@@ -710,18 +729,30 @@ export class MonacoApp extends BaseApp {
           { label: "Redo", action: () => this.executeAction("redo") },
           { label: "Cut", action: () => this.executeAction("cut") },
           { label: "Copy", action: () => this.executeAction("copy") },
-          { label: "Paste", action: () => this.executeAction("paste") }
-        ]
+          { label: "Paste", action: () => this.executeAction("paste") },
+        ],
       },
       {
         category: "View",
         items: [
-          { label: "Toggle Minimap", action: () => this.executeAction("toggleMinimap") },
-          { label: "Toggle Word Wrap", action: () => this.executeAction("toggleWordWrap") },
-          { label: "Toggle Line Numbers", action: () => this.executeAction("toggleLineNumbers") },
-          { label: "Toggle Whitespace", action: () => this.executeAction("toggleWhitespace") }
-        ]
-      }
+          {
+            label: "Toggle Minimap",
+            action: () => this.executeAction("toggleMinimap"),
+          },
+          {
+            label: "Toggle Word Wrap",
+            action: () => this.executeAction("toggleWordWrap"),
+          },
+          {
+            label: "Toggle Line Numbers",
+            action: () => this.executeAction("toggleLineNumbers"),
+          },
+          {
+            label: "Toggle Whitespace",
+            action: () => this.executeAction("toggleWhitespace"),
+          },
+        ],
+      },
     ];
 
     let selectedIndex = 0;
@@ -742,7 +773,7 @@ export class MonacoApp extends BaseApp {
                 this.executeTerminalCommand("help");
                 this.terminalInput.value = "";
               }
-            }
+            },
           },
           {
             label: "clear",
@@ -752,7 +783,7 @@ export class MonacoApp extends BaseApp {
                 this.executeTerminalCommand("clear");
                 this.terminalInput.value = "";
               }
-            }
+            },
           },
           {
             label: "ls",
@@ -762,7 +793,7 @@ export class MonacoApp extends BaseApp {
                 this.executeTerminalCommand("ls");
                 this.terminalInput.value = "";
               }
-            }
+            },
           },
           {
             label: "pwd",
@@ -772,7 +803,7 @@ export class MonacoApp extends BaseApp {
                 this.executeTerminalCommand("pwd");
                 this.terminalInput.value = "";
               }
-            }
+            },
           },
           {
             label: "cd",
@@ -782,7 +813,7 @@ export class MonacoApp extends BaseApp {
                 this.executeTerminalCommand("cd");
                 this.terminalInput.value = "";
               }
-            }
+            },
           },
           {
             label: "cat",
@@ -792,7 +823,7 @@ export class MonacoApp extends BaseApp {
                 this.executeTerminalCommand("cat");
                 this.terminalInput.value = "";
               }
-            }
+            },
           },
           {
             label: "mkdir",
@@ -802,7 +833,7 @@ export class MonacoApp extends BaseApp {
                 this.executeTerminalCommand("mkdir");
                 this.terminalInput.value = "";
               }
-            }
+            },
           },
           {
             label: "touch",
@@ -812,7 +843,7 @@ export class MonacoApp extends BaseApp {
                 this.executeTerminalCommand("touch");
                 this.terminalInput.value = "";
               }
-            }
+            },
           },
           {
             label: "rm",
@@ -822,7 +853,7 @@ export class MonacoApp extends BaseApp {
                 this.executeTerminalCommand("rm");
                 this.terminalInput.value = "";
               }
-            }
+            },
           },
           {
             label: "echo",
@@ -832,7 +863,7 @@ export class MonacoApp extends BaseApp {
                 this.executeTerminalCommand("echo");
                 this.terminalInput.value = "";
               }
-            }
+            },
           },
           {
             label: "whoami",
@@ -842,7 +873,7 @@ export class MonacoApp extends BaseApp {
                 this.executeTerminalCommand("whoami");
                 this.terminalInput.value = "";
               }
-            }
+            },
           },
           {
             label: "hostname",
@@ -852,7 +883,7 @@ export class MonacoApp extends BaseApp {
                 this.executeTerminalCommand("hostname");
                 this.terminalInput.value = "";
               }
-            }
+            },
           },
           {
             label: "date",
@@ -862,11 +893,13 @@ export class MonacoApp extends BaseApp {
                 this.executeTerminalCommand("date");
                 this.terminalInput.value = "";
               }
-            }
-          }
+            },
+          },
         ];
 
-        filteredItems = terminalCommands.filter((cmd) => cmd.label.includes(searchTerm));
+        filteredItems = terminalCommands.filter((cmd) =>
+          cmd.label.includes(searchTerm),
+        );
       } else {
         commands.forEach((category) => {
           category.items.forEach((item) => {
@@ -884,10 +917,11 @@ export class MonacoApp extends BaseApp {
             cursor: "pointer",
             display: "flex",
             alignItems: "center",
-            gap: "12px"
-          }
+            gap: "12px",
+          },
         });
-        if (index === selectedIndex) setStyle(itemEl, { background: "var(--surface-hover)" });
+        if (index === selectedIndex)
+          setStyle(itemEl, { background: "var(--surface-hover)" });
         itemEl.innerHTML = `
           <span style="color: var(--text-muted); font-size: 11px; min-width: 60px;">${item.category || "TERMINAL"}</span>
           <span style="color: var(--text-primary);">${item.label}</span>
@@ -942,7 +976,7 @@ export class MonacoApp extends BaseApp {
           palette.remove();
         }
       },
-      { once: true }
+      { once: true },
     );
   }
 
@@ -964,16 +998,22 @@ export class MonacoApp extends BaseApp {
     });
   }
 
-  createNewTab(title = `Untitled-${++this.tabCounter}`, content = "", filePath = null) {
+  createNewTab(
+    title = `Untitled-${++this.tabCounter}`,
+    content = "",
+    filePath = null,
+  ) {
     const tabId = `tab-${Date.now()}-${Math.random()}`;
     const language = this.detectLanguage(title);
 
     const editorContainer = createElement("div", {
       className: "monaco-editor-container",
-      attributes: { "data-tab-id": tabId }
+      attributes: { "data-tab-id": tabId },
     });
 
-    const editorsWrapper = this.currentWindow.querySelector(".monaco-editors-wrapper");
+    const editorsWrapper = this.currentWindow.querySelector(
+      ".monaco-editors-wrapper",
+    );
     editorsWrapper.appendChild(editorContainer);
 
     const editor = monaco.editor.create(editorContainer, {
@@ -999,7 +1039,11 @@ export class MonacoApp extends BaseApp {
       folding: true,
       foldingHighlight: true,
       showFoldingControls: "mouseover",
-      suggest: { showMethods: true, showFunctions: true, showConstructors: true }
+      suggest: {
+        showMethods: true,
+        showFunctions: true,
+        showConstructors: true,
+      },
     });
 
     const editorData = {
@@ -1016,8 +1060,8 @@ export class MonacoApp extends BaseApp {
         renderWhitespace: "selection",
         fontSize: 14,
         theme: "vs-dark",
-        language: language
-      }
+        language: language,
+      },
     };
 
     this.tabs.set(tabId, editorData);
@@ -1042,13 +1086,17 @@ export class MonacoApp extends BaseApp {
     this.tabs.forEach((data) => {
       if (data.tabId !== tabId) {
         setStyle(data.container, { display: "none" });
-        const tab = this.currentWindow.querySelector(`[data-tab-id="${data.tabId}"]`);
+        const tab = this.currentWindow.querySelector(
+          `[data-tab-id="${data.tabId}"]`,
+        );
         if (tab) tab.classList.remove("active");
       }
     });
 
     setStyle(editorData.container, { display: "block" });
-    const activeTab = this.currentWindow.querySelector(`[data-tab-id="${tabId}"]`);
+    const activeTab = this.currentWindow.querySelector(
+      `[data-tab-id="${tabId}"]`,
+    );
     if (activeTab) activeTab.classList.add("active");
 
     this.activeTabId = tabId;
@@ -1062,7 +1110,12 @@ export class MonacoApp extends BaseApp {
     if (!editorData) return;
 
     if (editorData.isDirty) {
-      if (!(await os.dialog.confirm("Confirm", `"${editorData.title}" has unsaved changes. Close anyway?`))) {
+      if (
+        !(await os.dialog.confirm(
+          "Confirm",
+          `"${editorData.title}" has unsaved changes. Close anyway?`,
+        ))
+      ) {
         return;
       }
     }
@@ -1088,8 +1141,11 @@ export class MonacoApp extends BaseApp {
     const tab = this.currentWindow?.querySelector(`[data-tab-id="${tabId}"]`);
     if (!tab) return;
 
-    const dirtyIndicator = isDirty ? '<span class="monaco-tab-dirty">●</span>' : "";
-    tab.querySelector(".monaco-tab-label").innerHTML = `${dirtyIndicator}${title}`;
+    const dirtyIndicator = isDirty
+      ? '<span class="monaco-tab-dirty">●</span>'
+      : "";
+    tab.querySelector(".monaco-tab-label").innerHTML =
+      `${dirtyIndicator}${title}`;
   }
 
   detectLanguage(fileName) {
@@ -1126,7 +1182,7 @@ export class MonacoApp extends BaseApp {
       yml: "yaml",
       sh: "shell",
       bash: "shell",
-      txt: "plaintext"
+      txt: "plaintext",
     };
     return langMap[ext] || "plaintext";
   }
@@ -1157,7 +1213,9 @@ export class MonacoApp extends BaseApp {
   }
 
   closeAllMenus(win) {
-    win.querySelectorAll(".monaco-menu-item").forEach((m) => m.classList.remove("active"));
+    win
+      .querySelectorAll(".monaco-menu-item")
+      .forEach((m) => m.classList.remove("active"));
   }
 
   setupEditorEvents(editorData) {
@@ -1182,9 +1240,12 @@ export class MonacoApp extends BaseApp {
       this.executeAction("save");
     });
 
-    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.KeyS, () => {
-      this.executeAction("saveAs");
-    });
+    editor.addCommand(
+      monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.KeyS,
+      () => {
+        this.executeAction("saveAs");
+      },
+    );
 
     editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyO, () => {
       this.executeAction("open");
@@ -1194,9 +1255,12 @@ export class MonacoApp extends BaseApp {
       this.executeAction("newFile");
     });
 
-    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.KeyN, () => {
-      this.executeAction("newWindow");
-    });
+    editor.addCommand(
+      monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.KeyN,
+      () => {
+        this.executeAction("newWindow");
+      },
+    );
 
     editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyW, () => {
       this.executeAction("closeTab");
@@ -1216,12 +1280,14 @@ export class MonacoApp extends BaseApp {
     if (closeBtn) {
       const originalClick = closeBtn.onclick;
       closeBtn.onclick = async (e) => {
-        const dirtyTabs = Array.from(this.tabs.values()).filter((t) => t.isDirty);
+        const dirtyTabs = Array.from(this.tabs.values()).filter(
+          (t) => t.isDirty,
+        );
         if (dirtyTabs.length > 0) {
           if (
             !(await os.dialog.confirm(
               "Confirm",
-              `${dirtyTabs.length} tab(s) have unsaved changes. Close window anyway?`
+              `${dirtyTabs.length} tab(s) have unsaved changes. Close window anyway?`,
             ))
           ) {
             return;
@@ -1261,7 +1327,8 @@ export class MonacoApp extends BaseApp {
       this.currentWindow.querySelector(".monaco-status-selection").textContent =
         `(${chars} chars, ${lines} lines selected)`;
     } else {
-      this.currentWindow.querySelector(".monaco-status-selection").textContent = "";
+      this.currentWindow.querySelector(".monaco-status-selection").textContent =
+        "";
     }
 
     this.currentWindow.querySelector(".monaco-status-language").textContent =
@@ -1270,9 +1337,8 @@ export class MonacoApp extends BaseApp {
     const options = editor.getOptions();
     const tabSize = options.get(monaco.editor.EditorOption.tabSize);
     const useSpaces = options.get(monaco.editor.EditorOption.insertSpaces);
-    this.currentWindow.querySelector(".monaco-status-indent").textContent = useSpaces
-      ? `Spaces: ${tabSize}`
-      : `Tabs: ${tabSize}`;
+    this.currentWindow.querySelector(".monaco-status-indent").textContent =
+      useSpaces ? `Spaces: ${tabSize}` : `Tabs: ${tabSize}`;
   }
 
   resetIdleTimer(editorData) {
@@ -1280,7 +1346,10 @@ export class MonacoApp extends BaseApp {
 
     if (editorData.editor.getValue().trim().length > 0) {
       this.idleTimer = setTimeout(() => {
-        speak("Looking good! Remember to save your work.", ClippyAnimation.IdleEyeBrowRaise);
+        speak(
+          "Looking good! Remember to save your work.",
+          ClippyAnimation.IdleEyeBrowRaise,
+        );
       }, this.idleDelay);
     }
   }
@@ -1291,7 +1360,12 @@ export class MonacoApp extends BaseApp {
 
   executeAction(action) {
     const editorData = this.getActiveEditorData();
-    if (!editorData && action !== "newFile" && action !== "newWindow" && action !== "open") {
+    if (
+      !editorData &&
+      action !== "newFile" &&
+      action !== "newWindow" &&
+      action !== "open"
+    ) {
       return;
     }
 
@@ -1307,7 +1381,8 @@ export class MonacoApp extends BaseApp {
       save: () => this.saveFile(editorData),
       saveAs: () => this.saveAsFile(editorData),
       closeTab: () => this.closeTab(this.activeTabId),
-      closeWindow: () => this.currentWindow.querySelector('[data-action="close"]').click(),
+      closeWindow: () =>
+        this.currentWindow.querySelector('[data-action="close"]').click(),
 
       undo: () => editor.trigger("keyboard", "undo"),
       redo: () => editor.trigger("keyboard", "redo"),
@@ -1325,24 +1400,35 @@ export class MonacoApp extends BaseApp {
           editor.trigger("keyboard", "type", { text });
         });
       },
-      selectAll: () => editor.setSelection(editor.getModel().getFullModelRange()),
+      selectAll: () =>
+        editor.setSelection(editor.getModel().getFullModelRange()),
 
       find: () => editor.trigger("keyboard", "actions.find"),
-      replace: () => editor.trigger("keyboard", "editor.action.startFindReplaceAction"),
+      replace: () =>
+        editor.trigger("keyboard", "editor.action.startFindReplaceAction"),
       findInSelection: () => {
         editor.trigger("keyboard", "actions.find");
         editor.trigger("keyboard", "toggleFindInSelection");
       },
 
-      expandSelection: () => editor.trigger("keyboard", "editor.action.smartSelect.expand"),
-      shrinkSelection: () => editor.trigger("keyboard", "editor.action.smartSelect.shrink"),
-      copyLineUp: () => editor.trigger("keyboard", "editor.action.copyLinesUpAction"),
-      copyLineDown: () => editor.trigger("keyboard", "editor.action.copyLinesDownAction"),
-      moveLineUp: () => editor.trigger("keyboard", "editor.action.moveLinesUpAction"),
-      moveLineDown: () => editor.trigger("keyboard", "editor.action.moveLinesDownAction"),
-      duplicateSelection: () => editor.trigger("keyboard", "editor.action.duplicateSelection"),
-      addCursorAbove: () => editor.trigger("keyboard", "editor.action.insertCursorAbove"),
-      addCursorBelow: () => editor.trigger("keyboard", "editor.action.insertCursorBelow"),
+      expandSelection: () =>
+        editor.trigger("keyboard", "editor.action.smartSelect.expand"),
+      shrinkSelection: () =>
+        editor.trigger("keyboard", "editor.action.smartSelect.shrink"),
+      copyLineUp: () =>
+        editor.trigger("keyboard", "editor.action.copyLinesUpAction"),
+      copyLineDown: () =>
+        editor.trigger("keyboard", "editor.action.copyLinesDownAction"),
+      moveLineUp: () =>
+        editor.trigger("keyboard", "editor.action.moveLinesUpAction"),
+      moveLineDown: () =>
+        editor.trigger("keyboard", "editor.action.moveLinesDownAction"),
+      duplicateSelection: () =>
+        editor.trigger("keyboard", "editor.action.duplicateSelection"),
+      addCursorAbove: () =>
+        editor.trigger("keyboard", "editor.action.insertCursorAbove"),
+      addCursorBelow: () =>
+        editor.trigger("keyboard", "editor.action.insertCursorBelow"),
 
       commandPalette: () => {
         this.showCommandPalette();
@@ -1363,7 +1449,10 @@ export class MonacoApp extends BaseApp {
         editor.updateOptions({ fontSize: editorData.settings.fontSize });
       },
       zoomOut: () => {
-        editorData.settings.fontSize = Math.max(8, editorData.settings.fontSize - 2);
+        editorData.settings.fontSize = Math.max(
+          8,
+          editorData.settings.fontSize - 2,
+        );
         editor.updateOptions({ fontSize: editorData.settings.fontSize });
       },
       resetZoom: () => {
@@ -1372,20 +1461,29 @@ export class MonacoApp extends BaseApp {
       },
       toggleMinimap: () => {
         editorData.settings.minimap = !editorData.settings.minimap;
-        editor.updateOptions({ minimap: { enabled: editorData.settings.minimap } });
+        editor.updateOptions({
+          minimap: { enabled: editorData.settings.minimap },
+        });
       },
       toggleWordWrap: () => {
         editorData.settings.wordWrap = !editorData.settings.wordWrap;
-        editor.updateOptions({ wordWrap: editorData.settings.wordWrap ? "on" : "off" });
+        editor.updateOptions({
+          wordWrap: editorData.settings.wordWrap ? "on" : "off",
+        });
       },
       toggleLineNumbers: () => {
         editorData.settings.lineNumbers = !editorData.settings.lineNumbers;
-        editor.updateOptions({ lineNumbers: editorData.settings.lineNumbers ? "on" : "off" });
+        editor.updateOptions({
+          lineNumbers: editorData.settings.lineNumbers ? "on" : "off",
+        });
       },
       toggleWhitespace: () => {
         const current = editorData.settings.renderWhitespace;
-        editorData.settings.renderWhitespace = current === "all" ? "selection" : "all";
-        editor.updateOptions({ renderWhitespace: editorData.settings.renderWhitespace });
+        editorData.settings.renderWhitespace =
+          current === "all" ? "selection" : "all";
+        editor.updateOptions({
+          renderWhitespace: editorData.settings.renderWhitespace,
+        });
       },
       changeLanguage: () => {
         const languages = [
@@ -1407,7 +1505,7 @@ export class MonacoApp extends BaseApp {
           "xml",
           "yaml",
           "shell",
-          "plaintext"
+          "plaintext",
         ];
         const current = editor.getModel().getLanguageId();
         const currentIndex = languages.indexOf(current);
@@ -1433,9 +1531,12 @@ export class MonacoApp extends BaseApp {
       },
 
       goToLine: () => editor.trigger("keyboard", "editor.action.gotoLine"),
-      goToSymbol: () => editor.trigger("keyboard", "editor.action.quickOutline"),
-      goToDefinition: () => editor.trigger("keyboard", "editor.action.revealDefinition"),
-      peekDefinition: () => editor.trigger("keyboard", "editor.action.peekDefinition"),
+      goToSymbol: () =>
+        editor.trigger("keyboard", "editor.action.quickOutline"),
+      goToDefinition: () =>
+        editor.trigger("keyboard", "editor.action.revealDefinition"),
+      peekDefinition: () =>
+        editor.trigger("keyboard", "editor.action.peekDefinition"),
       goToStart: () => editor.setPosition({ lineNumber: 1, column: 1 }),
       goToEnd: () => {
         const model = editor.getModel();
@@ -1444,14 +1545,20 @@ export class MonacoApp extends BaseApp {
         editor.setPosition({ lineNumber: lastLine, column: lastCol });
       },
       goBack: () => editor.trigger("keyboard", "workbench.action.navigateBack"),
-      goForward: () => editor.trigger("keyboard", "workbench.action.navigateForward"),
+      goForward: () =>
+        editor.trigger("keyboard", "workbench.action.navigateForward"),
 
-      formatDocument: () => editor.trigger("keyboard", "editor.action.formatDocument"),
-      formatSelection: () => editor.trigger("keyboard", "editor.action.formatSelection"),
-      toggleComment: () => editor.trigger("keyboard", "editor.action.commentLine"),
-      toggleBlockComment: () => editor.trigger("keyboard", "editor.action.blockComment"),
+      formatDocument: () =>
+        editor.trigger("keyboard", "editor.action.formatDocument"),
+      formatSelection: () =>
+        editor.trigger("keyboard", "editor.action.formatSelection"),
+      toggleComment: () =>
+        editor.trigger("keyboard", "editor.action.commentLine"),
+      toggleBlockComment: () =>
+        editor.trigger("keyboard", "editor.action.blockComment"),
       indentLine: () => editor.trigger("keyboard", "editor.action.indentLines"),
-      outdentLine: () => editor.trigger("keyboard", "editor.action.outdentLines"),
+      outdentLine: () =>
+        editor.trigger("keyboard", "editor.action.outdentLines"),
 
       trimWhitespace: () => {
         const model = editor.getModel();
@@ -1463,8 +1570,8 @@ export class MonacoApp extends BaseApp {
         editor.executeEdits("trimWhitespace", [
           {
             range: model.getFullModelRange(),
-            text: trimmed
-          }
+            text: trimmed,
+          },
         ]);
       },
       transformUppercase: () => {
@@ -1474,8 +1581,8 @@ export class MonacoApp extends BaseApp {
           editor.executeEdits("uppercase", [
             {
               range: selection,
-              text: text.toUpperCase()
-            }
+              text: text.toUpperCase(),
+            },
           ]);
         }
       },
@@ -1486,8 +1593,8 @@ export class MonacoApp extends BaseApp {
           editor.executeEdits("lowercase", [
             {
               range: selection,
-              text: text.toLowerCase()
-            }
+              text: text.toLowerCase(),
+            },
           ]);
         }
       },
@@ -1495,12 +1602,15 @@ export class MonacoApp extends BaseApp {
         const selection = editor.getSelection();
         if (!selection.isEmpty()) {
           const text = editor.getModel().getValueInRange(selection);
-          const titleCase = text.replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.slice(1).toLowerCase());
+          const titleCase = text.replace(
+            /\w\S*/g,
+            (txt) => txt.charAt(0).toUpperCase() + txt.slice(1).toLowerCase(),
+          );
           editor.executeEdits("titlecase", [
             {
               range: selection,
-              text: titleCase
-            }
+              text: titleCase,
+            },
           ]);
         }
       },
@@ -1512,8 +1622,8 @@ export class MonacoApp extends BaseApp {
         editor.executeEdits("sortAsc", [
           {
             range: model.getFullModelRange(),
-            text: lines.join("\n")
-          }
+            text: lines.join("\n"),
+          },
         ]);
       },
       sortLinesDesc: () => {
@@ -1523,8 +1633,8 @@ export class MonacoApp extends BaseApp {
         editor.executeEdits("sortDesc", [
           {
             range: model.getFullModelRange(),
-            text: lines.join("\n")
-          }
+            text: lines.join("\n"),
+          },
         ]);
       },
       removeDuplicates: () => {
@@ -1534,8 +1644,8 @@ export class MonacoApp extends BaseApp {
         editor.executeEdits("removeDuplicates", [
           {
             range: model.getFullModelRange(),
-            text: unique.join("\n")
-          }
+            text: unique.join("\n"),
+          },
         ]);
       },
       reverseLines: () => {
@@ -1545,8 +1655,8 @@ export class MonacoApp extends BaseApp {
         editor.executeEdits("reverseLines", [
           {
             range: model.getFullModelRange(),
-            text: lines.join("\n")
-          }
+            text: lines.join("\n"),
+          },
         ]);
       },
       shuffleLines: () => {
@@ -1559,14 +1669,16 @@ export class MonacoApp extends BaseApp {
         editor.executeEdits("shuffleLines", [
           {
             range: model.getFullModelRange(),
-            text: lines.join("\n")
-          }
+            text: lines.join("\n"),
+          },
         ]);
       },
       joinLines: () => {
         const selection = editor.getSelection();
         const model = editor.getModel();
-        const range = selection.isEmpty() ? model.getFullModelRange() : selection;
+        const range = selection.isEmpty()
+          ? model.getFullModelRange()
+          : selection;
         const text = model.getValueInRange(range);
         const joined = text
           .split("\n")
@@ -1579,7 +1691,9 @@ export class MonacoApp extends BaseApp {
         if (!selection.isEmpty()) {
           const text = editor.getModel().getValueInRange(selection);
           const split = text.split(/\s+/).join("\n");
-          editor.executeEdits("splitLines", [{ range: selection, text: split }]);
+          editor.executeEdits("splitLines", [
+            { range: selection, text: split },
+          ]);
         }
       },
       countWords: () => {
@@ -1600,8 +1714,8 @@ export class MonacoApp extends BaseApp {
           editor.executeEdits("base64encode", [
             {
               range: selection,
-              text: encoded
-            }
+              text: encoded,
+            },
           ]);
         }
       },
@@ -1614,8 +1728,8 @@ export class MonacoApp extends BaseApp {
             editor.executeEdits("base64decode", [
               {
                 range: selection,
-                text: decoded
-              }
+                text: decoded,
+              },
             ]);
           } catch (e) {
             os.notify.send("That's not valid Base64");
@@ -1628,7 +1742,10 @@ export class MonacoApp extends BaseApp {
           speak("JSON looks good!", ClippyAnimation.GetWizardy);
         } catch (e) {
           os.notify.send(`Not valid JSON: ${e.message}`);
-          speak("There's an error in your JSON.", ClippyAnimation.CheckingSomething);
+          speak(
+            "There's an error in your JSON.",
+            ClippyAnimation.CheckingSomething,
+          );
         }
       },
       minifyJSON: () => {
@@ -1651,7 +1768,8 @@ export class MonacoApp extends BaseApp {
       showShortcuts: () => {
         const shortcuts = `File:\n  Ctrl+N - New Tab\n  Ctrl+Shift+N - New Window\n  Ctrl+O - Open File\n  Ctrl+S - Save\n  Ctrl+W - Close Tab\n  \nEdit:\n  Ctrl+Z - Undo\n  Ctrl+Y - Redo\n  Ctrl+F - Find\n  Ctrl+H - Replace\n  \nGo:\n  Ctrl+G - Go to Line\n  F12 - Go to Definition`;
       },
-      showDocs: () => window.open("https://code.visualstudio.com/docs", "_blank"),
+      showDocs: () =>
+        window.open("https://code.visualstudio.com/docs", "_blank"),
       about: () => {
         showAboutDialog({
           title: "Yuki Code",
@@ -1659,9 +1777,9 @@ export class MonacoApp extends BaseApp {
           description:
             "A powerful code editor built on Monaco, the engine behind VS Code. Write, edit, and manage code with syntax highlighting, multi-tab editing, and an integrated terminal.",
           icon: "fas fa-code",
-          iconType: "fontawesome"
+          iconType: "fontawesome",
         });
-      }
+      },
     };
 
     if (actions[action]) {
@@ -1689,13 +1807,16 @@ export class MonacoApp extends BaseApp {
         let uniqueName = editorData.title;
         let counter = 1;
         const lastDot = editorData.title.lastIndexOf(".");
-        const baseName = lastDot !== -1 ? editorData.title.substring(0, lastDot) : editorData.title;
+        const baseName =
+          lastDot !== -1
+            ? editorData.title.substring(0, lastDot)
+            : editorData.title;
         const ext = lastDot !== -1 ? editorData.title.substring(lastDot) : "";
         while (
           await os.fs.exists(
             Array.isArray(editorData.filePath)
               ? [...editorData.filePath, uniqueName]
-              : [editorData.filePath, uniqueName].filter(Boolean).join("/")
+              : [editorData.filePath, uniqueName].filter(Boolean).join("/"),
           )
         ) {
           uniqueName = `${baseName}_${counter}${ext}`;
@@ -1722,10 +1843,14 @@ export class MonacoApp extends BaseApp {
   }
 
   saveAsFile(editorData) {
-    const defaultName = editorData.title.includes(".") ? editorData.title : `${editorData.title}`;
+    const defaultName = editorData.title.includes(".")
+      ? editorData.title
+      : `${editorData.title}`;
     this.explorerApp.openSaveDialog(defaultName, async (path, fileName) => {
       const content = editorData.editor.getValue();
-      const filePath = Array.isArray(path) ? [...path, fileName] : [path, fileName].filter(Boolean).join("/");
+      const filePath = Array.isArray(path)
+        ? [...path, fileName]
+        : [path, fileName].filter(Boolean).join("/");
       const exists = await os.fs.exists(filePath);
 
       try {
@@ -1736,11 +1861,14 @@ export class MonacoApp extends BaseApp {
             let uniqueName = fileName;
             let counter = 1;
             const lastDot = fileName.lastIndexOf(".");
-            const baseName = lastDot !== -1 ? fileName.substring(0, lastDot) : fileName;
+            const baseName =
+              lastDot !== -1 ? fileName.substring(0, lastDot) : fileName;
             const ext = lastDot !== -1 ? fileName.substring(lastDot) : "";
             while (
               await os.fs.exists(
-                Array.isArray(path) ? [...path, uniqueName] : [path, uniqueName].filter(Boolean).join("/")
+                Array.isArray(path)
+                  ? [...path, uniqueName]
+                  : [path, uniqueName].filter(Boolean).join("/"),
               )
             ) {
               uniqueName = `${baseName}_${counter}${ext}`;
@@ -1754,7 +1882,9 @@ export class MonacoApp extends BaseApp {
             editorData.filePath = path;
             editorData.isDirty = false;
             this.updateTabTitle(editorData.tabId, uniqueName, false);
-            const pathStr = path.length ? `/${path.join("/")}/${uniqueName}` : `/${uniqueName}`;
+            const pathStr = path.length
+              ? `/${path.join("/")}/${uniqueName}`
+              : `/${uniqueName}`;
             speak("Code saved successfully!", ClippyAnimation.Greeting);
             return;
           }
@@ -1767,7 +1897,9 @@ export class MonacoApp extends BaseApp {
         editorData.filePath = path;
         editorData.isDirty = false;
         this.updateTabTitle(editorData.tabId, fileName, false);
-        const pathStr = path.length ? `/${path.join("/")}/${fileName}` : `/${fileName}`;
+        const pathStr = path.length
+          ? `/${path.join("/")}/${fileName}`
+          : `/${fileName}`;
         speak("Code saved successfully!", ClippyAnimation.Greeting);
       } catch (e) {
         os.notify.send("Save error", "Couldn't save that file");
@@ -1778,7 +1910,9 @@ export class MonacoApp extends BaseApp {
   openFileDialog() {
     speak("Looking for some code?", ClippyAnimation.Searching);
     this.explorerApp.open(async (path, fileName) => {
-      const filePath = Array.isArray(path) ? [...path, fileName] : [path, fileName].filter(Boolean).join("/");
+      const filePath = Array.isArray(path)
+        ? [...path, fileName]
+        : [path, fileName].filter(Boolean).join("/");
       const content = await os.fs.read(filePath);
       this.open(fileName, content, path);
     }, this);

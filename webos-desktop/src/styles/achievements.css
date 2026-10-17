@@ -288,7 +288,12 @@
   left: 0;
   right: 0;
   height: 3px;
-  background: linear-gradient(90deg, transparent, var(--brand-dim), transparent);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--brand-dim),
+    transparent
+  );
   opacity: 0;
   transition: opacity 0.3s;
 }
@@ -308,7 +313,12 @@
 }
 
 .achievement-card--unlocked::before {
-  background: linear-gradient(90deg, var(--brand), var(--brand-hover), var(--brand));
+  background: linear-gradient(
+    90deg,
+    var(--brand),
+    var(--brand-hover),
+    var(--brand)
+  );
   opacity: 1;
 }
 
@@ -523,7 +533,11 @@
   width: 44px;
   height: 44px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(255, 255, 255, 0.15) 0%, transparent 70%);
+  background: radial-gradient(
+    circle,
+    rgba(255, 255, 255, 0.15) 0%,
+    transparent 70%
+  );
 }
 
 .achievement-popup__icon {

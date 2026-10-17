@@ -49,26 +49,34 @@ export class MusicControlWidget extends WidgetBase {
 
     this.muteEl = contentEl.querySelector(`#w-music-mute-${this.id}`);
 
-    contentEl.querySelector(`#w-music-play-${this.id}`).addEventListener("click", () => {
-      this.togglePlay();
-    });
+    contentEl
+      .querySelector(`#w-music-play-${this.id}`)
+      .addEventListener("click", () => {
+        this.togglePlay();
+      });
 
-    contentEl.querySelector(`#w-music-prev-${this.id}`).addEventListener("click", () => {
-      this.sendCmd("previoustrack");
-    });
+    contentEl
+      .querySelector(`#w-music-prev-${this.id}`)
+      .addEventListener("click", () => {
+        this.sendCmd("previoustrack");
+      });
 
-    contentEl.querySelector(`#w-music-next-${this.id}`).addEventListener("click", () => {
-      this.sendCmd("nexttrack");
-    });
+    contentEl
+      .querySelector(`#w-music-next-${this.id}`)
+      .addEventListener("click", () => {
+        this.sendCmd("nexttrack");
+      });
 
-    contentEl.querySelector(`#w-music-vol-${this.id}`).addEventListener("input", (e) => {
-      const vol = parseInt(e.target.value);
-      if (this.activeWinId) {
-        audioMixer().setChannel(this.activeWinId, vol / 100);
-      } else {
-        audioMixer().setMaster(vol / 100);
-      }
-    });
+    contentEl
+      .querySelector(`#w-music-vol-${this.id}`)
+      .addEventListener("input", (e) => {
+        const vol = parseInt(e.target.value);
+        if (this.activeWinId) {
+          audioMixer().setChannel(this.activeWinId, vol / 100);
+        } else {
+          audioMixer().setMaster(vol / 100);
+        }
+      });
 
     this.muteEl.addEventListener("click", () => {
       const mixer = audioMixer();
@@ -90,7 +98,10 @@ export class MusicControlWidget extends WidgetBase {
   getActiveChannel() {
     const mixer = audioMixer();
     if (this.activeWinId && mixer.channels.has(this.activeWinId)) {
-      return { winId: this.activeWinId, ch: mixer.channels.get(this.activeWinId) };
+      return {
+        winId: this.activeWinId,
+        ch: mixer.channels.get(this.activeWinId),
+      };
     }
     if (mixer.channels.size > 0) {
       for (const [winId, ch] of mixer.channels) {
@@ -155,7 +166,8 @@ export class MusicControlWidget extends WidgetBase {
           const btn = createElement("button");
           btn.className = "widget-music-channel-btn";
           if (winId === this.activeWinId) btn.classList.add("active");
-          if (ch.nowPlaying && ch.nowPlaying.playbackState === "playing") btn.classList.add("playing");
+          if (ch.nowPlaying && ch.nowPlaying.playbackState === "playing")
+            btn.classList.add("playing");
           btn.textContent = ch.title || "App";
           btn.title = ch.title;
           btn.addEventListener("click", () => {
@@ -168,7 +180,10 @@ export class MusicControlWidget extends WidgetBase {
 
     if (playBtn) {
       const icon = playBtn.querySelector("i");
-      const isPlaying = active && active.ch.nowPlaying && active.ch.nowPlaying.playbackState === "playing";
+      const isPlaying =
+        active &&
+        active.ch.nowPlaying &&
+        active.ch.nowPlaying.playbackState === "playing";
       if (icon) icon.className = isPlaying ? "fas fa-pause" : "fas fa-play";
       playBtn.classList.toggle("is-playing", !!isPlaying);
     }
@@ -204,7 +219,8 @@ export class MusicControlWidget extends WidgetBase {
     }
 
     if (coverImg && coverFallback) {
-      const artwork = active && active.ch.nowPlaying ? active.ch.nowPlaying.artwork : "";
+      const artwork =
+        active && active.ch.nowPlaying ? active.ch.nowPlaying.artwork : "";
       if (artwork) {
         coverImg.src = artwork;
         coverImg.style.display = "block";
@@ -219,7 +235,11 @@ export class MusicControlWidget extends WidgetBase {
       const icon = this.muteEl.querySelector("i");
       const isMuted = active && active.ch.volume === 0;
       if (icon)
-        icon.className = isMuted ? "fas fa-volume-off" : mixer.muted ? "fas fa-volume-xmark" : "fas fa-volume-up";
+        icon.className = isMuted
+          ? "fas fa-volume-off"
+          : mixer.muted
+            ? "fas fa-volume-xmark"
+            : "fas fa-volume-up";
       this.muteEl.title = isMuted ? "Unmute" : "Mute";
     }
   }

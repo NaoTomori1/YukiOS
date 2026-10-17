@@ -3,11 +3,12 @@ import { SYSTEM_LIBRARY_FILES } from "../generated/systemLibraryManifest.js";
 
 export const SYSTEM_FOLDER = "System";
 
-const LIBRARY_RAW_BASE = "https://cdn.jsdelivr.net/gh/NaoTomori1/yukios@main/webos-desktop/src";
+const LIBRARY_RAW_BASE =
+  "https://cdn.jsdelivr.net/gh/NaoTomori1/yukios@main/webos-desktop/src";
 const LIBRARY_FA_ICONS = {
   ".js": "papirus:mimetypes/application-x-javascript",
   ".mjs": "papirus:mimetypes/application-x-javascript",
-  ".css": "papirus:mimetypes/text-css"
+  ".css": "papirus:mimetypes/text-css",
 };
 
 let manifestIndex = null;
@@ -15,7 +16,9 @@ const overrideContentCache = new Map();
 
 function getManifestIndex() {
   if (!manifestIndex) {
-    manifestIndex = new Map(SYSTEM_LIBRARY_FILES.map((entry) => [entry.path, entry]));
+    manifestIndex = new Map(
+      SYSTEM_LIBRARY_FILES.map((entry) => [entry.path, entry]),
+    );
   }
   return manifestIndex;
 }
@@ -35,10 +38,15 @@ export function toSystemRelPath(fullPath, root) {
 }
 
 export function aliasSystemDir(fullPath, root) {
-  if (typeof fullPath !== "string" || !fullPath.startsWith("/")) return fullPath;
+  if (typeof fullPath !== "string" || !fullPath.startsWith("/"))
+    return fullPath;
   const cleanPath = fullPath.replace(/\/+$/, "");
   const systemRootAlias = `/${SYSTEM_FOLDER}`;
-  if (cleanPath !== systemRootAlias && !cleanPath.startsWith(`${systemRootAlias}/`)) return fullPath;
+  if (
+    cleanPath !== systemRootAlias &&
+    !cleanPath.startsWith(`${systemRootAlias}/`)
+  )
+    return fullPath;
   return `${root.replace(/\/+$/, "")}/${SYSTEM_FOLDER}${cleanPath.slice(systemRootAlias.length)}`;
 }
 
@@ -60,7 +68,8 @@ export function getManifestSize(relPath) {
 
 export function mimeForPath(pathOrName) {
   const lowerName = String(pathOrName ?? "").toLowerCase();
-  if (lowerName.endsWith(".js") || lowerName.endsWith(".mjs")) return "text/javascript";
+  if (lowerName.endsWith(".js") || lowerName.endsWith(".mjs"))
+    return "text/javascript";
   if (lowerName.endsWith(".css")) return "text/css";
   if (lowerName.endsWith(".json")) return "application/json";
   return "application/octet-stream";
@@ -69,7 +78,10 @@ export function mimeForPath(pathOrName) {
 export function mergeListings(virtualMap, realMap) {
   const merged = { ...virtualMap };
   for (const [name, entry] of Object.entries(realMap)) {
-    merged[name] = entry && entry.type === "file" ? { ...entry, overridden: true } : { ...entry };
+    merged[name] =
+      entry && entry.type === "file"
+        ? { ...entry, overridden: true }
+        : { ...entry };
   }
   return merged;
 }
@@ -80,12 +92,12 @@ function buildVirtualFileEntry(fsFacade, fileName, entry) {
   return {
     type: "file",
     kind: fsFacade.inferKind(fileName),
-    icon: "static/icons/file.webp",
+    icon: "static/icons/explorerwin11.png",
     faIcon: LIBRARY_FA_ICONS[ext] ?? null,
     content: "",
     size: entry.bytes,
     mtime: entry.mtime,
-    overridden: false
+    overridden: false,
   };
 }
 
@@ -125,35 +137,43 @@ export async function listSystemFolder(fsFacade, dir) {
     const meta = dirMeta[name] ?? {};
     let size = stat.size ?? 0;
     if (size === 0) {
-      const blob = await fsFacade.blobs.getBlobByFullPath(fullPath).catch(() => null);
+      const blob = await fsFacade.blobs
+        .getBlobByFullPath(fullPath)
+        .catch(() => null);
       size = blob?.size ?? meta.size ?? 0;
     }
     realMap[name] = {
       type: "file",
       kind: meta.kind ?? fsFacade.inferKind(name),
-      icon: meta.icon ?? "static/icons/file.webp",
+      icon: meta.icon ?? "static/icons/explorerwin11.png",
       faIcon: meta.faIcon ?? null,
       content: "",
       size,
-      mtime: stat.mtimeMs ?? null
+      mtime: stat.mtimeMs ?? null,
     };
   }
   return mergeListings(virtualMap, realMap);
 }
 
 export async function fetchSystemFileContent(relPath) {
-  if (overrideContentCache.has(relPath)) return overrideContentCache.get(relPath);
+  if (overrideContentCache.has(relPath))
+    return overrideContentCache.get(relPath);
   if (import.meta.env.DEV) {
-    const localResponse = await fetch(new URL(`src/${relPath}`, document.baseURI), {
-      cache: "no-store"
-    }).catch(() => null);
+    const localResponse = await fetch(
+      new URL(`src/${relPath}`, document.baseURI),
+      {
+        cache: "no-store",
+      },
+    ).catch(() => null);
     if (localResponse?.ok) {
       const content = await localResponse.text();
       overrideContentCache.set(relPath, content);
       return content;
     }
   }
-  const fallbackResponse = await fetch(`${LIBRARY_RAW_BASE}/${relPath}`).catch(() => null);
+  const fallbackResponse = await fetch(`${LIBRARY_RAW_BASE}/${relPath}`).catch(
+    () => null,
+  );
   if (fallbackResponse?.ok) {
     const content = await fallbackResponse.text();
     overrideContentCache.set(relPath, content);
@@ -175,8 +195,14 @@ async function collectAllOverrideContents(fsFacade) {
   const index = os.storage.get(StorageKeys.systemOverridesIndex) || {};
   const overrides = {};
   for (const relPath of Object.keys(index)) {
-    const fullPath = fsFacade.paths.join(fsFacade.CONFIG.ROOT, SYSTEM_FOLDER, relPath);
-    const content = await fsFacade.pRead("readFile", fullPath, "utf8").catch(() => "");
+    const fullPath = fsFacade.paths.join(
+      fsFacade.CONFIG.ROOT,
+      SYSTEM_FOLDER,
+      relPath,
+    );
+    const content = await fsFacade
+      .pRead("readFile", fullPath, "utf8")
+      .catch(() => "");
     const text = typeof content === "string" ? content : "";
     overrides[`/src/${relPath}`] = text;
   }
@@ -185,7 +211,10 @@ async function collectAllOverrideContents(fsFacade) {
 
 function pushOverridesToServiceWorker(overrides) {
   return new Promise((resolve) => {
-    const controller = typeof navigator !== "undefined" ? navigator.serviceWorker?.controller : null;
+    const controller =
+      typeof navigator !== "undefined"
+        ? navigator.serviceWorker?.controller
+        : null;
     if (!controller) {
       resolve(false);
       return;
@@ -201,14 +230,18 @@ function pushOverridesToServiceWorker(overrides) {
     };
     handshakeTimeout = setTimeout(() => settle(false), 1500);
     channel.port1.onmessage = (event) => settle(Boolean(event.data?.ok));
-    controller.postMessage({ type: "SYSTEM_OVERRIDES_PUSH", overrides }, [channel.port2]);
+    controller.postMessage({ type: "SYSTEM_OVERRIDES_PUSH", overrides }, [
+      channel.port2,
+    ]);
   });
 }
 
 export async function syncSystemOverrideAfterWrite(fsFacade, fullPath) {
   const relPath = toSystemRelPath(fullPath, fsFacade.CONFIG.ROOT);
   if (relPath === null) return;
-  let content = await fsFacade.pRead("readFile", fullPath, "utf8").catch(() => "");
+  let content = await fsFacade
+    .pRead("readFile", fullPath, "utf8")
+    .catch(() => "");
   if (typeof content !== "string") content = "";
   const { os } = await import("../framework.js");
   const index = os.storage.get(StorageKeys.systemOverridesIndex) || {};
@@ -219,7 +252,7 @@ export async function syncSystemOverrideAfterWrite(fsFacade, fullPath) {
       const response = await fetch("/__yukios-overrides", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ path: "src/" + relPath, content })
+        body: JSON.stringify({ path: "src/" + relPath, content }),
       });
       if (response.ok) {
         location.reload();
@@ -227,7 +260,9 @@ export async function syncSystemOverrideAfterWrite(fsFacade, fullPath) {
       }
     } catch {}
   }
-  await pushOverridesToServiceWorker(await collectAllOverrideContents(fsFacade));
+  await pushOverridesToServiceWorker(
+    await collectAllOverrideContents(fsFacade),
+  );
   if (import.meta.env.DEV) {
     os.notify.send("Saved. Override applies when running via the dev server");
   }
@@ -238,7 +273,9 @@ export async function removeSystemOverride(fsFacade, fullPath) {
   if (!relPath) return false;
   if (!(await fsFacade.exists(fullPath))) return false;
   await fsFacade.p("unlink", fullPath).catch(() => {});
-  await fsFacade.metadata.removeMeta(fsFacade.dirname(fullPath), fsFacade.basename(fullPath)).catch(() => {});
+  await fsFacade.metadata
+    .removeMeta(fsFacade.dirname(fullPath), fsFacade.basename(fullPath))
+    .catch(() => {});
   if (!fsFacade.isElectron) {
     await fsFacade.blobs.deleteBlobByFullPath(fullPath).catch(() => {});
   }
@@ -257,12 +294,14 @@ export async function removeSystemOverride(fsFacade, fullPath) {
     ? fetch("/__yukios-overrides", {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ path: "src/" + relPath })
+        body: JSON.stringify({ path: "src/" + relPath }),
       })
         .then((response) => response.ok)
         .catch(() => false)
     : Promise.resolve(false);
-  const remainingOverrides = hasRemainingOverrides ? await collectAllOverrideContents(fsFacade) : {};
+  const remainingOverrides = hasRemainingOverrides
+    ? await collectAllOverrideContents(fsFacade)
+    : {};
   await pushOverridesToServiceWorker(remainingOverrides);
   if (await devClearedRequest) {
     location.reload();

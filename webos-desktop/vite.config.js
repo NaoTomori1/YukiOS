@@ -19,10 +19,14 @@ const commitHash = (() => {
   }
 })();
 
-const readmeContent = readFileSync(resolve(process.cwd(), "../README.md"), "utf-8");
+const readmeContent = readFileSync(
+  resolve(process.cwd(), "../README.md"),
+  "utf-8",
+);
 
 function normalizeRepoUrl(repository) {
-  let url = typeof repository === "string" ? repository : repository && repository.url;
+  let url =
+    typeof repository === "string" ? repository : repository && repository.url;
   if (!url) return "";
   url = url
     .replace(/^git\+/, "")
@@ -47,10 +51,14 @@ function collectPackageLicenses() {
   const entries = [];
 
   try {
-    const pkgJson = JSON.parse(readFileSync(resolve(process.cwd(), "package.json"), "utf-8"));
+    const pkgJson = JSON.parse(
+      readFileSync(resolve(process.cwd(), "package.json"), "utf-8"),
+    );
 
     for (const [name, spec] of Object.entries(pkgJson.dependencies || {})) {
-      const meta = readPackageMeta(resolve(process.cwd(), "node_modules", name, "package.json"));
+      const meta = readPackageMeta(
+        resolve(process.cwd(), "node_modules", name, "package.json"),
+      );
 
       let version = spec;
       let license = "Unknown";
@@ -78,7 +86,14 @@ function collectPackageLicenses() {
     name: "hatsune-miku-windows-linux-cursors",
     version: "git",
     license: "Fan art (non-commercial)",
-    repo: "https://github.com/supermariofps/hatsune-miku-windows-linux-cursors"
+    repo: "https://github.com/supermariofps/hatsune-miku-windows-linux-cursors",
+  });
+
+  entries.push({
+    name: "win11react",
+    version: "0.1.1",
+    license: "CC0-1.0",
+    repo: "https://github.com/blueedgetechno/win11React",
   });
 
   entries.sort((a, b) => a.name.localeCompare(b.name));
@@ -108,16 +123,22 @@ const MIME_MAP = {
   ico: "image/x-icon",
   js: "application/javascript",
   css: "text/css",
-  wasm: "application/wasm"
+  wasm: "application/wasm",
 };
 
 function serveDir(basePath, dir) {
   return (req, res, next) => {
-    const filePath = join(dir, req.url.replace(new RegExp("^" + basePath), "") || "index.html");
+    const filePath = join(
+      dir,
+      req.url.replace(new RegExp("^" + basePath), "") || "index.html",
+    );
     try {
       const content = readFileSync(filePath);
       const ext = filePath.split(".").pop();
-      res.setHeader("Content-Type", MIME_MAP[ext] || "application/octet-stream");
+      res.setHeader(
+        "Content-Type",
+        MIME_MAP[ext] || "application/octet-stream",
+      );
       res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
       res.end(content);
     } catch {
@@ -132,7 +153,7 @@ function serveStaticDev() {
     configureServer(server) {
       server.middlewares.use("/static/", serveDir("/static/", staticDir));
       server.middlewares.use("/remote/", serveDir("/remote/", remoteDir));
-    }
+    },
   };
 }
 
@@ -142,13 +163,23 @@ function faviconBundlePlugin() {
     async buildStart() {
       const favDir = resolve(process.cwd(), "../static/icons/favicons");
       const { existsSync, readdirSync } = await import("fs");
-      const count = existsSync(favDir) ? readdirSync(favDir).filter((f) => f.endsWith(".webp")).length : 0;
+      const count = existsSync(favDir)
+        ? readdirSync(favDir).filter((f) => f.endsWith(".webp")).length
+        : 0;
       if (count < 36) {
         try {
           const { spawnSync } = await import("child_process");
-          console.log(`[favicon-bundle] Found ${count}/36 favicons, fetching...`);
-          const res = spawnSync("node", ["scripts/fetchFavicons.js"], { stdio: "inherit", cwd: process.cwd() });
-          if (res.status !== 0) console.warn("[favicon-bundle] fetch failed, continuing with fallback");
+          console.log(
+            `[favicon-bundle] Found ${count}/36 favicons, fetching...`,
+          );
+          const res = spawnSync("node", ["scripts/fetchFavicons.js"], {
+            stdio: "inherit",
+            cwd: process.cwd(),
+          });
+          if (res.status !== 0)
+            console.warn(
+              "[favicon-bundle] fetch failed, continuing with fallback",
+            );
           else console.log("[favicon-bundle] favicons ready");
         } catch (e) {
           console.warn("[favicon-bundle] error", e.message);
@@ -156,7 +187,7 @@ function faviconBundlePlugin() {
       } else {
         console.log(`[favicon-bundle] ${count} favicons cached, skip fetch`);
       }
-    }
+    },
   };
 }
 
@@ -166,8 +197,14 @@ function steamNewsData() {
   const FEED_TIMEOUT_MS = 10000;
   const FEEDS = [
     { url: "https://store.steampowered.com/feeds/news.xml", source: "News" },
-    { url: "https://store.steampowered.com/feeds/newreleases.xml", source: "New Releases" },
-    { url: "https://store.steampowered.com/feeds/specials.xml", source: "Sales" }
+    {
+      url: "https://store.steampowered.com/feeds/newreleases.xml",
+      source: "New Releases",
+    },
+    {
+      url: "https://store.steampowered.com/feeds/specials.xml",
+      source: "Sales",
+    },
   ];
 
   function parseRssItems(xml) {
@@ -176,15 +213,22 @@ function steamNewsData() {
     let match;
     while ((match = itemRegex.exec(xml)) !== null) {
       const block = match[1];
-      const titleMatch = block.match(/<title><!\[CDATA\[([\s\S]*?)\]\]><\/title>|<title>([\s\S]*?)<\/title>/);
-      const descMatch = block.match(
-        /<description><!\[CDATA\[([\s\S]*?)\]\]><\/description>|<description>([\s\S]*?)<\/description>/
+      const titleMatch = block.match(
+        /<title><!\[CDATA\[([\s\S]*?)\]\]><\/title>|<title>([\s\S]*?)<\/title>/,
       );
-      const encodedMatch = block.match(/<content:encoded><!\[CDATA\[([\s\S]*?)\]\]><\/content:encoded>/);
+      const descMatch = block.match(
+        /<description><!\[CDATA\[([\s\S]*?)\]\]><\/description>|<description>([\s\S]*?)<\/description>/,
+      );
+      const encodedMatch = block.match(
+        /<content:encoded><!\[CDATA\[([\s\S]*?)\]\]><\/content:encoded>/,
+      );
       const pubDateMatch = block.match(/<pubDate>([\s\S]*?)<\/pubDate>/);
       const enclosureMatch = block.match(/<enclosure[^>]*url="([^"]+)"/);
       const mediaContentMatch = block.match(/<media:content[^>]*url="([^"]+)"/);
-      const rawDesc = (descMatch && (descMatch[1] || descMatch[2])) || (encodedMatch && encodedMatch[1]) || "";
+      const rawDesc =
+        (descMatch && (descMatch[1] || descMatch[2])) ||
+        (encodedMatch && encodedMatch[1]) ||
+        "";
       const imgInDescMatch = rawDesc.match(/<img[^>]*src="([^"]+)"/);
       const plainDesc = rawDesc
         .replace(/<[^>]+>/g, " ")
@@ -201,7 +245,7 @@ function steamNewsData() {
           (mediaContentMatch && mediaContentMatch[1]) ||
           (imgInDescMatch && imgInDescMatch[1]) ||
           "",
-        description: plainDesc
+        description: plainDesc,
       });
     }
     return items;
@@ -209,7 +253,9 @@ function steamNewsData() {
 
   async function fetchFeedItems(feed) {
     try {
-      const resp = await fetch(feed.url, { signal: AbortSignal.timeout(FEED_TIMEOUT_MS) });
+      const resp = await fetch(feed.url, {
+        signal: AbortSignal.timeout(FEED_TIMEOUT_MS),
+      });
       if (!resp.ok) {
         console.warn(`Steam feed ${feed.source} responded ${resp.status}`);
         return [];
@@ -225,10 +271,15 @@ function steamNewsData() {
     name: "steam-news-data",
     async buildStart() {
       if (DISABLE_STEAM_NEWS_FETCH) {
-        console.log("Steam news fetch disabled, keeping existing steamNewsData.js");
+        console.log(
+          "Steam news fetch disabled, keeping existing steamNewsData.js",
+        );
         return;
       }
-      const CACHE_FILE = resolve(process.cwd(), "node_modules/.cache/steam-news.json");
+      const CACHE_FILE = resolve(
+        process.cwd(),
+        "node_modules/.cache/steam-news.json",
+      );
       const CACHE_TTL = 60 * 60 * 1000;
       let allItems = [];
 
@@ -236,7 +287,9 @@ function steamNewsData() {
         if (existsSync(CACHE_FILE)) {
           const cached = JSON.parse(readFileSync(CACHE_FILE, "utf-8"));
           if (Date.now() - cached.timestamp < CACHE_TTL) {
-            console.log(`Using cached steam news (${cached.items.length} items)`);
+            console.log(
+              `Using cached steam news (${cached.items.length} items)`,
+            );
             allItems = cached.items;
           } else {
             console.log("Steam news cache expired, refetching...");
@@ -253,18 +306,26 @@ function steamNewsData() {
         if (allItems.length > 0) {
           try {
             mkdirSync(dirname(CACHE_FILE), { recursive: true });
-            writeFileSync(CACHE_FILE, JSON.stringify({ timestamp: Date.now(), items: allItems }), "utf-8");
+            writeFileSync(
+              CACHE_FILE,
+              JSON.stringify({ timestamp: Date.now(), items: allItems }),
+              "utf-8",
+            );
             console.log("Steam news cache saved");
           } catch (err) {
             console.error("Failed to save steam news cache:", err.message);
           }
         } else {
-          console.warn("Steam news fetch returned no items, keeping existing cache untouched");
+          console.warn(
+            "Steam news fetch returned no items, keeping existing cache untouched",
+          );
         }
       }
 
       if (allItems.length === 0 && existsSync(OUTPUT_PATH)) {
-        console.log("Steam news unavailable, keeping previously generated file");
+        console.log(
+          "Steam news unavailable, keeping previously generated file",
+        );
         return;
       }
 
@@ -276,9 +337,13 @@ function steamNewsData() {
             title: item.title || "",
             description: (item.description || "").slice(0, 320),
             date: item.pubDate
-              ? new Date(item.pubDate).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })
-              : "Recent"
-          }))
+              ? new Date(item.pubDate).toLocaleDateString("en-US", {
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                })
+              : "Recent",
+          })),
       ];
 
       const content = `// Auto-generated by vite.config.js steamNewsData plugin
@@ -292,7 +357,7 @@ export const STEAM_NEWS_ITEMS = ${JSON.stringify(items, null, 2)};
       if (existingContent === content) return;
 
       writeFileSync(OUTPUT_PATH, content, "utf-8");
-    }
+    },
   };
 }
 
@@ -309,10 +374,10 @@ function staticCdnRewrite() {
       const html = readFileSync(fp, "utf-8");
       const out = html.replace(
         /(src|href)="(static\/|src\/styles\/)/g,
-        (_, attr, path) => `${attr}="${CDN_BASE}${path}`
+        (_, attr, path) => `${attr}="${CDN_BASE}${path}`,
       );
       writeFileSync(fp, out);
-    }
+    },
   };
 }
 
@@ -324,7 +389,7 @@ function removeCosmicFolder() {
       if (existsSync(cosmicPath)) {
         rmSync(cosmicPath, { force: true });
       }
-    }
+    },
   };
 }
 
@@ -341,7 +406,7 @@ function copyRemoteClient() {
           console.log(`Copied remote/${file} → dist/remote/${file}`);
         }
       }
-    }
+    },
   };
 }
 
@@ -349,8 +414,11 @@ function removeBoxedWineDist() {
   return {
     name: "remove-boxedwine-dist",
     closeBundle() {
-      rmSync(resolve(outDir, "static/apps/boxedwine"), { recursive: true, force: true });
-    }
+      rmSync(resolve(outDir, "static/apps/boxedwine"), {
+        recursive: true,
+        force: true,
+      });
+    },
   };
 }
 
@@ -358,7 +426,7 @@ function pageGenerator() {
   function runGenerator() {
     const result = spawnSync("node", ["scripts/generateSitemap.js"], {
       cwd: __dirname,
-      stdio: "inherit"
+      stdio: "inherit",
     });
     if (result.status !== 0) {
       throw new Error("Page generation failed");
@@ -380,7 +448,7 @@ function pageGenerator() {
       server.middlewares.use("/class/", serveDir("/class/", outDir));
       server.middlewares.use("/games/", serveDir("/games/", outDir));
       server.middlewares.use("/feature/", serveDir("/feature/", outDir));
-    }
+    },
   };
 }
 
@@ -388,14 +456,14 @@ const plugins = [
   nodePolyfills({
     include: ["buffer", "process", "stream", "path", "util", "timers"],
     globals: { Buffer: true, global: true, process: true },
-    protocolImports: true
+    protocolImports: true,
   }),
   serveStaticDev(),
   steamNewsData(),
   systemLibraryPlugin(),
   iconRegistryPlugin(),
   papirusDataPlugin(),
-  faviconBundlePlugin()
+  faviconBundlePlugin(),
 ];
 if (isSingleFile) {
   plugins.unshift(viteSingleFile());
@@ -422,8 +490,12 @@ if (isVisualize) {
           lines.push(`\n--- ${fileName} (${info.source.length} B) ---`);
         }
       }
-      writeFileSync(resolve(outDir, "bundle-stats.txt"), lines.join("\n"), "utf-8");
-    }
+      writeFileSync(
+        resolve(outDir, "bundle-stats.txt"),
+        lines.join("\n"),
+        "utf-8",
+      );
+    },
   });
 }
 plugins.push(staticCdnRewrite());
@@ -435,7 +507,7 @@ plugins.push(removeBoxedWineDist());
 const baseOutput = {
   entryFileNames: "assets/[name].[hash].js",
   chunkFileNames: "assets/[name].[hash].js",
-  assetFileNames: "assets/[name].[hash][extname]"
+  assetFileNames: "assets/[name].[hash][extname]",
 };
 if (isSingleFile) {
   baseOutput.inlineDynamicImports = true;
@@ -454,14 +526,14 @@ export default defineConfig({
         "./src/os/index.js",
         "./src/utils/utils.js",
         "./src/games/games.js",
-        "./src/games/gamesList.js"
-      ]
+        "./src/games/gamesList.js",
+      ],
     },
     headers: {
       "Cross-Origin-Opener-Policy": "same-origin",
       "Cross-Origin-Embedder-Policy": "require-corp",
-      "Cross-Origin-Resource-Policy": "cross-origin"
-    }
+      "Cross-Origin-Resource-Policy": "cross-origin",
+    },
   },
   optimizeDeps: {
     include: [
@@ -474,14 +546,14 @@ export default defineConfig({
       "docx",
       "html2canvas-pro",
       "webtorrent",
-      "vite-plugin-node-polyfills/shims/buffer"
-    ]
+      "vite-plugin-node-polyfills/shims/buffer",
+    ],
   },
   define: {
     __GIT_COMMIT__: JSON.stringify(commitHash),
     __README_CONTENT__: JSON.stringify(readmeContent),
     __SINGLE_FILE__: isSingleFile,
-    __PACKAGE_LICENSES__: JSON.stringify(packageLicenses)
+    __PACKAGE_LICENSES__: JSON.stringify(packageLicenses),
   },
   build: {
     outDir,
@@ -505,13 +577,13 @@ export default defineConfig({
             "html2canvas-pro",
             "isomorphic-git",
             /^isomorphic-git\/.*/,
-            "@webcontainer/api"
+            "@webcontainer/api",
           ]
         : [],
-      output: baseOutput
-    }
+      output: baseOutput,
+    },
   },
   esbuild: {
-    legalComments: "inline"
-  }
+    legalComments: "inline",
+  },
 });

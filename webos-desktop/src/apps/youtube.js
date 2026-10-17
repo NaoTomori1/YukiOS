@@ -6,5 +6,5 @@ export const YoutubeApp = createScramjetWebApp({
   targetUrl: "https://www.youtube.com",
   appIcon: "static/icons/youtube.webp",
   windowSize: ["1280px", "600px"],
-  trayOptions: {}
+  trayOptions: {},
 });

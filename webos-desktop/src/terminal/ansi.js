@@ -27,7 +27,7 @@ export const ANSI = {
     brightCyan: "\x1b[96m",
     brightWhite: "\x1b[97m",
     color256: (n) => `\x1b[38;5;${n}m`,
-    colorRgb: (r, g, b) => `\x1b[38;2;${r};${g};${b}m`
+    colorRgb: (r, g, b) => `\x1b[38;2;${r};${g};${b}m`,
   },
 
   bg: {
@@ -48,7 +48,7 @@ export const ANSI = {
     brightCyan: "\x1b[106m",
     brightWhite: "\x1b[107m",
     color256: (n) => `\x1b[48;5;${n}m`,
-    colorRgb: (r, g, b) => `\x1b[48;2;${r};${g};${b}m`
+    colorRgb: (r, g, b) => `\x1b[48;2;${r};${g};${b}m`,
   },
 
   screen: {
@@ -58,7 +58,7 @@ export const ANSI = {
     clearLine: "\x1b[K",
     home: "\x1b[H",
     saveCursor: "\x1b[s",
-    restoreCursor: "\x1b[u"
+    restoreCursor: "\x1b[u",
   },
 
   cursor: {
@@ -70,7 +70,7 @@ export const ANSI = {
     backward: (n = 1) => `\x1b[${n}D`,
     position: (row, col) => `\x1b[${row};${col}H`,
     save: "\x1b7",
-    restore: "\x1b8"
+    restore: "\x1b8",
   },
 
   ctrl: {
@@ -99,7 +99,7 @@ export const ANSI = {
     w: "\x17",
     x: "\x18",
     y: "\x19",
-    z: "\x1a"
+    z: "\x1a",
   },
 
   strip(str) {
@@ -112,5 +112,5 @@ export const ANSI = {
 
   wrap(str, code) {
     return code + str + ANSI.reset;
-  }
+  },
 };

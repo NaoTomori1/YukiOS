@@ -19,7 +19,7 @@ import {
   convertAudioBuffer,
   buildVideoConvertArgs,
   ensureFFmpegWasm,
-  ffmpegConvert
+  ffmpegConvert,
 } from "./converterCore.js";
 
 const conversionHistory = [];
@@ -30,7 +30,11 @@ async function readAsText(fs, path, name) {
     return await content.text();
   }
   if (typeof content === "string") {
-    if (content.startsWith("http") || content.startsWith("/") || content.startsWith("data:")) {
+    if (
+      content.startsWith("http") ||
+      content.startsWith("/") ||
+      content.startsWith("data:")
+    ) {
       try {
         const res = await fetch(content);
         return await res.text();
@@ -54,7 +58,11 @@ async function readAsBlob(fs, path, name) {
   const content = await fs.getFileContent(path, name);
   if (content instanceof Blob) return content;
   if (typeof content === "string") {
-    if (content.startsWith("http") || content.startsWith("/") || content.startsWith("data:")) {
+    if (
+      content.startsWith("http") ||
+      content.startsWith("/") ||
+      content.startsWith("data:")
+    ) {
       try {
         const res = await fetch(content);
         return await res.blob();
@@ -68,20 +76,34 @@ async function readAsBlob(fs, path, name) {
 }
 
 function isElectron() {
-  return typeof window !== "undefined" && window.electronAPI && window.electronAPI.ffmpeg;
+  return (
+    typeof window !== "undefined" &&
+    window.electronAPI &&
+    window.electronAPI.ffmpeg
+  );
 }
 
 function getElectronRunner() {
   if (!isElectron()) return null;
   return async (data, inputExt, outputExt, extraArgs) => {
-    const result = await window.electronAPI.ffmpeg.convert(data, inputExt, outputExt, extraArgs);
-    return new Blob([result.data], { type: result.mime || "application/octet-stream" });
+    const result = await window.electronAPI.ffmpeg.convert(
+      data,
+      inputExt,
+      outputExt,
+      extraArgs,
+    );
+    return new Blob([result.data], {
+      type: result.mime || "application/octet-stream",
+    });
   };
 }
 
 async function ffmpegProbe(inputData, inputExt) {
   if (isElectron()) {
-    const data = inputData instanceof Blob ? new Uint8Array(await inputData.arrayBuffer()) : inputData;
+    const data =
+      inputData instanceof Blob
+        ? new Uint8Array(await inputData.arrayBuffer())
+        : inputData;
     return window.electronAPI.ffmpeg.probe(data, inputExt);
   }
 
@@ -93,7 +115,10 @@ async function ffmpegProbe(inputData, inputExt) {
     void probeErr;
   }
 
-  const data = inputData instanceof Blob ? new Uint8Array(await inputData.arrayBuffer()) : inputData;
+  const data =
+    inputData instanceof Blob
+      ? new Uint8Array(await inputData.arrayBuffer())
+      : inputData;
   ffmpeg.FS("writeFile", inputName, data);
 
   ffmpeg.setLogger(({ type, msg }) => {
@@ -108,7 +133,12 @@ async function ffmpegProbe(inputData, inputExt) {
   return {};
 }
 
-export function openFileConverter(fileName, currentPath, os, onComplete = null) {
+export function openFileConverter(
+  fileName,
+  currentPath,
+  os,
+  onComplete = null,
+) {
   const fs = os.fs;
   const ext = getFileExtension(fileName);
   const baseName = getFileNameWithoutExtension(fileName);
@@ -312,14 +342,17 @@ export function openFileConverter(fileName, currentPath, os, onComplete = null) 
           <div style="font-size:12px;color:rgba(255,255,255,0.6);">Loading video info...</div>
         </div>
       </div>
-    `
+    `,
   };
 
   const availableFormats = getTargetFormats(ext);
   const firstFormat = availableFormats[0] || ext;
 
   const formatOptions = availableFormats
-    .map((f) => `<div class="custom-select-option" data-value="${f}">${f.toUpperCase()}</div>`)
+    .map(
+      (f) =>
+        `<div class="custom-select-option" data-value="${f}">${f.toUpperCase()}</div>`,
+    )
     .join("");
 
   const content = `
@@ -401,10 +434,16 @@ export function openFileConverter(fileName, currentPath, os, onComplete = null) 
     </div>
   `;
 
-  const win = os.window.create(winId, `File Converter - ${fileName}`, "850px", "550px", {
-    className: "converter-window",
-    icon: "fa-exchange-alt"
-  });
+  const win = os.window.create(
+    winId,
+    `File Converter - ${fileName}`,
+    "850px",
+    "550px",
+    {
+      className: "converter-window",
+      icon: "fa-exchange-alt",
+    },
+  );
 
   const contentDiv = createElement("div");
   contentDiv.className = "window-content";
@@ -468,11 +507,12 @@ export function openFileConverter(fileName, currentPath, os, onComplete = null) 
     videoMute: win.querySelector(`#${winId}-video-mute`),
     videoFaststart: win.querySelector(`#${winId}-video-faststart`),
     videoPreview: win.querySelector(`#${winId}-video-preview`),
-    backendLabel: win.querySelector(`#${winId}-backend-label`)
+    backendLabel: win.querySelector(`#${winId}-backend-label`),
   };
 
   const backend = isElectron() ? "native" : "wasm";
-  dom.backendLabel.textContent = backend === "native" ? "⚡ FFmpeg native" : "🐌 FFmpeg WASM (slower)";
+  dom.backendLabel.textContent =
+    backend === "native" ? "⚡ FFmpeg native" : "🐌 FFmpeg WASM (slower)";
 
   let fileContentStr = "";
   let fileContentBlob = null;
@@ -499,7 +539,7 @@ export function openFileConverter(fileName, currentPath, os, onComplete = null) 
           <div class="history-name" title="${h.convertedName}">${h.convertedName}</div>
           <span class="history-undo" data-index="${conversionHistory.length - 1 - index}">Undo</span>
         </div>
-      `
+      `,
       )
       .join("");
 
@@ -513,12 +553,23 @@ export function openFileConverter(fileName, currentPath, os, onComplete = null) 
           await fs.deleteItem(item.convertedPath, item.convertedName);
           if (item.originalBackup) {
             if (item.originalBackup instanceof Blob) {
-              await fs.writeBinaryFile(item.originalPath, item.originalName, item.originalBackup);
+              await fs.writeBinaryFile(
+                item.originalPath,
+                item.originalName,
+                item.originalBackup,
+              );
             } else {
-              await fs.updateFile(item.originalPath, item.originalName, item.originalBackup);
+              await fs.updateFile(
+                item.originalPath,
+                item.originalName,
+                item.originalBackup,
+              );
             }
           }
-          os.notify.send("File Converter", `Reverted conversion of "${item.originalName}"`);
+          os.notify.send(
+            "File Converter",
+            `Reverted conversion of "${item.originalName}"`,
+          );
           conversionHistory.splice(hIdx, 1);
           updateHistoryUI();
           if (onComplete) onComplete();
@@ -553,7 +604,10 @@ export function openFileConverter(fileName, currentPath, os, onComplete = null) 
     });
 
     win.addEventListener("click", (e) => {
-      if (!formatDisplay.contains(e.target) && !formatDropdown.contains(e.target)) {
+      if (
+        !formatDisplay.contains(e.target) &&
+        !formatDropdown.contains(e.target)
+      ) {
         formatDropdown.style.display = "none";
       }
     });
@@ -638,8 +692,12 @@ export function openFileConverter(fileName, currentPath, os, onComplete = null) 
         fileContentBlob = blob;
         dom.sizeInfo.textContent = `${(blob.size / 1024).toFixed(1)} KB`;
 
-        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        const arrayBuffer = blob.arrayBuffer ? blob.arrayBuffer() : blob.slice().arrayBuffer();
+        const audioContext = new (
+          window.AudioContext || window.webkitAudioContext
+        )();
+        const arrayBuffer = blob.arrayBuffer
+          ? blob.arrayBuffer()
+          : blob.slice().arrayBuffer();
         arrayBuffer
           .then((buffer) => audioContext.decodeAudioData(buffer))
           .then((decodedBuffer) => {
@@ -701,7 +759,8 @@ export function openFileConverter(fileName, currentPath, os, onComplete = null) 
 
     if (dom.stats.checked) {
       dom.statsPanel.style.display = "grid";
-      const wordCount = text.trim() === "" ? 0 : text.trim().split(/\s+/).length;
+      const wordCount =
+        text.trim() === "" ? 0 : text.trim().split(/\s+/).length;
       const charCount = text.length;
       const lineCount = fileContentStr.split("\n").length;
       dom.statWords.textContent = wordCount;
@@ -712,7 +771,8 @@ export function openFileConverter(fileName, currentPath, os, onComplete = null) 
     }
 
     let previewHtml = text.slice(0, 800);
-    if (text.length > 800) previewHtml += "\n... [content truncated for preview]";
+    if (text.length > 800)
+      previewHtml += "\n... [content truncated for preview]";
     dom.textPreview.textContent = previewHtml;
   }
 
@@ -738,14 +798,20 @@ export function openFileConverter(fileName, currentPath, os, onComplete = null) 
 
       let arr = Array.isArray(parsed) ? parsed : [parsed];
       if (dom.flatten.checked) {
-        arr = arr.map((item) => (typeof item === "object" ? flattenJson(item) : item));
+        arr = arr.map((item) =>
+          typeof item === "object" ? flattenJson(item) : item,
+        );
       }
 
       const sample = arr.slice(0, 5);
       const keys = [
         ...new Set(
-          sample.flatMap((item) => (typeof item === "object" && item !== null ? Object.keys(item) : ["Value"]))
-        )
+          sample.flatMap((item) =>
+            typeof item === "object" && item !== null
+              ? Object.keys(item)
+              : ["Value"],
+          ),
+        ),
       ];
 
       let tableHtml = `<table class="preview-table"><thead><tr>`;
@@ -757,7 +823,8 @@ export function openFileConverter(fileName, currentPath, os, onComplete = null) 
       sample.forEach((item) => {
         tableHtml += `<tr>`;
         keys.forEach((k) => {
-          const val = typeof item === "object" && item !== null ? item[k] : item;
+          const val =
+            typeof item === "object" && item !== null ? item[k] : item;
           tableHtml += `<td title="${val === undefined ? "" : val}">${val === undefined ? "" : val}</td>`;
         });
         tableHtml += `</tr>`;
@@ -805,8 +872,8 @@ export function openFileConverter(fileName, currentPath, os, onComplete = null) 
                 canvas.width = w;
                 canvas.height = h;
                 return canvas;
-              }
-            }
+              },
+            },
           });
 
           dom.progressFill.style.width = "75%";
@@ -816,7 +883,7 @@ export function openFileConverter(fileName, currentPath, os, onComplete = null) 
             sourceExt: ext,
             targetFormat,
             text: fileContentStr,
-            cleanup: dom.cleanup.checked
+            cleanup: dom.cleanup.checked,
           });
         } else if (category === "structured") {
           outputText = convertStructuredContent({
@@ -824,11 +891,13 @@ export function openFileConverter(fileName, currentPath, os, onComplete = null) 
             targetFormat,
             text: fileContentStr,
             pretty: dom.pretty.checked,
-            flatten: dom.flatten.checked
+            flatten: dom.flatten.checked,
           });
         } else if (category === "audio") {
           if (!audioBuffer && fileContentBlob) {
-            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const audioContext = new (
+              window.AudioContext || window.webkitAudioContext
+            )();
             const arrayBuffer = await (fileContentBlob.arrayBuffer
               ? fileContentBlob.arrayBuffer()
               : fileContentBlob.slice().arrayBuffer());
@@ -849,7 +918,7 @@ export function openFileConverter(fileName, currentPath, os, onComplete = null) 
             volumeBoost: parseFloat(dom.audioVolBoost.value) || 0,
             normalize: dom.audioNormalize.checked,
             trim: dom.audioTrim.checked,
-            ffmpegRunner: getElectronRunner()
+            ffmpegRunner: getElectronRunner(),
           });
 
           dom.progressFill.style.width = "75%";
@@ -867,19 +936,29 @@ export function openFileConverter(fileName, currentPath, os, onComplete = null) 
             bitrate: parseInt(dom.videoBitrate.value) * 1000000,
             codec: dom.videoCodec.value,
             audioCodec: dom.videoAudioCodec.value,
-            mute: dom.videoMute.checked
+            mute: dom.videoMute.checked,
           });
 
           dom.progressText.textContent = "Running FFmpeg conversion...";
-          outputBlob = await ffmpegConvert(fileContentBlob, ext, built.outputExt, built.args, getElectronRunner());
+          outputBlob = await ffmpegConvert(
+            fileContentBlob,
+            ext,
+            built.outputExt,
+            built.args,
+            getElectronRunner(),
+          );
         }
 
         dom.progressFill.style.width = "90%";
         dom.progressText.textContent = "Exporting to virtual filesystem...";
 
-        const exists = await fs.exists(fs.join(fs.resolveUserPath(currentPath), finalName));
+        const exists = await fs.exists(
+          fs.join(fs.resolveUserPath(currentPath), finalName),
+        );
         if (exists && !dom.overwrite.checked) {
-          throw new Error(`File "${finalName}" already exists. Check Overwrite to replace.`);
+          throw new Error(
+            `File "${finalName}" already exists. Check Overwrite to replace.`,
+          );
         }
 
         if (exists) {
@@ -900,13 +979,18 @@ export function openFileConverter(fileName, currentPath, os, onComplete = null) 
           originalBackup: fileContentBlob || fileContentStr,
           convertedPath: [...currentPath],
           convertedName: finalName,
-          timestamp: Date.now()
+          timestamp: Date.now(),
         });
 
         dom.progressFill.style.width = "100%";
         dom.progressText.textContent = "Conversion complete";
-        os.notify.send("File Converter", `Converted to "${finalName}"`, { type: "success", duration: 3000 });
-        os.events.emit(BusEvents.ACHIEVEMENT_TRIGGER, { achievementId: Achievements.Converter });
+        os.notify.send("File Converter", `Converted to "${finalName}"`, {
+          type: "success",
+          duration: 3000,
+        });
+        os.events.emit(BusEvents.ACHIEVEMENT_TRIGGER, {
+          achievementId: Achievements.Converter,
+        });
 
         updateHistoryUI();
 

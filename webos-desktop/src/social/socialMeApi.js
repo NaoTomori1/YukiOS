@@ -9,13 +9,24 @@ export async function fetchSocialMe({ refresh = false } = {}) {
   const userId = getLiveUserId();
   if (!userId) return null;
   if (!refresh && meCache && Date.now() - meTime < 15 * 1000) return meCache;
-  const data = await socialGet(`/live/social/me?userId=${encodeURIComponent(userId)}`);
+  const data = await socialGet(
+    `/live/social/me?userId=${encodeURIComponent(userId)}`,
+  );
   if (!data || !data.userId) return null;
   meCache = data;
   meTime = Date.now();
-  os.storage.set(StorageKeys.socialCoins, typeof data.coins === "number" ? data.coins : 0);
-  os.storage.set(StorageKeys.socialInventory, Array.isArray(data.inventory) ? data.inventory : []);
-  os.storage.set(StorageKeys.socialStreak, typeof data.streak === "number" ? data.streak : 0);
+  os.storage.set(
+    StorageKeys.socialCoins,
+    typeof data.coins === "number" ? data.coins : 0,
+  );
+  os.storage.set(
+    StorageKeys.socialInventory,
+    Array.isArray(data.inventory) ? data.inventory : [],
+  );
+  os.storage.set(
+    StorageKeys.socialStreak,
+    typeof data.streak === "number" ? data.streak : 0,
+  );
   return data;
 }
 
@@ -31,7 +42,9 @@ export function getCachedSocialMe() {
 export async function fetchQuests() {
   const userId = getLiveUserId();
   if (!userId) return [];
-  const data = await socialGet(`/live/quests?userId=${encodeURIComponent(userId)}`);
+  const data = await socialGet(
+    `/live/quests?userId=${encodeURIComponent(userId)}`,
+  );
   return Array.isArray(data?.quests) ? data.quests : [];
 }
 
@@ -40,7 +53,9 @@ export async function claimQuest(questId) {
   if (!userId || !questId) return { error: "Missing profile." };
   const res = await socialPost("/live/quests/claim", { userId, questId });
   if (res.ok) invalidateSocialMe();
-  return res.ok ? { status: "ok", rewardCoins: res.data.rewardCoins } : { error: res.data.error || "Could not claim." };
+  return res.ok
+    ? { status: "ok", rewardCoins: res.data.rewardCoins }
+    : { error: res.data.error || "Could not claim." };
 }
 
 export async function fetchLeaderboard(week, sort) {
@@ -63,13 +78,21 @@ export async function fetchReactions(targetId) {
 export async function sendReaction(targetId, reaction) {
   const userId = getLiveUserId();
   if (!userId || !targetId || !reaction) return { error: "Missing profile." };
-  const res = await socialPost("/live/reactions", { userId, targetId, reaction });
-  return res.ok ? { status: "ok" } : { error: res.data.error || "Could not react." };
+  const res = await socialPost("/live/reactions", {
+    userId,
+    targetId,
+    reaction,
+  });
+  return res.ok
+    ? { status: "ok" }
+    : { error: res.data.error || "Could not react." };
 }
 
 export async function removeReaction(targetId) {
   const userId = getLiveUserId();
   if (!userId || !targetId) return { error: "Missing profile." };
   const res = await socialDelete("/live/reactions", { userId, targetId });
-  return res.ok ? { status: "ok" } : { error: res.data.error || "Could not remove." };
+  return res.ok
+    ? { status: "ok" }
+    : { error: res.data.error || "Could not remove." };
 }

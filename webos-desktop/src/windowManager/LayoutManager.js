@@ -9,14 +9,24 @@ export class LayoutManager {
     const {
       position = "auto",
       workspace = this.manager.workspaceManager?.activeId || "default",
-      allowManualPosition = false
+      allowManualPosition = false,
     } = options;
 
-    if (allowManualPosition && position.x !== undefined && position.y !== undefined) {
+    if (
+      allowManualPosition &&
+      position.x !== undefined &&
+      position.y !== undefined
+    ) {
       const bounds = this.getScreenBounds();
       return {
-        left: Math.max(bounds.minX, Math.min(bounds.maxX - windowWidth, position.x)),
-        top: Math.max(bounds.minY, Math.min(bounds.maxY - windowHeight, position.y))
+        left: Math.max(
+          bounds.minX,
+          Math.min(bounds.maxX - windowWidth, position.x),
+        ),
+        top: Math.max(
+          bounds.minY,
+          Math.min(bounds.maxY - windowHeight, position.y),
+        ),
       };
     }
 
@@ -24,11 +34,21 @@ export class LayoutManager {
       return this.getCenteredPosition(windowWidth, windowHeight);
     }
 
-    if (typeof position === "object" && position.x !== undefined && position.y !== undefined) {
+    if (
+      typeof position === "object" &&
+      position.x !== undefined &&
+      position.y !== undefined
+    ) {
       const bounds = this.getScreenBounds();
       return {
-        left: Math.max(bounds.minX, Math.min(bounds.maxX - windowWidth, position.x)),
-        top: Math.max(bounds.minY, Math.min(bounds.maxY - windowHeight, position.y))
+        left: Math.max(
+          bounds.minX,
+          Math.min(bounds.maxX - windowWidth, position.x),
+        ),
+        top: Math.max(
+          bounds.minY,
+          Math.min(bounds.maxY - windowHeight, position.y),
+        ),
       };
     }
 
@@ -37,12 +57,16 @@ export class LayoutManager {
 
   getScreenBounds() {
     const padding = 20;
-    const taskbarPosition = os.storage.get(StorageKeys.taskbarPosition) || "bottom";
+    const taskbarPosition =
+      os.storage.get(StorageKeys.taskbarPosition) || "bottom";
     const taskbar = $("#taskbar");
     let taskbarSize = 0;
     if (taskbar) {
       const rect = taskbar.getBoundingClientRect();
-      taskbarSize = taskbarPosition === "left" || taskbarPosition === "right" ? rect.width : rect.height;
+      taskbarSize =
+        taskbarPosition === "left" || taskbarPosition === "right"
+          ? rect.width
+          : rect.height;
     }
 
     let minX = padding;
@@ -62,10 +86,14 @@ export class LayoutManager {
     const taskbar = $("#taskbar");
     if (!taskbar) return { top: 0, left: 0, width: 0, height: 0 };
     const rect = taskbar.getBoundingClientRect();
-    const taskbarPosition = os.storage.get(StorageKeys.taskbarPosition) || "bottom";
-    if (taskbarPosition === "left") return { top: 0, left: 0, width: rect.width, height: 0 };
-    if (taskbarPosition === "right") return { top: 0, left: 0, width: rect.width, height: 0 };
-    if (taskbarPosition === "top") return { top: 0, left: 0, width: 0, height: rect.height };
+    const taskbarPosition =
+      os.storage.get(StorageKeys.taskbarPosition) || "bottom";
+    if (taskbarPosition === "left")
+      return { top: 0, left: 0, width: rect.width, height: 0 };
+    if (taskbarPosition === "right")
+      return { top: 0, left: 0, width: rect.width, height: 0 };
+    if (taskbarPosition === "top")
+      return { top: 0, left: 0, width: 0, height: rect.height };
     return { top: 0, left: 0, width: 0, height: rect.height };
   }
 
@@ -73,7 +101,8 @@ export class LayoutManager {
     const taskbar = $("#taskbar");
     if (!taskbar) return 0;
     const rect = taskbar.getBoundingClientRect();
-    const taskbarPosition = os.storage.get(StorageKeys.taskbarPosition) || "bottom";
+    const taskbarPosition =
+      os.storage.get(StorageKeys.taskbarPosition) || "bottom";
     return taskbarPosition === "bottom" ? rect.height : 0;
   }
 
@@ -82,7 +111,7 @@ export class LayoutManager {
 
     return {
       left: bounds.minX + (bounds.maxX - bounds.minX - windowWidth) / 2,
-      top: bounds.minY + (bounds.maxY - bounds.minY - windowHeight) / 2
+      top: bounds.minY + (bounds.maxY - bounds.minY - windowHeight) / 2,
     };
   }
 
@@ -94,7 +123,10 @@ export class LayoutManager {
     this.manager.lastSpawnTime = now;
 
     const windows = $$(".window").filter(
-      (win) => win.style.display !== "none" && win.style.visibility !== "hidden" && win.id !== "desktop"
+      (win) =>
+        win.style.display !== "none" &&
+        win.style.visibility !== "hidden" &&
+        win.id !== "desktop",
     );
 
     if (windows.length === 0) {
@@ -135,8 +167,14 @@ export class LayoutManager {
     }
 
     const finalPos = {
-      left: Math.max(bounds.minX, Math.min(bounds.maxX - windowWidth, targetLeft)),
-      top: Math.max(bounds.minY, Math.min(bounds.maxY - windowHeight, targetTop))
+      left: Math.max(
+        bounds.minX,
+        Math.min(bounds.maxX - windowWidth, targetLeft),
+      ),
+      top: Math.max(
+        bounds.minY,
+        Math.min(bounds.maxY - windowHeight, targetTop),
+      ),
     };
 
     this.manager.lastSpawnedPosition = finalPos;

@@ -7,7 +7,7 @@ import {
   archiveBaseName,
   isTextFile,
   mimeFromExt,
-  sanitizeTitle
+  sanitizeTitle,
 } from "../utils.js";
 
 describe("utils", () => {

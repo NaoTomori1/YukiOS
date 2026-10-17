@@ -3,7 +3,7 @@ export const PROXIES = [
   { label: "WhateverOrigin", prefix: "https://whateverorigin.org/get?url=" },
   { label: "proxy.2677929.xyz", prefix: "https://proxy.2677929.xyz/" },
   { label: "cors-anywhere.herokuapp", prefix: "cors-anywhere.herokuapp.com/" },
-  { label: "Tor Anonymous", type: "tor" }
+  { label: "Tor Anonymous", type: "tor" },
 ];
 
 export function clampProxyIndex(index, proxies = PROXIES) {
@@ -23,9 +23,14 @@ export function buildProxyUrl(url, proxyIndex = 0, proxies = PROXIES) {
   return proxy.prefix + encodeURIComponent(url);
 }
 
-export async function fetchHtmlThroughProxy(url, proxyIndex = 0, proxies = PROXIES) {
+export async function fetchHtmlThroughProxy(
+  url,
+  proxyIndex = 0,
+  proxies = PROXIES,
+) {
   const proxyUrl = buildProxyUrl(url, proxyIndex, proxies);
-  if (!proxyUrl) throw new Error("Tor proxy not supported in fetchHtmlThroughProxy");
+  if (!proxyUrl)
+    throw new Error("Tor proxy not supported in fetchHtmlThroughProxy");
   const res = await fetch(proxyUrl);
   if (!res.ok) throw new Error(`HTTP ${res.status} fetching ${proxyUrl}`);
 
@@ -45,15 +50,26 @@ export async function fetchHtmlThroughProxy(url, proxyIndex = 0, proxies = PROXI
     }
   };
 
-  html = html.replace(/(src=|href=|action=|content=)(["'])([^"']+)\2/gi, (match, attr, quote, url) => {
-    if (url.startsWith("data:") || url.startsWith("blob:") || url.startsWith("#")) {
-      return match;
-    }
-    return `${attr}${quote}${rewriteUrl(url)}${quote}`;
-  });
+  html = html.replace(
+    /(src=|href=|action=|content=)(["'])([^"']+)\2/gi,
+    (match, attr, quote, url) => {
+      if (
+        url.startsWith("data:") ||
+        url.startsWith("blob:") ||
+        url.startsWith("#")
+      ) {
+        return match;
+      }
+      return `${attr}${quote}${rewriteUrl(url)}${quote}`;
+    },
+  );
 
   html = html.replace(/url\((["']?)([^"')]+)\1\)/gi, (match, quote, url) => {
-    if (url.startsWith("data:") || url.startsWith("blob:") || url.startsWith("#")) {
+    if (
+      url.startsWith("data:") ||
+      url.startsWith("blob:") ||
+      url.startsWith("#")
+    ) {
       return match;
     }
     return `url(${quote}${rewriteUrl(url)}${quote})`;
@@ -73,7 +89,10 @@ export async function fetchDirectAsBlobUrl(url) {
   const hasBase = /<base\b[^>]*>/i.test(html);
   if (!hasBase) {
     if (/<head\b[^>]*>/i.test(html))
-      withBase = html.replace(/<head\b[^>]*>/i, (m) => `${m}\n<base href="${baseHref}">`);
+      withBase = html.replace(
+        /<head\b[^>]*>/i,
+        (m) => `${m}\n<base href="${baseHref}">`,
+      );
     else withBase = `<base href="${baseHref}">\n${html}`;
   }
   const blob = new Blob([withBase], { type: "text/html" });

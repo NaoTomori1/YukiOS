@@ -3,7 +3,16 @@ import { os, $, $$, BusEvents, setStyle } from "../framework.js";
 import { FileKind } from "../shared/fileKindDetector.js";
 
 export class DragDropManager {
-  constructor(desktop, fs, positionHelper, positionStore, selectionManager, iconManager, iconDataHelper, explorerApp) {
+  constructor(
+    desktop,
+    fs,
+    positionHelper,
+    positionStore,
+    selectionManager,
+    iconManager,
+    iconDataHelper,
+    explorerApp,
+  ) {
     this.desktop = desktop;
     this.fs = fs;
     this.positionHelper = positionHelper;
@@ -12,7 +21,11 @@ export class DragDropManager {
     this.iconManager = iconManager;
     this.iconDataHelper = iconDataHelper;
     this.explorerApp = explorerApp;
-    this.state = { dragTarget: null, explorerDragTarget: null, isUserDragging: false };
+    this.state = {
+      dragTarget: null,
+      explorerDragTarget: null,
+      isUserDragging: false,
+    };
   }
 
   updateDragTarget(event) {
@@ -53,11 +66,17 @@ export class DragDropManager {
       });
     }
 
-    if (this.state.explorerDragTarget && this.state.explorerDragTarget !== foundExplorer) {
-      this.state.explorerDragTarget.querySelector("[id$='-view']")?.style.setProperty("outline", "");
+    if (
+      this.state.explorerDragTarget &&
+      this.state.explorerDragTarget !== foundExplorer
+    ) {
+      this.state.explorerDragTarget
+        .querySelector("[id$='-view']")
+        ?.style.setProperty("outline", "");
     }
     if (foundExplorer) {
-      foundExplorer.querySelector("[id$='-view']").style.outline = "2px solid rgba(79,158,255,0.8)";
+      foundExplorer.querySelector("[id$='-view']").style.outline =
+        "2px solid rgba(79,158,255,0.8)";
       this.state.explorerDragTarget = foundExplorer;
     } else {
       this.state.explorerDragTarget = null;
@@ -69,11 +88,15 @@ export class DragDropManager {
     let moved = 0;
     for (const icon of icons) {
       if (icon.classList.contains("folder-icon")) continue;
-      const name = icon.dataset.fileName || `${this.iconDataHelper.getIconName(icon)}.desktop`;
+      const name =
+        icon.dataset.fileName ||
+        `${this.iconDataHelper.getIconName(icon)}.desktop`;
       const destDir = this.fs.resolveUserPath(["Desktop", folderName]);
       const destPath = this.fs.join(destDir, name);
       const destExists = await os.fs.exists(destPath);
-      const finalName = destExists ? await this.fs.getUniqueFileName(["Desktop", folderName], name) : name;
+      const finalName = destExists
+        ? await this.fs.getUniqueFileName(["Desktop", folderName], name)
+        : name;
       const fileContent = await os.fs.read(["Desktop", name]);
       await os.fs.write(["Desktop", folderName, finalName], fileContent);
       await os.fs.delete(["Desktop"], name);
@@ -128,9 +151,18 @@ export class DragDropManager {
 
           if (action === "replace") {
             await this.fs.updateFile(inst.currentPath, fileName, content);
-            await this.fs.writeMeta(destDir, fileName, { kind, icon: fileIcon });
+            await this.fs.writeMeta(destDir, fileName, {
+              kind,
+              icon: fileIcon,
+            });
           } else {
-            await this.fs.createFile(inst.currentPath, fileName, content, kind, fileIcon);
+            await this.fs.createFile(
+              inst.currentPath,
+              fileName,
+              content,
+              kind,
+              fileIcon,
+            );
           }
 
           await os.fs.delete(["Desktop"], fileName);
@@ -142,14 +174,25 @@ export class DragDropManager {
           const folderName = icon.dataset.folderName;
           const destPath = inst.currentPath.length ? inst.currentPath : [];
           await os.fs.mkdir([...destPath, folderName]);
-          const srcEntries = await os.fs.readdir(["Desktop", folderName]).catch(() => ({}));
+          const srcEntries = await os.fs
+            .readdir(["Desktop", folderName])
+            .catch(() => ({}));
 
           for (const [childName, childData] of Object.entries(srcEntries)) {
             if (childData?.type !== "file") continue;
 
-            const childContent = await this.fs.getFileContent(["Desktop", folderName], childName);
-            const childKind = await this.fs.getFileKind(["Desktop", folderName], childName);
-            const childIcon = await this.fs.getFileIcon(["Desktop", folderName], childName);
+            const childContent = await this.fs.getFileContent(
+              ["Desktop", folderName],
+              childName,
+            );
+            const childKind = await this.fs.getFileKind(
+              ["Desktop", folderName],
+              childName,
+            );
+            const childIcon = await this.fs.getFileIcon(
+              ["Desktop", folderName],
+              childName,
+            );
 
             const destDir = this.fs.resolveUserPath([...destPath, folderName]);
             const destFilePath = this.fs.join(destDir, childName);
@@ -169,10 +212,23 @@ export class DragDropManager {
             if (action === "skip") continue;
 
             if (action === "replace") {
-              await this.fs.updateFile([...destPath, folderName], childName, childContent);
-              await this.fs.writeMeta(destDir, childName, { kind: childKind, icon: childIcon });
+              await this.fs.updateFile(
+                [...destPath, folderName],
+                childName,
+                childContent,
+              );
+              await this.fs.writeMeta(destDir, childName, {
+                kind: childKind,
+                icon: childIcon,
+              });
             } else {
-              await this.fs.createFile([...destPath, folderName], childName, childContent, childKind, childIcon);
+              await this.fs.createFile(
+                [...destPath, folderName],
+                childName,
+                childContent,
+                childKind,
+                childIcon,
+              );
             }
           }
 
@@ -182,7 +238,9 @@ export class DragDropManager {
           this.selectionManager.remove(icon);
           moved++;
         } else {
-          const fileName = icon.dataset.fileName || `${this.iconDataHelper.getIconName(icon)}.desktop`;
+          const fileName =
+            icon.dataset.fileName ||
+            `${this.iconDataHelper.getIconName(icon)}.desktop`;
           const content = await this.fs.getFileContent(["Desktop"], fileName);
 
           const destDir = this.fs.resolveUserPath(inst.currentPath);
@@ -205,7 +263,12 @@ export class DragDropManager {
           if (action === "replace") {
             await this.fs.updateFile(inst.currentPath, fileName, content);
           } else {
-            await this.fs.createFile(inst.currentPath, fileName, content, "text");
+            await this.fs.createFile(
+              inst.currentPath,
+              fileName,
+              content,
+              "text",
+            );
           }
 
           await os.fs.delete(["Desktop"], fileName);
@@ -232,7 +295,9 @@ export class DragDropManager {
     const topPx = clientY - rect.top;
 
     if (isFile) {
-      const existingIcon = $(`.desktop-file-icon[data-file-name="${CSS.escape(name)}"]`);
+      const existingIcon = $(
+        `.desktop-file-icon[data-file-name="${CSS.escape(name)}"]`,
+      );
       if (existingIcon) {
         this.positionHelper.setPosition(existingIcon, leftPx - 40, topPx - 40);
         this.positionHelper.snap(existingIcon);
@@ -260,13 +325,23 @@ export class DragDropManager {
         }
 
         let content;
-        if (kind === FileKind.IMAGE || kind === FileKind.VIDEO || kind === FileKind.AUDIO) {
+        if (
+          kind === FileKind.IMAGE ||
+          kind === FileKind.VIDEO ||
+          kind === FileKind.AUDIO
+        ) {
           const blob = await os.fs.readBinaryFile([...sourcePath], name);
           content = blob;
           if (action === "replace") {
             await os.fs.writeBinaryFile(["Desktop"], name, blob, kind, null);
           } else {
-            await os.fs.writeBinaryFile(["Desktop"], finalName, blob, kind, null);
+            await os.fs.writeBinaryFile(
+              ["Desktop"],
+              finalName,
+              blob,
+              kind,
+              null,
+            );
           }
         } else {
           content = await os.fs.read([...sourcePath, name]);
@@ -281,13 +356,16 @@ export class DragDropManager {
 
         await os.fs.delete(sourcePath, name);
 
-        const icon = await this.iconManager.createDesktopFileIcon(finalName, { content, kind });
+        const icon = await this.iconManager.createDesktopFileIcon(finalName, {
+          content,
+          kind,
+        });
         if (icon) {
           this.positionHelper.setPosition(icon, leftPx - 40, topPx - 40);
           this.positionHelper.snap(icon);
           const { col, row } = this.positionHelper.pixelsToCell(
             parseFloat(icon.style.left) || 0,
-            parseFloat(icon.style.top) || 0
+            parseFloat(icon.style.top) || 0,
           );
           const saved = this.positionStore.load();
           saved[this.positionStore.getKey(icon)] = { col, row };
@@ -297,7 +375,9 @@ export class DragDropManager {
         os.notify.send(`Could not move "${name}" to Desktop`);
       }
     } else {
-      const existingIcon = $(`.folder-icon[data-folder-name="${CSS.escape(name)}"]`);
+      const existingIcon = $(
+        `.folder-icon[data-folder-name="${CSS.escape(name)}"]`,
+      );
       if (existingIcon) {
         this.positionHelper.setPosition(existingIcon, leftPx - 40, topPx - 40);
         this.positionHelper.snap(existingIcon);
@@ -306,15 +386,23 @@ export class DragDropManager {
 
       try {
         await os.fs.mkdir(["Desktop", name]);
-        const srcEntries = await os.fs.readdir([...sourcePath, name]).catch(() => ({}));
+        const srcEntries = await os.fs
+          .readdir([...sourcePath, name])
+          .catch(() => ({}));
 
         let applyToAllAction = null;
 
         for (const [childName, childData] of Object.entries(srcEntries)) {
           if (childData?.type !== "file") continue;
 
-          const childContent = await this.fs.getFileContent([...sourcePath, name], childName);
-          const childKind = await this.fs.getFileKind([...sourcePath, name], childName);
+          const childContent = await this.fs.getFileContent(
+            [...sourcePath, name],
+            childName,
+          );
+          const childKind = await this.fs.getFileKind(
+            [...sourcePath, name],
+            childName,
+          );
 
           const destDir = this.fs.resolveUserPath(["Desktop", name]);
           const destFilePath = this.fs.join(destDir, childName);
@@ -334,10 +422,20 @@ export class DragDropManager {
           if (action === "skip") continue;
 
           if (action === "replace") {
-            await this.fs.updateFile(["Desktop", name], childName, childContent);
+            await this.fs.updateFile(
+              ["Desktop", name],
+              childName,
+              childContent,
+            );
             await this.fs.writeMeta(destDir, childName, { kind: childKind });
           } else {
-            await this.fs.createFile(["Desktop", name], childName, childContent, childKind, null);
+            await this.fs.createFile(
+              ["Desktop", name],
+              childName,
+              childContent,
+              childKind,
+              null,
+            );
           }
         }
 
@@ -348,7 +446,7 @@ export class DragDropManager {
           this.positionHelper.snap(icon);
           const { col, row } = this.positionHelper.pixelsToCell(
             parseFloat(icon.style.left) || 0,
-            parseFloat(icon.style.top) || 0
+            parseFloat(icon.style.top) || 0,
           );
           const saved = this.positionStore.load();
           saved[this.positionStore.getKey(icon)] = { col, row };
@@ -365,35 +463,57 @@ export class DragDropManager {
     this.state.isUserDragging = false;
     const addedIcons = this.selectionManager.toArray();
     addedIcons.forEach((icon) => {
-      os.events.emit(BusEvents.DESKTOP_ICON_ADDED, { icon: icon.dataset.icon || icon.querySelector("img")?.src || "" });
+      os.events.emit(BusEvents.DESKTOP_ICON_ADDED, {
+        icon: icon.dataset.icon || icon.querySelector("img")?.src || "",
+      });
     });
 
     if (this.state.explorerDragTarget) {
       const explorerWin = this.state.explorerDragTarget;
-      explorerWin.querySelector("[id$='-view']")?.style.setProperty("outline", "");
+      explorerWin
+        .querySelector("[id$='-view']")
+        ?.style.setProperty("outline", "");
       this.state.explorerDragTarget = null;
       this.selectionManager.forEach((icon) =>
-        Object.assign(icon.style, { opacity: "1", zIndex: "1", cursor: "default" })
+        Object.assign(icon.style, {
+          opacity: "1",
+          zIndex: "1",
+          cursor: "default",
+        }),
       );
-      await this.moveIconsToExplorer(this.selectionManager.toArray(), explorerWin.id);
+      await this.moveIconsToExplorer(
+        this.selectionManager.toArray(),
+        explorerWin.id,
+      );
       return;
     }
 
     if (this.state.dragTarget) {
       this.selectionManager.forEach((icon) =>
-        Object.assign(icon.style, { opacity: "1", zIndex: "1", cursor: "default" })
+        Object.assign(icon.style, {
+          opacity: "1",
+          zIndex: "1",
+          cursor: "default",
+        }),
       );
-      await this.moveIconsToFolder(this.selectionManager.toArray(), this.state.dragTarget.dataset.folderName);
+      await this.moveIconsToFolder(
+        this.selectionManager.toArray(),
+        this.state.dragTarget.dataset.folderName,
+      );
       this.state.dragTarget.style.outline = "";
       this.state.dragTarget = null;
     } else {
       const saved = this.positionStore.load();
       this.selectionManager.forEach((icon) => {
         this.positionHelper.snap(icon);
-        Object.assign(icon.style, { opacity: "1", zIndex: "1", cursor: "default" });
+        Object.assign(icon.style, {
+          opacity: "1",
+          zIndex: "1",
+          cursor: "default",
+        });
         const { col, row } = this.positionHelper.pixelsToCell(
           parseFloat(icon.style.left) || 0,
-          parseFloat(icon.style.top) || 0
+          parseFloat(icon.style.top) || 0,
         );
         saved[this.positionStore.getKey(icon)] = { col, row };
       });
@@ -404,7 +524,11 @@ export class DragDropManager {
   onDragStart() {
     this.state.isUserDragging = true;
     this.selectionManager.forEach((icon) =>
-      Object.assign(icon.style, { opacity: "0.7", zIndex: "1200", cursor: "move" })
+      Object.assign(icon.style, {
+        opacity: "0.7",
+        zIndex: "1200",
+        cursor: "move",
+      }),
     );
   }
 
@@ -414,7 +538,7 @@ export class DragDropManager {
       this.positionHelper.setPosition(
         icon,
         Math.max(0, (parseFloat(icon.style.left) || 0) + dx),
-        Math.max(0, (parseFloat(icon.style.top) || 0) + dy)
+        Math.max(0, (parseFloat(icon.style.top) || 0) + dy),
       );
     });
     this.updateDragTarget(event);

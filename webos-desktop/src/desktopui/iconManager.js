@@ -4,7 +4,7 @@ import {
   openFileWith,
   readFileAsDataURL,
   generateThumbnail,
-  resolveFileIcon
+  resolveFileIcon,
 } from "../fileDisplay.js";
 import { FileKind } from "../shared/fileKindDetector.js";
 
@@ -12,36 +12,76 @@ import { resolveIconUrl } from "../shared/assetResolver.js";
 import { resolveDesktopIcon } from "../shared/iconUtils.js";
 import { getEffectiveIcon } from "../shared/iconPack.js";
 import { decodeFileContent } from "../utils/utils.js";
-import { scheduleFileTooltip, scheduleAppTooltip, hideFileTooltip } from "../shared/fileTooltip.js";
 import { BusEvents } from "../core/EventBus.js";
 import { Achievements } from "../achievements.js";
 import { makeDraggable } from "../shared/dragUtils.js";
 
-import { $, $$, createElement, setHTML, setText, setStyle } from "../shared/domUtils.js";
+import {
+  $,
+  $$,
+  createElement,
+  setHTML,
+  setText,
+  setStyle,
+} from "../shared/domUtils.js";
 import { StorageKeys, os, MODES } from "../framework.js";
-import { isPhysicsChaosActive, notePhysicsDrag, releasePhysicsBody } from "../shared/desktopPhysics.js";
+import {
+  isPhysicsChaosActive,
+  notePhysicsDrag,
+  releasePhysicsBody,
+} from "../shared/desktopPhysics.js";
 
 const HARDCODED_DESKTOP_ICONS = [
-  { app: "explorerApp", name: "Files", icon: "static/icons/file.webp" },
-  { app: "systemAppsApp", name: "System Apps", icon: "papirus:apps/utilities-tweak-tool" },
-  { app: "browserApp", name: "Browser", icon: resolveIconUrl("static/icons/chrome.webp") },
+  { app: "explorerApp", name: "Files", icon: "static/icons/explorerwin11.png" },
+  {
+    app: "systemAppsApp",
+    name: "System Apps",
+    icon: "papirus:apps/utilities-tweak-tool",
+  },
+  {
+    app: "browserApp",
+    name: "Browser",
+    icon: resolveIconUrl("static/icons/chrome.webp"),
+  },
   { app: "notepadApp", name: "Notepad", icon: "static/icons/notepad.webp" },
   { app: "room3dApp", name: "3D Room", icon: "static/icons/3dyukios.webp" },
   { app: "craxgptApp", name: "CraxGPT", icon: "papirus:apps/gnome-robots" },
-  { app: "shittifyApp", name: "Evil Spotify", icon: "static/icons/shittify.webp" },
+  {
+    app: "shittifyApp",
+    name: "Evil Spotify",
+    icon: "static/icons/shittify.webp",
+  },
   { app: "steamApp", name: "Yuki Steam", icon: "papirus:apps/steam" },
   { app: "discordApp", name: "Discord", icon: "papirus:apps/discord" },
-  { app: "geometryTodayApp", name: "Cloud Gaming (Geometry Today)", icon: "papirus:apps/preferences-desktop-gaming" },
+  {
+    app: "geometryTodayApp",
+    name: "Cloud Gaming (Geometry Today)",
+    icon: "papirus:apps/preferences-desktop-gaming",
+  },
   {
     app: "infaredYoutubeApp",
     name: "Infared Youtube",
-    icon: "https://cdn.jsdelivr.net/gh/NaoTomori1/yukios@main/static/icons/favicons/youtube.webp"
+    icon: "https://cdn.jsdelivr.net/gh/NaoTomori1/yukios@main/static/icons/favicons/youtube.webp",
   },
-  { app: "spriteFusionApp", name: "SpriteFusion Destroy", icon: "static/icons/spritefusion.ico" }
+  {
+    app: "spriteFusionApp",
+    name: "SpriteFusion Destroy",
+    icon: "static/icons/spritefusion.ico",
+  },
+  { app: "codeRedApp", name: "Code Red", icon: "icons/codered.svg" },
 ];
 
 export class IconManager {
-  constructor(desktop, fs, positionHelper, positionStore, selectionManager, notepadApp, explorerApp, dragDropManager) {
+  constructor(
+    desktop,
+    fs,
+    positionHelper,
+    positionStore,
+    selectionManager,
+    notepadApp,
+    explorerApp,
+    dragDropManager,
+  ) {
     this.desktop = desktop;
     this.fs = fs;
     this.positionHelper = positionHelper;
@@ -57,7 +97,11 @@ export class IconManager {
 
   makeIconInteractable(icon, ignoreDrag = false) {
     icon.draggable = false;
-    setStyle(icon, { userSelect: "none", webkitUserDrag: "none", cursor: "default" });
+    setStyle(icon, {
+      userSelect: "none",
+      webkitUserDrag: "none",
+      cursor: "default",
+    });
     if (!ignoreDrag) this.setupInteractDrag(icon);
     this.attachIconEvents(icon);
   }
@@ -68,27 +112,21 @@ export class IconManager {
       if (icon.classList.contains("folder-icon")) {
         this.openFolder(icon.dataset.folderName);
       } else if (icon.dataset.app) {
-        os.storage.set(StorageKeys.launchTimePrefix + icon.dataset.app, Date.now());
-        const extra = icon.dataset.steamGameId ? { steamGameId: icon.dataset.steamGameId } : null;
+        os.storage.set(
+          StorageKeys.launchTimePrefix + icon.dataset.app,
+          Date.now(),
+        );
+        const extra = icon.dataset.steamGameId
+          ? { steamGameId: icon.dataset.steamGameId }
+          : null;
         os.app.launch(icon.dataset.app, false, extra);
       } else if (icon.dataset.fileName) {
         this.openDesktopFile(icon.dataset.fileName);
       }
     });
-    icon.addEventListener("mousedown", (e) => this.handleIconSelection(icon, e.ctrlKey));
-    icon.addEventListener("mouseenter", (e) => {
-      const isFolder = icon.classList.contains("folder-icon");
-      const dirPath = ["Desktop"];
-      const name = isFolder ? icon.dataset.folderName : icon.dataset.fileName;
-      if (name) {
-        scheduleFileTooltip(e, dirPath, name, isFolder);
-      } else if (icon.dataset.app) {
-        const titleEl = icon.querySelector("div:last-child");
-        const title = titleEl ? titleEl.textContent.trim() : icon.dataset.app;
-        scheduleAppTooltip(e, title);
-      }
-    });
-    icon.addEventListener("mouseleave", () => hideFileTooltip());
+    icon.addEventListener("mousedown", (e) =>
+      this.handleIconSelection(icon, e.ctrlKey),
+    );
   }
 
   async openFolder(folderName) {
@@ -123,7 +161,7 @@ export class IconManager {
       top: 0,
       left: 0,
       bottom: 0,
-      right: 0
+      right: 0,
     };
 
     if (!this.dragDropManager) {
@@ -133,9 +171,10 @@ export class IconManager {
         },
         move: (e, dx, dy) => {
           this.dragMove(dx, dy);
-          if (isPhysicsChaosActive()) this.selectionManager.forEach((i) => notePhysicsDrag(i));
+          if (isPhysicsChaosActive())
+            this.selectionManager.forEach((i) => notePhysicsDrag(i));
         },
-        end: () => this.dragEnd()
+        end: () => this.dragEnd(),
       });
     }
     return makeDraggable(icon, {
@@ -145,7 +184,8 @@ export class IconManager {
       },
       move: (e, dx, dy, clientX, clientY) => {
         this.dragDropManager.onDragMove({ dx, dy, clientX, clientY });
-        if (isPhysicsChaosActive()) this.selectionManager.forEach((i) => notePhysicsDrag(i));
+        if (isPhysicsChaosActive())
+          this.selectionManager.forEach((i) => notePhysicsDrag(i));
       },
       end: () => {
         if (isPhysicsChaosActive()) {
@@ -153,12 +193,14 @@ export class IconManager {
           return;
         }
         this.dragDropManager.onDragEnd();
-      }
+      },
     });
   }
 
   dragStart() {
-    this.selectionManager.forEach((icon) => setStyle(icon, { opacity: "0.7", zIndex: "1200", cursor: "move" }));
+    this.selectionManager.forEach((icon) =>
+      setStyle(icon, { opacity: "0.7", zIndex: "1200", cursor: "move" }),
+    );
   }
 
   dragMove(dx, dy) {
@@ -167,7 +209,11 @@ export class IconManager {
       const topRaw = parseFloat(icon.style.top);
       const leftBase = Number.isFinite(leftRaw) ? leftRaw : 0;
       const topBase = Number.isFinite(topRaw) ? topRaw : 0;
-      this.positionHelper.setPosition(icon, Math.max(0, leftBase + dx), Math.max(0, topBase + dy));
+      this.positionHelper.setPosition(
+        icon,
+        Math.max(0, leftBase + dx),
+        Math.max(0, topBase + dy),
+      );
     });
   }
 
@@ -197,17 +243,26 @@ export class IconManager {
     if (this.pendingFolders.has(folderName)) return;
     this.pendingFolders.add(folderName);
     try {
-      if ($(`.folder-icon[data-folder-name="${CSS.escape(folderName)}"]`)) return;
-      const folderIcon = createElement("div", { className: "icon selectable folder-icon" });
+      if ($(`.folder-icon[data-folder-name="${CSS.escape(folderName)}"]`))
+        return;
+      const folderIcon = createElement("div", {
+        className: "icon selectable folder-icon",
+      });
       folderIcon.dataset.folderName = folderName;
-      folderIcon.dataset.rawIcon = "static/icons/file.webp";
+      folderIcon.dataset.rawIcon = "static/icons/explorerwin11.png";
       setHTML(
         folderIcon,
-        `<img src="${resolveIconUrl("static/icons/file.webp")}"><div title="${folderName.replace(/"/g, "&quot;")}">${folderName}</div>`
+        `<img src="${resolveIconUrl("static/icons/explorerwin11.png")}"><div title="${folderName.replace(/"/g, "&quot;")}">${folderName}</div>`,
       );
       const saved = this.positionStore.load();
       const key = this.positionStore.getKey(folderIcon);
-      if (saved[key]) this.positionHelper.placeAtCell(folderIcon, saved[key].col, saved[key].row, folderIcon);
+      if (saved[key])
+        this.positionHelper.placeAtCell(
+          folderIcon,
+          saved[key].col,
+          saved[key].row,
+          folderIcon,
+        );
       else this.positionHelper.snap(folderIcon);
       this.desktop.appendChild(folderIcon);
       this.makeIconInteractable(folderIcon);
@@ -218,11 +273,14 @@ export class IconManager {
   }
 
   async createDesktopFileIcon(fileName, itemData = null) {
-    if ($(`.desktop-file-icon[data-file-name="${CSS.escape(fileName)}"]`)) return;
+    if ($(`.desktop-file-icon[data-file-name="${CSS.escape(fileName)}"]`))
+      return;
     if (this.pendingIcons.has(fileName)) return;
     this.pendingIcons.add(fileName);
     try {
-      const displayName = fileName.endsWith(".desktop") ? fileName.slice(0, -8) : fileName;
+      const displayName = fileName.endsWith(".desktop")
+        ? fileName.slice(0, -8)
+        : fileName;
 
       if (!itemData || !itemData.type) {
         try {
@@ -237,19 +295,36 @@ export class IconManager {
           const raw = await this.fs.getFileContent(["Desktop"], fileName);
           const parsed = JSON.parse(raw);
           iconSrc = resolveDesktopIcon(raw, fileName);
-          if ($(`.desktop-file-icon[data-file-name="${CSS.escape(fileName)}"]`)) return;
-          const iconHTML = buildFileIconHTML(fileName, { storedIcon: iconSrc, size: 64, radius: 12 });
-          const icon = createElement("div", { className: "icon selectable desktop-file-icon" });
+          if ($(`.desktop-file-icon[data-file-name="${CSS.escape(fileName)}"]`))
+            return;
+          const iconHTML = buildFileIconHTML(fileName, {
+            storedIcon: iconSrc,
+            size: 64,
+            radius: 12,
+          });
+          const icon = createElement("div", {
+            className: "icon selectable desktop-file-icon",
+          });
           icon.dataset.fileName = fileName;
           icon.dataset.filePath = "Desktop";
           if (parsed && parsed.app) icon.dataset.app = parsed.app;
-          if (parsed && parsed.steamGameId) icon.dataset.steamGameId = parsed.steamGameId;
+          if (parsed && parsed.steamGameId)
+            icon.dataset.steamGameId = parsed.steamGameId;
           if (iconSrc) icon.dataset.rawIcon = iconSrc;
           else if (parsed && parsed.path) icon.dataset.rawIcon = parsed.path;
-          setHTML(icon, `${iconHTML}<div title="${displayName.replace(/"/g, "&quot;")}">${displayName}</div>`);
+          setHTML(
+            icon,
+            `${iconHTML}<div title="${displayName.replace(/"/g, "&quot;")}">${displayName}</div>`,
+          );
           const saved = this.positionStore.load();
           const key = this.positionStore.getKey(icon);
-          if (saved[key]) this.positionHelper.placeAtCell(icon, saved[key].col, saved[key].row, icon);
+          if (saved[key])
+            this.positionHelper.placeAtCell(
+              icon,
+              saved[key].col,
+              saved[key].row,
+              icon,
+            );
           else this.positionHelper.snap(icon);
           this.desktop.appendChild(icon);
           this.makeIconInteractable(icon);
@@ -268,7 +343,10 @@ export class IconManager {
           try {
             const content = await this.fs.getFileContent(["Desktop"], fileName);
             if (content) {
-              const src = content instanceof Blob ? await readFileAsDataURL(content) : content;
+              const src =
+                content instanceof Blob
+                  ? await readFileAsDataURL(content)
+                  : content;
               thumbnailSrc = await generateThumbnail(src);
               if (thumbnailSrc) this.thumbnailCache.set(cacheKey, thumbnailSrc);
             }
@@ -278,11 +356,20 @@ export class IconManager {
         }
       }
 
-      if ($(`.desktop-file-icon[data-file-name="${CSS.escape(fileName)}"]`)) return;
+      if ($(`.desktop-file-icon[data-file-name="${CSS.escape(fileName)}"]`))
+        return;
       let storedIconValue = null;
-      if (itemData?.faIcon !== undefined && itemData.faIcon !== null && itemData.faIcon !== "") {
+      if (
+        itemData?.faIcon !== undefined &&
+        itemData.faIcon !== null &&
+        itemData.faIcon !== ""
+      ) {
         storedIconValue = itemData.faIcon;
-      } else if (itemData?.icon !== undefined && itemData.icon !== null && itemData.icon !== "") {
+      } else if (
+        itemData?.icon !== undefined &&
+        itemData.icon !== null &&
+        itemData.icon !== ""
+      ) {
         storedIconValue = itemData.icon;
       }
       const iconHTML = buildFileIconHTML(fileName, {
@@ -290,17 +377,28 @@ export class IconManager {
         storedIcon: storedIconValue,
         isFolder: false,
         size: 64,
-        radius: 12
+        radius: 12,
       });
-      const icon = createElement("div", { className: "icon selectable desktop-file-icon" });
+      const icon = createElement("div", {
+        className: "icon selectable desktop-file-icon",
+      });
       icon.dataset.fileName = fileName;
       icon.dataset.filePath = "Desktop";
       if (storedIconValue) icon.dataset.rawIcon = storedIconValue;
-      setHTML(icon, `${iconHTML}<div title="${displayName.replace(/"/g, "&quot;")}">${displayName}</div>`);
+      setHTML(
+        icon,
+        `${iconHTML}<div title="${displayName.replace(/"/g, "&quot;")}">${displayName}</div>`,
+      );
 
       const saved = this.positionStore.load();
       const key = this.positionStore.getKey(icon);
-      if (saved[key]) this.positionHelper.placeAtCell(icon, saved[key].col, saved[key].row, icon);
+      if (saved[key])
+        this.positionHelper.placeAtCell(
+          icon,
+          saved[key].col,
+          saved[key].row,
+          icon,
+        );
       else this.positionHelper.snap(icon);
       this.desktop.appendChild(icon);
       this.makeIconInteractable(icon);
@@ -333,15 +431,20 @@ export class IconManager {
   openYouTubeEmbedDesktop(content) {
     const winId = `yt-embed-${Date.now()}`;
     const effectiveName =
-      content.name !== undefined && content.name !== null && content.name !== "" ? content.name : "YouTube Embed";
+      content.name !== undefined && content.name !== null && content.name !== ""
+        ? content.name
+        : "YouTube Embed";
     const win = os.window.create(winId, effectiveName, "800px", "600px");
 
-    const base = content.nocookie ? "https://www.youtube-nocookie.com" : "https://www.youtube.com";
+    const base = content.nocookie
+      ? "https://www.youtube-nocookie.com"
+      : "https://www.youtube.com";
     const params = new URLSearchParams();
     if (content.autoplay) params.set("autoplay", "1");
     if (!content.controls) params.set("controls", "0");
     if (content.mute && content.autoplay) params.set("mute", "1");
-    if (content.startSeconds > 0) params.set("start", String(content.startSeconds));
+    if (content.startSeconds > 0)
+      params.set("start", String(content.startSeconds));
     if (content.endSeconds > 0) params.set("end", String(content.endSeconds));
     if (content.loop) params.set("loop", "1");
     params.set("rel", "0");
@@ -354,7 +457,10 @@ export class IconManager {
       if (content.loop) params.set("playlist", content.videoId);
       embedUrl = `${base}/embed/${encodeURIComponent(content.videoId)}?${params.toString()}`;
     } else {
-      os.notify.send("Invalid YouTube embed data", "Missing videoId or playlistId");
+      os.notify.send(
+        "Invalid YouTube embed data",
+        "Missing videoId or playlistId",
+      );
       return;
     }
 
@@ -371,7 +477,9 @@ export class IconManager {
 
   async editDesktopFileWithNotepad(fileName) {
     try {
-      const content = await decodeFileContent(await this.fs.getFileContent(["Desktop"], fileName));
+      const content = await decodeFileContent(
+        await this.fs.getFileContent(["Desktop"], fileName),
+      );
       if (this.notepadApp?.open) {
         this.notepadApp.open(fileName, content, ["Desktop"]);
       }
@@ -382,17 +490,29 @@ export class IconManager {
   }
 
   async saveToWallpapers(name, content, kind, icon) {
-    os.events.emit(BusEvents.ACHIEVEMENT_TRIGGER, { achievementId: Achievements.PersonalSpace });
+    os.events.emit(BusEvents.ACHIEVEMENT_TRIGGER, {
+      achievementId: Achievements.PersonalSpace,
+    });
 
     const wallpapersPath = ["Pictures", "Wallpapers"];
     await os.fs.mkdir(wallpapersPath);
     const hasIcon = icon !== undefined && icon !== null && icon !== "";
-    const safeIcon = kind === FileKind.IMAGE ? "@content" : hasIcon ? icon : resolveIconUrl("static/icons/file.webp");
-    await os.fs.write([...wallpapersPath, name], content, { kind, icon: safeIcon });
+    const safeIcon =
+      kind === FileKind.IMAGE
+        ? "@content"
+        : hasIcon
+          ? icon
+          : resolveIconUrl("static/icons/explorerwin11.png");
+    await os.fs.write([...wallpapersPath, name], content, {
+      kind,
+      icon: safeIcon,
+    });
   }
 
   addFiles() {
-    const input = createElement("input", { attributes: { type: "file", multiple: "true" } });
+    const input = createElement("input", {
+      attributes: { type: "file", multiple: "true" },
+    });
     input.addEventListener("change", async () => {
       const files = Array.from(input.files);
       if (!files.length) return;
@@ -404,7 +524,8 @@ export class IconManager {
   }
 
   async initializeDesktopFiles() {
-    const hideDesktopIcons = os.storage.get(StorageKeys.hideDesktopIcons) === "true";
+    const hideDesktopIcons =
+      os.storage.get(StorageKeys.hideDesktopIcons) === "true";
     if (hideDesktopIcons) return;
 
     await os.fs.mkdir(["Desktop"]);
@@ -422,14 +543,18 @@ export class IconManager {
       icon.dataset.rawIcon = def.icon;
       const effective = getEffectiveIcon(def.icon);
       if (typeof effective === "string" && effective.startsWith("papirus:")) {
-        const img = createElement("img", { attributes: { src: resolveIconUrl(effective) } });
+        const img = createElement("img", {
+          attributes: { src: resolveIconUrl(effective) },
+        });
         img.className = "papirus-icon papirus-icon--48";
         icon.appendChild(img);
       } else if (typeof effective === "string" && effective.startsWith("fa")) {
         const i = createElement("i", { className: effective });
         icon.appendChild(i);
       } else {
-        const img = createElement("img", { attributes: { src: resolveIconUrl(effective) } });
+        const img = createElement("img", {
+          attributes: { src: resolveIconUrl(effective) },
+        });
         icon.appendChild(img);
       }
 
@@ -441,7 +566,12 @@ export class IconManager {
 
       const key = this.positionStore.getKey(icon);
       if (saved[key]) {
-        this.positionHelper.placeAtCell(icon, saved[key].col, saved[key].row, icon);
+        this.positionHelper.placeAtCell(
+          icon,
+          saved[key].col,
+          saved[key].row,
+          icon,
+        );
       } else {
         regularIcons.push(icon);
       }
@@ -453,9 +583,16 @@ export class IconManager {
     let occupied = null;
     if (regularIcons.length) {
       if (isMacMode) {
-        occupied = this.positionHelper.layoutMacVerticalSync(regularIcons, occupied);
+        occupied = this.positionHelper.layoutMacVerticalSync(
+          regularIcons,
+          occupied,
+        );
       } else {
-        occupied = this.positionHelper.layoutSync(regularIcons, false, occupied);
+        occupied = this.positionHelper.layoutSync(
+          regularIcons,
+          false,
+          occupied,
+        );
       }
     }
     this.desktop.appendChild(fragment);
@@ -463,14 +600,18 @@ export class IconManager {
 
     for (const def of HARDCODED_DESKTOP_ICONS) {
       const fileName = `${def.name}.desktop`;
-      await os.fs.write(["Desktop", fileName], JSON.stringify({ app: def.app, name: def.name, path: def.icon }));
+      await os.fs.write(
+        ["Desktop", fileName],
+        JSON.stringify({ app: def.app, name: def.name, path: def.icon }),
+      );
     }
 
     await this.loadDesktopItems();
   }
 
   async loadDesktopItems() {
-    const hideDesktopIcons = os.storage.get(StorageKeys.hideDesktopIcons) === "true";
+    const hideDesktopIcons =
+      os.storage.get(StorageKeys.hideDesktopIcons) === "true";
     if (hideDesktopIcons) return;
 
     const desktopFolder = await os.fs.readdir(["Desktop"]);
@@ -480,8 +621,11 @@ export class IconManager {
       } else if (itemData.type === "file") {
         if (name.endsWith(".desktop")) {
           const label = name.replace(".desktop", "");
-          const isHardcoded = $$(".icon.selectable:not(.desktop-file-icon)").some(
-            (i) => i.querySelector("div:last-child")?.textContent?.trim() === label
+          const isHardcoded = $$(
+            ".icon.selectable:not(.desktop-file-icon)",
+          ).some(
+            (i) =>
+              i.querySelector("div:last-child")?.textContent?.trim() === label,
           );
 
           if (isHardcoded) continue;
@@ -501,7 +645,11 @@ os.events.on("icon-pack-changed", () => {
       if (!fileName) return;
       const label = el.querySelector("div:last-child");
       if (!label) return;
-      const newHTML = buildFileIconHTML(fileName, { storedIcon: raw, size: 64, radius: 12 });
+      const newHTML = buildFileIconHTML(fileName, {
+        storedIcon: raw,
+        size: 64,
+        radius: 12,
+      });
       Array.from(el.children).forEach((c) => {
         if (c !== label) c.remove();
       });
@@ -511,20 +659,27 @@ os.events.on("icon-pack-changed", () => {
       return;
     }
     const raw =
-      el.dataset.rawIcon || (el.dataset.app && HARDCODED_DESKTOP_ICONS.find((d) => d.app === el.dataset.app)?.icon);
+      el.dataset.rawIcon ||
+      (el.dataset.app &&
+        HARDCODED_DESKTOP_ICONS.find((d) => d.app === el.dataset.app)?.icon);
     if (!raw) return;
     const effective = getEffectiveIcon(raw);
     const existing = el.querySelector("img, i, svg");
     if (existing) existing.remove();
-    const isPapirus = typeof effective === "string" && effective.startsWith("papirus:");
+    const isPapirus =
+      typeof effective === "string" && effective.startsWith("papirus:");
     let newIcon;
     if (isPapirus) {
-      newIcon = createElement("img", { attributes: { src: resolveIconUrl(effective) } });
+      newIcon = createElement("img", {
+        attributes: { src: resolveIconUrl(effective) },
+      });
       newIcon.className = "papirus-icon papirus-icon--48";
     } else if (typeof effective === "string" && effective.startsWith("fa")) {
       newIcon = createElement("i", { className: effective });
     } else {
-      newIcon = createElement("img", { attributes: { src: resolveIconUrl(effective) } });
+      newIcon = createElement("img", {
+        attributes: { src: resolveIconUrl(effective) },
+      });
     }
     el.prepend(newIcon);
   });

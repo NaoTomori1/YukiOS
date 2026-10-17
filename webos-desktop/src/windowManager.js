@@ -5,7 +5,10 @@ import { windowMakeResizable } from "./windowManager/makeResizable.js";
 import { setupWindowControls } from "./windowManager/windowControls.js";
 
 import { bus, BusEvents } from "./core/EventBus.js";
-import { initClickBubble, animateWindowOpen } from "./windowManager/AnimationSystem.js";
+import {
+  initClickBubble,
+  animateWindowOpen,
+} from "./windowManager/AnimationSystem.js";
 import { InputHandler } from "./windowManager/InputHandler.js";
 import { LayoutManager } from "./windowManager/LayoutManager.js";
 import { SnapSystem } from "./windowManager/SnapSystem.js";
@@ -17,7 +20,10 @@ import { AppRestorationService } from "./windowManager/AppRestorationService.js"
 import { WindowStateManager } from "./windowManager/WindowStateManager.js";
 import { ContextMenuManager } from "./windowManager/ContextMenuManager.js";
 import { WindowManagerUtils } from "./windowManager/WindowManagerUtils.js";
-import { HEADER_STYLES, resolveHeaderStyleId } from "./windowManager/headerStyles.js";
+import {
+  HEADER_STYLES,
+  resolveHeaderStyleId,
+} from "./windowManager/headerStyles.js";
 import { TilingManager } from "./modes/tiling/TilingManager.js";
 import { StorageKeys, os, MODES } from "./framework.js";
 import { $, createElement } from "./shared/domUtils.js";
@@ -99,7 +105,8 @@ export class WindowManager {
       } else if (nowActive && wasActive) {
         this.macDock.onSettingsChanged();
       }
-      const headerStyleChanged = this.appliedHeaderStyleId !== resolveHeaderStyleId();
+      const headerStyleChanged =
+        this.appliedHeaderStyleId !== resolveHeaderStyleId();
       if (wasActive !== nowActive || headerStyleChanged) {
         this.updateWindowHeaderStyles();
       }
@@ -153,9 +160,13 @@ export class WindowManager {
   }
 
   triggerSessionSave() {
-    if (this.appRestorationService && this.appRestorationService.isRestoring) return;
+    if (this.appRestorationService && this.appRestorationService.isRestoring)
+      return;
     if (this.sessionSaveTimer) clearTimeout(this.sessionSaveTimer);
-    this.sessionSaveTimer = setTimeout(() => this.appRestorationService.saveSession(), 500);
+    this.sessionSaveTimer = setTimeout(
+      () => this.appRestorationService.saveSession(),
+      500,
+    );
   }
 
   guessAppIdFromWinId(winId) {
@@ -170,7 +181,14 @@ export class WindowManager {
     return this.appRestorationService.restoreSession();
   }
 
-  notify(title, message, type = "info", duration = 5000, icon = null, appSource = null) {
+  notify(
+    title,
+    message,
+    type = "info",
+    duration = 5000,
+    icon = null,
+    appSource = null,
+  ) {
     os.notify.send(title, message, { type, duration, icon, appSource });
   }
 
@@ -199,7 +217,11 @@ export class WindowManager {
   }
 
   buildContextMenuItems(addMenuItem, addSeparator, win) {
-    this.contextMenuManager.buildContextMenuItems(addMenuItem, addSeparator, win);
+    this.contextMenuManager.buildContextMenuItems(
+      addMenuItem,
+      addSeparator,
+      win,
+    );
   }
 
   getOpenWindowCount() {
@@ -210,7 +232,14 @@ export class WindowManager {
     return this.utils.getWindowNormalGeometry(win);
   }
 
-  createWindow(id, title, width = "80vw", height = "80vh", isGame = false, initialOptions = {}) {
+  createWindow(
+    id,
+    title,
+    width = "80vw",
+    height = "80vh",
+    isGame = false,
+    initialOptions = {},
+  ) {
     if (typeof isGame === "object") {
       initialOptions = isGame;
       isGame = false;
@@ -239,19 +268,27 @@ export class WindowManager {
       win.dataset.dupId = id;
     }
     win.id = winId;
-    if (!id.startsWith("browser-app-") && !id.startsWith("scramjet-window-") && id !== "games-app-win") {
+    if (
+      !id.startsWith("browser-app-") &&
+      !id.startsWith("scramjet-window-") &&
+      id !== "games-app-win"
+    ) {
       win.style.opacity = "0";
     }
     if (options.appId) win.dataset.appId = options.appId;
     if (options.appType) win.dataset.appType = options.appType;
 
     const resolveToPx = (val, isHeight) => {
-      if (val == null) return isHeight ? window.innerHeight * 0.8 : window.innerWidth * 0.8;
+      if (val == null)
+        return isHeight ? window.innerHeight * 0.8 : window.innerWidth * 0.8;
       const str = String(val).trim();
-      if (str.endsWith("vw")) return (window.innerWidth * parseFloat(str)) / 100;
-      if (str.endsWith("vh")) return (window.innerHeight * parseFloat(str)) / 100;
+      if (str.endsWith("vw"))
+        return (window.innerWidth * parseFloat(str)) / 100;
+      if (str.endsWith("vh"))
+        return (window.innerHeight * parseFloat(str)) / 100;
       if (str.endsWith("em") || str.endsWith("rem")) {
-        const baseFontSize = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+        const baseFontSize =
+          parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
         return parseFloat(str) * baseFontSize;
       }
       if (str.endsWith("%")) {
@@ -269,7 +306,8 @@ export class WindowManager {
 
     let disableDesktopStretchScroll = false;
     try {
-      disableDesktopStretchScroll = os.storage.get(StorageKeys.disableDesktopStretchScroll) !== "false";
+      disableDesktopStretchScroll =
+        os.storage.get(StorageKeys.disableDesktopStretchScroll) !== "false";
     } catch {}
 
     let finalW = vw;
@@ -279,19 +317,32 @@ export class WindowManager {
     if (options.forceId) {
       if (options.width != null) finalW = resolveToPx(options.width, false);
       if (options.height != null) finalH = resolveToPx(options.height, true);
-      if (options.position) position = { left: options.position.x, top: options.position.y };
+      if (options.position)
+        position = { left: options.position.x, top: options.position.y };
     } else if (options.appId) {
       try {
-        const saved = os.storage.get(`${StorageKeys.geometryPrefix}${options.appId}`);
+        const saved = os.storage.get(
+          `${StorageKeys.geometryPrefix}${options.appId}`,
+        );
         if (saved) {
-          if (saved && typeof saved.x === "number" && typeof saved.y === "number") {
+          if (
+            saved &&
+            typeof saved.x === "number" &&
+            typeof saved.y === "number"
+          ) {
             position = { left: saved.x, top: saved.y };
             if (saved.width) finalW = resolveToPx(saved.width, false);
             if (saved.height) finalH = resolveToPx(saved.height, true);
             try {
               const b = this.getScreenBounds();
-              position.left = Math.max(b.minX, Math.min(b.maxX - finalW, position.left));
-              position.top = Math.max(b.minY, Math.min(b.maxY - finalH, position.top));
+              position.left = Math.max(
+                b.minX,
+                Math.min(b.maxX - finalW, position.left),
+              );
+              position.top = Math.max(
+                b.minY,
+                Math.min(b.maxY - finalH, position.top),
+              );
             } catch {}
           }
         }
@@ -305,7 +356,7 @@ export class WindowManager {
         left: "0",
         top: "0",
         position: "fixed",
-        zIndex: this.nextWindowZIndex()
+        zIndex: this.nextWindowZIndex(),
       });
     } else if (options.deckMode) {
       Object.assign(win.dataset, {
@@ -313,7 +364,7 @@ export class WindowManager {
         prevHeight: win.style.height,
         prevLeft: win.style.left,
         prevTop: win.style.top,
-        prevZIndex: win.style.zIndex
+        prevZIndex: win.style.zIndex,
       });
       Object.assign(win.style, {
         width: "100vw",
@@ -321,7 +372,7 @@ export class WindowManager {
         left: "0",
         top: "0",
         position: "fixed",
-        zIndex: this.nextWindowZIndex()
+        zIndex: this.nextWindowZIndex(),
       });
       win.dataset.fullscreen = "true";
       win.classList.add("deck-launched");
@@ -334,7 +385,7 @@ export class WindowManager {
         left: `${position.left}px`,
         top: `${position.top}px`,
         position: disableDesktopStretchScroll ? "fixed" : "absolute",
-        zIndex: this.nextWindowZIndex()
+        zIndex: this.nextWindowZIndex(),
       });
     }
 
@@ -346,7 +397,9 @@ export class WindowManager {
       }, 0);
     }
     win.addEventListener("mousedown", () => this.bringToFront(win));
-    win.addEventListener("touchstart", () => this.bringToFront(win), { passive: true });
+    win.addEventListener("touchstart", () => this.bringToFront(win), {
+      passive: true,
+    });
     win.setAttribute("tabindex", "-1");
     this.triggerSessionSave();
 
@@ -354,7 +407,11 @@ export class WindowManager {
   }
 
   calculateWindowPosition(windowWidth, windowHeight, options = {}) {
-    return this.layoutManager.calculateWindowPosition(windowWidth, windowHeight, options);
+    return this.layoutManager.calculateWindowPosition(
+      windowWidth,
+      windowHeight,
+      options,
+    );
   }
 
   getScreenBounds() {
@@ -370,7 +427,11 @@ export class WindowManager {
   }
 
   getCascadePosition(windowWidth, windowHeight, workspace) {
-    return this.layoutManager.getCascadePosition(windowWidth, windowHeight, workspace);
+    return this.layoutManager.getCascadePosition(
+      windowWidth,
+      windowHeight,
+      workspace,
+    );
   }
 
   isTilingEnabled() {
@@ -398,12 +459,14 @@ export class WindowManager {
     if (!win.id.startsWith("scramjet-window-")) {
       requestAnimationFrame(() => animateWindowOpen(win));
     }
-    if (opts.bindControls !== false && !win.id.startsWith("scramjet-window-")) this.bindWindowControlsWhenReady(win);
+    if (opts.bindControls !== false && !win.id.startsWith("scramjet-window-"))
+      this.bindWindowControlsWhenReady(win);
     win.addEventListener("remove", () => this.removeFromTaskbar(win.id));
   }
 
   bindWindowControlsWhenReady(win) {
-    const hasControls = () => win.querySelector(".window-header, .browser-tabbar, .app-menubar");
+    const hasControls = () =>
+      win.querySelector(".window-header, .browser-tabbar, .app-menubar");
     if (hasControls()) {
       this.setupWindowControls(win);
       return;
@@ -429,7 +492,11 @@ export class WindowManager {
     const wins = Array.from(this.openWindows.keys())
       .map((id) => $("#" + id))
       .filter(Boolean)
-      .sort((a, b) => (parseInt(a.style.zIndex, 10) || 0) - (parseInt(b.style.zIndex, 10) || 0));
+      .sort(
+        (a, b) =>
+          (parseInt(a.style.zIndex, 10) || 0) -
+          (parseInt(b.style.zIndex, 10) || 0),
+      );
     let z = 1000;
     wins.forEach((w) => {
       w.style.zIndex = String(z++);
@@ -458,7 +525,11 @@ export class WindowManager {
   registerWindow(winId, entry) {
     this.openWindows.set(winId, entry);
     this.workspaceManager?.registerWindow(winId);
-    audioMixer().registerWindow(winId, entry.title, audioMixer().getIconHtmlForTaskbar(null, entry.iconValue));
+    audioMixer().registerWindow(
+      winId,
+      entry.title,
+      audioMixer().getIconHtmlForTaskbar(null, entry.iconValue),
+    );
   }
 
   unregisterWindow(winId) {
@@ -475,7 +546,8 @@ export class WindowManager {
     }
 
     if (entry && entry.record) {
-      const appId = (win && win.dataset.appId) || this.guessAppIdFromWinId(winId);
+      const appId =
+        (win && win.dataset.appId) || this.guessAppIdFromWinId(winId);
       if (appId) {
         try {
           const geom = win ? this.getWindowNormalGeometry(win) : entry.record;
@@ -483,7 +555,7 @@ export class WindowManager {
             x: geom.x,
             y: geom.y,
             width: geom.width,
-            height: geom.height
+            height: geom.height,
           });
         } catch (e) {}
       }
@@ -498,7 +570,8 @@ export class WindowManager {
       this.utils.resetToDefaultState();
     } else {
       const lastWin = Array.from(this.openWindows.values()).pop();
-      if (lastWin) this.utils.updatePageFavicon(lastWin.iconValue, lastWin.title);
+      if (lastWin)
+        this.utils.updatePageFavicon(lastWin.iconValue, lastWin.title);
     }
     this.triggerSessionSave();
   }
@@ -569,7 +642,10 @@ export class WindowManager {
       allHeaderClasses.forEach((cls) => header.classList.remove(cls));
       if (nextHeaderClass) header.classList.add(nextHeaderClass);
       win.classList.toggle("win7-window", isWin7Window);
-      controls.outerHTML = this.utils.getWindowControls(hasExternal ? "external" : null, showDownload);
+      controls.outerHTML = this.utils.getWindowControls(
+        hasExternal ? "external" : null,
+        showDownload,
+      );
     });
     this.openWindows.forEach((entry, winId) => {
       const win = $("#" + winId);

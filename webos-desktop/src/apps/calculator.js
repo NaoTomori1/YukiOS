@@ -28,7 +28,7 @@ export class CalculatorApp extends BaseApp {
 
     const win = os.window.create(winId, "Calculator", "360px", "560px", {
       icon: "fas fa-calculator",
-      appId: "calculatorApp"
+      appId: "calculatorApp",
     });
 
     this.win = win;
@@ -182,7 +182,9 @@ export class CalculatorApp extends BaseApp {
       const prev = parseFloat(this.previous);
       if (Number.isFinite(prev)) {
         if (this.operator === "+" || this.operator === "−") {
-          this.current = (Math.round(((prev * cur) / 100) * 1e12) / 1e12).toString();
+          this.current = (
+            Math.round(((prev * cur) / 100) * 1e12) / 1e12
+          ).toString();
         } else if (this.operator === "×" || this.operator === "÷") {
           this.current = (Math.round((cur / 100) * 1e12) / 1e12).toString();
         }
@@ -275,11 +277,15 @@ export class CalculatorApp extends BaseApp {
           const historyEl = this.win?.querySelector("#calc-history");
           if (historyEl) {
             historyEl.innerHTML = this.history
-              .map((h, i) => `<div class="calc-history-item" data-index="${i}">${h}</div>`)
+              .map(
+                (h, i) =>
+                  `<div class="calc-history-item" data-index="${i}">${h}</div>`,
+              )
               .join("");
           }
           const expressionEl = this.win?.querySelector("#calc-expression");
-          if (expressionEl) expressionEl.textContent = `${this.previous} ${this.operator} ${operand} =`;
+          if (expressionEl)
+            expressionEl.textContent = `${this.previous} ${this.operator} ${operand} =`;
           this.current = result.toString();
           this.previous = this.current;
           this.os.app.incrementCalculationDone();
@@ -313,7 +319,10 @@ export class CalculatorApp extends BaseApp {
             const historyEl = this.win?.querySelector("#calc-history");
             if (historyEl) {
               historyEl.innerHTML = this.history
-                .map((h, i) => `<div class="calc-history-item" data-index="${i}">${h}</div>`)
+                .map(
+                  (h, i) =>
+                    `<div class="calc-history-item" data-index="${i}">${h}</div>`,
+                )
                 .join("");
             }
             const expressionEl = this.win?.querySelector("#calc-expression");
@@ -350,8 +359,14 @@ export class CalculatorApp extends BaseApp {
     const resultEl = this.win?.querySelector("#calc-result");
     if (resultEl) {
       resultEl.textContent = this.current;
-      const calcSz = this.current.length > 10 ? "calc-result-size-sm" : "calc-result-size-lg";
-      resultEl.className = resultEl.className.replace(/calc-result-size-\w+/g, "").trim() + " " + calcSz;
+      const calcSz =
+        this.current.length > 10
+          ? "calc-result-size-sm"
+          : "calc-result-size-lg";
+      resultEl.className =
+        resultEl.className.replace(/calc-result-size-\w+/g, "").trim() +
+        " " +
+        calcSz;
     }
   }
 

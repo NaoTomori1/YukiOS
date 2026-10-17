@@ -45,7 +45,7 @@ export function createMagnifierEngine() {
       const clamped = Math.min(400, Math.max(100, level));
       engine.zoom = clamped;
       if (engine.active) applyTransform();
-    }
+    },
   };
 
   function applyTransform() {

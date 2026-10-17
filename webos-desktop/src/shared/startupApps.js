@@ -41,13 +41,16 @@ export function renderStartupAppList(container, state, opts = {}) {
   const onClass = opts.onClass || "autostart-on";
   const imgClass = opts.imgClass || "settings-app-icon-img";
   const faClass = opts.faClass || "settings-app-icon-fa";
-  const placeholderClass = opts.placeholderClass || "settings-app-icon-placeholder";
+  const placeholderClass =
+    opts.placeholderClass || "settings-app-icon-placeholder";
   const iconWrapClass = opts.iconWrapClass || "settings-app-icon";
   const emptyClass = opts.emptyClass || "settings-empty";
 
   const apps = getSystemApps();
   const filter = (state.filter || "").toLowerCase();
-  const filtered = filter ? apps.filter((a) => a.title && a.title.toLowerCase().includes(filter)) : [...apps];
+  const filtered = filter
+    ? apps.filter((a) => a.title && a.title.toLowerCase().includes(filter))
+    : [...apps];
 
   filtered.sort((a, b) => {
     const aOn = state.list.includes(a.id);
@@ -82,7 +85,7 @@ export function renderStartupAppList(container, state, opts = {}) {
           ${renderToggle(enabled, cbClass)}
         </div>`;
       })
-      .join("")
+      .join(""),
   );
 
   container.querySelectorAll("." + cbClass).forEach((cb) => {

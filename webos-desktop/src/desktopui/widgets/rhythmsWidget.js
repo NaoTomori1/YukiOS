@@ -38,7 +38,7 @@ export class RhythmsWidget extends WidgetBase {
       roundness: this.roundness,
       filled: this.filled,
       hue: this.hue,
-      color: this.color
+      color: this.color,
     });
     this.visualizer.start();
     const openBtn = contentEl.querySelector(".widget-rhythms-open");
@@ -62,8 +62,8 @@ export class RhythmsWidget extends WidgetBase {
           { value: "lines", label: "Lines" },
           { value: "mirror", label: "Mirror" },
           { value: "circle", label: "Circle" },
-          { value: "wave", label: "Wave" }
-        ]
+          { value: "wave", label: "Wave" },
+        ],
       },
       {
         key: "effectMode",
@@ -75,23 +75,23 @@ export class RhythmsWidget extends WidgetBase {
           { value: "none", label: "None" },
           { value: "wave", label: "Wave" },
           { value: "levels", label: "Levels" },
-          { value: "particles", label: "Particles" }
-        ]
+          { value: "particles", label: "Particles" },
+        ],
       },
       {
         key: "tileCount",
         label: "Bars (1-64)",
         type: "number",
         value: String(this.tileCount),
-        default: "36"
+        default: "36",
       },
       {
         key: "sensitivity",
         label: "Sensitivity (0.1-5.0)",
         type: "number",
         value: String(this.sensitivity),
-        default: "1.0"
-      }
+        default: "1.0",
+      },
     ];
   }
 
@@ -100,11 +100,13 @@ export class RhythmsWidget extends WidgetBase {
     if (data.effectMode) this.effectMode = data.effectMode;
     if (data.tileCount !== undefined) {
       const parsed = parseInt(data.tileCount);
-      if (Number.isFinite(parsed)) this.tileCount = Math.max(1, Math.min(64, parsed));
+      if (Number.isFinite(parsed))
+        this.tileCount = Math.max(1, Math.min(64, parsed));
     }
     if (data.sensitivity !== undefined) {
       const parsed = parseFloat(data.sensitivity);
-      if (Number.isFinite(parsed)) this.sensitivity = Math.max(0.1, Math.min(5, parsed));
+      if (Number.isFinite(parsed))
+        this.sensitivity = Math.max(0.1, Math.min(5, parsed));
     }
     if (this.visualizer) {
       this.visualizer.setDisplayMode(this.displayMode);
@@ -124,7 +126,7 @@ export class RhythmsWidget extends WidgetBase {
       roundness: this.roundness,
       filled: this.filled,
       hue: this.hue,
-      color: this.color
+      color: this.color,
     };
   }
 
@@ -147,7 +149,7 @@ export class RhythmsWidget extends WidgetBase {
         roundness: this.roundness,
         filled: this.filled,
         hue: this.hue,
-        color: this.color
+        color: this.color,
       });
     }
   }

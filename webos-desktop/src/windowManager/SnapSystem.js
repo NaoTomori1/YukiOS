@@ -1,4 +1,11 @@
-import { windowMakeDraggable, getSnapZone, showSnapGhost, hideSnapGhost, applySnap, unsnap } from "./makeDraggable.js";
+import {
+  windowMakeDraggable,
+  getSnapZone,
+  showSnapGhost,
+  hideSnapGhost,
+  applySnap,
+  unsnap,
+} from "./makeDraggable.js";
 import { $, createElement } from "../shared/domUtils.js";
 
 export class SnapSystem {

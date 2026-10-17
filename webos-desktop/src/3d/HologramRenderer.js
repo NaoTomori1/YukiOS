@@ -111,7 +111,10 @@ export class HologramRenderer {
       if (a.type !== "game" && b.type === "game") return 1;
       return (a.title || "").localeCompare(b.title || "");
     });
-    this.totalPages = Math.max(1, Math.ceil(this.allItems.length / this.itemsPerPage));
+    this.totalPages = Math.max(
+      1,
+      Math.ceil(this.allItems.length / this.itemsPerPage),
+    );
     this.markDirty();
   }
 
@@ -163,7 +166,15 @@ export class HologramRenderer {
   }
 
   drawGrid(ctx, W, H) {
-    const { gridStartX, gridStartY, gridCellW, gridCellH, iconSize, cols, pageItems } = this;
+    const {
+      gridStartX,
+      gridStartY,
+      gridCellW,
+      gridCellH,
+      iconSize,
+      cols,
+      pageItems,
+    } = this;
     const r = Math.round(iconSize * 0.125);
 
     pageItems.forEach((item, idx) => {
@@ -203,7 +214,11 @@ export class HologramRenderer {
         ctx.font = "bold 20px monospace";
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
-        ctx.fillText((item.title || "?")[0].toUpperCase(), cx, iy + iconSize / 2 + 1);
+        ctx.fillText(
+          (item.title || "?")[0].toUpperCase(),
+          cx,
+          iy + iconSize / 2 + 1,
+        );
       }
 
       ctx.fillStyle = "rgba(255,255,255,0.55)";
@@ -239,17 +254,33 @@ export class HologramRenderer {
     ctx.font = "12px monospace";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.fillText(`${this.currentPage + 1} / ${this.totalPages}`, W / 2, H - 34 + 1);
+    ctx.fillText(
+      `${this.currentPage + 1} / ${this.totalPages}`,
+      W / 2,
+      H - 34 + 1,
+    );
 
     const maxDots = Math.min(this.totalPages, 9);
     const dotStartX = W / 2 - (maxDots * 10) / 2;
     const dotY = H - 34 + 1 + 20;
-    const pageOffset = Math.max(0, Math.min(this.currentPage - Math.floor(maxDots / 2), this.totalPages - maxDots));
+    const pageOffset = Math.max(
+      0,
+      Math.min(
+        this.currentPage - Math.floor(maxDots / 2),
+        this.totalPages - maxDots,
+      ),
+    );
     for (let i = 0; i < maxDots; i++) {
       const pageIdx = pageOffset + i;
       if (pageIdx >= this.totalPages) break;
       const dx = dotStartX + i * 10;
-      this.dotBounds.push({ x: dx - 3, y: dotY - 3, w: 6, h: 6, page: pageIdx });
+      this.dotBounds.push({
+        x: dx - 3,
+        y: dotY - 3,
+        w: 6,
+        h: 6,
+        page: pageIdx,
+      });
 
       const proxim = Math.abs(pageIdx - this.currentPage);
       const bright = proxim === 0 ? 0.4 : Math.max(0.05, 0.25 - proxim * 0.04);
@@ -289,7 +320,8 @@ export class HologramRenderer {
 
     if (result.type === "nav") {
       if (result.action === "prev") {
-        const target = this.currentPage > 0 ? this.currentPage - 1 : this.totalPages - 1;
+        const target =
+          this.currentPage > 0 ? this.currentPage - 1 : this.totalPages - 1;
         this.goToPage(target);
         return { action: "navigate" };
       }
@@ -311,7 +343,12 @@ export class HologramRenderer {
   }
 
   pointInRect(px, py, rect) {
-    return px >= rect.x && px <= rect.x + rect.w && py >= rect.y && py <= rect.y + rect.h;
+    return (
+      px >= rect.x &&
+      px <= rect.x + rect.w &&
+      py >= rect.y &&
+      py <= rect.y + rect.h
+    );
   }
 
   roundRect(ctx, x, y, w, h, r) {

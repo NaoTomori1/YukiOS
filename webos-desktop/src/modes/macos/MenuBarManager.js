@@ -1,7 +1,16 @@
 import { BusEvents } from "../../core/EventBus.js";
 import { showDynamicContextMenu, hideMenu } from "../../shared/contextMenu.js";
 import { getSetting } from "../../utils/utils.js";
-import { $, $$, bindEvent, addClass, removeClass, toggleClass, setText, createElement } from "../../shared/domUtils.js";
+import {
+  $,
+  $$,
+  bindEvent,
+  addClass,
+  removeClass,
+  toggleClass,
+  setText,
+  createElement,
+} from "../../shared/domUtils.js";
 import { DEFAULT_SYSTEM_MENUS, APP_MENU_OVERRIDES } from "./appMenus.js";
 import { StorageKeys } from "../../StorageKeys.js";
 import { os, MODES, ServiceKeys } from "../../framework.js";
@@ -147,7 +156,7 @@ export class MenuBarManager {
       clientX: rect.left,
       clientY: menuBarRect.bottom,
       preventDefault: () => {},
-      stopPropagation: () => {}
+      stopPropagation: () => {},
     };
 
     this.buildAndShowDropdown(e, menuDef.items);
@@ -183,7 +192,7 @@ export class MenuBarManager {
         appearance: "pane-appearance",
         network: "pane-network",
         audio: "pane-audio",
-        accounts: "pane-accounts"
+        accounts: "pane-accounts",
       }[cat];
       this.os.app.launch("settingsApp", { section: pane }).catch(() => {});
       return;
@@ -210,7 +219,7 @@ export class MenuBarManager {
       const span = createElement("span", {
         className: "mac-menu-item",
         attributes: { "data-menu": menuDef.label },
-        text: menuDef.label
+        text: menuDef.label,
       });
       menuBar.appendChild(span);
     });
@@ -220,20 +229,22 @@ export class MenuBarManager {
     const menuBar = $("#mac-menu-bar");
     if (!menuBar) return;
 
-    $$(".mac-menu-item:not(.mac-menu-apple)", menuBar).forEach((item, index) => {
-      bindEvent(item, "mousedown", (e) => {
-        e.stopPropagation();
-        this.showMenu(index);
-      });
-      bindEvent(item, "click", (e) => {
-        e.stopPropagation();
-      });
-      bindEvent(item, "mouseenter", () => {
-        if (this.openMenuIndex >= 0 && this.openMenuIndex !== index) {
+    $$(".mac-menu-item:not(.mac-menu-apple)", menuBar).forEach(
+      (item, index) => {
+        bindEvent(item, "mousedown", (e) => {
+          e.stopPropagation();
           this.showMenu(index);
-        }
-      });
-    });
+        });
+        bindEvent(item, "click", (e) => {
+          e.stopPropagation();
+        });
+        bindEvent(item, "mouseenter", () => {
+          if (this.openMenuIndex >= 0 && this.openMenuIndex !== index) {
+            this.showMenu(index);
+          }
+        });
+      },
+    );
   }
 
   rebuildMenuItems() {
@@ -318,7 +329,9 @@ export class MenuBarManager {
 
       if (e.key === "ArrowLeft") {
         e.preventDefault();
-        const newIndex = (this.openMenuIndex - 1 + this.currentMenus.length) % this.currentMenus.length;
+        const newIndex =
+          (this.openMenuIndex - 1 + this.currentMenus.length) %
+          this.currentMenus.length;
         this.showMenu(newIndex);
         return;
       }
@@ -332,7 +345,9 @@ export class MenuBarManager {
     }
 
     if (e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey) {
-      const index = this.currentMenus.findIndex((m) => m.label[0].toLowerCase() === e.key.toLowerCase());
+      const index = this.currentMenus.findIndex(
+        (m) => m.label[0].toLowerCase() === e.key.toLowerCase(),
+      );
       if (index >= 0 && (e.key === " " || e.key.length === 1)) {
         if (this.getFocusedAppMenubar()) return;
         e.preventDefault();
@@ -342,7 +357,9 @@ export class MenuBarManager {
   }
 
   getFocusedAppMenubar() {
-    return $(".window:focus .app-menubar, .window[style*='z-index'] .app-menubar");
+    return $(
+      ".window:focus .app-menubar, .window[style*='z-index'] .app-menubar",
+    );
   }
 
   buildAndShowDropdown(e, items) {
@@ -369,8 +386,8 @@ export class MenuBarManager {
             ...dynamicItems.map((di) => ({
               type: "item",
               label: di.label,
-              action: di.action
-            }))
+              action: di.action,
+            })),
           );
         }
         continue;
@@ -381,7 +398,7 @@ export class MenuBarManager {
         label: entry.label,
         action: entry.action,
         checked: entry.checked,
-        disabled: entry.disabled
+        disabled: entry.disabled,
       });
     }
 
@@ -391,7 +408,10 @@ export class MenuBarManager {
       return true;
     });
 
-    return filtered.filter((r, i) => !(r.type === "separator" && filtered[i - 1]?.type === "separator"));
+    return filtered.filter(
+      (r, i) =>
+        !(r.type === "separator" && filtered[i - 1]?.type === "separator"),
+    );
   }
 
   buildMenuItems(menu, createItemFn, hr, submenuFn, items) {
@@ -401,7 +421,9 @@ export class MenuBarManager {
         continue;
       }
 
-      const el = createItemFn(entry.label, () => this.executeAction(entry.action));
+      const el = createItemFn(entry.label, () =>
+        this.executeAction(entry.action),
+      );
       el.className = "context-menu-item";
 
       if (entry.checked) {
@@ -447,14 +469,19 @@ const ACTION_MAP = {
     const current = os.storage.get(StorageKeys.clippy);
     const next = current === "true" ? "false" : "true";
     os.storage.set(StorageKeys.clippy, next);
-    window.dispatchEvent(new CustomEvent("yukios:clippy-toggle", { detail: { enabled: next === "true" } }));
+    window.dispatchEvent(
+      new CustomEvent("yukios:clippy-toggle", {
+        detail: { enabled: next === "true" },
+      }),
+    );
   },
   "ai:open": (os) => os.app.launch("aiAssistantApp").catch(() => {}),
   "screenshot:capture": (os) => os.app.launch("screenshotApp").catch(() => {}),
   "screenshot:record": () => {},
   "colorpicker:open": (os) => os.app.launch("colorPickerApp").catch(() => {}),
   "emoji:open": (os) => os.app.launch("emojiSelectorApp").catch(() => {}),
-  "clipboard:open": (os) => os.app.launch("clipboardManagerApp").catch(() => {}),
+  "clipboard:open": (os) =>
+    os.app.launch("clipboardManagerApp").catch(() => {}),
   "window:hideOthers": () => {
     const topWin = $(".window[style*='z-index']");
     if (!topWin) return;
@@ -502,32 +529,44 @@ const ACTION_MAP = {
   "notepad:open": () => {
     const target = focusedNotepadWindow();
     if (!target) return;
-    os.app.getInstance(ServiceKeys.NOTEPAD)?.openFileDialog?.(target.win, target.winId);
+    os.app
+      .getInstance(ServiceKeys.NOTEPAD)
+      ?.openFileDialog?.(target.win, target.winId);
   },
   "notepad:save": () => {
     const target = focusedNotepadWindow();
     if (!target) return;
-    os.app.getInstance(ServiceKeys.NOTEPAD)?.saveFile?.(target.win, target.winId);
+    os.app
+      .getInstance(ServiceKeys.NOTEPAD)
+      ?.saveFile?.(target.win, target.winId);
   },
   "notepad:saveAs": () => {
     const target = focusedNotepadWindow();
     if (!target) return;
-    os.app.getInstance(ServiceKeys.NOTEPAD)?.saveAsFile?.(target.win, target.winId);
+    os.app
+      .getInstance(ServiceKeys.NOTEPAD)
+      ?.saveAsFile?.(target.win, target.winId);
   },
   "view:zoomIn": () => {
     const target = focusedNotepadWindow();
     if (!target) return;
-    os.app.getInstance(ServiceKeys.NOTEPAD)?.zoom?.(target.win, target.winId, 10);
+    os.app
+      .getInstance(ServiceKeys.NOTEPAD)
+      ?.zoom?.(target.win, target.winId, 10);
   },
   "view:zoomOut": () => {
     const target = focusedNotepadWindow();
     if (!target) return;
-    os.app.getInstance(ServiceKeys.NOTEPAD)?.zoom?.(target.win, target.winId, -10);
+    os.app
+      .getInstance(ServiceKeys.NOTEPAD)
+      ?.zoom?.(target.win, target.winId, -10);
   },
   "view:zoomReset": () => {
     const target = focusedNotepadWindow();
     if (!target) return;
-    os.app.getInstance(ServiceKeys.NOTEPAD)?.zoomReset?.(target.win, target.winId);
+    os.app
+      .getInstance(ServiceKeys.NOTEPAD)
+      ?.zoomReset?.(target.win, target.winId);
   },
   "edit:undo": () => document.execCommand("undo"),
   "edit:redo": () => document.execCommand("redo"),
@@ -541,7 +580,10 @@ const ACTION_MAP = {
         const start = active.selectionStart;
         const end = active.selectionEnd;
         if (start !== undefined) {
-          active.value = active.value.substring(0, start) + text + active.value.substring(end);
+          active.value =
+            active.value.substring(0, start) +
+            text +
+            active.value.substring(end);
         }
       }
     });
@@ -553,11 +595,13 @@ const ACTION_MAP = {
   },
   "view:widgets": () => {
     const widgets = $("#widget-container");
-    if (widgets) widgets.style.display = widgets.style.display === "none" ? "" : "none";
+    if (widgets)
+      widgets.style.display = widgets.style.display === "none" ? "" : "none";
   },
   "view:taskbar": () => {
     const taskbar = $("#taskbar");
-    if (taskbar) taskbar.style.display = taskbar.style.display === "none" ? "" : "none";
+    if (taskbar)
+      taskbar.style.display = taskbar.style.display === "none" ? "" : "none";
   },
   "window:fullscreen": () => {
     if (!document.fullscreenElement) {
@@ -603,17 +647,25 @@ const ACTION_MAP = {
   "scale:150": (os) => os.storage.set(StorageKeys.guiScale, "150"),
   "theme:dark": (os) => os.storage.set(StorageKeys.theme, "dark"),
   "theme:light": (os) => os.storage.set(StorageKeys.theme, "light"),
-  "settings:themes": (os) => os.app.launch("settingsApp", { section: "pane-appearance" }).catch(() => {}),
+  "settings:themes": (os) =>
+    os.app
+      .launch("settingsApp", { section: "pane-appearance" })
+      .catch(() => {}),
   "workspace:overview": () => {
     const wm = os.window.wm;
     if (wm?.workspaceManager) wm.workspaceManager.toggleOverview?.();
   },
   "go:home": (os) => os.app.launch("explorerApp", { path: [] }).catch(() => {}),
-  "go:desktop": (os) => os.app.launch("explorerApp", { path: ["Desktop"] }).catch(() => {}),
-  "go:documents": (os) => os.app.launch("explorerApp", { path: ["Documents"] }).catch(() => {}),
-  "go:downloads": (os) => os.app.launch("explorerApp", { path: ["Downloads"] }).catch(() => {}),
-  "go:recents": (os) => os.app.launch("explorerApp", { path: ["Recents"] }).catch(() => {}),
-  "go:computer": (os) => os.app.launch("explorerApp", { path: [] }).catch(() => {}),
+  "go:desktop": (os) =>
+    os.app.launch("explorerApp", { path: ["Desktop"] }).catch(() => {}),
+  "go:documents": (os) =>
+    os.app.launch("explorerApp", { path: ["Documents"] }).catch(() => {}),
+  "go:downloads": (os) =>
+    os.app.launch("explorerApp", { path: ["Downloads"] }).catch(() => {}),
+  "go:recents": (os) =>
+    os.app.launch("explorerApp", { path: ["Recents"] }).catch(() => {}),
+  "go:computer": (os) =>
+    os.app.launch("explorerApp", { path: [] }).catch(() => {}),
   "go:folder": async (os) => {
     const path = await os.dialog.prompt("Go to Folder", "Enter folder path:");
     if (path) os.app.launch("explorerApp", { path }).catch(() => {});
@@ -644,7 +696,8 @@ const ACTION_MAP = {
   "guide:open": (os) => os.app.launch("yukiOsGuideApp").catch(() => {}),
   "news:open": (os) => os.app.launch("newsApp").catch(() => {}),
   "shortcuts:open": (os) => os.app.launch("shortcutsApp").catch(() => {}),
-  "help:report": () => window.open("https://github.com/Reeyuki/yukios/issues", "_blank"),
+  "help:report": () =>
+    window.open("https://github.com/Reeyuki/yukios/issues", "_blank"),
   "achievements:open": (os) => os.app.launch("achievementsApp").catch(() => {}),
   "browser:reload": () => {
     const iframe = $(".window[style*='z-index'] iframe");
@@ -660,5 +713,5 @@ const ACTION_MAP = {
   },
   "format:bold": () => document.execCommand("bold"),
   "format:italic": () => document.execCommand("italic"),
-  "format:underline": () => document.execCommand("underline")
+  "format:underline": () => document.execCommand("underline"),
 };

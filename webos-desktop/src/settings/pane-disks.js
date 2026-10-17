@@ -43,7 +43,9 @@ export async function bindDisks(win) {
 
     let mountRows = "";
     for (const m of mounts) {
-      const mountUsed = await calcDirSize(m.mountPoint.split("/").filter(Boolean));
+      const mountUsed = await calcDirSize(
+        m.mountPoint.split("/").filter(Boolean),
+      );
       const mPct = quota > 0 ? Math.min((mountUsed / quota) * 100, 100) : 0;
       mountRows += diskCard(m.label, mountUsed, mPct, "mount");
     }

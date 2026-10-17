@@ -146,7 +146,6 @@ export const videos2 = [
   "https://motionbgs.com/media/6069/minecraft-aquarium.1920x1080.mp4",
   "https://motionbgs.com/media/6090/raiden-mortal-kombat.1920x1080.mp4",
   "https://motionbgs.com/media/6200/white-toyota-drifting.1920x1080.mp4",
-  "https://motionbgs.com/media/6215/demon-slayer-dragon.1920x1080.mp4",
   "https://motionbgs.com/media/6226/sakura-wind-breaker.1920x1080.mp4",
   "https://motionbgs.com/media/6316/spider-man-dynamic-pose.1920x1080.mp4",
   "https://motionbgs.com/media/6356/batman-rain.1920x1080.mp4",

@@ -1,10 +1,23 @@
 import { $, $$, createElement } from "../shared/domUtils.js";
-import { showContextMenu, showDynamicContextMenu, hideMenu } from "../shared/contextMenu.js";
-import { sortDesktopIcons, relayoutDesktopIcons, changeDesktopIconSize } from "./desktopui.js";
+import {
+  showContextMenu,
+  showDynamicContextMenu,
+  hideMenu,
+} from "../shared/contextMenu.js";
+import {
+  sortDesktopIcons,
+  relayoutDesktopIcons,
+  changeDesktopIconSize,
+} from "./desktopui.js";
 import { os, StorageKeys, ServiceKeys } from "../framework.js";
 import { ArchiveExtractor } from "../archiveExtractor.js";
 import { AppSource } from "../AppSource.js";
-import { showFileProperties, isImageFile, openFileWithApp, buildFileIconHTML } from "../fileDisplay.js";
+import {
+  showFileProperties,
+  isImageFile,
+  openFileWithApp,
+  buildFileIconHTML,
+} from "../fileDisplay.js";
 import { isVideoFile } from "../shared/fileKindDetector.js";
 import { FileKind, getExt, isZipFile } from "../shared/fileKindDetector.js";
 import { getCompatibleApps, getDefaultApp } from "../fileAssociations.js";
@@ -18,10 +31,14 @@ import {
   buildPropertiesAction,
   getScreenshotService,
   isScreenshotRecording,
-  toggleDesktopRecording
+  toggleDesktopRecording,
 } from "./contextActions.js";
 import { openFileConverter } from "../utils/fileConverter.js";
-import { getTargetFormats, detectCategory, convertFileBlob } from "../utils/converterCore.js";
+import {
+  getTargetFormats,
+  detectCategory,
+  convertFileBlob,
+} from "../utils/converterCore.js";
 import { showTransferDialog } from "../shared/transferDialog.js";
 import { SystemUtilities } from "../system.js";
 import { videos } from "../wallpaperList.js";
@@ -153,10 +170,15 @@ async function runDesktopConvert(fileName, dirParts, targetFormat) {
     text,
     sourceExt: ext,
     targetFormat,
-    options: getDesktopConvertDefaults(category)
+    options: getDesktopConvertDefaults(category),
   });
   let result = out;
-  if (out && typeof out === "object" && !(out instanceof Blob) && ("blob" in out || "text" in out)) {
+  if (
+    out &&
+    typeof out === "object" &&
+    !(out instanceof Blob) &&
+    ("blob" in out || "text" in out)
+  ) {
     result = out.blob || out.text;
   }
   const candidate = `${getDesktopConvertBaseName(fileName)}.${targetFormat}`;
@@ -174,9 +196,17 @@ async function runDesktopConvert(fileName, dirParts, targetFormat) {
   return uniqueName;
 }
 
-async function quickDesktopConvert(fileName, dirParts, targetFormat, desktopUI) {
+async function quickDesktopConvert(
+  fileName,
+  dirParts,
+  targetFormat,
+  desktopUI,
+) {
   const label = targetFormat.toUpperCase();
-  const dialog = showTransferDialog({ title: `Converting to ${label}`, total: 1 });
+  const dialog = showTransferDialog({
+    title: `Converting to ${label}`,
+    total: 1,
+  });
   try {
     dialog.update(0, fileName);
     const created = await runDesktopConvert(fileName, dirParts, targetFormat);
@@ -208,11 +238,16 @@ export class DesktopContextMenuManager {
     this.archiveExtractor = new ArchiveExtractor(
       desktopUI.fs,
       (msg) => os.notify.send(msg),
-      AppSource.ARCHIVE_EXTRACTOR
+      AppSource.ARCHIVE_EXTRACTOR,
     );
     this.templates = {
       iconContextMenu: [
-        { id: "ctx-open", label: "Open", action: "open", icon: "fa-external-link-alt" },
+        {
+          id: "ctx-open",
+          label: "Open",
+          action: "open",
+          icon: "fa-external-link-alt",
+        },
         "hr",
         { id: "ctx-copy", label: "Copy", action: "copy", icon: "fa-copy" },
         { id: "ctx-cut", label: "Cut", action: "cut", icon: "fa-cut" },
@@ -222,43 +257,123 @@ export class DesktopContextMenuManager {
           label: "Paste",
           action: "paste",
           condition: () => !!this.desktopUI.getClipboard(),
-          icon: "fa-paste"
+          icon: "fa-paste",
         },
         "hr",
-        { id: "ctx-delete", label: "Move to Trash", action: "delete", icon: "fa-trash-alt" },
-        { id: "ctx-rename", label: "Rename", action: "rename", icon: "fa-edit" },
-        { id: "ctx-customize", label: "Customize Icon & Title", action: "customize", icon: "fa-palette" },
-        { id: "ctx-properties", label: "Properties", action: "properties", icon: "fa-info-circle" }
+        {
+          id: "ctx-delete",
+          label: "Delete",
+          action: "delete",
+          icon: "fa-trash-alt",
+        },
+        {
+          id: "ctx-rename",
+          label: "Rename",
+          action: "rename",
+          icon: "fa-edit",
+        },
+        {
+          id: "ctx-customize",
+          label: "Customize Icon & Title",
+          action: "customize",
+          icon: "fa-palette",
+        },
+        {
+          id: "ctx-properties",
+          label: "Properties",
+          action: "properties",
+          icon: "fa-info-circle",
+        },
       ],
       folderContextMenu: [
-        { id: "ctx-open-folder", label: "Open", action: "openFolder", icon: "fa-folder-open" },
+        {
+          id: "ctx-open-folder",
+          label: "Open",
+          action: "openFolder",
+          icon: "fa-folder-open",
+        },
         "hr",
-        { id: "ctx-add-archive-folder", label: "Add to archive", action: "addArchiveFolder", icon: "fa-file-archive" },
-        { id: "ctx-download-folder", label: "Download", action: "downloadFolder", icon: "fa-download" },
+        {
+          id: "ctx-add-archive-folder",
+          label: "Compress...",
+          action: "addArchiveFolder",
+          icon: "fa-file-archive",
+        },
+        {
+          id: "ctx-download-folder",
+          label: "Download",
+          action: "downloadFolder",
+          icon: "fa-download",
+        },
         "hr",
-        { id: "ctx-copy-folder", label: "Copy", action: "copyFolder", icon: "fa-copy" },
-        { id: "ctx-cut-folder", label: "Cut", action: "cutFolder", icon: "fa-cut" },
+        {
+          id: "ctx-copy-folder",
+          label: "Copy",
+          action: "copyFolder",
+          icon: "fa-copy",
+        },
+        {
+          id: "ctx-cut-folder",
+          label: "Cut",
+          action: "cutFolder",
+          icon: "fa-cut",
+        },
         "hr",
         {
           id: "ctx-paste-folder",
           label: "Paste",
           action: "paste",
           condition: () => !!this.desktopUI.getClipboard(),
-          icon: "fa-paste"
+          icon: "fa-paste",
         },
         "hr",
-        { id: "ctx-delete-folder", label: "Move to Trash", action: "deleteFolder", icon: "fa-trash-alt" },
-        { id: "ctx-rename-folder", label: "Rename", action: "renameFolder", icon: "fa-edit" },
+        {
+          id: "ctx-delete-folder",
+          label: "Delete",
+          action: "deleteFolder",
+          icon: "fa-trash-alt",
+        },
+        {
+          id: "ctx-rename-folder",
+          label: "Rename",
+          action: "renameFolder",
+          icon: "fa-edit",
+        },
         "hr",
-        { id: "ctx-properties-folder", label: "Properties", action: "propertiesFolder", icon: "fa-info-circle" }
+        {
+          id: "ctx-properties-folder",
+          label: "Properties",
+          action: "propertiesFolder",
+          icon: "fa-info-circle",
+        },
       ],
       fileIconContextMenu: [
-        { id: "ctx-open-file", label: "Open", action: "openFile", icon: "fa-file-alt" },
+        {
+          id: "ctx-open-file",
+          label: "Open",
+          action: "openFile",
+          icon: "fa-file-alt",
+        },
         "hr",
-        { id: "ctx-add-archive-file", label: "Add to archive", action: "addArchiveFile", icon: "fa-file-archive" },
-        { id: "ctx-download-file", label: "Download", action: "downloadFile", icon: "fa-download" },
+        {
+          id: "ctx-add-archive-file",
+          label: "Compress...",
+          action: "addArchiveFile",
+          icon: "fa-file-archive",
+        },
+        {
+          id: "ctx-download-file",
+          label: "Download",
+          action: "downloadFile",
+          icon: "fa-download",
+        },
         "hr",
-        { id: "ctx-copy-file", label: "Copy", action: "copyFile", icon: "fa-copy" },
+        {
+          id: "ctx-copy-file",
+          label: "Copy",
+          action: "copyFile",
+          icon: "fa-copy",
+        },
         { id: "ctx-cut-file", label: "Cut", action: "cutFile", icon: "fa-cut" },
         "hr",
         {
@@ -266,40 +381,100 @@ export class DesktopContextMenuManager {
           label: "Paste",
           action: "paste",
           condition: () => !!this.desktopUI.getClipboard(),
-          icon: "fa-paste"
+          icon: "fa-paste",
         },
         "hr",
-        { id: "ctx-delete-file", label: "Move to Trash", action: "deleteFile", icon: "fa-trash-alt" },
-        { id: "ctx-rename-file", label: "Rename", action: "renameFile", icon: "fa-edit" },
+        {
+          id: "ctx-delete-file",
+          label: "Delete",
+          action: "deleteFile",
+          icon: "fa-trash-alt",
+        },
+        {
+          id: "ctx-rename-file",
+          label: "Rename",
+          action: "renameFile",
+          icon: "fa-edit",
+        },
         "hr",
-        { id: "ctx-properties-file", label: "Properties", action: "propertiesFile", icon: "fa-info-circle" }
+        {
+          id: "ctx-properties-file",
+          label: "Properties",
+          action: "propertiesFile",
+          icon: "fa-info-circle",
+        },
       ],
       desktopContextMenu: [
         { id: "ctx-new", label: "New", action: "new", icon: "fa-plus" },
         "hr",
-        { id: "ctx-add-files", label: "Add file(s)", action: "addFiles", icon: "fa-file-upload" },
-        { id: "ctx-open-explorer", label: "Open Explorer", action: "openExplorer", icon: "fa-folder-open" },
-        { id: "ctx-start-recording", label: "Start Recording", action: "startRecording", icon: "fa-circle" },
-        { id: "ctx-set-wallpaper", label: "Customize", action: "setWallpaper", icon: "fa-paint-brush" },
-        { id: "ctx-background", label: "Background", action: "background", icon: "fa-image" },
-        { id: "ctx-open-terminal", label: "Open Terminal Here", action: "openTerminal", icon: "fa-terminal" },
+        {
+          id: "ctx-add-files",
+          label: "Upload files",
+          action: "addFiles",
+          icon: "fa-file-upload",
+        },
+        {
+          id: "ctx-open-explorer",
+          label: "Open in File Explorer",
+          action: "openExplorer",
+          icon: "fa-folder-open",
+        },
+        {
+          id: "ctx-start-recording",
+          label: "Start Recording",
+          action: "startRecording",
+          icon: "fa-circle",
+        },
+        {
+          id: "ctx-set-wallpaper",
+          label: "Personalize",
+          action: "setWallpaper",
+          icon: "fa-paint-brush",
+        },
+        {
+          id: "ctx-background",
+          label: "Change background",
+          action: "background",
+          icon: "fa-image",
+        },
+        {
+          id: "ctx-open-terminal",
+          label: "Open in Terminal",
+          action: "openTerminal",
+          icon: "fa-terminal",
+        },
         "hr",
         {
           id: "ctx-paste",
           label: "Paste",
           action: "paste",
           condition: () => !!this.desktopUI.getClipboard(),
-          icon: "fa-paste"
+          icon: "fa-paste",
         },
         "hr",
         { id: "ctx-view", label: "View", icon: "fa-eye", action: "view" },
-        { id: "ctx-sort", label: "Sort icons", icon: "fa-sort", action: "sort" },
+        { id: "ctx-sort", label: "Sort by", icon: "fa-sort", action: "sort" },
         "hr",
-        { id: "ctx-widgets", label: "Widgets", action: "widgets", icon: "fa-puzzle-piece" },
-        { id: "ctx-fullscreen", label: "Enter fullscreen", icon: "fa-expand", action: "fullscreen" },
+        {
+          id: "ctx-widgets",
+          label: "Widgets",
+          action: "widgets",
+          icon: "fa-puzzle-piece",
+        },
+        {
+          id: "ctx-fullscreen",
+          label: "Full screen",
+          icon: "fa-expand",
+          action: "fullscreen",
+        },
         "hr",
-        { id: "ctx-refresh", label: "Refresh", action: "refresh", icon: "fa-sync-alt" }
-      ]
+        {
+          id: "ctx-refresh",
+          label: "Refresh",
+          action: "refresh",
+          icon: "fa-sync-alt",
+        },
+      ],
     };
   }
 
@@ -342,7 +517,9 @@ export class DesktopContextMenuManager {
         await this.desktopUI.pasteToDesktop();
       },
       deleteFolder: buildDeleteAction(selectedArray, this.desktopUI),
-      renameFolder: buildRenameAction(folderIcon, this.desktopUI, { PositionStore: this.PositionStore })
+      renameFolder: buildRenameAction(folderIcon, this.desktopUI, {
+        PositionStore: this.PositionStore,
+      }),
     });
   }
 
@@ -354,15 +531,26 @@ export class DesktopContextMenuManager {
     const selectedArray = this.desktopUI.selectionManager.toArray();
     const fileName = fileIcon.dataset.fileName;
     const rawFilePath = fileIcon.dataset.filePath;
-    const filePath = rawFilePath !== undefined && rawFilePath !== null && rawFilePath !== "" ? rawFilePath : "Desktop";
+    const filePath =
+      rawFilePath !== undefined && rawFilePath !== null && rawFilePath !== ""
+        ? rawFilePath
+        : "Desktop";
 
     showDynamicContextMenu(e, async (menu, item, hr, submenu) => {
       const defaultApp = getDefaultApp(fileName);
       const defaultIcon =
-        defaultApp?.icon !== undefined && defaultApp?.icon !== null && defaultApp.icon !== ""
+        defaultApp?.icon !== undefined &&
+        defaultApp?.icon !== null &&
+        defaultApp.icon !== ""
           ? defaultApp.icon
           : "fa-file-alt";
-      menu.appendChild(item("Open", () => this.desktopUI.openDesktopFile(fileName), defaultIcon));
+      menu.appendChild(
+        item(
+          "Open",
+          () => this.desktopUI.openDesktopFile(fileName),
+          defaultIcon,
+        ),
+      );
       menu.appendChild(
         submenu(
           "Open with",
@@ -372,31 +560,40 @@ export class DesktopContextMenuManager {
               subMenuEl.appendChild(
                 subItem(
                   app.title,
-                  () => openFileWithApp(app.appId, { name: fileName, path: filePath.split("/") }),
-                  app.icon
-                )
+                  () =>
+                    openFileWithApp(app.appId, {
+                      name: fileName,
+                      path: filePath.split("/"),
+                    }),
+                  app.icon,
+                ),
               );
             }
             subMenuEl.appendChild(subHr());
             subMenuEl.appendChild(
               subItem(
                 "Choose another app",
-                () => showChooseAppDialog({ ext: getExt(fileName), name: fileName, path: filePath.split("/") }),
-                "fa-sliders-h"
-              )
+                () =>
+                  showChooseAppDialog({
+                    ext: getExt(fileName),
+                    name: fileName,
+                    path: filePath.split("/"),
+                  }),
+                "fa-sliders-h",
+              ),
             );
           },
-          "fa-share-alt"
-        )
+          "fa-share-alt",
+        ),
       );
       menu.appendChild(
         item(
-          "Add to archive",
+          "Compress...",
           async () => {
             await this.addToArchive([filePath, fileName], fileName);
           },
-          "fa-file-archive"
-        )
+          "fa-file-archive",
+        ),
       );
       menu.appendChild(
         item(
@@ -404,14 +601,16 @@ export class DesktopContextMenuManager {
           async () => {
             await this.downloadItem([filePath, fileName], fileName, false);
           },
-          "fa-download"
-        )
+          "fa-download",
+        ),
       );
       menu.appendChild(hr());
 
       const desktopExt = getDesktopConvertExtension(fileName);
       const desktopCategory = detectCategory(desktopExt);
-      const rawDesktopTargets = desktopCategory ? getTargetFormats(desktopExt) : null;
+      const rawDesktopTargets = desktopCategory
+        ? getTargetFormats(desktopExt)
+        : null;
       const desktopTargets = Array.isArray(rawDesktopTargets)
         ? rawDesktopTargets.filter((target) => target !== desktopExt)
         : [];
@@ -424,8 +623,13 @@ export class DesktopContextMenuManager {
               for (const target of desktopTargets) {
                 subMenuEl.appendChild(
                   subItem(target.toUpperCase(), () => {
-                    quickDesktopConvert(fileName, desktopDir, target, this.desktopUI);
-                  })
+                    quickDesktopConvert(
+                      fileName,
+                      desktopDir,
+                      target,
+                      this.desktopUI,
+                    );
+                  }),
                 );
               }
               subMenuEl.appendChild(subHr());
@@ -433,20 +637,34 @@ export class DesktopContextMenuManager {
                 subItem(
                   "Convert / Transform...",
                   () => {
-                    openFileConverter(fileName, desktopDir, os, this.desktopUI.appLauncher);
+                    openFileConverter(
+                      fileName,
+                      desktopDir,
+                      os,
+                      this.desktopUI.appLauncher,
+                    );
                   },
-                  "fa-exchange-alt"
-                )
+                  "fa-exchange-alt",
+                ),
               );
             },
-            "fa-exchange-alt"
-          )
+            "fa-exchange-alt",
+          ),
         );
       }
 
       menu.appendChild(hr());
 
-      const notEditable = ["mp4", "mp3", "png", "jpg", "gif", "webp", "zip", "exe"];
+      const notEditable = [
+        "mp4",
+        "mp3",
+        "png",
+        "jpg",
+        "gif",
+        "webp",
+        "zip",
+        "exe",
+      ];
       const fileExt = fileName.split(".").pop().toLowerCase();
       if (!notEditable.includes(fileExt)) {
         menu.appendChild(
@@ -455,8 +673,8 @@ export class DesktopContextMenuManager {
             async () => {
               await this.desktopUI.editDesktopFileWithNotepad(fileName);
             },
-            "fa-pen"
-          )
+            "fa-pen",
+          ),
         );
       }
 
@@ -466,8 +684,8 @@ export class DesktopContextMenuManager {
           async () => {
             await this.desktopUI.editDesktopFileWithNotepad(fileName);
           },
-          "fa-pen"
-        )
+          "fa-pen",
+        ),
       );
 
       if (isImageFile(fileName) || isVideoFile(fileName)) {
@@ -495,8 +713,8 @@ export class DesktopContextMenuManager {
                 os.dialog.alert("Error", "Could not set wallpaper");
               }
             },
-            isVideo ? "fa-video" : "fa-image"
-          )
+            isVideo ? "fa-video" : "fa-image",
+          ),
         );
         menu.appendChild(
           item(
@@ -508,21 +726,25 @@ export class DesktopContextMenuManager {
                   fileName,
                   dataUrl,
                   isVideo ? FileKind.VIDEO : FileKind.IMAGE,
-                  "@content"
+                  "@content",
                 );
               } catch (err) {
                 console.error("Save wallpaper error:", err);
                 os.dialog.alert("Error", "Could not save wallpaper");
               }
             },
-            "fa-save"
-          )
+            "fa-save",
+          ),
         );
       }
 
       menu.appendChild(hr());
-      menu.appendChild(item("Copy", buildCopyAction(selectedArray, this.desktopUI), "fa-copy"));
-      menu.appendChild(item("Cut", buildCutAction(selectedArray, this.desktopUI), "fa-cut"));
+      menu.appendChild(
+        item("Copy", buildCopyAction(selectedArray, this.desktopUI), "fa-copy"),
+      );
+      menu.appendChild(
+        item("Cut", buildCutAction(selectedArray, this.desktopUI), "fa-cut"),
+      );
       if (this.desktopUI.getClipboard()) {
         menu.appendChild(
           item(
@@ -530,8 +752,8 @@ export class DesktopContextMenuManager {
             async () => {
               await this.desktopUI.pasteToDesktop();
             },
-            "fa-paste"
-          )
+            "fa-paste",
+          ),
         );
       }
       menu.appendChild(hr());
@@ -539,10 +761,14 @@ export class DesktopContextMenuManager {
         item(
           "Create shortcut",
           async () => {
-            await createDesktopShortcut(fileName, parseDesktopDir(filePath), this.desktopUI);
+            await createDesktopShortcut(
+              fileName,
+              parseDesktopDir(filePath),
+              this.desktopUI,
+            );
           },
-          "fa-link"
-        )
+          "fa-link",
+        ),
       );
       if (isCursorFileName(fileName)) {
         const cursorDir = parseDesktopDir(filePath);
@@ -552,18 +778,42 @@ export class DesktopContextMenuManager {
             async () => {
               await setDesktopPointerFromFile(fileName, cursorDir);
             },
-            "fa-mouse-pointer"
-          )
+            "fa-mouse-pointer",
+          ),
         );
       }
       if (isCustomCursorActive()) {
-        menu.appendChild(item("Reset mouse pointer", () => resetDesktopPointerCursor(), "fa-undo"));
+        menu.appendChild(
+          item(
+            "Reset mouse pointer",
+            () => resetDesktopPointerCursor(),
+            "fa-undo",
+          ),
+        );
       }
       menu.appendChild(hr());
-      menu.appendChild(item("Move to Trash", buildDeleteAction(selectedArray, this.desktopUI), "fa-trash-alt"));
-      menu.appendChild(item("Rename", () => this.startInlineDesktopRename(fileIcon), "fa-edit"));
+      menu.appendChild(
+        item(
+          "Delete",
+          buildDeleteAction(selectedArray, this.desktopUI),
+          "fa-trash-alt",
+        ),
+      );
+      menu.appendChild(
+        item(
+          "Rename",
+          () => this.startInlineDesktopRename(fileIcon),
+          "fa-edit",
+        ),
+      );
       menu.appendChild(hr());
-      menu.appendChild(item("Properties", buildPropertiesAction(fileIcon, this.desktopUI), "fa-info-circle"));
+      menu.appendChild(
+        item(
+          "Properties",
+          buildPropertiesAction(fileIcon, this.desktopUI),
+          "fa-info-circle",
+        ),
+      );
     });
   }
 
@@ -593,17 +843,24 @@ export class DesktopContextMenuManager {
           } else if (iClass !== undefined && iClass !== null && iClass !== "") {
             iconValue = iClass;
           }
-          m.showAppCustomizer(last.dataset.app, this.IconDataHelper.getIconName(last), iconValue);
+          m.showAppCustomizer(
+            last.dataset.app,
+            this.IconDataHelper.getIconName(last),
+            iconValue,
+          );
         });
       },
-      properties: buildPropertiesAction(last, this.desktopUI)
+      properties: buildPropertiesAction(last, this.desktopUI),
     });
   }
 
   showDesktopContextMenu(e) {
     const currentSort = this.currentSortMode();
     const storedAutoSort = os.storage.get(StorageKeys.desktopAutoSort);
-    const currentAutoSort = storedAutoSort !== undefined && storedAutoSort !== null ? Boolean(storedAutoSort) : false;
+    const currentAutoSort =
+      storedAutoSort !== undefined && storedAutoSort !== null
+        ? Boolean(storedAutoSort)
+        : false;
 
     showDynamicContextMenu(e, (menu, item, hr, submenu) => {
       menu.appendChild(
@@ -616,8 +873,8 @@ export class DesktopContextMenuManager {
                 async () => {
                   await this.spawnInlineDesktopItem(false);
                 },
-                "fa-folder"
-              )
+                "fa-folder",
+              ),
             );
             sub.appendChild(
               sItem(
@@ -625,18 +882,26 @@ export class DesktopContextMenuManager {
                 async () => {
                   await this.spawnInlineDesktopItem(true);
                 },
-                "fa-file-alt"
-              )
+                "fa-file-alt",
+              ),
             );
           },
-          "fa-plus"
-        )
+          "fa-plus",
+        ),
       );
 
       menu.appendChild(hr());
 
-      menu.appendChild(item("Add file(s)", () => this.desktopUI.addFiles(), "fa-file-upload"));
-      menu.appendChild(item("Open Explorer", () => this.desktopUI.explorerApp.open(), "fa-folder-open"));
+      menu.appendChild(
+        item("Upload files", () => this.desktopUI.addFiles(), "fa-file-upload"),
+      );
+      menu.appendChild(
+        item(
+          "Open in File Explorer",
+          () => this.desktopUI.explorerApp.open(),
+          "fa-folder-open",
+        ),
+      );
       const screenshotService = getDesktopScreenshotService();
       const recordingActive = isScreenshotRecording(screenshotService);
       menu.appendChild(
@@ -649,32 +914,42 @@ export class DesktopContextMenuManager {
               os.dialog.alert("Recording", "Could not change recording state");
             }
           },
-          recordingActive ? "fa-stop" : "fa-circle"
-        )
+          recordingActive ? "fa-stop" : "fa-circle",
+        ),
       );
       menu.appendChild(
         item(
-          "Customize",
+          "Personalize",
           () => {
             os.app.launch("settingsApp", { section: "pane-appearance" });
           },
-          "fa-paint-brush"
-        )
+          "fa-paint-brush",
+        ),
       );
-      menu.appendChild(item("Background", () => this.showBackgroundContextMenu(e), "fa-image"));
       menu.appendChild(
         item(
-          "Open Terminal Here",
+          "Change background",
+          () => this.showBackgroundContextMenu(e),
+          "fa-image",
+        ),
+      );
+      menu.appendChild(
+        item(
+          "Open in Terminal",
           () => {
             const storedUsername = os.storage.get(StorageKeys.username);
             const username =
-              storedUsername !== undefined && storedUsername !== null && storedUsername !== ""
+              storedUsername !== undefined &&
+              storedUsername !== null &&
+              storedUsername !== ""
                 ? storedUsername
                 : "guest";
-            os.app.launch("terminalApp", { initialPath: ["home", username, "Desktop"] });
+            os.app.launch("terminalApp", {
+              initialPath: ["home", username, "Desktop"],
+            });
           },
-          "fa-terminal"
-        )
+          "fa-terminal",
+        ),
       );
 
       menu.appendChild(hr());
@@ -686,8 +961,8 @@ export class DesktopContextMenuManager {
             async () => {
               await this.desktopUI.pasteToDesktop();
             },
-            "fa-paste"
-          )
+            "fa-paste",
+          ),
         );
       }
 
@@ -701,12 +976,16 @@ export class DesktopContextMenuManager {
             const parsedSize = Number(storedSize);
             const currentSize = Number.isFinite(parsedSize) ? parsedSize : 48;
             const sizes = [
-              { size: 32, label: "Small icons", icon: "fa-th" },
+              { size: 96, label: "Large icons", icon: "fa-th-list" },
               { size: 64, label: "Medium icons", icon: "fa-th-large" },
-              { size: 96, label: "Large icons", icon: "fa-th-list" }
+              { size: 32, label: "Small icons", icon: "fa-th" },
             ];
             sizes.forEach(({ size, label, icon: faIcon }) => {
-              const el = sItem(label, () => changeDesktopIconSize(size), faIcon);
+              const el = sItem(
+                label,
+                () => changeDesktopIconSize(size),
+                faIcon,
+              );
               if (currentSize === size) {
                 el.style.fontWeight = "700";
                 const check = createElement("i");
@@ -720,29 +999,43 @@ export class DesktopContextMenuManager {
 
             sub.appendChild(sHr());
 
-            const storedAlignment = os.storage.get(StorageKeys.desktopIconAlignment);
+            const storedAlignment = os.storage.get(
+              StorageKeys.desktopIconAlignment,
+            );
             const currentAlignment =
-              storedAlignment !== undefined && storedAlignment !== null && storedAlignment !== ""
+              storedAlignment !== undefined &&
+              storedAlignment !== null &&
+              storedAlignment !== ""
                 ? storedAlignment
                 : "horizontal";
-            const alignLabel = currentAlignment === "vertical" ? "Align Horizontally" : "Align Vertically";
-            const alignIcon = currentAlignment === "vertical" ? "fa-arrows-alt-h" : "fa-arrows-alt-v";
+            const alignLabel =
+              currentAlignment === "vertical"
+                ? "Align Horizontally"
+                : "Align Vertically";
+            const alignIcon =
+              currentAlignment === "vertical"
+                ? "fa-arrows-alt-h"
+                : "fa-arrows-alt-v";
             sub.appendChild(
               sItem(
                 alignLabel,
                 () => {
-                  const next = currentAlignment === "vertical" ? "horizontal" : "vertical";
+                  const next =
+                    currentAlignment === "vertical" ? "horizontal" : "vertical";
                   os.storage.set(StorageKeys.desktopIconAlignment, next);
                   relayoutDesktopIcons();
                 },
-                alignIcon
-              )
+                alignIcon,
+              ),
             );
 
             sub.appendChild(sHr());
 
-            const hideDesktopIcons = os.storage.get(StorageKeys.hideDesktopIcons) === "true";
-            const hideLabel = hideDesktopIcons ? "Show desktop icons" : "Hide desktop icons";
+            const hideDesktopIcons =
+              os.storage.get(StorageKeys.hideDesktopIcons) === "true";
+            const hideLabel = hideDesktopIcons
+              ? "Show desktop icons"
+              : "Hide desktop icons";
             const hideIcon = hideDesktopIcons ? "fa-eye" : "fa-eye-slash";
             sub.appendChild(
               sItem(
@@ -754,22 +1047,22 @@ export class DesktopContextMenuManager {
                     icon.style.display = next ? "none" : "";
                   });
                 },
-                hideIcon
-              )
+                hideIcon,
+              ),
             );
           },
-          "fa-eye"
-        )
+          "fa-eye",
+        ),
       );
 
       menu.appendChild(
         submenu(
-          "Sort icons",
+          "Sort by",
           (sub, sItem, sHr) => {
             const sortItems = [
-              { id: "name", label: "By Name", icon: "fa-sort-alpha-down" },
-              { id: "type", label: "By Type", icon: "fa-sort-amount-down" },
-              { id: "recent", label: "By Recent Use", icon: "fa-clock" }
+              { id: "name", label: "Name", icon: "fa-sort-alpha-down" },
+              { id: "type", label: "Item type", icon: "fa-sort-amount-down" },
+              { id: "recent", label: "Recently used", icon: "fa-clock" },
             ];
             sortItems.forEach(({ id, label, icon: faIcon }) => {
               const el = sItem(label, () => sortDesktopIcons(id), faIcon);
@@ -785,10 +1078,18 @@ export class DesktopContextMenuManager {
             });
             sub.appendChild(sHr());
             if (currentSort && currentSort !== "none") {
-              sub.appendChild(sItem("Free Placement", () => sortDesktopIcons("none"), "fa-undo"));
+              sub.appendChild(
+                sItem(
+                  "Free Placement",
+                  () => sortDesktopIcons("none"),
+                  "fa-undo",
+                ),
+              );
             }
             sub.appendChild(sHr());
-            const autoLabel = currentAutoSort ? "Auto Sort: On" : "Auto Sort: Off";
+            const autoLabel = currentAutoSort
+              ? "Auto Sort: On"
+              : "Auto Sort: Off";
             const autoIcon = currentAutoSort ? "fa-toggle-on" : "fa-toggle-off";
             const autoEl = sItem(
               autoLabel,
@@ -799,13 +1100,13 @@ export class DesktopContextMenuManager {
                   sortDesktopIcons(currentSort);
                 }
               },
-              autoIcon
+              autoIcon,
             );
             if (currentAutoSort) autoEl.style.color = "var(--brand)";
             sub.appendChild(autoEl);
           },
-          "fa-sort"
-        )
+          "fa-sort",
+        ),
       );
 
       menu.appendChild(hr());
@@ -822,8 +1123,16 @@ export class DesktopContextMenuManager {
               { type: "weather", label: "Weather", icon: "fa-cloud-sun" },
               { type: "notes", label: "Notes", icon: "fa-sticky-note" },
               { type: "calendar", label: "Calendar", icon: "fa-calendar-alt" },
-              { type: "systemMonitor", label: "System Monitor", icon: "fa-desktop" },
-              { type: "musicControl", label: "Music Control", icon: "fa-music" },
+              {
+                type: "systemMonitor",
+                label: "System Monitor",
+                icon: "fa-desktop",
+              },
+              {
+                type: "musicControl",
+                label: "Music Control",
+                icon: "fa-music",
+              },
               { type: "todo", label: "To-Do", icon: "fa-check-square" },
               { type: "power", label: "Power", icon: "fa-power-off" },
               { type: "clipboard", label: "Clipboard", icon: "fa-clipboard" },
@@ -831,7 +1140,7 @@ export class DesktopContextMenuManager {
               { type: "timer", label: "Timer", icon: "fa-stopwatch" },
               { type: "youtube", label: "YouTube", icon: "fab fa-youtube" },
               { type: "aquarium", label: "Aquarium", icon: "fa-fish" },
-              { type: "rhythms", label: "Rhythms", icon: "fa-wave-square" }
+              { type: "rhythms", label: "Rhythms", icon: "fa-wave-square" },
             ];
             widgetTypes.forEach((wt) => {
               const disabled = existingTypes.has(wt.type);
@@ -842,7 +1151,7 @@ export class DesktopContextMenuManager {
                   : () => {
                       wm.addWidget(wt.type, wt.label);
                     },
-                wt.icon
+                wt.icon,
               );
               if (disabled) {
                 el.style.opacity = "0.4";
@@ -863,19 +1172,19 @@ export class DesktopContextMenuManager {
                 () => {
                   existing.forEach((w) => wm.removeWidget(w.id));
                 },
-                "fa-trash-alt"
+                "fa-trash-alt",
               );
               removeAll.style.color = "var(--error)";
               sub.appendChild(removeAll);
             }
           },
-          "fa-puzzle-piece"
-        )
+          "fa-puzzle-piece",
+        ),
       );
 
       menu.appendChild(
         item(
-          "Enter fullscreen",
+          "Full screen",
           () => {
             if (document.fullscreenElement) {
               document.exitFullscreen();
@@ -883,8 +1192,8 @@ export class DesktopContextMenuManager {
               document.documentElement.requestFullscreen();
             }
           },
-          "fa-expand"
-        )
+          "fa-expand",
+        ),
       );
 
       menu.appendChild(hr());
@@ -900,7 +1209,10 @@ export class DesktopContextMenuManager {
             $$(".folder-icon, .desktop-file-icon").forEach((i) => i.remove());
             await this.desktopUI.loadDesktopItems();
             relayoutDesktopIcons();
-            setTimeout(() => desktopEl.classList.remove("desktop-refreshing"), 80);
+            setTimeout(
+              () => desktopEl.classList.remove("desktop-refreshing"),
+              80,
+            );
             const fresh = $$("#desktop > .icon");
             fresh.forEach((el, idx) => {
               el.classList.remove("desktop-refresh-enter");
@@ -915,20 +1227,28 @@ export class DesktopContextMenuManager {
               });
             }, 600);
           },
-          "fa-sync-alt"
-        )
+          "fa-sync-alt",
+        ),
       );
     });
   }
 
   currentSortMode() {
     const stored = os.storage.get(StorageKeys.desktopSortMode);
-    return stored !== undefined && stored !== null && stored !== "" ? stored : "none";
+    return stored !== undefined && stored !== null && stored !== ""
+      ? stored
+      : "none";
   }
 
   async showBackgroundContextMenu(e) {
     showDynamicContextMenu(e, (menu, item, hr) => {
-      menu.appendChild(item("Open Wallpaper Engine", () => os.app.launch("wallpaperEngineApp"), "fa-paint-roller"));
+      menu.appendChild(
+        item(
+          "Open Wallpaper Engine",
+          () => os.app.launch("wallpaperEngineApp"),
+          "fa-paint-roller",
+        ),
+      );
       menu.appendChild(hr());
       menu.appendChild(item("Vanta.js Wallpapers", null, "fa-magic"));
       menu.appendChild(hr());
@@ -940,8 +1260,8 @@ export class DesktopContextMenuManager {
             async () => {
               await SystemUtilities.setWallpaper(`vanta:${preset.id}`);
             },
-            "fa-palette"
-          )
+            "fa-palette",
+          ),
         );
       });
 
@@ -961,8 +1281,8 @@ export class DesktopContextMenuManager {
             async () => {
               await SystemUtilities.setWallpaper(videoUrl);
             },
-            "fa-film"
-          )
+            "fa-film",
+          ),
         );
       });
     });
@@ -976,8 +1296,8 @@ export class DesktopContextMenuManager {
           async () => {
             await this.spawnInlineDesktopItem(false);
           },
-          "fa-folder"
-        )
+          "fa-folder",
+        ),
       );
       menu.appendChild(
         item(
@@ -985,8 +1305,8 @@ export class DesktopContextMenuManager {
           async () => {
             await this.spawnInlineDesktopItem(true);
           },
-          "fa-file-alt"
-        )
+          "fa-file-alt",
+        ),
       );
     });
   }
@@ -1046,7 +1366,9 @@ export class DesktopContextMenuManager {
       } catch (err) {
         committed = false;
         const msg =
-          err?.message !== undefined && err.message !== null && err.message !== ""
+          err?.message !== undefined &&
+          err.message !== null &&
+          err.message !== ""
             ? err.message
             : "Could not create item.";
         showError(msg);
@@ -1113,15 +1435,24 @@ export class DesktopContextMenuManager {
     ) {
       try {
         let targetForIcon = "";
-        if (icon.dataset.fileName !== undefined && icon.dataset.fileName !== "") {
+        if (
+          icon.dataset.fileName !== undefined &&
+          icon.dataset.fileName !== ""
+        ) {
           targetForIcon = icon.dataset.fileName;
-        } else if (icon.dataset.folderName !== undefined && icon.dataset.folderName !== "") {
+        } else if (
+          icon.dataset.folderName !== undefined &&
+          icon.dataset.folderName !== ""
+        ) {
           targetForIcon = icon.dataset.folderName;
         } else {
           targetForIcon = maybeLast.textContent.trim();
         }
         const tmp = document.createElement("div");
-        tmp.innerHTML = buildFileIconHTML(targetForIcon, { size: 64, radius: 12 }).trim();
+        tmp.innerHTML = buildFileIconHTML(targetForIcon, {
+          size: 64,
+          radius: 12,
+        }).trim();
         const fresh = tmp.firstElementChild;
         if (fresh) maybeFirst.replaceWith(fresh);
       } catch {}
@@ -1139,14 +1470,21 @@ export class DesktopContextMenuManager {
         currentName = icon.dataset.app;
       }
     } else {
-      if (icon.dataset.folderName !== undefined && icon.dataset.folderName !== "") {
+      if (
+        icon.dataset.folderName !== undefined &&
+        icon.dataset.folderName !== ""
+      ) {
         currentName = icon.dataset.folderName;
-      } else if (icon.dataset.fileName !== undefined && icon.dataset.fileName !== "") {
+      } else if (
+        icon.dataset.fileName !== undefined &&
+        icon.dataset.fileName !== ""
+      ) {
         currentName = icon.dataset.fileName;
       } else if (labelDiv && labelDiv.textContent !== null) {
         currentName = labelDiv.textContent.trim();
       }
-      if (currentName.endsWith(".desktop")) currentName = currentName.slice(0, -8);
+      if (currentName.endsWith(".desktop"))
+        currentName = currentName.slice(0, -8);
     }
     if (labelDiv) labelDiv.style.display = "none";
 
@@ -1188,7 +1526,12 @@ export class DesktopContextMenuManager {
       committed = true;
       try {
         if (icon.classList.contains("folder-icon")) {
-          await this.desktopUI.fs.renameItem("Desktop", currentName, newName, true);
+          await this.desktopUI.fs.renameItem(
+            "Desktop",
+            currentName,
+            newName,
+            true,
+          );
           icon.dataset.folderName = newName;
           if (labelDiv) {
             labelDiv.textContent = newName;
@@ -1199,20 +1542,35 @@ export class DesktopContextMenuManager {
           if (wasDesktop && !newName.endsWith(".desktop")) {
             newName += ".desktop";
           }
-          await this.desktopUI.fs.renameItem("Desktop", currentName, newName, true);
+          await this.desktopUI.fs.renameItem(
+            "Desktop",
+            currentName,
+            newName,
+            true,
+          );
           icon.dataset.fileName = newName;
-          const displayName = newName.endsWith(".desktop") ? newName.slice(0, -8) : newName;
+          const displayName = newName.endsWith(".desktop")
+            ? newName.slice(0, -8)
+            : newName;
           if (labelDiv) {
             labelDiv.textContent = displayName;
             labelDiv.title = displayName;
           }
         } else if (icon.dataset.app) {
           let newFile = newName;
-          if (icon.dataset.fileName?.endsWith(".desktop") && !newFile.endsWith(".desktop")) {
+          if (
+            icon.dataset.fileName?.endsWith(".desktop") &&
+            !newFile.endsWith(".desktop")
+          ) {
             newFile += ".desktop";
           }
           if (icon.dataset.fileName) {
-            await this.desktopUI.fs.renameItem("Desktop", icon.dataset.fileName, newFile, true);
+            await this.desktopUI.fs.renameItem(
+              "Desktop",
+              icon.dataset.fileName,
+              newFile,
+              true,
+            );
             icon.dataset.fileName = newFile;
           }
           if (labelDiv) {
@@ -1221,12 +1579,23 @@ export class DesktopContextMenuManager {
           }
         }
         const first = icon.firstElementChild;
-        if (first && first !== labelDiv && !first.querySelector("i, img, svg") && first.textContent.trim()) {
+        if (
+          first &&
+          first !== labelDiv &&
+          !first.querySelector("i, img, svg") &&
+          first.textContent.trim()
+        ) {
           try {
             const targetForIcon =
-              icon.dataset.fileName !== undefined && icon.dataset.fileName !== "" ? icon.dataset.fileName : newName;
+              icon.dataset.fileName !== undefined &&
+              icon.dataset.fileName !== ""
+                ? icon.dataset.fileName
+                : newName;
             const tmp = document.createElement("div");
-            tmp.innerHTML = buildFileIconHTML(targetForIcon, { size: 64, radius: 12 }).trim();
+            tmp.innerHTML = buildFileIconHTML(targetForIcon, {
+              size: 64,
+              radius: 12,
+            }).trim();
             const fresh = tmp.firstElementChild;
             if (fresh) first.replaceWith(fresh);
           } catch {}
@@ -1237,7 +1606,9 @@ export class DesktopContextMenuManager {
       } catch (err) {
         committed = false;
         const msg =
-          err?.message !== undefined && err.message !== null && err.message !== ""
+          err?.message !== undefined &&
+          err.message !== null &&
+          err.message !== ""
             ? err.message
             : `"${newName}" already exists`;
         showError(msg);
@@ -1261,7 +1632,7 @@ export class DesktopContextMenuManager {
         format: "zip",
         compressionLevel: 6,
         outputPath: ["Desktop"],
-        archiveName
+        archiveName,
       });
 
       if (result.success) {
@@ -1286,11 +1657,13 @@ export class DesktopContextMenuManager {
           format: "zip",
           compressionLevel: 6,
           outputPath: ["Desktop"],
-          archiveName
+          archiveName,
         });
 
         if (result.success) {
-          const content = await os.fs.read(["Desktop", result.name], { encoding: "binary" });
+          const content = await os.fs.read(["Desktop", result.name], {
+            encoding: "binary",
+          });
           const blob = new Blob([content], { type: "application/zip" });
           downloadBlob(blob, result.name);
           await os.fs.delete(["Desktop"], result.name);

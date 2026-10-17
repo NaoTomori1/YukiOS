@@ -4,7 +4,12 @@ import { StorageAdapter } from "./fs/StorageAdapter.js";
 import { ElectronFSAdapter } from "./fs/ElectronFSAdapter.js";
 import { MetadataManager } from "./fs/MetadataManager.js";
 import { PathResolver } from "./fs/PathResolver.js";
-import { FileKind, inferKind, mimeFromName, isBinaryName } from "./shared/fileKindDetector.js";
+import {
+  FileKind,
+  inferKind,
+  mimeFromName,
+  isBinaryName,
+} from "./shared/fileKindDetector.js";
 import { BlobStorage } from "./fs/BlobStorage.js";
 import { TrashManager } from "./fs/TrashManager.js";
 import { MountManager } from "./fs/MountManager.js";
@@ -18,18 +23,23 @@ import {
   requireLibraryEntry,
   syncSystemOverrideAfterWrite,
   toSystemRelPath,
-  withRootSystemEntry
+  withRootSystemEntry,
 } from "./fs/SystemLibrary.js";
 import { parseBool, isBlobLike } from "./utils/utils.js";
 import { ISOFileSystem } from "./isoFS.js";
-import { DEFAULT_WALLPAPER_FILES, WALLPAPER_STATIC_DIR } from "./wallpaperConfig.js";
+import {
+  DEFAULT_WALLPAPER_FILES,
+  WALLPAPER_STATIC_DIR,
+} from "./wallpaperConfig.js";
 
 const DEFAULT_STATICALLY_GH_BASE = CDN_BASES.MAIN;
 
 function defaultWallpaperUrl(nameOrPath) {
   if (typeof nameOrPath !== "string") return nameOrPath;
-  if (nameOrPath.startsWith("http://") || nameOrPath.startsWith("https://")) return nameOrPath;
-  if (nameOrPath.startsWith(WALLPAPER_STATIC_DIR)) return `${DEFAULT_STATICALLY_GH_BASE}${nameOrPath}`;
+  if (nameOrPath.startsWith("http://") || nameOrPath.startsWith("https://"))
+    return nameOrPath;
+  if (nameOrPath.startsWith(WALLPAPER_STATIC_DIR))
+    return `${DEFAULT_STATICALLY_GH_BASE}${nameOrPath}`;
   return `${DEFAULT_STATICALLY_GH_BASE}${WALLPAPER_STATIC_DIR}${nameOrPath}`;
 }
 
@@ -48,10 +58,10 @@ const DEFAULT_TILING_CONFIG = JSON.stringify(
     mouse_resize: true,
     config_poll_interval: 3000,
     workspace_switch_delay: 320,
-    resize_debounce: 150
+    resize_debounce: 150,
   },
   null,
-  2
+  2,
 );
 
 export const defaultStorage = {
@@ -59,192 +69,201 @@ export const defaultStorage = {
   Documents: {
     "INFO.txt": {
       type: "file",
-      content: "Welcome aboard!\n\nYou can write and save text files using the Notepad app.",
+      content:
+        "Welcome aboard!\n\nYou can write and save text files using the Notepad app.",
       kind: FileKind.TEXT,
-      icon: "static/icons/notepad.webp"
+      icon: "static/icons/notepad.webp",
     },
     "YukiOS.md": {
       type: "file",
-      content: typeof __README_CONTENT__ !== "undefined" ? __README_CONTENT__ : "# YukiOS\n",
+      content:
+        typeof __README_CONTENT__ !== "undefined"
+          ? __README_CONTENT__
+          : "# YukiOS\n",
       kind: FileKind.TEXT,
-      icon: "static/icons/notepad.webp"
+      icon: "static/icons/notepad.webp",
     },
     "Monocraft.ttf": {
       type: "file",
-      content: "https://cdn.jsdelivr.net/gh/IdreesInc/Monocraft@main/dist/Monocraft-ttf/Monocraft.ttf",
+      content:
+        "https://cdn.jsdelivr.net/gh/IdreesInc/Monocraft@main/dist/Monocraft-ttf/Monocraft.ttf",
       kind: FileKind.FONT,
-      icon: "fas fa-font"
-    }
+      icon: "fas fa-font",
+    },
   },
   Music: {
     "new_look_mii_maker_lofi_mix.mp3": {
       type: "file",
       content: resolveIconUrl("static/audio/new_look_mii_maker_lofi_mix.opus"),
       kind: FileKind.AUDIO,
-      icon: "static/icons/spot.webp"
-    }
+      icon: "static/icons/spot.webp",
+    },
   },
   Pictures: {
     "gandalf.gif": {
       type: "file",
       content: resolveIconUrl("static/gandalf.gif"),
       kind: FileKind.IMAGE,
-      icon: resolveIconUrl("static/gandalf.gif")
+      icon: resolveIconUrl("static/gandalf.gif"),
     },
     Wallpapers: {
       "wallpaper1.webp": {
         type: "file",
         content: defaultWallpaperUrl("wallpaper1.webp"),
         kind: FileKind.IMAGE,
-        icon: defaultWallpaperUrl("wallpaper1.webp")
+        icon: defaultWallpaperUrl("wallpaper1.webp"),
       },
       "wallpaper2.webp": {
         type: "file",
         content: defaultWallpaperUrl("wallpaper2.webp"),
         kind: FileKind.IMAGE,
-        icon: defaultWallpaperUrl("wallpaper2.webp")
+        icon: defaultWallpaperUrl("wallpaper2.webp"),
       },
       "wallpaper3.webp": {
         type: "file",
         content: defaultWallpaperUrl("wallpaper3.webp"),
         kind: FileKind.IMAGE,
-        icon: defaultWallpaperUrl("wallpaper3.webp")
+        icon: defaultWallpaperUrl("wallpaper3.webp"),
       },
       "wallpaper4.webp": {
         type: "file",
         content: defaultWallpaperUrl("wallpaper4.webp"),
         kind: FileKind.IMAGE,
-        icon: defaultWallpaperUrl("wallpaper4.webp")
+        icon: defaultWallpaperUrl("wallpaper4.webp"),
       },
       "wallpaper5.webp": {
         type: "file",
         content: defaultWallpaperUrl("wallpaper5.webp"),
         kind: FileKind.IMAGE,
-        icon: defaultWallpaperUrl("wallpaper5.webp")
+        icon: defaultWallpaperUrl("wallpaper5.webp"),
       },
       "wallpaper6.webp": {
         type: "file",
         content: defaultWallpaperUrl("wallpaper6.webp"),
         kind: FileKind.IMAGE,
-        icon: defaultWallpaperUrl("wallpaper6.webp")
+        icon: defaultWallpaperUrl("wallpaper6.webp"),
       },
       "wallpaper7.webp": {
         type: "file",
         content: defaultWallpaperUrl("wallpaper7.webp"),
         kind: FileKind.IMAGE,
-        icon: defaultWallpaperUrl("wallpaper7.webp")
+        icon: defaultWallpaperUrl("wallpaper7.webp"),
       },
       "wallpaper8.webp": {
         type: "file",
         content: defaultWallpaperUrl("wallpaper8.webp"),
         kind: FileKind.IMAGE,
-        icon: defaultWallpaperUrl("wallpaper8.webp")
+        icon: defaultWallpaperUrl("wallpaper8.webp"),
       },
       "wallpaper9.webp": {
         type: "file",
         content: defaultWallpaperUrl("wallpaper9.webp"),
         kind: FileKind.IMAGE,
-        icon: defaultWallpaperUrl("wallpaper9.webp")
+        icon: defaultWallpaperUrl("wallpaper9.webp"),
       },
       "wallpaper10.webp": {
         type: "file",
         content: defaultWallpaperUrl("wallpaper10.webp"),
         kind: FileKind.IMAGE,
-        icon: defaultWallpaperUrl("wallpaper10.webp")
+        icon: defaultWallpaperUrl("wallpaper10.webp"),
       },
       "wallpaper11.webp": {
         type: "file",
         content: defaultWallpaperUrl("wallpaper11.webp"),
         kind: FileKind.IMAGE,
-        icon: defaultWallpaperUrl("wallpaper11.webp")
+        icon: defaultWallpaperUrl("wallpaper11.webp"),
       },
       "wallpaper12.png": {
         type: "file",
         content: defaultWallpaperUrl("wallpaper12.png"),
         kind: FileKind.IMAGE,
-        icon: defaultWallpaperUrl("wallpaper12.png")
+        icon: defaultWallpaperUrl("wallpaper12.png"),
       },
       "wallpaper13.png": {
         type: "file",
         content: defaultWallpaperUrl("wallpaper13.png"),
         kind: FileKind.IMAGE,
-        icon: defaultWallpaperUrl("wallpaper13.png")
+        icon: defaultWallpaperUrl("wallpaper13.png"),
       },
       "mint.webp": {
         type: "file",
         content: defaultWallpaperUrl("mint.webp"),
         kind: FileKind.IMAGE,
-        icon: defaultWallpaperUrl("mint.webp")
+        icon: defaultWallpaperUrl("mint.webp"),
       },
       "redwin10.jpg": {
         type: "file",
         content: defaultWallpaperUrl("redwin10.jpg"),
         kind: FileKind.IMAGE,
-        icon: defaultWallpaperUrl("redwin10.jpg")
+        icon: defaultWallpaperUrl("redwin10.jpg"),
       },
       "win7.webp": {
         type: "file",
         content: defaultWallpaperUrl("win7.webp"),
         kind: FileKind.IMAGE,
-        icon: defaultWallpaperUrl("win7.webp")
+        icon: defaultWallpaperUrl("win7.webp"),
       },
       "win10.webp": {
         type: "file",
         content: defaultWallpaperUrl("win10.webp"),
         kind: FileKind.IMAGE,
-        icon: defaultWallpaperUrl("win10.webp")
+        icon: defaultWallpaperUrl("win10.webp"),
       },
       "win11.webp": {
         type: "file",
         content: defaultWallpaperUrl("win11.webp"),
         kind: FileKind.IMAGE,
-        icon: defaultWallpaperUrl("win11.webp")
+        icon: defaultWallpaperUrl("win11.webp"),
       },
       "xp.webp": {
         type: "file",
         content: defaultWallpaperUrl("xp.webp"),
         kind: FileKind.IMAGE,
-        icon: defaultWallpaperUrl("xp.webp")
+        icon: defaultWallpaperUrl("xp.webp"),
       },
       "corndog.jpg": {
         type: "file",
         content: defaultWallpaperUrl("corndog.jpg"),
         kind: FileKind.IMAGE,
-        icon: defaultWallpaperUrl("corndog.jpg")
+        icon: defaultWallpaperUrl("corndog.jpg"),
       },
       "end_4.jpg": {
         type: "file",
         content: defaultWallpaperUrl("end_4.jpg"),
         kind: FileKind.IMAGE,
-        icon: defaultWallpaperUrl("end_4.jpg")
+        icon: defaultWallpaperUrl("end_4.jpg"),
       },
       "Kath.jpg": {
         type: "file",
         content: defaultWallpaperUrl("Kath.jpg"),
         kind: FileKind.IMAGE,
-        icon: defaultWallpaperUrl("Kath.jpg")
+        icon: defaultWallpaperUrl("Kath.jpg"),
       },
       "Meptl.png": {
         type: "file",
         content: defaultWallpaperUrl("Meptl.png"),
         kind: FileKind.IMAGE,
-        icon: defaultWallpaperUrl("Meptl.png")
-      }
-    }
+        icon: defaultWallpaperUrl("Meptl.png"),
+      },
+    },
   },
   Videos: {
     "flymetothemoon.mp4": {
       type: "file",
       content: resolveIconUrl("static/flymetothemoon.mp4"),
       kind: FileKind.VIDEO,
-      icon: resolveIconUrl("static/flymetothemoon-preview.webp")
+      icon: resolveIconUrl("static/flymetothemoon-preview.webp"),
     },
     "serial-experiments-lain.mp4": {
       type: "file",
-      content: resolveIconUrl("https://cdn.jsdelivr.net/gh/Reeyuki/ringracers@main/l.mp4"),
+      content: resolveIconUrl(
+        "https://cdn.jsdelivr.net/gh/Reeyuki/ringracers@main/l.mp4",
+      ),
       kind: FileKind.VIDEO,
-      icon: resolveIconUrl("https://cdn.jsdelivr.net/gh/Yangmoooo/lain-sddm-theme@master/VisLain.gif")
-    }
+      icon: resolveIconUrl(
+        "https://cdn.jsdelivr.net/gh/Yangmoooo/lain-sddm-theme@master/VisLain.gif",
+      ),
+    },
   },
   Config: {
     yukiOs: {
@@ -252,10 +271,10 @@ export const defaultStorage = {
         type: "file",
         content: DEFAULT_TILING_CONFIG,
         kind: FileKind.TEXT,
-        icon: "fas fa-layer-group"
-      }
-    }
-  }
+        icon: "fas fa-layer-group",
+      },
+    },
+  },
 };
 
 export class FileSystemManager {
@@ -263,13 +282,15 @@ export class FileSystemManager {
     this.CONFIG = {
       GRID_SIZE: 80,
       ROOT: "/home/guest",
-      META_FILE: ".meta.json"
+      META_FILE: ".meta.json",
     };
     this.sessionKey = "guest";
     this.desktopUI = null;
 
     this.isElectron =
-      typeof window !== "undefined" && typeof window.electronAPI !== "undefined" && !!window.electronAPI.electronFs;
+      typeof window !== "undefined" &&
+      typeof window.electronAPI !== "undefined" &&
+      !!window.electronAPI.electronFs;
 
     if (this.isElectron) {
       this.storage = new ElectronFSAdapter(this.CONFIG);
@@ -297,7 +318,7 @@ export class FileSystemManager {
       putBlob: () => Promise.resolve(),
       getBlobByFullPath: () => Promise.resolve(null),
       deleteBlobByFullPath: () => Promise.resolve(),
-      renameBlobByFullPath: () => Promise.resolve()
+      renameBlobByFullPath: () => Promise.resolve(),
     };
     this.blobs = noop;
   }
@@ -326,7 +347,9 @@ export class FileSystemManager {
   isDesktopPath(path) {
     const desktopPath = this.paths.join(this.CONFIG.ROOT, "Desktop");
     const resolvedPath = this.paths.resolveUserPath(path);
-    return resolvedPath === desktopPath || resolvedPath.startsWith(desktopPath + "/");
+    return (
+      resolvedPath === desktopPath || resolvedPath.startsWith(desktopPath + "/")
+    );
   }
 
   async notifyDesktopChange(path) {
@@ -363,7 +386,10 @@ export class FileSystemManager {
         await this.storage.initFS(sessionKey);
         if (this.isElectron && this.storage.homeDir) {
           try {
-            this.mountManager.registerInternalPath(this.storage.homeDir, "Local Disk");
+            this.mountManager.registerInternalPath(
+              this.storage.homeDir,
+              "Local Disk",
+            );
           } catch (e) {
             // mount already registered, ignore
           }
@@ -407,7 +433,12 @@ export class FileSystemManager {
 
   async migrateFromOldUuid(username) {
     const oldKey = os.storage.get(StorageKeys.userId);
-    if (!oldKey || oldKey === username || !/^[0-9a-f]{8}-[0-9a-f]{4}-/.test(oldKey)) return;
+    if (
+      !oldKey ||
+      oldKey === username ||
+      !/^[0-9a-f]{8}-[0-9a-f]{4}-/.test(oldKey)
+    )
+      return;
     const oldRoot = `/ys/users/${oldKey}`;
     const newRoot = `/home/${username}`;
     if (oldRoot === newRoot) return;
@@ -446,12 +477,18 @@ export class FileSystemManager {
           await walkCopy(fullPath);
         } else {
           const newFullPath = fullPath.replace(oldRoot, newRoot);
-          const content = await this.pRead("readFile", fullPath).catch(() => null);
+          const content = await this.pRead("readFile", fullPath).catch(
+            () => null,
+          );
           if (content !== null) {
-            await this.p("mkdir", this.paths.dirname(newFullPath), { recursive: true }).catch(() => {});
+            await this.p("mkdir", this.paths.dirname(newFullPath), {
+              recursive: true,
+            }).catch(() => {});
             await this.p("writeFile", newFullPath, content);
           }
-          const blob = await this.blobs.getBlobByFullPath(fullPath).catch(() => null);
+          const blob = await this.blobs
+            .getBlobByFullPath(fullPath)
+            .catch(() => null);
           if (blob) {
             await this.blobs.putBlob(newFullPath, blob);
             await this.blobs.deleteBlobByFullPath(fullPath).catch(() => {});
@@ -462,7 +499,9 @@ export class FileSystemManager {
 
     await walkCopy(oldRoot);
 
-    const oldMeta = await this.metadata.readMeta(this.paths.dirname(oldRoot)).catch(() => null);
+    const oldMeta = await this.metadata
+      .readMeta(this.paths.dirname(oldRoot))
+      .catch(() => null);
     if (oldMeta) {
       const oldName = oldRoot.split("/").pop();
       const newName = newRoot.split("/").pop();
@@ -487,7 +526,11 @@ export class FileSystemManager {
       if (!data) return new Uint8Array();
       if (data instanceof Uint8Array) return data;
       if (data.buffer && typeof data.byteLength === "number") {
-        return new Uint8Array(data.buffer, data.byteOffset || 0, data.byteLength);
+        return new Uint8Array(
+          data.buffer,
+          data.byteOffset || 0,
+          data.byteLength,
+        );
       }
       if (data instanceof ArrayBuffer) return new Uint8Array(data);
       try {
@@ -520,7 +563,9 @@ export class FileSystemManager {
         }
 
         if (!this.isElectron) {
-          const blob = await this.blobs.getBlobByFullPath(fullPath).catch(() => null);
+          const blob = await this.blobs
+            .getBlobByFullPath(fullPath)
+            .catch(() => null);
           if (blob) {
             const bytes = new Uint8Array(await blob.arrayBuffer());
             entries.push({
@@ -528,7 +573,7 @@ export class FileSystemManager {
               path: fullPath,
               isBlob: true,
               mime: blob.type || "application/octet-stream",
-              dataB64: this.uint8ToBase64(bytes)
+              dataB64: this.uint8ToBase64(bytes),
             });
             continue;
           }
@@ -545,7 +590,7 @@ export class FileSystemManager {
           type: "file",
           path: fullPath,
           isBlob: false,
-          dataB64: this.uint8ToBase64(bytes)
+          dataB64: this.uint8ToBase64(bytes),
         });
       }
     };
@@ -556,13 +601,20 @@ export class FileSystemManager {
 
   async importSnapshot(snapshot, { wipe = true } = {}) {
     await this.fsReady;
-    if (!snapshot || snapshot.version !== 1 || !Array.isArray(snapshot.entries) || typeof snapshot.root !== "string") {
+    if (
+      !snapshot ||
+      snapshot.version !== 1 ||
+      !Array.isArray(snapshot.entries) ||
+      typeof snapshot.root !== "string"
+    ) {
       audioMixer().playCriticalWarning();
       throw new Error("Invalid snapshot format.");
     }
     if (snapshot.root !== this.CONFIG.ROOT) {
       audioMixer().playCriticalWarning();
-      throw new Error(`Snapshot root mismatch. Expected ${this.CONFIG.ROOT}, got ${snapshot.root}.`);
+      throw new Error(
+        `Snapshot root mismatch. Expected ${this.CONFIG.ROOT}, got ${snapshot.root}.`,
+      );
     }
 
     if (wipe) {
@@ -573,11 +625,17 @@ export class FileSystemManager {
       if (rootStatOk) {
         await this.deleteDirectoryRecursive(this.CONFIG.ROOT).catch(() => {});
       }
-      await this.p("mkdir", this.CONFIG.ROOT, { recursive: true }).catch(() => {});
+      await this.p("mkdir", this.CONFIG.ROOT, { recursive: true }).catch(
+        () => {},
+      );
     }
 
-    const dirs = snapshot.entries.filter((e) => e && e.type === "dir" && typeof e.path === "string");
-    const files = snapshot.entries.filter((e) => e && e.type === "file" && typeof e.path === "string");
+    const dirs = snapshot.entries.filter(
+      (e) => e && e.type === "dir" && typeof e.path === "string",
+    );
+    const files = snapshot.entries.filter(
+      (e) => e && e.type === "file" && typeof e.path === "string",
+    );
 
     dirs.sort((a, b) => a.path.length - b.path.length);
     for (const d of dirs) {
@@ -585,7 +643,9 @@ export class FileSystemManager {
     }
 
     for (const f of files) {
-      await this.p("mkdir", this.paths.dirname(f.path), { recursive: true }).catch(() => {});
+      await this.p("mkdir", this.paths.dirname(f.path), {
+        recursive: true,
+      }).catch(() => {});
       const bytes = this.base64ToUint8(f.dataB64 || "");
       if (f.isBlob) {
         if (this.isElectron) {
@@ -593,7 +653,10 @@ export class FileSystemManager {
         } else {
           try {
             await this.safeWriteFile(f.path, new Uint8Array([0]));
-            const mime = typeof f.mime === "string" && f.mime ? f.mime : "application/octet-stream";
+            const mime =
+              typeof f.mime === "string" && f.mime
+                ? f.mime
+                : "application/octet-stream";
             await this.blobs.putBlob(f.path, new Blob([bytes], { type: mime }));
           } catch (e) {
             console.warn(`Failed to import blob file ${f.path}:`, e);
@@ -633,7 +696,8 @@ export class FileSystemManager {
     const fullPath = this.paths.join(dir, name);
     const ext = name.split(".").pop().toLowerCase();
     const isoExts = ["iso", "bin", "img", "nrg", "mdf", "cdi"];
-    if (!isoExts.includes(ext)) throw new Error(`Not a supported disc image: ${name}`);
+    if (!isoExts.includes(ext))
+      throw new Error(`Not a supported disc image: ${name}`);
 
     let buffer;
     const blob = await this.blobs.getBlobByFullPath(fullPath);
@@ -671,7 +735,9 @@ export class FileSystemManager {
 
     const isoFS = new ISOFileSystem(buffer);
 
-    let label = isoFS.volumeLabel || name.replace(/\.[^.]+$/, "").replace(/[^a-zA-Z0-9_\-. ]/g, "_");
+    let label =
+      isoFS.volumeLabel ||
+      name.replace(/\.[^.]+$/, "").replace(/[^a-zA-Z0-9_\-. ]/g, "_");
     if (!label) label = "Unknown Disc";
 
     if (this.isoMounts.has(label)) {
@@ -685,7 +751,13 @@ export class FileSystemManager {
     }
 
     const mountPoint = `ISOs/${label}`;
-    this.isoMounts.set(label, { isoFS, label, mountPoint, name, sourcePath: [...path] });
+    this.isoMounts.set(label, {
+      isoFS,
+      label,
+      mountPoint,
+      name,
+      sourcePath: [...path],
+    });
     this.persistISOMounts();
     return mountPoint;
   }
@@ -697,15 +769,23 @@ export class FileSystemManager {
   }
 
   getISOMounts() {
-    return Array.from(this.isoMounts.values()).map(({ label, mountPoint }) => ({ label, mountPoint, type: "iso" }));
+    return Array.from(this.isoMounts.values()).map(({ label, mountPoint }) => ({
+      label,
+      mountPoint,
+      type: "iso",
+    }));
   }
 
   isISOMounted(absolutePath) {
     const isoRoot = this.paths.join(this.CONFIG.ROOT, "ISOs");
-    if (!absolutePath.startsWith(isoRoot + "/") && absolutePath !== isoRoot) return false;
+    if (!absolutePath.startsWith(isoRoot + "/") && absolutePath !== isoRoot)
+      return false;
     for (const [, mount] of this.isoMounts) {
       const fullMountPath = this.paths.join(this.CONFIG.ROOT, mount.mountPoint);
-      if (absolutePath === fullMountPath || absolutePath.startsWith(fullMountPath + "/")) {
+      if (
+        absolutePath === fullMountPath ||
+        absolutePath.startsWith(fullMountPath + "/")
+      ) {
         return true;
       }
     }
@@ -714,14 +794,18 @@ export class FileSystemManager {
 
   resolveISOMount(absolutePath) {
     const isoRoot = this.paths.join(this.CONFIG.ROOT, "ISOs");
-    if (!absolutePath.startsWith(isoRoot + "/") && absolutePath !== isoRoot) return null;
+    if (!absolutePath.startsWith(isoRoot + "/") && absolutePath !== isoRoot)
+      return null;
     for (const [, mount] of this.isoMounts) {
       const fullMountPath = this.paths.join(this.CONFIG.ROOT, mount.mountPoint);
       if (absolutePath === fullMountPath) {
         return { isoFS: mount.isoFS, relativePath: "" };
       }
       if (absolutePath.startsWith(fullMountPath + "/")) {
-        return { isoFS: mount.isoFS, relativePath: absolutePath.slice(fullMountPath.length + 1) };
+        return {
+          isoFS: mount.isoFS,
+          relativePath: absolutePath.slice(fullMountPath.length + 1),
+        };
       }
     }
     return null;
@@ -743,7 +827,12 @@ export class FileSystemManager {
   persistISOMounts() {
     const meta = [];
     for (const [, mount] of this.isoMounts) {
-      meta.push({ label: mount.label, mountPoint: mount.mountPoint, sourcePath: mount.sourcePath, name: mount.name });
+      meta.push({
+        label: mount.label,
+        mountPoint: mount.mountPoint,
+        sourcePath: mount.sourcePath,
+        name: mount.name,
+      });
     }
     try {
       os.storage.set(StorageKeys.isoMounts, meta);
@@ -765,7 +854,8 @@ export class FileSystemManager {
   }
 
   async ensureDefaults() {
-    const defaultsCreatedKey = StorageKeys.defaultsCreatedPrefix + this.sessionKey;
+    const defaultsCreatedKey =
+      StorageKeys.defaultsCreatedPrefix + this.sessionKey;
     if (parseBool(os.storage.get(defaultsCreatedKey))) {
       const homeExists = await this.exists(this.CONFIG.ROOT);
       if (homeExists) {
@@ -814,7 +904,9 @@ export class FileSystemManager {
       if (value.type === "file") {
         const exists = await this.exists(fullPath);
         if (!exists) {
-          await this.p("mkdir", this.paths.dirname(fullPath), { recursive: true }).catch(() => {});
+          await this.p("mkdir", this.paths.dirname(fullPath), {
+            recursive: true,
+          }).catch(() => {});
           let content = value.content ?? "";
           if (
             this.isElectron &&
@@ -826,17 +918,21 @@ export class FileSystemManager {
               const buf = await resp.arrayBuffer();
               content = new Uint8Array(buf);
             } catch (e) {
-              console.warn(`Failed to download default file ${key} from ${content}:`, e);
+              console.warn(
+                `Failed to download default file ${key} from ${content}:`,
+                e,
+              );
               content = "";
             }
           }
           await this.p("writeFile", fullPath, content);
-          const size = typeof content === "string" ? content.length : content.byteLength;
+          const size =
+            typeof content === "string" ? content.length : content.byteLength;
           await this.metadata.writeMeta(this.paths.dirname(fullPath), key, {
             kind: value.kind,
             icon: value.icon,
             faIcon: value.faIcon,
-            size
+            size,
           });
         }
       } else {
@@ -931,7 +1027,10 @@ export class FileSystemManager {
     if (this.isMounted(dir)) {
       const resolved = this.resolveMount(dir);
       if (resolved) {
-        return await this.mountManager.readdir(resolved.mount, resolved.relativePath);
+        return await this.mountManager.readdir(
+          resolved.mount,
+          resolved.relativePath,
+        );
       }
     }
 
@@ -962,7 +1061,9 @@ export class FileSystemManager {
     const result = {};
 
     const filtered = entries.filter(
-      (n) => n !== this.CONFIG.META_FILE && !(n === ".trash" && dir === this.CONFIG.ROOT)
+      (n) =>
+        n !== this.CONFIG.META_FILE &&
+        !(n === ".trash" && dir === this.CONFIG.ROOT),
     );
 
     const statResults = await Promise.all(
@@ -974,7 +1075,7 @@ export class FileSystemManager {
         } catch {
           return null;
         }
-      })
+      }),
     );
 
     const files = [];
@@ -991,7 +1092,8 @@ export class FileSystemManager {
     if (files.length > 0) {
       const fileResults = files.map(({ name, full, stat }) => {
         const kind = meta[name]?.kind ?? this.inferKind(name);
-        const icon = resolveIconUrl(meta[name]?.icon) ?? "static/icons/file.webp";
+        const icon =
+          resolveIconUrl(meta[name]?.icon) ?? "static/icons/explorerwin11.png";
         const faIcon = meta[name]?.faIcon ?? null;
         let fileSize = stat.size ?? meta[name]?.size ?? 0;
         return { name, full, kind, icon, faIcon, fileSize };
@@ -1008,7 +1110,7 @@ export class FileSystemManager {
             } catch {
               return { name: f.name, size: 0 };
             }
-          })
+          }),
         );
 
         const sizeMap = {};
@@ -1030,7 +1132,7 @@ export class FileSystemManager {
           icon: f.icon,
           faIcon: f.faIcon,
           content: "",
-          size: f.fileSize
+          size: f.fileSize,
         };
       }
     }
@@ -1052,7 +1154,10 @@ export class FileSystemManager {
     if (this.isMounted(fullPath)) {
       const resolved = this.resolveMount(fullPath);
       if (resolved) {
-        return await this.mountManager.readFile(resolved.mount, resolved.relativePath);
+        return await this.mountManager.readFile(
+          resolved.mount,
+          resolved.relativePath,
+        );
       }
     }
     try {
@@ -1078,14 +1183,25 @@ export class FileSystemManager {
     return candidate;
   }
 
-  async createFile(path, name, content = "", kind = null, icon = null, faIcon = null) {
+  async createFile(
+    path,
+    name,
+    content = "",
+    kind = null,
+    icon = null,
+    faIcon = null,
+  ) {
     await this.fsReady;
     const dir = this.paths.resolveUserPath(path);
     const filePath = this.paths.join(dir, name);
     if (this.isMounted(filePath)) {
       const resolved = this.resolveMount(filePath);
       if (resolved) {
-        await this.mountManager.writeFile(resolved.mount, resolved.relativePath, content);
+        await this.mountManager.writeFile(
+          resolved.mount,
+          resolved.relativePath,
+          content,
+        );
         return name;
       }
     }
@@ -1093,10 +1209,16 @@ export class FileSystemManager {
     const uniqueName = await this.getUniqueFileName(path, name);
     const filePath2 = this.paths.join(dir, uniqueName);
     const fileKind = kind || this.inferKind(uniqueName);
-    const fileIcon = icon || (fileKind === FileKind.TEXT ? "static/icons/notepad.webp" : "static/icons/file.webp");
+    const fileIcon =
+      icon ||
+      (fileKind === FileKind.TEXT
+        ? "static/icons/notepad.webp"
+        : "static/icons/explorerwin11.png");
     await this.p("mkdir", dir, { recursive: true }).catch(() => {});
     if (isBlobLike(content)) {
-      const typedBlob = content.type ? content : new Blob([content], { type: mimeFromName(uniqueName) });
+      const typedBlob = content.type
+        ? content
+        : new Blob([content], { type: mimeFromName(uniqueName) });
       if (this.isElectron) {
         const bytes = new Uint8Array(await typedBlob.arrayBuffer());
         await this.p("writeFile", filePath2, bytes);
@@ -1104,7 +1226,7 @@ export class FileSystemManager {
           kind: fileKind,
           icon: fileIcon,
           faIcon,
-          size: typedBlob.size
+          size: typedBlob.size,
         });
       } else {
         await this.p("writeFile", filePath2, "");
@@ -1112,13 +1234,18 @@ export class FileSystemManager {
           kind: fileKind,
           icon: fileIcon,
           faIcon,
-          size: typedBlob.size
+          size: typedBlob.size,
         });
         await this.blobs.putBlob(filePath2, typedBlob);
       }
     } else {
       await this.p("writeFile", filePath2, content);
-      await this.metadata.writeMeta(dir, uniqueName, { kind: fileKind, icon: fileIcon, faIcon, size: content.length });
+      await this.metadata.writeMeta(dir, uniqueName, {
+        kind: fileKind,
+        icon: fileIcon,
+        faIcon,
+        size: content.length,
+      });
     }
     await this.notifyDesktopChange(path);
     if (isSystemPath(filePath2, this.CONFIG.ROOT)) {
@@ -1155,11 +1282,20 @@ export class FileSystemManager {
     if (this.isMounted(target)) {
       const resolved = this.resolveMount(target);
       if (resolved) {
-        const isFile = await this.mountManager.isFile(resolved.mount, resolved.relativePath);
+        const isFile = await this.mountManager.isFile(
+          resolved.mount,
+          resolved.relativePath,
+        );
         if (isFile) {
-          await this.mountManager.deleteFile(resolved.mount, resolved.relativePath);
+          await this.mountManager.deleteFile(
+            resolved.mount,
+            resolved.relativePath,
+          );
         } else {
-          await this.mountManager.deleteDirectory(resolved.mount, resolved.relativePath);
+          await this.mountManager.deleteDirectory(
+            resolved.mount,
+            resolved.relativePath,
+          );
         }
         return;
       }
@@ -1208,7 +1344,10 @@ export class FileSystemManager {
     const oldPath = this.paths.join(dir, oldName);
     const newPath = this.paths.join(dir, newName);
 
-    if (isSystemPath(oldPath, this.CONFIG.ROOT) || isSystemPath(newPath, this.CONFIG.ROOT)) {
+    if (
+      isSystemPath(oldPath, this.CONFIG.ROOT) ||
+      isSystemPath(newPath, this.CONFIG.ROOT)
+    ) {
       throw new Error("Cannot rename system library files");
     }
 
@@ -1216,7 +1355,11 @@ export class FileSystemManager {
       const oldResolved = this.resolveMount(oldPath);
       const newResolved = this.resolveMount(newPath);
       if (oldResolved && newResolved) {
-        await this.mountManager.rename(oldResolved.mount, oldResolved.relativePath, newResolved.relativePath);
+        await this.mountManager.rename(
+          oldResolved.mount,
+          oldResolved.relativePath,
+          newResolved.relativePath,
+        );
         return;
       }
     }
@@ -1233,7 +1376,11 @@ export class FileSystemManager {
       if (meta[oldName]) {
         meta[newName] = meta[oldName];
         delete meta[oldName];
-        await this.p("writeFile", this.paths.join(dir, this.CONFIG.META_FILE), JSON.stringify(meta));
+        await this.p(
+          "writeFile",
+          this.paths.join(dir, this.CONFIG.META_FILE),
+          JSON.stringify(meta),
+        );
       }
     } finally {
       release();
@@ -1252,17 +1399,26 @@ export class FileSystemManager {
     if (this.isMounted(filePath)) {
       const resolved = this.resolveMount(filePath);
       if (resolved) {
-        await this.mountManager.writeFile(resolved.mount, resolved.relativePath, content);
+        await this.mountManager.writeFile(
+          resolved.mount,
+          resolved.relativePath,
+          content,
+        );
         return;
       }
     }
     const exists = await this.exists(filePath);
     if (!exists) {
       const kind = this.inferKind(name);
-      const icon = kind === FileKind.TEXT ? "static/icons/notepad.webp" : "static/icons/file.webp";
+      const icon =
+        kind === FileKind.TEXT
+          ? "static/icons/notepad.webp"
+          : "static/icons/explorerwin11.png";
       await this.createFile(path, name, content, kind, icon);
     } else if (isBlobLike(content)) {
-      const typedBlob = content.type ? content : new Blob([content], { type: mimeFromName(name) });
+      const typedBlob = content.type
+        ? content
+        : new Blob([content], { type: mimeFromName(name) });
       if (this.isElectron) {
         const bytes = new Uint8Array(await typedBlob.arrayBuffer());
         await this.p("writeFile", filePath, bytes);
@@ -1313,11 +1469,17 @@ export class FileSystemManager {
     if (this.isMounted(fullPath)) {
       const resolved = this.resolveMount(fullPath);
       if (resolved) {
-        const blob = await this.mountManager.readFileBinary(resolved.mount, resolved.relativePath);
+        const blob = await this.mountManager.readFileBinary(
+          resolved.mount,
+          resolved.relativePath,
+        );
         if (blob && blob.type && blob.type !== "application/octet-stream") {
           return blob;
         }
-        const text = await this.mountManager.readFile(resolved.mount, resolved.relativePath);
+        const text = await this.mountManager.readFile(
+          resolved.mount,
+          resolved.relativePath,
+        );
         return text;
       }
     }
@@ -1332,7 +1494,9 @@ export class FileSystemManager {
     if (!this.isElectron) {
       const blob = await this.blobs.getBlobByFullPath(fullPath);
       if (blob) {
-        return blob.type ? blob : new Blob([blob], { type: mimeFromName(name) });
+        return blob.type
+          ? blob
+          : new Blob([blob], { type: mimeFromName(name) });
       }
     }
 
@@ -1340,7 +1504,11 @@ export class FileSystemManager {
       if (this.isElectron) {
         const text = await this.pRead("readFile", fullPath, "utf8");
         if (text) {
-          if (text.startsWith("data:") || text.startsWith("http") || text.startsWith("/")) {
+          if (
+            text.startsWith("data:") ||
+            text.startsWith("http") ||
+            text.startsWith("/")
+          ) {
             return resolveIconUrl(text);
           }
           if (!this.isBinaryName(name)) {
@@ -1365,7 +1533,11 @@ export class FileSystemManager {
       ) {
         return null;
       }
-      if (text.startsWith("data:") || text.startsWith("http") || text.startsWith("/")) {
+      if (
+        text.startsWith("data:") ||
+        text.startsWith("http") ||
+        text.startsWith("/")
+      ) {
         return resolveIconUrl(text);
       }
       return text;
@@ -1391,7 +1563,7 @@ export class FileSystemManager {
     const dir = this.paths.resolveUserPath(path);
     const fullPath = this.paths.join(dir, name);
     if (this.isMounted(fullPath)) {
-      return "static/icons/file.webp";
+      return "static/icons/explorerwin11.png";
     }
     const meta = await this.readMeta(dir);
     return meta[name]?.icon ?? null;
@@ -1416,7 +1588,10 @@ export class FileSystemManager {
     if (this.isMounted(fullPath)) {
       const resolved = this.resolveMount(fullPath);
       if (resolved) {
-        return await this.mountManager.isFile(resolved.mount, resolved.relativePath);
+        return await this.mountManager.isFile(
+          resolved.mount,
+          resolved.relativePath,
+        );
       }
     }
     try {
@@ -1450,18 +1625,28 @@ export class FileSystemManager {
                 try {
                   const content = await this.pRead("readFile", fullPath);
                   fileSize =
-                    content instanceof Uint8Array ? content.length : typeof content === "string" ? content.length : 0;
+                    content instanceof Uint8Array
+                      ? content.length
+                      : typeof content === "string"
+                        ? content.length
+                        : 0;
                 } catch (readErr) {
-                  console.warn(`Failed to read ${fullPath} for size:`, readErr.message);
+                  console.warn(
+                    `Failed to read ${fullPath} for size:`,
+                    readErr.message,
+                  );
                 }
               }
 
-              if (!currentMeta[fileName] || currentMeta[fileName].size !== fileSize) {
+              if (
+                !currentMeta[fileName] ||
+                currentMeta[fileName].size !== fileSize
+              ) {
                 await this.writeMeta(dir, fileName, {
                   kind: currentMeta[fileName]?.kind || this.inferKind(fileName),
                   icon: currentMeta[fileName]?.icon,
                   faIcon: currentMeta[fileName]?.faIcon,
-                  size: fileSize
+                  size: fileSize,
                 });
               }
             } else if (stat.isDirectory()) {
@@ -1474,7 +1659,10 @@ export class FileSystemManager {
                 await walkAndUpdate(fullPath);
               }
             } catch {
-              console.warn(`Skipping ${fullPath} due to stat error:`, statErr.message);
+              console.warn(
+                `Skipping ${fullPath} due to stat error:`,
+                statErr.message,
+              );
             }
           }
         }
@@ -1497,7 +1685,10 @@ export class FileSystemManager {
     if (this.isMounted(path)) {
       const resolved = this.resolveMount(path);
       if (resolved) {
-        return await this.mountManager.exists(resolved.mount, resolved.relativePath);
+        return await this.mountManager.exists(
+          resolved.mount,
+          resolved.relativePath,
+        );
       }
     }
     return this.storage.exists(path);
@@ -1510,7 +1701,11 @@ export class FileSystemManager {
     if (this.isMounted(fullPath)) {
       const resolved = this.resolveMount(fullPath);
       if (resolved) {
-        await this.mountManager.writeFile(resolved.mount, resolved.relativePath, blob);
+        await this.mountManager.writeFile(
+          resolved.mount,
+          resolved.relativePath,
+          blob,
+        );
         return name;
       }
     }
@@ -1525,13 +1720,17 @@ export class FileSystemManager {
       [FileKind.IMAGE]: "@content",
       [FileKind.VIDEO]: "fas fa-camera",
       [FileKind.AUDIO]: "/static/icons/spot.webp",
-      [FileKind.TEXT]: "static/icons/notepad.webp"
+      [FileKind.TEXT]: "static/icons/notepad.webp",
     };
-    const fileIcon = icon || iconMap[fileKind] || "static/icons/file.webp";
+    const fileIcon =
+      icon || iconMap[fileKind] || "static/icons/explorerwin11.png";
     const fileSize = isBlobLike(blob) ? blob.size : 0;
 
     await this.p("mkdir", dir, { recursive: true }).catch(() => {});
-    const typedBlob = isBlobLike(blob) && !blob.type ? new Blob([blob], { type: mimeFromName(name) }) : blob;
+    const typedBlob =
+      isBlobLike(blob) && !blob.type
+        ? new Blob([blob], { type: mimeFromName(name) })
+        : blob;
     if (this.isElectron) {
       const bytes = new Uint8Array(await typedBlob.arrayBuffer());
       await this.p("writeFile", fullPath2, bytes);
@@ -1539,7 +1738,11 @@ export class FileSystemManager {
       await this.p("writeFile", fullPath2, "");
       await this.blobs.putBlob(fullPath2, typedBlob);
     }
-    await this.metadata.writeMeta(dir, uniqueName, { kind: fileKind, icon: fileIcon, size: fileSize });
+    await this.metadata.writeMeta(dir, uniqueName, {
+      kind: fileKind,
+      icon: fileIcon,
+      size: fileSize,
+    });
     await this.notifyDesktopChange(folderPath);
     return uniqueName;
   }
@@ -1551,7 +1754,10 @@ export class FileSystemManager {
     if (this.isMounted(fullPath)) {
       const resolved = this.resolveMount(fullPath);
       if (resolved) {
-        return await this.mountManager.readFileBinary(resolved.mount, resolved.relativePath);
+        return await this.mountManager.readFileBinary(
+          resolved.mount,
+          resolved.relativePath,
+        );
       }
     }
     if (this.isElectron) {
@@ -1573,7 +1779,10 @@ export class FileSystemManager {
     if (this.isMounted(fullPath)) {
       const resolved = this.resolveMount(fullPath);
       if (resolved) {
-        await this.mountManager.deleteFile(resolved.mount, resolved.relativePath);
+        await this.mountManager.deleteFile(
+          resolved.mount,
+          resolved.relativePath,
+        );
         return;
       }
     }
@@ -1591,7 +1800,10 @@ export class FileSystemManager {
     const oldPath = this.paths.join(dir, oldName);
     const newPath = this.paths.join(dir, newName);
 
-    if (isSystemPath(oldPath, this.CONFIG.ROOT) || isSystemPath(newPath, this.CONFIG.ROOT)) {
+    if (
+      isSystemPath(oldPath, this.CONFIG.ROOT) ||
+      isSystemPath(newPath, this.CONFIG.ROOT)
+    ) {
       throw new Error("Cannot rename system library files");
     }
 
@@ -1599,7 +1811,11 @@ export class FileSystemManager {
       const oldResolved = this.resolveMount(oldPath);
       const newResolved = this.resolveMount(newPath);
       if (oldResolved && newResolved) {
-        await this.mountManager.rename(oldResolved.mount, oldResolved.relativePath, newResolved.relativePath);
+        await this.mountManager.rename(
+          oldResolved.mount,
+          oldResolved.relativePath,
+          newResolved.relativePath,
+        );
         return;
       }
     }
@@ -1616,7 +1832,11 @@ export class FileSystemManager {
       if (meta[oldName]) {
         meta[newName] = meta[oldName];
         delete meta[oldName];
-        await this.p("writeFile", this.paths.join(dir, this.CONFIG.META_FILE), JSON.stringify(meta));
+        await this.p(
+          "writeFile",
+          this.paths.join(dir, this.CONFIG.META_FILE),
+          JSON.stringify(meta),
+        );
       }
     } finally {
       release();

@@ -11,7 +11,8 @@ function viewerIcon(papirusIcon, size = 14) {
   if (typeof effective === "string" && effective.startsWith("papirus:"))
     return `<img src="${resolveIconUrl(effective)}" style="width:${size}px;height:${size}px;" alt="" />`;
   let cls = effective;
-  if (typeof cls === "string" && cls.startsWith("fa-") && !cls.includes(" ")) cls = "fas " + cls;
+  if (typeof cls === "string" && cls.startsWith("fa-") && !cls.includes(" "))
+    cls = "fas " + cls;
   return `<i class="${cls}" style="font-size:${size}px;"></i>`;
 }
 
@@ -51,7 +52,7 @@ import {
   CODE_EXTS,
   VIDEO_MIME_MAP,
   IMAGE_MIME_MAP,
-  OFFICE_EXTS
+  OFFICE_EXTS,
 } from "./shared/fileKindDetector.js";
 
 export {
@@ -64,7 +65,7 @@ export {
   isExeFile,
   isSwfFile,
   readFontBlob,
-  OFFICE_EXTS
+  OFFICE_EXTS,
 };
 
 const CODE_ICON_COLORS = {
@@ -108,7 +109,7 @@ const CODE_ICON_COLORS = {
   sc: "#ff6b7d",
   zig: "#ffb347",
   nim: "#ffd24d",
-  elm: "#7fd3e8"
+  elm: "#7fd3e8",
 };
 
 const RECENT_FILES_MAX = 20;
@@ -119,7 +120,12 @@ function trackRecentFile(name, path) {
     const key = Array.isArray(path) ? path.join("/") : path;
     const existing = recent.findIndex((f) => f.name === name && f.path === key);
     if (existing !== -1) recent.splice(existing, 1);
-    recent.unshift({ name, path: key, kind: fileKindFromName(name), timestamp: Date.now() });
+    recent.unshift({
+      name,
+      path: key,
+      kind: fileKindFromName(name),
+      timestamp: Date.now(),
+    });
     if (recent.length > RECENT_FILES_MAX) recent.length = RECENT_FILES_MAX;
     os.storage.set(StorageKeys.recentFiles, recent);
   } catch (e) {
@@ -143,17 +149,21 @@ export function isWallpaperPath(path) {
 }
 
 export function resolveFileIcon(name, isFolder = false) {
-  if (isFolder) return resolveIconUrl("static/icons/file.webp");
+  if (isFolder) return resolveIconUrl("static/icons/explorerwin11.png");
   if (isImageFile(name)) return "@content";
   if (isVideoFile(name)) return resolveIconUrl("static/icons/obs.webp");
   if (isAudioFile(name)) return resolveIconUrl("static/icons/spot.webp");
   if (isRomFile(name)) return "rom";
   if (isSwfFile(name)) return resolveIconUrl("static/icons/flash.webp");
   if (isZipFile(name)) return resolveIconUrl("static/icons/zip.webp");
-  if (isExeFile(name)) return getExt(name) === "exe" ? "fas fa-wine-glass" : resolveIconUrl("static/icons/jsdos.webp");
+  if (isExeFile(name))
+    return getExt(name) === "exe"
+      ? "fas fa-wine-glass"
+      : resolveIconUrl("static/icons/jsdos.webp");
   if (isOfficeFile(name)) return resolveIconUrl("static/icons/office.webp");
   if (isEbookFile(name)) return resolveIconUrl("static/icons/office.webp");
-  if (isFontFile(name)) return getEffectiveIcon("papirus:mimetypes/application-x-font-ttf");
+  if (isFontFile(name))
+    return getEffectiveIcon("papirus:mimetypes/application-x-font-ttf");
   if (isDiskFile(name)) return resolveIconUrl("static/icons/zip.webp");
   if (isShortcutFile(name)) return resolveIconUrl("static/icons/notepad.webp");
   if (isHtmlFile(name)) return resolveIconUrl("static/icons/chrome.webp");
@@ -181,7 +191,13 @@ export function readFileAsText(file) {
 
 export function buildFileIconHTML(
   name,
-  { thumbnailSrc = null, size = 64, radius = 8, storedIcon = null, isFolder = false } = {}
+  {
+    thumbnailSrc = null,
+    size = 64,
+    radius = 8,
+    storedIcon = null,
+    isFolder = false,
+  } = {},
 ) {
   const s = `width:${size}px;height:${size}px;border-radius:${radius}px;`;
 
@@ -198,17 +214,25 @@ export function buildFileIconHTML(
 
   function renderPapirus(papirusIcon, opts = {}) {
     const effective = getEffectiveIcon(papirusIcon);
-    if (typeof effective === "string" && effective.startsWith("papirus:")) return papirusDiv(effective, opts);
+    if (typeof effective === "string" && effective.startsWith("papirus:"))
+      return papirusDiv(effective, opts);
     let faCandidate = effective;
-    if (typeof faCandidate === "string" && faCandidate.startsWith("fa-") && !faCandidate.includes(" "))
+    if (
+      typeof faCandidate === "string" &&
+      faCandidate.startsWith("fa-") &&
+      !faCandidate.includes(" ")
+    )
       faCandidate = "fas " + faCandidate;
-    if (typeof faCandidate === "string" && (faCandidate.startsWith("fa") || faCandidate.includes(" fa-")))
+    if (
+      typeof faCandidate === "string" &&
+      (faCandidate.startsWith("fa") || faCandidate.includes(" fa-"))
+    )
       return faIconDiv(faCandidate, opts);
     return papirusDiv(papirusIcon, opts);
   }
 
   if (isFolder) {
-    return `<img src="${resolveIconUrl("static/icons/file.webp")}" style="${s}object-fit:cover;">`;
+    return `<img src="${resolveIconUrl("static/icons/explorerwin11.png")}" style="${s}object-fit:cover;">`;
   }
 
   let iconSource = thumbnailSrc || storedIcon;
@@ -219,14 +243,23 @@ export function buildFileIconHTML(
       return papirusDiv(effective, { bg: "var(--surface-1)" });
     }
     let faCandidate = effective;
-    if (typeof faCandidate === "string" && faCandidate.startsWith("fa-") && !faCandidate.includes(" "))
+    if (
+      typeof faCandidate === "string" &&
+      faCandidate.startsWith("fa-") &&
+      !faCandidate.includes(" ")
+    )
       faCandidate = "fas " + faCandidate;
-    if (typeof faCandidate === "string" && (faCandidate.startsWith("fa") || faCandidate.includes(" fa-"))) {
+    if (
+      typeof faCandidate === "string" &&
+      (faCandidate.startsWith("fa") || faCandidate.includes(" fa-"))
+    ) {
       return faIconDiv(faCandidate);
     }
     if (
       typeof effective === "string" &&
-      (effective.startsWith("data:") || effective.startsWith("blob:") || effective.startsWith("http"))
+      (effective.startsWith("data:") ||
+        effective.startsWith("blob:") ||
+        effective.startsWith("http"))
     ) {
       return `<img src="${effective}" style="${s}object-fit:cover;">`;
     }
@@ -236,13 +269,19 @@ export function buildFileIconHTML(
     return `<div style="${s}display:flex;align-items:center;justify-content:center;background:var(--surface-1);"><img src="${resolveIconUrl("static/icons/chrome.webp")}" style="width:${Math.round(size * 0.62)}px;height:${Math.round(size * 0.62)}px;object-fit:contain;" loading="lazy" alt=""></div>`;
   }
   if (isMarkdownFile(name)) {
-    return renderPapirus("papirus:mimetypes/text-x-markdown", { bg: "var(--surface-1)" });
+    return renderPapirus("papirus:mimetypes/text-x-markdown", {
+      bg: "var(--surface-1)",
+    });
   }
   if (isISOFile(name)) {
-    return renderPapirus("papirus:devices/media-optical", { bg: "var(--surface-1)" });
+    return renderPapirus("papirus:devices/media-optical", {
+      bg: "var(--surface-1)",
+    });
   }
   if (isRomFile(name)) {
-    return renderPapirus("papirus:apps/preferences-desktop-gaming", { bg: "var(--surface-1)" });
+    return renderPapirus("papirus:apps/preferences-desktop-gaming", {
+      bg: "var(--surface-1)",
+    });
   }
   if (isSwfFile(name)) {
     return `<img src="${resolveIconUrl("static/icons/flash.webp")}" style="${s}object-fit:cover;">`;
@@ -261,7 +300,9 @@ export function buildFileIconHTML(
     return `<img src="${resolveIconUrl("static/icons/notepad.webp")}" style="${s}object-fit:cover;">`;
   }
   if (isCodeFile(name)) {
-    return renderPapirus("papirus:mimetypes/text-x-script", { bg: "var(--surface-1)" });
+    return renderPapirus("papirus:mimetypes/text-x-script", {
+      bg: "var(--surface-1)",
+    });
   }
   if (isImageFile(name) && thumbnailSrc && thumbnailSrc !== "@content") {
     return `<img src="${thumbnailSrc}" style="${s}object-fit:cover;">`;
@@ -276,29 +317,47 @@ export function buildFileIconHTML(
         return `<img src="${resolvedStored}" style="${s}object-fit:cover;">`;
       }
     }
-    return renderPapirus("papirus:mimetypes/video-x-generic", { bg: "var(--bg-primary)" });
+    return renderPapirus("papirus:mimetypes/video-x-generic", {
+      bg: "var(--bg-primary)",
+    });
   }
   if (isOfficeFile(name)) {
     return `<img src="${resolveIconUrl("static/icons/office.webp")}" style="${s}object-fit:cover;">`;
   }
   if (isEbookFile(name)) {
-    return renderPapirus("papirus:mimetypes/application-epub+zip", { bg: "var(--surface-1)" });
+    return renderPapirus("papirus:mimetypes/application-epub+zip", {
+      bg: "var(--surface-1)",
+    });
   }
   if (isFontFile(name)) {
-    return renderPapirus("papirus:mimetypes/application-x-font-ttf", { bg: "var(--surface-1)" });
+    return renderPapirus("papirus:mimetypes/application-x-font-ttf", {
+      bg: "var(--surface-1)",
+    });
   }
   if (isDiskFile(name)) {
-    return renderPapirus("papirus:devices/drive-harddisk", { bg: "var(--surface-1)" });
+    return renderPapirus("papirus:devices/drive-harddisk", {
+      bg: "var(--surface-1)",
+    });
   }
   if (storedIcon && storedIcon !== "@content" && storedIcon !== "rom") {
     const effectiveStored = getEffectiveIcon(storedIcon);
-    if (typeof effectiveStored === "string" && effectiveStored.startsWith("papirus:")) {
+    if (
+      typeof effectiveStored === "string" &&
+      effectiveStored.startsWith("papirus:")
+    ) {
       return papirusDiv(effectiveStored, { bg: "var(--surface-1)" });
     }
     let faStored = effectiveStored;
-    if (typeof faStored === "string" && faStored.startsWith("fa-") && !faStored.includes(" "))
+    if (
+      typeof faStored === "string" &&
+      faStored.startsWith("fa-") &&
+      !faStored.includes(" ")
+    )
       faStored = "fas " + faStored;
-    if (typeof faStored === "string" && (faStored.startsWith("fa") || faStored.includes(" fa-"))) {
+    if (
+      typeof faStored === "string" &&
+      (faStored.startsWith("fa") || faStored.includes(" fa-"))
+    ) {
       return faIconDiv(faStored, { bg: "var(--surface-1)" });
     }
     return `<img src="${resolveIconUrl(effectiveStored)}" style="${s}object-fit:cover;">`;
@@ -306,7 +365,9 @@ export function buildFileIconHTML(
   if (isShortcutFile(name)) {
     return renderPapirus("papirus:actions/link", { bg: "var(--surface-1)" });
   }
-  return renderPapirus("papirus:mimetypes/text-x-generic", { bg: "var(--surface-1)" });
+  return renderPapirus("papirus:mimetypes/text-x-generic", {
+    bg: "var(--surface-1)",
+  });
 }
 
 function setupImageViewer(win) {
@@ -379,7 +440,7 @@ function setupImageViewer(win) {
       const factor = e.deltaY > 0 ? 1 / 1.1 : 1.1;
       zoomAt(scale * factor, e.clientX, e.clientY);
     },
-    { passive: false }
+    { passive: false },
   );
 
   img.addEventListener("dblclick", (e) => {
@@ -461,14 +522,79 @@ function setupImageViewer(win) {
   });
 }
 
+function trackExternalBlobUrl(win, blobUrl) {
+  try {
+    win.addEventListener("remove", () => {
+      try {
+        URL.revokeObjectURL(blobUrl);
+      } catch (revokeErr) {
+        void revokeErr;
+      }
+    });
+  } catch (trackErr) {
+    void trackErr;
+  }
+}
+
+function openMediaInNewTab(src, win) {
+  const target = String(src || "");
+  if (!target) return;
+  if (!target.startsWith("data:")) {
+    window.open(target, "_blank", "noopener,noreferrer");
+    return;
+  }
+  const markerIndex = target.indexOf(";base64,");
+  if (markerIndex !== -1) {
+    try {
+      const blobUrl = URL.createObjectURL(base64ToBlob(target));
+      trackExternalBlobUrl(win, blobUrl);
+      try {
+        win.dataset.externalUrl = blobUrl;
+      } catch (datasetErr) {
+        void datasetErr;
+      }
+      window.open(blobUrl, "_blank", "noopener,noreferrer");
+      return;
+    } catch (blobErr) {
+      void blobErr;
+    }
+  }
+  const opened = window.open("about:blank", "_blank", "noopener,noreferrer");
+  fetch(target)
+    .then((resp) => resp.blob())
+    .then((blob) => {
+      const blobUrl = URL.createObjectURL(blob);
+      trackExternalBlobUrl(win, blobUrl);
+      try {
+        win.dataset.externalUrl = blobUrl;
+      } catch (datasetErr) {
+        void datasetErr;
+      }
+      if (opened && !opened.closed) opened.location.href = blobUrl;
+      else window.open(blobUrl, "_blank", "noopener,noreferrer");
+    })
+    .catch((fetchErr) => {
+      try {
+        if (opened && !opened.closed) opened.close();
+      } catch (closeErr) {
+        void closeErr;
+      }
+      console.error("[FileDisplay] openMediaInNewTab error:", fetchErr);
+    });
+}
+
 export function openMediaViewer(name, src, kind, storedIcon = null, opts = {}) {
   const isVideo = kind === FileKind.VIDEO || isVideoFile(name);
   const isAudio = kind === FileKind.AUDIO || isAudioFile(name);
   const isImage = !isVideo && !isAudio;
 
-  const [defaultWidth, defaultHeight] = isAudio ? ["400px", "120px"] : ["500px", "400px"];
-  const width = typeof opts.width === "number" ? `${opts.width}px` : defaultWidth;
-  const height = typeof opts.height === "number" ? `${opts.height}px` : defaultHeight;
+  const [defaultWidth, defaultHeight] = isAudio
+    ? ["400px", "120px"]
+    : ["500px", "400px"];
+  const width =
+    typeof opts.width === "number" ? `${opts.width}px` : defaultWidth;
+  const height =
+    typeof opts.height === "number" ? `${opts.height}px` : defaultHeight;
   let icon;
   if (storedIcon) {
     const effective = getEffectiveIcon(storedIcon);
@@ -476,14 +602,20 @@ export function openMediaViewer(name, src, kind, storedIcon = null, opts = {}) {
       icon = resolveIconUrl(effective);
     } else if (
       typeof effective === "string" &&
-      (effective.startsWith("http") || effective.startsWith("data:") || effective.startsWith("/"))
+      (effective.startsWith("http") ||
+        effective.startsWith("data:") ||
+        effective.startsWith("/"))
     ) {
       icon = effective;
     } else {
-      icon = isAudio ? resolveIconUrl("static/icons/spot.webp") : resolveIconUrl("static/icons/file.webp");
+      icon = isAudio
+        ? resolveIconUrl("static/icons/spot.webp")
+        : resolveIconUrl("static/icons/explorerwin11.png");
     }
   } else {
-    icon = isAudio ? resolveIconUrl("static/icons/spot.webp") : resolveIconUrl("static/icons/file.webp");
+    icon = isAudio
+      ? resolveIconUrl("static/icons/spot.webp")
+      : resolveIconUrl("static/icons/explorerwin11.png");
   }
 
   let media;
@@ -497,7 +629,7 @@ export function openMediaViewer(name, src, kind, storedIcon = null, opts = {}) {
   const createOptions = {
     icon,
     autoMount: false,
-    skipAutoSetup: true
+    skipAutoSetup: true,
   };
   if (opts.forceId) {
     createOptions.forceId = opts.forceId;
@@ -519,7 +651,7 @@ export function openMediaViewer(name, src, kind, storedIcon = null, opts = {}) {
   const headerHtml = `
     <div class="window-header">
       <span><img src="${icon}" style="width:20px;height:20px;margin-right:6px;vertical-align:middle;">${name}</span>
-      ${os.window.getWindowControls(icon)}
+      ${os.window.getWindowControls(src)}
     </div>
   `;
 
@@ -555,6 +687,20 @@ export function openMediaViewer(name, src, kind, storedIcon = null, opts = {}) {
   const desktop = $("#desktop");
   if (desktop) desktop.appendChild(win);
   os.window.setupWindowControls(win);
+  if (
+    typeof src === "string" &&
+    (src.startsWith("http://") ||
+      src.startsWith("https://") ||
+      src.startsWith("blob:"))
+  ) {
+    try {
+      win.dataset.externalUrl = src;
+    } catch (datasetErr) {
+      void datasetErr;
+    }
+  }
+  const externalBtn = win.querySelector(".external-btn");
+  if (externalBtn) externalBtn.onclick = () => openMediaInNewTab(src, win);
   os.window.makeDraggable(win);
   os.window.makeResizable(win);
   os.window.addToTaskbar(win.id, name, icon);
@@ -565,7 +711,8 @@ export function openMediaViewer(name, src, kind, storedIcon = null, opts = {}) {
 
   if (isVideo || isAudio) {
     const mediaEl = $("video, audio", win);
-    if (mediaEl) mediaEl.addEventListener("contextmenu", (e) => e.preventDefault());
+    if (mediaEl)
+      mediaEl.addEventListener("contextmenu", (e) => e.preventDefault());
   }
   return win;
 }
@@ -591,7 +738,7 @@ async function confirmLargeFile(name, size) {
     "Large File Warning",
     `The file "${name}" is quite large (${sizeStr}).\n\nOpening it in Notepad may cause performance issues.\n\nDo you want to continue?`,
     "Continue",
-    "Cancel"
+    "Cancel",
   );
 }
 
@@ -661,7 +808,11 @@ export async function openMediaFile(name, path, opts = {}) {
   try {
     const ext = getExt(name);
 
-    const kind = isVideoFile(name) ? FileKind.VIDEO : isAudioFile(name) ? FileKind.AUDIO : FileKind.IMAGE;
+    const kind = isVideoFile(name)
+      ? FileKind.VIDEO
+      : isAudioFile(name)
+        ? FileKind.AUDIO
+        : FileKind.IMAGE;
 
     const mime = isAudioFile(name)
       ? mimeFromName(name)
@@ -684,7 +835,7 @@ export async function openMediaFile(name, path, opts = {}) {
         width: opts.width,
         height: opts.height,
         x: opts.x,
-        y: opts.y
+        y: opts.y,
       });
       return;
     }
@@ -696,16 +847,23 @@ export async function openMediaFile(name, path, opts = {}) {
         width: opts.width,
         height: opts.height,
         x: opts.x,
-        y: opts.y
+        y: opts.y,
       });
       return;
     }
     if (typeof content === "string" && content) {
       let src;
-      if (content.startsWith("http") || content.startsWith("/") || content.startsWith("data:")) {
+      if (
+        content.startsWith("http") ||
+        content.startsWith("/") ||
+        content.startsWith("data:")
+      ) {
         src = content;
       } else {
-        const typedBlob = new Blob([Uint8Array.from(content, (c) => c.charCodeAt(0))], { type: mime });
+        const typedBlob = new Blob(
+          [Uint8Array.from(content, (c) => c.charCodeAt(0))],
+          { type: mime },
+        );
         src = await getMediaSrc(typedBlob);
       }
       openMediaViewer(name, src, kind, storedIcon, {
@@ -714,7 +872,7 @@ export async function openMediaFile(name, path, opts = {}) {
         width: opts.width,
         height: opts.height,
         x: opts.x,
-        y: opts.y
+        y: opts.y,
       });
     }
   } catch (err) {
@@ -735,7 +893,11 @@ async function openOfficeFile(name, path) {
       if (blob && blob.size > 0) {
         officeApp.loadContent(name, await blob.arrayBuffer(), path);
       } else {
-        officeApp.loadContent(name, await os.fs.getFileContent(path, name), path);
+        officeApp.loadContent(
+          name,
+          await os.fs.getFileContent(path, name),
+          path,
+        );
       }
       return;
     }
@@ -792,7 +954,11 @@ async function readFontBlob(name, path) {
   const content = await os.fs.getFileContent(path, name);
   if (content instanceof Blob && content.size) return content;
   if (typeof content === "string" && content) {
-    if (content.startsWith("data:") || content.startsWith("http://") || content.startsWith("https://")) {
+    if (
+      content.startsWith("data:") ||
+      content.startsWith("http://") ||
+      content.startsWith("https://")
+    ) {
       try {
         const resp = await fetch(content);
         if (resp.ok) return resp.blob();
@@ -807,9 +973,15 @@ async function readFontBlob(name, path) {
 async function openFontFile(name, path) {
   try {
     const blob = await readFontBlob(name, path);
-    if (!blob || !blob.size) return os.dialog.alert("Error", "Could not read font file");
+    if (!blob || !blob.size)
+      return os.dialog.alert("Error", "Could not read font file");
     const ext = getExt(name);
-    const formatMap = { ttf: "truetype", otf: "opentype", woff: "woff", woff2: "woff2" };
+    const formatMap = {
+      ttf: "truetype",
+      otf: "opentype",
+      woff: "woff",
+      woff2: "woff2",
+    };
     const format = formatMap[ext] || "truetype";
     const fontFamily = name.replace(/\.[^.]+$/, "");
     const fontUrl = URL.createObjectURL(blob);
@@ -821,7 +993,7 @@ async function openFontFile(name, path) {
 
     const winId = `font-preview-${Date.now()}`;
     const win = os.window.create(winId, name, "550px", "480px", {
-      icon: getEffectiveIcon("papirus:mimetypes/application-x-font-ttf")
+      icon: getEffectiveIcon("papirus:mimetypes/application-x-font-ttf"),
     });
 
     const contentEl = win.querySelector(".window-content");
@@ -884,7 +1056,8 @@ async function openShortcutTarget(name, path) {
   const entry = entries ? entries[targetName] : null;
   if (entry && entry.type !== "file") {
     const explorerApp = os.app.getInstance(ServiceKeys.EXPLORER);
-    if (explorerApp && explorerApp.open) explorerApp.open(targetDir.concat(targetName));
+    if (explorerApp && explorerApp.open)
+      explorerApp.open(targetDir.concat(targetName));
     return;
   }
   await openFileWith({ name: targetName, path: targetDir });
@@ -913,9 +1086,14 @@ export async function openFileWith({ name, path }) {
     if (isISOFile(name)) {
       try {
         const mountPoint = await os.fs.mountISO(path, name);
-        if (mountPoint) os.events.emit("iso:mounted", { mountPoint, path, name });
+        if (mountPoint)
+          os.events.emit("iso:mounted", { mountPoint, path, name });
       } catch (e) {
-        os.notify.send("Disc Image", `Failed to mount "${name}": ${e.message}`, { type: "error" });
+        os.notify.send(
+          "Disc Image",
+          `Failed to mount "${name}": ${e.message}`,
+          { type: "error" },
+        );
       }
       return;
     }
@@ -928,7 +1106,8 @@ export async function openFileWith({ name, path }) {
     }
 
     if (isUnassociated(name)) {
-      const { showChooseAppDialog } = await import("./shared/chooseAppDialog.js");
+      const { showChooseAppDialog } =
+        await import("./shared/chooseAppDialog.js");
       await showChooseAppDialog({ ext: getExt(name), name, path });
       return;
     }
@@ -942,7 +1121,8 @@ export async function openFileWith({ name, path }) {
       return openExecutable(name, path);
     if (isSwfFile(name)) return openSwfFile(name, path);
     if (isRomFile(name)) return openRomFile(name, path);
-    if (isVideoFile(name) || isAudioFile(name) || isImageFile(name)) return openMediaFile(name, path);
+    if (isVideoFile(name) || isAudioFile(name) || isImageFile(name))
+      return openMediaFile(name, path);
     if (isOfficeFile(name)) return openOfficeFile(name, path);
     if (isFontFile(name)) return openFontFile(name, path);
 
@@ -1020,7 +1200,9 @@ export async function openFileWithApp(appId, { name, path }) {
     }
   } catch (err) {
     console.error("[FileDisplay] openFileWithApp error:", err);
-    os.notify.send("File Display", `Failed to open ${name} with ${appId}`, { type: "error" });
+    os.notify.send("File Display", `Failed to open ${name} with ${appId}`, {
+      type: "error",
+    });
     return false;
   }
 }
@@ -1030,7 +1212,7 @@ function resolveDesktopIconFromDOM(name) {
   const desktop = $("#desktop");
   if (!desktop) return null;
   const iconEl = desktop.querySelector(
-    `.icon.selectable[data-file-name="${CSS.escape(name)}"], .icon.selectable[data-folder-name="${CSS.escape(name)}"]`
+    `.icon.selectable[data-file-name="${CSS.escape(name)}"], .icon.selectable[data-folder-name="${CSS.escape(name)}"]`,
   );
   if (iconEl) {
     const img = iconEl.querySelector("img");
@@ -1039,9 +1221,9 @@ function resolveDesktopIconFromDOM(name) {
     if (faIcon) return faIcon.className;
     return null;
   }
-  const labelIcon = Array.from(desktop.querySelectorAll(".icon.selectable")).find(
-    (el) => el.querySelector("div, span")?.textContent?.trim() === label
-  );
+  const labelIcon = Array.from(
+    desktop.querySelectorAll(".icon.selectable"),
+  ).find((el) => el.querySelector("div, span")?.textContent?.trim() === label);
   if (labelIcon) {
     const img = labelIcon.querySelector("img");
     if (img) return img.getAttribute("src") || null;
@@ -1057,7 +1239,12 @@ function stripext(name) {
     : name;
 }
 
-export async function showFileProperties(path, name, isFolder, onRename = null) {
+export async function showFileProperties(
+  path,
+  name,
+  isFolder,
+  onRename = null,
+) {
   try {
     const displayLabel = isFolder ? name : stripext(name);
     let iconSrc;
@@ -1077,10 +1264,16 @@ export async function showFileProperties(path, name, isFolder, onRename = null) 
     let contents = "";
     let size;
     if (isFolder) {
-      const { size: totalSize, files: fileCount, dirs: folderCount } = await os.fs.calcDirSize(path);
+      const {
+        size: totalSize,
+        files: fileCount,
+        dirs: folderCount,
+      } = await os.fs.calcDirSize(path);
       const parts = [];
-      if (fileCount > 0) parts.push(`${fileCount} File${fileCount !== 1 ? "s" : ""}`);
-      if (folderCount > 0) parts.push(`${folderCount} Folder${folderCount !== 1 ? "s" : ""}`);
+      if (fileCount > 0)
+        parts.push(`${fileCount} File${fileCount !== 1 ? "s" : ""}`);
+      if (folderCount > 0)
+        parts.push(`${folderCount} Folder${folderCount !== 1 ? "s" : ""}`);
       contents = parts.join(", ") || "Empty";
       size = totalSize > 0 ? formatSize(totalSize) : "Empty";
     } else {
@@ -1122,7 +1315,7 @@ export async function showFileProperties(path, name, isFolder, onRename = null) 
         sql: "SQL",
         toml: "TOML",
         html: "HTML",
-        htm: "HTML"
+        htm: "HTML",
       };
 
       if (kind === FileKind.TEXT) {
@@ -1147,7 +1340,12 @@ export async function showFileProperties(path, name, isFolder, onRename = null) 
     const modified = await getModifiedDate(path);
 
     const title = `Properties: ${displayLabel}`;
-    const propsWin = os.window.create(`${Date.now()}-props`, title, "400px", "auto");
+    const propsWin = os.window.create(
+      `${Date.now()}-props`,
+      title,
+      "400px",
+      "auto",
+    );
 
     propsWin.innerHTML = `
       <div class="window-header"><span>${title}</span>
@@ -1188,7 +1386,9 @@ export async function showFileProperties(path, name, isFolder, onRename = null) 
     renameInput.onkeydown = async (e) => {
       if (e.key === "Enter") {
         const newName = renameInput.value.trim();
-        const shortcutExt = SHORTCUT_EXTS.find((e) => name.toLowerCase().endsWith(`.${e}`));
+        const shortcutExt = SHORTCUT_EXTS.find((e) =>
+          name.toLowerCase().endsWith(`.${e}`),
+        );
         const targetName = shortcutExt ? `${newName}.${shortcutExt}` : newName;
         if (!newName || targetName === name) return;
 
@@ -1223,7 +1423,8 @@ async function getItemSize(path) {
       return formatSize(new Blob([text]).size);
     }
     const content = await os.fs.read(path, { encoding: "binary" });
-    const bytes = content instanceof Uint8Array ? content.length : new Blob([content]).size;
+    const bytes =
+      content instanceof Uint8Array ? content.length : new Blob([content]).size;
     return formatSize(bytes);
   } catch {
     return "Unknown";

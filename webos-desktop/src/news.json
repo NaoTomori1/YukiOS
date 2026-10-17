@@ -1,5 +1,91 @@
 [
   {
+    "date": "October 17, 2026",
+    "label": "YukiOS v5.1",
+    "sections": [
+      {
+        "icon": "fas fa-video",
+        "title": "Infrared YouTube",
+        "items": [
+          [
+            "fas fa-wrench",
+            "Playback Fixed",
+            "Watch videos again with working playback."
+          ],
+          [
+            "fas fa-search",
+            "Search Restored",
+            "Find channels and videos reliably."
+          ]
+        ]
+      },
+      {
+        "icon": "fas fa-cloud",
+        "title": "Pollinations Text",
+        "items": [
+          [
+            "fas fa-bolt",
+            "Free Cloud Chat",
+            "Chat free in the assistant with no key."
+          ],
+          [
+            "fas fa-list",
+            "One Click Setup",
+            "Pick Pollinations and press initialize."
+          ],
+          [
+            "fas fa-shield-halved",
+            "Public Relay Notice",
+            "Prompts may be logged without uptime promise."
+          ]
+        ]
+      },
+      {
+        "icon": "fas fa-globe",
+        "title": "Smarter Proxy Recovery",
+        "items": [
+          [
+            "fas fa-shield-halved",
+            "Automatic WISP Fallback",
+            "Browser switches servers when the active proxy fails."
+          ]
+        ]
+      },
+      {
+        "icon": "fas fa-tornado",
+        "title": "Code Red",
+        "items": [
+          [
+            "fas fa-tornado",
+            "Trigger Chaos Mode",
+            "Launch Code Red and unleash physics chaos as Red invades your taskbar."
+          ],
+          [
+            "fas fa-person-running",
+            "Red Attacks the Taskbar",
+            "Watch Red, the stickman sharpshooter, blast apart your taskbar and icons as it shatters."
+          ],
+          [
+            "fas fa-person",
+            "Living Prisoner",
+            "Red paces, dozes, and hangs upside down inside the cell."
+          ]
+        ]
+      },
+      {
+        "icon": "fas fa-gamepad",
+        "title": "Added Games",
+        "items": [
+          [
+            "fas fa-gamepad",
+            "New Games Added",
+            "Geometry Dash Lite, 2048 Merge Run, Baldi's Basics Plus, and Minecraft versions 1.8.8, 1.12.2, and 1.21.4."
+          ]
+        ]
+      }
+    ]
+  },
+  {
     "date": "October 7, 2026",
     "label": "YukiOS V5.0.0",
     "sections": [

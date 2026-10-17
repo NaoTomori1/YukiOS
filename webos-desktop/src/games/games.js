@@ -70,7 +70,8 @@ export function refreshSteamUI() {
   const steamProfileImgs = $$(".steam-user-profile img");
   const friendsProfileImg = $(".friends-profile img");
   const avatarImgs = [...steamProfileImgs];
-  if (friendsProfileImg instanceof HTMLImageElement) avatarImgs.push(friendsProfileImg);
+  if (friendsProfileImg instanceof HTMLImageElement)
+    avatarImgs.push(friendsProfileImg);
   if (avatarImgs.length > 0) {
     resolveAvatarUrl(profilePic, "static/icons/guest.webp").then((url) => {
       avatarImgs.forEach((img) => {
@@ -95,7 +96,8 @@ export async function updateSteamProfileCoins() {
     if (valueEl) setText(valueEl, String(coins));
     coinsEl.classList.remove("steam-profile-coins--hidden");
   }
-  const streakVal = me && typeof me.streak === "number" && me.streak > 0 ? me.streak : null;
+  const streakVal =
+    me && typeof me.streak === "number" && me.streak > 0 ? me.streak : null;
   const valueStreakEl = $(".steam-profile-streak-value", streakEl);
   if (streakVal == null) {
     if (streakEl) streakEl.classList.add("steam-profile-streak--hidden");
@@ -117,7 +119,7 @@ const imgObserver = new IntersectionObserver(
       imgObserver.unobserve(img);
     });
   },
-  { rootMargin: "200px" }
+  { rootMargin: "200px" },
 );
 
 export function lazyImg(src, attrs = "") {
@@ -125,7 +127,9 @@ export function lazyImg(src, attrs = "") {
 }
 
 export function observeLazyImages(root) {
-  root.querySelectorAll("img[data-src]").forEach((img) => imgObserver.observe(img));
+  root
+    .querySelectorAll("img[data-src]")
+    .forEach((img) => imgObserver.observe(img));
 }
 
 function patchAppMap(appMap) {
@@ -135,7 +139,7 @@ function patchAppMap(appMap) {
     if (app.icon && app.icon.startsWith("/static/")) {
       if (key.startsWith("subwaySurfers")) {
         app.icon = resolveGhUrl(
-          `https://cdn.jsdelivr.net/gh/NaoTomori1/yukios-games@main/subwaySurfers/${app.icon.split("/").pop()}`
+          `https://cdn.jsdelivr.net/gh/NaoTomori1/yukios-games@main/subwaySurfers/${app.icon.split("/").pop()}`,
         );
       } else {
         app.icon = `${getCdnBase()}${app.icon}`;
@@ -153,7 +157,9 @@ function patchAppMap(appMap) {
 }
 patchAppMap(appMap);
 
-export const popularityMap = new Map(Object.keys(appMap).map((id, index) => [id, index]));
+export const popularityMap = new Map(
+  Object.keys(appMap).map((id, index) => [id, index]),
+);
 
 export function getGameName(appId) {
   return appMap[appId]?.title || null;
@@ -185,7 +191,7 @@ export const HIGHLIGHTED_GAMES = new Set([
   "playtimeHellBear5van",
   "baldiBalds",
   "pneumo",
-  "wheresBaldi"
+  "wheresBaldi",
 ]);
 
 const FLASH_EMUPEDIA_EXCLUDED = new Set([
@@ -197,7 +203,7 @@ const FLASH_EMUPEDIA_EXCLUDED = new Set([
   "mario",
   "fruitNinja",
   "cutTheRope",
-  "jetpack"
+  "jetpack",
 ]);
 const FLASH_EMUPEDIA_PATTERN = "emupedia.net";
 const FLASH_URL_PATTERNS = [
@@ -205,10 +211,16 @@ const FLASH_URL_PATTERNS = [
   "flashpointarchive.html",
   "/static/rfiv.html",
   "cache.armorgames.com",
-  "silvergames.com"
+  "silvergames.com",
 ];
 
-const FLASH_LOCAL_IDS = new Set(["badIceCream", "henry", "badIceCream2", "badIceCream3", "trinitas"]);
+const FLASH_LOCAL_IDS = new Set([
+  "badIceCream",
+  "henry",
+  "badIceCream2",
+  "badIceCream3",
+  "trinitas",
+]);
 
 function isFlashGame(id, data) {
   if (data.type === "swf") return true;
@@ -217,7 +229,8 @@ function isFlashGame(id, data) {
   if (data.type !== "game") return false;
   const url = data.url || "";
   if (FLASH_URL_PATTERNS.some((p) => url.includes(p))) return true;
-  if (url.includes(FLASH_EMUPEDIA_PATTERN) && !FLASH_EMUPEDIA_EXCLUDED.has(id)) return true;
+  if (url.includes(FLASH_EMUPEDIA_PATTERN) && !FLASH_EMUPEDIA_EXCLUDED.has(id))
+    return true;
   return false;
 }
 
@@ -229,7 +242,8 @@ export const SteamDataManager = {
   },
 
   getStats() {
-    if (this.cache.stats === undefined) this.cache.stats = os.storage.get(StorageKeys.steamStats) || {};
+    if (this.cache.stats === undefined)
+      this.cache.stats = os.storage.get(StorageKeys.steamStats) || {};
     return this.cache.stats;
   },
 
@@ -249,9 +263,12 @@ export const SteamDataManager = {
     const TWO_WEEKS_MS = 14 * 24 * 60 * 60 * 1000;
     const now = Date.now();
     try {
-      if (this.cache.sessions === undefined) this.cache.sessions = os.storage.get(StorageKeys.steamSessions) || {};
+      if (this.cache.sessions === undefined)
+        this.cache.sessions = os.storage.get(StorageKeys.steamSessions) || {};
       const appSessions = this.cache.sessions[appId] || [];
-      return appSessions.filter((s) => now - s.ts < TWO_WEEKS_MS).reduce((sum, s) => sum + s.min, 0);
+      return appSessions
+        .filter((s) => now - s.ts < TWO_WEEKS_MS)
+        .reduce((sum, s) => sum + s.min, 0);
     } catch {
       return 0;
     }
@@ -271,17 +288,26 @@ export const SteamDataManager = {
     }
     return stored || [];
   },
-  setCollapsed: (collapsed) => os.storage.set(StorageKeys.steamCollapsed, collapsed),
+  setCollapsed: (collapsed) =>
+    os.storage.set(StorageKeys.steamCollapsed, collapsed),
 
   setupDefaultCollections: () => {
     const cols = SteamDataManager.getCollections();
     if (cols["Webports/Html games"] && cols["Flash Games"]) return;
     const allEntries = Object.entries(appMap).filter(
-      ([id, data]) => data.type !== "system" && !GAMES_APP_EXCLUDED.has(id) && data.icon && data.title
+      ([id, data]) =>
+        data.type !== "system" &&
+        !GAMES_APP_EXCLUDED.has(id) &&
+        data.icon &&
+        data.title,
     );
 
-    const flashIds = allEntries.filter(([id, data]) => isFlashGame(id, data)).map(([id]) => id);
-    const webIds = allEntries.filter(([id, data]) => !isFlashGame(id, data)).map(([id]) => id);
+    const flashIds = allEntries
+      .filter(([id, data]) => isFlashGame(id, data))
+      .map(([id]) => id);
+    const webIds = allEntries
+      .filter(([id, data]) => !isFlashGame(id, data))
+      .map(([id]) => id);
 
     cols["Webports/Html games"] = webIds;
     cols["Flash Games"] = flashIds;
@@ -332,7 +358,10 @@ export const SteamDataManager = {
     const cols = SteamDataManager.getCollections();
     const names = Object.keys(cols);
     if (names.length === 0) {
-      const name = await os.dialog.prompt("New Collection", "Enter collection name:");
+      const name = await os.dialog.prompt(
+        "New Collection",
+        "Enter collection name:",
+      );
       if (name && name.trim()) {
         const clean = name.trim();
         SteamDataManager.createCollection(clean);
@@ -344,7 +373,7 @@ export const SteamDataManager = {
     const name = await os.dialog.prompt(
       "Save to Collection",
       `Enter collection name (existing: ${names.join(", ")}):`,
-      suggestion
+      suggestion,
     );
     if (!name || !name.trim()) return;
     const clean = name.trim();
@@ -373,7 +402,11 @@ export const SteamDataManager = {
     if (existingIndex !== -1) {
       recentGames.splice(existingIndex, 1);
     }
-    recentGames.unshift({ id: gameId, title: gameTitle, timestamp: Date.now() });
+    recentGames.unshift({
+      id: gameId,
+      title: gameTitle,
+      timestamp: Date.now(),
+    });
     const trimmed = recentGames.slice(0, 10);
     SteamDataManager.setRecentGames(trimmed);
     return trimmed;
@@ -389,13 +422,29 @@ export const SteamDataManager = {
     const items = [
       { label: "Library", icon: "fa-book", action: null },
       { label: "Store", icon: "fa-store", action: null },
-      { label: "Community", icon: "fa-users", action: () => dispatchSteamNavigate("community") },
+      {
+        label: "Community",
+        icon: "fa-users",
+        action: () => dispatchSteamNavigate("community"),
+      },
       { type: "divider" },
-      { label: "Friends", icon: "fa-user-group", action: () => gameUI.openFriendsWindow(wm) },
-      { label: "Settings", icon: "fa-gear", action: () => openSteamSettingsWindow(wm) },
+      {
+        label: "Friends",
+        icon: "fa-user-group",
+        action: () => gameUI.openFriendsWindow(wm),
+      },
+      {
+        label: "Settings",
+        icon: "fa-gear",
+        action: () => openSteamSettingsWindow(wm),
+      },
       { type: "divider" },
-      { label: "Steam Deck Mode", icon: "fa-gamepad", action: () => switchToSteamDeckMode() },
-      { type: "divider" }
+      {
+        label: "Steam Deck Mode",
+        icon: "fa-gamepad",
+        action: () => switchToSteamDeckMode(),
+      },
+      { type: "divider" },
     ];
 
     if (recentGames.length > 0) {
@@ -406,19 +455,25 @@ export const SteamDataManager = {
           icon: "fa-gamepad",
           action: () => {
             if (appLauncher) appLauncher.launch(game.id);
-          }
+          },
         });
       });
       items.push({ type: "divider" });
     }
 
     return items;
-  }
+  },
 };
 
 export function initSteamDataManagerCache() {
-  const subscribeKeys = [StorageKeys.steamStats, StorageKeys.steamRecentGames, StorageKeys.steamSessions];
-  subscribeKeys.forEach((key) => os.storage.subscribe(key, () => SteamDataManager.invalidateCache()));
+  const subscribeKeys = [
+    StorageKeys.steamStats,
+    StorageKeys.steamRecentGames,
+    StorageKeys.steamSessions,
+  ];
+  subscribeKeys.forEach((key) =>
+    os.storage.subscribe(key, () => SteamDataManager.invalidateCache()),
+  );
 }
 
 const STEAM_WIN_ID = "games-app-win";
@@ -426,10 +481,19 @@ const STEAM_WIN_ID = "games-app-win";
 const dispatchSteamNavigate = (page, navData = {}) => {
   const container = $("#games-app-container");
   if (!container) return;
-  container.dispatchEvent(new CustomEvent("steam-navigate", { detail: { page, ...navData } }));
+  container.dispatchEvent(
+    new CustomEvent("steam-navigate", { detail: { page, ...navData } }),
+  );
 };
 
-export function openSteamWindow(appLauncher, wm, focusCollection = null, gameId = null, page = null, navData = {}) {
+export function openSteamWindow(
+  appLauncher,
+  wm,
+  focusCollection = null,
+  gameId = null,
+  page = null,
+  navData = {},
+) {
   const existing = $("#" + STEAM_WIN_ID);
   if (existing) {
     if (existing.style.display === "none") {
@@ -470,12 +534,15 @@ export function openSteamWindow(appLauncher, wm, focusCollection = null, gameId 
   }
 
   const winTitle = "Games";
-  const taskbarIcon = focusCollection === "Flash Games" ? resolveIconUrl("static/icons/flash.webp") : "fab fa-steam";
+  const taskbarIcon =
+    focusCollection === "Flash Games"
+      ? resolveIconUrl("static/icons/flash.webp")
+      : "fab fa-steam";
 
   const win = os.window.create(STEAM_WIN_ID, winTitle, "90%", "90%", {
     icon: taskbarIcon,
     position: { x: "5%", y: "5%" },
-    skipHeader: true
+    skipHeader: true,
   });
   win.classList.add("window-root");
   win.style.display = "flex";
@@ -491,8 +558,12 @@ export function openSteamWindow(appLauncher, wm, focusCollection = null, gameId 
   if (!os.modes.isActive(MODES.MAC)) {
     os.tray.register(STEAM_WIN_ID, taskbarIcon, winTitle, {
       showInTray: true,
-      contextMenuItems: SteamDataManager.getSteamContextMenuItems(appLauncher, wm, gamesRenderer),
-      priority: 100
+      contextMenuItems: SteamDataManager.getSteamContextMenuItems(
+        appLauncher,
+        wm,
+        gamesRenderer,
+      ),
+      priority: 100,
     });
   }
 
@@ -516,7 +587,8 @@ export function openSteamWindow(appLauncher, wm, focusCollection = null, gameId 
     }
   };
 
-  const gameParam = new URLSearchParams(window.location.search).get("steam") || gameId;
+  const gameParam =
+    new URLSearchParams(window.location.search).get("steam") || gameId;
   if (gameParam) {
     if (gameId && !new URLSearchParams(window.location.search).get("steam")) {
       gamesRenderer.render(container, onLaunch, wm, focusCollection);
@@ -567,7 +639,13 @@ class GameWindowRenderer {
     this.newsItems =
       STEAM_NEWS_ITEMS.length > 0
         ? STEAM_NEWS_ITEMS.flat()
-        : [{ image: "fas fa-snowflake", title: "Yuki Steam App Added", date: "May 1, 2026" }];
+        : [
+            {
+              image: "fas fa-snowflake",
+              title: "Yuki Steam App Added",
+              date: "May 1, 2026",
+            },
+          ];
     this.imgObserver = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
@@ -580,7 +658,7 @@ class GameWindowRenderer {
           this.imgObserver.unobserve(img);
         });
       },
-      { rootMargin: "200px" }
+      { rootMargin: "200px" },
     );
 
     this.gameRenderer = new GameRenderer(this);
@@ -614,7 +692,11 @@ class GameWindowRenderer {
   }
 
   renderArchiveGameOverview(container, archiveGame, onLaunch) {
-    return this.gameRenderer.renderArchiveGameOverview(container, archiveGame, onLaunch);
+    return this.gameRenderer.renderArchiveGameOverview(
+      container,
+      archiveGame,
+      onLaunch,
+    );
   }
 
   renderGrid(container, onLaunch, focusCollection = null) {
@@ -641,7 +723,9 @@ class GameWindowRenderer {
     const sidebarList = container.querySelector(".sidebar-game-list");
     if (!sidebarList) return;
 
-    const existing = sidebarList.querySelector(`.sidebar-game-item[data-app="${archiveGame.appId}"]`);
+    const existing = sidebarList.querySelector(
+      `.sidebar-game-item[data-app="${archiveGame.appId}"]`,
+    );
     if (existing) return;
 
     const item = this.makeSidebarItem(archiveGame, container, onLaunch, true);
@@ -694,7 +778,8 @@ export class SteamAppRenderer extends GameWindowRenderer {
         if (data.type === "system") return false;
         if (GAMES_APP_EXCLUDED.has(id)) return false;
         if (!data.icon || !data.title) return false;
-        if (appRegistry.isAppUninstalled(id) || appRegistry.isAppDisabled(id)) return false;
+        if (appRegistry.isAppUninstalled(id) || appRegistry.isAppDisabled(id))
+          return false;
         return true;
       })
       .map(([id, data]) => ({ app: id, ...data }));
@@ -720,7 +805,9 @@ function handleGameUrlParam(renderer, container, onLaunch, wm = null) {
     const downloadsPageEl = container.querySelector(".steam-downloads-page");
     const tabEls = container.querySelectorAll(".steam-tab");
 
-    [libraryPageEl, storePageEl, communityPageEl, downloadsPageEl].forEach((p) => p && p.classList.add("hidden"));
+    [libraryPageEl, storePageEl, communityPageEl, downloadsPageEl].forEach(
+      (p) => p && p.classList.add("hidden"),
+    );
     tabEls.forEach((t) => t.classList.remove("active"));
     const libTab = container.querySelector(".steam-tab[data-page='library']");
     if (libTab) libTab.classList.add("active");
@@ -734,7 +821,9 @@ function handleGameUrlParam(renderer, container, onLaunch, wm = null) {
       item.classList.toggle("active", item.dataset.app === gameParam);
     });
 
-    const activeItem = container.querySelector(`.sidebar-game-item[data-app="${gameParam}"]`);
+    const activeItem = container.querySelector(
+      `.sidebar-game-item[data-app="${gameParam}"]`,
+    );
     if (activeItem) {
       activeItem.scrollIntoView({ behavior: "smooth", block: "nearest" });
     }

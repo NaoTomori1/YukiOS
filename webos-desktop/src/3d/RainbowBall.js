@@ -18,7 +18,7 @@ export class RainbowBall {
       roughness: 0.05,
       metalness: 0.7,
       emissive: 0x000000,
-      emissiveIntensity: 0.4
+      emissiveIntensity: 0.4,
     });
     this.mesh = new T.Mesh(geo, mat);
     this.mesh.position.copy(position);
@@ -35,7 +35,7 @@ export class RainbowBall {
       linearDamping: 0.1,
       angularDamping: 0.2,
       sleepSpeedLimit: 0.05,
-      sleepTimeLimit: 0.5
+      sleepTimeLimit: 0.5,
     });
     this.body.wakeUp();
 
@@ -47,7 +47,9 @@ export class RainbowBall {
   updateColor(hue) {
     const color = new this.THREE.Color(`hsl(${hue % 360}, 100%, 55%)`);
     this.mesh.material.color.copy(color);
-    this.mesh.material.emissive.copy(new this.THREE.Color(`hsl(${hue % 360}, 100%, 30%)`));
+    this.mesh.material.emissive.copy(
+      new this.THREE.Color(`hsl(${hue % 360}, 100%, 30%)`),
+    );
   }
 
   update(delta, time) {

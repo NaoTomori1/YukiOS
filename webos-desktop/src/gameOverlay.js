@@ -18,7 +18,7 @@ import {
   addClass,
   removeClass,
   toggleClass,
-  setStyle
+  setStyle,
 } from "./shared/domUtils.js";
 
 const OVERLAY_SETTINGS_KEY = StorageKeys.overlaySettings;
@@ -35,7 +35,7 @@ const DOCK_ITEM_DEFAULTS = [
   { id: "screenshots", title: "Screenshots", icon: "fa-images" },
   { id: "audio", title: "Audio", icon: "fa-volume-high" },
   { id: "launcher", title: "Quick Launch", icon: "fa-th" },
-  { id: "settings", title: "Settings", icon: "fa-cog" }
+  { id: "settings", title: "Settings", icon: "fa-cog" },
 ];
 
 export class GameOverlayController {
@@ -81,7 +81,10 @@ export class GameOverlayController {
   }
 
   onKeyDown(e) {
-    if (KeybindManager.matches(e, "steam.overlay") || (e.shiftKey && e.key === "Tab")) {
+    if (
+      KeybindManager.matches(e, "steam.overlay") ||
+      (e.shiftKey && e.key === "Tab")
+    ) {
       e.preventDefault();
       e.stopPropagation();
       if (this.visible) {
@@ -98,10 +101,13 @@ export class GameOverlayController {
         enabled: true,
         restoreTabs: true,
         perfMonitor: false,
-        dockItems: null
+        dockItems: null,
       };
       if (!s.dockItems) {
-        s.dockItems = DOCK_ITEM_DEFAULTS.map((d) => ({ id: d.id, visible: true }));
+        s.dockItems = DOCK_ITEM_DEFAULTS.map((d) => ({
+          id: d.id,
+          visible: true,
+        }));
       } else {
         s.dockItems = s.dockItems.filter((d) => d.id !== "terminal");
       }
@@ -111,7 +117,7 @@ export class GameOverlayController {
         enabled: true,
         restoreTabs: true,
         perfMonitor: false,
-        dockItems: DOCK_ITEM_DEFAULTS.map((d) => ({ id: d.id, visible: true }))
+        dockItems: DOCK_ITEM_DEFAULTS.map((d) => ({ id: d.id, visible: true })),
       };
     }
   }
@@ -190,7 +196,9 @@ export class GameOverlayController {
       const titleEl = this.overlayEl.querySelector(".overlay-info-title");
       if (titleEl) titleEl.textContent = escapeHtml(this.currentGameTitle);
       this.overlayEl.style.display = "";
-      requestAnimationFrame(() => this.overlayEl.classList.add("steam-overlay--visible"));
+      requestAnimationFrame(() =>
+        this.overlayEl.classList.add("steam-overlay--visible"),
+      );
     } else {
       this.buildOverlay();
     }
@@ -216,7 +224,9 @@ export class GameOverlayController {
       const titleEl = this.overlayEl.querySelector(".overlay-info-title");
       if (titleEl) titleEl.textContent = escapeHtml(this.currentGameTitle);
       this.overlayEl.style.display = "";
-      requestAnimationFrame(() => this.overlayEl.classList.add("steam-overlay--visible"));
+      requestAnimationFrame(() =>
+        this.overlayEl.classList.add("steam-overlay--visible"),
+      );
     } else {
       this.buildOverlay();
     }
@@ -336,7 +346,9 @@ export class GameOverlayController {
 
   buildDock(dockEl) {
     dockEl.innerHTML = "";
-    const dockArr = this.settings.dockItems || DOCK_ITEM_DEFAULTS.map((d) => ({ id: d.id, visible: true }));
+    const dockArr =
+      this.settings.dockItems ||
+      DOCK_ITEM_DEFAULTS.map((d) => ({ id: d.id, visible: true }));
     const visible = dockArr.filter((d) => d.visible);
     let draggedId = null;
 
@@ -345,7 +357,8 @@ export class GameOverlayController {
       if (!def) return;
 
       const btn = createElement("button");
-      btn.className = "overlay-dock-btn" + (this.openPanels.has(item.id) ? " active" : "");
+      btn.className =
+        "overlay-dock-btn" + (this.openPanels.has(item.id) ? " active" : "");
       btn.dataset.panel = item.id;
       btn.draggable = true;
       btn.innerHTML = `<i class="fas ${def.icon}"></i>`;
@@ -380,7 +393,9 @@ export class GameOverlayController {
       btn.addEventListener("dragend", () => {
         btn.classList.remove("dragging");
         draggedId = null;
-        dockEl.querySelectorAll(".overlay-dock-btn").forEach((b) => b.classList.remove("drag-over"));
+        dockEl
+          .querySelectorAll(".overlay-dock-btn")
+          .forEach((b) => b.classList.remove("drag-over"));
       });
 
       dockEl.appendChild(btn);
@@ -413,8 +428,12 @@ export class GameOverlayController {
   bindOverlayEvents() {
     const el = this.overlayEl;
 
-    el.querySelector("#overlay-close-x").addEventListener("click", () => this.close());
-    el.querySelector("#overlay-exit-game").addEventListener("click", () => this.exitGame());
+    el.querySelector("#overlay-close-x").addEventListener("click", () =>
+      this.close(),
+    );
+    el.querySelector("#overlay-exit-game").addEventListener("click", () =>
+      this.exitGame(),
+    );
 
     el.addEventListener("click", (e) => {
       if (e.target === el.querySelector(".steam-overlay-backdrop")) {
@@ -458,9 +477,13 @@ export class GameOverlayController {
       screenshots: "Screenshots",
       audio: "Audio",
       launcher: "Quick Launch",
-      settings: "Settings"
+      settings: "Settings",
     };
-    const panelTitle = titleMap[id] || (id.startsWith("screenshot-view--") ? id.replace("screenshot-view--", "") : id);
+    const panelTitle =
+      titleMap[id] ||
+      (id.startsWith("screenshot-view--")
+        ? id.replace("screenshot-view--", "")
+        : id);
     const pos = this.panelPositions[id] || this.getDefaultPanelPos(id);
     const panel = createElement("div");
     panel.className = "overlay-panel";
@@ -487,14 +510,18 @@ export class GameOverlayController {
     container.appendChild(panel);
     this.makePanelDraggable(panel);
     this.makePanelResizable(panel);
-    panel.querySelector(".overlay-panel-close").addEventListener("click", (e) => {
-      e.stopPropagation();
-      this.togglePanel(id);
-    });
-    panel.querySelector(".overlay-panel-maximize").addEventListener("click", (e) => {
-      e.stopPropagation();
-      this.toggleMaximizePanel(panel);
-    });
+    panel
+      .querySelector(".overlay-panel-close")
+      .addEventListener("click", (e) => {
+        e.stopPropagation();
+        this.togglePanel(id);
+      });
+    panel
+      .querySelector(".overlay-panel-maximize")
+      .addEventListener("click", (e) => {
+        e.stopPropagation();
+        this.toggleMaximizePanel(panel);
+      });
     panel.addEventListener("mousedown", () => this.bringPanelToFront(panel));
   }
 
@@ -508,7 +535,7 @@ export class GameOverlayController {
       screenshots: { x: 26, y: 259, w: 320, h: 282 },
       audio: { x: 1164, y: 460, w: 347, h: 241 },
       launcher: { x: 579, y: 260, w: 373, h: 336 },
-      settings: { x: 281, y: -77, w: 500, h: 691 }
+      settings: { x: 281, y: -77, w: 500, h: 691 },
     };
 
     const ref = REF[id];
@@ -528,15 +555,21 @@ export class GameOverlayController {
     let startX, startY, origX, origY;
 
     header.addEventListener("mousedown", (e) => {
-      if (e.target.closest(".overlay-panel-close") || e.target.closest(".overlay-panel-maximize")) return;
+      if (
+        e.target.closest(".overlay-panel-close") ||
+        e.target.closest(".overlay-panel-maximize")
+      )
+        return;
       isDragging = true;
       this.bringPanelToFront(panel);
       header.style.cursor = "grabbing";
 
       if (panel.classList.contains("maximized")) {
-        const restore = panel.preMaximizeRect || this.getDefaultPanelPos(panel.dataset.panel);
+        const restore =
+          panel.preMaximizeRect || this.getDefaultPanelPos(panel.dataset.panel);
         panel.classList.remove("maximized");
-        panel.querySelector(".overlay-panel-maximize i").className = "fas fa-expand";
+        panel.querySelector(".overlay-panel-maximize i").className =
+          "fas fa-expand";
         panel.style.width = restore.w + "px";
         panel.style.height = restore.h + "px";
         panel.style.left = e.clientX - restore.w / 2 + "px";
@@ -567,7 +600,7 @@ export class GameOverlayController {
           x: parseInt(panel.style.left),
           y: parseInt(panel.style.top),
           w: panel.offsetWidth,
-          h: panel.offsetHeight
+          h: panel.offsetHeight,
         };
         this.savePanelPositions();
       }
@@ -629,7 +662,7 @@ export class GameOverlayController {
           x: parseInt(panel.style.left),
           y: parseInt(panel.style.top),
           w: panel.offsetWidth,
-          h: panel.offsetHeight
+          h: panel.offsetHeight,
         };
         this.savePanelPositions();
       }
@@ -654,14 +687,19 @@ export class GameOverlayController {
       panel.style.height = restore.h + "px";
       panel.preMaximizeRect = null;
       if (icon) icon.className = "fas fa-expand";
-      this.panelPositions[id] = { x: restore.x, y: restore.y, w: restore.w, h: restore.h };
+      this.panelPositions[id] = {
+        x: restore.x,
+        y: restore.y,
+        w: restore.w,
+        h: restore.h,
+      };
       this.savePanelPositions();
     } else {
       panel.preMaximizeRect = {
         x: panel.offsetLeft,
         y: panel.offsetTop,
         w: panel.offsetWidth,
-        h: panel.offsetHeight
+        h: panel.offsetHeight,
       };
       const rect = container.getBoundingClientRect();
       panel.classList.add("maximized");
@@ -675,12 +713,16 @@ export class GameOverlayController {
   }
 
   activateDockBtn(id) {
-    const btn = this.overlayEl.querySelector(`.overlay-dock-btn[data-panel="${id}"]`);
+    const btn = this.overlayEl.querySelector(
+      `.overlay-dock-btn[data-panel="${id}"]`,
+    );
     if (btn) btn.classList.add("active");
   }
 
   deactivateDockBtn(id) {
-    const btn = this.overlayEl.querySelector(`.overlay-dock-btn[data-panel="${id}"]`);
+    const btn = this.overlayEl.querySelector(
+      `.overlay-dock-btn[data-panel="${id}"]`,
+    );
     if (btn) btn.classList.remove("active");
   }
 
@@ -747,12 +789,19 @@ export class GameOverlayController {
   }
 
   renderOverview() {
-    const pane = this.overlayEl.querySelector('[data-panel="overview"] .overlay-panel-body');
+    const pane = this.overlayEl.querySelector(
+      '[data-panel="overview"] .overlay-panel-body',
+    );
     if (!pane) return;
 
     const stats = SteamDataManager.getStats();
-    const gameStats = stats[this.currentGameId] || { totalMin: 0, lastPlayed: 0 };
-    const sessionMin = this.sessionStart ? Math.round((Date.now() - this.sessionStart) / 60000) : 0;
+    const gameStats = stats[this.currentGameId] || {
+      totalMin: 0,
+      lastPlayed: 0,
+    };
+    const sessionMin = this.sessionStart
+      ? Math.round((Date.now() - this.sessionStart) / 60000)
+      : 0;
 
     pane.innerHTML = `
       <div class="overview-header">Game Overview</div>
@@ -781,15 +830,21 @@ export class GameOverlayController {
 
   updateOverviewPlaytime() {
     if (!this.visible) return;
-    const sessionMin = this.sessionStart ? Math.round((Date.now() - this.sessionStart) / 60000) : 0;
-    const sessionEl = this.overlayEl?.querySelector("#overview-session-playtime");
+    const sessionMin = this.sessionStart
+      ? Math.round((Date.now() - this.sessionStart) / 60000)
+      : 0;
+    const sessionEl = this.overlayEl?.querySelector(
+      "#overview-session-playtime",
+    );
     if (sessionEl) {
       sessionEl.textContent = this.formatTime(sessionMin);
     }
   }
 
   renderAchievements() {
-    const pane = this.overlayEl.querySelector('[data-panel="achievements"] .overlay-panel-body');
+    const pane = this.overlayEl.querySelector(
+      '[data-panel="achievements"] .overlay-panel-body',
+    );
     if (!pane) return;
 
     const achApp = this.os.app.getInstance(ServiceKeys.ACHIEVEMENTS);
@@ -854,7 +909,9 @@ export class GameOverlayController {
   }
 
   renderFriends() {
-    const pane = this.overlayEl.querySelector('[data-panel="friends"] .overlay-panel-body');
+    const pane = this.overlayEl.querySelector(
+      '[data-panel="friends"] .overlay-panel-body',
+    );
     if (!pane) return;
 
     renderFriendsListPanel(pane, {
@@ -866,21 +923,33 @@ export class GameOverlayController {
         os.dialog.alert("Chat", "Chat feature not available in overlay mode.");
       },
       onOpenContextMenu: (event, friend) => {
-        const items = [{ id: "friend-profile", label: "View Profile", icon: "fa-id-badge", action: "profile" }];
+        const items = [
+          {
+            id: "friend-profile",
+            label: "View Profile",
+            icon: "fa-id-badge",
+            action: "profile",
+          },
+        ];
         const handlers = {
           profile: () => {
-            os.app.launch("steamApp", { steamPage: "profile", steamUserId: friend.userId });
-          }
+            os.app.launch("steamApp", {
+              steamPage: "profile",
+              steamUserId: friend.userId,
+            });
+          },
         };
         showContextMenu(event, items, handlers);
-      }
+      },
     }).catch(() => {
       pane.innerHTML = `<div class="overlay-no-data">Failed to load friends</div>`;
     });
   }
 
   renderNotes() {
-    const pane = this.overlayEl.querySelector('[data-panel="notes"] .overlay-panel-body');
+    const pane = this.overlayEl.querySelector(
+      '[data-panel="notes"] .overlay-panel-body',
+    );
     if (!pane) return;
 
     pane.innerHTML = `
@@ -894,9 +963,11 @@ export class GameOverlayController {
       </div>
     `;
 
-    pane.querySelector("#overlay-notes-add-btn").addEventListener("click", () => {
-      this.addNote();
-    });
+    pane
+      .querySelector("#overlay-notes-add-btn")
+      .addEventListener("click", () => {
+        this.addNote();
+      });
 
     this.bindNoteEvents();
   }
@@ -915,7 +986,7 @@ export class GameOverlayController {
         </div>
         <div class="overlay-note-text" contenteditable="true" data-index="${i}">${escapeHtml(note.text)}</div>
       </div>
-    `
+    `,
       )
       .join("");
   }
@@ -957,7 +1028,9 @@ export class GameOverlayController {
   }
 
   async renderScreenshots() {
-    const pane = this.overlayEl.querySelector('[data-panel="screenshots"] .overlay-panel-body');
+    const pane = this.overlayEl.querySelector(
+      '[data-panel="screenshots"] .overlay-panel-body',
+    );
     if (!pane) return;
 
     try {
@@ -965,7 +1038,9 @@ export class GameOverlayController {
       const filesArray = Object.entries(files || {})
         .filter(([, item]) => item.type === "file")
         .map(([name, item]) => ({ ...item, name }));
-      const imageFiles = filesArray.filter((f) => f.name && (isImageFile(f.name) || f.name.endsWith(".webm")));
+      const imageFiles = filesArray.filter(
+        (f) => f.name && (isImageFile(f.name) || f.name.endsWith(".webm")),
+      );
 
       const hasFiles = imageFiles.length > 0;
 
@@ -987,7 +1062,9 @@ export class GameOverlayController {
           </div>
         `;
       } else {
-        const sortedFiles = imageFiles.sort((a, b) => (b.mtime || 0) - (a.mtime || 0));
+        const sortedFiles = imageFiles.sort(
+          (a, b) => (b.mtime || 0) - (a.mtime || 0),
+        );
 
         pane.innerHTML += `
           <div class="overlay-screenshots-grid">
@@ -1002,7 +1079,7 @@ export class GameOverlayController {
                     : `<img src="" alt="${file.name}" class="screenshot-img" data-path="Pictures/Screenshots/${file.name}">`
                 }
               </div>
-            `
+            `,
               )
               .join("")}
           </div>
@@ -1013,7 +1090,10 @@ export class GameOverlayController {
           const preview = pane.querySelector(`[data-path="${path}"]`);
           if (preview) {
             try {
-              const data = await os.fs.readBinaryFile(["Pictures", "Screenshots"], file.name);
+              const data = await os.fs.readBinaryFile(
+                ["Pictures", "Screenshots"],
+                file.name,
+              );
               const url = URL.createObjectURL(data);
               if (file.name.endsWith(".webm")) {
                 preview.src = url;
@@ -1021,7 +1101,11 @@ export class GameOverlayController {
                 preview.src = url;
               }
             } catch (e) {
-              console.warn("[Overlay] Failed to load screenshot:", file.name, e);
+              console.warn(
+                "[Overlay] Failed to load screenshot:",
+                file.name,
+                e,
+              );
             }
           }
         }
@@ -1049,7 +1133,9 @@ export class GameOverlayController {
         fullBtn.addEventListener("click", () => this.captureScreenshot("full"));
       }
       if (recordBtn) {
-        recordBtn.addEventListener("click", () => this.captureScreenshot("record"));
+        recordBtn.addEventListener("click", () =>
+          this.captureScreenshot("record"),
+        );
       }
     } catch (e) {
       console.warn("[Overlay] Failed to load screenshots:", e);
@@ -1076,7 +1162,10 @@ export class GameOverlayController {
       return;
     }
     try {
-      const data = await os.fs.readBinaryFile(["Pictures", "Screenshots"], name);
+      const data = await os.fs.readBinaryFile(
+        ["Pictures", "Screenshots"],
+        name,
+      );
       const url = URL.createObjectURL(data);
       this.screenshotViewUrls.set(panelId, url);
       this.togglePanel(panelId);
@@ -1087,7 +1176,9 @@ export class GameOverlayController {
   }
 
   renderScreenshotView(panelId) {
-    const pane = this.overlayEl?.querySelector(`[data-panel="${panelId}"] .overlay-panel-body`);
+    const pane = this.overlayEl?.querySelector(
+      `[data-panel="${panelId}"] .overlay-panel-body`,
+    );
     if (!pane) return;
     const name = panelId.replace("screenshot-view--", "");
     const url = this.screenshotViewUrls.get(panelId);
@@ -1154,7 +1245,9 @@ export class GameOverlayController {
   }
 
   renderRecordings() {
-    const pane = this.overlayEl.querySelector('[data-panel="recordings"] .overlay-panel-body');
+    const pane = this.overlayEl.querySelector(
+      '[data-panel="recordings"] .overlay-panel-body',
+    );
     if (!pane) return;
     pane.innerHTML = `
       <div class="overlay-recordings-placeholder">
@@ -1166,7 +1259,9 @@ export class GameOverlayController {
   }
 
   initScramjet() {
-    const pane = this.overlayEl.querySelector('[data-panel="scramjet"] .overlay-panel-body');
+    const pane = this.overlayEl.querySelector(
+      '[data-panel="scramjet"] .overlay-panel-body',
+    );
     if (!pane) return;
 
     const panel = pane.closest(".overlay-panel");
@@ -1181,7 +1276,7 @@ export class GameOverlayController {
     iframe.style.cssText = "width:100%;height:100%;border:none;";
     iframe.setAttribute(
       "sandbox",
-      "allow-scripts allow-same-origin allow-forms allow-popups allow-top-navigation-by-user-activation"
+      "allow-scripts allow-same-origin allow-forms allow-popups allow-top-navigation-by-user-activation",
     );
     iframe.src = window.location.origin + "/s/index.html";
 
@@ -1191,10 +1286,15 @@ export class GameOverlayController {
   }
 
   renderSettings() {
-    const pane = this.overlayEl.querySelector('[data-panel="settings"] .overlay-panel-body');
+    const pane = this.overlayEl.querySelector(
+      '[data-panel="settings"] .overlay-panel-body',
+    );
     if (!pane) return;
 
-    const keybind = KeybindManager.getCurrentKeys("steam.overlay") || ["Shift", "Tab"];
+    const keybind = KeybindManager.getCurrentKeys("steam.overlay") || [
+      "Shift",
+      "Tab",
+    ];
 
     pane.innerHTML = `
       <div class="overlay-settings-container">
@@ -1270,52 +1370,63 @@ export class GameOverlayController {
       });
     });
 
-    pane.querySelectorAll(".overlay-settings-toggle[data-dock-toggle]").forEach((toggle) => {
-      toggle.addEventListener("click", () => {
-        const dockId = toggle.dataset.dockToggle;
-        const item = this.settings.dockItems.find((d) => d.id === dockId);
-        if (item) {
-          item.visible = !item.visible;
-          toggle.classList.toggle("active");
-          this.saveSettings();
-          this.rebuildDock();
-        }
+    pane
+      .querySelectorAll(".overlay-settings-toggle[data-dock-toggle]")
+      .forEach((toggle) => {
+        toggle.addEventListener("click", () => {
+          const dockId = toggle.dataset.dockToggle;
+          const item = this.settings.dockItems.find((d) => d.id === dockId);
+          if (item) {
+            item.visible = !item.visible;
+            toggle.classList.toggle("active");
+            this.saveSettings();
+            this.rebuildDock();
+          }
+        });
       });
-    });
 
     const dockConfig = pane.querySelector("#overlay-dock-config");
     if (dockConfig) {
       let dragRow = null;
-      dockConfig.querySelectorAll(".overlay-settings-dock-row").forEach((row) => {
-        row.draggable = true;
-        row.addEventListener("dragstart", (e) => {
-          dragRow = row;
-          row.style.opacity = "0.4";
-          e.dataTransfer.effectAllowed = "move";
-          e.dataTransfer.setData("text/plain", row.dataset.dockId);
-        });
-        row.addEventListener("dragover", (e) => {
-          e.preventDefault();
-          if (dragRow && dragRow !== row) {
-            const rect = row.getBoundingClientRect();
-            const mid = rect.top + rect.height / 2;
-            dockConfig.insertBefore(dragRow, e.clientY < mid ? row : row.nextSibling);
-          }
-        });
-        row.addEventListener("dragend", () => {
-          row.style.opacity = "";
-          dragRow = null;
-          const newOrder = [];
-          dockConfig.querySelectorAll(".overlay-settings-dock-row").forEach((r) => {
-            const id = r.dataset.dockId;
-            const existing = this.settings.dockItems.find((d) => d.id === id);
-            if (existing) newOrder.push(existing);
+      dockConfig
+        .querySelectorAll(".overlay-settings-dock-row")
+        .forEach((row) => {
+          row.draggable = true;
+          row.addEventListener("dragstart", (e) => {
+            dragRow = row;
+            row.style.opacity = "0.4";
+            e.dataTransfer.effectAllowed = "move";
+            e.dataTransfer.setData("text/plain", row.dataset.dockId);
           });
-          this.settings.dockItems = newOrder;
-          this.saveSettings();
-          this.rebuildDock();
+          row.addEventListener("dragover", (e) => {
+            e.preventDefault();
+            if (dragRow && dragRow !== row) {
+              const rect = row.getBoundingClientRect();
+              const mid = rect.top + rect.height / 2;
+              dockConfig.insertBefore(
+                dragRow,
+                e.clientY < mid ? row : row.nextSibling,
+              );
+            }
+          });
+          row.addEventListener("dragend", () => {
+            row.style.opacity = "";
+            dragRow = null;
+            const newOrder = [];
+            dockConfig
+              .querySelectorAll(".overlay-settings-dock-row")
+              .forEach((r) => {
+                const id = r.dataset.dockId;
+                const existing = this.settings.dockItems.find(
+                  (d) => d.id === id,
+                );
+                if (existing) newOrder.push(existing);
+              });
+            this.settings.dockItems = newOrder;
+            this.saveSettings();
+            this.rebuildDock();
+          });
         });
-      });
     }
 
     const keybindBtn = pane.querySelector("#overlay-keybind-btn");
@@ -1352,7 +1463,9 @@ export class GameOverlayController {
   }
 
   renderAudio() {
-    const pane = this.overlayEl.querySelector('[data-panel="audio"] .overlay-panel-body');
+    const pane = this.overlayEl.querySelector(
+      '[data-panel="audio"] .overlay-panel-body',
+    );
     if (!pane) return;
     const mixer = audioMixer();
     const masterPct = Math.round(mixer.masterVolume * 100);
@@ -1398,23 +1511,27 @@ export class GameOverlayController {
       });
     }
 
-    pane.querySelectorAll(".overlay-audio-slider[data-channel]").forEach((slider) => {
-      slider.addEventListener("input", () => {
-        const winId = slider.dataset.channel;
-        if (!winId) return;
-        const val = parseInt(slider.value) / 100;
-        mixer.setChannel(winId, val);
-        const row = slider.closest(".overlay-audio-row");
-        if (row) {
-          const pct = row.querySelector(".overlay-audio-pct");
-          if (pct) pct.textContent = `${Math.round(val * 100)}%`;
-        }
+    pane
+      .querySelectorAll(".overlay-audio-slider[data-channel]")
+      .forEach((slider) => {
+        slider.addEventListener("input", () => {
+          const winId = slider.dataset.channel;
+          if (!winId) return;
+          const val = parseInt(slider.value) / 100;
+          mixer.setChannel(winId, val);
+          const row = slider.closest(".overlay-audio-row");
+          if (row) {
+            const pct = row.querySelector(".overlay-audio-pct");
+            if (pct) pct.textContent = `${Math.round(val * 100)}%`;
+          }
+        });
       });
-    });
   }
 
   renderLauncher() {
-    const pane = this.overlayEl.querySelector('[data-panel="launcher"] .overlay-panel-body');
+    const pane = this.overlayEl.querySelector(
+      '[data-panel="launcher"] .overlay-panel-body',
+    );
     if (!pane) return;
 
     const allApps = os.app.getAllApps();
@@ -1447,7 +1564,7 @@ export class GameOverlayController {
             <div class="overlay-launcher-item-icon">${renderIcon(app)}</div>
             <div class="overlay-launcher-item-label">${escapeHtml(app.title)}</div>
           </div>
-        `
+        `,
           )
           .join("")}
       </div>
@@ -1458,7 +1575,9 @@ export class GameOverlayController {
     searchInput.addEventListener("input", () => {
       const q = searchInput.value.toLowerCase();
       grid.querySelectorAll(".overlay-launcher-item").forEach((item) => {
-        const label = item.querySelector(".overlay-launcher-item-label").textContent.toLowerCase();
+        const label = item
+          .querySelector(".overlay-launcher-item-label")
+          .textContent.toLowerCase();
         item.style.display = label.includes(q) ? "" : "none";
       });
     });
@@ -1479,7 +1598,9 @@ export class GameOverlayController {
       this.overlayClockUnsub = subscribeTimeTick((data) => {
         const timeEl = this.overlayEl?.querySelector("#overlay-clock-time");
         const dateEl = this.overlayEl?.querySelector("#overlay-clock-date");
-        const sessionEl = this.overlayEl?.querySelector("#overlay-session-time");
+        const sessionEl = this.overlayEl?.querySelector(
+          "#overlay-session-time",
+        );
         if (timeEl) timeEl.textContent = data.timeLong;
         if (dateEl) dateEl.textContent = data.dateLong;
         if (sessionEl && this.sessionStart) {
@@ -1489,7 +1610,10 @@ export class GameOverlayController {
       });
     });
     this.updateOverviewPlaytime();
-    this.playtimeInterval = setInterval(() => this.updateOverviewPlaytime(), 1000);
+    this.playtimeInterval = setInterval(
+      () => this.updateOverviewPlaytime(),
+      1000,
+    );
   }
 
   stopClock() {

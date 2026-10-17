@@ -14,7 +14,7 @@ import {
   FONT_EXTS,
   SWF_EXTS,
   EXE_EXTS,
-  DISK_EXTS
+  DISK_EXTS,
 } from "./shared/fileKindDetector.js";
 import { ROM_EXTS } from "./shared/coreMap.js";
 
@@ -25,26 +25,31 @@ const BUILTIN_HANDLERS = {
     appId: "mediaViewer",
     title: "Media Viewer",
     icon: "papirus:actions/media-playback-start",
-    extensions: [...IMAGE_EXTS, ...VIDEO_EXTS, ...AUDIO_EXTS]
+    extensions: [...IMAGE_EXTS, ...VIDEO_EXTS, ...AUDIO_EXTS],
   },
   fontViewer: {
     appId: "fontViewer",
     title: "Font Viewer",
     icon: "papirus:mimetypes/application-x-font-ttf",
-    extensions: [...FONT_EXTS]
-  }
+    extensions: [...FONT_EXTS],
+  },
 };
 
 function getManifestHandlers() {
   const handlers = new Map();
   for (const manifest of APP_MANIFESTS) {
     const extensions = manifest.fileAssociations?.extensions;
-    if (!manifest.serviceKey || !Array.isArray(extensions) || !extensions.length) continue;
+    if (
+      !manifest.serviceKey ||
+      !Array.isArray(extensions) ||
+      !extensions.length
+    )
+      continue;
     handlers.set(manifest.serviceKey, {
       appId: manifest.serviceKey,
       title: manifest.title,
       icon: manifest.icon,
-      extensions: [...extensions]
+      extensions: [...extensions],
     });
   }
   return handlers;
@@ -52,14 +57,18 @@ function getManifestHandlers() {
 
 function getAllHandlers() {
   const handlers = new Map();
-  for (const handler of Object.values(BUILTIN_HANDLERS)) handlers.set(handler.appId, handler);
-  for (const [appId, handler] of getManifestHandlers()) handlers.set(appId, handler);
+  for (const handler of Object.values(BUILTIN_HANDLERS))
+    handlers.set(handler.appId, handler);
+  for (const [appId, handler] of getManifestHandlers())
+    handlers.set(appId, handler);
   return [...handlers.values()];
 }
 
 function getHandlerById(appId) {
   return (
-    Object.values(BUILTIN_HANDLERS).find((handler) => handler.appId === appId) ||
+    Object.values(BUILTIN_HANDLERS).find(
+      (handler) => handler.appId === appId,
+    ) ||
     getManifestHandlers().get(appId) ||
     null
   );
@@ -69,7 +78,13 @@ function getAppDescriptor(appId) {
   const handler = getHandlerById(appId);
   if (handler) return handler;
   const info = os.app.getAppInfo(appId);
-  if (info?.title) return { appId, title: info.title, icon: info.icon || "papirus:actions/view-grid", extensions: [] };
+  if (info?.title)
+    return {
+      appId,
+      title: info.title,
+      icon: info.icon || "papirus:actions/view-grid",
+      extensions: [],
+    };
   return null;
 }
 
@@ -85,7 +100,7 @@ const DEFAULT_EXT_MAP = {};
   assignDefaults("boxedWineApp", ["exe"]);
   assignDefaults(
     "jsDosApp",
-    EXE_EXTS.filter((ext) => ext !== "exe")
+    EXE_EXTS.filter((ext) => ext !== "exe"),
   );
   assignDefaults("v86app", DISK_EXTS);
   assignDefaults("browserApp", HTML_EXTS);
@@ -167,7 +182,9 @@ export function clearDefaultApp(ext) {
 
 export function isUnassociated(ext) {
   const overrides = getOverrides();
-  return Object.prototype.hasOwnProperty.call(overrides, ext) && !overrides[ext];
+  return (
+    Object.prototype.hasOwnProperty.call(overrides, ext) && !overrides[ext]
+  );
 }
 
 export function unassociateExtension(ext) {

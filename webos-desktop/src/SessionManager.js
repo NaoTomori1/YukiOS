@@ -30,6 +30,10 @@ import {
   applySteamDeckSettings,
   disableSteamDeckSettings,
 } from "./modes/steamdeck/session.js";
+import {
+  applyWin11Settings,
+  disableWin11Settings,
+} from "./modes/win11/session.js";
 import { getRecentNews } from "./apps/news.js";
 import { pickLoginTip } from "./shared/loginTips.js";
 import { BOOT_ANIMATIONS, pickAnimation } from "./bootAnimations.js";
@@ -37,6 +41,8 @@ import { runLoopingBootPreview } from "./bootScreen.js";
 import gsap from "gsap";
 import logoImg from "./assets/logo.png";
 import { setDeckBootVideoSkip } from "./modes/steamdeck/deckBootVideo.js";
+
+const HIDE_WIN11 = true;
 
 export class SessionManager {
   constructor(os) {
@@ -50,6 +56,10 @@ export class SessionManager {
     this.selectedUser = null;
     this.selectedSession =
       os.storage.get(StorageKeys.selectedSession) || "Yuki Desktop(Default)";
+    if (HIDE_WIN11 && this.selectedSession === "Yuki Windows 11") {
+      this.selectedSession = "Yuki Desktop(Default)";
+      os.storage.set(StorageKeys.selectedSession, this.selectedSession);
+    }
     this.ensureUserId();
     this.setupProfileUpdateListener();
     this.startTime = Date.now();
@@ -401,6 +411,14 @@ export class SessionManager {
                 <img src="https://cdn.jsdelivr.net/gh/PapirusDevelopmentTeam/papirus-icon-theme@master/Papirus/22x22/apps/steam.svg" class="papirus-icon papirus-icon--32" alt="" />
                 <span>Deck</span>
               </button>
+              ${
+                HIDE_WIN11
+                  ? ""
+                  : `<button type="button" class="session-mode-btn" data-mode="win11">
+                <i class="fab fa-windows" aria-hidden="true"></i>
+                <span>Windows 11</span>
+              </button>`
+              }
               <button type="button" class="session-mode-btn" data-mode="3d">
                 <img src="https://cdn.jsdelivr.net/gh/PapirusDevelopmentTeam/papirus-icon-theme@master/Papirus/22x22/apps/kjumpingcube.svg" class="papirus-icon papirus-icon--32" alt="" />
                 <span>3D Fps Game</span>
@@ -863,6 +881,7 @@ export class SessionManager {
         tiling: modes.tiling !== false,
         "3d": modes["3d"] !== false,
         steamdeck: modes.steamdeck !== false,
+        win11: HIDE_WIN11 ? false : modes.win11 !== false,
       },
       showSocial,
       showBanner,
@@ -892,6 +911,10 @@ export class SessionManager {
     this.container
       .querySelectorAll("#session-modes .session-mode-btn")
       .forEach((btn) => {
+        if (HIDE_WIN11 && btn.dataset.mode === "win11") {
+          btn.style.display = "none";
+          return;
+        }
         btn.style.display = prefs.modes[btn.dataset.mode] ? "" : "none";
       });
 
@@ -1353,6 +1376,7 @@ export class SessionManager {
       tiling: "Yuki Tiling VM",
       "3d": "Yuki 3D Desktop",
       steamdeck: "Yuki Deck Mode",
+      win11: "Yuki Windows 11",
     };
     const sessionToMode = {
       "Yuki Desktop(Default)": "reset",
@@ -1361,6 +1385,7 @@ export class SessionManager {
       "Yuki Tiling VM": "tiling",
       "Yuki 3D Desktop": "3d",
       "Yuki Deck Mode": "steamdeck",
+      "Yuki Windows 11": "win11",
       tiling: "tiling",
     };
     const activeMode = sessionToMode[this.selectedSession] || "reset";
@@ -1715,6 +1740,12 @@ export class SessionManager {
       applySteamDeckSettings();
     } else {
       disableSteamDeckSettings();
+    }
+
+    if (this.selectedSession === "Yuki Windows 11") {
+      applyWin11Settings();
+    } else {
+      disableWin11Settings();
     }
 
     if (this.selectedSession === "Yuki 3D Desktop") {

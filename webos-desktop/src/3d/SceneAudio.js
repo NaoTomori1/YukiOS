@@ -82,7 +82,14 @@ export class SceneAudio {
 
   playTone(freq, duration, opts = {}) {
     this.ensure();
-    const { type = "sine", volume = 0.1, sweep = 0, delay = 0, filter = 0, pan = 0 } = opts;
+    const {
+      type = "sine",
+      volume = 0.1,
+      sweep = 0,
+      delay = 0,
+      filter = 0,
+      pan = 0,
+    } = opts;
     const now = this.ctx.currentTime + delay;
     const osc = this.createOsc(type, freq);
     const gain = this.createGain(0);
@@ -105,7 +112,8 @@ export class SceneAudio {
     }
     gain.gain.setValueAtTime(0, now);
     gain.gain.linearRampToValueAtTime(volume, now + 0.005);
-    if (sweep) osc.frequency.linearRampToValueAtTime(freq + sweep, now + duration);
+    if (sweep)
+      osc.frequency.linearRampToValueAtTime(freq + sweep, now + duration);
     gain.gain.setValueAtTime(volume, now + duration * 0.7);
     gain.gain.linearRampToValueAtTime(0, now + duration);
     osc.start(now);
@@ -263,7 +271,11 @@ export class SceneAudio {
 
   playBookThrow() {
     if (!this.ambientEnabled) return;
-    this.playSweepTone(200, 2000, 0.15, { type: "sine", volume: 0.05, filter: 1000 });
+    this.playSweepTone(200, 2000, 0.15, {
+      type: "sine",
+      volume: 0.05,
+      filter: 1000,
+    });
   }
 
   playBookShelve() {
@@ -303,7 +315,11 @@ export class SceneAudio {
 
   playBallThrow() {
     if (!this.ambientEnabled) return;
-    this.playSweepTone(1200, 800, 0.2, { type: "sine", volume: 0.05, filter: 2000 });
+    this.playSweepTone(1200, 800, 0.2, {
+      type: "sine",
+      volume: 0.05,
+      filter: 2000,
+    });
   }
 
   playBallBounce() {
@@ -325,7 +341,11 @@ export class SceneAudio {
 
   playReleasePOV() {
     if (!this.ambientEnabled) return;
-    this.playSweepTone(300, 200, 0.1, { type: "sine", volume: 0.06, filter: 400 });
+    this.playSweepTone(300, 200, 0.1, {
+      type: "sine",
+      volume: 0.06,
+      filter: 400,
+    });
   }
 
   playHoloHover(opts = {}) {
@@ -346,27 +366,47 @@ export class SceneAudio {
     }
     let hash = 0;
     if (opts && typeof opts.id === "string") {
-      for (let i = 0; i < opts.id.length; i++) hash = (hash * 31 + opts.id.charCodeAt(i)) >>> 0;
+      for (let i = 0; i < opts.id.length; i++)
+        hash = (hash * 31 + opts.id.charCodeAt(i)) >>> 0;
       pitch = hash % 7;
-      bright = opts.id.includes("main_play") || opts.id.includes("board_endless") || opts.id.includes("sort");
+      bright =
+        opts.id.includes("main_play") ||
+        opts.id.includes("board_endless") ||
+        opts.id.includes("sort");
     }
     const base = 720 + pitch * 42 + (bright ? 110 : 0);
     const jitter = (Math.random() - 0.5) * 14;
     const f1 = base + jitter;
     const f2 = f1 * 1.498;
     const f3 = f1 * 2.01;
-    this.playTone(f1, 0.07, { type: "triangle", volume: bright ? 0.058 : 0.042, filter: 3400, pan, sweep: 55 });
+    this.playTone(f1, 0.07, {
+      type: "triangle",
+      volume: bright ? 0.058 : 0.042,
+      filter: 3400,
+      pan,
+      sweep: 55,
+    });
     this.playTone(f2, 0.085, {
       type: "sine",
       volume: bright ? 0.028 : 0.019,
       delay: 0.018,
       filter: 4200,
-      pan: pan * 0.5
+      pan: pan * 0.5,
     });
     this.playNoise(0.018, { volume: 0.016, filter: 5200, pan: pan * 0.3 });
-    this.playReverbTone(f3, 0.16, { type: "sine", volume: bright ? 0.022 : 0.014, delay: 0.022 });
+    this.playReverbTone(f3, 0.16, {
+      type: "sine",
+      volume: bright ? 0.022 : 0.014,
+      delay: 0.022,
+    });
     if (bright)
-      this.playTone(f1 * 0.5, 0.09, { type: "sine", volume: 0.02, delay: 0.01, filter: 1800, pan: pan * 0.2 });
+      this.playTone(f1 * 0.5, 0.09, {
+        type: "sine",
+        volume: 0.02,
+        delay: 0.01,
+        filter: 1800,
+        pan: pan * 0.2,
+      });
   }
 
   playHoloClick() {
@@ -410,7 +450,11 @@ export class SceneAudio {
 
   playCloseCatalog() {
     if (!this.uiEnabled) return;
-    this.playSweepTone(800, 200, 0.12, { type: "sine", volume: 0.06, filter: 600 });
+    this.playSweepTone(800, 200, 0.12, {
+      type: "sine",
+      volume: 0.06,
+      filter: 600,
+    });
     this.playNoise(0.12, { volume: 0.04, filter: 200 });
   }
 
@@ -421,17 +465,24 @@ export class SceneAudio {
     let vol = (sprint ? 0.15 : 0.1) * (0.6 + 0.4 * intensity);
     const filterVal = sprint ? 500 : 400;
     if (crouch) vol *= 0.45;
-    this.playNoise(dur, { volume: vol, filter: crouch ? filterVal * 0.6 : filterVal });
+    this.playNoise(dur, {
+      volume: vol,
+      filter: crouch ? filterVal * 0.6 : filterVal,
+    });
     this.playTone((sprint ? 100 : 80) * rnd, dur, {
       type: "sine",
       volume: vol * 0.5,
-      filter: crouch ? 200 : 0
+      filter: crouch ? 200 : 0,
     });
   }
 
   playJump() {
     if (!this.ambientEnabled) return;
-    this.playSweepTone(200, 600, 0.08, { type: "sine", volume: 0.05, filter: 800 });
+    this.playSweepTone(200, 600, 0.08, {
+      type: "sine",
+      volume: 0.05,
+      filter: 800,
+    });
   }
 
   playLand(impact = 2) {
@@ -464,18 +515,31 @@ export class SceneAudio {
     if (!this.ambientEnabled) return;
     const notes = [293, 369, 440, 554];
     notes.forEach((f, i) => {
-      this.playReverbTone(f, 0.3, { type: "sine", volume: 0.12, delay: i * 0.1 });
+      this.playReverbTone(f, 0.3, {
+        type: "sine",
+        volume: 0.12,
+        delay: i * 0.1,
+      });
     });
   }
 
   completionScales(accuracy) {
-    const grade = accuracy >= 90 ? "S" : accuracy >= 75 ? "A" : accuracy >= 60 ? "B" : accuracy >= 40 ? "C" : "D";
+    const grade =
+      accuracy >= 90
+        ? "S"
+        : accuracy >= 75
+          ? "A"
+          : accuracy >= 60
+            ? "B"
+            : accuracy >= 40
+              ? "C"
+              : "D";
     const scales = {
       S: [523, 659, 784, 1047, 1319, 1568],
       A: [440, 554, 659, 880, 1109],
       B: [392, 494, 587, 784],
       C: [349, 440, 523, 698],
-      D: [311, 392, 466, 587]
+      D: [311, 392, 466, 587],
     };
     return { grade, notes: scales[grade] };
   }
@@ -484,12 +548,26 @@ export class SceneAudio {
     if (!this.ambientEnabled) return;
     const { notes } = this.completionScales(accuracy);
     notes.forEach((f, i) => {
-      this.playReverbTone(f, 0.35, { type: "sine", volume: 0.11, delay: i * 0.12 });
+      this.playReverbTone(f, 0.35, {
+        type: "sine",
+        volume: 0.11,
+        delay: i * 0.12,
+      });
     });
     const top = notes[notes.length - 1];
     const t = notes.length * 0.12;
-    this.playTone(top * 2, 0.25, { type: "sine", volume: 0.06, delay: t + 0.05, filter: 4000 });
-    this.playTone(top * 3, 0.35, { type: "sine", volume: 0.05, delay: t + 0.17, filter: 5000 });
+    this.playTone(top * 2, 0.25, {
+      type: "sine",
+      volume: 0.06,
+      delay: t + 0.05,
+      filter: 4000,
+    });
+    this.playTone(top * 3, 0.35, {
+      type: "sine",
+      volume: 0.05,
+      delay: t + 0.17,
+      filter: 5000,
+    });
   }
 
   playCompletionRow(index, total, accuracy) {
@@ -506,8 +584,16 @@ export class SceneAudio {
     const roots = { S: 523, A: 440, B: 392, C: 349, D: 311 };
     const root = roots[grade] || 392;
     this.playReverbTone(root, 0.6, { type: "sine", volume: 0.14 });
-    this.playReverbTone(root * 1.25, 0.6, { type: "sine", volume: 0.1, delay: 0.03 });
-    this.playReverbTone(root * 1.5, 0.7, { type: "sine", volume: 0.09, delay: 0.06 });
+    this.playReverbTone(root * 1.25, 0.6, {
+      type: "sine",
+      volume: 0.1,
+      delay: 0.03,
+    });
+    this.playReverbTone(root * 1.5, 0.7, {
+      type: "sine",
+      volume: 0.09,
+      delay: 0.06,
+    });
   }
 
   playSparkle() {
@@ -530,9 +616,23 @@ export class SceneAudio {
 
   playCatWindup() {
     if (!this.ambientEnabled) return;
-    this.playSweepTone(180, 900, 0.5, { type: "sawtooth", volume: 0.09, filter: 900 });
-    this.playSweepTone(300, 1400, 0.45, { type: "sine", volume: 0.05, filter: 1600, delay: 0.06 });
-    this.playTone(1800, 0.3, { type: "sine", volume: 0.03, filter: 2400, delay: 0.12 });
+    this.playSweepTone(180, 900, 0.5, {
+      type: "sawtooth",
+      volume: 0.09,
+      filter: 900,
+    });
+    this.playSweepTone(300, 1400, 0.45, {
+      type: "sine",
+      volume: 0.05,
+      filter: 1600,
+      delay: 0.06,
+    });
+    this.playTone(1800, 0.3, {
+      type: "sine",
+      volume: 0.03,
+      filter: 2400,
+      delay: 0.12,
+    });
     this.playNoise(0.4, { volume: 0.05, filter: 1100 });
   }
 
@@ -540,7 +640,11 @@ export class SceneAudio {
     if (!this.ambientEnabled) return;
     this.playNoise(0.18, { volume: 0.1, filter: 350 });
     this.playTone(110, 0.16, { type: "sine", volume: 0.16 });
-    this.playSweepTone(220, 90, 0.2, { type: "triangle", volume: 0.08, filter: 500 });
+    this.playSweepTone(220, 90, 0.2, {
+      type: "triangle",
+      volume: 0.08,
+      filter: 500,
+    });
   }
 
   playCatStun() {
@@ -552,7 +656,11 @@ export class SceneAudio {
   playMeow() {
     if (!this.ambientEnabled) return;
     this.playSweepTone(600, 900, 0.15, { type: "sine", volume: 0.2 });
-    this.playSweepTone(900, 600, 0.2, { type: "sine", volume: 0.18, delay: 0.15 });
+    this.playSweepTone(900, 600, 0.2, {
+      type: "sine",
+      volume: 0.18,
+      delay: 0.15,
+    });
   }
 
   playPurr() {
@@ -583,7 +691,11 @@ export class SceneAudio {
 
   playEditorEnter() {
     if (!this.uiEnabled) return;
-    this.playSweepTone(300, 900, 0.2, { type: "triangle", volume: 0.08, filter: 1000 });
+    this.playSweepTone(300, 900, 0.2, {
+      type: "triangle",
+      volume: 0.08,
+      filter: 1000,
+    });
     this.playTone(450, 0.1, { type: "triangle", volume: 0.06, delay: 0.1 });
     this.playTone(600, 0.1, { type: "triangle", volume: 0.05, delay: 0.15 });
   }
@@ -645,14 +757,23 @@ export class SceneAudio {
 
   playLobThrow() {
     if (!this.ambientEnabled) return;
-    this.playSweepTone(600, 200, 0.16, { type: "sine", volume: 0.05, filter: 900 });
+    this.playSweepTone(600, 200, 0.16, {
+      type: "sine",
+      volume: 0.05,
+      filter: 900,
+    });
     this.playNoise(0.14, { volume: 0.03, filter: 700, delay: 0.02 });
   }
 
   playLobSnap() {
     if (!this.ambientEnabled) return;
     this.playTone(1200, 0.04, { type: "sine", volume: 0.1, filter: 3000 });
-    this.playTone(1600, 0.05, { type: "sine", volume: 0.07, delay: 0.02, filter: 3500 });
+    this.playTone(1600, 0.05, {
+      type: "sine",
+      volume: 0.07,
+      delay: 0.02,
+      filter: 3500,
+    });
     this.playTone(80, 0.05, { type: "sine", volume: 0.07 });
   }
 
@@ -660,7 +781,12 @@ export class SceneAudio {
     if (!this.ambientEnabled) return;
     const root = 523 * Math.pow(2, (Math.min(Math.max(level, 1), 8) * 2) / 12);
     this.playTone(root, 0.09, { type: "sine", volume: 0.1, filter: 2400 });
-    this.playTone(root * 1.5, 0.11, { type: "sine", volume: 0.08, delay: 0.07, filter: 2600 });
+    this.playTone(root * 1.5, 0.11, {
+      type: "sine",
+      volume: 0.08,
+      delay: 0.07,
+      filter: 2600,
+    });
   }
 
   playDayNight() {
@@ -684,7 +810,11 @@ export class SceneAudio {
   playShatter() {
     if (!this.ambientEnabled) return;
     this.playNoise(0.25, { volume: 0.08, filter: 2000 });
-    this.playSweepTone(400, 80, 0.25, { type: "sawtooth", volume: 0.06, filter: 600 });
+    this.playSweepTone(400, 80, 0.25, {
+      type: "sawtooth",
+      volume: 0.06,
+      filter: 600,
+    });
   }
 
   playThief() {
@@ -694,7 +824,11 @@ export class SceneAudio {
 
   playCushion() {
     if (!this.ambientEnabled) return;
-    this.playSweepTone(300, 900, 0.25, { type: "sawtooth", volume: 0.09, filter: 1000 });
+    this.playSweepTone(300, 900, 0.25, {
+      type: "sawtooth",
+      volume: 0.09,
+      filter: 1000,
+    });
     this.playNoise(0.12, { volume: 0.07, filter: 800 });
   }
 
@@ -714,7 +848,12 @@ export class SceneAudio {
   playCatnip() {
     if (!this.ambientEnabled) return;
     this.playTone(1800, 0.06, { type: "sine", volume: 0.05, filter: 4000 });
-    this.playTone(2400, 0.1, { type: "sine", volume: 0.04, delay: 0.06, filter: 4000 });
+    this.playTone(2400, 0.1, {
+      type: "sine",
+      volume: 0.04,
+      delay: 0.06,
+      filter: 4000,
+    });
   }
 
   playBuy() {

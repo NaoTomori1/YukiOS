@@ -1,5 +1,15 @@
-import { setStyle, os, StorageKeys, MODES, $, createElement } from "../framework.js";
-import { handlePopupMessage, handlePopupTitleMessage } from "../core/ScramjetPopupManager.js";
+import {
+  setStyle,
+  os,
+  StorageKeys,
+  MODES,
+  $,
+  createElement,
+} from "../framework.js";
+import {
+  handlePopupMessage,
+  handlePopupTitleMessage,
+} from "../core/ScramjetPopupManager.js";
 import { ScramjetBaseApp } from "../core/ScramjetBaseApp.js";
 import { SYSTEM_APPS } from "../AppRegistryConfig.js";
 
@@ -32,7 +42,8 @@ export class DiscordApp extends ScramjetBaseApp {
   }
 
   async open(opts = {}) {
-    const iconHtml = '<i class="fab fa-discord" style="margin-right:8px;font-size:16px;"></i>';
+    const iconHtml =
+      '<i class="fab fa-discord" style="margin-right:8px;font-size:16px;"></i>';
     const controlsHtml = os.window.getWindowControls();
     const winId = `${this.getAppId()}-window`;
     this.winId = winId;
@@ -43,7 +54,7 @@ export class DiscordApp extends ScramjetBaseApp {
     const win = os.window.create(winId, this.getAppName(), size[0], size[1], {
       appId: this.getAppId(),
       skipHeader: true,
-      icon: this.getAppIcon()
+      icon: this.getAppIcon(),
     });
 
     win.innerHTML = `
@@ -71,7 +82,11 @@ export class DiscordApp extends ScramjetBaseApp {
       win.dataset.popupBridgeBound = "true";
       const popupHandler = (event) => {
         try {
-          const meta = { parentAppId: this.getAppId(), parentName: this.getAppName(), parentIcon: this.getAppIcon() };
+          const meta = {
+            parentAppId: this.getAppId(),
+            parentName: this.getAppName(),
+            parentIcon: this.getAppIcon(),
+          };
           if (handlePopupTitleMessage(event)) {
             return;
           }
@@ -124,7 +139,7 @@ export class DiscordApp extends ScramjetBaseApp {
       borderRadius: "14px",
       backdropFilter: "blur(32px)",
       boxShadow: "0 24px 64px rgba(0,0,0,0.65)",
-      pointerEvents: "none"
+      pointerEvents: "none",
     });
     splash.style.left = `${Math.round((window.innerWidth - 220) / 2)}px`;
     splash.style.top = `${Math.round((window.innerHeight - 220) / 2)}px`;
@@ -192,7 +207,7 @@ export class DiscordApp extends ScramjetBaseApp {
           } else {
             os.window.close(this.winId);
           }
-        }
+        },
       });
     }
   }

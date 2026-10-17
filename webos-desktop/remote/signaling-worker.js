@@ -17,21 +17,27 @@ export class Room extends DurableObject {
       new TextEncoder().encode(this.env.TURN_SECRET),
       { name: "HMAC", hash: "SHA-1" },
       false,
-      ["sign"]
+      ["sign"],
     );
-    const sig = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(username));
+    const sig = await crypto.subtle.sign(
+      "HMAC",
+      key,
+      new TextEncoder().encode(username),
+    );
     const credential = btoa(String.fromCharCode(...new Uint8Array(sig)));
     return {
       urls: [this.env.TURN_URL],
       username,
-      credential
+      credential,
     };
   }
 
   async fetch(request) {
     const url = new URL(request.url);
     const role = url.searchParams.get("role") || "";
-    const roomParam = (url.searchParams.get("room") || "").slice(0, 6).toUpperCase();
+    const roomParam = (url.searchParams.get("room") || "")
+      .slice(0, 6)
+      .toUpperCase();
 
     if (request.headers.get("Upgrade") !== "websocket") {
       return new Response("YukiOS Remote Desktop Signaling", { status: 200 });
@@ -46,7 +52,9 @@ export class Room extends DurableObject {
         const msg = JSON.parse(event.data);
         await this.handleMessage(server, msg, roomParam);
       } catch (err) {
-        server.send(JSON.stringify({ type: "error", message: "Invalid message" }));
+        server.send(
+          JSON.stringify({ type: "error", message: "Invalid message" }),
+        );
       }
     });
 
@@ -66,12 +74,16 @@ export class Room extends DurableObject {
       case "register-host":
         this.host = server;
         const turn = await this.getTurnCreds();
-        server.send(JSON.stringify({ type: "host-registered", room: roomParam, turn }));
+        server.send(
+          JSON.stringify({ type: "host-registered", room: roomParam, turn }),
+        );
         break;
 
       case "join-as-client":
         if (!this.host) {
-          server.send(JSON.stringify({ type: "error", message: "Host not ready" }));
+          server.send(
+            JSON.stringify({ type: "error", message: "Host not ready" }),
+          );
           return;
         }
         this.client = server;
@@ -82,7 +94,9 @@ export class Room extends DurableObject {
 
       case "offer":
         if (this.client) {
-          this.client.send(JSON.stringify({ type: "offer", sdp: msg.sdp, codec: msg.codec }));
+          this.client.send(
+            JSON.stringify({ type: "offer", sdp: msg.sdp, codec: msg.codec }),
+          );
         }
         break;
 
@@ -95,13 +109,17 @@ export class Room extends DurableObject {
       case "ice-candidate":
         const target = msg.from === "host" ? this.client : this.host;
         if (target) {
-          target.send(JSON.stringify({ type: "ice-candidate", candidate: msg.candidate }));
+          target.send(
+            JSON.stringify({ type: "ice-candidate", candidate: msg.candidate }),
+          );
         }
         break;
 
       case "input-event":
         if (this.host) {
-          this.host.send(JSON.stringify({ type: "input-event", input: msg.input }));
+          this.host.send(
+            JSON.stringify({ type: "input-event", input: msg.input }),
+          );
         }
         break;
 
@@ -113,8 +131,8 @@ export class Room extends DurableObject {
               type: "frame-data",
               data: msg.data,
               ts: msg.ts,
-              from: msg.from
-            })
+              from: msg.from,
+            }),
           );
         }
         break;
@@ -151,5 +169,5 @@ export default {
 
     const stub = env.ROOMS.get(roomId);
     return stub.fetch(request);
-  }
+  },
 };

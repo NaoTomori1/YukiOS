@@ -66,7 +66,9 @@ export class ElectronFSAdapter {
         const result = await ef.readFile(path, wantsBinary ? "binary" : "utf8");
         if (!result.success) throw new Error(result.error);
         if (wantsBinary || result.encoding === "base64") {
-          const bytes = Uint8Array.from(atob(result.data), (c) => c.charCodeAt(0));
+          const bytes = Uint8Array.from(atob(result.data), (c) =>
+            c.charCodeAt(0),
+          );
           return bytes;
         }
         return result.data;
@@ -92,7 +94,7 @@ export class ElectronFSAdapter {
       isFile: () => s.isFile,
       size: s.size,
       mtimeMs: s.mtimeMs,
-      birthtimeMs: s.birthtimeMs
+      birthtimeMs: s.birthtimeMs,
     };
   }
 
@@ -104,7 +106,9 @@ export class ElectronFSAdapter {
       console.warn(`safeWriteFile failed for ${path}:`, e);
       try {
         if (content instanceof Uint8Array) {
-          const text = new TextDecoder("utf-8", { fatal: false }).decode(content);
+          const text = new TextDecoder("utf-8", { fatal: false }).decode(
+            content,
+          );
           await this.p("writeFile", path, text);
         } else if (typeof content === "string") {
           await this.p("writeFile", path, content);

@@ -1074,11 +1074,17 @@
 
 .steam-game-grid,
 .steam-archive-grid {
-  grid-template-columns: repeat(auto-fill, minmax(var(--steam-grid-min, 140px), 1fr)) !important;
+  grid-template-columns: repeat(
+    auto-fill,
+    minmax(var(--steam-grid-min, 140px), 1fr)
+  ) !important;
 }
 
 .store-games-grid {
-  grid-template-columns: repeat(auto-fill, minmax(calc(var(--steam-grid-min, 140px) + 40px), 1fr)) !important;
+  grid-template-columns: repeat(
+    auto-fill,
+    minmax(calc(var(--steam-grid-min, 140px) + 40px), 1fr)
+  ) !important;
 }
 
 .store-layout {
@@ -1838,7 +1844,8 @@
   flex-shrink: 0;
 }
 
-html.transparent-ui.tp-window-header[data-theme] .window-header.steam-popup-header,
+html.transparent-ui.tp-window-header[data-theme]
+  .window-header.steam-popup-header,
 html[data-theme] .window-header.steam-popup-header,
 .window-header.steam-popup-header {
   position: absolute;

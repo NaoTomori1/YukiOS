@@ -41,7 +41,9 @@ export class Shell {
 
   async expandGlob(pattern, path) {
     const items = Object.keys(await os.fs.readdir(this.pathToString(path)));
-    const regex = new RegExp("^" + pattern.replace(/\*/g, ".*").replace(/\?/g, ".") + "$");
+    const regex = new RegExp(
+      "^" + pattern.replace(/\*/g, ".*").replace(/\?/g, ".") + "$",
+    );
     return items.filter((item) => regex.test(item));
   }
 
@@ -66,7 +68,8 @@ export class Shell {
     const now = Date.now();
     const last = Number(os.storage.get(StorageKeys.sudoAuth) || 0);
     if (now - last < 5 * 60 * 1000) return true;
-    if (outputCallback) await outputCallback(`[sudo] password for ${this.sessionKey}: `);
+    if (outputCallback)
+      await outputCallback(`[sudo] password for ${this.sessionKey}: `);
     os.storage.set(StorageKeys.sudoAuth, String(now));
     return true;
   }
@@ -95,7 +98,7 @@ export class Shell {
       "--non-interactive",
       "--stdin",
       "--shell",
-      "--version"
+      "--version",
     ]);
     const sudoFlagsWithValue = new Set([
       "-u",
@@ -109,7 +112,7 @@ export class Shell {
       "--group",
       "--prompt",
       "--chdir",
-      "--other-user"
+      "--other-user",
     ]);
     let argsQueue = [...args];
     const innerFlags = [];
@@ -123,7 +126,21 @@ export class Shell {
       if (flag.startsWith("-") && flag.length > 2 && !flag.startsWith("--")) {
         const chars = flag.slice(1).split("");
         const isSudoCombined = chars.every((c) =>
-          ["A", "b", "E", "H", "k", "K", "l", "n", "S", "s", "v", "V", "h"].includes(c)
+          [
+            "A",
+            "b",
+            "E",
+            "H",
+            "k",
+            "K",
+            "l",
+            "n",
+            "S",
+            "s",
+            "v",
+            "V",
+            "h",
+          ].includes(c),
         );
         if (isSudoCombined) continue;
       }
@@ -165,7 +182,10 @@ export class Shell {
       }
 
       if (i < pipeline.length - 1) {
-        output = await this.captureOutput(() => handler(expandedArgs, flags), outputCallback);
+        output = await this.captureOutput(
+          () => handler(expandedArgs, flags),
+          outputCallback,
+        );
       } else {
         await handler(expandedArgs, flags, outputCallback);
       }
@@ -202,27 +222,63 @@ export class Shell {
 
   registerDefaultCommands() {
     this.registerCommand("help", (args, flags, output) => this.cmdHelp(output));
-    this.registerCommand("clear", (args, flags, output) => this.cmdClear(output));
-    this.registerCommand("pwd", (args, flags, output) => output(this.pathToString(this.currentPath)));
-    this.registerCommand("ls", (args, flags, output) => this.cmdLs(args, flags, output));
-    this.registerCommand("cd", (args, flags, output) => this.cmdCd(args, output));
-    this.registerCommand("mkdir", (args, flags, output) => this.cmdMkdir(args, output));
-    this.registerCommand("touch", (args, flags, output) => this.cmdTouch(args, output));
-    this.registerCommand("rm", (args, flags, output) => this.cmdRm(args, flags, output));
-    this.registerCommand("cat", (args, flags, output) => this.cmdCat(args, output));
-    this.registerCommand("echo", (args, flags, output) => output(args.join(" ")));
-    this.registerCommand("whoami", (args, flags, output) => output(this.sessionKey));
-    this.registerCommand("hostname", (args, flags, output) => output("yuki-os"));
-    this.registerCommand("date", (args, flags, output) => output(new Date().toString()));
-    this.registerCommand("history", (args, flags, output) => this.cmdHistory(output));
+    this.registerCommand("clear", (args, flags, output) =>
+      this.cmdClear(output),
+    );
+    this.registerCommand("pwd", (args, flags, output) =>
+      output(this.pathToString(this.currentPath)),
+    );
+    this.registerCommand("ls", (args, flags, output) =>
+      this.cmdLs(args, flags, output),
+    );
+    this.registerCommand("cd", (args, flags, output) =>
+      this.cmdCd(args, output),
+    );
+    this.registerCommand("mkdir", (args, flags, output) =>
+      this.cmdMkdir(args, output),
+    );
+    this.registerCommand("touch", (args, flags, output) =>
+      this.cmdTouch(args, output),
+    );
+    this.registerCommand("rm", (args, flags, output) =>
+      this.cmdRm(args, flags, output),
+    );
+    this.registerCommand("cat", (args, flags, output) =>
+      this.cmdCat(args, output),
+    );
+    this.registerCommand("echo", (args, flags, output) =>
+      output(args.join(" ")),
+    );
+    this.registerCommand("whoami", (args, flags, output) =>
+      output(this.sessionKey),
+    );
+    this.registerCommand("hostname", (args, flags, output) =>
+      output("yuki-os"),
+    );
+    this.registerCommand("date", (args, flags, output) =>
+      output(new Date().toString()),
+    );
+    this.registerCommand("history", (args, flags, output) =>
+      this.cmdHistory(output),
+    );
     this.registerCommand("tree", (args, flags, output) => this.cmdTree(output));
     this.registerCommand("uname", (args, flags, output) =>
-      output("Linux reeyuki-desktop 6.1.23-arch1-1 #1 SMP PREEMPT x86_64 GNU/Linux")
+      output(
+        "Linux reeyuki-desktop 6.1.23-arch1-1 #1 SMP PREEMPT x86_64 GNU/Linux",
+      ),
     );
-    this.registerCommand("ping", (args, flags, output) => this.cmdPing(args, output));
-    this.registerCommand("curl", (args, flags, output) => this.cmdCurl(args, output));
-    this.registerCommand("neofetch", (args, flags, output) => this.cmdNeofetch(output));
-    this.registerCommand("screenfetch", (args, flags, output) => this.cmdNeofetch(output));
+    this.registerCommand("ping", (args, flags, output) =>
+      this.cmdPing(args, output),
+    );
+    this.registerCommand("curl", (args, flags, output) =>
+      this.cmdCurl(args, output),
+    );
+    this.registerCommand("neofetch", (args, flags, output) =>
+      this.cmdNeofetch(output),
+    );
+    this.registerCommand("screenfetch", (args, flags, output) =>
+      this.cmdNeofetch(output),
+    );
     for (const fetchAlias of [
       "fastfetch",
       "hyfetch",
@@ -232,26 +288,37 @@ export class Shell {
       "pfetch",
       "ufetch",
       "afetch",
-      "nerdfetch"
+      "nerdfetch",
     ]) {
-      this.registerCommand(fetchAlias, (args, flags, output) => this.cmdNeofetch(output));
+      this.registerCommand(fetchAlias, (args, flags, output) =>
+        this.cmdNeofetch(output),
+      );
     }
     this.registerCommand("sudo", async (args, flags, output) => {
       const ok = await this.ensureSudoAuth(output);
       if (!ok) return;
       if (!args.length && !flags.length) return;
-      const unwrapped = this.unwrapSudoSegment({ command: "sudo", args, flags });
+      const unwrapped = this.unwrapSudoSegment({
+        command: "sudo",
+        args,
+        flags,
+      });
       if (!unwrapped || !unwrapped.command) return;
       const handler = this.commands[unwrapped.command];
       if (!handler) {
-        if (unwrapped.command) await output(`${unwrapped.command}: command not found`);
+        if (unwrapped.command)
+          await output(`${unwrapped.command}: command not found`);
         return;
       }
       await handler(unwrapped.args, unwrapped.flags, output);
     });
     this.registerCommand("ps", (args, flags, output) => this.cmdPs(output));
-    this.registerCommand("grep", (args, flags, output) => this.cmdGrep(args, output));
-    this.registerCommand("wc", (args, flags, output) => this.cmdWc(args, output));
+    this.registerCommand("grep", (args, flags, output) =>
+      this.cmdGrep(args, output),
+    );
+    this.registerCommand("wc", (args, flags, output) =>
+      this.cmdWc(args, output),
+    );
   }
 
   cmdHelp(output) {
@@ -276,7 +343,9 @@ export class Shell {
     output("  curl     - Fetch URL content");
     output("  neofetch - Display system info");
     output("  screenfetch - Alias for neofetch");
-    output("  fastfetch/hyfetch/neowofetch/archey/archey4/pfetch/ufetch/afetch/nerdfetch - Alias for neofetch");
+    output(
+      "  fastfetch/hyfetch/neowofetch/archey/archey4/pfetch/ufetch/afetch/nerdfetch - Alias for neofetch",
+    );
     output("  sudo     - Run command with elevated privileges (no-op)");
     output("  ps       - List processes");
     output("  grep     - Search for pattern");
@@ -310,7 +379,9 @@ export class Shell {
 
     try {
       const items = await os.fs.readdir(this.pathToString(this.currentPath));
-      const filtered = showAll ? items : Object.keys(items).filter((k) => !k.startsWith("."));
+      const filtered = showAll
+        ? items
+        : Object.keys(items).filter((k) => !k.startsWith("."));
 
       if (longFormat) {
         for (const name of filtered) {
@@ -318,7 +389,9 @@ export class Shell {
           const stat = await this.fs.pStat(this.pathToString(fullPath));
           const isDir = stat && stat.mode === 16877;
           const size = stat ? stat.size : 0;
-          output(`${isDir ? "d" : "-"}rwxr-xr-x 1 ${this.sessionKey} ${this.sessionKey} ${formatSize(size)} ${name}`);
+          output(
+            `${isDir ? "d" : "-"}rwxr-xr-x 1 ${this.sessionKey} ${this.sessionKey} ${formatSize(size)} ${name}`,
+          );
         }
       } else {
         output(Object.keys(filtered).join("  "));
@@ -437,13 +510,17 @@ export class Shell {
           const item = items[i];
           const isFile = await this.fs.isFile(path, item);
           const last = i === items.length - 1;
-          output(prefix + (last ? "└── " : "├── ") + item + (isFile ? "" : "/"));
+          output(
+            prefix + (last ? "└── " : "├── ") + item + (isFile ? "" : "/"),
+          );
           if (!isFile) {
             await listTree([...path, item], prefix + (last ? "    " : "│   "));
           }
         }
       } catch (e) {
-        output(`tree: cannot access '${this.pathToString(path)}': No such file or directory`);
+        output(
+          `tree: cannot access '${this.pathToString(path)}': No such file or directory`,
+        );
       }
     };
     output(this.pathToString(this.currentPath));
@@ -462,7 +539,9 @@ export class Shell {
     } catch (e) {
       console.error(e);
     }
-    output(`Reply from ${args[0]}: time=${(performance.now() - start).toFixed(2)}ms`);
+    output(
+      `Reply from ${args[0]}: time=${(performance.now() - start).toFixed(2)}ms`,
+    );
   }
 
   async cmdCurl(args, output) {
@@ -480,7 +559,11 @@ export class Shell {
 
   async cmdNeofetch(output) {
     const ua = navigator.userAgent;
-    const platformRaw = navigator.userAgentData?.platform || navigator.platform || ua || "Unknown";
+    const platformRaw =
+      navigator.userAgentData?.platform ||
+      navigator.platform ||
+      ua ||
+      "Unknown";
 
     let os = "Unknown";
     if (/Windows/i.test(platformRaw)) os = "Windows";
@@ -497,10 +580,14 @@ export class Shell {
     else if (/Chrome\/\d+/i.test(ua)) browser = "Chrome";
     else if (/Safari\/\d+/i.test(ua)) browser = "Safari";
 
-    const browserText = browser === "Chrome" || browser === "Edge" ? "eww a chromium?!" : browser;
+    const browserText =
+      browser === "Chrome" || browser === "Edge" ? "eww a chromium?!" : browser;
 
     const cores = navigator.hardwareConcurrency ?? "Unknown";
-    const coresText = typeof cores === "number" && cores > 10 ? `${cores} (Wow its op!)` : cores;
+    const coresText =
+      typeof cores === "number" && cores > 10
+        ? `${cores} (Wow its op!)`
+        : cores;
 
     let gpu = "Unknown";
     try {
@@ -518,8 +605,13 @@ export class Shell {
     else if (typeof window.chrome !== "undefined") engine = "V8";
     else if (/Apple/.test(navigator.vendor)) engine = "JavaScriptCore";
 
-    const ram = navigator.deviceMemory ? `${navigator.deviceMemory} GB` : "Unknown";
-    const dnt = navigator.doNotTrack === "1" || window.doNotTrack === "1" ? "Enabled" : "Disabled";
+    const ram = navigator.deviceMemory
+      ? `${navigator.deviceMemory} GB`
+      : "Unknown";
+    const dnt =
+      navigator.doNotTrack === "1" || window.doNotTrack === "1"
+        ? "Enabled"
+        : "Disabled";
 
     const lines = [
       "",
@@ -532,7 +624,7 @@ export class Shell {
       `    /   __   \\       GRAPHICS    ${gpu}`,
       `   / __|  |__-\\      MEMOWY    ${ram}`,
       `  /_-''    ''-_\\     DO-NOT-TRACK  ${dnt}`,
-      `                      RESOLUTION   ${window.innerWidth}x${window.innerHeight}`
+      `                      RESOLUTION   ${window.innerWidth}x${window.innerHeight}`,
     ];
 
     for (const line of lines) {

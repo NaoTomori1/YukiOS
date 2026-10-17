@@ -59,7 +59,8 @@ class ProcessManager {
 
   measureProcess(winId, win) {
     const now = performance.now();
-    if (!this.windowBirthTimes.has(winId)) this.windowBirthTimes.set(winId, now);
+    if (!this.windowBirthTimes.has(winId))
+      this.windowBirthTimes.set(winId, now);
 
     const isMinimized = win.style.display === "none";
     const iframeEl = $("iframe", win);
@@ -84,13 +85,18 @@ class ProcessManager {
     if (performance.memory) {
       const totalHeapMB = performance.memory.usedJSHeapSize / 1048576;
       const allWins = $$(".window");
-      const totalNodes = allWins.reduce((s, w) => s + w.querySelectorAll("*").length, 1);
+      const totalNodes = allWins.reduce(
+        (s, w) => s + w.querySelectorAll("*").length,
+        1,
+      );
       const share = domNodes / totalNodes;
       baseMem = Math.max(baseMem, totalHeapMB * share * 0.6);
     }
 
     const activityStress = Math.min(40, domDelta * 2);
-    let cpuShare = isMinimized ? 0.05 : domNodes / Math.max(1, $$(".window *").length);
+    let cpuShare = isMinimized
+      ? 0.05
+      : domNodes / Math.max(1, $$(".window *").length);
     if (hasIframe && !isMinimized) cpuShare *= 2.2;
     if (hasVideo && !isMinimized) cpuShare *= 1.8;
     if (hasCanvas && !isMinimized) cpuShare *= 1.5;
@@ -121,8 +127,13 @@ class ProcessManager {
         const systemCpuSignal = frameStress * 0.5 + longTaskStress * 0.5;
         const isMinimized = win.style.display === "none";
         const domNodes = $$("*", win).length;
-        const totalWindowNodes = $$(".window").reduce((s, w) => s + w.querySelectorAll("*").length, 0);
-        let cpuShare = isMinimized ? 0.05 : domNodes / Math.max(1, totalWindowNodes);
+        const totalWindowNodes = $$(".window").reduce(
+          (s, w) => s + w.querySelectorAll("*").length,
+          0,
+        );
+        let cpuShare = isMinimized
+          ? 0.05
+          : domNodes / Math.max(1, totalWindowNodes);
         if (!!$("iframe", win) && !isMinimized) cpuShare *= 2.2;
         if (!!$("video", win) && !isMinimized) cpuShare *= 1.8;
         if (!!$("canvas", win) && !isMinimized) cpuShare *= 1.5;
@@ -130,7 +141,10 @@ class ProcessManager {
         const prev = this.usageCache.get(app.winId) || { cpu: 0, mem: 0 };
         adjustedCpu = prev.cpu * 0.55 + adjustedCpu * 0.45;
         adjustedCpu += (Math.random() - 0.5) * 1.2;
-        adjustedCpu = Math.max(0.1, Math.min(99, isMinimized ? Math.min(adjustedCpu, 1.5) : adjustedCpu));
+        adjustedCpu = Math.max(
+          0.1,
+          Math.min(99, isMinimized ? Math.min(adjustedCpu, 1.5) : adjustedCpu),
+        );
       }
 
       procs.push({
@@ -141,7 +155,7 @@ class ProcessManager {
         cpu: adjustedCpu,
         mem,
         status: app.status || "Running",
-        isTray: false
+        isTray: false,
       });
     });
 
@@ -170,7 +184,7 @@ class ProcessManager {
         cpu,
         mem,
         status: "Tray",
-        isTray: true
+        isTray: true,
       });
     });
 

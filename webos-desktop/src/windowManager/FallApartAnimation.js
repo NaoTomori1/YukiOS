@@ -20,7 +20,11 @@ function clampInt(value, min, max) {
 }
 
 function buildShardCells(width, height) {
-  const cellCount = clampInt((width * height) / TARGET_CELL_AREA_PX2, MIN_CELLS, MAX_CELLS);
+  const cellCount = clampInt(
+    (width * height) / TARGET_CELL_AREA_PX2,
+    MIN_CELLS,
+    MAX_CELLS,
+  );
   const cols = Math.max(3, Math.ceil(Math.sqrt((cellCount * width) / height)));
   const rows = Math.max(3, Math.ceil(cellCount / cols));
 
@@ -30,7 +34,7 @@ function buildShardCells(width, height) {
       if (seeds.length >= cellCount) break;
       seeds.push({
         x: ((colIdx + 0.18 + Math.random() * 0.64) * width) / cols,
-        y: ((rowIdx + 0.18 + Math.random() * 0.64) * height) / rows
+        y: ((rowIdx + 0.18 + Math.random() * 0.64) * height) / rows,
       });
     }
   }
@@ -48,7 +52,7 @@ function voronoiCell(ownSeed, ownIndex, seeds, width, height) {
     { x: 0, y: 0 },
     { x: width, y: 0 },
     { x: width, y: height },
-    { x: 0, y: height }
+    { x: 0, y: height },
   ];
   for (let j = 0; j < seeds.length; j++) {
     if (j === ownIndex || polygon.length === 0) continue;
@@ -66,14 +70,18 @@ function clipHalfPlane(polygon, ownSeed, otherSeed) {
   for (let i = 0; i < polygon.length; i++) {
     const current = polygon[i];
     const next = polygon[(i + 1) % polygon.length];
-    const distCurrent = (current.x - midX) * normalX + (current.y - midY) * normalY;
+    const distCurrent =
+      (current.x - midX) * normalX + (current.y - midY) * normalY;
     const distNext = (next.x - midX) * normalX + (next.y - midY) * normalY;
     if (distCurrent <= 0) kept.push(current);
-    if ((distCurrent < 0 && distNext > 0) || (distCurrent > 0 && distNext < 0)) {
+    if (
+      (distCurrent < 0 && distNext > 0) ||
+      (distCurrent > 0 && distNext < 0)
+    ) {
       const t = distCurrent / (distCurrent - distNext);
       kept.push({
         x: current.x + (next.x - current.x) * t,
-        y: current.y + (next.y - current.y) * t
+        y: current.y + (next.y - current.y) * t,
       });
     }
   }
@@ -94,11 +102,18 @@ function polygonAreaAndCentroid(polygon) {
   }
   const area = Math.abs(twiceArea) / 2;
   if (area < 1) return { area: 0, cx: polygon[0].x, cy: polygon[0].y };
-  return { area, cx: centroidX / (3 * twiceArea), cy: centroidY / (3 * twiceArea) };
+  return {
+    area,
+    cx: centroidX / (3 * twiceArea),
+    cy: centroidY / (3 * twiceArea),
+  };
 }
 
 function shardClipPath(corners, width, height) {
-  const points = corners.map((pt) => `${((pt.x / width) * 100).toFixed(2)}% ${((pt.y / height) * 100).toFixed(2)}%`);
+  const points = corners.map(
+    (pt) =>
+      `${((pt.x / width) * 100).toFixed(2)}% ${((pt.y / height) * 100).toFixed(2)}%`,
+  );
   return `polygon(${points.join(", ")})`;
 }
 
@@ -144,7 +159,15 @@ function prepareCloneRoot(sourceWin) {
   return cloneRoot;
 }
 
-function createShard(layer, corners, rect, mode, contentPayload, impactPoint, fallDurationMs) {
+function createShard(
+  layer,
+  corners,
+  rect,
+  mode,
+  contentPayload,
+  impactPoint,
+  fallDurationMs,
+) {
   const element = createElement("div");
   element.className = "wa-shard";
   element.style.left = `${rect.left}px`;
@@ -162,7 +185,9 @@ function createShard(layer, corners, rect, mode, contentPayload, impactPoint, fa
     element.style.filter = "drop-shadow(0 6px 12px rgba(0, 0, 0, 0.32))";
   } else {
     element.style.backgroundColor =
-      contentPayload.fallbackBackground === null ? "var(--glass)" : contentPayload.fallbackBackground;
+      contentPayload.fallbackBackground === null
+        ? "var(--glass)"
+        : contentPayload.fallbackBackground;
     element.style.boxShadow = "inset 0 0 0 1px var(--glass-border)";
     element.style.filter = `brightness(${(0.86 + Math.random() * 0.22).toFixed(2)}) drop-shadow(0 6px 12px rgba(0, 0, 0, 0.32))`;
   }
@@ -178,7 +203,11 @@ function createShard(layer, corners, rect, mode, contentPayload, impactPoint, fa
 
   const inertiaScale = clamp(Math.sqrt(area) / 95, 0.45, 2.6);
   const spinSign = offsetX >= 0 ? 1 : -1;
-  const delayMs = clamp((offsetDist / CRACK_SPEED_PX_PER_S) * 1000 * (0.75 + Math.random() * 0.5), 0, 150);
+  const delayMs = clamp(
+    (offsetDist / CRACK_SPEED_PX_PER_S) * 1000 * (0.75 + Math.random() * 0.5),
+    0,
+    150,
+  );
 
   return {
     element,
@@ -187,11 +216,13 @@ function createShard(layer, corners, rect, mode, contentPayload, impactPoint, fa
     rotation: 0,
     vx: dirX * (14 + Math.random() * 48) + (Math.random() - 0.5) * 18,
     vy: dirY * (8 + Math.random() * 30) + (Math.random() - 0.5) * 16 + 12,
-    spinSpeed: (spinSign * (16 + Math.random() * 64)) / inertiaScale + (Math.random() - 0.5) * 12,
+    spinSpeed:
+      (spinSign * (16 + Math.random() * 64)) / inertiaScale +
+      (Math.random() - 0.5) * 12,
     delayMs,
     fadeStartRatio: 0.62 + Math.random() * 0.28,
     durationMs: fallDurationMs - delayMs,
-    released: false
+    released: false,
   };
 }
 
@@ -219,7 +250,8 @@ function runFallPhysics(layer, shards, fallDurationMs, onFinished) {
       const opacity =
         localProgress <= shard.fadeStartRatio
           ? 1
-          : 1 - (localProgress - shard.fadeStartRatio) / (1 - shard.fadeStartRatio);
+          : 1 -
+            (localProgress - shard.fadeStartRatio) / (1 - shard.fadeStartRatio);
 
       shard.element.style.transform = `translate3d(${shard.x.toFixed(1)}px, ${shard.y.toFixed(1)}px, 0) rotate(${shard.rotation.toFixed(1)}deg)`;
       shard.element.style.opacity = Math.max(opacity, 0).toFixed(3);
@@ -241,19 +273,31 @@ function startFall(rect, mode, contentPayload, speedMultiplier, onFinished) {
   layer.className = "wa-fall-apart-layer";
 
   const cornerSets = buildShardCells(rect.width, rect.height);
-  const fallDurationMs = clamp(950 + rect.height * 0.85, 1050, 1750) * Math.max(speedMultiplier, 0.35);
+  const fallDurationMs =
+    clamp(950 + rect.height * 0.85, 1050, 1750) *
+    Math.max(speedMultiplier, 0.35);
   const impactPoint = {
     x: rect.width * (0.35 + Math.random() * 0.3),
-    y: rect.height * (0.35 + Math.random() * 0.3)
+    y: rect.height * (0.35 + Math.random() * 0.3),
   };
 
   const shards = cornerSets.map((corners) =>
-    createShard(layer, corners, rect, mode, contentPayload, impactPoint, fallDurationMs)
+    createShard(
+      layer,
+      corners,
+      rect,
+      mode,
+      contentPayload,
+      impactPoint,
+      fallDurationMs,
+    ),
   );
   document.body.appendChild(layer);
   shards.forEach((shardState) => {
     try {
-      shardState.element.getAnimations({ subtree: true }).forEach((animation) => animation.cancel());
+      shardState.element
+        .getAnimations({ subtree: true })
+        .forEach((animation) => animation.cancel());
     } catch {}
   });
 
@@ -271,7 +315,11 @@ export function playFallApartAnimation(win, onDone, speedMultiplier = 1) {
   const computedStyle = getComputedStyle(win);
   const rawBackground = computedStyle.backgroundColor;
   const fallbackBackground =
-    rawBackground && rawBackground !== "transparent" && !rawBackground.endsWith(", 0)") ? rawBackground : null;
+    rawBackground &&
+    rawBackground !== "transparent" &&
+    !rawBackground.endsWith(", 0)")
+      ? rawBackground
+      : null;
 
   const nodeCount = win.querySelectorAll("*").length;
   const useCloneMode = nodeCount <= MAX_CLONE_NODES;
@@ -284,7 +332,7 @@ export function playFallApartAnimation(win, onDone, speedMultiplier = 1) {
         "clone",
         { sourceWin: win, borderRadius: computedStyle.borderRadius || "0px" },
         speedMultiplier,
-        () => {}
+        () => {},
       );
       launched = true;
     }
@@ -292,7 +340,13 @@ export function playFallApartAnimation(win, onDone, speedMultiplier = 1) {
 
   if (!launched) {
     try {
-      startFall(rect, "glass", { fallbackBackground }, speedMultiplier, () => {});
+      startFall(
+        rect,
+        "glass",
+        { fallbackBackground },
+        speedMultiplier,
+        () => {},
+      );
       launched = true;
     } catch {
       activeFallCount--;

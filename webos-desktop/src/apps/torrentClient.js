@@ -3,7 +3,14 @@ import { $, $$, bindEvent } from "../shared/domUtils.js";
 import { showAboutDialog } from "../shared/aboutDialog.js";
 import { formatSize, downloadBlob } from "../utils/utils.js";
 
-import { BaseApp, os, StorageKeys, MODES, createElement, ServiceKeys } from "../framework.js";
+import {
+  BaseApp,
+  os,
+  StorageKeys,
+  MODES,
+  createElement,
+  ServiceKeys,
+} from "../framework.js";
 export class TorrentClientApp extends BaseApp {
   constructor(services) {
     super(services);
@@ -23,10 +30,16 @@ export class TorrentClientApp extends BaseApp {
   }
 
   open() {
-    const win = os.window.create("torrent-client-win", "Torrent Client", "900px", "600px", {
-      icon: "fas fa-download",
-      appId: "torrentClientApp"
-    });
+    const win = os.window.create(
+      "torrent-client-win",
+      "Torrent Client",
+      "900px",
+      "600px",
+      {
+        icon: "fas fa-download",
+        appId: "torrentClientApp",
+      },
+    );
     win.innerHTML = `
       <div class="window-content">
         <div class="app-menubar">
@@ -162,7 +175,9 @@ export class TorrentClientApp extends BaseApp {
       if (!win.contains(e.target)) closeAllMenus();
     };
     document.addEventListener("click", closeHandler);
-    win.addEventListener("remove", () => document.removeEventListener("click", closeHandler));
+    win.addEventListener("remove", () =>
+      document.removeEventListener("click", closeHandler),
+    );
   }
 
   handleMenuAction(win, action) {
@@ -181,7 +196,9 @@ export class TorrentClientApp extends BaseApp {
         break;
       case "toggleDetails":
         const detailsPanel = win.querySelector("#torrent-details-panel");
-        const checkmark = win.querySelector('[data-action="toggleDetails"] .checkmark');
+        const checkmark = win.querySelector(
+          '[data-action="toggleDetails"] .checkmark',
+        );
         if (detailsPanel) {
           const isVisible = detailsPanel.style.display !== "none";
           detailsPanel.style.display = isVisible ? "none" : "block";
@@ -190,7 +207,9 @@ export class TorrentClientApp extends BaseApp {
         break;
       case "toggleStatusBar":
         const statusBar = win.querySelector("#torrent-status-bar");
-        const statusCheckmark = win.querySelector('[data-action="toggleStatusBar"] .checkmark');
+        const statusCheckmark = win.querySelector(
+          '[data-action="toggleStatusBar"] .checkmark',
+        );
         if (statusBar) {
           const isVisible = statusBar.style.display !== "none";
           statusBar.style.display = isVisible ? "none" : "flex";
@@ -212,7 +231,7 @@ export class TorrentClientApp extends BaseApp {
       version: "1.0.0",
       description: "A WebTorrent-based torrent client for YukiOS.",
       icon: "fas fa-download",
-      iconType: "fontawesome"
+      iconType: "fontawesome",
     });
   }
 
@@ -225,7 +244,9 @@ export class TorrentClientApp extends BaseApp {
         e.stopPropagation();
         const category = item.dataset.category;
         this.currentCategory = category;
-        qa(".torrent-sidebar-item").forEach((el) => el.classList.remove("active"));
+        qa(".torrent-sidebar-item").forEach((el) =>
+          el.classList.remove("active"),
+        );
         item.classList.add("active");
         this.renderTorrentList();
       });
@@ -233,7 +254,10 @@ export class TorrentClientApp extends BaseApp {
 
     bindEvent(q("#torrent-add-btn"), "click", async (e) => {
       e.stopPropagation();
-      const magnetUri = await os.dialog.prompt("Add Torrent", "Paste a magnet link or info hash:");
+      const magnetUri = await os.dialog.prompt(
+        "Add Torrent",
+        "Paste a magnet link or info hash:",
+      );
       if (magnetUri) this.addTorrent(magnetUri.trim());
     });
 
@@ -275,7 +299,9 @@ export class TorrentClientApp extends BaseApp {
       e.stopPropagation();
       this.selectedTorrents.clear();
       if (e.target.checked) {
-        this.getFilteredTorrents().forEach((t) => this.selectedTorrents.add(t.infoHash));
+        this.getFilteredTorrents().forEach((t) =>
+          this.selectedTorrents.add(t.infoHash),
+        );
       }
       this.renderTorrentList();
     });
@@ -293,26 +319,28 @@ export class TorrentClientApp extends BaseApp {
         {
           label: "Open Torrent Client",
           icon: "fas fa-external-link-alt",
-          action: () => os.tray.restoreFromTray(winId)
+          action: () => os.tray.restoreFromTray(winId),
         },
         {
           label: "Pause All",
           icon: "fas fa-pause",
-          action: () => this.pauseAllTorrents()
+          action: () => this.pauseAllTorrents(),
         },
         {
           label: "Resume All",
           icon: "fas fa-play",
-          action: () => this.resumeAllTorrents()
-        }
-      ]
+          action: () => this.resumeAllTorrents(),
+        },
+      ],
     });
     this.trayRegistered = true;
   }
 
   minimizeToTray() {
     const winId = "torrent-client-win";
-    const activeCount = Array.from(this.activeTorrents.values()).filter((t) => !t.done && !t.paused).length;
+    const activeCount = Array.from(this.activeTorrents.values()).filter(
+      (t) => !t.done && !t.paused,
+    ).length;
     const queueCount = this.downloadQueue.length;
     const label =
       activeCount > 0
@@ -325,7 +353,7 @@ export class TorrentClientApp extends BaseApp {
       "Running in tray - downloads continue in the background",
       "info",
       3000,
-      "fas fa-thumbtack"
+      "fas fa-thumbtack",
     );
   }
 
@@ -339,7 +367,9 @@ export class TorrentClientApp extends BaseApp {
   }
 
   toggleAllTorrents(pause, selected) {
-    const torrents = selected ? this.getSelectedTorrents() : this.activeTorrents;
+    const torrents = selected
+      ? this.getSelectedTorrents()
+      : this.activeTorrents;
     torrents.forEach((t) => {
       if (!t.done && (pause ? !t.paused : t.paused)) {
         pause ? t.pause() : t.resume();
@@ -390,7 +420,8 @@ export class TorrentClientApp extends BaseApp {
   }
 
   addToHistory(torrent) {
-    const ratio = torrent.downloaded > 0 ? torrent.uploaded / torrent.downloaded : 0;
+    const ratio =
+      torrent.downloaded > 0 ? torrent.uploaded / torrent.downloaded : 0;
     const historyItem = {
       name: torrent.name,
       infoHash: torrent.infoHash,
@@ -398,9 +429,13 @@ export class TorrentClientApp extends BaseApp {
       downloaded: torrent.downloaded,
       uploaded: torrent.uploaded,
       ratio: parseFloat(ratio.toFixed(3)),
-      completedAt: new Date().toISOString()
+      completedAt: new Date().toISOString(),
     };
-    this.seedRatios.set(torrent.infoHash, { uploaded: torrent.uploaded, downloaded: torrent.downloaded, ratio });
+    this.seedRatios.set(torrent.infoHash, {
+      uploaded: torrent.uploaded,
+      downloaded: torrent.downloaded,
+      ratio,
+    });
     this.torrentHistory.unshift(historyItem);
     if (this.torrentHistory.length > 100) {
       this.torrentHistory = this.torrentHistory.slice(0, 100);
@@ -411,8 +446,13 @@ export class TorrentClientApp extends BaseApp {
   updateSeedRatio(infoHash) {
     const torrent = this.activeTorrents.get(infoHash);
     if (!torrent) return;
-    const ratio = torrent.downloaded > 0 ? torrent.uploaded / torrent.downloaded : 0;
-    this.seedRatios.set(infoHash, { uploaded: torrent.uploaded, downloaded: torrent.downloaded, ratio });
+    const ratio =
+      torrent.downloaded > 0 ? torrent.uploaded / torrent.downloaded : 0;
+    this.seedRatios.set(infoHash, {
+      uploaded: torrent.uploaded,
+      downloaded: torrent.downloaded,
+      ratio,
+    });
   }
 
   getSeedRatio(infoHash) {
@@ -451,7 +491,10 @@ export class TorrentClientApp extends BaseApp {
       os.dialog.alert("No Selection", "Select torrents to remove.");
       return;
     }
-    const confirmed = os.dialog.confirm("Remove Torrents", `Remove ${this.selectedTorrents.size} torrent(s)?`);
+    const confirmed = os.dialog.confirm(
+      "Remove Torrents",
+      `Remove ${this.selectedTorrents.size} torrent(s)?`,
+    );
     confirmed.then((ok) => {
       if (ok) {
         this.selectedTorrents.forEach((infoHash) => {
@@ -463,13 +506,24 @@ export class TorrentClientApp extends BaseApp {
           }
         });
         this.selectedTorrents.clear();
-        if (this.selectedDetailsHash && !this.activeTorrents.has(this.selectedDetailsHash)) {
+        if (
+          this.selectedDetailsHash &&
+          !this.activeTorrents.has(this.selectedDetailsHash)
+        ) {
           this.selectedDetailsHash = null;
           const panel = $("#torrent-details-panel");
-          if (panel) panel.innerHTML = '<div class="torrent-details-empty">Select a torrent to see details</div>';
+          if (panel)
+            panel.innerHTML =
+              '<div class="torrent-details-empty">Select a torrent to see details</div>';
         }
         this.renderTorrentList();
-        this.notify("Torrent Client", "Removed selected torrents", "info", 3000, "fas fa-trash");
+        this.notify(
+          "Torrent Client",
+          "Removed selected torrents",
+          "info",
+          3000,
+          "fas fa-trash",
+        );
       }
     });
   }
@@ -481,7 +535,13 @@ export class TorrentClientApp extends BaseApp {
         this.client = new WebTorrent();
         this.client.on("error", (err) => {
           console.error("WebTorrent error:", err);
-          this.notify("Torrent Client", `Error: ${err.message}`, "error", 5000, "fas fa-exclamation-triangle");
+          this.notify(
+            "Torrent Client",
+            `Error: ${err.message}`,
+            "error",
+            5000,
+            "fas fa-exclamation-triangle",
+          );
         });
       } catch (err) {
         console.error("Failed to load WebTorrent:", err);
@@ -490,7 +550,7 @@ export class TorrentClientApp extends BaseApp {
           "Failed to load WebTorrent library",
           "error",
           5000,
-          "fas fa-exclamation-triangle"
+          "fas fa-exclamation-triangle",
         );
       }
     }
@@ -507,7 +567,7 @@ export class TorrentClientApp extends BaseApp {
 
     const CDN_URLS = [
       "https://cdn.jsdelivr.net/npm/webtorrent@0.108.6/webtorrent.debug.js",
-      "https://cdnjs.cloudflare.com/ajax/libs/webtorrent/0.108.6/webtorrent.debug.js"
+      "https://cdnjs.cloudflare.com/ajax/libs/webtorrent/0.108.6/webtorrent.debug.js",
     ];
 
     this.webTorrentLoadPromise = (async () => {
@@ -524,7 +584,8 @@ export class TorrentClientApp extends BaseApp {
                 reject(new Error("WebTorrent not available on window"));
               }
             };
-            script.onerror = (err) => reject(new Error(`Failed to load ${url}`));
+            script.onerror = (err) =>
+              reject(new Error(`Failed to load ${url}`));
             document.head.appendChild(script);
           });
           return window.WebTorrent;
@@ -546,12 +607,23 @@ export class TorrentClientApp extends BaseApp {
     }
     const existing = this.client.get(magnetUri);
     if (existing) {
-      this.notify("Torrent Client", "This torrent is already added", "info", 3000, "fas fa-info-circle");
+      this.notify(
+        "Torrent Client",
+        "This torrent is already added",
+        "info",
+        3000,
+        "fas fa-info-circle",
+      );
       return;
     }
-    os.dialog.confirm("Save to YukiOS?", "Save files to YukiOS when the download finishes?").then((saveToYukiOS) => {
-      this.startDownloadWithOptions({ magnetUri }, saveToYukiOS, null);
-    });
+    os.dialog
+      .confirm(
+        "Save to YukiOS?",
+        "Save files to YukiOS when the download finishes?",
+      )
+      .then((saveToYukiOS) => {
+        this.startDownloadWithOptions({ magnetUri }, saveToYukiOS, null);
+      });
   }
 
   enqueue(item) {
@@ -565,7 +637,7 @@ export class TorrentClientApp extends BaseApp {
         `Queued - ${this.downloadQueue.length} item(s) waiting (max ${this.maxConcurrentDownloads} active)`,
         "info",
         3000,
-        "fas fa-list-ol"
+        "fas fa-list-ol",
       );
       if (this.currentCategory === "queued") this.renderTorrentList();
     }
@@ -606,7 +678,13 @@ export class TorrentClientApp extends BaseApp {
       t.paused = false;
       this.activeTorrents.set(t.infoHash, t);
       this.renderTorrentList();
-      this.notify("Torrent Client", `Downloading: ${t.name}`, "success", 4000, "fas fa-download");
+      this.notify(
+        "Torrent Client",
+        `Downloading: ${t.name}`,
+        "success",
+        4000,
+        "fas fa-download",
+      );
     });
     this.attachTorrentEvents(torrent);
   }
@@ -616,7 +694,13 @@ export class TorrentClientApp extends BaseApp {
       t.paused = false;
       this.activeTorrents.set(t.infoHash, t);
       this.renderTorrentList();
-      this.notify("Torrent Client", `Downloading: ${t.name}`, "success", 4000, "fas fa-download");
+      this.notify(
+        "Torrent Client",
+        `Downloading: ${t.name}`,
+        "success",
+        4000,
+        "fas fa-download",
+      );
     });
     this.attachTorrentEvents(torrent);
   }
@@ -630,13 +714,25 @@ export class TorrentClientApp extends BaseApp {
 
     torrent.on("error", (err) => {
       console.error("Torrent error:", err);
-      this.notify("Torrent Client", `Torrent error: ${err.message}`, "error", 5000, "fas fa-exclamation-triangle");
+      this.notify(
+        "Torrent Client",
+        `Torrent error: ${err.message}`,
+        "error",
+        5000,
+        "fas fa-exclamation-triangle",
+      );
       this.dequeue();
     });
 
     torrent.on("done", () => {
       this.addToHistory(torrent);
-      this.notify("Torrent Client", `Download complete: ${torrent.name}`, "success", 5000, "fas fa-check-circle");
+      this.notify(
+        "Torrent Client",
+        `Download complete: ${torrent.name}`,
+        "success",
+        5000,
+        "fas fa-check-circle",
+      );
       this.renderTorrentList();
       this.dequeue();
       this.updateTrayLabel();
@@ -654,7 +750,9 @@ export class TorrentClientApp extends BaseApp {
 
   updateTrayLabel() {
     if (!this.trayRegistered) return;
-    const activeCount = Array.from(this.activeTorrents.values()).filter((t) => !t.done && !t.paused).length;
+    const activeCount = Array.from(this.activeTorrents.values()).filter(
+      (t) => !t.done && !t.paused,
+    ).length;
     const queueCount = this.downloadQueue.length;
     const label =
       activeCount > 0
@@ -682,11 +780,23 @@ export class TorrentClientApp extends BaseApp {
         this.showFileSelectionDialog(parsed);
       } catch (err) {
         console.error("Failed to parse torrent:", err);
-        this.notify("Torrent Client", "Failed to parse torrent file", "error", 5000, "fas fa-exclamation-triangle");
+        this.notify(
+          "Torrent Client",
+          "Failed to parse torrent file",
+          "error",
+          5000,
+          "fas fa-exclamation-triangle",
+        );
       }
     };
     reader.onerror = () => {
-      this.notify("Torrent Client", "Failed to read torrent file", "error", 5000, "fas fa-exclamation-triangle");
+      this.notify(
+        "Torrent Client",
+        "Failed to read torrent file",
+        "error",
+        5000,
+        "fas fa-exclamation-triangle",
+      );
     };
     reader.readAsArrayBuffer(file);
   }
@@ -751,20 +861,32 @@ export class TorrentClientApp extends BaseApp {
       e.stopPropagation();
       if (e.target === overlay) close();
     });
-    overlay.querySelector("#torrent-dlg-close").addEventListener("click", close);
-    overlay.querySelector("#torrent-dlg-cancel").addEventListener("click", close);
+    overlay
+      .querySelector("#torrent-dlg-close")
+      .addEventListener("click", close);
+    overlay
+      .querySelector("#torrent-dlg-cancel")
+      .addEventListener("click", close);
 
-    overlay.querySelector("#torrent-dlg-start").addEventListener("click", () => {
-      const saveToYukiOS = overlay.querySelector("#torrent-save-yukios-toggle").checked;
+    overlay
+      .querySelector("#torrent-dlg-start")
+      .addEventListener("click", () => {
+        const saveToYukiOS = overlay.querySelector(
+          "#torrent-save-yukios-toggle",
+        ).checked;
 
-      const selectedIndices = new Set();
-      overlay.querySelectorAll(".torrent-file-select-cb").forEach((cb) => {
-        if (cb.checked) selectedIndices.add(parseInt(cb.dataset.index, 10));
+        const selectedIndices = new Set();
+        overlay.querySelectorAll(".torrent-file-select-cb").forEach((cb) => {
+          if (cb.checked) selectedIndices.add(parseInt(cb.dataset.index, 10));
+        });
+
+        close();
+        this.startDownloadWithOptions(
+          { parsedTorrent },
+          saveToYukiOS,
+          selectedIndices.size > 0 ? selectedIndices : null,
+        );
       });
-
-      close();
-      this.startDownloadWithOptions({ parsedTorrent }, saveToYukiOS, selectedIndices.size > 0 ? selectedIndices : null);
-    });
   }
 
   startDownloadWithOptions(item, saveToYukiOS, selectedFileIndices) {
@@ -779,7 +901,7 @@ export class TorrentClientApp extends BaseApp {
         `Queued - ${this.downloadQueue.length} item(s) waiting`,
         "info",
         3000,
-        "fas fa-list-ol"
+        "fas fa-list-ol",
       );
       if (this.currentCategory === "queued") this.renderTorrentList();
     }
@@ -799,7 +921,13 @@ export class TorrentClientApp extends BaseApp {
       }
       this.activeTorrents.set(t.infoHash, t);
       this.renderTorrentList();
-      this.notify("Torrent Client", `Downloading: ${t.name}`, "success", 4000, "fas fa-download");
+      this.notify(
+        "Torrent Client",
+        `Downloading: ${t.name}`,
+        "success",
+        4000,
+        "fas fa-download",
+      );
     };
 
     let torrent;
@@ -845,7 +973,11 @@ export class TorrentClientApp extends BaseApp {
       const downloadSpeed = this.formatSpeed(torrent.downloadSpeed);
       const uploadSpeed = this.formatSpeed(torrent.uploadSpeed);
       const size = formatSize(torrent.length);
-      const status = torrent.done ? "Completed" : torrent.paused ? "Paused" : "Downloading";
+      const status = torrent.done
+        ? "Completed"
+        : torrent.paused
+          ? "Paused"
+          : "Downloading";
       const isSelected = this.selectedTorrents.has(infoHash);
       const ratio = this.getSeedRatio(infoHash).toFixed(2);
       const isActive = this.selectedDetailsHash === infoHash;
@@ -887,7 +1019,9 @@ export class TorrentClientApp extends BaseApp {
       bindEvent(row, "click", (e) => {
         if (e.target.classList.contains("torrent-checkbox")) return;
         this.selectedDetailsHash = row.dataset.infohash;
-        $$(".torrent-row", list).forEach((r) => r.classList.remove("torrent-row--active"));
+        $$(".torrent-row", list).forEach((r) =>
+          r.classList.remove("torrent-row--active"),
+        );
         row.classList.add("torrent-row--active");
         this.showTorrentDetails(row.dataset.infohash);
       });
@@ -950,7 +1084,8 @@ export class TorrentClientApp extends BaseApp {
     for (const item of this.torrentHistory) {
       const size = formatSize(item.size);
       const date = new Date(item.completedAt).toLocaleDateString();
-      const ratio = typeof item.ratio === "number" ? item.ratio.toFixed(2) : "0.00";
+      const ratio =
+        typeof item.ratio === "number" ? item.ratio.toFixed(2) : "0.00";
       html += `
         <div class="torrent-history-item">
           <span class="torrent-history-name" title="${item.name}">${item.name}</span>
@@ -971,7 +1106,8 @@ export class TorrentClientApp extends BaseApp {
     if (!panel) return;
 
     let contentDiv = panel.querySelector(".torrent-details-content");
-    const isSameTorrent = contentDiv && contentDiv.dataset.infohash === infoHash;
+    const isSameTorrent =
+      contentDiv && contentDiv.dataset.infohash === infoHash;
 
     if (!isSameTorrent) {
       panel.innerHTML = this.renderTorrentDetails(torrent);
@@ -990,8 +1126,16 @@ export class TorrentClientApp extends BaseApp {
     const downloaded = formatSize(torrent.downloaded);
     const uploaded = formatSize(torrent.uploaded);
     const peers = torrent.numPeers;
-    const status = torrent.done ? "completed" : torrent.paused ? "paused" : "downloading";
-    const statusLabel = torrent.done ? "Completed" : torrent.paused ? "Paused" : "Downloading";
+    const status = torrent.done
+      ? "completed"
+      : torrent.paused
+        ? "paused"
+        : "downloading";
+    const statusLabel = torrent.done
+      ? "Completed"
+      : torrent.paused
+        ? "Paused"
+        : "Downloading";
     const ratio = this.getSeedRatio(infoHash).toFixed(3);
 
     let filesHtml = "";
@@ -1097,7 +1241,8 @@ export class TorrentClientApp extends BaseApp {
         } else if (action === "delete") {
           this.removeTorrent(hash);
           this.selectedDetailsHash = null;
-          container.innerHTML = '<div class="torrent-details-empty">Select a torrent to see details</div>';
+          container.innerHTML =
+            '<div class="torrent-details-empty">Select a torrent to see details</div>';
         }
       });
     });
@@ -1133,8 +1278,11 @@ export class TorrentClientApp extends BaseApp {
         const fileProgress = Math.round(file.progress * 100);
         const fills = panel.querySelectorAll(".torrent-file-progress-fill");
         if (fills[i]) fills[i].style.width = `${fileProgress}%`;
-        const texts = panel.querySelectorAll(".torrent-file-progress .torrent-progress-text");
-        if (texts[i] && texts[i].textContent !== `${fileProgress}%`) texts[i].textContent = `${fileProgress}%`;
+        const texts = panel.querySelectorAll(
+          ".torrent-file-progress .torrent-progress-text",
+        );
+        if (texts[i] && texts[i].textContent !== `${fileProgress}%`)
+          texts[i].textContent = `${fileProgress}%`;
       });
     }
   }
@@ -1152,7 +1300,8 @@ export class TorrentClientApp extends BaseApp {
       const upEl = row.querySelector(".torrent-up");
 
       if (fill) fill.style.width = `${progress}%`;
-      if (text && text.textContent !== `${progress}%`) text.textContent = `${progress}%`;
+      if (text && text.textContent !== `${progress}%`)
+        text.textContent = `${progress}%`;
       if (downEl) downEl.textContent = this.formatSpeed(torrent.downloadSpeed);
       if (upEl) upEl.textContent = this.formatSpeed(torrent.uploadSpeed);
     }
@@ -1196,7 +1345,13 @@ export class TorrentClientApp extends BaseApp {
       torrent.destroy(() => {
         this.activeTorrents.delete(infoHash);
         this.renderTorrentList();
-        this.notify("Torrent Client", "Torrent removed", "info", 3000, "fas fa-trash");
+        this.notify(
+          "Torrent Client",
+          "Torrent removed",
+          "info",
+          3000,
+          "fas fa-trash",
+        );
       });
     }
   }
@@ -1206,7 +1361,9 @@ export class TorrentClientApp extends BaseApp {
     const units = ["B/s", "KB/s", "MB/s", "GB/s"];
     const k = 1024;
     const i = Math.floor(Math.log(bytesPerSecond) / Math.log(k));
-    return parseFloat((bytesPerSecond / Math.pow(k, i)).toFixed(1)) + " " + units[i];
+    return (
+      parseFloat((bytesPerSecond / Math.pow(k, i)).toFixed(1)) + " " + units[i]
+    );
   }
 
   sanitizeFileName(name) {
@@ -1219,7 +1376,10 @@ export class TorrentClientApp extends BaseApp {
 
   async saveToComputer(torrent) {
     if (!torrent.done) {
-      os.dialog.alert("Not Ready", "Wait for the download to finish before saving.");
+      os.dialog.alert(
+        "Not Ready",
+        "Wait for the download to finish before saving.",
+      );
       return;
     }
     const files = torrent.files;
@@ -1236,7 +1396,7 @@ export class TorrentClientApp extends BaseApp {
         `Saved ${files.length} file(s) to your computer`,
         "success",
         4000,
-        "fas fa-check-circle"
+        "fas fa-check-circle",
       );
     }
   }
@@ -1256,7 +1416,10 @@ export class TorrentClientApp extends BaseApp {
 
   async saveToYukiOS(torrent) {
     if (!torrent.done) {
-      os.dialog.alert("Not Ready", "Wait for the download to finish before saving.");
+      os.dialog.alert(
+        "Not Ready",
+        "Wait for the download to finish before saving.",
+      );
       return;
     }
     const explorerApp = this.os.app.getInstance(ServiceKeys.EXPLORER);
@@ -1288,7 +1451,7 @@ export class TorrentClientApp extends BaseApp {
         `Saved ${savedCount} file(s) to ${savePath.join("/")}`,
         "success",
         4000,
-        "fas fa-check-circle"
+        "fas fa-check-circle",
       );
     } catch (err) {
       console.error("Error saving to YukiOS:", err);

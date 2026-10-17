@@ -2,7 +2,11 @@ import "../styles/camera.css";
 import { openMediaViewer } from "../fileDisplay.js";
 import { FileKind, isImageFile } from "../shared/fileKindDetector.js";
 import { formatSize } from "../utils/utils.js";
-import { renderSelectMenu, bindSelectMenu, getSelectMenuValue } from "../shared/selectMenu.js";
+import {
+  renderSelectMenu,
+  bindSelectMenu,
+  getSelectMenuValue,
+} from "../shared/selectMenu.js";
 import { BaseApp, os } from "../framework.js";
 import { $, $$, setStyle, createElement } from "../framework.js";
 
@@ -26,7 +30,7 @@ export class CameraApp extends BaseApp {
       bulkSelectMode: false,
       selectedItems: [],
       currentPage: 1,
-      itemsPerPage: 12
+      itemsPerPage: 12,
     };
   }
 
@@ -36,7 +40,7 @@ export class CameraApp extends BaseApp {
     const win = os.window.create(winId, "Camera", "800px", "600px", {
       icon: "static/icons/obs.webp",
       appId: "camera",
-      style: { minWidth: "400px", minHeight: "400px" }
+      style: { minWidth: "400px", minHeight: "400px" },
     });
 
     this.win = win;
@@ -115,7 +119,8 @@ export class CameraApp extends BaseApp {
         this.state.currentMode = btn.dataset.mode;
         const indicator = $("#mode-indicator", win);
         if (indicator) {
-          indicator.textContent = $("span", btn)?.textContent || this.state.currentMode;
+          indicator.textContent =
+            $("span", btn)?.textContent || this.state.currentMode;
         }
         this.updateShutterButton(this.state, win);
       });
@@ -151,9 +156,15 @@ export class CameraApp extends BaseApp {
   }
 
   openHistoryWindow(state) {
-    const historyWin = os.window.create("history-win", "Recordings History", "45vw", "70vh", {
-      icon: "static/icons/obs.webp"
-    });
+    const historyWin = os.window.create(
+      "history-win",
+      "Recordings History",
+      "45vw",
+      "70vh",
+      {
+        icon: "static/icons/obs.webp",
+      },
+    );
 
     historyWin.innerHTML = `
       <div class="window-content">
@@ -165,19 +176,19 @@ export class CameraApp extends BaseApp {
                 { value: "all", label: "All" },
                 { value: "photo", label: "Photos" },
                 { value: "video", label: "Videos" },
-                { value: "screen", label: "Screen" }
+                { value: "screen", label: "Screen" },
               ],
               state.historyFilter || "all",
-              "history-filter-select"
+              "history-filter-select",
             )}
             ${renderSelectMenu(
               "history-sort",
               [
                 { value: "newest", label: "Newest First" },
-                { value: "oldest", label: "Oldest First" }
+                { value: "oldest", label: "Oldest First" },
               ],
               state.historySort || "newest",
-              "history-sort-select"
+              "history-sort-select",
             )}
             <span id="history-count" class="history-count"></span>
           </div>
@@ -219,15 +230,22 @@ export class CameraApp extends BaseApp {
 
     bulkSelectBtn.onclick = () => {
       state.bulkSelectMode = !state.bulkSelectMode;
-      bulkSelectBtn.textContent = state.bulkSelectMode ? "Cancel Select" : "Bulk Select";
-      setStyle(deleteSelectedBtn, { display: state.bulkSelectMode ? "block" : "none" });
+      bulkSelectBtn.textContent = state.bulkSelectMode
+        ? "Cancel Select"
+        : "Bulk Select";
+      setStyle(deleteSelectedBtn, {
+        display: state.bulkSelectMode ? "block" : "none",
+      });
       state.selectedItems = [];
       this.renderHistory(state, historyWin);
     };
 
     deleteSelectedBtn.onclick = async () => {
       if (state.selectedItems.length === 0) return;
-      const confirmed = await os.dialog.confirm("Confirm", `Delete ${state.selectedItems.length} selected items?`);
+      const confirmed = await os.dialog.confirm(
+        "Confirm",
+        `Delete ${state.selectedItems.length} selected items?`,
+      );
       if (!confirmed) return;
       for (const id of state.selectedItems) {
         await this.deleteRecording(id, state);
@@ -244,7 +262,9 @@ export class CameraApp extends BaseApp {
     };
 
     nextPageBtn.onclick = () => {
-      const totalPages = Math.ceil(state.recordings.length / state.itemsPerPage);
+      const totalPages = Math.ceil(
+        state.recordings.length / state.itemsPerPage,
+      );
       if (state.currentPage < totalPages) {
         state.currentPage++;
         this.renderHistory(state, historyWin);
@@ -260,7 +280,10 @@ export class CameraApp extends BaseApp {
     inner.className = "shutter-inner";
     if (state.currentMode === "photo") {
       inner.classList.add("photo");
-    } else if (state.currentMode === "video" || state.currentMode === "screen") {
+    } else if (
+      state.currentMode === "video" ||
+      state.currentMode === "screen"
+    ) {
       if (state.isRecording) {
         inner.classList.add("stop");
       } else {
@@ -292,10 +315,16 @@ export class CameraApp extends BaseApp {
 
   async startCamera() {
     try {
-      this.stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+      this.stream = await navigator.mediaDevices.getUserMedia({
+        video: true,
+        audio: true,
+      });
       this.video.srcObject = this.stream;
     } catch (err) {
-      os.notify.send("No camera permission", "Camera access denied or not available.");
+      os.notify.send(
+        "No camera permission",
+        "Camera access denied or not available.",
+      );
       console.error(err);
     }
   }
@@ -306,10 +335,18 @@ export class CameraApp extends BaseApp {
     canvas.height = this.video.videoHeight;
     canvas.getContext("2d").drawImage(this.video, 0, 0);
 
-    const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
+    const blob = await new Promise((resolve) =>
+      canvas.toBlob(resolve, "image/png"),
+    );
 
     const fileName = `photo-${Date.now()}.png`;
-    await os.fs.writeBinaryFile(["Pictures", "Camera"], fileName, blob, "image", "@content");
+    await os.fs.writeBinaryFile(
+      ["Pictures", "Camera"],
+      fileName,
+      blob,
+      "image",
+      "@content",
+    );
 
     const dataUrl = canvas.toDataURL("image/png");
     this.downloadLink.href = dataUrl;
@@ -317,7 +354,13 @@ export class CameraApp extends BaseApp {
     this.downloadLink.textContent = "Download Photo";
     setStyle(this.downloadLink, { display: "flex" });
 
-    await this.addRecording(dataUrl, blob, fileName, fileName.replace(".png", ""), state);
+    await this.addRecording(
+      dataUrl,
+      blob,
+      fileName,
+      fileName.replace(".png", ""),
+      state,
+    );
 
     const flash = createElement("div");
     flash.className = "cam-viewfinder-flash";
@@ -341,12 +384,24 @@ export class CameraApp extends BaseApp {
 
       const fileName = `video-${Date.now()}.webm`;
       try {
-        await os.fs.writeBinaryFile(["Videos", "Camera"], fileName, blob, "video", "fas fa-camera");
+        await os.fs.writeBinaryFile(
+          ["Videos", "Camera"],
+          fileName,
+          blob,
+          "video",
+          "fas fa-camera",
+        );
       } catch (e) {
         console.error("Failed to save video:", e);
       }
 
-      await this.addRecording(url, blob, fileName, fileName.replace(".webm", ""), state);
+      await this.addRecording(
+        url,
+        blob,
+        fileName,
+        fileName.replace(".webm", ""),
+        state,
+      );
 
       state.isRecording = false;
       this.stopTimer();
@@ -373,7 +428,10 @@ export class CameraApp extends BaseApp {
 
   async startScreenRecording(state, cameraApp) {
     try {
-      const screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
+      const screenStream = await navigator.mediaDevices.getDisplayMedia({
+        video: true,
+        audio: true,
+      });
       this.activeStream = screenStream;
       this.video.srcObject = screenStream;
 
@@ -390,12 +448,24 @@ export class CameraApp extends BaseApp {
 
         const fileName = `screen-${Date.now()}.webm`;
         try {
-          await os.fs.writeBinaryFile(["Videos", "Camera"], fileName, blob, "video", "fas fa-camera");
+          await os.fs.writeBinaryFile(
+            ["Videos", "Camera"],
+            fileName,
+            blob,
+            "video",
+            "fas fa-camera",
+          );
         } catch (e) {
           console.error("Failed to save screen recording:", e);
         }
 
-        await this.addRecording(url, blob, fileName, fileName.replace(".webm", ""), state);
+        await this.addRecording(
+          url,
+          blob,
+          fileName,
+          fileName.replace(".webm", ""),
+          state,
+        );
 
         state.isRecording = false;
         this.downloadLink.href = url;
@@ -423,7 +493,10 @@ export class CameraApp extends BaseApp {
       this.startTimer();
     } catch (e) {
       console.error(e);
-      os.notify.send("No camera permission", "Screen capture cancelled or not allowed");
+      os.notify.send(
+        "No camera permission",
+        "Screen capture cancelled or not allowed",
+      );
     }
   }
 
@@ -449,7 +522,13 @@ export class CameraApp extends BaseApp {
     }
     if (!savedName) {
       const fileName = `recording-${Date.now()}.webm`;
-      await os.fs.writeBinaryFile(["Videos", "Camera"], fileName, blob, "video", "fas fa-camera");
+      await os.fs.writeBinaryFile(
+        ["Videos", "Camera"],
+        fileName,
+        blob,
+        "video",
+        "fas fa-camera",
+      );
       savedName = fileName;
     }
 
@@ -457,7 +536,7 @@ export class CameraApp extends BaseApp {
       id: savedName,
       name: displayName,
       url,
-      blob
+      blob,
     });
 
     this.renderHistory(state);
@@ -481,8 +560,11 @@ export class CameraApp extends BaseApp {
 
     list.innerHTML = "";
 
-    const filterVal = getSelectMenuValue("history-type-filter", historyWin || document) || "all";
-    const sortVal = getSelectMenuValue("history-sort", historyWin || document) || "newest";
+    const filterVal =
+      getSelectMenuValue("history-type-filter", historyWin || document) ||
+      "all";
+    const sortVal =
+      getSelectMenuValue("history-sort", historyWin || document) || "newest";
 
     let filtered = state.recordings.filter((rec) => {
       const type = this.getRecordingType(rec);
@@ -509,7 +591,8 @@ export class CameraApp extends BaseApp {
 
     if (prevPageBtn) prevPageBtn.disabled = state.currentPage <= 1;
     if (nextPageBtn) nextPageBtn.disabled = state.currentPage >= totalPages;
-    if (pageInfo) pageInfo.textContent = `Page ${state.currentPage} of ${totalPages || 1}`;
+    if (pageInfo)
+      pageInfo.textContent = `Page ${state.currentPage} of ${totalPages || 1}`;
   }
 
   getRecordingType(rec) {
@@ -545,7 +628,8 @@ export class CameraApp extends BaseApp {
       checkbox.onchange = () => {
         const idx = state.selectedItems.indexOf(rec.id);
         if (checkbox.checked && idx === -1) state.selectedItems.push(rec.id);
-        else if (!checkbox.checked && idx > -1) state.selectedItems.splice(idx, 1);
+        else if (!checkbox.checked && idx > -1)
+          state.selectedItems.splice(idx, 1);
       };
       thumbnail.appendChild(checkbox);
     }
@@ -639,7 +723,9 @@ export class CameraApp extends BaseApp {
     try {
       const response = await fetch(url);
       const blob = await response.blob();
-      await navigator.clipboard.write([new ClipboardItem({ [blob.type]: blob })]);
+      await navigator.clipboard.write([
+        new ClipboardItem({ [blob.type]: blob }),
+      ]);
     } catch (e) {
       console.error("Failed to copy to clipboard:", e);
       os.notify.send("Clipboard failure", "Failed to copy to clipboard");
@@ -678,9 +764,17 @@ export class CameraApp extends BaseApp {
           const ext = isImageFile(rec.id) ? ".png" : ".webm";
           const newFileName = `${newName}${ext}`;
           try {
-            await os.fs.renameBinaryFile(["Pictures", "Camera"], rec.id, newFileName);
+            await os.fs.renameBinaryFile(
+              ["Pictures", "Camera"],
+              rec.id,
+              newFileName,
+            );
           } catch {
-            await os.fs.renameBinaryFile(["Videos", "Camera"], rec.id, newFileName);
+            await os.fs.renameBinaryFile(
+              ["Videos", "Camera"],
+              rec.id,
+              newFileName,
+            );
           }
           rec.id = newFileName;
           rec.name = newName;
@@ -710,7 +804,10 @@ export class CameraApp extends BaseApp {
     const index = state.recordings.findIndex((r) => r.id === id);
     if (index === -1) return;
 
-    const confirmed = await os.dialog.confirm("Delete Recording", `Delete "${id}" for good?`);
+    const confirmed = await os.dialog.confirm(
+      "Delete Recording",
+      `Delete "${id}" for good?`,
+    );
     if (!confirmed) return;
 
     URL.revokeObjectURL(state.recordings[index].url);
@@ -726,9 +823,15 @@ export class CameraApp extends BaseApp {
   }
 
   playRecording(url) {
-    const playerWin = os.window.create(`camera-playback-${Date.now()}`, "Playback", "50vw", "70vh", {
-      icon: "static/icons/obs.webp"
-    });
+    const playerWin = os.window.create(
+      `camera-playback-${Date.now()}`,
+      "Playback",
+      "50vw",
+      "70vh",
+      {
+        icon: "static/icons/obs.webp",
+      },
+    );
 
     playerWin.innerHTML = `
       <div class="window-content">
@@ -747,20 +850,32 @@ export class CameraApp extends BaseApp {
   }
 
   async restoreHistory(state) {
-    const cameraFolder = await os.fs.readdir(["Pictures", "Camera"]).catch(() => ({}));
-    const videosFolder = await os.fs.readdir(["Videos", "Camera"]).catch(() => ({}));
+    const cameraFolder = await os.fs
+      .readdir(["Pictures", "Camera"])
+      .catch(() => ({}));
+    const videosFolder = await os.fs
+      .readdir(["Videos", "Camera"])
+      .catch(() => ({}));
 
-    const cameraEntries = Object.keys(cameraFolder).filter((k) => cameraFolder[k].type === "file");
-    const videoEntries = Object.keys(videosFolder).filter((k) => videosFolder[k].type === "file");
+    const cameraEntries = Object.keys(cameraFolder).filter(
+      (k) => cameraFolder[k].type === "file",
+    );
+    const videoEntries = Object.keys(videosFolder).filter(
+      (k) => videosFolder[k].type === "file",
+    );
     const allEntries = [...cameraEntries, ...videoEntries];
 
     const existingIds = new Set(state.recordings.map((r) => r.id));
     for (const name of allEntries) {
       if (existingIds.has(name)) continue;
 
-      let blob = await os.fs.readBinaryFile(["Pictures", "Camera"], name).catch(() => null);
+      let blob = await os.fs
+        .readBinaryFile(["Pictures", "Camera"], name)
+        .catch(() => null);
       if (!blob) {
-        blob = await os.fs.readBinaryFile(["Videos", "Camera"], name).catch(() => null);
+        blob = await os.fs
+          .readBinaryFile(["Videos", "Camera"], name)
+          .catch(() => null);
       }
 
       if (!blob) continue;
@@ -768,7 +883,7 @@ export class CameraApp extends BaseApp {
         id: name,
         name: name.replace(/\.(png|webm|jpg|jpeg)$/, ""),
         url: URL.createObjectURL(blob),
-        blob
+        blob,
       });
     }
 

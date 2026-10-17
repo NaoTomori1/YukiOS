@@ -7,159 +7,164 @@ import { parseBool } from "../utils/utils.js";
 import { StorageKeys, os, createElement } from "../framework.js";
 import { showContextMenu } from "../shared/contextMenu.js";
 import { startSteamTour } from "../apps/steamIntro.js";
-import { SteamSettings, openSteamSettingsWindow, buildSettingsPageHTML, getGridMin } from "./steamSettings.js";
+import {
+  SteamSettings,
+  openSteamSettingsWindow,
+  buildSettingsPageHTML,
+  getGridMin,
+} from "./steamSettings.js";
 
 export const STORE_GAMES = [
   {
     app: "tabs",
     icon: resolveIconUrl("static/icons/tabs.webp"),
     title: "TABS: Totaly Accurate Battle Simulator",
-    tags: ["Strategy", "Simulation", "War"]
+    tags: ["Strategy", "Simulation", "War"],
   },
   {
     app: "catGoesFishing",
     icon: resolveIconUrl("static/icons/cat.webp"),
     title: "Cat Goes Fishing",
-    tags: ["Fishing", "Simulation", "Relaxing", "Casual"]
+    tags: ["Fishing", "Simulation", "Relaxing", "Casual"],
   },
   {
     app: "angryBirds2",
     icon: resolveIconUrl("static/icons/angryBirds2.webp"),
     title: "Angry Birds 2",
-    tags: ["Slingshot", "Physics", "Puzzle"]
+    tags: ["Slingshot", "Physics", "Puzzle"],
   },
   {
     app: "slimeRancher",
     icon: resolveIconUrl("static/icons/slime.webp"),
     title: "Slime Rancher",
-    tags: ["Farming Sim", "Exploration", "First-Person"]
+    tags: ["Farming Sim", "Exploration", "First-Person"],
   },
   {
     app: "lobotomyCorporation",
     icon: resolveIconUrl("static/icons/lobotomy.webp"),
     title: "Lobotomy Corporation,",
-    tags: ["Strategy", "Simulation"]
+    tags: ["Strategy", "Simulation"],
   },
   {
     app: "plagueIncEvolved",
     icon: resolveIconUrl("static/icons/plague.webp"),
     title: "Plague Inc Evolved",
-    tags: ["Strategy", "Simulation"]
+    tags: ["Strategy", "Simulation"],
   },
   {
     app: "pttr",
     icon: resolveIconUrl("static/icons/pttr.webp"),
     title: "Paint the Town Red",
-    tags: ["Action", "Fighting", "Voxel"]
+    tags: ["Action", "Fighting", "Voxel"],
   },
   {
     app: "fiveNightsAtFrickbears3",
     icon: resolveIconUrl("static/icons/fiveNightsAtFrickbears.webp"),
     title: "Five Nights At Frickbears 3",
-    tags: ["Horror", "Survival"]
+    tags: ["Horror", "Survival"],
   },
   {
     app: "helltaker",
     icon: resolveIconUrl("static/icons/helltaker.jpg"),
     title: "Helltaker",
-    tags: ["Puzzle", "Anime"]
+    tags: ["Puzzle", "Anime"],
   },
   {
     app: "inscryption",
     icon: resolveIconUrl("static/icons/inscryption.webp"),
     title: "Inscryption",
-    tags: ["Card Game", "Roguelike"]
+    tags: ["Card Game", "Roguelike"],
   },
   {
     app: "nightInTheWoods",
     icon: resolveIconUrl("static/icons/night.webp"),
     title: "Night In The Woods",
-    tags: ["Adventure", "Narrative"]
+    tags: ["Adventure", "Narrative"],
   },
   {
     app: "daddy",
     icon: resolveIconUrl("static/icons/daddy.webp"),
     title: "Who's Your Daddy",
-    tags: ["Casual", "Multiplayer"]
+    tags: ["Casual", "Multiplayer"],
   },
   {
     app: "suicideGuy",
     icon: resolveIconUrl("static/icons/suicideguy.webp"),
     title: "Suicide Guy",
-    tags: ["Puzzle", "Platformer"]
+    tags: ["Puzzle", "Platformer"],
   },
   {
     app: "ytlifeomg",
     icon: resolveIconUrl("static/icons/yt.webp"),
     title: "Youtubers Life Omg",
-    tags: ["Simulation", "Management"]
+    tags: ["Simulation", "Management"],
   },
   {
     app: "inStarsAndTime",
     icon: resolveIconUrl("static/icons/star.webp"),
     title: "In Stars And Time",
-    tags: ["RPG", "Story"]
+    tags: ["RPG", "Story"],
   },
   {
     app: "slenderina",
     icon: resolveIconUrl("static/icons/slenderina.webp"),
     title: "Slenderina The Cellar",
-    tags: ["Horror", "Action"]
+    tags: ["Horror", "Action"],
   },
   {
     app: "wheresBaldi",
     icon: resolveIconUrl("static/icons/wheresBaldi.webp"),
     title: "Where's Baldi",
-    tags: ["Horror", "Action"]
+    tags: ["Horror", "Action"],
   },
   {
     app: "baldiBalds",
     icon: resolveIconUrl("static/icons/baldiBalds.webp"),
     title: "Baldi Balds The Universe",
-    tags: ["Horror", "Action"]
+    tags: ["Horror", "Action"],
   },
   {
     app: "baldisBasicsTeachingOnTwos",
     icon: resolveIconUrl("static/icons/baldisBasicsTeachingOnTwos.webp"),
     title: "Baldi's Basics: Teaching On Twos",
-    tags: ["Horror", "Education"]
+    tags: ["Horror", "Education"],
   },
   {
     app: "playtimeHellBear5van",
     icon: resolveIconUrl("static/icons/playtimeHellBear5van.webp"),
     title: "Playtime Hell & Bear 5 Van",
-    tags: ["Horror", "Action"]
+    tags: ["Horror", "Action"],
   },
   {
     app: "antidisestablishmentarianism",
     icon: resolveIconUrl("static/icons/antiDisestablishism.webp"),
     title: "Antidisestablishmentarianism",
-    tags: ["Puzzle", "Indie", "Education"]
+    tags: ["Puzzle", "Indie", "Education"],
   },
   {
     app: "minusThree",
     icon: resolveIconUrl("static/icons/minusThree.webp"),
     title: "Minus Three",
-    tags: ["Puzzle", "Indie", "Education"]
+    tags: ["Puzzle", "Indie", "Education"],
   },
   {
     app: "three",
     icon: resolveIconUrl("static/icons/three.webp"),
     title: "Three",
-    tags: ["Puzzle", "Indie", "Education"]
+    tags: ["Puzzle", "Indie", "Education"],
   },
   {
     app: "theMathIsLeaking",
     icon: resolveIconUrl("static/icons/theMathIsLeaking.webp"),
     title: "The Math Is Leaking",
-    tags: ["Puzzle", "Education"]
+    tags: ["Puzzle", "Education"],
   },
   {
     app: "pneumonoultramicroscopicsilicovolcanoconiosis",
     icon: resolveIconUrl("static/icons/pneumo.webp"),
     title: "Pneumonoultramicroscopicsilicovolcanoconiosis",
-    tags: ["Puzzle", "Educational", "Word", "Indie"]
-  }
+    tags: ["Puzzle", "Educational", "Word", "Indie"],
+  },
 ];
 
 export function getCdnBase() {
@@ -170,7 +175,13 @@ export function getCdnBaseGames() {
   return CDN_CONFIG.repos.games.base;
 }
 
-export function buildSteamShell(container, username, profilePic, hiddenGamesCount, CDN_BASE_REF) {
+export function buildSteamShell(
+  container,
+  username,
+  profilePic,
+  hiddenGamesCount,
+  CDN_BASE_REF,
+) {
   const settings = SteamSettings.load();
   const showAnimation = settings.enableStartupAnimation !== false;
   const gridMin = getGridMin(settings.gridSize);
@@ -354,14 +365,49 @@ export function initDropdowns(container, navigateTo, openFriendsWindow, wm) {
     userProfile.addEventListener("click", (e) => {
       e.stopPropagation();
       const items = [
-        { id: "up-my-profile", action: "up-my-profile", label: "My Profile", icon: "fa-user" },
-        { id: "up-quests", action: "up-quests", label: "Daily Quests", icon: "fa-clipboard-list" },
-        { id: "up-shop", action: "up-shop", label: "Profile Store", icon: "fa-store" },
+        {
+          id: "up-my-profile",
+          action: "up-my-profile",
+          label: "My Profile",
+          icon: "fa-user",
+        },
+        {
+          id: "up-quests",
+          action: "up-quests",
+          label: "Daily Quests",
+          icon: "fa-clipboard-list",
+        },
+        {
+          id: "up-shop",
+          action: "up-shop",
+          label: "Profile Store",
+          icon: "fa-store",
+        },
         "hr",
-        { id: "up-friends", action: "up-friends", label: "Friends & Chat", icon: "fa-user-group" },
-        { id: "up-settings", action: "up-settings", label: "Settings", icon: "fa-gear" },
-        { id: "up-account", action: "up-account", label: "Account", icon: "fa-user-lock" },
-        { id: "up-social-tour", action: "up-social-tour", label: "Yuki Steam Tour", icon: "fa-question-circle" }
+        {
+          id: "up-friends",
+          action: "up-friends",
+          label: "Friends & Chat",
+          icon: "fa-user-group",
+        },
+        {
+          id: "up-settings",
+          action: "up-settings",
+          label: "Settings",
+          icon: "fa-gear",
+        },
+        {
+          id: "up-account",
+          action: "up-account",
+          label: "Account",
+          icon: "fa-user-lock",
+        },
+        {
+          id: "up-social-tour",
+          action: "up-social-tour",
+          label: "Yuki Steam Tour",
+          icon: "fa-question-circle",
+        },
       ];
       const handlers = {
         "up-my-profile": () => navigateTo("user"),
@@ -370,7 +416,7 @@ export function initDropdowns(container, navigateTo, openFriendsWindow, wm) {
         "up-friends": () => openFriendsWindow(wm),
         "up-settings": () => navigateTo("settings"),
         "up-account": () => navigateTo("login"),
-        "up-social-tour": () => startSteamTour()
+        "up-social-tour": () => startSteamTour(),
       };
       showContextMenu(e, items, handlers);
     });
@@ -426,7 +472,9 @@ export function initDropdowns(container, navigateTo, openFriendsWindow, wm) {
         steamAudio.playBack();
         const winRoot = container.closest(".window");
         if (winRoot) {
-          const closeBtn = winRoot.querySelector(".window-close-btn, .close-btn, [data-action='close']");
+          const closeBtn = winRoot.querySelector(
+            ".window-close-btn, .close-btn, [data-action='close']",
+          );
           if (closeBtn) closeBtn.click();
           else winRoot.remove();
         }
@@ -472,23 +520,31 @@ export function initDropdowns(container, navigateTo, openFriendsWindow, wm) {
     });
   });
 
-  container.querySelectorAll(".steam-downloads-btn, .steam-friends-btn, .steam-notifications").forEach((btn) => {
-    btn.addEventListener("mouseenter", () => steamAudio.playHover());
-    btn.addEventListener("click", () => steamAudio.playSelect());
-  });
+  container
+    .querySelectorAll(
+      ".steam-downloads-btn, .steam-friends-btn, .steam-notifications",
+    )
+    .forEach((btn) => {
+      btn.addEventListener("mouseenter", () => steamAudio.playHover());
+      btn.addEventListener("click", () => steamAudio.playSelect());
+    });
 
   document.addEventListener("click", closeAll);
 
   const disclaimer = container.querySelector(".steam-disclaimer");
   const disclaimerClose = container.querySelector(".steam-disclaimer-close");
 
-  const disclaimerAcknowledged = os.storage.get(StorageKeys.steamDisclaimerAcknowledged);
+  const disclaimerAcknowledged = os.storage.get(
+    StorageKeys.steamDisclaimerAcknowledged,
+  );
   if (disclaimerAcknowledged && disclaimer) {
     disclaimer.classList.add("hidden");
   }
 
   if (disclaimerClose && disclaimer) {
-    disclaimerClose.addEventListener("mouseenter", () => steamAudio.playHover());
+    disclaimerClose.addEventListener("mouseenter", () =>
+      steamAudio.playHover(),
+    );
     disclaimerClose.addEventListener("click", () => {
       steamAudio.playSelect();
       disclaimer.classList.add("hidden");
@@ -497,50 +553,56 @@ export function initDropdowns(container, navigateTo, openFriendsWindow, wm) {
   }
 }
 
-export function initStorePage(container, onLaunch, navigateTo, CDN_BASE_REF, imgObserver) {
+export function initStorePage(
+  container,
+  onLaunch,
+  navigateTo,
+  CDN_BASE_REF,
+  imgObserver,
+) {
   const heroImgs = [
     {
       app: "tabs",
       img: resolveIconUrl("static/icons/tabs.webp"),
       title: "TABS: Totaly Accurate Battle Simulator",
       tags: ["Strategy", "Simulation", "War"],
-      desc: "A physics based tactics game where wobbly historical and mythological armies clash in chaotic, ragdoll powered battles."
+      desc: "A physics based tactics game where wobbly historical and mythological armies clash in chaotic, ragdoll powered battles.",
     },
     {
       app: "plagueIncEvolved",
       img: resolveIconUrl("static/icons/plague.webp"),
       title: "Plague Inc: Evolved",
       tags: ["Strategy", "Simulation"],
-      desc: "A unique mix of high strategy and terrifyingly realistic simulation. Can you infect the world?"
+      desc: "A unique mix of high strategy and terrifyingly realistic simulation. Can you infect the world?",
     },
     {
       app: "pttr",
       img: resolveIconUrl("static/icons/pttr.webp"),
       title: "Paint the Town Red",
       tags: ["Action", "Fighting", "Voxel"],
-      desc: "A chaotic voxel brawler where you fight through hordes of enemies with fists, weapons and utter destruction."
+      desc: "A chaotic voxel brawler where you fight through hordes of enemies with fists, weapons and utter destruction.",
     },
     {
       app: "inscryption",
       img: resolveIconUrl("static/icons/inscryption.webp"),
       title: "Inscryption",
       tags: ["Card Game", "Roguelike", "Dark"],
-      desc: "A deck-building roguelike where you're trapped playing a sinister card game with a mysterious figure."
+      desc: "A deck-building roguelike where you're trapped playing a sinister card game with a mysterious figure.",
     },
     {
       app: "helltaker",
       img: resolveIconUrl("static/icons/helltaker.jpg"),
       title: "Helltaker",
       tags: ["Puzzle", "Anime", "Free"],
-      desc: "A free game about making a harem of demon girls. Fight your way through hell one puzzle at a time."
+      desc: "A free game about making a harem of demon girls. Fight your way through hell one puzzle at a time.",
     },
     {
       app: "nightInTheWoods",
       img: resolveIconUrl("static/icons/night.webp"),
       title: "Night In The Woods",
       tags: ["Adventure", "Narrative", "Indie"],
-      desc: "An adventure game focused on exploration, story and character, featuring a 20-something college dropout."
-    }
+      desc: "An adventure game focused on exploration, story and character, featuring a 20-something college dropout.",
+    },
   ];
 
   const storePage = container.querySelector(".steam-store-page");
@@ -564,14 +626,18 @@ export function initStorePage(container, onLaunch, navigateTo, CDN_BASE_REF, img
 
     thumb.addEventListener("click", () => {
       steamAudio.playNavigate();
-      storePage.querySelectorAll(".store-hero-thumb").forEach((t) => t.classList.remove("active"));
+      storePage
+        .querySelectorAll(".store-hero-thumb")
+        .forEach((t) => t.classList.remove("active"));
       thumb.classList.add("active");
 
       heroImg.src = h.img;
       heroTitle.textContent = h.title;
       heroDesc.textContent = descriptionMap[h.app] || h.desc;
       heroPlayBtn.dataset.app = h.app;
-      heroTagsEl.innerHTML = h.tags.map((t) => `<span class="store-tag">${t}</span>`).join("");
+      heroTagsEl.innerHTML = h.tags
+        .map((t) => `<span class="store-tag">${t}</span>`)
+        .join("");
     });
 
     heroThumbs.appendChild(thumb);
@@ -620,12 +686,16 @@ export function initStorePage(container, onLaunch, navigateTo, CDN_BASE_REF, img
 `;
       card.addEventListener("mouseenter", () => steamAudio.playHover());
 
-      card.querySelector(".store-card-play-btn").addEventListener("mouseenter", (e) => e.stopPropagation());
-      card.querySelector(".store-card-play-btn").addEventListener("click", (e) => {
-        e.stopPropagation();
-        steamAudio.playSelect();
-        onLaunch(g.app);
-      });
+      card
+        .querySelector(".store-card-play-btn")
+        .addEventListener("mouseenter", (e) => e.stopPropagation());
+      card
+        .querySelector(".store-card-play-btn")
+        .addEventListener("click", (e) => {
+          e.stopPropagation();
+          steamAudio.playSelect();
+          onLaunch(g.app);
+        });
       card.addEventListener("click", (e) => {
         if (e.target.closest(".store-card-play-btn")) return;
         steamAudio.playNavigate();
@@ -643,6 +713,9 @@ export function initStorePage(container, onLaunch, navigateTo, CDN_BASE_REF, img
 
 window.addEventListener("steam-settings-changed", (e) => {
   if (e.detail.setting === "gridSize") {
-    document.documentElement.style.setProperty("--steam-grid-min", getGridMin(e.detail.value));
+    document.documentElement.style.setProperty(
+      "--steam-grid-min",
+      getGridMin(e.detail.value),
+    );
   }
 });

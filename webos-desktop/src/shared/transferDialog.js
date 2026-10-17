@@ -1,5 +1,12 @@
 import "../styles/transferDialog.css";
-import { os, $, bindEvent, createElement, setHTML, setText } from "../framework.js";
+import {
+  os,
+  $,
+  bindEvent,
+  createElement,
+  setHTML,
+  setText,
+} from "../framework.js";
 
 let transferSequence = 0;
 
@@ -25,7 +32,12 @@ export function showTransferDialog(options = {}) {
   const total = knownTotal ? Math.floor(rawTotal) : 0;
   const cancellable = options.cancellable !== false;
 
-  const dialogState = { done: 0, finished: false, cancelled: false, handlers: [] };
+  const dialogState = {
+    done: 0,
+    finished: false,
+    cancelled: false,
+    handlers: [],
+  };
   const dialogId = `transfer-dialog-${Date.now()}-${transferSequence++}`;
 
   let host = null;
@@ -67,7 +79,7 @@ export function showTransferDialog(options = {}) {
     overlay = createElement("div", { className: "transfer-dialog-overlay" });
     setHTML(
       overlay,
-      `<div class="transfer-dialog-box" role="dialog" aria-label="${title}">${buildDialogHTML(title, cancellable, !knownTotal)}</div>`
+      `<div class="transfer-dialog-box" role="dialog" aria-label="${title}">${buildDialogHTML(title, cancellable, !knownTotal)}</div>`,
     );
     document.body.appendChild(overlay);
     host = overlay;
@@ -76,7 +88,9 @@ export function showTransferDialog(options = {}) {
 
   try {
     if (os && os.window && typeof os.window.create === "function") {
-      const win = os.window.create(dialogId, title, "320px", "auto", { icon: "fas fa-copy" });
+      const win = os.window.create(dialogId, title, "320px", "auto", {
+        icon: "fas fa-copy",
+      });
       if (win) {
         host = win;
         useWindow = true;

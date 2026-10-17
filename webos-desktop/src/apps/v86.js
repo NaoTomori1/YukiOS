@@ -1,7 +1,16 @@
 import { Achievements } from "../achievements.js";
 import { CDN_BASES } from "../shared/assetResolver.js";
 
-import { BusEvents, BaseApp, os, $, $$, setStyle, createElement, ServiceKeys } from "../framework.js";
+import {
+  BusEvents,
+  BaseApp,
+  os,
+  $,
+  $$,
+  setStyle,
+  createElement,
+  ServiceKeys,
+} from "../framework.js";
 import { resolveIconUrl } from "../shared/assetResolver.js";
 import {
   normalizePath,
@@ -10,7 +19,7 @@ import {
   buildErrorHTML,
   setLog,
   renderEmulatorFileList,
-  handleEmulatorUpload
+  handleEmulatorUpload,
 } from "../shared/emulatorBase.js";
 const IMAGES_DIR = ["VMs"];
 
@@ -23,18 +32,19 @@ export class V86App extends BaseApp {
   }
 
   get explorerApp() {
-    if (!this.explorerAppService) this.explorerAppService = this.getService(ServiceKeys.EXPLORER);
+    if (!this.explorerAppService)
+      this.explorerAppService = this.getService(ServiceKeys.EXPLORER);
     return this.explorerAppService;
   }
 
   async open(opts) {
     const systems = [
       { id: "freedos", name: "FreeDOS", icon: "fa-solid fa-terminal" },
-      { id: "openbsd", name: "OpenBSD", icon: "fa-solid fa-fish" }
+      { id: "openbsd", name: "OpenBSD", icon: "fa-solid fa-fish" },
     ];
 
     const win = os.window.create("v86-win", "V86", "800px", "600px", {
-      icon: resolveIconUrl("static/icons/v86.webp")
+      icon: resolveIconUrl("static/icons/v86.webp"),
     });
     win.innerHTML = `<div class="window-content v86-shell emu-shell">
       <div class="v86-header emu-header">
@@ -64,7 +74,7 @@ export class V86App extends BaseApp {
       <i class="${sys.icon} v86-system-icon emu-card-icon"></i>
       <div class="v86-system-name emu-card-title">${sys.name}</div>
     </div>
-  `
+  `,
           )
           .join("")}
       </div>
@@ -100,8 +110,12 @@ export class V86App extends BaseApp {
         const systemName = $("div", card).textContent;
         this.launchSystem(systemId, systemName);
       });
-      card.addEventListener("mouseenter", () => card.classList.add("emu-card--hover"));
-      card.addEventListener("mouseleave", () => card.classList.remove("emu-card--hover"));
+      card.addEventListener("mouseenter", () =>
+        card.classList.add("emu-card--hover"),
+      );
+      card.addEventListener("mouseleave", () =>
+        card.classList.remove("emu-card--hover"),
+      );
     });
 
     this.initV86(null, null, win, null);
@@ -128,7 +142,7 @@ export class V86App extends BaseApp {
         os.notify.send("V86", `Saved ${file.name} to VMs.`);
         await this.loadUserImages($("#v86-win"));
       },
-      onReload: () => {}
+      onReload: () => {},
     });
   }
 
@@ -140,7 +154,11 @@ export class V86App extends BaseApp {
       container,
       dir: IMAGES_DIR,
       filter: (f) =>
-        f.endsWith(".iso") || f.endsWith(".img") || f.endsWith(".bin") || f.endsWith(".state") || f.endsWith(".gz"),
+        f.endsWith(".iso") ||
+        f.endsWith(".img") ||
+        f.endsWith(".bin") ||
+        f.endsWith(".state") ||
+        f.endsWith(".gz"),
       emptyHTML: `<div class="v86-empty-text emu-empty">No uploaded images yet.</div>`,
       cardHTML: (f) => `
         <div class="v86-image-card emu-card emu-card--removable" data-user-file="${f}">
@@ -153,12 +171,16 @@ export class V86App extends BaseApp {
       deleteBtnSelector: ".v86-delete-btn",
       deleteAction: (name) => os.fs.deleteBinaryFile(IMAGES_DIR, name),
       onCardClick: (fileName) => this.launchImage(fileName, IMAGES_DIR),
-      onReload: () => this.loadUserImages(win)
+      onReload: () => this.loadUserImages(win),
     });
 
     $$(".v86-image-card", container).forEach((card) => {
-      card.addEventListener("mouseenter", () => card.classList.add("emu-card--hover"));
-      card.addEventListener("mouseleave", () => card.classList.remove("emu-card--hover"));
+      card.addEventListener("mouseenter", () =>
+        card.classList.add("emu-card--hover"),
+      );
+      card.addEventListener("mouseleave", () =>
+        card.classList.remove("emu-card--hover"),
+      );
     });
   }
 
@@ -167,12 +189,12 @@ export class V86App extends BaseApp {
     const systemConfigs = {
       freedos: {
         fda: { url: `${V86_PATH}/freedos722.img`, size: 737280 },
-        memory_size: 32 * 1024 * 1024
+        memory_size: 32 * 1024 * 1024,
       },
       openbsd: {
         cdrom: { url: `${V86_PATH}/openbsd_state-v2.bin.zst` },
-        memory_size: 192 * 1024 * 1024
-      }
+        memory_size: 192 * 1024 * 1024,
+      },
     };
 
     const config = systemConfigs[systemId];
@@ -221,20 +243,24 @@ export class V86App extends BaseApp {
   async launchV86(displayName, config) {
     const winId = `v86-${Date.now()}`;
     const win = os.window.create(winId, displayName, "800px", "600px", {
-      icon: "static/icons/v86.webp"
+      icon: "static/icons/v86.webp",
     });
 
-    os.events.emit(BusEvents.ACHIEVEMENT_TRIGGER, { achievementId: Achievements.RetroPlayer });
+    os.events.emit(BusEvents.ACHIEVEMENT_TRIGGER, {
+      achievementId: Achievements.RetroPlayer,
+    });
 
     win.innerHTML = `
     <div class="window-content v86-window emu-window">
       ${buildLoadingStateHTML({
         winId,
-        iconClass: "fa-solid fa-microchip fa-spin v86-state-icon emu-state-icon",
-        wrapperClass: "yuki-loading-indicator v86-loading emu-state emu-load-wrap",
+        iconClass:
+          "fa-solid fa-microchip fa-spin v86-state-icon emu-state-icon",
+        wrapperClass:
+          "yuki-loading-indicator v86-loading emu-state emu-load-wrap",
         textClass: "v86-state-text emu-state-text",
         logClass: "v86-log emu-state-text--muted",
-        displayName
+        displayName,
       })}
       <div id="${winId}-screen" class="v86-screen emu-window-screen"></div>
     </div>`;
@@ -248,8 +274,9 @@ export class V86App extends BaseApp {
         inner.innerHTML = buildErrorHTML({
           msg,
           wrapperClass: "v86-error emu-state emu-state--error",
-          iconClass: "fa-solid fa-triangle-exclamation v86-error-icon emu-state-icon",
-          textClass: "v86-error-msg emu-state-text emu-state--error"
+          iconClass:
+            "fa-solid fa-triangle-exclamation v86-error-icon emu-state-icon",
+          textClass: "v86-error-msg emu-state-text emu-state--error",
         });
     };
 
@@ -289,7 +316,7 @@ export class V86App extends BaseApp {
         bios: { url: CDN_BASES.MAIN + "/static/apps/v86/bios/seabios.bin" },
         vga_bios: { url: CDN_BASES.MAIN + "/static/apps/v86/bios/vgabios.bin" },
         autostart: true,
-        ...config
+        ...config,
       };
 
       emulator = new V86(baseConfig);

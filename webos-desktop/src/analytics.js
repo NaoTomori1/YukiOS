@@ -1,7 +1,7 @@
 import { os, $ } from "./framework.js";
 import { StorageKeys } from "./StorageKeys.js";
 import { getLiveUserId, ensureLiveUserId } from "./social/userIdentity.js";
-import { SOCIAL_BASE } from "./social/endpoints.js";
+import { SOCIAL_BASE, ANALYTICS_NETWORK_DISABLED } from "./social/endpoints.js";
 
 const ANALYTICS_QUEUE_KEY = StorageKeys.analyticsQueue;
 import { parseBool } from "./utils/utils.js";
@@ -9,7 +9,9 @@ import { parseBool } from "./utils/utils.js";
 const ENDPOINT = SOCIAL_BASE + "/analytics";
 const DOWNLOAD_ENDPOINT = SOCIAL_BASE + "/api/download";
 const ELECTRON_USAGE_ENDPOINT = SOCIAL_BASE + "/api/electron-usage";
-const ANALYTICS_DISABLED = () => parseBool(os.storage.get(StorageKeys.analyticsDisabled));
+const ANALYTICS_DISABLED = () =>
+  ANALYTICS_NETWORK_DISABLED ||
+  parseBool(os.storage.get(StorageKeys.analyticsDisabled));
 const FLUSH_INTERVAL_MS = 5000;
 const MAX_QUEUE_SIZE = 15;
 const SEND_FAIL_THRESHOLD = 5;
@@ -41,7 +43,7 @@ export function getAnalyticsBase(app) {
     app: app ?? "unknown",
     name: $(".start-user span")?.textContent ?? "",
     timestamp: now,
-    sessionAgeMs: now - pageLoadTime
+    sessionAgeMs: now - pageLoadTime,
   };
 }
 
@@ -85,10 +87,10 @@ function sendBatch(events) {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(events),
-    keepalive: true
+    keepalive: true,
   }).then(
     (res) => recordSendOutcome(res.ok),
-    () => recordSendOutcome(false)
+    () => recordSendOutcome(false),
   );
 }
 
@@ -149,7 +151,7 @@ export function sendLaunchAnalytics(app) {
     app,
     event: "launch",
     timestamp: Date.now(),
-    sessionAgeMs: Date.now() - pageLoadTime
+    sessionAgeMs: Date.now() - pageLoadTime,
   });
 }
 
@@ -165,7 +167,7 @@ export function recordUsageDuration(appId, durationMs) {
     event: "usage",
     durationMs: Math.max(60000, ms),
     timestamp: Date.now(),
-    sessionAgeMs: Date.now() - pageLoadTime
+    sessionAgeMs: Date.now() - pageLoadTime,
   });
 }
 
@@ -199,7 +201,8 @@ export function getCachedPlayCounts() {
 export async function fetchLiveStats() {
   if (ANALYTICS_DISABLED()) return null;
   const now = Date.now();
-  if (cachedLiveStats && now - liveStatsCacheTime < LIVE_STATS_TTL_MS) return cachedLiveStats;
+  if (cachedLiveStats && now - liveStatsCacheTime < LIVE_STATS_TTL_MS)
+    return cachedLiveStats;
   if (liveStatsPromise) return liveStatsPromise;
   liveStatsPromise = (async () => {
     try {
@@ -227,15 +230,17 @@ export function trackDownload(event) {
     fileSize: typeof event.fileSize === "number" ? event.fileSize : 0,
     fileType: event.fileType || "",
     source: event.source || "browser",
-    timestamp: Date.now()
+    timestamp: Date.now(),
   };
   const body = JSON.stringify([payload]);
-  const sent = navigator.sendBeacon ? navigator.sendBeacon(DOWNLOAD_ENDPOINT, body) : false;
+  const sent = navigator.sendBeacon
+    ? navigator.sendBeacon(DOWNLOAD_ENDPOINT, body)
+    : false;
   if (!sent) {
     fetch(DOWNLOAD_ENDPOINT, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body
+      body,
     }).catch(() => {});
   }
 }
@@ -249,20 +254,23 @@ export function trackElectronUsage(event) {
     version: event.version || "",
     details: event.details || "",
     isDev: !!event.isDev,
-    timestamp: Date.now()
+    timestamp: Date.now(),
   };
   const body = JSON.stringify([payload]);
-  const sent = navigator.sendBeacon ? navigator.sendBeacon(ELECTRON_USAGE_ENDPOINT, body) : false;
+  const sent = navigator.sendBeacon
+    ? navigator.sendBeacon(ELECTRON_USAGE_ENDPOINT, body)
+    : false;
   if (!sent) {
     fetch(ELECTRON_USAGE_ENDPOINT, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body
+      body,
     }).catch(() => {});
   }
 }
 
 export function trackElectronUsageFromMain(event) {
+  if (ANALYTICS_DISABLED()) return;
   if (!event || !event.action) return;
   const payload = {
     action: event.action,
@@ -270,12 +278,12 @@ export function trackElectronUsageFromMain(event) {
     version: event.version || "",
     details: event.details || "",
     isDev: !!event.isDev,
-    timestamp: Date.now()
+    timestamp: Date.now(),
   };
   const body = JSON.stringify([payload]);
   fetch(ELECTRON_USAGE_ENDPOINT, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body
+    body,
   }).catch(() => {});
 }

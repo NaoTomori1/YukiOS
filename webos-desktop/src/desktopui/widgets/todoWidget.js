@@ -20,13 +20,17 @@ export class TodoWidget extends WidgetBase {
     this.loadTodos();
     this.render();
 
-    contentEl.querySelector(`#w-todo-add-${this.id}`).addEventListener("click", () => {
-      this.addTodo();
-    });
+    contentEl
+      .querySelector(`#w-todo-add-${this.id}`)
+      .addEventListener("click", () => {
+        this.addTodo();
+      });
 
-    contentEl.querySelector(`#w-todo-input-${this.id}`).addEventListener("keypress", (e) => {
-      if (e.key === "Enter") this.addTodo();
-    });
+    contentEl
+      .querySelector(`#w-todo-input-${this.id}`)
+      .addEventListener("keypress", (e) => {
+        if (e.key === "Enter") this.addTodo();
+      });
   }
 
   loadTodos() {
@@ -88,18 +92,22 @@ export class TodoWidget extends WidgetBase {
         <span class="widget-todo-text">${todo.text}</span>
         <button class="widget-todo-delete"><i class="fas fa-times"></i></button>
       </div>
-    `
+    `,
       )
       .join("");
 
     listEl.querySelectorAll(".widget-todo-item").forEach((item) => {
       const id = parseInt(item.dataset.id);
-      item.querySelector(".widget-todo-check").addEventListener("change", () => {
-        this.toggleTodo(id);
-      });
-      item.querySelector(".widget-todo-delete").addEventListener("click", () => {
-        this.deleteTodo(id);
-      });
+      item
+        .querySelector(".widget-todo-check")
+        .addEventListener("change", () => {
+          this.toggleTodo(id);
+        });
+      item
+        .querySelector(".widget-todo-delete")
+        .addEventListener("click", () => {
+          this.deleteTodo(id);
+        });
     });
   }
 

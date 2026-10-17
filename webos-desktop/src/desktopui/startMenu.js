@@ -2,7 +2,12 @@ import { appMap } from "../games/gamesList.js";
 import { APP_DESCRIPTIONS, descriptionMap } from "../games/gameDescriptions.js";
 import { camelize } from "../utils/utils.js";
 import { ClippyAnimation, speak } from "../ai/clippy.js";
-import { isImageFile, resolveFileIcon, openFileWith, showFileProperties } from "../fileDisplay.js";
+import {
+  isImageFile,
+  resolveFileIcon,
+  openFileWith,
+  showFileProperties,
+} from "../fileDisplay.js";
 import { isTextFile } from "../utils/utils.js";
 import { resolveIconUrl } from "../shared/assetResolver.js";
 import { showDynamicContextMenu, refreshIcons } from "../shared/contextMenu.js";
@@ -12,9 +17,16 @@ import { CDN_CONFIG } from "../shared/cdnConfig.js";
 import { getAppRegistry } from "../appRegistry.js";
 import { SYSTEM_APPS } from "../AppRegistryConfig.js";
 import { resolveAvatarUrl } from "../social/avatarResolver.js";
-import { SETTINGS_CATEGORIES, launchSettingsPane } from "../settings/settingsNav.js";
+import {
+  SETTINGS_CATEGORIES,
+  launchSettingsPane,
+} from "../settings/settingsNav.js";
 import { addAppToDesktop, isAppOnDesktop } from "../shared/desktopShortcuts.js";
-import { isAppPinnedToTaskbar, toggleTaskbarPin, showAppProperties } from "../shared/appContextActions.js";
+import {
+  isAppPinnedToTaskbar,
+  toggleTaskbarPin,
+  showAppProperties,
+} from "../shared/appContextActions.js";
 
 import {
   $,
@@ -25,7 +37,7 @@ import {
   addClass,
   removeClass,
   toggleClass,
-  setStyle
+  setStyle,
 } from "../shared/domUtils.js";
 import { BusEvents } from "../core/EventBus.js";
 import { StorageKeys, os, ServiceKeys } from "../framework.js";
@@ -52,7 +64,10 @@ function showDescriptionTooltip(text, x, y) {
     document.body.removeChild(descriptionTooltip);
   }
 
-  descriptionTooltip = createElement("div", { className: "description-tooltip", text });
+  descriptionTooltip = createElement("div", {
+    className: "description-tooltip",
+    text,
+  });
   setStyle(descriptionTooltip, { left: `${x + 10}px`, top: `${y + 10}px` });
   document.body.appendChild(descriptionTooltip);
 }
@@ -84,7 +99,7 @@ export function closeStartMenu() {
       el.classList.remove("closing");
       el.style.display = "none";
     },
-    { once: true }
+    { once: true },
   );
 }
 
@@ -117,7 +132,7 @@ export function applyStartMenuSettings(el) {
     "development",
     "games",
     "system",
-    "help"
+    "help",
   ];
   const el2 = el.querySelector('.start-cat[data-cat="places"]');
   if (el2) el2.style.display = "none";
@@ -129,7 +144,11 @@ export function applyStartMenuSettings(el) {
         ? el.querySelector('.start-cat[data-cat="all"]')
         : el.querySelector(`.start-cat[data-cat="${catName}"]`);
     if (catEl) {
-      catEl.style.display = deletedCats.has(catName) ? "none" : isEnabled ? "flex" : "none";
+      catEl.style.display = deletedCats.has(catName)
+        ? "none"
+        : isEnabled
+          ? "flex"
+          : "none";
     }
   });
 
@@ -143,7 +162,10 @@ export function applyStartMenuSettings(el) {
   });
 }
 
-async function openStartMenu({ focusSearch = false, openDefaultPage = true } = {}) {
+async function openStartMenu({
+  focusSearch = false,
+  openDefaultPage = true,
+} = {}) {
   if (isStartMenuBlocked()) return;
   if (os.tiling.enabled) return;
   if (modeManager.isActive(MODES.CHROME_OS)) {
@@ -153,6 +175,9 @@ async function openStartMenu({ focusSearch = false, openDefaultPage = true } = {
   }
   const el = getStartMenuEl();
   if (!el) return;
+  try {
+    if (el.classList.contains("stk-shatter-hidden")) return;
+  } catch {}
 
   ensureStartMenuStructure(el);
   applyStartMenuSettings(el);
@@ -188,8 +213,18 @@ async function openStartMenu({ focusSearch = false, openDefaultPage = true } = {
     const deletedCats = getCategoryDeleted();
     let defaultCat = "favorites";
     if (cats.favorites === false || deletedCats.has("favorites")) {
-      const catNames = ["all", WEB_MENU_CATEGORY, "favorites", "games", "system", "help", "settingsApp"];
-      const firstEnabled = catNames.find((c) => cats[c] !== false && !deletedCats.has(c));
+      const catNames = [
+        "all",
+        WEB_MENU_CATEGORY,
+        "favorites",
+        "games",
+        "system",
+        "help",
+        "settingsApp",
+      ];
+      const firstEnabled = catNames.find(
+        (c) => cats[c] !== false && !deletedCats.has(c),
+      );
       if (firstEnabled) defaultCat = firstEnabled;
     }
     el.querySelector(`.start-cat[data-cat="${defaultCat}"]`)?.click();
@@ -201,6 +236,10 @@ async function openStartMenu({ focusSearch = false, openDefaultPage = true } = {
 }
 
 export async function toggleStartMenu(opts) {
+  try {
+    const menuEl = getStartMenuEl();
+    if (menuEl && menuEl.classList.contains("stk-shatter-hidden")) return;
+  } catch {}
   if (isStartMenuOpen()) closeStartMenu();
   else await openStartMenu(opts);
 }
@@ -237,7 +276,8 @@ function unfavoriteApp(appName) {
 
 function buildIconEl(iconVal) {
   const effective = getEffectiveIcon(iconVal);
-  const isPapirus = typeof effective === "string" && effective.startsWith("papirus:");
+  const isPapirus =
+    typeof effective === "string" && effective.startsWith("papirus:");
   if (isPapirus) {
     const iconEl = createElement("img");
     iconEl.src = resolveIconUrl(effective);
@@ -257,7 +297,9 @@ function buildIconEl(iconVal) {
     const iconEl = createElement("img");
     let iconSrc = effective;
     if (effective.startsWith("static/") || effective.startsWith("/static/")) {
-      const cleanPath = effective.startsWith("/") ? effective.substring(1) : effective;
+      const cleanPath = effective.startsWith("/")
+        ? effective.substring(1)
+        : effective;
       iconSrc = `${CDN_CONFIG.repos.main.base}/${cleanPath}`;
     } else {
       iconSrc = resolveIconUrl(effective);
@@ -268,7 +310,10 @@ function buildIconEl(iconVal) {
     return iconEl;
   }
   const iconEl = createElement("i");
-  iconEl.className = typeof effective === "string" && effective.startsWith("fa") ? effective : `fa ${effective}`;
+  iconEl.className =
+    typeof effective === "string" && effective.startsWith("fa")
+      ? effective
+      : `fa ${effective}`;
   return iconEl;
 }
 
@@ -299,7 +344,9 @@ function updateStarState(appName, isFavorite) {
   });
   const item = $(`.start-menu-item[data-app="${appName}"]`);
   if (item) {
-    item.style.background = isFavorite ? "rgba(255, 215, 0, 0.1)" : "transparent";
+    item.style.background = isFavorite
+      ? "rgba(255, 215, 0, 0.1)"
+      : "transparent";
   }
 }
 let selectedItem = null;
@@ -313,13 +360,19 @@ let searchDebounceTimer = null;
 const RECENTLY_USED_MAX = 8;
 const CORE_MENU_CATEGORY = "all";
 const WEB_MENU_CATEGORY = "web";
-const WEB_CATEGORY_ORDER = ["internet", "media", "office", "graphics", "development"];
+const WEB_CATEGORY_ORDER = [
+  "internet",
+  "media",
+  "office",
+  "graphics",
+  "development",
+];
 const WEB_CATEGORY_LABELS = {
   internet: "Internet",
   media: "Media",
   office: "Office",
   graphics: "Graphics",
-  development: "Development"
+  development: "Development",
 };
 
 let mergedAllAppsCache = null;
@@ -338,7 +391,7 @@ function computeAppsSignature() {
     Object.keys(os.app.getAllApps()).length,
     appRegistry.disabledApps.size,
     appRegistry.uninstalledApps.size,
-    renamed
+    renamed,
   ].join("|");
 }
 
@@ -358,14 +411,19 @@ function getSearchIndex() {
   const appRegistry = getAppRegistry();
   const index = [];
   for (const [appId, appData] of Object.entries(getAllAppsMerged())) {
-    if (appRegistry.isAppUninstalled(appId) || appRegistry.isAppDisabled(appId)) continue;
+    if (appRegistry.isAppUninstalled(appId) || appRegistry.isAppDisabled(appId))
+      continue;
     index.push({
       appId,
       appData,
       titleLower: (appData.title || appId).toLowerCase(),
-      descLower: (APP_DESCRIPTIONS[appId] || descriptionMap[appId] || "").toLowerCase(),
+      descLower: (
+        APP_DESCRIPTIONS[appId] ||
+        descriptionMap[appId] ||
+        ""
+      ).toLowerCase(),
       isWeb: isWebApp(appId, appData),
-      isGame: appData.type === "game"
+      isGame: appData.type === "game",
     });
   }
   searchIndexCache = index;
@@ -377,7 +435,8 @@ function getAppCategory(appId, appData) {
 }
 
 function isWebApp(appId, appData) {
-  if (appData.launchType === "iframe" || appData.launchType === "remote") return true;
+  if (appData.launchType === "iframe" || appData.launchType === "remote")
+    return true;
   if (appData.source || appData.targetUrl) return true;
   return false;
 }
@@ -387,7 +446,8 @@ function isCoreApp(appId, appData) {
 }
 
 function buildCategoryEl(cat, label) {
-  const papirusIcon = START_CATEGORY_ICONS[cat] || "papirus:actions/bookmark-new";
+  const papirusIcon =
+    START_CATEGORY_ICONS[cat] || "papirus:actions/bookmark-new";
   const effective = getEffectiveIcon(papirusIcon);
   const el = createElement("div");
   el.className = "start-cat";
@@ -432,7 +492,7 @@ function ensureStartMenuStructure(menuEl) {
     development: "Development",
     system: "System",
     help: "Help",
-    places: "Places"
+    places: "Places",
   };
 
   for (const [cat, papirusIcon] of Object.entries(START_CATEGORY_ICONS)) {
@@ -459,7 +519,9 @@ function ensureStartMenuStructure(menuEl) {
       let inserted = false;
       for (let j = idx + 1; j < order.length; j++) {
         const nextCat = order[j];
-        const nextEl = catList.querySelector(`.start-cat[data-cat="${nextCat}"]`);
+        const nextEl = catList.querySelector(
+          `.start-cat[data-cat="${nextCat}"]`,
+        );
         if (nextEl) {
           catList.insertBefore(catEl, nextEl);
           inserted = true;
@@ -483,7 +545,9 @@ function ensureStartMenuStructure(menuEl) {
     }
   }
 
-  const settingsCat = menuEl.querySelector('.start-cat[data-cat="settingsApp"]');
+  const settingsCat = menuEl.querySelector(
+    '.start-cat[data-cat="settingsApp"]',
+  );
   if (settingsCat) {
     const effective = getEffectiveIcon("papirus:actions/configure");
     settingsCat.querySelectorAll("img, i, svg").forEach((el) => el.remove());
@@ -501,13 +565,17 @@ function ensureStartMenuStructure(menuEl) {
   }
 
   let webCat = $('.start-cat[data-cat="web"]', menuEl);
-  const webPapirus = START_CATEGORY_ICONS.web || "papirus:apps/internet-web-browser";
+  const webPapirus =
+    START_CATEGORY_ICONS.web || "papirus:apps/internet-web-browser";
   const webEffective = getEffectiveIcon(webPapirus);
   if (!webCat) {
     webCat = createElement("div");
     webCat.className = "start-cat";
     webCat.dataset.cat = WEB_MENU_CATEGORY;
-    if (typeof webEffective === "string" && webEffective.startsWith("papirus:")) {
+    if (
+      typeof webEffective === "string" &&
+      webEffective.startsWith("papirus:")
+    ) {
       const icon = createElement("img");
       icon.src = resolveIconUrl(webEffective);
       icon.className = "papirus-icon papirus-icon--22";
@@ -534,7 +602,10 @@ function ensureStartMenuStructure(menuEl) {
   } else {
     webCat.querySelectorAll("img, i, svg").forEach((el) => el.remove());
     let newIcon;
-    if (typeof webEffective === "string" && webEffective.startsWith("papirus:")) {
+    if (
+      typeof webEffective === "string" &&
+      webEffective.startsWith("papirus:")
+    ) {
       newIcon = createElement("img");
       newIcon.src = resolveIconUrl(webEffective);
       newIcon.className = "papirus-icon papirus-icon--22";
@@ -585,7 +656,8 @@ export function trackRecentlyUsed(appId) {
   let recent = getRecentlyUsed();
   recent = recent.filter((id) => id !== appId);
   recent.unshift(appId);
-  if (recent.length > RECENTLY_USED_MAX) recent = recent.slice(0, RECENTLY_USED_MAX);
+  if (recent.length > RECENTLY_USED_MAX)
+    recent = recent.slice(0, RECENTLY_USED_MAX);
   os.storage.set(StorageKeys.recentlyUsedApps, recent);
 }
 
@@ -660,7 +732,7 @@ function createRecentFileItem(name, path, kind) {
   const rawIcon = resolveFileIcon(name);
   let iconSrc = rawIcon;
   if (rawIcon === "@content" || rawIcon === "rom") {
-    iconSrc = "static/icons/file.webp";
+    iconSrc = "static/icons/explorerwin11.png";
   }
   const iconEl = buildIconEl(iconSrc);
 
@@ -729,7 +801,8 @@ function updateRecentlyUsedUI() {
   const validApps = recentApps.filter((appId) => {
     const appData = allApps[appId];
     if (!appData) return false;
-    if (appRegistry.isAppUninstalled(appId) || appRegistry.isAppDisabled(appId)) return false;
+    if (appRegistry.isAppUninstalled(appId) || appRegistry.isAppDisabled(appId))
+      return false;
     return true;
   });
 
@@ -789,7 +862,11 @@ function navigateSelection(direction) {
   const activePage = $(".start-page.active");
   if (!activePage) return;
 
-  const items = Array.from(activePage.querySelectorAll(".start-menu-item:not(.letter-category-header)"));
+  const items = Array.from(
+    activePage.querySelectorAll(
+      ".start-menu-item:not(.letter-category-header)",
+    ),
+  );
   if (items.length === 0) return;
 
   const currentIndex = items.indexOf(selectedItem);
@@ -801,9 +878,11 @@ function navigateSelection(direction) {
 
   let newIndex;
   if (direction === "down") {
-    newIndex = currentIndex === -1 ? 0 : Math.min(currentIndex + 1, items.length - 1);
+    newIndex =
+      currentIndex === -1 ? 0 : Math.min(currentIndex + 1, items.length - 1);
   } else {
-    newIndex = currentIndex === -1 ? items.length - 1 : Math.max(currentIndex - 1, 0);
+    newIndex =
+      currentIndex === -1 ? items.length - 1 : Math.max(currentIndex - 1, 0);
   }
 
   clearItemSelection();
@@ -834,7 +913,7 @@ function activateCategoryPage(cat) {
       "games",
       "development",
       "system",
-      "help"
+      "help",
     ].includes(cat.dataset.cat)
   ) {
     if (!renderedCategories.has(cat.dataset.cat)) {
@@ -847,7 +926,7 @@ function activateCategoryPage(cat) {
 
 function navigateCategories(direction) {
   const categories = Array.from($$(".start-cat:not(.docked)")).filter(
-    (cat) => cat.style.display !== "none" && cat.offsetParent !== null
+    (cat) => cat.style.display !== "none" && cat.offsetParent !== null,
   );
   if (categories.length === 0) return;
 
@@ -860,9 +939,15 @@ function navigateCategories(direction) {
 
   let newIndex;
   if (direction === "down") {
-    newIndex = currentIndex === -1 ? 0 : Math.min(currentIndex + 1, categories.length - 1);
+    newIndex =
+      currentIndex === -1
+        ? 0
+        : Math.min(currentIndex + 1, categories.length - 1);
   } else {
-    newIndex = currentIndex === -1 ? categories.length - 1 : Math.max(currentIndex - 1, 0);
+    newIndex =
+      currentIndex === -1
+        ? categories.length - 1
+        : Math.max(currentIndex - 1, 0);
   }
 
   clearCategorySelection();
@@ -922,7 +1007,11 @@ export function updateFavoritesUI() {
   favorites.forEach((appName) => {
     const appData = allApps[appName];
     if (!appData) return;
-    if (appRegistry.isAppUninstalled(appName) || appRegistry.isAppDisabled(appName)) return;
+    if (
+      appRegistry.isAppUninstalled(appName) ||
+      appRegistry.isAppDisabled(appName)
+    )
+      return;
     const item = createAppItem(appName, appData);
     item.style.background = "rgba(255, 215, 0, 0.1)";
     favoritesPage.appendChild(item);
@@ -1010,8 +1099,8 @@ export function setupStartMenu(sessionManager) {
               deletedCats.forEach((c) => setCategoryDeleted(c, false));
               applyStartMenuSettings(getStartMenuEl());
             },
-            "papirus:actions/edit-undo"
-          )
+            "papirus:actions/edit-undo",
+          ),
         );
         if (deletedCats.size > 1) menu.appendChild(hr());
         deletedCats.forEach((catName) => {
@@ -1023,8 +1112,8 @@ export function setupStartMenu(sessionManager) {
                 setCategoryDeleted(catName, false);
                 applyStartMenuSettings(getStartMenuEl());
               },
-              "papirus:actions/list-add"
-            )
+              "papirus:actions/list-add",
+            ),
           );
         });
       });
@@ -1036,7 +1125,10 @@ export function setupStartMenu(sessionManager) {
   searchInput.addEventListener("focus", () => {
     focusMode = "search";
     clearSelection();
-    speak("Looking for an app? I know where everything is.", ClippyAnimation.Searching);
+    speak(
+      "Looking for an app? I know where everything is.",
+      ClippyAnimation.Searching,
+    );
   });
 
   if (!keyboardHandlerInstalled) {
@@ -1080,7 +1172,9 @@ export function setupStartMenu(sessionManager) {
       } else if (KeybindManager.matches(e, "startMenu.enter")) {
         e.preventDefault();
         if (focusMode === "search") {
-          const result = $(".start-page.active .start-menu-item:not(.letter-category-header)");
+          const result = $(
+            ".start-page.active .start-menu-item:not(.letter-category-header)",
+          );
           if (result) result.click();
         } else if (focusMode === "categories" && selectedCategory) {
           selectedCategory.dispatchEvent(new Event("click"));
@@ -1144,7 +1238,9 @@ export function setupStartMenu(sessionManager) {
   }
 
   function levenshtein(a, b) {
-    const dp = Array.from({ length: a.length + 1 }, () => new Array(b.length + 1).fill(0));
+    const dp = Array.from({ length: a.length + 1 }, () =>
+      new Array(b.length + 1).fill(0),
+    );
 
     for (let i = 0; i <= a.length; i++) dp[i][0] = i;
     for (let j = 0; j <= b.length; j++) dp[0][j] = j;
@@ -1153,7 +1249,11 @@ export function setupStartMenu(sessionManager) {
       for (let j = 1; j <= b.length; j++) {
         const cost = a[i - 1] === b[j - 1] ? 0 : 1;
 
-        dp[i][j] = Math.min(dp[i - 1][j] + 1, dp[i][j - 1] + 1, dp[i - 1][j - 1] + cost);
+        dp[i][j] = Math.min(
+          dp[i - 1][j] + 1,
+          dp[i][j - 1] + 1,
+          dp[i - 1][j - 1] + cost,
+        );
       }
     }
 
@@ -1210,14 +1310,20 @@ export function setupStartMenu(sessionManager) {
       const results = { core: [], web: [], games: [], files: [] };
       const seenAppIds = new Set();
 
-      getSearchIndex().forEach(({ appId, appData, titleLower, descLower, isWeb, isGame }) => {
-        if (seenAppIds.has(appId)) return;
-        if (!fuzzyMatch(q, titleLower) && !wordBoundaryMatch(q, descLower)) return;
-        seenAppIds.add(appId);
-        const item = createAppItem(appId, appData);
-        const bucket = isWeb ? "web" : isGame ? "games" : "core";
-        results[bucket].push({ element: item, title: appData.title || appId });
-      });
+      getSearchIndex().forEach(
+        ({ appId, appData, titleLower, descLower, isWeb, isGame }) => {
+          if (seenAppIds.has(appId)) return;
+          if (!fuzzyMatch(q, titleLower) && !wordBoundaryMatch(q, descLower))
+            return;
+          seenAppIds.add(appId);
+          const item = createAppItem(appId, appData);
+          const bucket = isWeb ? "web" : isGame ? "games" : "core";
+          results[bucket].push({
+            element: item,
+            title: appData.title || appId,
+          });
+        },
+      );
 
       SETTINGS_CATEGORIES.forEach((cat) => {
         const title = `Settings: ${cat.title}`;
@@ -1225,8 +1331,16 @@ export function setupStartMenu(sessionManager) {
           const appId = `settings-${cat.id}`;
           if (!seenAppIds.has(appId)) {
             seenAppIds.add(appId);
-            const appData = { title, icon: cat.icon, type: "system", category: "system" };
-            results.core.push({ element: createAppItem(appId, appData), title });
+            const appData = {
+              title,
+              icon: cat.icon,
+              type: "system",
+              category: "system",
+            };
+            results.core.push({
+              element: createAppItem(appId, appData),
+              title,
+            });
           }
         }
       });
@@ -1237,7 +1351,9 @@ export function setupStartMenu(sessionManager) {
       });
 
       const unmatched = recentFiles.filter(
-        (f) => isTextFile(f.name) && !fileResults.some((r) => r.name === f.name && r.path === f.path)
+        (f) =>
+          isTextFile(f.name) &&
+          !fileResults.some((r) => r.name === f.name && r.path === f.path),
       );
       const contentMatches = await Promise.all(
         unmatched.map(async (f) => {
@@ -1254,17 +1370,23 @@ export function setupStartMenu(sessionManager) {
             }
           }
           if (data == null) return null;
-          const text = typeof data === "string" ? data : data?.toString?.() || "";
+          const text =
+            typeof data === "string" ? data : data?.toString?.() || "";
           if (text.toLowerCase().includes(q)) {
             return { ...f, contentMatch: true };
           }
           return null;
-        })
+        }),
       );
       fileResults.push(...contentMatches.filter(Boolean));
 
       const categoryOrder = ["core", "web", "games", "files"];
-      const categoryLabels = { core: "Core Apps", web: "Web Apps", games: "Games", files: "Files" };
+      const categoryLabels = {
+        core: "Core Apps",
+        web: "Web Apps",
+        games: "Games",
+        files: "Files",
+      };
 
       const fragment = document.createDocumentFragment();
       let hasResults = false;
@@ -1332,17 +1454,18 @@ export function getCurrentUser() {
     if (currentUser) {
       return {
         name: currentUser.name,
-        avatar: currentUser.avatar
+        avatar: currentUser.avatar,
       };
     }
   }
 
   const fallbackName = os.storage.get(StorageKeys.username) || "Guest";
-  const fallbackAvatar = os.storage.get(StorageKeys.profilePicture) || "static/icons/guest.webp";
+  const fallbackAvatar =
+    os.storage.get(StorageKeys.profilePicture) || "static/icons/guest.webp";
 
   return {
     name: fallbackName,
-    avatar: fallbackAvatar
+    avatar: fallbackAvatar,
   };
 }
 
@@ -1356,7 +1479,11 @@ export async function updateStartUserDisplay() {
   const avatarImg = $("img", startUser);
 
   if (nameSpan) nameSpan.textContent = user.name;
-  if (avatarImg) avatarImg.src = await resolveAvatarUrl(user.avatar, "static/icons/guest.webp");
+  if (avatarImg)
+    avatarImg.src = await resolveAvatarUrl(
+      user.avatar,
+      "static/icons/guest.webp",
+    );
 }
 
 function setupStartUserHover() {
@@ -1400,7 +1527,7 @@ export function tryGetIcon(id) {
   id = camelize(id);
 
   if (id === "explorerApp") {
-    return resolveIconUrl("static/icons/file.webp");
+    return resolveIconUrl("static/icons/explorerwin11.png");
   }
   if (id === "appCreatorApp") {
     return "papirus:apps/kjumpingcube";
@@ -1427,7 +1554,7 @@ export function tryGetIcon(id) {
           id.startsWith(key) ||
           key === camel ||
           key.startsWith(camel) ||
-          camel.startsWith(key)
+          camel.startsWith(key),
       );
       if (found && found[1].icon) {
         return found[1].icon;
@@ -1438,7 +1565,9 @@ export function tryGetIcon(id) {
       return appMap[id].icon;
     }
 
-    const foundEntry = Object.entries(appMap).find(([key]) => key === id || key.startsWith(id) || id.startsWith(key));
+    const foundEntry = Object.entries(appMap).find(
+      ([key]) => key === id || key.startsWith(id) || id.startsWith(key),
+    );
 
     if (foundEntry && foundEntry[1].icon) {
       return foundEntry[1].icon;
@@ -1461,8 +1590,13 @@ function getGridItems() {
     try {
       const migrated = saved.map((i) =>
         i.app === "installedAppsApp"
-          ? { ...i, app: "systemAppsApp", title: "System Apps", icon: "papirus:apps/utilities-tweak-tool" }
-          : i
+          ? {
+              ...i,
+              app: "systemAppsApp",
+              title: "System Apps",
+              icon: "papirus:apps/utilities-tweak-tool",
+            }
+          : i,
       );
       const seen = new Set();
       const deduped = migrated.filter((i) => {
@@ -1480,29 +1614,97 @@ function getGridItems() {
     }
   }
   return [
-    { app: "browserApp", title: "Yuki Browser", icon: "papirus:apps/internet-web-browser" },
+    {
+      app: "browserApp",
+      title: "Yuki Browser",
+      icon: "papirus:apps/internet-web-browser",
+    },
     { app: "explorerApp", title: "Files", icon: "papirus:places/folder-blue" },
-    { app: "settingsApp", title: "Settings", icon: "papirus:actions/configure" },
-    { app: "aiAssistantApp", title: "Yuki AI Assistant", icon: "papirus:apps/gnome-robots" },
+    {
+      app: "settingsApp",
+      title: "Settings",
+      icon: "papirus:actions/configure",
+    },
+    {
+      app: "aiAssistantApp",
+      title: "Yuki AI Assistant",
+      icon: "papirus:apps/gnome-robots",
+    },
     { app: "notepadApp", title: "Notepad", icon: "papirus:actions/edit" },
-    { app: "calculatorApp", title: "Calculator", icon: "papirus:apps/accessories-calculator" },
-    { app: "shortcutsApp", title: "Shortcuts", icon: "papirus:devices/input-keyboard" },
-    { app: "yukiConvertApp", title: "Yuki Convert", icon: "papirus:actions/swap-panels" },
-    { app: "cameraApp", title: "Camera", icon: "papirus:apps/accessories-camera" },
-    { app: "officeApp", title: "Office", icon: "papirus:mimetypes/x-office-document" },
-    { app: "clipboardManagerApp", title: "Clipboard Manager", icon: "papirus:actions/edit-paste" },
+    {
+      app: "calculatorApp",
+      title: "Calculator",
+      icon: "papirus:apps/accessories-calculator",
+    },
+    {
+      app: "shortcutsApp",
+      title: "Shortcuts",
+      icon: "papirus:devices/input-keyboard",
+    },
+    {
+      app: "yukiConvertApp",
+      title: "Yuki Convert",
+      icon: "papirus:actions/swap-panels",
+    },
+    {
+      app: "cameraApp",
+      title: "Camera",
+      icon: "papirus:apps/accessories-camera",
+    },
+    {
+      app: "officeApp",
+      title: "Office",
+      icon: "papirus:mimetypes/x-office-document",
+    },
+    {
+      app: "clipboardManagerApp",
+      title: "Clipboard Manager",
+      icon: "papirus:actions/edit-paste",
+    },
     { app: "weatherApp", title: "Weather", icon: "papirus:apps/weather" },
-    { app: "yukiOsGuideApp", title: "YukiOS Guide", icon: "papirus:apps/accessories-dictionary" },
+    {
+      app: "yukiOsGuideApp",
+      title: "YukiOS Guide",
+      icon: "papirus:apps/accessories-dictionary",
+    },
     { app: "steamApp", title: "Yuki Steam", icon: "papirus:apps/steam" },
     { app: "paint", title: "Paint", icon: "papirus:apps/gpaint" },
-    { app: "newsApp", title: "What's New", icon: "papirus:apps/accessories-text-editor" },
+    {
+      app: "newsApp",
+      title: "What's New",
+      icon: "papirus:apps/accessories-text-editor",
+    },
     { app: "shittifyApp", title: "Evil Spotify", icon: "papirus:apps/juk" },
-    { app: "appCreatorApp", title: "AppCreator", icon: "papirus:apps/kjumpingcube" },
-    { app: "systemAppsApp", title: "System Apps", icon: "papirus:apps/utilities-tweak-tool" },
-    { app: "taskManagerApp", title: "Task Manager", icon: "papirus:apps/utilities-system-monitor" },
-    { app: "terminal", title: "Terminal", icon: "papirus:apps/utilities-terminal" },
-    { app: "aboutApp", title: "About YukiOS", icon: "papirus:actions/help-about" },
-    { app: "achievementsApp", title: "Achievements", icon: "papirus:actions/games-achievements" }
+    {
+      app: "appCreatorApp",
+      title: "AppCreator",
+      icon: "papirus:apps/kjumpingcube",
+    },
+    {
+      app: "systemAppsApp",
+      title: "System Apps",
+      icon: "papirus:apps/utilities-tweak-tool",
+    },
+    {
+      app: "taskManagerApp",
+      title: "Task Manager",
+      icon: "papirus:apps/utilities-system-monitor",
+    },
+    {
+      app: "terminal",
+      title: "Terminal",
+      icon: "papirus:apps/utilities-terminal",
+    },
+    {
+      app: "aboutApp",
+      title: "About YukiOS",
+      icon: "papirus:actions/help-about",
+    },
+    {
+      app: "achievementsApp",
+      title: "Achievements",
+      icon: "papirus:actions/games-achievements",
+    },
   ];
 }
 
@@ -1521,7 +1723,7 @@ function showStartItemEditor(currentItem) {
       .map(([id, data]) => ({
         id,
         title: data.title || id,
-        icon: data.icon || ""
+        icon: data.icon || "",
       }))
       .sort((a, b) => a.title.localeCompare(b.title));
 
@@ -1530,12 +1732,13 @@ function showStartItemEditor(currentItem) {
         (app) =>
           `<option value="${app.id}" ${
             currentItem && currentItem.app === app.id ? "selected" : ""
-          }>${app.title} (${app.id})</option>`
+          }>${app.title} (${app.id})</option>`,
       )
       .join("");
 
     const isCdnOrUrl = (str) =>
-      typeof str === "string" && (str.startsWith("http") || str.includes("/") || str.includes("."));
+      typeof str === "string" &&
+      (str.startsWith("http") || str.includes("/") || str.includes("."));
 
     const getCleanIcon = (appId, explicitIcon) => {
       if (explicitIcon && !isCdnOrUrl(explicitIcon)) return explicitIcon;
@@ -1544,11 +1747,16 @@ function showStartItemEditor(currentItem) {
       return "papirus:actions/bookmark-new";
     };
 
-    const dialogTitle = currentItem ? "Edit Start Menu Item" : "Add Start Menu Item";
+    const dialogTitle = currentItem
+      ? "Edit Start Menu Item"
+      : "Add Start Menu Item";
 
     const titleVal = currentItem ? currentItem.title : apps[0]?.title || "";
 
-    const iconVal = getCleanIcon(currentItem ? currentItem.app : apps[0]?.id, currentItem?.icon);
+    const iconVal = getCleanIcon(
+      currentItem ? currentItem.app : apps[0]?.id,
+      currentItem?.icon,
+    );
 
     let uploadedIconDataUrl = null;
 
@@ -1680,7 +1888,7 @@ function showStartItemEditor(currentItem) {
         element: opt,
         id: app.id,
         title: app.title.toLowerCase(),
-        idLower: app.id.toLowerCase()
+        idLower: app.id.toLowerCase(),
       };
     });
 
@@ -1697,7 +1905,12 @@ function showStartItemEditor(currentItem) {
       const icon = uploadedIconDataUrl || iconInput.value.trim();
 
       if (!app || !title) return;
-      if (!uploadedIconDataUrl && !icon.startsWith("fa") && !icon.startsWith("papirus:")) return;
+      if (
+        !uploadedIconDataUrl &&
+        !icon.startsWith("fa") &&
+        !icon.startsWith("papirus:")
+      )
+        return;
 
       overlay.remove();
       resolve({ app, title, icon });
@@ -1753,19 +1966,19 @@ function showStartMenuContext(e, itemData, index) {
         () => {
           editGridItem(itemData, index);
         },
-        "papirus:actions/edit"
-      )
+        "papirus:actions/edit",
+      ),
     );
     menu.appendChild(
       item(
         "Customize Icon & Title",
         () => {
           import("../shared/appCustomizer.js").then((m) =>
-            m.showAppCustomizer(itemData.app, itemData.title, itemData.icon)
+            m.showAppCustomizer(itemData.app, itemData.title, itemData.icon),
           );
         },
-        "papirus:apps/com.github.cassidyjames.palette"
-      )
+        "papirus:apps/com.github.cassidyjames.palette",
+      ),
     );
     menu.appendChild(
       item(
@@ -1773,8 +1986,8 @@ function showStartMenuContext(e, itemData, index) {
         () => {
           removeGridItem(index);
         },
-        "papirus:actions/entry-delete"
-      )
+        "papirus:actions/entry-delete",
+      ),
     );
     menu.appendChild(hr());
     menu.appendChild(
@@ -1783,8 +1996,8 @@ function showStartMenuContext(e, itemData, index) {
         () => {
           addGridItem();
         },
-        "papirus:actions/list-add"
-      )
+        "papirus:actions/list-add",
+      ),
     );
   });
 }
@@ -1797,8 +2010,8 @@ function showStartGridContext(e) {
         () => {
           addGridItem();
         },
-        "papirus:actions/list-add"
-      )
+        "papirus:actions/list-add",
+      ),
     );
   });
 }
@@ -1812,7 +2025,11 @@ export function initializeAppGrid() {
   const appRegistry = getAppRegistry();
   const fragment = document.createDocumentFragment();
   items.forEach((itemData, index) => {
-    if (appRegistry.isAppUninstalled(itemData.app) || appRegistry.isAppDisabled(itemData.app)) return;
+    if (
+      appRegistry.isAppUninstalled(itemData.app) ||
+      appRegistry.isAppDisabled(itemData.app)
+    )
+      return;
     const item = createElement("div");
     item.className = "start-menu-item";
     item.dataset.app = itemData.app;
@@ -1832,7 +2049,8 @@ export function initializeAppGrid() {
 
     const descEl = createElement("span");
     descEl.className = "app-description";
-    const description = APP_DESCRIPTIONS[itemData.app] || descriptionMap[itemData.app] || "";
+    const description =
+      APP_DESCRIPTIONS[itemData.app] || descriptionMap[itemData.app] || "";
     descEl.textContent = description;
     descEl.dataset.fullDescription = description;
     contentEl.appendChild(descEl);
@@ -1868,13 +2086,19 @@ export function initializeAppGrid() {
     placeholder.style.transition = "opacity 0.2s";
     placeholder.style.cursor = "pointer";
     const placeholderEffective = getEffectiveIcon("papirus:actions/list-add");
-    if (typeof placeholderEffective === "string" && placeholderEffective.startsWith("papirus:")) {
+    if (
+      typeof placeholderEffective === "string" &&
+      placeholderEffective.startsWith("papirus:")
+    ) {
       const iconEl = createElement("img");
       iconEl.src = resolveIconUrl(placeholderEffective);
       iconEl.className = "papirus-icon papirus-icon--16";
       iconEl.alt = "";
       placeholder.appendChild(iconEl);
-    } else if (typeof placeholderEffective === "string" && placeholderEffective.startsWith("fa")) {
+    } else if (
+      typeof placeholderEffective === "string" &&
+      placeholderEffective.startsWith("fa")
+    ) {
       const iconEl = createElement("i");
       iconEl.className = placeholderEffective;
       placeholder.appendChild(iconEl);
@@ -1931,7 +2155,8 @@ function populateCategoryPage(category) {
 
   const apps = [];
   Object.entries(allApps).forEach(([appId, appData]) => {
-    if (appRegistry.isAppUninstalled(appId) || appRegistry.isAppDisabled(appId)) return;
+    if (appRegistry.isAppUninstalled(appId) || appRegistry.isAppDisabled(appId))
+      return;
 
     let shouldInclude = false;
     if (category === CORE_MENU_CATEGORY) {
@@ -1956,7 +2181,12 @@ function populateCategoryPage(category) {
   if (category === CORE_MENU_CATEGORY || category === "system") {
     SETTINGS_CATEGORIES.forEach((cat) => {
       const appId = `settings-${cat.id}`;
-      const appData = { title: `Settings: ${cat.title}`, icon: cat.icon, type: "system", category: "system" };
+      const appData = {
+        title: `Settings: ${cat.title}`,
+        icon: cat.icon,
+        type: "system",
+        category: "system",
+      };
       apps.push({ appId, appData });
     });
   }
@@ -1964,7 +2194,9 @@ function populateCategoryPage(category) {
   const fragment = document.createDocumentFragment();
 
   if (category === CORE_MENU_CATEGORY) {
-    apps.sort((a, b) => (a.appData.title || a.appId).localeCompare(b.appData.title || b.appId));
+    apps.sort((a, b) =>
+      (a.appData.title || a.appId).localeCompare(b.appData.title || b.appId),
+    );
 
     const groupedApps = {};
     apps.forEach(({ appId, appData }) => {
@@ -1990,18 +2222,25 @@ function populateCategoryPage(category) {
       });
   } else if (category === WEB_MENU_CATEGORY) {
     WEB_CATEGORY_ORDER.forEach((webCategory) => {
-      const categoryApps = apps.filter(({ appId, appData }) => getAppCategory(appId, appData) === webCategory);
+      const categoryApps = apps.filter(
+        ({ appId, appData }) => getAppCategory(appId, appData) === webCategory,
+      );
       if (categoryApps.length === 0) return;
 
       const categoryHeader = createElement("div");
       categoryHeader.className = "search-category-header";
-      categoryHeader.textContent = WEB_CATEGORY_LABELS[webCategory] || webCategory;
+      categoryHeader.textContent =
+        WEB_CATEGORY_LABELS[webCategory] || webCategory;
       fragment.appendChild(categoryHeader);
 
       const categoryResults = createElement("div");
       categoryResults.className = "search-category-results";
       categoryApps
-        .sort((a, b) => (a.appData.title || a.appId).localeCompare(b.appData.title || b.appId))
+        .sort((a, b) =>
+          (a.appData.title || a.appId).localeCompare(
+            b.appData.title || b.appId,
+          ),
+        )
         .forEach(({ appId, appData }) => {
           categoryResults.appendChild(createAppItem(appId, appData));
         });
@@ -2028,8 +2267,8 @@ function showAppItemContextMenu(e, appId, appData) {
       item(
         isPinned ? "Unpin from Taskbar" : "Pin to Taskbar",
         () => toggleTaskbarPin(appId, appData),
-        isPinned ? "papirus:actions/window-pin" : "papirus:actions/window-pin"
-      )
+        isPinned ? "papirus:actions/window-pin" : "papirus:actions/window-pin",
+      ),
     );
 
     const isFavorite = getFavorites().includes(appId);
@@ -2037,8 +2276,10 @@ function showAppItemContextMenu(e, appId, appData) {
       item(
         isFavorite ? "Unpin from Start" : "Pin to Start",
         () => toggleStartPin(appId),
-        isFavorite ? "papirus:actions/bookmark-new" : "papirus:actions/bookmark-new"
-      )
+        isFavorite
+          ? "papirus:actions/bookmark-new"
+          : "papirus:actions/bookmark-new",
+      ),
     );
 
     menu.appendChild(
@@ -2048,17 +2289,26 @@ function showAppItemContextMenu(e, appId, appData) {
           try {
             const already = await isAppOnDesktop(appId);
             if (already) {
-              os.notify.send("Already on Desktop", `${appData.title || appId} is already on your desktop.`);
+              os.notify.send(
+                "Already on Desktop",
+                `${appData.title || appId} is already on your desktop.`,
+              );
               return;
             }
             await addAppToDesktop(appId, appData);
-            os.notify.send("Added to Desktop", `${appData.title || appId} is now on your desktop.`);
+            os.notify.send(
+              "Added to Desktop",
+              `${appData.title || appId} is now on your desktop.`,
+            );
           } catch (error) {
-            os.notify.send("Add to Desktop", "Could not add the app to your desktop.");
+            os.notify.send(
+              "Add to Desktop",
+              "Could not add the app to your desktop.",
+            );
           }
         },
-        "papirus:devices/computer"
-      )
+        "papirus:devices/computer",
+      ),
     );
 
     menu.appendChild(hr());
@@ -2066,12 +2316,21 @@ function showAppItemContextMenu(e, appId, appData) {
     menu.appendChild(
       item(
         "View in Installed Apps",
-        () => os.app.launch("systemAppsApp", { searchQuery: appData.title || appId }),
-        "papirus:actions/view-grid"
-      )
+        () =>
+          os.app.launch("systemAppsApp", {
+            searchQuery: appData.title || appId,
+          }),
+        "papirus:actions/view-grid",
+      ),
     );
 
-    menu.appendChild(item("Properties", () => showAppProperties(appId, appData), "papirus:actions/help-about"));
+    menu.appendChild(
+      item(
+        "Properties",
+        () => showAppProperties(appId, appData),
+        "papirus:actions/help-about",
+      ),
+    );
 
     menu.appendChild(hr());
 
@@ -2080,11 +2339,15 @@ function showAppItemContextMenu(e, appId, appData) {
         "Customize Icon & Title",
         () => {
           import("../shared/appCustomizer.js").then((m) =>
-            m.showAppCustomizer(appId, appData.title || appId, appData.icon || "")
+            m.showAppCustomizer(
+              appId,
+              appData.title || appId,
+              appData.icon || "",
+            ),
           );
         },
-        "papirus:apps/com.github.cassidyjames.palette"
-      )
+        "papirus:apps/com.github.cassidyjames.palette",
+      ),
     );
 
     menu.appendChild(
@@ -2092,23 +2355,32 @@ function showAppItemContextMenu(e, appId, appData) {
         "Edit Item",
         () => {
           os.dialog
-            .prompt("Edit Item", `Enter a new name for "${appData.title || appId}":`, appData.title || appId)
+            .prompt(
+              "Edit Item",
+              `Enter a new name for "${appData.title || appId}":`,
+              appData.title || appId,
+            )
             .then((newName) => {
               if (newName === null) return;
               const appRegistry = getAppRegistry();
               if (newName.trim() === "") {
                 appRegistry.resetAppName(appId);
-                appData.title = appRegistry.getAppDisplayName(appId, appData.title);
+                appData.title = appRegistry.getAppDisplayName(
+                  appId,
+                  appData.title,
+                );
               } else {
                 appRegistry.setAppName(appId, newName.trim());
                 appData.title = newName.trim();
               }
-              const entryEl = $(`.start-menu-item[data-app="${CSS.escape(appId)}"] .app-title`);
+              const entryEl = $(
+                `.start-menu-item[data-app="${CSS.escape(appId)}"] .app-title`,
+              );
               if (entryEl) entryEl.textContent = appData.title;
             });
         },
-        "papirus:actions/edit"
-      )
+        "papirus:actions/edit",
+      ),
     );
 
     menu.appendChild(hr());
@@ -2119,7 +2391,7 @@ function showAppItemContextMenu(e, appId, appData) {
         async () => {
           const confirmed = await os.dialog.confirm(
             "Uninstall App",
-            `Are you sure you want to uninstall ${appData.title || appId}? You can restore it later.`
+            `Are you sure you want to uninstall ${appData.title || appId}? You can restore it later.`,
           );
           if (confirmed) {
             const appRegistry = getAppRegistry();
@@ -2128,8 +2400,8 @@ function showAppItemContextMenu(e, appId, appData) {
             }
           }
         },
-        "papirus:actions/entry-delete"
-      )
+        "papirus:actions/entry-delete",
+      ),
     );
   });
 }
@@ -2145,23 +2417,30 @@ function showCategoryContextMenu(e, catEl) {
       item(
         "Rename Category",
         () => {
-          os.dialog.prompt("Rename Category", `Enter a new name for this category:`, currentLabel).then((newLabel) => {
-            if (newLabel === null) return;
-            if (newLabel.trim() === "") {
-              setCategoryRename(catName, "");
-              const iconEl = catEl.querySelector("i");
-              const textNode = catEl.childNodes[catEl.childNodes.length - 1];
-              if (textNode) textNode.textContent = ` ${catName.charAt(0).toUpperCase() + catName.slice(1)}`;
-            } else {
-              setCategoryRename(catName, newLabel.trim());
-              const iconEl = catEl.querySelector("i");
-              const textNode = catEl.childNodes[catEl.childNodes.length - 1];
-              if (textNode) textNode.textContent = ` ${newLabel.trim()}`;
-            }
-          });
+          os.dialog
+            .prompt(
+              "Rename Category",
+              `Enter a new name for this category:`,
+              currentLabel,
+            )
+            .then((newLabel) => {
+              if (newLabel === null) return;
+              if (newLabel.trim() === "") {
+                setCategoryRename(catName, "");
+                const iconEl = catEl.querySelector("i");
+                const textNode = catEl.childNodes[catEl.childNodes.length - 1];
+                if (textNode)
+                  textNode.textContent = ` ${catName.charAt(0).toUpperCase() + catName.slice(1)}`;
+              } else {
+                setCategoryRename(catName, newLabel.trim());
+                const iconEl = catEl.querySelector("i");
+                const textNode = catEl.childNodes[catEl.childNodes.length - 1];
+                if (textNode) textNode.textContent = ` ${newLabel.trim()}`;
+              }
+            });
         },
-        "papirus:actions/edit"
-      )
+        "papirus:actions/edit",
+      ),
     );
     if (!isProtected) {
       menu.appendChild(
@@ -2171,8 +2450,8 @@ function showCategoryContextMenu(e, catEl) {
             setCategoryDeleted(catName, true);
             catEl.style.display = "none";
           },
-          "papirus:actions/entry-delete"
-        )
+          "papirus:actions/entry-delete",
+        ),
       );
     }
   });

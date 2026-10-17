@@ -15,10 +15,20 @@ export function fileNameToDisplayName(name) {
     .replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
-export function buildLoadingStateHTML({ winId, iconClass, wrapperClass, textClass, logClass, displayName }) {
+export function buildLoadingStateHTML({
+  winId,
+  iconClass,
+  wrapperClass,
+  textClass,
+  logClass,
+  displayName,
+}) {
   const wc = wrapperClass || "yuki-loading-indicator emu-state emu-load-wrap";
   const ic = iconClass || "fas fa-spinner fa-spin";
-  const indicator = buildLoadingIndicator({ label: `Starting <strong>${displayName}</strong>…`, iconClass: ic });
+  const indicator = buildLoadingIndicator({
+    label: `Starting <strong>${displayName}</strong>…`,
+    iconClass: ic,
+  });
   return `
     <div id="${winId}-inner" class="${wc}">
       ${indicator}
@@ -31,7 +41,7 @@ export function buildErrorHTML({
   msg,
   wrapperClass = "emu-state emu-state--error",
   iconClass = "fa-solid fa-triangle-exclamation emu-state-icon",
-  textClass = "emu-state-text emu-state--error"
+  textClass = "emu-state-text emu-state--error",
 }) {
   return `<div class="${wrapperClass}"><i class="${iconClass}"></i><div class="${textClass}">${msg}</div></div>`;
 }
@@ -40,11 +50,26 @@ export function setLog(logEl, msg) {
   if (logEl) logEl.textContent = msg;
 }
 
-export async function saveEmulatorFile({ file, dir, kind = "other", icon, extraDirs = [], emitChanged = false }) {
-  const blob = new Blob([await file.arrayBuffer()], { type: file.type || "application/octet-stream" });
+export async function saveEmulatorFile({
+  file,
+  dir,
+  kind = "other",
+  icon,
+  extraDirs = [],
+  emitChanged = false,
+}) {
+  const blob = new Blob([await file.arrayBuffer()], {
+    type: file.type || "application/octet-stream",
+  });
   await os.fs.writeBinaryFile(dir, file.name, blob, kind, icon);
   for (const extra of extraDirs) {
-    await os.fs.writeBinaryFile(extra.dir, file.name, blob, extra.kind ?? kind, icon);
+    await os.fs.writeBinaryFile(
+      extra.dir,
+      file.name,
+      blob,
+      extra.kind ?? kind,
+      icon,
+    );
   }
   if (emitChanged) os.events.emit(BusEvents.FILE_CHANGED, { path: file.name });
   return blob;
@@ -60,7 +85,7 @@ export async function renderEmulatorFileList({
   deleteBtnSelector,
   deleteAction,
   onCardClick,
-  onReload
+  onReload,
 }) {
   if (!container) return;
   try {
@@ -115,7 +140,7 @@ export async function handleEmulatorUpload({
   successHTML,
   errorHTML,
   onSaved,
-  onReload
+  onReload,
 }) {
   const originalHTML = zone.innerHTML;
   const count = files.length;
@@ -131,7 +156,9 @@ export async function handleEmulatorUpload({
       onReload?.();
     }, 1500);
   } catch (err) {
-    zone.innerHTML = errorHTML ? errorHTML(err.message) : defaultError(err.message);
+    zone.innerHTML = errorHTML
+      ? errorHTML(err.message)
+      : defaultError(err.message);
     setTimeout(() => {
       zone.innerHTML = originalHTML;
     }, 2500);
@@ -204,7 +231,10 @@ export function readLastPlayedRom() {
 
 export function recordLastPlayedRom(fileName) {
   try {
-    os.storage.set(EMULATOR_LAST_PLAYED_KEY, { name: fileName, at: Date.now() });
+    os.storage.set(EMULATOR_LAST_PLAYED_KEY, {
+      name: fileName,
+      at: Date.now(),
+    });
   } catch {}
 }
 
@@ -212,8 +242,10 @@ export function normalizeSavePayload(payload) {
   try {
     if (!payload) return null;
     if (payload instanceof Blob) return payload.size > 0 ? payload : null;
-    if (payload instanceof ArrayBuffer) return payload.byteLength > 0 ? new Blob([payload]) : null;
-    if (ArrayBuffer.isView(payload)) return payload.byteLength > 0 ? new Blob([payload]) : null;
+    if (payload instanceof ArrayBuffer)
+      return payload.byteLength > 0 ? new Blob([payload]) : null;
+    if (ArrayBuffer.isView(payload))
+      return payload.byteLength > 0 ? new Blob([payload]) : null;
   } catch {}
   return null;
 }
@@ -375,8 +407,10 @@ export function applyEmulatorContentSize(iframe, win) {
   const doc = iframe?.contentDocument;
   if (!doc) return false;
   const canvas = doc.querySelector("canvas");
-  const width = (canvas && canvas.width) || doc.documentElement?.scrollWidth || 0;
-  const height = (canvas && canvas.height) || doc.documentElement?.scrollHeight || 0;
+  const width =
+    (canvas && canvas.width) || doc.documentElement?.scrollWidth || 0;
+  const height =
+    (canvas && canvas.height) || doc.documentElement?.scrollHeight || 0;
   if (!width || !height) return false;
   return resizeEmulatorWindow(win, width, height);
 }

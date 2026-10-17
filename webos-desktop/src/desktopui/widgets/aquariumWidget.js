@@ -1,5 +1,9 @@
 import { WidgetBase } from "../widgetManager.js";
-import { FISH_DATA, getFishById, getAllFish } from "../../apps/aquarium/fishCatalog.js";
+import {
+  FISH_DATA,
+  getFishById,
+  getAllFish,
+} from "../../apps/aquarium/fishCatalog.js";
 import { drawSeaFish } from "../../apps/aquarium/fishRender.js";
 
 function randomBetween(a, b) {
@@ -52,7 +56,8 @@ export class AquariumWidget extends WidgetBase {
     this.createSeaweeds();
     this.createBubbles(8);
     if (this.fishes.length === 0) {
-      for (let i = 0; i < this.widgetFishCount; i++) this.fishes.push(this.makeFish());
+      for (let i = 0; i < this.widgetFishCount; i++)
+        this.fishes.push(this.makeFish());
     }
     this.updateCount();
     this.setupCanvas();
@@ -116,7 +121,7 @@ export class AquariumWidget extends WidgetBase {
         xRatio: ((i * 137.5) % 1000) / 1000,
         yOff: Math.random() * 18 + 2,
         r: randomBetween(1, 2),
-        c: `rgba(${180 + Math.floor(Math.random() * 40)},${160 + Math.floor(Math.random() * 40)},${120 + Math.floor(Math.random() * 30)},0.6)`
+        c: `rgba(${180 + Math.floor(Math.random() * 40)},${160 + Math.floor(Math.random() * 40)},${120 + Math.floor(Math.random() * 30)},0.6)`,
       });
     }
   }
@@ -131,7 +136,9 @@ export class AquariumWidget extends WidgetBase {
     return {
       fd,
       id: fd.id,
-      x: overrides.x ?? randomBetween(size, Math.max(size + 10, this.width - size)),
+      x:
+        overrides.x ??
+        randomBetween(size, Math.max(size + 10, this.width - size)),
       y: overrides.y ?? randomBetween(20, Math.max(20, this.height - 20)),
       vx: dir * randomBetween(0.6, 1.4),
       vy: randomBetween(-0.3, 0.3),
@@ -139,7 +146,7 @@ export class AquariumWidget extends WidgetBase {
       phase: Math.random() * Math.PI * 2,
       wiggleSpeed: randomBetween(0.08, 0.16),
       wobble: randomBetween(0.6, 1.1),
-      flip: dir > 0 ? 1 : -1
+      flip: dir > 0 ? 1 : -1,
     };
   }
 
@@ -153,7 +160,7 @@ export class AquariumWidget extends WidgetBase {
         height: randomBetween(28, 56),
         sway: randomBetween(0.5, 1.0),
         phase: Math.random() * Math.PI * 2,
-        width: randomBetween(6, 10)
+        width: randomBetween(6, 10),
       });
     }
   }
@@ -166,18 +173,23 @@ export class AquariumWidget extends WidgetBase {
   makeBubble(randomY = false) {
     return {
       x: randomBetween(10, this.width - 10),
-      y: randomY ? randomBetween(0, this.height) : this.height + randomBetween(6, 16),
+      y: randomY
+        ? randomBetween(0, this.height)
+        : this.height + randomBetween(6, 16),
       r: randomBetween(1.5, 3.5),
       speed: randomBetween(0.3, 0.9),
       sway: randomBetween(0.6, 1.2),
       phase: Math.random() * Math.PI * 2,
-      opacity: randomBetween(0.2, 0.45)
+      opacity: randomBetween(0.2, 0.45),
     };
   }
 
   addFish() {
     if (this.fishes.length >= 12) this.fishes.shift();
-    const fish = this.makeFish({ x: this.width + 20, y: randomBetween(20, this.height - 20) });
+    const fish = this.makeFish({
+      x: this.width + 20,
+      y: randomBetween(20, this.height - 20),
+    });
     fish.vx = -Math.abs(fish.vx);
     fish.flip = -1;
     this.fishes.push(fish);
@@ -262,10 +274,12 @@ export class AquariumWidget extends WidgetBase {
     ctx.save();
     ctx.globalAlpha = 0.06;
     for (let i = 0; i < 2; i++) {
-      const y = h * 0.22 + i * 18 + Math.sin(performance.now() * 0.0003 + i) * 4;
+      const y =
+        h * 0.22 + i * 18 + Math.sin(performance.now() * 0.0003 + i) * 4;
       ctx.beginPath();
       ctx.moveTo(0, y);
-      for (let x = 0; x < w; x += 16) ctx.lineTo(x, y + Math.sin(x * 0.02 + i) * 3);
+      for (let x = 0; x < w; x += 16)
+        ctx.lineTo(x, y + Math.sin(x * 0.02 + i) * 3);
       ctx.lineTo(w, y + 6);
       ctx.lineTo(0, y + 6);
       ctx.closePath();
@@ -277,7 +291,8 @@ export class AquariumWidget extends WidgetBase {
     ctx.fillStyle = "rgba(120,90,40,0.26)";
     ctx.beginPath();
     ctx.moveTo(0, h - gh);
-    for (let x = 0; x <= w; x += 12) ctx.lineTo(x, h - gh + Math.sin(x * 0.08) * 2);
+    for (let x = 0; x <= w; x += 12)
+      ctx.lineTo(x, h - gh + Math.sin(x * 0.08) * 2);
     ctx.lineTo(w, h);
     ctx.lineTo(0, h);
     ctx.closePath();
@@ -301,7 +316,12 @@ export class AquariumWidget extends WidgetBase {
       ctx.beginPath();
       ctx.moveTo(s.x, s.baseY);
       const sway = Math.sin(s.phase) * 10 * s.sway;
-      ctx.quadraticCurveTo(s.x + sway * 0.5, s.baseY - s.height * 0.5, s.x + sway, s.baseY - s.height);
+      ctx.quadraticCurveTo(
+        s.x + sway * 0.5,
+        s.baseY - s.height * 0.5,
+        s.x + sway,
+        s.baseY - s.height,
+      );
       ctx.stroke();
       ctx.restore();
     }
@@ -340,13 +360,14 @@ export class AquariumWidget extends WidgetBase {
         x: Math.round(f.x),
         y: Math.round(f.y),
         vx: Number(f.vx.toFixed(2)),
-        size: Math.round(f.size)
-      }))
+        size: Math.round(f.size),
+      })),
     };
   }
 
   setData(data) {
-    if (!data || !Array.isArray(data.fishes) || data.fishes.length === 0) return;
+    if (!data || !Array.isArray(data.fishes) || data.fishes.length === 0)
+      return;
     this.fishes = data.fishes.slice(0, 12).map((f) => {
       const fd = getFishById(f.id) || pick(FISH_DATA);
       return {
@@ -360,7 +381,7 @@ export class AquariumWidget extends WidgetBase {
         phase: Math.random() * Math.PI * 2,
         wiggleSpeed: randomBetween(0.08, 0.16),
         wobble: randomBetween(0.6, 1.1),
-        flip: f.vx >= 0 ? 1 : -1
+        flip: f.vx >= 0 ? 1 : -1,
       };
     });
   }
@@ -368,7 +389,8 @@ export class AquariumWidget extends WidgetBase {
   destroy() {
     if (this.rafId) cancelAnimationFrame(this.rafId);
     this.rafId = null;
-    if (this.visHandler) document.removeEventListener("visibilitychange", this.visHandler);
+    if (this.visHandler)
+      document.removeEventListener("visibilitychange", this.visHandler);
     if (this.resizeObserver) {
       this.resizeObserver.disconnect();
       this.resizeObserver = null;

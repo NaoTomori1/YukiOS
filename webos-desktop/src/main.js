@@ -74,7 +74,7 @@ const os = initializeOSBridge({
   notificationCenter,
   eventBus: bus,
   trayManager,
-  portManager
+  portManager,
 });
 
 notificationCenter.restorePersistedState();
@@ -101,7 +101,7 @@ const preloaded = {};
     ["jsDosApp", new JsDosApp(os)],
     ["v86app", new V86App(os)],
     ["settingsApp", new SettingsApp(os)],
-    ["appCreatorApp", new AppCreatorApp(os)]
+    ["appCreatorApp", new AppCreatorApp(os)],
   ];
   for (const [key, instance] of apps) {
     preloaded[key] = instance;
@@ -122,7 +122,11 @@ const v86App = preloaded.v86app;
 const settingsApp = preloaded.settingsApp;
 const appCreatorApp = preloaded.appCreatorApp;
 
-const appLauncher = new AppLauncher(windowManager, fileSystemManager, os.app.registry);
+const appLauncher = new AppLauncher(
+  windowManager,
+  fileSystemManager,
+  os.app.registry,
+);
 os.setAppLauncher(appLauncher);
 windowManager.setAppLauncher(appLauncher);
 setGameLauncher(appLauncher);
@@ -157,14 +161,16 @@ SystemUtilities.startTaskbarWeather();
 
 async function start() {
   setTimeout(() => {
-    import("./account/syncEngine.js").then(({ syncPull, syncPush, isSyncEnabledPref }) => {
-      import("./account/session.js").then(({ isLoggedIn }) => {
-        if (isLoggedIn() && isSyncEnabledPref()) {
-          syncPull().catch(() => {});
-          syncPush().catch(() => {});
-        }
-      });
-    });
+    import("./account/syncEngine.js").then(
+      ({ syncPull, syncPush, isSyncEnabledPref }) => {
+        import("./account/session.js").then(({ isLoggedIn }) => {
+          if (isLoggedIn() && isSyncEnabledPref()) {
+            syncPull().catch(() => {});
+            syncPush().catch(() => {});
+          }
+        });
+      },
+    );
   }, 2500);
   try {
     applyIconPack(getIconPack());
@@ -181,10 +187,13 @@ async function start() {
     }
   })();
   if (!papirusEnabled) {
-    const faScript = $('script[src*="font-awesome"], script[src*="fontawesome"]');
+    const faScript = $(
+      'script[src*="font-awesome"], script[src*="fontawesome"]',
+    );
     if (!faScript) {
       const s = createElement("script");
-      s.src = "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/js/all.min.js";
+      s.src =
+        "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/js/all.min.js";
       s.defer = true;
       s.crossOrigin = "anonymous";
       document.head.appendChild(s);
@@ -198,13 +207,19 @@ async function start() {
     } catch {}
   }, 100);
 
-  document.documentElement.style.setProperty("--start-logo-url", `url("${logoImg}")`);
+  document.documentElement.style.setProperty(
+    "--start-logo-url",
+    `url("${logoImg}")`,
+  );
   try {
     applyStartButtonIcon();
   } catch {}
 
   setDesktopUI(desktopUI);
-  await Promise.allSettled([clipboardManager.init(), SystemUtilities.loadWallpaper()]);
+  await Promise.allSettled([
+    clipboardManager.init(),
+    SystemUtilities.loadWallpaper(),
+  ]);
   windowManager.restorePinnedItems();
   desktopPeekManager.setupPeekButton();
 
@@ -231,8 +246,12 @@ async function start() {
   const swf = parseBool(urlParams.get("swf"));
   const steamParam = urlParams.get("steam");
 
-  const pathMatch = window.location.pathname.match(/^\/(app|game)\/(.+)\.html$/);
-  const featureMatch = window.location.pathname.match(/^\/feature\/(.+)\.html$/);
+  const pathMatch = window.location.pathname.match(
+    /^\/(app|game)\/(.+)\.html$/,
+  );
+  const featureMatch = window.location.pathname.match(
+    /^\/feature\/(.+)\.html$/,
+  );
   const isFeatureIndex = window.location.pathname === "/features.html";
 
   if (pathMatch) {
@@ -252,7 +271,7 @@ async function start() {
       workspaces: null,
       widgets: null,
       "audio-mixer": null,
-      "user-accounts": null
+      "user-accounts": null,
     };
     const appId = FEATURE_APP_MAP[featureMatch[1]];
     if (appId) {
@@ -278,91 +297,100 @@ async function start() {
 
   if (window.electronAPI && window.electronAPI.onTrayAction) {
     import("./audioMixer.js").then(({ audioMixer }) => {
-      import("./shared/performanceManager.js").then(({ performanceManager }) => {
-        import("./modeManager.js").then(({ modeManager, MODES }) => {
-          const getSessionMode = () => {
-            const active = modeManager.getActiveModes();
-            if (active.length === 0) return "normal";
-            const m = active[0];
-            if (m === MODES.MAC) return "mac";
-            if (m === MODES.TILING) return "tiling";
-            if (m === MODES.CHROME_OS) return "chromeos";
-            return m;
-          };
+      import("./shared/performanceManager.js").then(
+        ({ performanceManager }) => {
+          import("./modeManager.js").then(({ modeManager, MODES }) => {
+            const getSessionMode = () => {
+              const active = modeManager.getActiveModes();
+              if (active.length === 0) return "normal";
+              const m = active[0];
+              if (m === MODES.MAC) return "mac";
+              if (m === MODES.TILING) return "tiling";
+              if (m === MODES.CHROME_OS) return "chromeos";
+              if (m === MODES.WIN11) return "win11";
+              return m;
+            };
 
-          const syncState = () => {
-            const mixer = audioMixer();
-            const remoteApp = os.app.getInstance(ServiceKeys.REMOTE_HOST);
-            window.electronAPI.sendTrayState({
-              dnd: os.notify.getDoNotDisturb(),
-              muted: mixer ? mixer.muted : false,
-              powerMode: performanceManager.getMode(),
-              sessionMode: getSessionMode(),
-              remoteDesktopActive: !!(remoteApp && remoteApp.hostStreaming),
-              remoteDesktopCode: (remoteApp && remoteApp.hostRoomCode) || null
-            });
-          };
+            const syncState = () => {
+              const mixer = audioMixer();
+              const remoteApp = os.app.getInstance(ServiceKeys.REMOTE_HOST);
+              window.electronAPI.sendTrayState({
+                dnd: os.notify.getDoNotDisturb(),
+                muted: mixer ? mixer.muted : false,
+                powerMode: performanceManager.getMode(),
+                sessionMode: getSessionMode(),
+                remoteDesktopActive: !!(remoteApp && remoteApp.hostStreaming),
+                remoteDesktopCode:
+                  (remoteApp && remoteApp.hostRoomCode) || null,
+              });
+            };
 
-          window.electronAPI.onTrayAction(async ({ action, value }) => {
-            switch (action) {
-              case "toggle-dnd": {
-                const current = os.notify.getDoNotDisturb();
-                os.notify.setDoNotDisturb(!current);
-                window.electronAPI.sendTrayState({ dnd: !current });
-                break;
-              }
-              case "toggle-mute": {
-                const mixer = audioMixer();
-                if (mixer) {
-                  mixer.muted = !mixer.muted;
-                  mixer.applyMasterToAll();
-                  mixer.save();
-                  window.electronAPI.sendTrayState({ muted: mixer.muted });
+            window.electronAPI.onTrayAction(async ({ action, value }) => {
+              switch (action) {
+                case "toggle-dnd": {
+                  const current = os.notify.getDoNotDisturb();
+                  os.notify.setDoNotDisturb(!current);
+                  window.electronAPI.sendTrayState({ dnd: !current });
+                  break;
                 }
-                break;
+                case "toggle-mute": {
+                  const mixer = audioMixer();
+                  if (mixer) {
+                    mixer.muted = !mixer.muted;
+                    mixer.applyMasterToAll();
+                    mixer.save();
+                    window.electronAPI.sendTrayState({ muted: mixer.muted });
+                  }
+                  break;
+                }
+                case "lock-screen": {
+                  os.app.lockSession();
+                  break;
+                }
+                case "set-power-mode": {
+                  performanceManager.setMode(value);
+                  window.electronAPI.sendTrayState({ powerMode: value });
+                  break;
+                }
+                case "set-session-mode": {
+                  modeManager.exitAll();
+                  const modeMap = {
+                    mac: MODES.MAC,
+                    chromeos: MODES.CHROME_OS,
+                    tiling: MODES.TILING,
+                    win11: MODES.WIN11,
+                  };
+                  const modeId = modeMap[value];
+                  if (modeId) modeManager.enter(modeId);
+                  window.electronAPI.sendTrayState({ sessionMode: value });
+                  break;
+                }
+                case "remote-stop": {
+                  try {
+                    await window.electronAPI.stopRemoteHost();
+                  } catch {}
+                  window.electronAPI.sendTrayState({
+                    remoteDesktopActive: false,
+                    remoteDesktopCode: null,
+                  });
+                  break;
+                }
               }
-              case "lock-screen": {
-                os.app.lockSession();
-                break;
-              }
-              case "set-power-mode": {
-                performanceManager.setMode(value);
-                window.electronAPI.sendTrayState({ powerMode: value });
-                break;
-              }
-              case "set-session-mode": {
-                modeManager.exitAll();
-                const modeMap = { mac: MODES.MAC, chromeos: MODES.CHROME_OS, tiling: MODES.TILING };
-                const modeId = modeMap[value];
-                if (modeId) modeManager.enter(modeId);
-                window.electronAPI.sendTrayState({ sessionMode: value });
-                break;
-              }
-              case "remote-stop": {
-                try {
-                  await window.electronAPI.stopRemoteHost();
-                } catch {}
-                window.electronAPI.sendTrayState({
-                  remoteDesktopActive: false,
-                  remoteDesktopCode: null
-                });
-                break;
-              }
-            }
-          });
-
-          syncState();
-          setInterval(() => {
-            const remoteApp = os.app.getInstance(ServiceKeys.REMOTE_HOST);
-            const active = !!(remoteApp && remoteApp.hostStreaming);
-            const code = (remoteApp && remoteApp.hostRoomCode) || null;
-            window.electronAPI.sendTrayState({
-              remoteDesktopActive: active,
-              remoteDesktopCode: code
             });
-          }, 5000);
-        });
-      });
+
+            syncState();
+            setInterval(() => {
+              const remoteApp = os.app.getInstance(ServiceKeys.REMOTE_HOST);
+              const active = !!(remoteApp && remoteApp.hostStreaming);
+              const code = (remoteApp && remoteApp.hostRoomCode) || null;
+              window.electronAPI.sendTrayState({
+                remoteDesktopActive: active,
+                remoteDesktopCode: code,
+              });
+            }, 5000);
+          });
+        },
+      );
     });
   }
 }

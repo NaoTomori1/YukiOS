@@ -1,4 +1,12 @@
-import { unzip, gunzip, strFromU8, zipSync, gzipSync, compressSync, decompressSync } from "fflate";
+import {
+  unzip,
+  gunzip,
+  strFromU8,
+  zipSync,
+  gzipSync,
+  compressSync,
+  decompressSync,
+} from "fflate";
 import { getLibraryUrl } from "./shared/cdnConfig.js";
 import { archiveBaseName, tarStr } from "./utils/utils.js";
 import { os } from "./framework.js";
@@ -6,7 +14,9 @@ import { FileKind, isISOFile } from "./shared/fileKindDetector.js";
 import { ISOFileSystem } from "./isoFS.js";
 
 function toOwnedBytes(data) {
-  return new Uint8Array(data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength));
+  return new Uint8Array(
+    data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength),
+  );
 }
 
 let sevenZipModule = null;
@@ -20,7 +30,7 @@ async function get7zip() {
           return libUrl.replace("7zz.es6.js", "7zz.wasm");
         }
         return prefix + path;
-      }
+      },
     });
   }
   return sevenZipModule;
@@ -52,7 +62,7 @@ const MAGIC_BYTES = {
   lzma: [0x5d, 0x00, 0x00],
   rar4: [0x52, 0x61, 0x72, 0x21, 0x4a, 0x41, 0x52],
   rar5: [0x52, 0x61, 0x72, 0x21, 0x1a, 0x07, 0x01, 0x00],
-  "7z": [0x37, 0x7a, 0xbc, 0xaf, 0x27, 0x1c]
+  "7z": [0x37, 0x7a, 0xbc, 0xaf, 0x27, 0x1c],
 };
 
 function detectArchiveFormat(bytes, fileName) {
@@ -66,11 +76,16 @@ function detectArchiveFormat(bytes, fileName) {
     return true;
   };
 
-  if (checkMagic(MAGIC_BYTES.zip) || checkMagic(MAGIC_BYTES.zip_spanned) || checkMagic(MAGIC_BYTES.zip_empty)) {
+  if (
+    checkMagic(MAGIC_BYTES.zip) ||
+    checkMagic(MAGIC_BYTES.zip_spanned) ||
+    checkMagic(MAGIC_BYTES.zip_empty)
+  ) {
     return "zip";
   }
   if (checkMagic(MAGIC_BYTES["7z"])) return "7z";
-  if (checkMagic(MAGIC_BYTES.rar4) || checkMagic(MAGIC_BYTES.rar5)) return "rar";
+  if (checkMagic(MAGIC_BYTES.rar4) || checkMagic(MAGIC_BYTES.rar5))
+    return "rar";
   if (checkMagic(MAGIC_BYTES.xz)) return "xz";
   if (checkMagic(MAGIC_BYTES.bzip2)) return "bz2";
   if (checkMagic(MAGIC_BYTES.gzip)) return "gz";
@@ -96,14 +111,24 @@ export class ArchiveExtractor {
   }
 
   async createArchive(items, options = {}) {
-    const { format = "zip", compressionLevel = 6, outputPath, archiveName, password = null } = options;
+    const {
+      format = "zip",
+      compressionLevel = 6,
+      outputPath,
+      archiveName,
+      password = null,
+    } = options;
 
     const filesMap = await this.collectFilesRecursively(items);
 
     let zipped;
     if (format === "zip") {
       if (password) {
-        zipped = await this.createZipWithPassword(filesMap, compressionLevel, password);
+        zipped = await this.createZipWithPassword(
+          filesMap,
+          compressionLevel,
+          password,
+        );
       } else {
         zipped = zipSync(filesMap, { level: compressionLevel });
       }
@@ -121,7 +146,9 @@ export class ArchiveExtractor {
     } else if (format === "gz") {
       const fileEntries = Object.entries(filesMap);
       if (fileEntries.length !== 1) {
-        throw new Error("Gzip format only supports single-file compression. Use .tar.gz for multiple files.");
+        throw new Error(
+          "Gzip format only supports single-file compression. Use .tar.gz for multiple files.",
+        );
       }
       const fileEntry = fileEntries[0];
       if (!fileEntry) throw new Error("No file to compress");
@@ -129,7 +156,9 @@ export class ArchiveExtractor {
     } else if (format === "bz2") {
       const fileEntries = Object.entries(filesMap);
       if (fileEntries.length !== 1) {
-        throw new Error("Bzip2 format only supports single-file compression. Use .tar.bz2 for multiple files.");
+        throw new Error(
+          "Bzip2 format only supports single-file compression. Use .tar.bz2 for multiple files.",
+        );
       }
       const fileEntry = fileEntries[0];
       if (!fileEntry) throw new Error("No file to compress");
@@ -145,8 +174,18 @@ export class ArchiveExtractor {
 
     if (outputPath) {
       const uniqueName = await this.fs.getUniqueFileName(outputPath, fullName);
-      await os.fs.writeBinaryFile(outputPath, uniqueName, blob, FileKind.OTHER, "static/icons/zip.webp");
-      return { success: true, path: [...outputPath, uniqueName], name: uniqueName };
+      await os.fs.writeBinaryFile(
+        outputPath,
+        uniqueName,
+        blob,
+        FileKind.OTHER,
+        "static/icons/zip.webp",
+      );
+      return {
+        success: true,
+        path: [...outputPath, uniqueName],
+        name: uniqueName,
+      };
     }
 
     return { success: true, blob, name: fullName };
@@ -154,7 +193,13 @@ export class ArchiveExtractor {
 
   async extract(itemName, currentPath, onComplete, password = null) {
     const lower = itemName.toLowerCase();
-    this.notify(`Extracting "${itemName}"...`, "info", 5000, null, this.appSource);
+    this.notify(
+      `Extracting "${itemName}"...`,
+      "info",
+      5000,
+      null,
+      this.appSource,
+    );
     try {
       let blob;
       try {
@@ -168,7 +213,7 @@ export class ArchiveExtractor {
           "error",
           5000,
           "papirus:status/dialog-warning",
-          this.appSource
+          this.appSource,
         );
         return;
       }
@@ -181,10 +226,20 @@ export class ArchiveExtractor {
       if (detectedFormat === "zip" && !password) {
         await this.extractZip(toOwnedBytes(bytes), destPath);
       } else if (detectedFormat === "zip" && password) {
-        await this.extractZipWithPassword(toOwnedBytes(bytes), destPath, password);
-      } else if (detectedFormat === "7z" || (lower.endsWith(".7z") && !detectedFormat)) {
+        await this.extractZipWithPassword(
+          toOwnedBytes(bytes),
+          destPath,
+          password,
+        );
+      } else if (
+        detectedFormat === "7z" ||
+        (lower.endsWith(".7z") && !detectedFormat)
+      ) {
         await this.extract7z(toOwnedBytes(bytes), destPath);
-      } else if (detectedFormat === "rar" || (lower.endsWith(".rar") && !detectedFormat)) {
+      } else if (
+        detectedFormat === "rar" ||
+        (lower.endsWith(".rar") && !detectedFormat)
+      ) {
         await this.extractWithArchiveWasm(bytes, destPath, password);
       } else if (lower.endsWith(".tar.gz") || lower.endsWith(".tgz")) {
         const decompressed = await this.gunzipBytes(toOwnedBytes(bytes));
@@ -195,14 +250,20 @@ export class ArchiveExtractor {
       } else if (lower.endsWith(".tar.xz")) {
         const decompressed = await this.xzDecompress(toOwnedBytes(bytes));
         await this.extractTar(decompressed, destPath);
-      } else if (detectedFormat === "xz" || (lower.endsWith(".xz") && !lower.endsWith(".tar.xz"))) {
+      } else if (
+        detectedFormat === "xz" ||
+        (lower.endsWith(".xz") && !lower.endsWith(".tar.xz"))
+      ) {
         const decompressed = await this.xzDecompress(toOwnedBytes(bytes));
         const innerName = itemName.slice(0, -3);
         const blob = new Blob([decompressed]);
         const kind = this.inferFileKind(innerName);
         const icon = this.inferFileIcon(innerName);
         await os.fs.writeBinaryFile(destPath, innerName, blob, kind, icon);
-      } else if (detectedFormat === "bz2" || (lower.endsWith(".bz2") && !lower.endsWith(".tar.bz2"))) {
+      } else if (
+        detectedFormat === "bz2" ||
+        (lower.endsWith(".bz2") && !lower.endsWith(".tar.bz2"))
+      ) {
         const decompressed = await this.bunzip2Bytes(toOwnedBytes(bytes));
         const innerName = itemName.slice(0, -4);
         const blob = new Blob([new Uint8Array(decompressed)]);
@@ -224,7 +285,13 @@ export class ArchiveExtractor {
         await this.extractWithArchiveWasm(bytes, destPath, password);
       }
 
-      this.notify(`Extracted to "${baseName}/"`, "success", 5000, null, this.appSource);
+      this.notify(
+        `Extracted to "${baseName}/"`,
+        "success",
+        5000,
+        null,
+        this.appSource,
+      );
       if (onComplete) await onComplete();
     } catch (err) {
       this.notify(
@@ -232,14 +299,20 @@ export class ArchiveExtractor {
         "error",
         5000,
         "papirus:status/dialog-error",
-        this.appSource
+        this.appSource,
       );
     }
   }
 
   async extractISO(itemName, currentPath, onComplete) {
     const lower = itemName.toLowerCase();
-    this.notify(`Extracting "${itemName}"...`, "info", 5000, null, this.appSource);
+    this.notify(
+      `Extracting "${itemName}"...`,
+      "info",
+      5000,
+      null,
+      this.appSource,
+    );
     try {
       let blob;
       try {
@@ -248,7 +321,13 @@ export class ArchiveExtractor {
         blob = await os.fs.read([...currentPath, itemName]);
       }
       if (!blob) {
-        this.notify(`Could not read "${itemName}"`, "error", 5000, "papirus:status/dialog-warning", this.appSource);
+        this.notify(
+          `Could not read "${itemName}"`,
+          "error",
+          5000,
+          "papirus:status/dialog-warning",
+          this.appSource,
+        );
         return;
       }
       const arrayBuffer = await blob.arrayBuffer();
@@ -256,7 +335,13 @@ export class ArchiveExtractor {
       const destPath = [...currentPath, baseName];
       await os.fs.mkdir(destPath);
       await this.extractISOFromBytes(arrayBuffer, destPath);
-      this.notify(`Extracted to "${baseName}/"`, "success", 5000, null, this.appSource);
+      this.notify(
+        `Extracted to "${baseName}/"`,
+        "success",
+        5000,
+        null,
+        this.appSource,
+      );
       if (onComplete) await onComplete();
     } catch (err) {
       this.notify(
@@ -264,7 +349,7 @@ export class ArchiveExtractor {
         "error",
         5000,
         "papirus:status/dialog-error",
-        this.appSource
+        this.appSource,
       );
     }
   }
@@ -272,7 +357,13 @@ export class ArchiveExtractor {
   async extractISOFromBytes(buffer, destPath) {
     const isoFS = new ISOFileSystem(buffer);
     if (!isoFS.rootDir) {
-      this.notify("Could not parse ISO filesystem", "error", 5000, null, this.appSource);
+      this.notify(
+        "Could not parse ISO filesystem",
+        "error",
+        5000,
+        null,
+        this.appSource,
+      );
       return;
     }
     await this.copyFromISOFS(isoFS, "", destPath);
@@ -284,13 +375,25 @@ export class ArchiveExtractor {
       if (entry.type === "dir" || Object.keys(entry).length === 0) {
         const subDest = [...destPath, name];
         await os.fs.mkdir(subDest);
-        await this.copyFromISOFS(isoFS, dirPath ? `${dirPath}/${name}` : name, subDest);
+        await this.copyFromISOFS(
+          isoFS,
+          dirPath ? `${dirPath}/${name}` : name,
+          subDest,
+        );
       } else {
         const filePath = dirPath ? `${dirPath}/${name}` : name;
         const data = isoFS.readFile(filePath);
         if (!data) continue;
-        const blob = new Blob([new Uint8Array(data)], { type: "application/octet-stream" });
-        await os.fs.writeBinaryFile(destPath, name, blob, entry.kind, entry.icon);
+        const blob = new Blob([new Uint8Array(data)], {
+          type: "application/octet-stream",
+        });
+        await os.fs.writeBinaryFile(
+          destPath,
+          name,
+          blob,
+          entry.kind,
+          entry.icon,
+        );
       }
     }
   }
@@ -338,7 +441,9 @@ export class ArchiveExtractor {
     sevenZip.FS.write(stream, bytes, 0, bytes.length);
     sevenZip.FS.close(stream);
     sevenZip.callMain(["e", tempFileName, `-o${outDir}`, "-y"]);
-    const files = sevenZip.FS.readdir(outDir).filter((f) => f !== "." && f !== "..");
+    const files = sevenZip.FS.readdir(outDir).filter(
+      (f) => f !== "." && f !== "..",
+    );
     if (files.length !== 1) {
       throw new Error(`Expected 1 decompressed file, got ${files.length}`);
     }
@@ -370,7 +475,9 @@ export class ArchiveExtractor {
 
     const cleanupDir = (currentPath) => {
       try {
-        const entries = sevenZip.FS.readdir(currentPath).filter((e) => e !== "." && e !== "..");
+        const entries = sevenZip.FS.readdir(currentPath).filter(
+          (e) => e !== "." && e !== "..",
+        );
         for (const entry of entries) {
           const full = `${currentPath}/${entry}`;
           const stat = sevenZip.FS.stat(full);
@@ -388,7 +495,9 @@ export class ArchiveExtractor {
   }
 
   async collectSevenZipOutput(sevenZip, baseDir, currentDir, destPath) {
-    const entries = sevenZip.FS.readdir(currentDir).filter((f) => f !== "." && f !== "..");
+    const entries = sevenZip.FS.readdir(currentDir).filter(
+      (f) => f !== "." && f !== "..",
+    );
     for (const entry of entries) {
       const fullPath = `${currentDir}/${entry}`;
       const stat = sevenZip.FS.stat(fullPath);
@@ -501,15 +610,26 @@ export class ArchiveExtractor {
         offset += 512;
         const nextSize = parseInt(tarStr(nextHeader, 124, 12).trim(), 8) || 0;
         if (nextTypeflag === "0" || nextTypeflag === "\0") {
-          const longParts = longName.replace(/\\/g, "/").split("/").filter(Boolean);
+          const longParts = longName
+            .replace(/\\/g, "/")
+            .split("/")
+            .filter(Boolean);
           const longFileName = longParts.pop();
           const longSubPath = [...destPath, ...longParts];
           await os.fs.mkdir(longSubPath);
-          const fileBytes = toOwnedBytes(bytes.slice(offset, offset + nextSize));
+          const fileBytes = toOwnedBytes(
+            bytes.slice(offset, offset + nextSize),
+          );
           const blob = new Blob([fileBytes]);
           const kind = this.inferFileKind(longFileName);
           const icon = this.inferFileIcon(longFileName);
-          await os.fs.writeBinaryFile(longSubPath, longFileName, blob, kind, icon);
+          await os.fs.writeBinaryFile(
+            longSubPath,
+            longFileName,
+            blob,
+            kind,
+            icon,
+          );
           offset += Math.ceil(nextSize / 512) * 512;
           continue;
         }
@@ -558,7 +678,11 @@ export class ArchiveExtractor {
             if (content instanceof Blob) {
               bytes = new Uint8Array(await content.arrayBuffer());
             } else if (typeof content === "string") {
-              if (content.startsWith("http") || content.startsWith("/") || content.startsWith("data:")) {
+              if (
+                content.startsWith("http") ||
+                content.startsWith("/") ||
+                content.startsWith("data:")
+              ) {
                 try {
                   const res = await fetch(content);
                   const blob = await res.blob();
@@ -579,14 +703,29 @@ export class ArchiveExtractor {
       const folderEntries = await os.fs.readdir(subPath).catch(() => ({}));
       for (const [childName, childData] of Object.entries(folderEntries)) {
         const childIsFile = childData?.type === "file";
-        await this.collectFileRecursive(subPath, childName, childIsFile, prefix + itemName + "/", filesMap);
+        await this.collectFileRecursive(
+          subPath,
+          childName,
+          childIsFile,
+          prefix + itemName + "/",
+          filesMap,
+        );
       }
     }
   }
 
   inferFileKind(fileName) {
     const ext = fileName.split(".").pop().toLowerCase();
-    const imageExts = ["png", "jpg", "jpeg", "gif", "webp", "svg", "ico", "bmp"];
+    const imageExts = [
+      "png",
+      "jpg",
+      "jpeg",
+      "gif",
+      "webp",
+      "svg",
+      "ico",
+      "bmp",
+    ];
     const textExts = ["txt", "md", "html", "json", "xml", "yaml", "yml", "csv"];
     const audioExts = ["mp3", "wav", "ogg", "flac", "m4a"];
     const videoExts = ["mp4", "webm", "mov", "avi", "mkv"];
@@ -625,7 +764,7 @@ export class ArchiveExtractor {
       webm: "fa-file-video",
       mov: "fa-file-video",
       avi: "fa-file-video",
-      mkv: "fa-file-video"
+      mkv: "fa-file-video",
     };
     return iconMap[ext] || "fa-file";
   }
@@ -760,7 +899,8 @@ export class ArchiveExtractor {
     for (const [relPath, bytes] of Object.entries(filesMap)) {
       const slashIndex = relPath.lastIndexOf("/");
       const dirPath = slashIndex > 0 ? relPath.substring(0, slashIndex) : "";
-      const filename = slashIndex > 0 ? relPath.substring(slashIndex + 1) : relPath;
+      const filename =
+        slashIndex > 0 ? relPath.substring(slashIndex + 1) : relPath;
       writeToFS(dirPath, filename, bytes);
       const topLevelName = relPath.split("/")[0];
       if (!filesToCompress.includes(topLevelName)) {
@@ -778,7 +918,7 @@ export class ArchiveExtractor {
       archiveFile,
       ...filesToCompress.map((f) => `${tempDir}/${f}`),
       `-mx=${compressionLevel}`,
-      "-y"
+      "-y",
     ]);
 
     const result = new Uint8Array(sevenZip.FS.readFile(archiveFile));
@@ -789,7 +929,9 @@ export class ArchiveExtractor {
 
     const cleanupDir = (currentPath) => {
       try {
-        const entries = sevenZip.FS.readdir(currentPath).filter((e) => e !== "." && e !== "..");
+        const entries = sevenZip.FS.readdir(currentPath).filter(
+          (e) => e !== "." && e !== "..",
+        );
         for (const entry of entries) {
           const full = `${currentPath}/${entry}`;
           const stat = sevenZip.FS.stat(full);
@@ -852,7 +994,9 @@ export class ArchiveExtractor {
       }
     } catch (e) {
       if (e.message && e.message.includes("password")) {
-        throw new Error("Incorrect password or encrypted archive not supported");
+        throw new Error(
+          "Incorrect password or encrypted archive not supported",
+        );
       }
       throw e;
     }
@@ -866,10 +1010,13 @@ export class ArchiveExtractor {
         entries.push({
           path,
           data: bytes,
-          type: "FILE"
+          type: "FILE",
         });
       }
-      const result = archiveWasm.create(entries, { password, compressionLevel });
+      const result = archiveWasm.create(entries, {
+        password,
+        compressionLevel,
+      });
       return new Uint8Array(result);
     } catch (e) {
       this.notify(
@@ -877,23 +1024,30 @@ export class ArchiveExtractor {
         "info",
         5000,
         "papirus:actions/help-about",
-        this.appSource
+        this.appSource,
       );
       return zipSync(filesMap, { level: compressionLevel });
     }
   }
 
   async createXz(bytes) {
-    throw new Error("XZ compression not yet implemented via archive-wasm. Use 7zip-wasm fallback.");
+    throw new Error(
+      "XZ compression not yet implemented via archive-wasm. Use 7zip-wasm fallback.",
+    );
   }
 
-  async extractStreaming(itemName, currentPath, onComplete, chunkSize = 1024 * 1024) {
+  async extractStreaming(
+    itemName,
+    currentPath,
+    onComplete,
+    chunkSize = 1024 * 1024,
+  ) {
     this.notify(
       `Streaming extraction not yet implemented. Falling back to full extraction.`,
       "info",
       5000,
       "papirus:actions/help-about",
-      this.appSource
+      this.appSource,
     );
     return this.extract(itemName, currentPath, onComplete);
   }

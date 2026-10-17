@@ -33,16 +33,25 @@
       content="YukiOS is a free browser-based desktop environment with a tiling window manager, macOS-style interface, 3000 games, a terminal with Python &amp; Git, emulators for DOS/Flash/x86/3DS, and 90+ apps - no sign-up or download required. Open source with MIT license."
     />
 
-    <meta property="og:title" content="YukiOS - Free Desktop Environment in Your Browser, No Download Needed" />
+    <meta
+      property="og:title"
+      content="YukiOS - Free Desktop Environment in Your Browser, No Download Needed"
+    />
 
     <meta
       property="og:description"
       content="Turn your browser into a full desktop OS with YukiOS. Tiling window manager, Mac desktop mode, 3000 free games, Python/Node terminal, DOS/Flash/x86 emulators, 90+ apps - all in one browser tab."
     />
 
-    <meta name="twitter:title" content="YukiOS - Free Desktop Environment in Your Browser, No Install Needed" />
+    <meta
+      name="twitter:title"
+      content="YukiOS - Free Desktop Environment in Your Browser, No Install Needed"
+    />
     <meta property="og:type" content="website" />
-    <meta property="og:image" content="https://cdn.jsdelivr.net/gh/Reeyuki/YukiOS@main/.github/yuki-deck.png" />
+    <meta
+      property="og:image"
+      content="https://cdn.jsdelivr.net/gh/Reeyuki/YukiOS@main/.github/yuki-deck.png"
+    />
     <meta property="og:image:width" content="1920" />
     <meta property="og:image:height" content="1080" />
     <meta
@@ -58,7 +67,10 @@
       name="twitter:description"
       content="Browser desktop OS with tiling WM, Mac mode, 3000 games, Python/Node terminal, emulators for DOS/Flash/x86/3DS, themes, wallpapers, PWA support, and 90+ apps - completely free and no download."
     />
-    <meta name="twitter:image" content="https://cdn.jsdelivr.net/gh/Reeyuki/YukiOS@main/.github/yuki-deck.png" />
+    <meta
+      name="twitter:image"
+      content="https://cdn.jsdelivr.net/gh/Reeyuki/YukiOS@main/.github/yuki-deck.png"
+    />
     <meta
       name="twitter:image:alt"
       content="YukiOS browser-based desktop environment showing windowed multitasking with apps, taskbar, and start menu"
@@ -66,14 +78,20 @@
 
     <meta name="application-name" content="YukiOS" />
     <meta name="theme-color" content="#1e1e1e" />
-    <meta name="google-site-verification" content="6D2EMAqnKo-MEhFnlXuyqliO-87DFoI3hfAsWer0KKg" />
+    <meta
+      name="google-site-verification"
+      content="6D2EMAqnKo-MEhFnlXuyqliO-87DFoI3hfAsWer0KKg"
+    />
     <link rel="canonical" href="https://yukios.netlify.app/" />
     <link rel="icon" href="favicon.ico" />
     <link rel="preload" as="image" href="src/assets/logo.png" />
     <script>
       (function () {
         try {
-          var href = new URL("manifest.webmanifest", window.location.href).toString();
+          var href = new URL(
+            "manifest.webmanifest",
+            window.location.href,
+          ).toString();
           var link = document.createElement("link");
           link.rel = "manifest";
           link.href = href;
@@ -133,6 +151,7 @@
     <link href="src/styles/steam.css" rel="stylesheet" />
     <link href="src/styles/style.css" rel="stylesheet" />
     <link href="src/styles/systemUI.css" rel="stylesheet" />
+    <link href="src/styles/contextMenuWin11.css" rel="stylesheet" />
     <link href="src/styles/taskbar.css" rel="stylesheet" />
     <link href="src/styles/widgets.css" rel="stylesheet" />
     <link href="src/styles/themes.css" rel="stylesheet" />
@@ -143,7 +162,14 @@
 
   <body>
     <h1
-      style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap"
+      style="
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+      "
     >
       YukiOS - Free Browser-Based Desktop Environment
     </h1>
@@ -169,21 +195,33 @@
                 alt=""
               />
             </button>
-            <button class="start-lock-btn" id="start-lock-btn" title="Lock System">
+            <button
+              class="start-lock-btn"
+              id="start-lock-btn"
+              title="Lock System"
+            >
               <img
                 src="https://cdn.jsdelivr.net/gh/PapirusDevelopmentTeam/papirus-icon-theme@master/Papirus/22x22/actions/object-locked.svg"
                 class="papirus-icon papirus-icon--32"
                 alt=""
               />
             </button>
-            <button class="start-signout-btn" id="start-signout-btn" title="Sign Out">
+            <button
+              class="start-signout-btn"
+              id="start-signout-btn"
+              title="Sign Out"
+            >
               <img
                 src="https://cdn.jsdelivr.net/gh/PapirusDevelopmentTeam/papirus-icon-theme@master/Papirus/22x22/actions/system-log-out.svg"
                 class="papirus-icon papirus-icon--32"
                 alt=""
               />
             </button>
-            <button class="start-shutdown-btn" id="start-shutdown-btn" title="Shutdown">
+            <button
+              class="start-shutdown-btn"
+              id="start-shutdown-btn"
+              title="Shutdown"
+            >
               <img
                 src="https://cdn.jsdelivr.net/gh/PapirusDevelopmentTeam/papirus-icon-theme@master/Papirus/22x22/actions/system-shutdown.svg"
                 class="papirus-icon papirus-icon--32"
@@ -200,7 +238,11 @@
               class="papirus-icon papirus-icon--22 search-icon"
               alt=""
             />
-            <input id="start-menu-search" placeholder="Search..." autocomplete="off" />
+            <input
+              id="start-menu-search"
+              placeholder="Search..."
+              autocomplete="off"
+            />
           </div>
 
           <div class="start-page active" data-page="all">
@@ -209,7 +251,9 @@
 
           <div class="start-page" data-page="favorites"></div>
 
-          <div class="start-page" data-page="recent"><div class="app-grid"></div></div>
+          <div class="start-page" data-page="recent">
+            <div class="app-grid"></div>
+          </div>
 
           <div class="start-page" data-page="development">
             <div class="app-grid"></div>

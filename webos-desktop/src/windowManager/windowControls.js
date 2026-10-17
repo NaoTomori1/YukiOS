@@ -37,8 +37,13 @@ export function setupWindowControls(win, wm) {
 
   const header = win.querySelector(".window-header");
   if (header) {
-    const isIcon = (target) => !target.closest(".window-controls") && target.matches("img, i, svg, .window-icon");
-    const isHeader = (target) => header.contains(target) && !target.closest(".window-controls") && !isIcon(target);
+    const isIcon = (target) =>
+      !target.closest(".window-controls") &&
+      target.matches("img, i, svg, .window-icon");
+    const isHeader = (target) =>
+      header.contains(target) &&
+      !target.closest(".window-controls") &&
+      !isIcon(target);
     let lastPressTime = 0;
     const handleDoublePress = (target, e) => {
       const now = performance.now();

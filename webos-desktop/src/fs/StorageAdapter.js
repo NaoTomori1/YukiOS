@@ -32,10 +32,15 @@ export class StorageAdapter {
         await this.p("writeFile", path, bytes);
       }
     } catch (e) {
-      console.warn(`safeWriteFile failed for ${path}, trying alternative approach:`, e);
+      console.warn(
+        `safeWriteFile failed for ${path}, trying alternative approach:`,
+        e,
+      );
       try {
         if (content instanceof Uint8Array) {
-          const text = new TextDecoder("utf-8", { fatal: false }).decode(content);
+          const text = new TextDecoder("utf-8", { fatal: false }).decode(
+            content,
+          );
           await this.p("writeFile", path, text);
         } else if (typeof content === "string") {
           await this.p("writeFile", path, content);
@@ -70,7 +75,7 @@ export class StorageAdapter {
       IndexedDBFS.configure(
         {
           fs: "IndexedDB",
-          options: {}
+          options: {},
         },
         async (e) => {
           if (e) {
@@ -87,7 +92,7 @@ export class StorageAdapter {
           }
           this.fs = IndexedDBFS.BFSRequire("fs");
           if (this.resolveFs) this.resolveFs();
-        }
+        },
       );
     };
     attemptInit();

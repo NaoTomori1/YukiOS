@@ -19,10 +19,26 @@ const MAX_RUN_HISTORY = 20;
 const MODES = ["drun", "run", "window", "calc"];
 
 const MODE_CONFIG = {
-  drun: { icon: "papirus:actions/view-grid", label: "Apps", placeholder: "Search apps..." },
-  run: { icon: "papirus:apps/utilities-terminal", label: "Run", placeholder: "Type a command or app name..." },
-  window: { icon: "papirus:actions/window-restore", label: "Windows", placeholder: "Search open windows..." },
-  calc: { icon: "papirus:apps/accessories-calculator", label: "Calc", placeholder: "Type a math expression..." }
+  drun: {
+    icon: "papirus:actions/view-grid",
+    label: "Apps",
+    placeholder: "Search apps...",
+  },
+  run: {
+    icon: "papirus:apps/utilities-terminal",
+    label: "Run",
+    placeholder: "Type a command or app name...",
+  },
+  window: {
+    icon: "papirus:actions/window-restore",
+    label: "Windows",
+    placeholder: "Search open windows...",
+  },
+  calc: {
+    icon: "papirus:apps/accessories-calculator",
+    label: "Calc",
+    placeholder: "Type a math expression...",
+  },
 };
 
 export class TilingRofi {
@@ -138,7 +154,9 @@ export class TilingRofi {
 
   updateModeUI() {
     const cfg = MODE_CONFIG[this.mode];
-    this.overlay.className = this.overlay.className.replace(/rofi-mode-\w+/g, "").trim() + ` rofi-mode-${this.mode}`;
+    this.overlay.className =
+      this.overlay.className.replace(/rofi-mode-\w+/g, "").trim() +
+      ` rofi-mode-${this.mode}`;
     this.modeIndicator.innerHTML = `<i class="fas ${cfg.icon}"></i><span>${cfg.label}</span>`;
     this.inputEl.placeholder = cfg.placeholder;
 
@@ -146,7 +164,7 @@ export class TilingRofi {
       drun: `<kbd>↑</kbd><kbd>↓</kbd> navigate <kbd>Enter</kbd> launch <kbd>Tab</kbd> mode`,
       run: `<kbd>↑</kbd><kbd>↓</kbd> history <kbd>Enter</kbd> execute <kbd>Tab</kbd> mode`,
       window: `<kbd>↑</kbd><kbd>↓</kbd> navigate <kbd>Enter</kbd> focus <kbd>Tab</kbd> mode`,
-      calc: `<kbd>Enter</kbd> copy result <kbd>Tab</kbd> mode`
+      calc: `<kbd>Enter</kbd> copy result <kbd>Tab</kbd> mode`,
     };
     this.footerHints.innerHTML = footerMap[this.mode];
   }
@@ -225,7 +243,14 @@ export class TilingRofi {
     const items = [];
     for (const id of recent) {
       const app = allApps[id];
-      if (app) items.push({ id, title: app.title || id, icon: app.icon, desc: "", type: "app" });
+      if (app)
+        items.push({
+          id,
+          title: app.title || id,
+          icon: app.icon,
+          desc: "",
+          type: "app",
+        });
     }
     this.renderItems(items, "Recently Used");
   }
@@ -237,7 +262,13 @@ export class TilingRofi {
     for (const [id, app] of Object.entries(allApps)) {
       const title = app.title || id;
       if (fuzzyMatch(q, title)) {
-        matched.push({ id, title, icon: app.icon, desc: app.description || "", type: "app" });
+        matched.push({
+          id,
+          title,
+          icon: app.icon,
+          desc: app.description || "",
+          type: "app",
+        });
       }
     }
     matched.sort((a, b) => {
@@ -246,11 +277,14 @@ export class TilingRofi {
       if (aIdx !== bIdx) return aIdx - bIdx;
       return a.title.length - b.title.length;
     });
-    const maxResults = Number(os.storage.get(StorageKeys.tilingRofiMaxResults)) || 10;
+    const maxResults =
+      Number(os.storage.get(StorageKeys.tilingRofiMaxResults)) || 10;
     const sliced = matched.slice(0, maxResults);
     this.renderItems(
       sliced,
-      matched.length > maxResults ? `Apps (${matched.length} found, showing ${maxResults})` : "Apps"
+      matched.length > maxResults
+        ? `Apps (${matched.length} found, showing ${maxResults})`
+        : "Apps",
     );
   }
 
@@ -268,7 +302,10 @@ export class TilingRofi {
       const history = this.getRunHistory();
       const filtered = history.filter((h) => h !== cmd);
       filtered.unshift(cmd);
-      os.storage.set(StorageKeys.tilingRofiRunHistory, JSON.stringify(filtered.slice(0, MAX_RUN_HISTORY)));
+      os.storage.set(
+        StorageKeys.tilingRofiRunHistory,
+        JSON.stringify(filtered.slice(0, MAX_RUN_HISTORY)),
+      );
     } catch {}
   }
 
@@ -279,20 +316,22 @@ export class TilingRofi {
       title: cmd,
       icon: "papirus:actions/document-open-recent",
       desc: "",
-      type: "history"
+      type: "history",
     }));
     this.renderItems(items, items.length ? "Command History" : undefined);
   }
 
   populateRunResults(query) {
     const history = this.getRunHistory();
-    const matched = history.filter((cmd) => cmd.toLowerCase().includes(query.toLowerCase()));
+    const matched = history.filter((cmd) =>
+      cmd.toLowerCase().includes(query.toLowerCase()),
+    );
     const items = matched.map((cmd) => ({
       id: cmd,
       title: cmd,
       icon: "papirus:apps/utilities-terminal",
       desc: "",
-      type: "history"
+      type: "history",
     }));
     if (items.length === 0) {
       this.resultsEl.innerHTML = `<div class="rofi-empty">Press Enter to run &ldquo;${escapeHtml(query)}&rdquo;</div>`;
@@ -334,7 +373,7 @@ export class TilingRofi {
       desc: win.status === "minimized" ? "Minimized" : "",
       type: "window",
       winId: win.winId,
-      status: win.status
+      status: win.status,
     }));
     this.renderItems(items, items.length ? "Open Windows" : undefined);
   }
@@ -342,7 +381,9 @@ export class TilingRofi {
   populateWindowResults(query) {
     const running = os.app.getRunningApps() || [];
     const q = query.toLowerCase();
-    const matched = running.filter((win) => (win.title || win.winId).toLowerCase().includes(q));
+    const matched = running.filter((win) =>
+      (win.title || win.winId).toLowerCase().includes(q),
+    );
     const items = matched.map((win) => ({
       id: win.winId,
       title: win.title || win.winId,
@@ -350,9 +391,12 @@ export class TilingRofi {
       desc: win.status === "minimized" ? "Minimized" : "",
       type: "window",
       winId: win.winId,
-      status: win.status
+      status: win.status,
     }));
-    this.renderItems(items, items.length ? `Open Windows (${items.length})` : undefined);
+    this.renderItems(
+      items,
+      items.length ? `Open Windows (${items.length})` : undefined,
+    );
   }
 
   focusWindow(winId) {
@@ -405,7 +449,7 @@ export class TilingRofi {
         os.notify.send("Calculator", `Copied ${result} to clipboard`, {
           type: "info",
           duration: 2000,
-          icon: "papirus:apps/accessories-calculator"
+          icon: "papirus:apps/accessories-calculator",
         });
       }
     } catch {}
@@ -439,7 +483,8 @@ export class TilingRofi {
           item.icon.startsWith("data:") ||
           item.icon.startsWith("/") ||
           /\.(webp|png|jpg|jpeg|gif|svg)/.test(item.icon));
-      const isPapirus = typeof item.icon === "string" && item.icon.startsWith("papirus:");
+      const isPapirus =
+        typeof item.icon === "string" && item.icon.startsWith("papirus:");
       const isFa =
         typeof item.icon === "string" &&
         (item.icon.startsWith("fa-") ||
@@ -519,7 +564,10 @@ export class TilingRofi {
       const recent = this.getRecentApps();
       const filtered = recent.filter((id) => id !== appId);
       filtered.unshift(appId);
-      os.storage.set(StorageKeys.tilingRofiRecentApps, JSON.stringify(filtered.slice(0, MAX_RECENT)));
+      os.storage.set(
+        StorageKeys.tilingRofiRecentApps,
+        JSON.stringify(filtered.slice(0, MAX_RECENT)),
+      );
     } catch {}
   }
 

@@ -1,7 +1,10 @@
 import { os } from "../framework.js";
 import { resolveIconUrl } from "../shared/assetResolver.js";
 
-export async function resolveAvatarUrl(avatar, fallback = "static/icons/guest.webp") {
+export async function resolveAvatarUrl(
+  avatar,
+  fallback = "static/icons/guest.webp",
+) {
   if (!avatar) return resolveIconUrl(fallback);
   if (avatar.startsWith("fs://")) {
     const filePath = avatar.replace("fs://", "");
@@ -18,7 +21,11 @@ export async function resolveAvatarUrl(avatar, fallback = "static/icons/guest.we
     }
     return resolveIconUrl(fallback);
   }
-  if (!/^https?:\/\//.test(avatar) && !avatar.startsWith("blob:") && !avatar.startsWith("data:")) {
+  if (
+    !/^https?:\/\//.test(avatar) &&
+    !avatar.startsWith("blob:") &&
+    !avatar.startsWith("data:")
+  ) {
     return resolveIconUrl(avatar);
   }
   return avatar;

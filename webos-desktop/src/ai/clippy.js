@@ -4,7 +4,10 @@ import { parseBool } from "../utils/utils.js";
 
 import { BusEvents } from "../core/EventBus.js";
 import { StorageKeys, os, createElement } from "../framework.js";
-const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+const isMobile =
+  /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+    navigator.userAgent,
+  );
 
 export const ClippyAnimation = Object.freeze({
   CheckingSomething: "CheckingSomething",
@@ -27,7 +30,7 @@ export const ClippyAnimation = Object.freeze({
   Searching: "Searching",
   Show: "Show",
   Wave: "Wave",
-  Writing: "Writing"
+  Writing: "Writing",
 });
 
 const CLIPPY_STORAGE_KEY = StorageKeys.clippy;
@@ -116,7 +119,9 @@ async function disableClippyLive() {
 export function initClippy() {
   if (!clippyEventBound) {
     clippyEventBound = true;
-    window.addEventListener("yukios:clippy-toggle", (e) => setClippyEnabled(!!e?.detail?.enabled));
+    window.addEventListener("yukios:clippy-toggle", (e) =>
+      setClippyEnabled(!!e?.detail?.enabled),
+    );
 
     os.events.on(BusEvents.SETTINGS_CHANGED, (settings) => {
       if (settings && typeof settings.clippy !== "undefined") {
@@ -127,7 +132,8 @@ export function initClippy() {
 
   clippyPromise = new Promise((resolve) => {
     const params = new URLSearchParams(window.location.search);
-    if (params.get("game") || isMobile || !isExplicitlyEnabled()) return resolve(null);
+    if (params.get("game") || isMobile || !isExplicitlyEnabled())
+      return resolve(null);
     waitForBootAndInit(resolve);
   });
 
@@ -150,7 +156,8 @@ export async function speak(message, animation) {
   if (!clippyPromise) return;
 
   const now = Date.now();
-  if (message === lastSpokenMessage && now - lastSpokenAt < SPEAK_COOLDOWN_MS) return;
+  if (message === lastSpokenMessage && now - lastSpokenAt < SPEAK_COOLDOWN_MS)
+    return;
   lastSpokenMessage = message;
   lastSpokenAt = now;
 

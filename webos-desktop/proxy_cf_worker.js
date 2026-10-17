@@ -28,7 +28,7 @@ function corsHeaders() {
     "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
     "Access-Control-Allow-Headers": "*",
-    "Access-Control-Max-Age": "86400"
+    "Access-Control-Max-Age": "86400",
   };
 }
 
@@ -88,14 +88,14 @@ export default {
     if (request.method === "OPTIONS") {
       return new Response(null, {
         status: 204,
-        headers: corsHeaders()
+        headers: corsHeaders(),
       });
     }
 
     if (!rateLimit(ip)) {
       return new Response("Rate limit exceeded", {
         status: 429,
-        headers: corsHeaders()
+        headers: corsHeaders(),
       });
     }
 
@@ -107,7 +107,7 @@ export default {
       if (blocked(finalUrl)) {
         return new Response("Blocked", {
           status: 403,
-          headers: corsHeaders()
+          headers: corsHeaders(),
         });
       }
 
@@ -115,9 +115,9 @@ export default {
         method: request.method,
         headers: {
           "User-Agent": "Mozilla/5.0",
-          Accept: "*/*"
+          Accept: "*/*",
         },
-        redirect: "follow"
+        redirect: "follow",
       });
 
       const body = await res.arrayBuffer();
@@ -125,7 +125,7 @@ export default {
       if (body.byteLength > MAX_BYTES) {
         return new Response("Too large", {
           status: 413,
-          headers: corsHeaders()
+          headers: corsHeaders(),
         });
       }
 
@@ -143,15 +143,15 @@ export default {
 
       return new Response(body, {
         status: res.status,
-        headers
+        headers,
       });
     }
 
     return new Response(html(), {
       headers: {
         "content-type": "text/html; charset=utf-8",
-        ...corsHeaders()
-      }
+        ...corsHeaders(),
+      },
     });
-  }
+  },
 };

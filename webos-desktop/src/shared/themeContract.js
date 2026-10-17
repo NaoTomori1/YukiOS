@@ -32,7 +32,7 @@ export const THEME_COLOR_KEYS = [
   "charging",
   "menu-bg",
   "window-bg",
-  "shadow-color"
+  "shadow-color",
 ];
 
 export const THEME_EFFECT_OPTIONS = {
@@ -49,7 +49,7 @@ export const THEME_EFFECT_OPTIONS = {
     "blurReveal",
     "perspective3D",
     "cornerUnfold",
-    "slideInGrowth"
+    "slideInGrowth",
   ],
   close: [
     "instant",
@@ -60,7 +60,7 @@ export const THEME_EFFECT_OPTIONS = {
     "burn",
     "shrinkToPoint",
     "dissolveBlur",
-    "fallApart"
+    "fallApart",
   ],
   minimize: [
     "instant",
@@ -69,12 +69,19 @@ export const THEME_EFFECT_OPTIONS = {
     "magicLamp",
     "fadeToTaskbar",
     "elasticStretch",
-    "spiralDown"
+    "spiralDown",
   ],
-  restore: ["fromTaskbar", "scaleCenter", "fade", "slideUp", "instant"]
+  restore: ["fromTaskbar", "scaleCenter", "fade", "slideUp", "instant"],
 };
 
-export const THEME_CONFIG_FONTS = ["opensans", "inter", "rubik", "sora", "jetbrainsmono", "monocraft"];
+export const THEME_CONFIG_FONTS = [
+  "opensans",
+  "inter",
+  "rubik",
+  "sora",
+  "jetbrainsmono",
+  "monocraft",
+];
 export const THEME_CONFIG_DENSITIES = ["compact", "comfortable", "spacious"];
 
 const COLOR_VALUE_RE =
@@ -116,12 +123,18 @@ export function sanitizeThemeContract(input) {
   if (!name || name.length > 48) {
     errors.push("Theme name must be 1-48 characters");
   }
-  const description = typeof input.description === "string" ? input.description.trim().slice(0, 200) : "";
-  const author = typeof input.author === "string" ? input.author.trim().slice(0, 32) : "";
-  const icon = typeof input.icon === "string" ? input.icon.trim().slice(0, 64) : "";
+  const description =
+    typeof input.description === "string"
+      ? input.description.trim().slice(0, 200)
+      : "";
+  const author =
+    typeof input.author === "string" ? input.author.trim().slice(0, 32) : "";
+  const icon =
+    typeof input.icon === "string" ? input.icon.trim().slice(0, 64) : "";
 
   const colors = {};
-  const rawColors = input.colors && typeof input.colors === "object" ? input.colors : {};
+  const rawColors =
+    input.colors && typeof input.colors === "object" ? input.colors : {};
   THEME_COLOR_KEYS.forEach((key) => {
     const value = sanitizeColorValue(rawColors[key]);
     if (value !== null) colors[key] = value;
@@ -131,7 +144,8 @@ export function sanitizeThemeContract(input) {
   }
 
   const effects = {};
-  const rawEffects = input.effects && typeof input.effects === "object" ? input.effects : {};
+  const rawEffects =
+    input.effects && typeof input.effects === "object" ? input.effects : {};
   if (rawEffects.windowAnimation != null) {
     if (THEME_EFFECT_OPTIONS.open.includes(rawEffects.windowAnimation)) {
       effects.windowAnimation = rawEffects.windowAnimation;
@@ -161,11 +175,20 @@ export function sanitizeThemeContract(input) {
   }
 
   const config = {};
-  const rawConfig = input.config && typeof input.config === "object" ? input.config : {};
-  if (THEME_CONFIG_FONTS.includes(rawConfig.fontFamily)) config.fontFamily = rawConfig.fontFamily;
-  if (THEME_CONFIG_DENSITIES.includes(rawConfig.density)) config.density = rawConfig.density;
-  if (typeof rawConfig.windowTransparency === "number" && Number.isFinite(rawConfig.windowTransparency)) {
-    config.windowTransparency = Math.max(20, Math.min(100, Math.round(rawConfig.windowTransparency)));
+  const rawConfig =
+    input.config && typeof input.config === "object" ? input.config : {};
+  if (THEME_CONFIG_FONTS.includes(rawConfig.fontFamily))
+    config.fontFamily = rawConfig.fontFamily;
+  if (THEME_CONFIG_DENSITIES.includes(rawConfig.density))
+    config.density = rawConfig.density;
+  if (
+    typeof rawConfig.windowTransparency === "number" &&
+    Number.isFinite(rawConfig.windowTransparency)
+  ) {
+    config.windowTransparency = Math.max(
+      20,
+      Math.min(100, Math.round(rawConfig.windowTransparency)),
+    );
   }
 
   if (errors.length > 0) {
@@ -181,12 +204,20 @@ export function sanitizeThemeContract(input) {
     icon: icon || "fas fa-palette",
     colors,
     effects,
-    config
+    config,
   };
   return { ok: true, contract, errors: [] };
 }
 
-export function buildThemeContract({ name, description, author, icon, colors, effects, config } = {}) {
+export function buildThemeContract({
+  name,
+  description,
+  author,
+  icon,
+  colors,
+  effects,
+  config,
+} = {}) {
   const result = sanitizeThemeContract({
     schemaVersion: THEME_CONTRACT_VERSION,
     type: "yukios-theme",
@@ -196,7 +227,7 @@ export function buildThemeContract({ name, description, author, icon, colors, ef
     icon,
     colors,
     effects: effects || {},
-    config: config || {}
+    config: config || {},
   });
   if (!result.ok) {
     throw new Error(result.errors[0]);
@@ -211,7 +242,7 @@ export function themeToContract(theme, effects) {
     author: "",
     icon: theme.icon || "fas fa-palette",
     colors: theme.colors,
-    effects: effects || {}
+    effects: effects || {},
   });
 }
 
@@ -240,7 +271,7 @@ export function contractToThemeData(contract) {
     label: contract.name,
     icon: contract.icon,
     colors: contract.colors,
-    effects: contract.effects
+    effects: contract.effects,
   };
 }
 

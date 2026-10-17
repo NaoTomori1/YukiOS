@@ -1,14 +1,33 @@
 import { formatSize } from "../utils/utils.js";
-import { isLoggedIn, accountLogin, accountRegister, accountSignOut, fetchAccountInfo, updateAccountInfo, onAccountChange, getSession } from "./session.js";
-import { buildBundle, componentSizes, isSyncEnabledPref, setSyncEnabledPref, getToggles, setToggle, syncPush, syncPull } from "./syncEngine.js";
+import {
+  isLoggedIn,
+  accountLogin,
+  accountRegister,
+  accountSignOut,
+  fetchAccountInfo,
+  updateAccountInfo,
+  onAccountChange,
+  getSession,
+} from "./session.js";
+import {
+  buildBundle,
+  componentSizes,
+  isSyncEnabledPref,
+  setSyncEnabledPref,
+  getToggles,
+  setToggle,
+  syncPush,
+  syncPull,
+} from "./syncEngine.js";
 
 export class AccountAPI {
   constructor() {
-this.client = {
+    this.client = {
       signIn: ({ email, password }) => accountLogin(email, password),
-      signUp: ({ username, email, password }) => accountRegister({ nickname: username || email, password }),
+      signUp: ({ username, email, password }) =>
+        accountRegister({ nickname: username || email, password }),
       signOut: () => accountSignOut(),
-      getUser: () => getSession()
+      getUser: () => getSession(),
     };
   }
 
@@ -36,11 +55,11 @@ this.client = {
     return fetchAccountInfo(remote);
   }
 
-async updateInfo(user) {
+  async updateInfo(user) {
     return updateAccountInfo({
       nickname: user?.name ?? user?.nickname ?? user?.username,
       avatarIndex: user?.avatarIndex ?? user?.avatar,
-      bio: user?.bio
+      bio: user?.bio,
     });
   }
 
@@ -57,7 +76,7 @@ async updateInfo(user) {
     getEnabledComponents: () => componentSizes(buildBundle()),
     buildBundle: () => buildBundle(),
     push: () => syncPush(),
-    pull: (remoteData) => syncPull(remoteData)
+    pull: (remoteData) => syncPull(remoteData),
   };
 
   onAccountChange = onAccountChange;

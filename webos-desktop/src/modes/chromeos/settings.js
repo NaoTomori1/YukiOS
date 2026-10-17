@@ -4,9 +4,10 @@ import { $, $$, bindEvent, toggleClass } from "../../shared/domUtils.js";
 
 function getSettings() {
   return {
-    shelfPosition: os.storage.get(StorageKeys.chromeOsShelfPosition) || "bottom",
+    shelfPosition:
+      os.storage.get(StorageKeys.chromeOsShelfPosition) || "bottom",
     shelfAutoHide: os.storage.get(StorageKeys.chromeOsShelfAutoHide) === "true",
-    clock24h: os.storage.get(StorageKeys.chromeOsClock24h) === "true"
+    clock24h: os.storage.get(StorageKeys.chromeOsClock24h) === "true",
   };
 }
 
@@ -57,7 +58,9 @@ export function renderChromeOsSettings() {
 
 export function bindChromeOsCategory(win, showSaved) {
   const applyShelfPosition = (pos) => {
-    $$(".settings-btn[data-shelf-pos]", win).forEach((b) => toggleClass(b, "active", b.dataset.shelfPos === pos));
+    $$(".settings-btn[data-shelf-pos]", win).forEach((b) =>
+      toggleClass(b, "active", b.dataset.shelfPos === pos),
+    );
     os.storage.set(StorageKeys.chromeOsShelfPosition, pos);
     const shelf = $("#chromeos-shelf");
     if (shelf) {
@@ -94,7 +97,10 @@ export function bindChromeOsCategory(win, showSaved) {
   const clock24hToggle = $("#settingsChromeOsClock24h", win);
   if (clock24hToggle) {
     bindEvent(clock24hToggle, "change", () => {
-      os.storage.set(StorageKeys.chromeOsClock24h, String(clock24hToggle.checked));
+      os.storage.set(
+        StorageKeys.chromeOsClock24h,
+        String(clock24hToggle.checked),
+      );
       os.events.emit(BusEvents.SETTINGS_CHANGED, {});
       showSaved();
     });

@@ -3,8 +3,12 @@ import { BaseApp, StorageKeys, os } from "../framework.js";
 import { $, $$ } from "../framework.js";
 import { resolveIconUrl, resolveGhUrl } from "../shared/assetResolver.js";
 
-const CDN = resolveGhUrl("https://cdn.jsdelivr.net/gh/NaoTomori1/yukios-games@main/html/roblox");
-const CDN_ROBLOX = resolveGhUrl("https://cdn.jsdelivr.net/gh/NaoTomori1/yukios-games@main/roblox");
+const CDN = resolveGhUrl(
+  "https://cdn.jsdelivr.net/gh/NaoTomori1/yukios-games@main/html/roblox",
+);
+const CDN_ROBLOX = resolveGhUrl(
+  "https://cdn.jsdelivr.net/gh/NaoTomori1/yukios-games@main/roblox",
+);
 
 const COVER_MAP = {
   clclimbforbrainrots: "static/icons/roblox/swingbrainrots.webp",
@@ -19,7 +23,7 @@ const COVER_MAP = {
   clobbyyardsale: "static/icons/roblox/yardsale.webp",
   clsabduel: "static/icons/roblox/sabduel.webp",
   clstealbrainrot: "static/icons/roblox/sab.webp",
-  clswingforbrainrots: "static/icons/roblox/swingbrainrots.webp"
+  clswingforbrainrots: "static/icons/roblox/swingbrainrots.webp",
 };
 
 const SUBDIR_GAMES = ["99_nights_in_the_forest", "grow_a_garden"];
@@ -39,10 +43,12 @@ const GAMES = [
   { name: "Steal Brainrot", id: "clstealbrainrot" },
   { name: "Swing for Brainrots", id: "clswingforbrainrots" },
   { name: "99 Nights in the Forest", id: "99_nights_in_the_forest" },
-  { name: "Grow a Garden", id: "grow_a_garden" }
+  { name: "Grow a Garden", id: "grow_a_garden" },
 ];
 
-const FAKE_RATINGS = [4.2, 3.8, 4.5, 3.5, 4.8, 4.0, 3.2, 4.7, 3.9, 4.3, 3.6, 4.1, 4.4, 3.7, 4.6];
+const FAKE_RATINGS = [
+  4.2, 3.8, 4.5, 3.5, 4.8, 4.0, 3.2, 4.7, 3.9, 4.3, 3.6, 4.1, 4.4, 3.7, 4.6,
+];
 
 const SETTINGS_KEY = StorageKeys.robloxSettings;
 
@@ -57,11 +63,13 @@ export class RobloxApp extends BaseApp {
 
   async open() {
     const username = os.storage.get(StorageKeys.username) || "Guest";
-    const avatar = resolveIconUrl(os.storage.get(StorageKeys.profilePicture) || "static/icons/guest.webp");
+    const avatar = resolveIconUrl(
+      os.storage.get(StorageKeys.profilePicture) || "static/icons/guest.webp",
+    );
 
     const win = os.window.create("roblox-win", "Roblox", "1000px", "650px", {
       icon: resolveIconUrl("static/icons/roblox.webp"),
-      appId: "roblox"
+      appId: "roblox",
     });
     win.innerHTML = `
             <div class="roblox-app">
@@ -131,7 +139,7 @@ export class RobloxApp extends BaseApp {
     this.pages = {
       home: element.querySelector("#roblox-page-home"),
       stats: element.querySelector("#roblox-page-stats"),
-      settings: element.querySelector("#roblox-page-settings")
+      settings: element.querySelector("#roblox-page-settings"),
     };
     this.games = this.buildGames();
     this.history = this.loadHistory();
@@ -146,7 +154,9 @@ export class RobloxApp extends BaseApp {
     this.navBtns.forEach((btn) => {
       btn.addEventListener("click", () => this.switchPage(btn.dataset.page));
     });
-    this.navSettings.addEventListener("click", () => this.switchPage("settings"));
+    this.navSettings.addEventListener("click", () =>
+      this.switchPage("settings"),
+    );
 
     this.renderHome();
     this.initContinueScroll();
@@ -154,7 +164,13 @@ export class RobloxApp extends BaseApp {
 
   loadSettings() {
     try {
-      return os.storage.get(SETTINGS_KEY) || { showRatings: true, showContinue: true, cardSize: "normal" };
+      return (
+        os.storage.get(SETTINGS_KEY) || {
+          showRatings: true,
+          showContinue: true,
+          cardSize: "normal",
+        }
+      );
     } catch {
       return { showRatings: true, showContinue: true, cardSize: "normal" };
     }
@@ -166,7 +182,9 @@ export class RobloxApp extends BaseApp {
 
   switchPage(page) {
     this.currentPage = page;
-    this.navBtns.forEach((btn) => btn.classList.toggle("active", btn.dataset.page === page));
+    this.navBtns.forEach((btn) =>
+      btn.classList.toggle("active", btn.dataset.page === page),
+    );
     Object.entries(this.pages).forEach(([key, el]) => {
       el.style.display = key === page ? "" : "none";
     });
@@ -178,8 +196,12 @@ export class RobloxApp extends BaseApp {
     return GAMES.map((game, i) => ({
       ...game,
       rating: FAKE_RATINGS[i],
-      cover: COVER_MAP[game.id] ? resolveIconUrl(COVER_MAP[game.id]) : `${CDN}/covers/${game.id}.svg`,
-      url: SUBDIR_GAMES.includes(game.id) ? `${CDN_ROBLOX}/${game.id}/index.html` : `${CDN}/${game.id}.html`
+      cover: COVER_MAP[game.id]
+        ? resolveIconUrl(COVER_MAP[game.id])
+        : `${CDN}/covers/${game.id}.svg`,
+      url: SUBDIR_GAMES.includes(game.id)
+        ? `${CDN_ROBLOX}/${game.id}/index.html`
+        : `${CDN}/${game.id}.html`,
     }));
   }
 
@@ -188,7 +210,10 @@ export class RobloxApp extends BaseApp {
       let data = os.storage.get(StorageKeys.robloxPlayed);
       if (!data) return [];
       if (typeof data[0] === "string") {
-        data = data.map((id) => ({ id, date: new Date().toISOString().slice(0, 10) }));
+        data = data.map((id) => ({
+          id,
+          date: new Date().toISOString().slice(0, 10),
+        }));
         os.storage.set(StorageKeys.robloxPlayed, data);
       }
       return data;
@@ -217,7 +242,9 @@ export class RobloxApp extends BaseApp {
 
   renderHome() {
     const filtered = this.searchQuery
-      ? this.games.filter((g) => g.name.toLowerCase().includes(this.searchQuery))
+      ? this.games.filter((g) =>
+          g.name.toLowerCase().includes(this.searchQuery),
+        )
       : this.games;
 
     if (this.settings.showContinue) {
@@ -231,7 +258,9 @@ export class RobloxApp extends BaseApp {
   renderContinue(allGames) {
     const continueGames = this.searchQuery
       ? allGames.filter((g) => this.playedIds.includes(g.id))
-      : this.playedIds.map((id) => this.games.find((g) => g.id === id)).filter(Boolean);
+      : this.playedIds
+          .map((id) => this.games.find((g) => g.id === id))
+          .filter(Boolean);
 
     if (continueGames.length === 0) {
       this.continueSection.style.display = "none";
@@ -239,12 +268,16 @@ export class RobloxApp extends BaseApp {
     }
     this.continueSection.style.display = "";
 
-    this.continueTrack.innerHTML = continueGames.map((game) => this.cardHtml(game)).join("");
+    this.continueTrack.innerHTML = continueGames
+      .map((game) => this.cardHtml(game))
+      .join("");
     this.bindCards(this.continueTrack);
   }
 
   renderRecommended(allGames) {
-    this.recommendedGrid.innerHTML = allGames.map((game) => this.cardHtml(game, this.settings.showRatings)).join("");
+    this.recommendedGrid.innerHTML = allGames
+      .map((game) => this.cardHtml(game, this.settings.showRatings))
+      .join("");
     this.bindCards(this.recommendedGrid);
   }
 
@@ -321,7 +354,7 @@ export class RobloxApp extends BaseApp {
         e.preventDefault();
         this.continueScroll.scrollLeft += e.deltaY;
       },
-      { passive: false }
+      { passive: false },
     );
   }
 
@@ -334,7 +367,7 @@ export class RobloxApp extends BaseApp {
         appId: `roblox-${id}`,
         type: "game",
         source: url,
-        originalName: name
+        originalName: name,
       });
     }
   }
@@ -408,16 +441,21 @@ export class RobloxApp extends BaseApp {
       });
     });
 
-    this.settingsBody.querySelector("#roblox-reset-history").addEventListener("click", async () => {
-      const confirmed = await os.dialog.confirm("Reset History", "Are you sure you want to clear all play history?");
-      if (confirmed) {
-        this.history = [];
-        this.playedIds = [];
-        os.storage.set(StorageKeys.robloxPlayed, []);
-        this.renderHome();
-        this.renderStats();
-      }
-    });
+    this.settingsBody
+      .querySelector("#roblox-reset-history")
+      .addEventListener("click", async () => {
+        const confirmed = await os.dialog.confirm(
+          "Reset History",
+          "Are you sure you want to clear all play history?",
+        );
+        if (confirmed) {
+          this.history = [];
+          this.playedIds = [];
+          os.storage.set(StorageKeys.robloxPlayed, []);
+          this.renderHome();
+          this.renderStats();
+        }
+      });
   }
 
   onClose(winId) {

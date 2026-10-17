@@ -72,7 +72,12 @@ export function bindRecentFiles(win) {
 
     const rows = recent
       .map((f, index) => {
-        const path = typeof f.path === "string" ? f.path : Array.isArray(f.path) ? f.path.join("/") : "";
+        const path =
+          typeof f.path === "string"
+            ? f.path
+            : Array.isArray(f.path)
+              ? f.path.join("/")
+              : "";
         return `
           <div class="settings-row recent-file-row" data-index="${index}">
             <span class="recent-file-icon">${fileIconHtml(f.name)}</span>
@@ -101,7 +106,10 @@ export function bindRecentFiles(win) {
       bindEvent(btn, "click", () => {
         const entry = readRecentFiles()[Number(btn.dataset.index)];
         if (!entry) return;
-        const dir = typeof entry.path === "string" ? entry.path.split("/").filter(Boolean) : entry.path;
+        const dir =
+          typeof entry.path === "string"
+            ? entry.path.split("/").filter(Boolean)
+            : entry.path;
         openFileWith({ name: entry.name, path: dir });
       });
     });
@@ -113,7 +121,7 @@ export function bindRecentFiles(win) {
         if (!entry) return;
         const confirmed = await os.dialog.confirm(
           "Remove from History",
-          `Remove "${entry.name}" from your recent files?`
+          `Remove "${entry.name}" from your recent files?`,
         );
         if (!confirmed) return;
         const next = readRecentFiles().filter((_, i) => i !== index);
@@ -125,7 +133,10 @@ export function bindRecentFiles(win) {
     const clearBtn = container.querySelector(".recent-file-clear");
     if (clearBtn) {
       bindEvent(clearBtn, "click", async () => {
-        const confirmed = await os.dialog.confirm("Clear History", "Remove all recent files? This cannot be undone.");
+        const confirmed = await os.dialog.confirm(
+          "Clear History",
+          "Remove all recent files? This cannot be undone.",
+        );
         if (!confirmed) return;
         os.storage.set(StorageKeys.recentFiles, []);
         renderList();

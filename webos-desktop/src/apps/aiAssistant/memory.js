@@ -102,7 +102,7 @@ export class AIMemory {
           id,
           title: this.buildChatTitle(legacy),
           createdAt: Date.now(),
-          messages: legacy
+          messages: legacy,
         };
         await this.saveChats({ [id]: chat }, id);
         os.storage.remove(this.CHAT_KEY);
@@ -128,7 +128,9 @@ export class AIMemory {
 
   buildChatTitle(messages) {
     const first = messages.find((message) => message.role === "user");
-    const content = first ? String(first.content).replace(/\s+/g, " ").trim() : "";
+    const content = first
+      ? String(first.content).replace(/\s+/g, " ").trim()
+      : "";
     if (!content) {
       return "New Chat";
     }
@@ -172,7 +174,7 @@ export class AIMemory {
     return {
       session: Object.fromEntries(this.sessionMemory),
       context: Object.fromEntries(this.contextMemory),
-      preferences: Object.fromEntries(this.preferences)
+      preferences: Object.fromEntries(this.preferences),
     };
   }
 
@@ -182,7 +184,7 @@ export class AIMemory {
       context: Object.fromEntries(this.contextMemory),
       preferences: Object.fromEntries(this.preferences),
       chatHistory: this.chatHistory.slice(-10),
-      timestamp: Date.now()
+      timestamp: Date.now(),
     };
   }
 

@@ -5,7 +5,7 @@ export const ADSTERRA_KEYS = {
   leaderboard: "28c33f91ee21bcf1063e489aae3024f8",
   rectangle: "914131b4a8e7414d1576d6d7c5a6c87f",
   storeWide: "f88fd46583493c3820f283948e5e5391",
-  storeRect: "ee9dc67de90729e2804aa8aba6454ec8"
+  storeRect: "ee9dc67de90729e2804aa8aba6454ec8",
 };
 
 export function hardenAdEnvironment() {
@@ -35,7 +35,14 @@ export function shouldEnableAds() {
   return true;
 }
 
-export function injectAdsterraAd(containerId, key, width, height, delay = 0, format = "iframe") {
+export function injectAdsterraAd(
+  containerId,
+  key,
+  width,
+  height,
+  delay = 0,
+  format = "iframe",
+) {
   const doInject = () => {
     const slot = $("#" + containerId);
     if (!slot) return;
@@ -61,7 +68,8 @@ export function injectNativeAd(containerId) {
   const s = createElement("script");
   s.async = true;
   s.setAttribute("data-cfasync", "false");
-  s.src = "https://pl29381085.effectivecpmnetwork.com/5f797791a9771b6940fb9385a69ce168/invoke.js";
+  s.src =
+    "https://pl29381085.effectivecpmnetwork.com/5f797791a9771b6940fb9385a69ce168/invoke.js";
   slot.appendChild(s);
 }
 
@@ -75,9 +83,11 @@ export function initPopunder() {
 
 export function suppressAdBlocks(container) {
   if (!container) return;
-  container.querySelectorAll(".store-ad-block, [id^='container-']").forEach((el) => {
-    el.style.display = "none";
-  });
+  container
+    .querySelectorAll(".store-ad-block, [id^='container-']")
+    .forEach((el) => {
+      el.style.display = "none";
+    });
 }
 
 export function buildGameAdBannerHtml(key) {

@@ -67,7 +67,12 @@
   position: relative;
   aspect-ratio: 16 / 9;
   overflow: hidden;
-  background: radial-gradient(circle at 30% 20%, var(--bg-secondary), var(--glass) 60%, var(--bg-primary));
+  background: radial-gradient(
+    circle at 30% 20%,
+    var(--bg-secondary),
+    var(--glass) 60%,
+    var(--bg-primary)
+  );
   flex-shrink: 0;
 }
 
@@ -210,14 +215,22 @@
   height: 8px;
   border-radius: 6px;
   border: 1px solid var(--border);
-  background: linear-gradient(to right, var(--brand) 0 var(--p, 0%), var(--glass) var(--p, 0%));
+  background: linear-gradient(
+    to right,
+    var(--brand) 0 var(--p, 0%),
+    var(--glass) var(--p, 0%)
+  );
 }
 
 .mp-seek::-moz-range-track {
   height: 8px;
   border-radius: 6px;
   border: 1px solid var(--border);
-  background: linear-gradient(to right, var(--brand) 0 var(--p, 0%), var(--glass) var(--p, 0%));
+  background: linear-gradient(
+    to right,
+    var(--brand) 0 var(--p, 0%),
+    var(--glass) var(--p, 0%)
+  );
 }
 
 .mp-seek::-webkit-slider-thumb {

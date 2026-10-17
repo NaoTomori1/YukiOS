@@ -1,9 +1,17 @@
 import { resolveGhUrl, resolveIconUrl } from "../shared/assetResolver.js";
 import { audioMixer } from "../audioMixer.js";
-import { BaseApp, os, StorageKeys, MODES, $, createElement } from "../framework.js";
+import {
+  BaseApp,
+  os,
+  StorageKeys,
+  MODES,
+  $,
+  createElement,
+} from "../framework.js";
 const SHITTIFY_ICON = resolveIconUrl("/static/icons/shittify.webp");
 
-const SHITTIFY_CDN_URL = "https://cdn.jsdelivr.net/gh/Reeyuki/shittifylol@master/shittify21.html";
+const SHITTIFY_CDN_URL =
+  "https://cdn.jsdelivr.net/gh/Reeyuki/shittifylol@master/shittify21.html";
 
 const SHITTIFY_BRIDGE_SCRIPT = `
 <script>
@@ -238,7 +246,7 @@ export class ShittifyApp extends BaseApp {
     `;
 
     const win = os.window.create(winId, "Evil Spotify", "820px", "600px", {
-      icon: SHITTIFY_ICON
+      icon: SHITTIFY_ICON,
     });
 
     const contentDiv = createElement("div");
@@ -249,14 +257,19 @@ export class ShittifyApp extends BaseApp {
     win.appendChild(contentDiv);
 
     if (!os.modes.isActive(MODES.MAC)) {
-      os.tray.register(winId, SHITTIFY_ICON, "Evil Spotify", { showInTray: true, priority: 1 });
+      os.tray.register(winId, SHITTIFY_ICON, "Evil Spotify", {
+        showInTray: true,
+        priority: 1,
+      });
     }
     audioMixer().registerWindow(
       winId,
       "Evil Spotify",
-      `<img src="${SHITTIFY_ICON}" style="width:14px;height:14px;border-radius:2px;object-fit:contain;vertical-align:middle;" />`
+      `<img src="${SHITTIFY_ICON}" style="width:14px;height:14px;border-radius:2px;object-fit:contain;vertical-align:middle;" />`,
     );
-    audioMixer().setChannelCommandHandler(winId, (cmd, data) => this.sendCommand(cmd, data));
+    audioMixer().setChannelCommandHandler(winId, (cmd, data) =>
+      this.sendCommand(cmd, data),
+    );
     this.setupMessageBridge(winId);
 
     try {
@@ -272,11 +285,16 @@ export class ShittifyApp extends BaseApp {
             url = url.replace(/\/shittifylol\//i, "/shittifylol@master/");
           }
           return resolveGhUrl(url);
-        }
+        },
       );
 
-      const injected = html.replace(/<\/head>/i, `${SHITTIFY_BRIDGE_SCRIPT}</head>`);
-      const blobUrl = URL.createObjectURL(new Blob([injected], { type: "text/html" }));
+      const injected = html.replace(
+        /<\/head>/i,
+        `${SHITTIFY_BRIDGE_SCRIPT}</head>`,
+      );
+      const blobUrl = URL.createObjectURL(
+        new Blob([injected], { type: "text/html" }),
+      );
 
       const content = win.querySelector(".window-content");
       if (content) {
@@ -298,7 +316,12 @@ export class ShittifyApp extends BaseApp {
         });
       }
     } catch (err) {
-      this.notify("Evil Spotify", `Failed to load: ${err.message}`, "error", 5000);
+      this.notify(
+        "Evil Spotify",
+        `Failed to load: ${err.message}`,
+        "error",
+        5000,
+      );
       const content = win.querySelector(".window-content");
       if (content) {
         content.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;height:100%;flex-direction:column;gap:12px;opacity:0.6;"><i class="fas fa-exclamation-circle" style="font-size:2em;"></i><span>Failed to load Evil Spotify</span><span style="font-size:0.75em;opacity:0.6;">${err.message}</span></div>`;
@@ -317,11 +340,21 @@ export class ShittifyApp extends BaseApp {
       if (
         d.track &&
         d.artist &&
-        (d.track !== last.track || d.artist !== last.artist || d.playbackState !== last.state)
+        (d.track !== last.track ||
+          d.artist !== last.artist ||
+          d.playbackState !== last.state)
       ) {
-        os.storage.set(StorageKeys.shittifyLastState, { track: d.track, artist: d.artist, state: d.playbackState });
+        os.storage.set(StorageKeys.shittifyLastState, {
+          track: d.track,
+          artist: d.artist,
+          state: d.playbackState,
+        });
       }
-      this.lastTrackMeta = { track: d.track, artist: d.artist, state: d.playbackState };
+      this.lastTrackMeta = {
+        track: d.track,
+        artist: d.artist,
+        state: d.playbackState,
+      };
       audioMixer().updateChannelMeta(winId, {
         track: d.track || "",
         artist: d.artist || "",
@@ -330,7 +363,7 @@ export class ShittifyApp extends BaseApp {
         playbackState: d.playbackState || "none",
         position: Number(d.position) || 0,
         duration: Number(d.duration) || 0,
-        volume: d.volume == null ? 1 : Number(d.volume)
+        volume: d.volume == null ? 1 : Number(d.volume),
       });
     };
     window.addEventListener("message", this.msgListener);
@@ -338,7 +371,10 @@ export class ShittifyApp extends BaseApp {
 
   sendCommand(cmd, data = {}) {
     if (this.iframe && this.iframe.contentWindow) {
-      this.iframe.contentWindow.postMessage({ __shittify_cmd: true, cmd, data }, "*");
+      this.iframe.contentWindow.postMessage(
+        { __shittify_cmd: true, cmd, data },
+        "*",
+      );
     }
   }
 

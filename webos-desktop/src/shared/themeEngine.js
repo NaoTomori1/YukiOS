@@ -39,8 +39,8 @@ const BUILTIN_THEMES = [
       charging: "oklch(65% 0.19 145)",
       "menu-bg": "oklch(20% 0.005 250)",
       "window-bg": "oklch(16% 0.005 250)",
-      "shadow-color": "rgba(0, 0, 0, 0.65)"
-    }
+      "shadow-color": "rgba(0, 0, 0, 0.65)",
+    },
   },
   {
     value: "yukios",
@@ -80,8 +80,8 @@ const BUILTIN_THEMES = [
       charging: "oklch(65% 0.2 140)",
       "menu-bg": "oklch(24% 0.01 265)",
       "window-bg": "oklch(18% 0.01 265)",
-      "shadow-color": "rgba(0, 0, 0, 0.65)"
-    }
+      "shadow-color": "rgba(0, 0, 0, 0.65)",
+    },
   },
   {
     value: "light",
@@ -89,21 +89,22 @@ const BUILTIN_THEMES = [
     label: "Light",
     category: "basic",
     preview: "linear-gradient(135deg, #f5f5f5, #e8e8e8)",
-    textColor: "#111"
+    textColor: "#111",
   },
   {
     value: "auto",
     icon: "fas fa-circle-half-stroke",
     label: "Auto",
     category: "basic",
-    preview: "linear-gradient(135deg, #333 0%, #333 50%, #f5f5f5 50%, #f5f5f5 100%)"
+    preview:
+      "linear-gradient(135deg, #333 0%, #333 50%, #f5f5f5 50%, #f5f5f5 100%)",
   },
   {
     value: "cyber",
     icon: "fas fa-bolt",
     label: "Cyber",
     category: "special",
-    preview: "linear-gradient(135deg, #00ffff, #ff00ff)"
+    preview: "linear-gradient(135deg, #00ffff, #ff00ff)",
   },
   {
     value: "arctic",
@@ -111,14 +112,14 @@ const BUILTIN_THEMES = [
     label: "Arctic",
     category: "special",
     preview: "linear-gradient(135deg, #a5d8ff, #d0e8ff)",
-    textColor: "#111"
+    textColor: "#111",
   },
   {
     value: "crt",
     icon: "fas fa-terminal",
     label: "CRT",
     category: "special",
-    preview: "linear-gradient(135deg, #001400, #003300)"
+    preview: "linear-gradient(135deg, #001400, #003300)",
   },
   {
     value: "sakura",
@@ -126,36 +127,37 @@ const BUILTIN_THEMES = [
     label: "Sakura",
     category: "special",
     preview: "linear-gradient(135deg, #ffb7c5, #ffe4e9)",
-    textColor: "#111"
+    textColor: "#111",
   },
   {
     value: "oled",
     icon: "fas fa-tv",
     label: "OLED",
     category: "special",
-    preview: "linear-gradient(135deg, #000000, #111111)"
+    preview: "linear-gradient(135deg, #000000, #111111)",
   },
   {
     value: "nordic",
     icon: "fas fa-mountain",
     label: "Nordic",
     category: "special",
-    preview: "linear-gradient(135deg, #5e81ac, #2e3440)"
+    preview: "linear-gradient(135deg, #5e81ac, #2e3440)",
   },
   {
     value: "forest",
     icon: "fas fa-tree",
     label: "Forest",
     category: "special",
-    preview: "linear-gradient(135deg, #2d5a27, #4a7c59)"
+    preview: "linear-gradient(135deg, #2d5a27, #4a7c59)",
   },
   {
     value: "high-contrast",
     icon: "fas fa-adjust",
     label: "High Contrast",
     category: "special",
-    preview: "linear-gradient(135deg, #000000 0%, #000000 50%, #ffffff 50%, #ffffff 100%)",
-    textColor: "#111"
+    preview:
+      "linear-gradient(135deg, #000000 0%, #000000 50%, #ffffff 50%, #ffffff 100%)",
+    textColor: "#111",
   },
   {
     value: "vaporwave",
@@ -163,14 +165,14 @@ const BUILTIN_THEMES = [
     label: "Vaporwave",
     category: "special",
     preview: "linear-gradient(135deg, #ff71ce, #01cdfe)",
-    textColor: "#111"
+    textColor: "#111",
   },
   {
     value: "gameboy",
     icon: "fas fa-gamepad",
     label: "Gameboy",
     category: "special",
-    preview: "linear-gradient(135deg, #8bac0f, #306230)"
+    preview: "linear-gradient(135deg, #8bac0f, #306230)",
   },
   {
     value: "frutiger-aero",
@@ -178,21 +180,21 @@ const BUILTIN_THEMES = [
     label: "Frutiger Aero",
     category: "special",
     preview: "linear-gradient(135deg, #00d4ff, #7bed9f)",
-    textColor: "#111"
+    textColor: "#111",
   },
   {
     value: "dracula",
     icon: "fas fa-skull",
     label: "Dracula",
     category: "special",
-    preview: "linear-gradient(135deg, #bd93f9, #6272a4)"
+    preview: "linear-gradient(135deg, #bd93f9, #6272a4)",
   },
   {
     value: "solarized-dark",
     icon: "fas fa-sun",
     label: "Solarized Dark",
     category: "special",
-    preview: "linear-gradient(135deg, #073642, #586e75)"
+    preview: "linear-gradient(135deg, #073642, #586e75)",
   },
   {
     value: "solarized-light",
@@ -200,7 +202,7 @@ const BUILTIN_THEMES = [
     label: "Solarized Light",
     category: "special",
     preview: "linear-gradient(135deg, #fdf6e3, #eee8d5)",
-    textColor: "#111"
+    textColor: "#111",
   },
   {
     value: "github-light",
@@ -208,21 +210,21 @@ const BUILTIN_THEMES = [
     label: "GitHub Light",
     category: "special",
     preview: "linear-gradient(135deg, #ffffff, #f6f8fa)",
-    textColor: "#111"
+    textColor: "#111",
   },
   {
     value: "github-dark",
     icon: "fab fa-github",
     label: "GitHub Dark",
     category: "special",
-    preview: "linear-gradient(135deg, #0d1117, #161b22)"
+    preview: "linear-gradient(135deg, #0d1117, #161b22)",
   },
   {
     value: "minimal-gray",
     icon: "fas fa-circle",
     label: "Minimal Gray",
     category: "special",
-    preview: "linear-gradient(135deg, #6b7280, #9ca3af)"
+    preview: "linear-gradient(135deg, #6b7280, #9ca3af)",
   },
   {
     value: "paper",
@@ -230,49 +232,49 @@ const BUILTIN_THEMES = [
     label: "Paper",
     category: "special",
     preview: "linear-gradient(135deg, #f5f5dc, #efe6c3)",
-    textColor: "#111"
+    textColor: "#111",
   },
   {
     value: "macos-fluent",
     icon: "fab fa-apple",
     label: "MacOS Fluent",
     category: "special",
-    preview: "linear-gradient(135deg, #1a1a2e, #16213e)"
+    preview: "linear-gradient(135deg, #1a1a2e, #16213e)",
   },
   {
     value: "windows-fluent",
     icon: "fab fa-windows",
     label: "Windows Fluent",
     category: "special",
-    preview: "linear-gradient(135deg, #0078d4, #10893e)"
+    preview: "linear-gradient(135deg, #0078d4, #10893e)",
   },
   {
     value: "material-you",
     icon: "fas fa-palette",
     label: "Material You",
     category: "special",
-    preview: "linear-gradient(135deg, #6750a4, #7c4dff)"
+    preview: "linear-gradient(135deg, #6750a4, #7c4dff)",
   },
   {
     value: "sepia",
     icon: "fas fa-book",
     label: "Sepia",
     category: "special",
-    preview: "linear-gradient(135deg, #704214, #8b5e3c)"
+    preview: "linear-gradient(135deg, #704214, #8b5e3c)",
   },
   {
     value: "hatsune-miku",
     icon: "fas fa-music",
     label: "Hatsune Miku",
     category: "special",
-    preview: "linear-gradient(135deg, #39c5bb, #1a8a8a)"
+    preview: "linear-gradient(135deg, #39c5bb, #1a8a8a)",
   },
   {
     value: "star-wars-dark",
     icon: "fas fa-skull",
     label: "Star Wars Dark",
     category: "special",
-    preview: "linear-gradient(135deg, #000000, #2a2a2a)"
+    preview: "linear-gradient(135deg, #000000, #2a2a2a)",
   },
   {
     value: "amber",
@@ -280,21 +282,21 @@ const BUILTIN_THEMES = [
     label: "Amber",
     category: "special",
     preview: "linear-gradient(135deg, #ffbf00, #ff8c00)",
-    textColor: "#111"
+    textColor: "#111",
   },
   {
     value: "coral",
     icon: "fas fa-water",
     label: "Coral",
     category: "special",
-    preview: "linear-gradient(135deg, #ff7f50, #ff6347)"
+    preview: "linear-gradient(135deg, #ff7f50, #ff6347)",
   },
   {
     value: "slate",
     icon: "fas fa-circle",
     label: "Slate",
     category: "special",
-    preview: "linear-gradient(135deg, #475569, #64748b)"
+    preview: "linear-gradient(135deg, #475569, #64748b)",
   },
   {
     value: "mint",
@@ -302,7 +304,7 @@ const BUILTIN_THEMES = [
     label: "Mint",
     category: "special",
     preview: "linear-gradient(135deg, #98ff98, #66cc66)",
-    textColor: "#111"
+    textColor: "#111",
   },
   {
     value: "cream",
@@ -310,7 +312,7 @@ const BUILTIN_THEMES = [
     label: "Cream",
     category: "special",
     preview: "linear-gradient(135deg, #fffdd0, #f5f0cb)",
-    textColor: "#111"
+    textColor: "#111",
   },
   {
     value: "glass",
@@ -318,7 +320,7 @@ const BUILTIN_THEMES = [
     label: "Glass",
     category: "special",
     preview: "linear-gradient(135deg, #e0f7fa, #b2ebf2)",
-    textColor: "#111"
+    textColor: "#111",
   },
   {
     value: "neumorphism",
@@ -326,21 +328,21 @@ const BUILTIN_THEMES = [
     label: "Neumorphism",
     category: "special",
     preview: "linear-gradient(135deg, #e0e0e0, #ffffff)",
-    textColor: "#111"
+    textColor: "#111",
   },
   {
     value: "claymorphism",
     icon: "fas fa-cube",
     label: "Claymorphism",
     category: "special",
-    preview: "linear-gradient(135deg, #ff6b6b, #ee5a24)"
+    preview: "linear-gradient(135deg, #ff6b6b, #ee5a24)",
   },
   {
     value: "brutalism",
     icon: "fas fa-bolt",
     label: "Brutalism",
     category: "special",
-    preview: "linear-gradient(135deg, #ff0000, #000000)"
+    preview: "linear-gradient(135deg, #ff0000, #000000)",
   },
   {
     value: "y2k",
@@ -348,14 +350,14 @@ const BUILTIN_THEMES = [
     label: "Y2K",
     category: "special",
     preview: "linear-gradient(135deg, #ff69b4, #00bfff)",
-    textColor: "#111"
+    textColor: "#111",
   },
   {
     value: "tokyo-night",
     icon: "fas fa-city",
     label: "Tokyo Night",
     category: "special",
-    preview: "linear-gradient(135deg, #1a1b2e, #7aa2f7)"
+    preview: "linear-gradient(135deg, #1a1b2e, #7aa2f7)",
   },
   {
     value: "catppuccin",
@@ -396,8 +398,8 @@ const BUILTIN_THEMES = [
       charging: "#a6e3a1",
       "menu-bg": "#1e1e2e",
       "window-bg": "#181825",
-      "shadow-color": "rgba(0, 0, 0, 0.7)"
-    }
+      "shadow-color": "rgba(0, 0, 0, 0.7)",
+    },
   },
 
   {
@@ -406,56 +408,56 @@ const BUILTIN_THEMES = [
     label: "Aurora",
     category: "special",
     preview: "linear-gradient(135deg, #00ff88, #00d9ff)",
-    textColor: "#111"
+    textColor: "#111",
   },
   {
     value: "aura",
     icon: "fas fa-gem",
     label: "Aura",
     category: "special",
-    preview: "linear-gradient(135deg, #a78bfa, #7c3aed)"
+    preview: "linear-gradient(135deg, #a78bfa, #7c3aed)",
   },
   {
     value: "nier",
     icon: "fas fa-robot",
     label: "NieR",
     category: "special",
-    preview: "linear-gradient(135deg, #1a1a1a, #e63946)"
+    preview: "linear-gradient(135deg, #1a1a1a, #e63946)",
   },
   {
     value: "eva-unit-01",
     icon: "fas fa-brain",
     label: "EVA Unit-01",
     category: "special",
-    preview: "linear-gradient(135deg, #7c3aed, #10b981)"
+    preview: "linear-gradient(135deg, #7c3aed, #10b981)",
   },
   {
     value: "eva-unit-02",
     icon: "fas fa-fire",
     label: "EVA Unit-02",
     category: "special",
-    preview: "linear-gradient(135deg, #dc2626, #f59e0b)"
+    preview: "linear-gradient(135deg, #dc2626, #f59e0b)",
   },
   {
     value: "matrix",
     icon: "fas fa-th",
     label: "Matrix",
     category: "special",
-    preview: "linear-gradient(135deg, #001a00, #00ff00)"
+    preview: "linear-gradient(135deg, #001a00, #00ff00)",
   },
   {
     value: "amber-terminal",
     icon: "fas fa-terminal",
     label: "Amber Terminal",
     category: "special",
-    preview: "linear-gradient(135deg, #1a0e00, #ffb000)"
+    preview: "linear-gradient(135deg, #1a0e00, #ffb000)",
   },
   {
     value: "aurora-borealis",
     icon: "fas fa-wand-magic-sparkles",
     label: "Aurora Borealis",
     category: "special",
-    preview: "linear-gradient(135deg, #00d9ff, #00ff88, #7c3aed)"
+    preview: "linear-gradient(135deg, #00d9ff, #00ff88, #7c3aed)",
   },
   {
     value: "vice-city",
@@ -463,8 +465,8 @@ const BUILTIN_THEMES = [
     label: "Vice City",
     category: "special",
     preview: "linear-gradient(135deg, #ff6ec7, #00bfff)",
-    textColor: "#111"
-  }
+    textColor: "#111",
+  },
 ];
 let customThemes = [];
 function loadCustomThemes() {
@@ -502,7 +504,10 @@ export function getSpecialThemes() {
   if (customThemes.length === 0) {
     loadCustomThemes();
   }
-  return [...BUILTIN_THEMES.filter((t) => t.category === "special"), ...customThemes];
+  return [
+    ...BUILTIN_THEMES.filter((t) => t.category === "special"),
+    ...customThemes,
+  ];
 }
 
 export function getFeaturedThemes() {
@@ -535,7 +540,7 @@ export function addCustomTheme(theme) {
     description: theme.description || "",
     author: theme.author || "",
     effects: theme.effects || {},
-    config: theme.config || {}
+    config: theme.config || {},
   };
   customThemes.push(newTheme);
   saveCustomThemes();

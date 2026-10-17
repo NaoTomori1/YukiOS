@@ -3,7 +3,14 @@ import { FileKind } from "../shared/fileKindDetector.js";
 import { os, $ } from "../framework.js";
 
 export class ClipboardManager {
-  constructor(fs, positionStore, deletedIconsStore, iconManager, iconDataHelper, explorerApp) {
+  constructor(
+    fs,
+    positionStore,
+    deletedIconsStore,
+    iconManager,
+    iconDataHelper,
+    explorerApp,
+  ) {
     this.fs = fs;
     this.positionStore = positionStore;
     this.deletedIconsStore = deletedIconsStore;
@@ -34,10 +41,10 @@ export class ClipboardManager {
           folderName: icon.dataset.folderName || null,
           isDesktopFile: icon.classList.contains("desktop-file-icon"),
           isFolderIcon: icon.classList.contains("folder-icon"),
-          innerHTML: icon.innerHTML
-        }
+          innerHTML: icon.innerHTML,
+        },
       })),
-      sourceInst: null
+      sourceInst: null,
     };
   }
 
@@ -57,7 +64,10 @@ export class ClipboardManager {
         try {
           if (isFile) {
             const kind = await this.fs.getFileKind(srcPath, name);
-            const isBinary = kind === FileKind.IMAGE || kind === FileKind.VIDEO || kind === FileKind.AUDIO;
+            const isBinary =
+              kind === FileKind.IMAGE ||
+              kind === FileKind.VIDEO ||
+              kind === FileKind.AUDIO;
 
             let content;
             if (isBinary) {
@@ -91,15 +101,33 @@ export class ClipboardManager {
             if (resolvedAction === "replace") {
               await os.fs.delete(["Desktop"], name).catch(() => {});
               if (isBinary) {
-                await os.fs.writeBinaryFile(["Desktop"], name, content, kind, null);
+                await os.fs.writeBinaryFile(
+                  ["Desktop"],
+                  name,
+                  content,
+                  kind,
+                  null,
+                );
               } else {
                 await os.fs.createFile(["Desktop"], name, content, kind, null);
               }
             } else {
               if (isBinary) {
-                await os.fs.writeBinaryFile(["Desktop"], finalName, content, kind, null);
+                await os.fs.writeBinaryFile(
+                  ["Desktop"],
+                  finalName,
+                  content,
+                  kind,
+                  null,
+                );
               } else {
-                await os.fs.createFile(["Desktop"], finalName, content, kind, null);
+                await os.fs.createFile(
+                  ["Desktop"],
+                  finalName,
+                  content,
+                  kind,
+                  null,
+                );
               }
             }
 
@@ -108,11 +136,20 @@ export class ClipboardManager {
             try {
               this.deletedIconsStore.remove(`file:${finalName}`);
             } catch {}
-            const existingIcon = $(`.desktop-file-icon[data-file-name="${CSS.escape(finalName)}"]`);
-            if (!existingIcon) await this.iconManager.createDesktopFileIcon(finalName, { content, kind });
+            const existingIcon = $(
+              `.desktop-file-icon[data-file-name="${CSS.escape(finalName)}"]`,
+            );
+            if (!existingIcon)
+              await this.iconManager.createDesktopFileIcon(finalName, {
+                content,
+                kind,
+              });
             pastedCount++;
           } else {
-            const destFolderPath = this.fs.join(this.fs.resolveUserPath(["Desktop"]), name);
+            const destFolderPath = this.fs.join(
+              this.fs.resolveUserPath(["Desktop"]),
+              name,
+            );
             const destFolderExists = await os.fs.exists(destFolderPath);
 
             let finalFolderName = name;
@@ -127,28 +164,47 @@ export class ClipboardManager {
               }
               if (resolvedAction === "skip") continue;
               if (resolvedAction === "keep") {
-                finalFolderName = await this.fs.getUniqueFileName(["Desktop"], name);
+                finalFolderName = await this.fs.getUniqueFileName(
+                  ["Desktop"],
+                  name,
+                );
               }
             }
 
             await os.fs.mkdir(["Desktop", finalFolderName]);
-            const srcEntries = await os.fs.readdir([...srcPath, name]).catch(() => ({}));
+            const srcEntries = await os.fs
+              .readdir([...srcPath, name])
+              .catch(() => ({}));
 
             for (const [childName, childData] of Object.entries(srcEntries)) {
               if (childData?.type !== "file") continue;
 
-              const childKind = await this.fs.getFileKind([...srcPath, name], childName);
+              const childKind = await this.fs.getFileKind(
+                [...srcPath, name],
+                childName,
+              );
               const isChildBinary =
-                childKind === FileKind.IMAGE || childKind === FileKind.VIDEO || childKind === FileKind.AUDIO;
+                childKind === FileKind.IMAGE ||
+                childKind === FileKind.VIDEO ||
+                childKind === FileKind.AUDIO;
 
               let childContent;
               if (isChildBinary) {
-                childContent = await os.fs.readBinaryFile([...srcPath, name], childName);
+                childContent = await os.fs.readBinaryFile(
+                  [...srcPath, name],
+                  childName,
+                );
               } else {
-                childContent = await this.fs.getFileContent([...srcPath, name], childName);
+                childContent = await this.fs.getFileContent(
+                  [...srcPath, name],
+                  childName,
+                );
               }
 
-              const childDestDir = this.fs.resolveUserPath(["Desktop", finalFolderName]);
+              const childDestDir = this.fs.resolveUserPath([
+                "Desktop",
+                finalFolderName,
+              ]);
               const childDestPath = this.fs.join(childDestDir, childName);
               const childExists = await os.fs.exists(childDestPath);
 
@@ -166,17 +222,43 @@ export class ClipboardManager {
               if (resolvedAction === "skip") continue;
 
               if (resolvedAction === "replace") {
-                await os.fs.delete(["Desktop", finalFolderName], childName).catch(() => {});
+                await os.fs
+                  .delete(["Desktop", finalFolderName], childName)
+                  .catch(() => {});
                 if (isChildBinary) {
-                  await os.fs.writeBinaryFile(["Desktop", finalFolderName], childName, childContent, childKind, null);
+                  await os.fs.writeBinaryFile(
+                    ["Desktop", finalFolderName],
+                    childName,
+                    childContent,
+                    childKind,
+                    null,
+                  );
                 } else {
-                  await os.fs.createFile(["Desktop", finalFolderName], childName, childContent, childKind, null);
+                  await os.fs.createFile(
+                    ["Desktop", finalFolderName],
+                    childName,
+                    childContent,
+                    childKind,
+                    null,
+                  );
                 }
               } else {
                 if (isChildBinary) {
-                  await os.fs.writeBinaryFile(["Desktop", finalFolderName], childName, childContent, childKind, null);
+                  await os.fs.writeBinaryFile(
+                    ["Desktop", finalFolderName],
+                    childName,
+                    childContent,
+                    childKind,
+                    null,
+                  );
                 } else {
-                  await os.fs.createFile(["Desktop", finalFolderName], childName, childContent, childKind, null);
+                  await os.fs.createFile(
+                    ["Desktop", finalFolderName],
+                    childName,
+                    childContent,
+                    childKind,
+                    null,
+                  );
                 }
               }
             }
@@ -186,8 +268,11 @@ export class ClipboardManager {
             try {
               this.deletedIconsStore.remove(`folder:${finalFolderName}`);
             } catch {}
-            const existingFolder = $(`.folder-icon[data-folder-name="${CSS.escape(finalFolderName)}"]`);
-            if (!existingFolder) await this.iconManager.createFolderIcon(finalFolderName);
+            const existingFolder = $(
+              `.folder-icon[data-folder-name="${CSS.escape(finalFolderName)}"]`,
+            );
+            if (!existingFolder)
+              await this.iconManager.createFolderIcon(finalFolderName);
             pastedCount++;
           }
         } catch {
@@ -201,7 +286,15 @@ export class ClipboardManager {
       }
     } else if (cb.source === "desktop") {
       for (const iconData of cb.icons) {
-        const { isDesktopFile, isFolderIcon, fileName, folderName, app, name, innerHTML } = iconData.data;
+        const {
+          isDesktopFile,
+          isFolderIcon,
+          fileName,
+          folderName,
+          app,
+          name,
+          innerHTML,
+        } = iconData.data;
         const element = iconData.element;
 
         try {
@@ -212,28 +305,61 @@ export class ClipboardManager {
             const fileIcon = await this.fs.getFileIcon(["Desktop"], srcName);
 
             if (action === "copy") {
-              const uniqueName = await this.fs.getUniqueFileName(["Desktop"], srcName);
-              await this.fs.createFile(["Desktop"], uniqueName, content, kind, fileIcon);
+              const uniqueName = await this.fs.getUniqueFileName(
+                ["Desktop"],
+                srcName,
+              );
+              await this.fs.createFile(
+                ["Desktop"],
+                uniqueName,
+                content,
+                kind,
+                fileIcon,
+              );
               try {
                 this.deletedIconsStore.remove(`file:${uniqueName}`);
               } catch {}
-              await this.iconManager.createDesktopFileIcon(uniqueName, { content, kind, icon: fileIcon });
+              await this.iconManager.createDesktopFileIcon(uniqueName, {
+                content,
+                kind,
+                icon: fileIcon,
+              });
             }
             pastedCount++;
           } else if (isFolderIcon) {
             const srcName = folderName;
 
             if (action === "copy") {
-              let uniqueName = await this.fs.getUniqueFileName(["Desktop"], srcName);
+              let uniqueName = await this.fs.getUniqueFileName(
+                ["Desktop"],
+                srcName,
+              );
               await os.fs.mkdir(["Desktop", uniqueName]);
-              const srcEntries = await os.fs.readdir(["Desktop", srcName]).catch(() => ({}));
+              const srcEntries = await os.fs
+                .readdir(["Desktop", srcName])
+                .catch(() => ({}));
 
               for (const [childName, childData] of Object.entries(srcEntries)) {
                 if (childData?.type !== "file") continue;
-                const childContent = await this.fs.getFileContent(["Desktop", srcName], childName);
-                const childKind = await this.fs.getFileKind(["Desktop", srcName], childName);
-                const childIcon = await this.fs.getFileIcon(["Desktop", srcName], childName);
-                await os.fs.createFile(["Desktop", uniqueName], childName, childContent, childKind, childIcon);
+                const childContent = await this.fs.getFileContent(
+                  ["Desktop", srcName],
+                  childName,
+                );
+                const childKind = await this.fs.getFileKind(
+                  ["Desktop", srcName],
+                  childName,
+                );
+                const childIcon = await this.fs.getFileIcon(
+                  ["Desktop", srcName],
+                  childName,
+                );
+                await os.fs.createFile(
+                  ["Desktop", uniqueName],
+                  childName,
+                  childContent,
+                  childKind,
+                  childIcon,
+                );
               }
 
               try {
@@ -243,12 +369,19 @@ export class ClipboardManager {
             }
             pastedCount++;
           } else {
-            const iconName = name || this.iconDataHelper.getIconName(element || { querySelector: () => null });
+            const iconName =
+              name ||
+              this.iconDataHelper.getIconName(
+                element || { querySelector: () => null },
+              );
             const srcFileName = `${iconName}.desktop`;
             const content = await os.fs.read(["Desktop", srcFileName]);
 
             if (action === "copy") {
-              const uniqueName = await this.fs.getUniqueFileName(["Desktop"], srcFileName);
+              const uniqueName = await this.fs.getUniqueFileName(
+                ["Desktop"],
+                srcFileName,
+              );
               await os.fs.write(["Desktop"], uniqueName, content);
               try {
                 this.deletedIconsStore.remove(`file:${uniqueName}`);

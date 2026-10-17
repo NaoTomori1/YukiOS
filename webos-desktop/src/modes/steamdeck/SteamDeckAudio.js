@@ -12,7 +12,7 @@ const AUDIO_FILES = {
   navigation: "navigation.opus",
   toggleChange: "toggle_change.opus",
   sliderTick: "slider_tick.opus",
-  sliderMax: "slider_max.opus"
+  sliderMax: "slider_max.opus",
 };
 
 export class SteamDeckAudio {
@@ -64,7 +64,9 @@ export class SteamDeckAudio {
 
   playAudio(file) {
     if (os.storage.get(StorageKeys.steamDeckAudioEnabled) === "false") return;
-    const url = resolveGhUrl(`https://cdn.jsdelivr.net/gh/NaoTomori1/yukios@main/static/audio/deck/${file}`);
+    const url = resolveGhUrl(
+      `https://cdn.jsdelivr.net/gh/NaoTomori1/yukios@main/static/audio/deck/${file}`,
+    );
     const audio = new Audio(url);
     audio.preload = "auto";
     audio.volume = audioMixer().masterVolume * audioMixer().systemVolume;

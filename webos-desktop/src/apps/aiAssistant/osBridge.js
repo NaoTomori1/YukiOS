@@ -5,13 +5,17 @@ import { SystemUtilities } from "../../system.js";
 import {
   WALLPAPER_NAME_URL_PAIRS,
   MAC_WALLPAPER_NAME_URL_PAIRS,
-  CHROME_OS_WALLPAPER_NAME_URL_PAIRS
+  CHROME_OS_WALLPAPER_NAME_URL_PAIRS,
 } from "../../wallpaperConfig.js";
 import { videos, videos2 } from "../../wallpaperList.js";
 import { getRecentNews } from "../news.js";
 import { getAchievementCatalog } from "../../achievements.js";
 import { appMap as gamesAppMap } from "../../games/gamesList.js";
-import { getAllThemes, getThemeColors, addCustomTheme } from "../../shared/themeEngine.js";
+import {
+  getAllThemes,
+  getThemeColors,
+  addCustomTheme,
+} from "../../shared/themeEngine.js";
 
 export class OSBridge {
   constructor(os) {
@@ -23,7 +27,10 @@ export class OSBridge {
 
   async execute(action) {
     const { action: actionType, target, params } = action;
-    console.log(`[AI Assistant] Executing action: ${actionType}, target: ${target}`, params);
+    console.log(
+      `[AI Assistant] Executing action: ${actionType}, target: ${target}`,
+      params,
+    );
 
     switch (actionType) {
       case "open_app":
@@ -112,7 +119,10 @@ export class OSBridge {
       console.log(`[AI Assistant] App launched: ${resolvedAppId}`);
       return { success: true, message: `Opened ${resolvedAppId}` };
     } catch (error) {
-      console.error(`[AI Assistant] Failed to open app ${resolvedAppId}:`, error);
+      console.error(
+        `[AI Assistant] Failed to open app ${resolvedAppId}:`,
+        error,
+      );
       throw new Error(`Failed to open ${appId}: ${error.message}`);
     }
   }
@@ -154,7 +164,7 @@ export class OSBridge {
       v86: "v86app",
       emulator: "emulatorApp",
       ruffle: "ruffleApp",
-      ai: "aiAssistantApp"
+      ai: "aiAssistantApp",
     };
     return aliases[normalized] || appId;
   }
@@ -229,26 +239,34 @@ export class OSBridge {
       throw new Error("Workspace manager not available");
     }
 
-    const normalizedTarget = String(target || params.direction || "next").toLowerCase();
+    const normalizedTarget = String(
+      target || params.direction || "next",
+    ).toLowerCase();
     const workspaces = workspaceManager.workspaces || [];
     if (workspaces.length === 0) {
       throw new Error("No workspaces available");
     }
 
-    const currentIndex = workspaces.findIndex((ws) => ws.id === workspaceManager.activeId);
+    const currentIndex = workspaces.findIndex(
+      (ws) => ws.id === workspaceManager.activeId,
+    );
     let targetWorkspace = null;
 
     if (normalizedTarget === "next") {
-      targetWorkspace = workspaces[(currentIndex + 1 + workspaces.length) % workspaces.length];
+      targetWorkspace =
+        workspaces[(currentIndex + 1 + workspaces.length) % workspaces.length];
     } else if (normalizedTarget === "prev" || normalizedTarget === "previous") {
-      targetWorkspace = workspaces[(currentIndex - 1 + workspaces.length) % workspaces.length];
+      targetWorkspace =
+        workspaces[(currentIndex - 1 + workspaces.length) % workspaces.length];
     } else if (/^\d+$/.test(normalizedTarget)) {
       const numericTarget = Number(normalizedTarget);
       targetWorkspace =
         workspaces.find((ws) => ws.id === numericTarget) ||
         workspaces.find((ws, idx) => idx === Math.max(0, numericTarget - 1));
     } else {
-      targetWorkspace = workspaces.find((ws) => ws.name.toLowerCase() === normalizedTarget);
+      targetWorkspace = workspaces.find(
+        (ws) => ws.name.toLowerCase() === normalizedTarget,
+      );
     }
 
     if (!targetWorkspace) {
@@ -259,7 +277,7 @@ export class OSBridge {
     return {
       success: true,
       message: `Switched to workspace ${targetWorkspace.name}`,
-      workspaceId: targetWorkspace.id
+      workspaceId: targetWorkspace.id,
     };
   }
 
@@ -270,7 +288,8 @@ export class OSBridge {
     }
 
     const windowId = params.winId || winId;
-    const workspaceTarget = params.workspaceId ?? params.workspace ?? params.target;
+    const workspaceTarget =
+      params.workspaceId ?? params.workspace ?? params.target;
     if (!windowId) {
       throw new Error("Window id is required");
     }
@@ -292,7 +311,7 @@ export class OSBridge {
     return {
       success: true,
       message: `Moved ${windowId} to workspace ${targetWorkspace.name}`,
-      workspaceId: targetWorkspace.id
+      workspaceId: targetWorkspace.id,
     };
   }
 
@@ -303,7 +322,9 @@ export class OSBridge {
       }
 
       const content = await os.fs.read(path);
-      console.log(`[AI Assistant] Read file ${path}, length: ${String(content).length}`);
+      console.log(
+        `[AI Assistant] Read file ${path}, length: ${String(content).length}`,
+      );
 
       return { success: true, content, message: `Read ${path}` };
     } catch (error) {
@@ -322,7 +343,11 @@ export class OSBridge {
       console.log(`[AI Assistant] Listed directory ${path}, entries:`, entries);
 
       const listing = Array.isArray(entries)
-        ? entries.map((e) => (typeof e === "string" ? e : e.name || JSON.stringify(e))).join("\n")
+        ? entries
+            .map((e) =>
+              typeof e === "string" ? e : e.name || JSON.stringify(e),
+            )
+            .join("\n")
         : String(entries);
 
       return { success: true, content: listing, message: `Listed ${path}` };
@@ -366,7 +391,9 @@ export class OSBridge {
       const themes = getAllThemes();
       const themeExists = themes.some((t) => t.value === themeName);
       if (!themeExists) {
-        throw new Error(`Theme "${themeName}" not found. Available themes: ${themes.map((t) => t.value).join(", ")}`);
+        throw new Error(
+          `Theme "${themeName}" not found. Available themes: ${themes.map((t) => t.value).join(", ")}`,
+        );
       }
       os.storage.set(StorageKeys.theme, themeName);
       applyTheme(themeName, () => null);
@@ -410,7 +437,10 @@ export class OSBridge {
       } else {
         mixer.setMaster(value);
       }
-      return { success: true, message: `Volume set to ${Math.round(value * 100)}%` };
+      return {
+        success: true,
+        message: `Volume set to ${Math.round(value * 100)}%`,
+      };
     } catch (error) {
       throw new Error(`Failed to set volume: ${error.message}`);
     }
@@ -420,7 +450,11 @@ export class OSBridge {
     try {
       const mixer = audioMixer();
       const percent = Math.round(mixer.masterVolume * 100);
-      return { success: true, message: `Volume is ${percent}%, muted: ${mixer.muted}`, content: `${percent}%` };
+      return {
+        success: true,
+        message: `Volume is ${percent}%, muted: ${mixer.muted}`,
+        content: `${percent}%`,
+      };
     } catch (error) {
       throw new Error(`Failed to get volume: ${error.message}`);
     }
@@ -445,9 +479,11 @@ export class OSBridge {
         const allPairs = [
           ...WALLPAPER_NAME_URL_PAIRS,
           ...MAC_WALLPAPER_NAME_URL_PAIRS,
-          ...CHROME_OS_WALLPAPER_NAME_URL_PAIRS
+          ...CHROME_OS_WALLPAPER_NAME_URL_PAIRS,
         ];
-        const match = allPairs.find((pair) => pair.name.toLowerCase().includes(normalized));
+        const match = allPairs.find((pair) =>
+          pair.name.toLowerCase().includes(normalized),
+        );
         if (match) {
           url = match.url;
         }
@@ -456,9 +492,13 @@ export class OSBridge {
         const available = [
           ...WALLPAPER_NAME_URL_PAIRS.map((pair) => pair.name),
           ...MAC_WALLPAPER_NAME_URL_PAIRS.map((pair) => `mac: ${pair.name}`),
-          ...CHROME_OS_WALLPAPER_NAME_URL_PAIRS.map((pair) => `chromeos: ${pair.name}`)
+          ...CHROME_OS_WALLPAPER_NAME_URL_PAIRS.map(
+            (pair) => `chromeos: ${pair.name}`,
+          ),
         ].join(", ");
-        throw new Error(`Wallpaper "${name}" not found. Available: ${available}`);
+        throw new Error(
+          `Wallpaper "${name}" not found. Available: ${available}`,
+        );
       }
       await SystemUtilities.setWallpaper(url);
       return { success: true, message: `Set wallpaper to ${name}` };
@@ -489,7 +529,11 @@ export class OSBridge {
         lines.push(video.split("/").pop());
       }
     }
-    return { success: true, message: `Listed ${category} wallpapers`, content: lines.join("\n") };
+    return {
+      success: true,
+      message: `Listed ${category} wallpapers`,
+      content: lines.join("\n"),
+    };
   }
 
   async sendNotification(title, params) {
@@ -497,7 +541,7 @@ export class OSBridge {
       os.notify.send(title, params?.message || "", {
         type: params?.type || "info",
         duration: params?.duration || 5000,
-        icon: params?.icon
+        icon: params?.icon,
       });
       return { success: true, message: `Sent notification: ${title}` };
     } catch (error) {
@@ -521,8 +565,14 @@ export class OSBridge {
   async getNotifications(target, params) {
     try {
       const all = os.notify.getAll() || [];
-      const content = all.map((n) => `${n.id}: ${n.title} - ${n.message}`).join("\n");
-      return { success: true, message: `Found ${all.length} notifications`, content };
+      const content = all
+        .map((n) => `${n.id}: ${n.title} - ${n.message}`)
+        .join("\n");
+      return {
+        success: true,
+        message: `Found ${all.length} notifications`,
+        content,
+      };
     } catch (error) {
       throw new Error(`Failed to get notifications: ${error.message}`);
     }
@@ -541,7 +591,10 @@ export class OSBridge {
         enabled = !current;
       }
       os.notify.setDoNotDisturb(enabled);
-      return { success: true, message: `Do not disturb ${enabled ? "enabled" : "disabled"}` };
+      return {
+        success: true,
+        message: `Do not disturb ${enabled ? "enabled" : "disabled"}`,
+      };
     } catch (error) {
       throw new Error(`Failed to toggle do not disturb: ${error.message}`);
     }
@@ -562,7 +615,12 @@ export class OSBridge {
         .toLowerCase()
         .replace(/\s+/g, "")
         .trim();
-      mode = mode === "chromeos" || mode === "chromeos" ? mode : mode === "chromeos" ? mode : mode;
+      mode =
+        mode === "chromeos" || mode === "chromeos"
+          ? mode
+          : mode === "chromeos"
+            ? mode
+            : mode;
       const aliases = {
         chromeos: "chromeos",
         chromeosmode: "chromeos",
@@ -570,12 +628,14 @@ export class OSBridge {
         mac: "mac",
         tiling: "tiling",
         "3d": "3d",
-        steamdeck: "steamdeck"
+        steamdeck: "steamdeck",
       };
       const normalized = aliases[mode] || mode;
       const validModes = ["mac", "tiling", "chromeos", "steamdeck", "3d"];
       if (!validModes.includes(normalized)) {
-        throw new Error(`Unknown mode "${target}". Valid modes: ${validModes.join(", ")}`);
+        throw new Error(
+          `Unknown mode "${target}". Valid modes: ${validModes.join(", ")}`,
+        );
       }
       os.modes.enter(normalized);
       return { success: true, message: `Switched to mode ${normalized}` };
@@ -590,7 +650,7 @@ export class OSBridge {
       return {
         success: true,
         message: `Active modes: ${active.join(", ") || "none"}`,
-        content: active.join(", ") || "none"
+        content: active.join(", ") || "none",
       };
     } catch (error) {
       throw new Error(`Failed to get modes: ${error.message}`);
@@ -626,7 +686,11 @@ export class OSBridge {
       for (const [winId, item] of items) {
         content.push(`${winId}: ${item?.label || item?.title || winId}`);
       }
-      return { success: true, message: `Found ${items.size} tray items`, content: content.join("\n") };
+      return {
+        success: true,
+        message: `Found ${items.size} tray items`,
+        content: content.join("\n"),
+      };
     } catch (error) {
       throw new Error(`Failed to get tray items: ${error.message}`);
     }
@@ -638,7 +702,7 @@ export class OSBridge {
       return {
         success: true,
         message: `Found ${catalog.length} achievements`,
-        content: catalog.map((a) => a.title).join("\n")
+        content: catalog.map((a) => a.title).join("\n"),
       };
     } catch (error) {
       throw new Error(`Failed to get achievements: ${error.message}`);
@@ -651,7 +715,9 @@ export class OSBridge {
       return {
         success: true,
         message: `Found ${themes.length} themes`,
-        content: themes.map((t) => `${t.value}: ${t.label} (${t.category})`).join("\n")
+        content: themes
+          .map((t) => `${t.value}: ${t.label} (${t.category})`)
+          .join("\n"),
       };
     } catch (error) {
       throw new Error(`Failed to list themes: ${error.message}`);
@@ -689,12 +755,14 @@ export class OSBridge {
         "bg-primary": bg,
         "bg-secondary": bg,
         "text-primary": text,
-        "text-secondary": text
+        "text-secondary": text,
       };
       try {
         addCustomTheme({ value, label: name, colors: themeColors });
       } catch (error) {
-        throw new Error(`Theme "${name}" already exists (${value}). Choose a different label.`);
+        throw new Error(
+          `Theme "${name}" already exists (${value}). Choose a different label.`,
+        );
       }
       os.storage.set(StorageKeys.theme, value);
       applyTheme(value, () => null);
@@ -710,11 +778,15 @@ export class OSBridge {
       const filtered =
         category === "all"
           ? APP_MANIFESTS
-          : APP_MANIFESTS.filter((app) => String(app.category || "").toLowerCase() === category);
+          : APP_MANIFESTS.filter(
+              (app) => String(app.category || "").toLowerCase() === category,
+            );
       return {
         success: true,
         message: `Found ${filtered.length} apps`,
-        content: filtered.map((app) => `${app.serviceKey}: ${app.title} (${app.category})`).join("\n")
+        content: filtered
+          .map((app) => `${app.serviceKey}: ${app.title} (${app.category})`)
+          .join("\n"),
       };
     } catch (error) {
       throw new Error(`Failed to list apps: ${error.message}`);
@@ -727,7 +799,9 @@ export class OSBridge {
       return {
         success: true,
         message: `Found ${ids.length} games`,
-        content: ids.map((id) => `${id}: ${gamesAppMap[id]?.title || id}`).join("\n")
+        content: ids
+          .map((id) => `${id}: ${gamesAppMap[id]?.title || id}`)
+          .join("\n"),
       };
     } catch (error) {
       throw new Error(`Failed to list games: ${error.message}`);
@@ -741,7 +815,7 @@ export class OSBridge {
       return {
         success: true,
         message: `Found ${items.length} news items`,
-        content: items.map((item) => `${item.date}: ${item.label}`).join("\n")
+        content: items.map((item) => `${item.date}: ${item.label}`).join("\n"),
       };
     } catch (error) {
       throw new Error(`Failed to get news: ${error.message}`);
@@ -754,9 +828,11 @@ export class OSBridge {
       title: os.window.getTitle(win.id) || "Unknown",
       appId: win.dataset.appId || null,
       visible: win.style.display !== "none",
-      minimized: win.style.display === "none"
+      minimized: win.style.display === "none",
     }));
-    const runningApps = Array.from(new Set(windows.map((win) => win.appId).filter(Boolean)));
+    const runningApps = Array.from(
+      new Set(windows.map((win) => win.appId).filter(Boolean)),
+    );
     const wsm = os.tiling?.wm?.workspaceManager;
     const workspaceState = wsm
       ? {
@@ -764,8 +840,8 @@ export class OSBridge {
           items: wsm.workspaces.map((ws) => ({
             id: ws.id,
             name: ws.name,
-            windowCount: ws.windows.size
-          }))
+            windowCount: ws.windows.size,
+          })),
         }
       : null;
 
@@ -774,7 +850,7 @@ export class OSBridge {
       runningApps,
       workspaces: workspaceState,
       theme: os.storage.get(StorageKeys.theme) || "dark",
-      settings: this.getSettings()
+      settings: this.getSettings(),
     };
   }
 

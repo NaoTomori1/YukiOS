@@ -1,9 +1,16 @@
 import { $, bindEvent, createElement } from "./domUtils.js";
 import { getEffectiveIcon } from "./iconPack.js";
+import { getContextMenuStyle } from "./contextMenuStyle.js";
 import { resolveIconUrl } from "./assetResolver.js";
 
 const MENU_ID = "context-menu";
 const bodySubmenus = [];
+
+function syncCmStyle() {
+  try {
+    document.documentElement.dataset.cmstyle = getContextMenuStyle();
+  } catch {}
+}
 
 bindEvent(
   document,
@@ -14,7 +21,7 @@ bindEvent(
       e.stopImmediatePropagation();
     }
   },
-  true
+  true,
 );
 
 function getMenu() {
@@ -37,7 +44,8 @@ export function hideMenu() {
   cleanupBodySubmenus();
   if (menu && menu._restoreSelection) {
     try {
-      if (window.CSS && window.CSS.highlights) window.CSS.highlights.delete("terminal-preserved");
+      if (window.CSS && window.CSS.highlights)
+        window.CSS.highlights.delete("terminal-preserved");
     } catch {}
     try {
       const hl = menu._preservedHighlightEl;
@@ -100,7 +108,7 @@ export function positionMenu(menu, pageX, pageY) {
   Object.assign(menu.style, {
     left: `${left}px`,
     top: `${top}px`,
-    display: "block"
+    display: "block",
   });
 }
 
@@ -125,20 +133,29 @@ export function bindDismissal() {
 }
 
 export function refreshIcons(node = document) {
-  if (window.FontAwesome && window.FontAwesome.dom && window.FontAwesome.dom.i2svg) {
+  if (
+    window.FontAwesome &&
+    window.FontAwesome.dom &&
+    window.FontAwesome.dom.i2svg
+  ) {
     window.FontAwesome.dom.i2svg({ node });
   }
 }
 
 export function showContextMenu(e, items, handlers) {
+  syncCmStyle();
   const menu = getMenu();
   if (!menu) return;
   menu.classList.remove("closing");
   menu.style.display = "";
   menu.classList.add("context-menu-glass");
 
-  const filtered = items.filter((item) => typeof item === "string" || !item.condition || item.condition());
-  const deduped = filtered.filter((item, i) => !(item === "hr" && filtered[i - 1] === "hr"));
+  const filtered = items.filter(
+    (item) => typeof item === "string" || !item.condition || item.condition(),
+  );
+  const deduped = filtered.filter(
+    (item, i) => !(item === "hr" && filtered[i - 1] === "hr"),
+  );
 
   menu.innerHTML = deduped
     .map((item) => {
@@ -146,8 +163,11 @@ export function showContextMenu(e, items, handlers) {
       const icon = (item.icon || "fa-chevron-right").trim();
       const iconCls = icon.includes(" ") ? icon : `fas ${icon}`;
       const iconHtml = `<i class="${iconCls}" style="width:16px;text-align:center;opacity:0.7;"></i>`;
-      const isDisabled = typeof item.disabled === "function" ? item.disabled() : !!item.disabled;
-      const disabledAttr = isDisabled ? ' class="context-menu-disabled" style="opacity:0.45;pointer-events:none;"' : "";
+      const isDisabled =
+        typeof item.disabled === "function" ? item.disabled() : !!item.disabled;
+      const disabledAttr = isDisabled
+        ? ' class="context-menu-disabled" style="opacity:0.45;pointer-events:none;"'
+        : "";
       return `<div id="${item.id}"${disabledAttr}>${iconHtml}<span>${item.label}</span></div>`;
     })
     .join("");
@@ -155,8 +175,10 @@ export function showContextMenu(e, items, handlers) {
   refreshIcons(menu);
 
   items.forEach((item) => {
-    if (typeof item === "string" || (item.condition && !item.condition())) return;
-    const isDisabled = typeof item.disabled === "function" ? item.disabled() : !!item.disabled;
+    if (typeof item === "string" || (item.condition && !item.condition()))
+      return;
+    const isDisabled =
+      typeof item.disabled === "function" ? item.disabled() : !!item.disabled;
     if (isDisabled) return;
     const el = $("#" + item.id);
     if (el && handlers[item.action]) {
@@ -186,7 +208,7 @@ export function showContextMenu(e, items, handlers) {
       el: activeEl,
       start: activeEl.selectionStart,
       end: activeEl.selectionEnd,
-      hadSelection: hasInputSelection
+      hadSelection: hasInputSelection,
     };
   }
   if (sel && sel.rangeCount > 0 && !hasInputSelection) {
@@ -221,7 +243,9 @@ export function showContextMenu(e, items, handlers) {
   if (savedRanges.length > 0) {
     try {
       if (window.CSS && window.CSS.highlights) {
-        const highlight = new Highlight(...savedRanges.map((r) => r.cloneRange()));
+        const highlight = new Highlight(
+          ...savedRanges.map((r) => r.cloneRange()),
+        );
         window.CSS.highlights.set("terminal-preserved", highlight);
       }
     } catch {}
@@ -230,7 +254,8 @@ export function showContextMenu(e, items, handlers) {
   const restoreSelection = () => {
     if (savedInput && savedInput.el) {
       try {
-        if (document.contains(savedInput.el)) savedInput.el.setSelectionRange(savedInput.start, savedInput.end);
+        if (document.contains(savedInput.el))
+          savedInput.el.setSelectionRange(savedInput.start, savedInput.end);
       } catch {}
     }
     if (savedRanges.length > 0 && sel) {
@@ -239,8 +264,14 @@ export function showContextMenu(e, items, handlers) {
         if (cur.rangeCount === 0) {
           savedRanges.forEach((r) => cur.addRange(r.cloneRange()));
         }
-        if (window.CSS && window.CSS.highlights && !window.CSS.highlights.has("terminal-preserved")) {
-          const highlight = new Highlight(...savedRanges.map((r) => r.cloneRange()));
+        if (
+          window.CSS &&
+          window.CSS.highlights &&
+          !window.CSS.highlights.has("terminal-preserved")
+        ) {
+          const highlight = new Highlight(
+            ...savedRanges.map((r) => r.cloneRange()),
+          );
           window.CSS.highlights.set("terminal-preserved", highlight);
         }
       } catch {}
@@ -253,7 +284,9 @@ export function showContextMenu(e, items, handlers) {
 }
 
 function getNavItems(menuEl) {
-  return Array.from(menuEl.children).filter((el) => el.tagName !== "HR" && el.style.display !== "none");
+  return Array.from(menuEl.children).filter(
+    (el) => el.tagName !== "HR" && el.style.display !== "none",
+  );
 }
 
 function focusItem(menuEl, idx) {
@@ -277,7 +310,7 @@ function setupKeyboardNav(menuEl) {
   menuEl.setAttribute("tabindex", "-1");
 
   menuEl.addEventListener("mouseover", clearFocus.bind(null, menuEl), {
-    passive: true
+    passive: true,
   });
 
   menuEl.addEventListener("keydown", (e) => {
@@ -337,7 +370,9 @@ function setupKeyboardNav(menuEl) {
         } else if (e.key === "Escape") {
           e.preventDefault();
           e.stopPropagation();
-          menuEl.querySelectorAll(".context-menu").forEach((s) => (s.style.display = "none"));
+          menuEl
+            .querySelectorAll(".context-menu")
+            .forEach((s) => (s.style.display = "none"));
           hideMenu();
         }
         break;
@@ -365,7 +400,8 @@ function createItemElement(text, onclick, icon) {
     const iconVal = typeof effective === "string" ? effective.trim() : "";
     if (iconVal.startsWith("papirus:")) {
       const iconImg = createElement("img");
-      iconImg.className = "context-menu-item-icon-img papirus-icon papirus-icon--16";
+      iconImg.className =
+        "context-menu-item-icon-img papirus-icon papirus-icon--16";
       iconImg.src = resolveIconUrl(iconVal);
       iconImg.alt = "";
       el.appendChild(iconImg);
@@ -399,6 +435,7 @@ function createItemElement(text, onclick, icon) {
 }
 
 export function showDynamicContextMenu(e, buildFn) {
+  syncCmStyle();
   const menu = getMenu();
   if (!menu) return;
 
@@ -409,7 +446,8 @@ export function showDynamicContextMenu(e, buildFn) {
   menu.innerHTML = "";
   menu.classList.add("context-menu-glass");
 
-  const item = (text, onclick, icon = null) => createItemElement(text, onclick, icon);
+  const item = (text, onclick, icon = null) =>
+    createItemElement(text, onclick, icon);
 
   const hr = () => createElement("hr");
 
@@ -440,9 +478,11 @@ export function showDynamicContextMenu(e, buildFn) {
   };
 
   const submenu = (label, buildSubFn, icon = null) => {
+    syncCmStyle();
     const wrapper = createElement("div");
     wrapper.className = "context-menu-item has-submenu";
-    wrapper.style.cssText = "display:block;padding:0;background:none;border-radius:0;cursor:default;";
+    wrapper.style.cssText =
+      "display:block;padding:0;background:none;border-radius:0;cursor:default;";
 
     const trigger = createItemElement(label, null, icon);
     const arrow = createElement("span");
@@ -459,7 +499,8 @@ export function showDynamicContextMenu(e, buildFn) {
     document.body.appendChild(subMenuEl);
     bodySubmenus.push(subMenuEl);
 
-    const subItem = (text, onclick, subIcon = null) => createItemElement(text, onclick, subIcon);
+    const subItem = (text, onclick, subIcon = null) =>
+      createItemElement(text, onclick, subIcon);
     const subHr = () => createElement("hr");
     buildSubFn(subMenuEl, subItem, subHr, submenu);
     setupKeyboardNav(subMenuEl);
@@ -496,7 +537,12 @@ export function showDynamicContextMenu(e, buildFn) {
       const x2 = Math.max(t.right, s.right) + 4;
       const y1 = Math.min(t.top, s.top) - 4;
       const y2 = Math.max(t.bottom, s.bottom) + 4;
-      if (e.clientX >= x1 && e.clientX <= x2 && e.clientY >= y1 && e.clientY <= y2) {
+      if (
+        e.clientX >= x1 &&
+        e.clientX <= x2 &&
+        e.clientY >= y1 &&
+        e.clientY <= y2
+      ) {
         clearTimeout(hideTimeout);
       } else {
         close();
@@ -556,7 +602,8 @@ export function showStartStyleMenu(e, buildFn) {
     menuItem.className = "menu-item";
 
     const effective = getEffectiveIcon(icon || "fa-chevron-right");
-    const iconVal = typeof effective === "string" ? effective.trim() : "fa-chevron-right";
+    const iconVal =
+      typeof effective === "string" ? effective.trim() : "fa-chevron-right";
     if (iconVal.startsWith("papirus:")) {
       const iconImg = createElement("img");
       iconImg.className = "papirus-icon papirus-icon--16";
@@ -566,7 +613,11 @@ export function showStartStyleMenu(e, buildFn) {
       iconImg.style.height = "16px";
       iconImg.style.objectFit = "contain";
       menuItem.appendChild(iconImg);
-    } else if (iconVal.startsWith("http") || iconVal.startsWith("data:") || iconVal.startsWith("/")) {
+    } else if (
+      iconVal.startsWith("http") ||
+      iconVal.startsWith("data:") ||
+      iconVal.startsWith("/")
+    ) {
       const iconImg = createElement("img");
       iconImg.src = iconVal;
       iconImg.alt = "";
@@ -590,7 +641,9 @@ export function showStartStyleMenu(e, buildFn) {
     menuItem.onclick = () => {
       action();
       menu.classList.add("closing");
-      menu.addEventListener("animationend", () => menu.remove(), { once: true });
+      menu.addEventListener("animationend", () => menu.remove(), {
+        once: true,
+      });
     };
     menu.appendChild(menuItem);
   };
@@ -643,7 +696,10 @@ export function showStartStyleMenu(e, buildFn) {
   }
 
   menu.style.setProperty("--ctx-left", `${left}px`);
-  menu.style.setProperty("--ctx-bottom", `${viewportHeight - top - rect.height}px`);
+  menu.style.setProperty(
+    "--ctx-bottom",
+    `${viewportHeight - top - rect.height}px`,
+  );
 
   document.addEventListener("click", function removeMenu() {
     document.removeEventListener("click", removeMenu);

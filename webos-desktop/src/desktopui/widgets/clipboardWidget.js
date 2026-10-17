@@ -20,7 +20,11 @@ export class ClipboardWidget extends WidgetBase {
     `;
 
     this.refresh(contentEl);
-    this.stopPoll = createAdaptiveInterval(() => this.refresh(contentEl), 2000, 10000);
+    this.stopPoll = createAdaptiveInterval(
+      () => this.refresh(contentEl),
+      2000,
+      10000,
+    );
   }
 
   refresh(ce) {
@@ -29,7 +33,11 @@ export class ClipboardWidget extends WidgetBase {
     if (!currentEl || !listEl) return;
 
     const current = os.storage.get(StorageKeys.clipboardCurrent);
-    currentEl.textContent = current ? (current.length > 60 ? current.slice(0, 60) + "..." : current) : "Empty";
+    currentEl.textContent = current
+      ? current.length > 60
+        ? current.slice(0, 60) + "..."
+        : current
+      : "Empty";
 
     const history = os.storage.get(StorageKeys.clipboardHistory);
     if (Array.isArray(history) && history.length > 0) {

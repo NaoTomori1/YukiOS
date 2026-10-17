@@ -32,8 +32,7 @@ export const PREDEFINED_AVATARS = [
   resolveIconUrl("static/icons/fnaf1.webp"),
   resolveIconUrl("static/icons/ddlc.webp"),
   resolveIconUrl("static/icons/bendy.webp"),
-  resolveIconUrl("static/icons/clusterRush.webp")
+  resolveIconUrl("static/icons/clusterRush.webp"),
 ];
 
 export { generateUUID } from "./utils.js";
-

@@ -1,11 +1,21 @@
-import { readdirSync, readFileSync, writeFileSync, statSync, mkdirSync, existsSync } from "fs";
+import {
+  readdirSync,
+  readFileSync,
+  writeFileSync,
+  statSync,
+  mkdirSync,
+  existsSync,
+} from "fs";
 import { resolve, relative, join, dirname, sep } from "path";
 
 const projectRoot = process.cwd();
 const sourceDir = resolve(projectRoot, "src");
 const generatedDir = resolve(sourceDir, "generated");
 const manifestPath = resolve(generatedDir, "systemLibraryManifest.js");
-const overridesCachePath = resolve(projectRoot, "node_modules/.cache/yukios-system-overrides.json");
+const overridesCachePath = resolve(
+  projectRoot,
+  "node_modules/.cache/yukios-system-overrides.json",
+);
 const OVERRIDES_ROUTE = "/__yukios-overrides";
 
 const overrideStore = new Map();
@@ -27,7 +37,8 @@ function collectSourceFiles(currentDir, excludedDirs) {
     }
     if (!dirEntry.isFile()) continue;
     if (!/\.(js|css)$/.test(dirEntry.name)) continue;
-    if (/\.test\.js$/.test(dirEntry.name) || /\.spec\.js$/.test(dirEntry.name)) continue;
+    if (/\.test\.js$/.test(dirEntry.name) || /\.spec\.js$/.test(dirEntry.name))
+      continue;
     collected.push(fullPath);
   }
   return collected;
@@ -42,7 +53,7 @@ function regenerateSystemLibraryManifest() {
     entries.push({
       path: relative(sourceDir, filePath).split(sep).join("/"),
       bytes: stats.size,
-      mtime: Math.round(stats.mtimeMs)
+      mtime: Math.round(stats.mtimeMs),
     });
   }
   entries.sort((a, b) => (a.path < b.path ? -1 : a.path > b.path ? 1 : 0));
@@ -74,7 +85,11 @@ function loadPersistedOverrides() {
 function persistOverrides() {
   try {
     mkdirSync(dirname(overridesCachePath), { recursive: true });
-    writeFileSync(overridesCachePath, JSON.stringify(Object.fromEntries(overrideStore)), "utf-8");
+    writeFileSync(
+      overridesCachePath,
+      JSON.stringify(Object.fromEntries(overrideStore)),
+      "utf-8",
+    );
   } catch {}
 }
 
@@ -153,7 +168,8 @@ export function systemLibraryPlugin() {
           if (moduleById) modulesToInvalidate.add(moduleById);
         } catch {}
         try {
-          const modulesByFile = server.moduleGraph.getModulesByFile(absolutePath);
+          const modulesByFile =
+            server.moduleGraph.getModulesByFile(absolutePath);
           if (Array.isArray(modulesByFile)) {
             for (const mod of modulesByFile) modulesToInvalidate.add(mod);
           }
@@ -178,7 +194,10 @@ export function systemLibraryPlugin() {
         }
 
         if (!isSameOriginRequest(req)) {
-          return sendJson(res, 403, { ok: false, error: "cross-origin request rejected" });
+          return sendJson(res, 403, {
+            ok: false,
+            error: "cross-origin request rejected",
+          });
         }
 
         const body = await readJsonBody(req);
@@ -207,6 +226,6 @@ export function systemLibraryPlugin() {
 
         return next();
       });
-    }
+    },
   };
 }

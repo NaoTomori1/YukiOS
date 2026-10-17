@@ -9,13 +9,13 @@ export default [
       ecmaVersion: "latest",
       sourceType: "module",
       globals: {
-        ...globals.browser
-      }
+        ...globals.browser,
+      },
     },
     rules: {
       "no-unused-vars": "off",
-      "no-console": "off"
-    }
+      "no-console": "off",
+    },
   },
-  prettier
+  prettier,
 ];

@@ -29,7 +29,7 @@ const IMAGE_REPLACEMENTS = [
   ["img/2x-text.png", imgText2x],
   ["img/2x-horizon.png", imgHorizon2x],
   ["img/2x-trex.png", imgTrex2x],
-  ["img/2x-restart.png", imgRestart2x]
+  ["img/2x-restart.png", imgRestart2x],
 ];
 
 let cachedGameHtml = null;
@@ -41,7 +41,10 @@ export function buildDinoGameHtml() {
   for (const [path, uri] of IMAGE_REPLACEMENTS) {
     html = html.split(path).join(uri);
   }
-  html = html.replace('<script src="scripts/runner.js"></script>', "<script>" + runnerJsRaw + "</script>");
+  html = html.replace(
+    '<script src="scripts/runner.js"></script>',
+    "<script>" + runnerJsRaw + "</script>",
+  );
   cachedGameHtml = html;
   return cachedGameHtml;
 }

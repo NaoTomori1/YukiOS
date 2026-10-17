@@ -13,17 +13,21 @@ export function applySteamDeckSettings() {
   steamDeckSession.enter();
   steamDeckManager.setup();
   playDeckBootVideo();
-  
+
   headerMouseMoveHandler = (e) => {
     const threshold = 50;
     if (e.clientY < threshold) {
-      document.querySelectorAll(".window.deck-launched .window-header").forEach((header) => {
-        header.classList.add("deck-header-visible");
-      });
+      document
+        .querySelectorAll(".window.deck-launched .window-header")
+        .forEach((header) => {
+          header.classList.add("deck-header-visible");
+        });
     } else {
-      document.querySelectorAll(".window.deck-launched .window-header").forEach((header) => {
-        header.classList.remove("deck-header-visible");
-      });
+      document
+        .querySelectorAll(".window.deck-launched .window-header")
+        .forEach((header) => {
+          header.classList.remove("deck-header-visible");
+        });
     }
   };
   document.addEventListener("mousemove", headerMouseMoveHandler);

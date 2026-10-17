@@ -5,7 +5,7 @@ export function createAppActions(appLauncher) {
   const actions = {};
 
   const LAUNCH_METHOD_DISPATCH = {
-    openYukiDevToolsApp: (extra) => appLauncher.openYukiDevToolsApp(extra)
+    openYukiDevToolsApp: (extra) => appLauncher.openYukiDevToolsApp(extra),
   };
 
   for (const [appId, metadata] of Object.entries(SYSTEM_APPS)) {
@@ -21,7 +21,10 @@ export function createAppActions(appLauncher) {
             return;
           }
 
-          const appInstance = appLauncher.appRegistry.get(appId) || appLauncher[appId] || appLauncher[appId + "App"];
+          const appInstance =
+            appLauncher.appRegistry.get(appId) ||
+            appLauncher[appId] ||
+            appLauncher[appId + "App"];
           if (appInstance) return appInstance.open(extra);
 
           console.error(`No app instance found for ${appId}`);
@@ -48,16 +51,23 @@ export function createAppActions(appLauncher) {
             appId,
             type: "game",
             source,
-            originalName: title
+            originalName: title,
           });
         };
         break;
 
       case "steam":
         actions[appId] = (extra) => {
-          return openSteamWindow(appLauncher, appLauncher.explorerApp.wm, null, extra?.steamGameId, extra?.steamPage, {
-            userId: extra?.steamUserId
-          });
+          return openSteamWindow(
+            appLauncher,
+            appLauncher.explorerApp.wm,
+            null,
+            extra?.steamGameId,
+            extra?.steamPage,
+            {
+              userId: extra?.steamUserId,
+            },
+          );
         };
         break;
 

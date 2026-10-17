@@ -1,11 +1,26 @@
 import "../styles/appCreator.css";
 import { isImageFile } from "../fileDisplay.js";
 import { refreshIcons } from "../shared/contextMenu.js";
-import { $, createElement, bindEvent, setText, setHTML, toggleClass, BaseApp, os } from "../framework.js";
+import {
+  $,
+  createElement,
+  bindEvent,
+  setText,
+  setHTML,
+  toggleClass,
+  BaseApp,
+  os,
+} from "../framework.js";
 import { resolveIconUrl } from "../shared/assetResolver.js";
 import { getWispUrl } from "../shared/wispConfig.js";
 import { createScramjetWebApp } from "../core/ScramjetWebAppFactory.js";
-import { PROXIES, clampProxyIndex, buildProxyUrl, fetchHtmlThroughProxy, fetchDirectAsBlobUrl } from "../proxies.js";
+import {
+  PROXIES,
+  clampProxyIndex,
+  buildProxyUrl,
+  fetchHtmlThroughProxy,
+  fetchDirectAsBlobUrl,
+} from "../proxies.js";
 import { AppSource } from "../AppSource.js";
 import { PREDEFINED_AVATARS } from "../utils/avatarData.js";
 import { buildWindowHeader } from "../shared/windowHeader.js";
@@ -16,7 +31,7 @@ const AC = {
   TASKBAR_ICON: "fas fa-cubes",
   FALLBACK_ICON: "fas fa-window-maximize",
   WIN_WIDTH: "560px",
-  WIN_HEIGHT: "520px"
+  WIN_HEIGHT: "520px",
 };
 
 function resolvedIcon(iconUrl) {
@@ -37,7 +52,7 @@ function buildAppMapEntry(
   proxyEnabled = false,
   proxyIndex = 0,
   scramjetEnabled = false,
-  blobEnabled = false
+  blobEnabled = false,
 ) {
   const iconValue = faviconUrl || icon;
   return {
@@ -50,7 +65,7 @@ function buildAppMapEntry(
     proxyEnabled,
     proxyIndex,
     scramjetEnabled,
-    blobEnabled
+    blobEnabled,
   };
 }
 
@@ -63,9 +78,20 @@ function buildAppMeta(
   proxyEnabled = false,
   proxyIndex = 0,
   scramjetEnabled = false,
-  blobEnabled = false
+  blobEnabled = false,
 ) {
-  return { appId, name, url, icon, faviconUrl, type: "game", proxyEnabled, proxyIndex, scramjetEnabled, blobEnabled };
+  return {
+    appId,
+    name,
+    url,
+    icon,
+    faviconUrl,
+    type: "game",
+    proxyEnabled,
+    proxyIndex,
+    scramjetEnabled,
+    blobEnabled,
+  };
 }
 
 async function buildBlobUrl(url, proxyEnabled, proxyIndex) {
@@ -96,7 +122,7 @@ function parseFaviconFromHtml(html, baseUrl) {
     "link[rel~='icon']",
     "link[rel='shortcut icon']",
     "link[rel='apple-touch-icon']",
-    "link[rel='apple-touch-icon-precomposed']"
+    "link[rel='apple-touch-icon-precomposed']",
   ];
   for (const sel of selectors) {
     const el = doc.querySelector(sel);
@@ -155,7 +181,7 @@ export class AppCreatorApp extends BaseApp {
       appName: name,
       targetUrl: url,
       appIcon: icon,
-      windowSize: ["1280px", "800px"]
+      windowSize: ["1280px", "800px"],
     });
 
     const appInstance = new AppClass(this.os);
@@ -259,9 +285,15 @@ export class AppCreatorApp extends BaseApp {
       </div>
     `;
 
-    const win = os.window.create(AC.WIN_ID, "App Creator", AC.WIN_WIDTH, AC.WIN_HEIGHT, {
-      icon: AC.TASKBAR_ICON
-    });
+    const win = os.window.create(
+      AC.WIN_ID,
+      "App Creator",
+      AC.WIN_WIDTH,
+      AC.WIN_HEIGHT,
+      {
+        icon: AC.TASKBAR_ICON,
+      },
+    );
     win.innerHTML = content;
     os.window.addToTaskbar(AC.WIN_ID, "App Creator", AC.TASKBAR_ICON);
 
@@ -288,8 +320,8 @@ export class AppCreatorApp extends BaseApp {
           !!app.proxyEnabled,
           clampProxyIndex(app.proxyIndex, PROXIES),
           !!app.scramjetEnabled,
-          !!app.blobEnabled
-        )
+          !!app.blobEnabled,
+        ),
       );
       this.addToDesktop(app.appId, app.name, app.icon, app.faviconUrl);
 
@@ -443,7 +475,14 @@ export class AppCreatorApp extends BaseApp {
       const proxyIndex = clampProxyIndex(parseInt(proxySelect?.value), PROXIES);
       const useScramjet = !!scramjetEnabledInput?.checked;
       const blobEnabled = !!blobEnabledInput?.checked;
-      await this.openPreviewWindow(name, url, useProxy, proxyIndex, useScramjet, blobEnabled);
+      await this.openPreviewWindow(
+        name,
+        url,
+        useProxy,
+        proxyIndex,
+        useScramjet,
+        blobEnabled,
+      );
     });
 
     installBtn.addEventListener("click", () => {
@@ -482,7 +521,7 @@ export class AppCreatorApp extends BaseApp {
             scramjetEnabled,
             blobEnabled,
             status,
-            win
+            win,
           )
         : this.installApp(
             name,
@@ -493,7 +532,7 @@ export class AppCreatorApp extends BaseApp {
             scramjetEnabled,
             blobEnabled,
             status,
-            win
+            win,
           );
       task.catch(console.error);
     });
@@ -590,7 +629,7 @@ export class AppCreatorApp extends BaseApp {
               proxyIndex: data.proxyIndex || 0,
               scramjetEnabled: data.scramjetEnabled || false,
               blobEnabled: data.blobEnabled || false,
-              fileName: fileName
+              fileName: fileName,
             });
           }
         } catch {}
@@ -609,7 +648,8 @@ export class AppCreatorApp extends BaseApp {
           const raw = await this.fs.readTextFile(["Desktop"], fileName);
           if (!raw) continue;
           const data = JSON.parse(raw);
-          if (data.isCustomApp && data.app === appId) return { ...data, fileName: fileName };
+          if (data.isCustomApp && data.app === appId)
+            return { ...data, fileName: fileName };
         } catch {}
       }
     } catch {}
@@ -631,7 +671,8 @@ export class AppCreatorApp extends BaseApp {
       proxySelect.value = String(clampProxyIndex(meta.proxyIndex, PROXIES));
       proxySelect.disabled = !proxyEnabledInput?.checked;
     }
-    if (scramjetEnabledInput) scramjetEnabledInput.checked = !!meta.scramjetEnabled;
+    if (scramjetEnabledInput)
+      scramjetEnabledInput.checked = !!meta.scramjetEnabled;
     if (blobEnabledInput) blobEnabledInput.checked = !!meta.blobEnabled;
     if (scramjetEnabledInput && blobEnabledInput) {
       const scramjetChecked = !!meta.scramjetEnabled;
@@ -658,11 +699,24 @@ export class AppCreatorApp extends BaseApp {
     $(".window-content", win).scrollTop = 0;
   }
 
-  async saveEdit(appId, name, url, iconUrl, proxyEnabled, proxyIndex, scramjetEnabled, blobEnabled, statusEl, win) {
+  async saveEdit(
+    appId,
+    name,
+    url,
+    iconUrl,
+    proxyEnabled,
+    proxyIndex,
+    scramjetEnabled,
+    blobEnabled,
+    statusEl,
+    win,
+  ) {
     const meta = await this.loadAppMeta(appId);
     if (!meta) {
       this.showStatus(statusEl, "error", "Could not find app to edit.");
-      os.notify.send("", `Failed to update "${name}": app not found.`, { appSource: AppSource.APP_CREATOR });
+      os.notify.send("", `Failed to update "${name}": app not found.`, {
+        appSource: AppSource.APP_CREATOR,
+      });
       return;
     }
 
@@ -681,14 +735,17 @@ export class AppCreatorApp extends BaseApp {
       proxyIndex,
       scramjetEnabled,
       blobEnabled,
-      isCustomApp: true
+      isCustomApp: true,
     };
 
     try {
       if (fileNameChanged) {
         await os.fs.delete(["Desktop"], meta.fileName);
       }
-      await os.fs.write(["Desktop", newFileName], JSON.stringify(updated, null, 2));
+      await os.fs.write(
+        ["Desktop", newFileName],
+        JSON.stringify(updated, null, 2),
+      );
     } catch (e) {
       console.warn("AppCreator: fs update failed", e);
       os.notify.send("", `Failed to save "${name}" to filesystem.`);
@@ -705,8 +762,8 @@ export class AppCreatorApp extends BaseApp {
           !!proxyEnabled,
           clampProxyIndex(proxyIndex, PROXIES),
           !!scramjetEnabled,
-          !!blobEnabled
-        )
+          !!blobEnabled,
+        ),
       );
     }
 
@@ -720,10 +777,14 @@ export class AppCreatorApp extends BaseApp {
     }
 
     if (fileNameChanged) {
-      const oldIcon = $(`.desktop-file-icon[data-file-name="${CSS.escape(meta.fileName)}"]`);
+      const oldIcon = $(
+        `.desktop-file-icon[data-file-name="${CSS.escape(meta.fileName)}"]`,
+      );
       if (oldIcon) oldIcon.remove();
       await this.desktopUI.iconManager.createDesktopFileIcon(newFileName);
-      const icon = $(`.desktop-file-icon[data-file-name="${CSS.escape(newFileName)}"]`);
+      const icon = $(
+        `.desktop-file-icon[data-file-name="${CSS.escape(newFileName)}"]`,
+      );
       if (icon) {
         icon.addEventListener("contextmenu", (e) => {
           e.preventDefault();
@@ -744,18 +805,28 @@ export class AppCreatorApp extends BaseApp {
     const meta = await this.loadAppMeta(appId);
     if (!meta) return;
 
-    if (!(await os.dialog.confirm("Confirm", `Delete "${meta.name}"? The desktop icon will also be removed.`))) return;
+    if (
+      !(await os.dialog.confirm(
+        "Confirm",
+        `Delete "${meta.name}"? The desktop icon will also be removed.`,
+      ))
+    )
+      return;
 
     try {
       await os.fs.delete(["Desktop"], meta.fileName);
     } catch (e) {
       console.warn("AppCreator: fs delete failed", e);
-      os.notify.send("", `Failed to delete "${meta.name}" from filesystem.`, { appSource: AppSource.APP_CREATOR });
+      os.notify.send("", `Failed to delete "${meta.name}" from filesystem.`, {
+        appSource: AppSource.APP_CREATOR,
+      });
     }
 
     os.app.unregisterCustomApp(appId);
 
-    const desktopIcon = $(`.desktop-file-icon[data-file-name="${CSS.escape(meta.fileName)}"]`);
+    const desktopIcon = $(
+      `.desktop-file-icon[data-file-name="${CSS.escape(meta.fileName)}"]`,
+    );
     if (desktopIcon) desktopIcon.remove();
 
     os.notify.send("", `"${meta.name}" has been uninstalled.`);
@@ -767,7 +838,9 @@ export class AppCreatorApp extends BaseApp {
     const meta = await this.loadAppMeta(appId);
     if (!meta) return;
 
-    const desktopIcon = $(`.desktop-file-icon[data-file-name="${CSS.escape(meta.fileName)}"]`);
+    const desktopIcon = $(
+      `.desktop-file-icon[data-file-name="${CSS.escape(meta.fileName)}"]`,
+    );
     if (!desktopIcon) return;
 
     const label = $("div", desktopIcon);
@@ -823,7 +896,7 @@ export class AppCreatorApp extends BaseApp {
     proxyEnabled = false,
     proxyIndex = 0,
     scramjetEnabled = false,
-    blobEnabled = false
+    blobEnabled = false,
   ) {
     const secureUrl = ensureHttpsProtocol(url);
     let finalUrl = secureUrl;
@@ -831,14 +904,22 @@ export class AppCreatorApp extends BaseApp {
     if (scramjetEnabled) {
       const wispUrl = getWispUrl();
       finalUrl = `/sapps/set-template.html?wisp=${encodeURIComponent(wispUrl)}&target=${encodeURIComponent(secureUrl)}`;
-    } else if (blobEnabled && typeof secureUrl === "string" && /^https?:\/\//.test(secureUrl)) {
+    } else if (
+      blobEnabled &&
+      typeof secureUrl === "string" &&
+      /^https?:\/\//.test(secureUrl)
+    ) {
       try {
         finalUrl = await buildBlobUrl(secureUrl, proxyEnabled, proxyIndex);
       } catch (e) {
         console.error("[AppCreator Preview] Failed to fetch blob:", e);
         finalUrl = secureUrl;
       }
-    } else if (proxyEnabled && typeof secureUrl === "string" && /^https?:\/\//.test(secureUrl)) {
+    } else if (
+      proxyEnabled &&
+      typeof secureUrl === "string" &&
+      /^https?:\/\//.test(secureUrl)
+    ) {
       try {
         finalUrl = await fetchHtmlThroughProxy(secureUrl, proxyIndex, PROXIES);
       } catch (e) {
@@ -849,7 +930,7 @@ export class AppCreatorApp extends BaseApp {
 
     const winId = `app-creator-preview-${Date.now()}`;
     const win = os.window.create(winId, `${name} - Preview`, "80vw", "80vh", {
-      icon: AC.TASKBAR_ICON
+      icon: AC.TASKBAR_ICON,
     });
     win.innerHTML = `
       <div class="window-content">
@@ -865,7 +946,17 @@ export class AppCreatorApp extends BaseApp {
     os.window.addToTaskbar(winId, `${name} - Preview`, AC.TASKBAR_ICON);
   }
 
-  async installApp(name, url, iconUrl, proxyEnabled, proxyIndex, scramjetEnabled, blobEnabled, statusEl, win) {
+  async installApp(
+    name,
+    url,
+    iconUrl,
+    proxyEnabled,
+    proxyIndex,
+    scramjetEnabled,
+    blobEnabled,
+    statusEl,
+    win,
+  ) {
     const secureUrl = ensureHttpsProtocol(url);
     const appId = `${AC.APP_ID_PREFIX}${name.toLowerCase().replace(/\s+/g, "-")}-${Date.now()}`;
     const fileName = `${name}.desktop`;
@@ -879,7 +970,7 @@ export class AppCreatorApp extends BaseApp {
       !!proxyEnabled,
       clampProxyIndex(proxyIndex, PROXIES),
       !!scramjetEnabled,
-      !!blobEnabled
+      !!blobEnabled,
     );
 
     const desktopFileContent = JSON.stringify({
@@ -893,7 +984,7 @@ export class AppCreatorApp extends BaseApp {
       proxyIndex,
       scramjetEnabled,
       blobEnabled,
-      isCustomApp: true
+      isCustomApp: true,
     });
 
     try {
@@ -913,8 +1004,8 @@ export class AppCreatorApp extends BaseApp {
         !!proxyEnabled,
         clampProxyIndex(proxyIndex, PROXIES),
         !!scramjetEnabled,
-        !!blobEnabled
-      )
+        !!blobEnabled,
+      ),
     );
     this.addToDesktop(appId, name, iconUrl, faviconUrl);
 
@@ -923,7 +1014,10 @@ export class AppCreatorApp extends BaseApp {
     }
 
     this.showStatus(statusEl, "success", `"${name}" installed!`);
-    os.notify.send("Added to desktop", `"${name}"`, { type: "success", duration: 3000 });
+    os.notify.send("Added to desktop", `"${name}"`, {
+      type: "success",
+      duration: 3000,
+    });
     this.refreshInstalledList(win);
   }
 
@@ -931,7 +1025,9 @@ export class AppCreatorApp extends BaseApp {
     if (this.desktopUI) {
       const fileName = `${name}.desktop`;
       await this.desktopUI.iconManager.createDesktopFileIcon(fileName);
-      const icon = $(`.desktop-file-icon[data-file-name="${CSS.escape(fileName)}"]`);
+      const icon = $(
+        `.desktop-file-icon[data-file-name="${CSS.escape(fileName)}"]`,
+      );
       if (icon) {
         icon.addEventListener("contextmenu", (e) => {
           e.preventDefault();
@@ -940,7 +1036,9 @@ export class AppCreatorApp extends BaseApp {
         });
       }
     } else {
-      console.warn("AppCreator: desktopUI not set, call setDesktopUI() after construction.");
+      console.warn(
+        "AppCreator: desktopUI not set, call setDesktopUI() after construction.",
+      );
     }
   }
 
@@ -955,13 +1053,13 @@ export class AppCreatorApp extends BaseApp {
       { id: "ctx-ca-cut", label: "Cut", icon: "fa-cut" },
       { id: "ctx-ca-copy", label: "Copy", icon: "fa-copy" },
       { id: "ctx-ca-delete", label: "Delete", icon: "fa-trash-alt" },
-      { id: "ctx-ca-props", label: "Properties", icon: "fa-info-circle" }
+      { id: "ctx-ca-props", label: "Properties", icon: "fa-info-circle" },
     ];
 
     menu.innerHTML = items
       .map(
         (i) =>
-          `<div id="${i.id}"><i class="fas ${i.icon}" style="width:16px;margin-right:8px;opacity:0.6;"></i><span>${i.label}</span></div>`
+          `<div id="${i.id}"><i class="fas ${i.icon}" style="width:16px;margin-right:8px;opacity:0.6;"></i><span>${i.label}</span></div>`,
       )
       .join("");
 
@@ -1021,14 +1119,14 @@ export class AppCreatorApp extends BaseApp {
             <div class="ac-avatar-option-window" data-src="${avatar}">
               <img src="${avatar}" />
             </div>
-          `
+          `,
           ).join("")}
         </div>
       </div>
     `;
 
     const win = os.window.create(winId, "Choose Avatar", "320px", "336px", {
-      icon: "fas fa-images"
+      icon: "fas fa-images",
     });
     win.innerHTML = content;
     os.window.addToTaskbar(winId, "Choose Avatar", "fas fa-images");

@@ -150,7 +150,8 @@ html.transparent-ui.tp-start-menu[data-theme="macos-fluent"] .start-menu {
   height: var(--dock-icon-size);
   border-radius: 10px;
   overflow: visible;
-  transition: transform var(--dock-anim-speed) cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  transition: transform var(--dock-anim-speed)
+    cubic-bezier(0.25, 0.46, 0.45, 0.94);
   transform-origin: center bottom;
 }
 
@@ -272,7 +273,8 @@ html.transparent-ui.tp-start-menu[data-theme="macos-fluent"] .start-menu {
 }
 
 .mac-dock.dock-magnify .dock-icon-wrap {
-  transition: transform var(--dock-anim-speed) cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  transition: transform var(--dock-anim-speed)
+    cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
 .mac-dock:not(.dock-magnify) .dock-item {
@@ -582,7 +584,9 @@ html.mac-mode .desktop-peek-btn {
   border-radius: 4px;
   transition: background 0.12s ease;
   user-select: none;
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue",
+    sans-serif;
 }
 
 .mac-mode .mac-menu-item.mac-menu-apple {
@@ -747,7 +751,9 @@ html[data-theme].mac-mode .network-settings-btn:hover {
     0 8px 32px rgba(0, 0, 0, 0.55),
     0 2px 8px rgba(0, 0, 0, 0.3),
     inset 0 1px 0 rgba(255, 255, 255, 0.04);
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue",
+    sans-serif;
   font-size: 13px;
   z-index: 999999;
   animation: macMenuIn 0.13s ease-out;
@@ -773,7 +779,11 @@ html[data-theme].mac-mode .network-settings-btn:hover {
 .mac-mode #context-menu.context-menu-glass > div,
 .mac-mode #context-menu.context-menu-glass .context-menu > div,
 .mac-mode #context-menu.context-menu-glass .context-menu-item > div,
-.mac-mode #context-menu.context-menu-glass .context-menu .context-menu-item > div {
+.mac-mode
+  #context-menu.context-menu-glass
+  .context-menu
+  .context-menu-item
+  > div {
   display: flex;
   align-items: center;
   margin: 0 4px;
@@ -790,21 +800,34 @@ html[data-theme].mac-mode .network-settings-btn:hover {
 .mac-mode #context-menu.context-menu-glass > div:hover,
 .mac-mode #context-menu.context-menu-glass .context-menu > div:hover,
 .mac-mode #context-menu.context-menu-glass .context-menu-item > div:hover,
-.mac-mode #context-menu.context-menu-glass .context-menu .context-menu-item > div:hover {
+.mac-mode
+  #context-menu.context-menu-glass
+  .context-menu
+  .context-menu-item
+  > div:hover {
   background: rgba(110, 120, 255, 0.35);
 }
 
 .mac-mode #context-menu.context-menu-glass > div.cm-focused,
 .mac-mode #context-menu.context-menu-glass .context-menu > div.cm-focused,
 .mac-mode #context-menu.context-menu-glass .context-menu-item > div.cm-focused,
-.mac-mode #context-menu.context-menu-glass .context-menu .context-menu-item > div.cm-focused {
+.mac-mode
+  #context-menu.context-menu-glass
+  .context-menu
+  .context-menu-item
+  > div.cm-focused {
   background: rgba(110, 120, 255, 0.35);
 }
 
 .mac-mode #context-menu.context-menu-glass > div i,
 .mac-mode #context-menu.context-menu-glass .context-menu > div i,
 .mac-mode #context-menu.context-menu-glass .context-menu-item > div i,
-.mac-mode #context-menu.context-menu-glass .context-menu .context-menu-item > div i {
+.mac-mode
+  #context-menu.context-menu-glass
+  .context-menu
+  .context-menu-item
+  > div
+  i {
   width: 16px;
   text-align: center;
   font-size: 12px;
@@ -820,7 +843,11 @@ html[data-theme].mac-mode .network-settings-btn:hover {
   text-overflow: ellipsis;
 }
 
-.mac-mode #context-menu.context-menu-glass .context-menu-item.has-submenu > div .submenu-arrow {
+.mac-mode
+  #context-menu.context-menu-glass
+  .context-menu-item.has-submenu
+  > div
+  .submenu-arrow {
   font-size: 10px;
   color: rgba(255, 255, 255, 0.4);
   margin-left: auto;
@@ -848,7 +875,8 @@ html[data-theme].mac-mode .network-settings-btn:hover {
 }
 
 html[data-theme="light"].mac-mode #context-menu.context-menu-glass,
-html[data-theme].mac-mode[data-theme-mode="light"] #context-menu.context-menu-glass {
+html[data-theme].mac-mode[data-theme-mode="light"]
+  #context-menu.context-menu-glass {
   background: rgba(240, 240, 242, 0.95);
   border: 1px solid rgba(0, 0, 0, 0.12);
   box-shadow:
@@ -857,12 +885,30 @@ html[data-theme].mac-mode[data-theme-mode="light"] #context-menu.context-menu-gl
 }
 
 html[data-theme="light"].mac-mode #context-menu.context-menu-glass > div,
-html[data-theme].mac-mode[data-theme-mode="light"] #context-menu.context-menu-glass > div,
-html[data-theme="light"].mac-mode #context-menu.context-menu-glass .context-menu > div,
-html[data-theme].mac-mode[data-theme-mode="light"] #context-menu.context-menu-glass .context-menu > div,
-html[data-theme="light"].mac-mode #context-menu.context-menu-glass .context-menu-item > div,
-html[data-theme].mac-mode[data-theme-mode="light"] #context-menu.context-menu-glass .context-menu-item > div,
-html[data-theme="light"].mac-mode #context-menu.context-menu-glass .context-menu .context-menu-item > div,
+html[data-theme].mac-mode[data-theme-mode="light"]
+  #context-menu.context-menu-glass
+  > div,
+html[data-theme="light"].mac-mode
+  #context-menu.context-menu-glass
+  .context-menu
+  > div,
+html[data-theme].mac-mode[data-theme-mode="light"]
+  #context-menu.context-menu-glass
+  .context-menu
+  > div,
+html[data-theme="light"].mac-mode
+  #context-menu.context-menu-glass
+  .context-menu-item
+  > div,
+html[data-theme].mac-mode[data-theme-mode="light"]
+  #context-menu.context-menu-glass
+  .context-menu-item
+  > div,
+html[data-theme="light"].mac-mode
+  #context-menu.context-menu-glass
+  .context-menu
+  .context-menu-item
+  > div,
 html[data-theme].mac-mode[data-theme-mode="light"]
   #context-menu.context-menu-glass
   .context-menu
@@ -872,12 +918,30 @@ html[data-theme].mac-mode[data-theme-mode="light"]
 }
 
 html[data-theme="light"].mac-mode #context-menu.context-menu-glass > div:hover,
-html[data-theme].mac-mode[data-theme-mode="light"] #context-menu.context-menu-glass > div:hover,
-html[data-theme="light"].mac-mode #context-menu.context-menu-glass .context-menu > div:hover,
-html[data-theme].mac-mode[data-theme-mode="light"] #context-menu.context-menu-glass .context-menu > div:hover,
-html[data-theme="light"].mac-mode #context-menu.context-menu-glass .context-menu-item > div:hover,
-html[data-theme].mac-mode[data-theme-mode="light"] #context-menu.context-menu-glass .context-menu-item > div:hover,
-html[data-theme="light"].mac-mode #context-menu.context-menu-glass .context-menu .context-menu-item > div:hover,
+html[data-theme].mac-mode[data-theme-mode="light"]
+  #context-menu.context-menu-glass
+  > div:hover,
+html[data-theme="light"].mac-mode
+  #context-menu.context-menu-glass
+  .context-menu
+  > div:hover,
+html[data-theme].mac-mode[data-theme-mode="light"]
+  #context-menu.context-menu-glass
+  .context-menu
+  > div:hover,
+html[data-theme="light"].mac-mode
+  #context-menu.context-menu-glass
+  .context-menu-item
+  > div:hover,
+html[data-theme].mac-mode[data-theme-mode="light"]
+  #context-menu.context-menu-glass
+  .context-menu-item
+  > div:hover,
+html[data-theme="light"].mac-mode
+  #context-menu.context-menu-glass
+  .context-menu
+  .context-menu-item
+  > div:hover,
 html[data-theme].mac-mode[data-theme-mode="light"]
   #context-menu.context-menu-glass
   .context-menu
@@ -887,12 +951,36 @@ html[data-theme].mac-mode[data-theme-mode="light"]
 }
 
 html[data-theme="light"].mac-mode #context-menu.context-menu-glass > div i,
-html[data-theme].mac-mode[data-theme-mode="light"] #context-menu.context-menu-glass > div i,
-html[data-theme="light"].mac-mode #context-menu.context-menu-glass .context-menu > div i,
-html[data-theme].mac-mode[data-theme-mode="light"] #context-menu.context-menu-glass .context-menu > div i,
-html[data-theme="light"].mac-mode #context-menu.context-menu-glass .context-menu-item > div i,
-html[data-theme].mac-mode[data-theme-mode="light"] #context-menu.context-menu-glass .context-menu-item > div i,
-html[data-theme="light"].mac-mode #context-menu.context-menu-glass .context-menu .context-menu-item > div i,
+html[data-theme].mac-mode[data-theme-mode="light"]
+  #context-menu.context-menu-glass
+  > div
+  i,
+html[data-theme="light"].mac-mode
+  #context-menu.context-menu-glass
+  .context-menu
+  > div
+  i,
+html[data-theme].mac-mode[data-theme-mode="light"]
+  #context-menu.context-menu-glass
+  .context-menu
+  > div
+  i,
+html[data-theme="light"].mac-mode
+  #context-menu.context-menu-glass
+  .context-menu-item
+  > div
+  i,
+html[data-theme].mac-mode[data-theme-mode="light"]
+  #context-menu.context-menu-glass
+  .context-menu-item
+  > div
+  i,
+html[data-theme="light"].mac-mode
+  #context-menu.context-menu-glass
+  .context-menu
+  .context-menu-item
+  > div
+  i,
 html[data-theme].mac-mode[data-theme-mode="light"]
   #context-menu.context-menu-glass
   .context-menu
@@ -902,14 +990,20 @@ html[data-theme].mac-mode[data-theme-mode="light"]
   color: rgba(0, 0, 0, 0.45);
 }
 
-html[data-theme="light"].mac-mode #context-menu.context-menu-glass .context-menu,
-html[data-theme].mac-mode[data-theme-mode="light"] #context-menu.context-menu-glass .context-menu {
+html[data-theme="light"].mac-mode
+  #context-menu.context-menu-glass
+  .context-menu,
+html[data-theme].mac-mode[data-theme-mode="light"]
+  #context-menu.context-menu-glass
+  .context-menu {
   background: rgba(240, 240, 242, 0.95);
   border: 1px solid rgba(0, 0, 0, 0.12);
 }
 
 html[data-theme="light"].mac-mode #context-menu.context-menu-glass hr,
-html[data-theme].mac-mode[data-theme-mode="light"] #context-menu.context-menu-glass hr {
+html[data-theme].mac-mode[data-theme-mode="light"]
+  #context-menu.context-menu-glass
+  hr {
   border-top: 1px solid rgba(0, 0, 0, 0.1);
 }
 

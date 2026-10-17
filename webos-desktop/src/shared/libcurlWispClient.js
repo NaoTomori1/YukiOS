@@ -1,4 +1,4 @@
-import { getWispUrl } from "./wispConfig.js";
+import { getWispUrl, getWispCandidates } from "./wispConfig.js";
 import { createElement } from "./domUtils.js";
 import { StorageKeys } from "../StorageKeys.js";
 
@@ -303,6 +303,75 @@ async function runSessionFetch(target, wispUrl, options) {
   }
 }
 
+const WISP_ATTEMPT_TIMEOUT_MS = 15000;
+
+function resolveWispCandidates(preferred) {
+  try {
+    if (typeof getWispCandidates === "function") {
+      const listed = getWispCandidates(preferred);
+      if (Array.isArray(listed)) {
+        const seen = new Set();
+        const ordered = [];
+        for (let index = 0; index < listed.length; index++) {
+          const entry = String(listed[index] || "").trim();
+          if (!entry || seen.has(entry)) {
+            continue;
+          }
+          seen.add(entry);
+          ordered.push(entry);
+        }
+        if (ordered.length > 0) {
+          return ordered;
+        }
+      }
+    }
+  } catch (resolveErr) {
+    void resolveErr;
+  }
+  const fallback = String(preferred || getWispUrl() || "").trim();
+  if (!fallback) {
+    return [];
+  }
+  return [fallback];
+}
+
+function runSessionFetchWithTimeout(target, wispUrl, options) {
+  let timerId = null;
+  const timeoutTask = new Promise((resolve, reject) => {
+    timerId = setTimeout(() => {
+      reject(
+        new Error(
+          "WISP attempt timed out after " +
+            WISP_ATTEMPT_TIMEOUT_MS +
+            "ms for " +
+            wispUrl,
+        ),
+      );
+    }, WISP_ATTEMPT_TIMEOUT_MS);
+  });
+  const fetchTask = runSessionFetch(target, wispUrl, options);
+  return Promise.race([fetchTask, timeoutTask]).then(
+    (result) => {
+      clearTimeout(timerId);
+      return result;
+    },
+    (fetchErr) => {
+      clearTimeout(timerId);
+      throw fetchErr;
+    },
+  );
+}
+
+function buildWispFailureMessage(target, attempted, lastError) {
+  const detail =
+    lastError && lastError.message
+      ? lastError.message
+      : String(lastError || "unknown error");
+  return (
+    "All " + attempted + " WISP servers failed for " + target + ": " + detail
+  );
+}
+
 export async function fetchViaWisp(url, options = {}) {
   const target = String(url || "").trim();
   if (!target) {
@@ -311,22 +380,56 @@ export async function fetchViaWisp(url, options = {}) {
   if (!/^https?:\/\//i.test(target)) {
     throw new Error("fetchViaWisp handles web addresses only: " + target);
   }
-  const wispUrl = options.wispUrl || getWispUrl();
-  const response = await runSessionFetch(target, wispUrl, options);
-  const status = response.status || 0;
-  throwForStatus(target, status);
-  const contentType = readContentType(response);
-  const mime = String(contentType || "")
-    .split(";")[0]
-    .trim()
-    .toLowerCase();
-  if (isTextResponse(mime, target)) {
-    let text = "";
+  const candidates = resolveWispCandidates(options.wispUrl);
+  let lastError = null;
+  for (let index = 0; index < candidates.length; index++) {
+    const candidate = candidates[index];
+    let response = null;
     try {
-      text = await response.text();
+      response = await runSessionFetchWithTimeout(target, candidate, options);
+    } catch (err) {
+      lastError = err;
+      sessionByUrl.delete(candidate);
+      continue;
+    }
+    const status = response.status || 0;
+    throwForStatus(target, status);
+    const contentType = readContentType(response);
+    const mime = String(contentType || "")
+      .split(";")[0]
+      .trim()
+      .toLowerCase();
+    if (isTextResponse(mime, target)) {
+      let text = "";
+      try {
+        text = await response.text();
+      } catch (err) {
+        throw new Error(
+          "Page read failed for " +
+            target +
+            ": " +
+            (err && err.message ? err.message : String(err)),
+        );
+      }
+      return {
+        status,
+        contentType: mime,
+        text,
+        blobUrl: null,
+        title: extractTitle(text) || target,
+        usedWispUrl: candidate,
+      };
+    }
+    let blobUrl = null;
+    try {
+      const buffer = await response.arrayBuffer();
+      const blob = new Blob([buffer], {
+        type: mime || "application/octet-stream",
+      });
+      blobUrl = URL.createObjectURL(blob);
     } catch (err) {
       throw new Error(
-        "Page read failed for " +
+        "Binary read failed for " +
           target +
           ": " +
           (err && err.message ? err.message : String(err)),
@@ -335,33 +438,15 @@ export async function fetchViaWisp(url, options = {}) {
     return {
       status,
       contentType: mime,
-      text,
-      blobUrl: null,
-      title: extractTitle(text) || target,
+      text: null,
+      blobUrl,
+      title: target,
+      usedWispUrl: candidate,
     };
   }
-  let blobUrl = null;
-  try {
-    const buffer = await response.arrayBuffer();
-    const blob = new Blob([buffer], {
-      type: mime || "application/octet-stream",
-    });
-    blobUrl = URL.createObjectURL(blob);
-  } catch (err) {
-    throw new Error(
-      "Binary read failed for " +
-        target +
-        ": " +
-        (err && err.message ? err.message : String(err)),
-    );
-  }
-  return {
-    status,
-    contentType: mime,
-    text: null,
-    blobUrl,
-    title: target,
-  };
+  throw new Error(
+    buildWispFailureMessage(target, candidates.length, lastError),
+  );
 }
 
 export async function fetchViaWispRaw(url, options = {}) {
@@ -372,32 +457,47 @@ export async function fetchViaWispRaw(url, options = {}) {
   if (!/^https?:\/\//i.test(target)) {
     throw new Error("fetchViaWispRaw handles web addresses only: " + target);
   }
-  const wispUrl = options.wispUrl || getWispUrl();
-  const response = await runSessionFetch(target, wispUrl, options);
-  const status = response.status || 0;
-  throwForStatus(target, status);
-  const contentType = readContentType(response);
-  const mime = String(contentType || "")
-    .split(";")[0]
-    .trim()
-    .toLowerCase();
-  let buffer = null;
-  try {
-    buffer = await response.arrayBuffer();
-  } catch (err) {
-    throw new Error(
-      "Binary read failed for " +
-        target +
-        ": " +
-        (err && err.message ? err.message : String(err)),
-    );
+  const candidates = resolveWispCandidates(options.wispUrl);
+  let lastError = null;
+  for (let index = 0; index < candidates.length; index++) {
+    const candidate = candidates[index];
+    let response = null;
+    try {
+      response = await runSessionFetchWithTimeout(target, candidate, options);
+    } catch (err) {
+      lastError = err;
+      sessionByUrl.delete(candidate);
+      continue;
+    }
+    const status = response.status || 0;
+    throwForStatus(target, status);
+    const contentType = readContentType(response);
+    const mime = String(contentType || "")
+      .split(";")[0]
+      .trim()
+      .toLowerCase();
+    let buffer = null;
+    try {
+      buffer = await response.arrayBuffer();
+    } catch (err) {
+      throw new Error(
+        "Binary read failed for " +
+          target +
+          ": " +
+          (err && err.message ? err.message : String(err)),
+      );
+    }
+    return {
+      status,
+      contentType: mime,
+      headers: readHeaderBag(response),
+      buffer,
+      usedWispUrl: candidate,
+    };
   }
-  return {
-    status,
-    contentType: mime,
-    headers: readHeaderBag(response),
-    buffer,
-  };
+  throw new Error(
+    buildWispFailureMessage(target, candidates.length, lastError),
+  );
 }
 
 export function resetWispSessions() {

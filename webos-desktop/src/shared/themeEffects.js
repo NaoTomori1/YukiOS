@@ -4,7 +4,10 @@ import { sanitizeBackground, THEME_EFFECT_OPTIONS } from "./themeContract.js";
 const EFFECTS_STYLE_ID = "yukios-theme-effects";
 
 function applyEffectsStyle(effects) {
-  const hasBg = effects && typeof effects.background === "string" && effects.background.length > 0;
+  const hasBg =
+    effects &&
+    typeof effects.background === "string" &&
+    effects.background.length > 0;
   const existing = $("#" + EFFECTS_STYLE_ID);
   if (!hasBg) {
     if (existing) existing.remove();
@@ -21,7 +24,8 @@ function applyEffectsStyle(effects) {
 export function getStoredEffects() {
   try {
     const stored = os.storage.get(StorageKeys.themeHubEffects);
-    if (!stored || typeof stored !== "object" || Array.isArray(stored)) return null;
+    if (!stored || typeof stored !== "object" || Array.isArray(stored))
+      return null;
     return stored;
   } catch (e) {
     return null;
@@ -32,11 +36,17 @@ export function applyThemeEffects(effects) {
   try {
     if (!effects || typeof effects !== "object") return;
     const sanitized = {};
-    if (typeof effects.windowAnimation === "string" && THEME_EFFECT_OPTIONS.open.includes(effects.windowAnimation)) {
+    if (
+      typeof effects.windowAnimation === "string" &&
+      THEME_EFFECT_OPTIONS.open.includes(effects.windowAnimation)
+    ) {
       os.storage.set(StorageKeys.windowOpenAnimation, effects.windowAnimation);
       sanitized.windowAnimation = effects.windowAnimation;
     }
-    if (typeof effects.closeAnimation === "string" && THEME_EFFECT_OPTIONS.close.includes(effects.closeAnimation)) {
+    if (
+      typeof effects.closeAnimation === "string" &&
+      THEME_EFFECT_OPTIONS.close.includes(effects.closeAnimation)
+    ) {
       os.storage.set(StorageKeys.windowCloseAnimation, effects.closeAnimation);
       sanitized.closeAnimation = effects.closeAnimation;
     }
@@ -44,14 +54,20 @@ export function applyThemeEffects(effects) {
       typeof effects.minimizeAnimation === "string" &&
       THEME_EFFECT_OPTIONS.minimize.includes(effects.minimizeAnimation)
     ) {
-      os.storage.set(StorageKeys.windowMinimizeAnimation, effects.minimizeAnimation);
+      os.storage.set(
+        StorageKeys.windowMinimizeAnimation,
+        effects.minimizeAnimation,
+      );
       sanitized.minimizeAnimation = effects.minimizeAnimation;
     }
     if (
       typeof effects.restoreAnimation === "string" &&
       THEME_EFFECT_OPTIONS.restore.includes(effects.restoreAnimation)
     ) {
-      os.storage.set(StorageKeys.windowRestoreAnimation, effects.restoreAnimation);
+      os.storage.set(
+        StorageKeys.windowRestoreAnimation,
+        effects.restoreAnimation,
+      );
       sanitized.restoreAnimation = effects.restoreAnimation;
     }
     if (typeof effects.cursorOff === "boolean") {
@@ -68,7 +84,10 @@ export function applyThemeEffects(effects) {
     if (Object.keys(sanitized).length > 0) {
       os.storage.set(StorageKeys.themeHubEffects, sanitized);
     }
-    os.events.emit(BusEvents.SETTINGS_CHANGED, { key: "themeEffects", value: sanitized });
+    os.events.emit(BusEvents.SETTINGS_CHANGED, {
+      key: "themeEffects",
+      value: sanitized,
+    });
   } catch (e) {
     console.warn("Failed to apply theme effects:", e);
   }
@@ -84,7 +103,10 @@ export function clearThemeEffects() {
     const existing = $("#" + EFFECTS_STYLE_ID);
     if (existing) existing.remove();
     os.storage.remove(StorageKeys.themeHubEffects);
-    os.events.emit(BusEvents.SETTINGS_CHANGED, { key: "themeEffects", value: {} });
+    os.events.emit(BusEvents.SETTINGS_CHANGED, {
+      key: "themeEffects",
+      value: {},
+    });
   } catch (e) {
     console.warn("Failed to clear theme effects:", e);
   }
@@ -106,9 +128,11 @@ export function collectCurrentEffects() {
   return {
     windowAnimation: os.storage.get(StorageKeys.windowOpenAnimation) || null,
     closeAnimation: os.storage.get(StorageKeys.windowCloseAnimation) || null,
-    minimizeAnimation: os.storage.get(StorageKeys.windowMinimizeAnimation) || null,
-    restoreAnimation: os.storage.get(StorageKeys.windowRestoreAnimation) || null,
+    minimizeAnimation:
+      os.storage.get(StorageKeys.windowMinimizeAnimation) || null,
+    restoreAnimation:
+      os.storage.get(StorageKeys.windowRestoreAnimation) || null,
     cursorOff: os.storage.get(StorageKeys.cursorEffectEnabled) === false,
-    background: null
+    background: null,
   };
 }

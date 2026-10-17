@@ -13,24 +13,72 @@ const TEXTURE_H = 440;
 const SPAWN_Y = 2.5;
 const BATCH_PER_FRAME = 4;
 const INITIAL_SPAWN = 20;
-const EXCLUDED = new Set(["TMNP", "vscode", "paint", "photopea", "nightInTheWoods"]);
+const EXCLUDED = new Set([
+  "TMNP",
+  "vscode",
+  "paint",
+  "photopea",
+  "nightInTheWoods",
+]);
 
 const FIXED_POSITIONS = {
   seaSweeper: { x: -1.917, y: 0.02, z: 0.933, rx: -1.571, ry: 0, rz: 1.01 },
   deltaruneCh5: { x: -0.936, y: 0.82, z: -0.74, rx: -1.571, ry: 0, rz: -0.01 },
   slimeRancher: { x: 2.759, y: 0.02, z: -0.545, rx: -1.571, ry: 0, rz: -2.781 },
   tabs: { x: 1.076, y: 0.02, z: 1.09, rx: -1.571, ry: 0, rz: -0.296 },
-  plagueIncEvolved: { x: -3.212, y: 0.02, z: -1.365, rx: -1.571, ry: 0, rz: 0.406 },
+  plagueIncEvolved: {
+    x: -3.212,
+    y: 0.02,
+    z: -1.365,
+    rx: -1.571,
+    ry: 0,
+    rz: 0.406,
+  },
   pttr: { x: -2.8, y: 0.02, z: -1.2, rx: -1.571, ry: 0, rz: 0.3 },
-  fiveNightsAtFrickbears3: { x: 2.0, y: 0.056, z: -0.748, rx: -1.704, ry: 0.065, rz: 1.735 },
+  fiveNightsAtFrickbears3: {
+    x: 2.0,
+    y: 0.056,
+    z: -0.748,
+    rx: -1.704,
+    ry: 0.065,
+    rz: 1.735,
+  },
   helltaker: { x: 2.367, y: 0.02, z: 0.699, rx: -1.571, ry: 0, rz: -0.548 },
   daddy: { x: 1.9, y: 0.02, z: 1.318, rx: -1.571, ry: 0, rz: -0.278 },
   suicideGuy: { x: -3.525, y: 0.535, z: 0.782, rx: -1.571, ry: 0, rz: 2.018 },
-  ytlifeomg: { x: 1.999, y: 0.089, z: -0.802, rx: -1.704, ry: 0.065, rz: 2.734 },
-  slenderina: { x: 1.751, y: 0.048, z: -0.627, rx: -1.703, ry: 0.065, rz: 0.911 },
+  ytlifeomg: {
+    x: 1.999,
+    y: 0.089,
+    z: -0.802,
+    rx: -1.704,
+    ry: 0.065,
+    rz: 2.734,
+  },
+  slenderina: {
+    x: 1.751,
+    y: 0.048,
+    z: -0.627,
+    rx: -1.703,
+    ry: 0.065,
+    rz: 0.911,
+  },
   baldiBalds: { x: 1.93, y: 0.02, z: -0.257, rx: -1.571, ry: 0, rz: 0.097 },
-  baldisBasicsTeachingOnTwos: { x: 0.19, y: 0.02, z: -2.388, rx: -1.571, ry: 0, rz: 1.344 },
-  playtimeHellBear5van: { x: 2.437, y: 0.02, z: -2.496, rx: -1.571, ry: 0, rz: 0.828 }
+  baldisBasicsTeachingOnTwos: {
+    x: 0.19,
+    y: 0.02,
+    z: -2.388,
+    rx: -1.571,
+    ry: 0,
+    rz: 1.344,
+  },
+  playtimeHellBear5van: {
+    x: 2.437,
+    y: 0.02,
+    z: -2.496,
+    rx: -1.571,
+    ry: 0,
+    rz: 0.828,
+  },
 };
 
 const FIXED_SHELVES = {
@@ -39,7 +87,7 @@ const FIXED_SHELVES = {
   catGoesFishing: 79,
   inscryption: 46,
   stardew: 52,
-  inStarsAndTime: 40
+  inStarsAndTime: 40,
 };
 
 function hashId(id) {
@@ -71,11 +119,14 @@ function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
 
 export function getGameList() {
   return Object.entries(appMap)
-    .filter(([id, data]) => data.type !== "system" && !EXCLUDED.has(id) && data.icon && data.title)
+    .filter(
+      ([id, data]) =>
+        data.type !== "system" && !EXCLUDED.has(id) && data.icon && data.title,
+    )
     .map(([id, data]) => ({
       id,
       title: data.title,
-      icon: data.icon
+      icon: data.icon,
     }));
 }
 
@@ -147,15 +198,20 @@ export class GameCaseManager {
           body.invMass = 0;
           body.updateMassProperties();
         } else {
-          body.velocity.set((Math.random() - 0.5) * 0.15, -0.1 - Math.random() * 0.1, (Math.random() - 0.5) * 0.15);
+          body.velocity.set(
+            (Math.random() - 0.5) * 0.15,
+            -0.1 - Math.random() * 0.1,
+            (Math.random() - 0.5) * 0.15,
+          );
           body.angularVelocity.set(
             (Math.random() - 0.5) * 0.08,
             (Math.random() - 0.5) * 0.08,
-            (Math.random() - 0.5) * 0.08
+            (Math.random() - 0.5) * 0.08,
           );
         }
 
-        const shelfSlotIndex = this.savedShelves[game.id] ?? FIXED_SHELVES[game.id] ?? null;
+        const shelfSlotIndex =
+          this.savedShelves[game.id] ?? FIXED_SHELVES[game.id] ?? null;
 
         this.spawnQueue.push({
           mesh,
@@ -176,13 +232,13 @@ export class GameCaseManager {
           shattered: false,
           respawnAt: 0,
           prevSpeed: 0,
-          squashAt: 0
+          squashAt: 0,
         });
       } else {
         this.gamePool.push({
           id: game.id,
           title: game.title,
-          icon: game.icon
+          icon: game.icon,
         });
       }
     }
@@ -197,11 +253,19 @@ export class GameCaseManager {
     if (queueIdx !== -1) {
       const gameCase = this.spawnQueue.splice(queueIdx, 1)[0];
       this.scene.add(gameCase.mesh);
-      gameCase.body.position.set(gameCase.pos.x, gameCase.pos.y, gameCase.pos.z);
+      gameCase.body.position.set(
+        gameCase.pos.x,
+        gameCase.pos.y,
+        gameCase.pos.z,
+      );
       gameCase.body.velocity.set(0, 0, 0);
       gameCase.body.angularVelocity.set(0, 0, 0);
       gameCase.body.wakeUp();
-      gameCase.mesh.position.set(gameCase.pos.x, gameCase.pos.y, gameCase.pos.z);
+      gameCase.mesh.position.set(
+        gameCase.pos.x,
+        gameCase.pos.y,
+        gameCase.pos.z,
+      );
       this.gameCases.push(gameCase);
       return gameCase;
     }
@@ -244,8 +308,16 @@ export class GameCaseManager {
       body.invMass = 0;
       body.updateMassProperties();
     } else {
-      body.velocity.set((Math.random() - 0.5) * 0.5, 0.6 + Math.random() * 0.4, (Math.random() - 0.5) * 0.5);
-      body.angularVelocity.set((Math.random() - 0.5) * 1.5, (Math.random() - 0.5) * 1.5, (Math.random() - 0.5) * 1.5);
+      body.velocity.set(
+        (Math.random() - 0.5) * 0.5,
+        0.6 + Math.random() * 0.4,
+        (Math.random() - 0.5) * 0.5,
+      );
+      body.angularVelocity.set(
+        (Math.random() - 0.5) * 1.5,
+        (Math.random() - 0.5) * 1.5,
+        (Math.random() - 0.5) * 1.5,
+      );
     }
 
     this.scene.add(mesh);
@@ -268,7 +340,7 @@ export class GameCaseManager {
       shattered: false,
       respawnAt: 0,
       prevSpeed: 0,
-      squashAt: 0
+      squashAt: 0,
     };
 
     this.gameCases.push(gameCase);
@@ -308,7 +380,7 @@ export class GameCaseManager {
     this.gamePool.push({
       id: game.id,
       title: game.title,
-      icon: game.icon
+      icon: game.icon,
     });
   }
 
@@ -322,7 +394,7 @@ export class GameCaseManager {
         this.gamePool.push({
           id: game.id,
           title: game.title,
-          icon: game.icon
+          icon: game.icon,
         });
       }
     }
@@ -332,7 +404,7 @@ export class GameCaseManager {
     const spawned = this.gameCases.map((b) => ({
       id: b.gameId,
       title: b.title,
-      icon: b.iconUrl
+      icon: b.iconUrl,
     }));
     return { spawned, pool: this.gamePool, trashed: [...this.trashed] };
   }
@@ -393,7 +465,14 @@ export class GameCaseManager {
     ctx.font = "bold 20px sans-serif";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    wrapText(ctx, game.title, TEXTURE_W / 2, TEXTURE_H - 44, TEXTURE_W - 32, 24);
+    wrapText(
+      ctx,
+      game.title,
+      TEXTURE_W / 2,
+      TEXTURE_H - 44,
+      TEXTURE_W - 32,
+      24,
+    );
 
     if (this.gameMode) {
       const genre = this.getGenreForGame(game.id);
@@ -403,7 +482,11 @@ export class GameCaseManager {
       ctx.font = "bold 18px sans-serif";
       ctx.textAlign = "center";
       ctx.textBaseline = "bottom";
-      ctx.fillText("[" + genreLabel.toUpperCase() + "]", TEXTURE_W / 2, TEXTURE_H - 64);
+      ctx.fillText(
+        "[" + genreLabel.toUpperCase() + "]",
+        TEXTURE_W / 2,
+        TEXTURE_H - 64,
+      );
     }
 
     const tex = new this.THREE.CanvasTexture(canvas);
@@ -413,7 +496,9 @@ export class GameCaseManager {
 
   async loadIcons() {
     const all = [...this.spawnQueue];
-    const promises = all.map((gameCase) => this.loadSingleIcon(gameCase).catch(() => {}));
+    const promises = all.map((gameCase) =>
+      this.loadSingleIcon(gameCase).catch(() => {}),
+    );
     await Promise.allSettled(promises);
   }
 
@@ -453,7 +538,14 @@ export class GameCaseManager {
     ctx.font = "bold 20px sans-serif";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    wrapText(ctx, gameCase.title, TEXTURE_W / 2, TEXTURE_H - 44, TEXTURE_W - 32, 24);
+    wrapText(
+      ctx,
+      gameCase.title,
+      TEXTURE_W / 2,
+      TEXTURE_H - 44,
+      TEXTURE_W - 32,
+      24,
+    );
 
     const newTex = new this.THREE.CanvasTexture(canvas);
     newTex.needsUpdate = true;
@@ -480,7 +572,7 @@ export class GameCaseManager {
     return new this.THREE.Vector3(
       Math.cos(angle) * radius,
       Math.min(SPAWN_Y + (h % 20) * 0.05, 2.7),
-      Math.sin(angle) * radius
+      Math.sin(angle) * radius,
     );
   }
 
@@ -490,7 +582,7 @@ export class GameCaseManager {
     const mat = new T.MeshStandardMaterial({
       map: texture,
       roughness: 0.7,
-      metalness: 0.05
+      metalness: 0.05,
     });
     const mesh = new T.Mesh(geo, mat);
     mesh.castShadow = true;
@@ -512,7 +604,11 @@ export class GameCaseManager {
 
   highlightGameCases(query) {
     for (const gameCase of this.gameCases) {
-      if (query && query.length > 0 && gameCase.title.toLowerCase().includes(query.toLowerCase())) {
+      if (
+        query &&
+        query.length > 0 &&
+        gameCase.title.toLowerCase().includes(query.toLowerCase())
+      ) {
         gameCase.mesh.material.emissive.setHex(0x00ddff);
         gameCase.mesh.material.emissiveIntensity = 0.6;
       } else {
@@ -541,7 +637,7 @@ export class GameCaseManager {
         z: p.z,
         rx: r.x,
         ry: r.y,
-        rz: r.z
+        rz: r.z,
       };
     }
     return positions;
@@ -563,7 +659,11 @@ export class GameCaseManager {
 
       gameCase.mesh.position.copy(slot.position);
       gameCase.mesh.quaternion.copy(quat);
-      gameCase.body.position.set(slot.position.x, slot.position.y, slot.position.z);
+      gameCase.body.position.set(
+        slot.position.x,
+        slot.position.y,
+        slot.position.z,
+      );
       gameCase.body.quaternion.set(quat.x, quat.y, quat.z, quat.w);
       gameCase.body.type = CANNON.Body.KINEMATIC;
       gameCase.body.velocity.set(0, 0, 0);
@@ -598,12 +698,13 @@ export class GameCaseManager {
       { xMin: 0.5, xMax: b.maxX - margin, zMin: b.minZ + margin, zMax: -0.5 },
       { xMin: b.minX + margin, xMax: -1, zMin: 0.5, zMax: b.maxZ - margin },
       { xMin: 0.5, xMax: b.maxX - margin, zMin: 0.5, zMax: b.maxZ - margin },
-      { xMin: -0.5, xMax: 0.5, zMin: b.minZ + margin, zMax: b.maxZ - margin }
+      { xMin: -0.5, xMax: 0.5, zMin: b.minZ + margin, zMax: b.maxZ - margin },
     ];
     const zone = zones[index % zones.length];
     const h = hashId(gameId);
     const rx = zone.xMin + ((h % 1000) / 1000) * (zone.xMax - zone.xMin);
-    const rz = zone.zMin + (((h >> 10) % 1000) / 1000) * (zone.zMax - zone.zMin);
+    const rz =
+      zone.zMin + (((h >> 10) % 1000) / 1000) * (zone.zMax - zone.zMin);
     const ry = (h % 360) * (Math.PI / 180);
     return new T.Vector3(rx, 0.02, rz);
   }
@@ -628,7 +729,14 @@ export class GameCaseManager {
     const genreGames = Object.entries(GAME_GENRES)
       .map(([id, genre]) => {
         const data = appMap[id];
-        if (!data || data.type === "system" || EXCLUDED.has(id) || !data.icon || !data.title) return null;
+        if (
+          !data ||
+          data.type === "system" ||
+          EXCLUDED.has(id) ||
+          !data.icon ||
+          !data.title
+        )
+          return null;
         return { id, title: data.title, icon: data.icon, genre };
       })
       .filter(Boolean);
@@ -669,14 +777,23 @@ export class GameCaseManager {
 
       const pos = this.scatteredSpawnPosition(game.id, i);
       mesh.position.copy(pos);
-      const flatRotation = new THREE.Euler(-Math.PI / 2, 0, (hashId(game.id) % 628) / 100 - 3.14);
+      const flatRotation = new THREE.Euler(
+        -Math.PI / 2,
+        0,
+        (hashId(game.id) % 628) / 100 - 3.14,
+      );
       mesh.rotation.copy(flatRotation);
 
       const dynamicMass = 0.3 + Math.random() * 0.3;
       const body = this.physics.createBody(pos, size, dynamicMass);
       body.velocity.set(0, 0, 0);
       body.angularVelocity.set(0, 0, 0);
-      body.quaternion.set(mesh.quaternion.x, mesh.quaternion.y, mesh.quaternion.z, mesh.quaternion.w);
+      body.quaternion.set(
+        mesh.quaternion.x,
+        mesh.quaternion.y,
+        mesh.quaternion.z,
+        mesh.quaternion.w,
+      );
 
       const gameCase = {
         mesh,
@@ -700,7 +817,7 @@ export class GameCaseManager {
         shattered: false,
         respawnAt: 0,
         prevSpeed: 0,
-        squashAt: 0
+        squashAt: 0,
       };
 
       this.scene.add(mesh);
@@ -730,7 +847,11 @@ export class GameCaseManager {
       return new T.Vector3(x, this.getRestY(), z);
     }
     if (gameCase) return this.spawnPosition({ id: gameCase.gameId });
-    return new T.Vector3((Math.random() - 0.5) * 2, this.getRestY(), (Math.random() - 0.5) * 2);
+    return new T.Vector3(
+      (Math.random() - 0.5) * 2,
+      this.getRestY(),
+      (Math.random() - 0.5) * 2,
+    );
   }
 
   spawnFlashRing(position, color, grow, maxLife) {
@@ -742,7 +863,7 @@ export class GameCaseManager {
       opacity: 0.9,
       blending: T.AdditiveBlending,
       side: T.DoubleSide,
-      depthWrite: false
+      depthWrite: false,
     });
     const mesh = new T.Mesh(geo, mat);
     mesh.position.copy(position);
@@ -754,7 +875,7 @@ export class GameCaseManager {
       grow,
       maxLife,
       maxOpacity: 0.9,
-      life: 0
+      life: 0,
     });
   }
 
@@ -767,7 +888,13 @@ export class GameCaseManager {
       arr[i * 3] = position.x + (Math.random() - 0.5) * 0.5;
       arr[i * 3 + 1] = position.y + (Math.random() - 0.5) * 0.5;
       arr[i * 3 + 2] = position.z + (Math.random() - 0.5) * 0.5;
-      velocities.push(new T.Vector3((Math.random() - 0.5) * 1.5, Math.random() * 1.5, (Math.random() - 0.5) * 1.5));
+      velocities.push(
+        new T.Vector3(
+          (Math.random() - 0.5) * 1.5,
+          Math.random() * 1.5,
+          (Math.random() - 0.5) * 1.5,
+        ),
+      );
     }
     const geo = new T.BufferGeometry();
     geo.setAttribute("position", new T.BufferAttribute(arr, 3));
@@ -777,7 +904,7 @@ export class GameCaseManager {
       transparent: true,
       opacity: 0.9,
       blending: T.AdditiveBlending,
-      depthWrite: false
+      depthWrite: false,
     });
     const points = new T.Points(geo, mat);
     this.scene.add(points);
@@ -812,10 +939,24 @@ export class GameCaseManager {
       ) {
         gameCase.mesh.scale.set(1.12, 0.8, 1.12);
         gameCase.squashAt = performance.now() + 400;
-        this.spawnDustPuff(new this.THREE.Vector3(gameCase.body.position.x, this.getRestY(), gameCase.body.position.z));
-      } else if (gameCase.mesh.scale.x !== 1 || gameCase.mesh.scale.y !== 1 || gameCase.mesh.scale.z !== 1) {
+        this.spawnDustPuff(
+          new this.THREE.Vector3(
+            gameCase.body.position.x,
+            this.getRestY(),
+            gameCase.body.position.z,
+          ),
+        );
+      } else if (
+        gameCase.mesh.scale.x !== 1 ||
+        gameCase.mesh.scale.y !== 1 ||
+        gameCase.mesh.scale.z !== 1
+      ) {
         const s = gameCase.mesh.scale;
-        gameCase.mesh.scale.set(s.x + (1 - s.x) * ease, s.y + (1 - s.y) * ease, s.z + (1 - s.z) * ease);
+        gameCase.mesh.scale.set(
+          s.x + (1 - s.x) * ease,
+          s.y + (1 - s.y) * ease,
+          s.z + (1 - s.z) * ease,
+        );
       }
       gameCase.prevSpeed = speed;
     }
@@ -846,11 +987,19 @@ export class GameCaseManager {
     while (this.spawnQueue.length > 0 && spawned < BATCH_PER_FRAME) {
       const gameCase = this.spawnQueue.shift();
       this.scene.add(gameCase.mesh);
-      gameCase.body.position.set(gameCase.pos.x, gameCase.pos.y, gameCase.pos.z);
+      gameCase.body.position.set(
+        gameCase.pos.x,
+        gameCase.pos.y,
+        gameCase.pos.z,
+      );
       gameCase.body.velocity.set(0, 0, 0);
       gameCase.body.angularVelocity.set(0, 0, 0);
       gameCase.body.wakeUp();
-      gameCase.mesh.position.set(gameCase.pos.x, gameCase.pos.y, gameCase.pos.z);
+      gameCase.mesh.position.set(
+        gameCase.pos.x,
+        gameCase.pos.y,
+        gameCase.pos.z,
+      );
       this.gameCases.push(gameCase);
       spawned++;
     }
@@ -885,7 +1034,8 @@ export class GameCaseManager {
         arr[p * 3 + 2] += v.z * delta;
       }
       sparkle.points.geometry.attributes.position.needsUpdate = true;
-      sparkle.points.material.opacity = 0.9 * (1 - sparkle.life / sparkle.maxLife);
+      sparkle.points.material.opacity =
+        0.9 * (1 - sparkle.life / sparkle.maxLife);
       if (sparkle.life >= sparkle.maxLife) {
         this.scene.remove(sparkle.points);
         sparkle.points.geometry.dispose();
@@ -894,7 +1044,13 @@ export class GameCaseManager {
       }
     }
     for (const gameCase of this.gameCases) {
-      if (!gameCase.fragile || gameCase.shattered || gameCase.grabbed || gameCase.shelved) continue;
+      if (
+        !gameCase.fragile ||
+        gameCase.shattered ||
+        gameCase.grabbed ||
+        gameCase.shelved
+      )
+        continue;
       if (!gameCase.body || gameCase.body.mass <= 0) continue;
       const speed = gameCase.body.velocity.length();
       if (speed > this.shatterSpeed && !gameCase.body.sleepState) {

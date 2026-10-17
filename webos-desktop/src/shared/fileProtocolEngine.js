@@ -347,6 +347,21 @@ function recordHistory(url, title) {
   }
 }
 
+function persistWorkingWispUrl(requested, used) {
+  const active = String(used || "");
+  if (!active) {
+    return;
+  }
+  if (String(requested || "") === active) {
+    return;
+  }
+  try {
+    os.storage.set(StorageKeys.wispServer, active);
+  } catch (persistErr) {
+    void persistErr;
+  }
+}
+
 function syncAddressInput(root, url) {
   const field = $(".file-protocol-address", root);
   if (field) {
@@ -435,11 +450,14 @@ export async function fetchRangeAsBlob(url, start, end, opts = {}) {
     headers.Range =
       "bytes=" + start + "-" + (end !== undefined && end !== null ? end : "");
   }
-  return fetchPage(target, {
-    wispUrl: opts.wispUrl || getWispUrl(),
+  const requested = opts.wispUrl || getWispUrl();
+  const result = await fetchPage(target, {
+    wispUrl: requested,
     headers,
     method: opts.method || "GET",
   });
+  persistWorkingWispUrl(requested, result.usedWispUrl);
+  return result;
 }
 
 export async function renderFileProtocolUrl(viewportIframe, url, opts = {}) {
@@ -461,7 +479,13 @@ export async function renderFileProtocolUrl(viewportIframe, url, opts = {}) {
   ) {
     viewportIframe.removeAttribute("srcdoc");
     viewportIframe.src = normalized;
-    return { handled: true, url: normalized, title: normalized };
+    return {
+      handled: true,
+      url: normalized,
+      title: normalized,
+      usedWispUrl: "",
+      fallbackUsed: false,
+    };
   }
   const local = parseLocalTarget(normalized);
   if (local && (local.kind === "fs" || local.kind === "port")) {
@@ -481,6 +505,9 @@ export async function renderFileProtocolUrl(viewportIframe, url, opts = {}) {
     });
     recordHistory(normalized, result.title);
     const mime = result.contentType || getMimeType(normalized);
+    const usedWispUrl = result.usedWispUrl || wispUrl || "";
+    const fallbackUsed = result.fallbackUsed === true;
+    persistWorkingWispUrl(wispUrl, usedWispUrl);
     if (result.blobUrl) {
       viewportIframe.removeAttribute("srcdoc");
       viewportIframe.src = result.blobUrl;
@@ -490,6 +517,8 @@ export async function renderFileProtocolUrl(viewportIframe, url, opts = {}) {
         status: result.status,
         title: result.title,
         contentType: mime,
+        usedWispUrl,
+        fallbackUsed,
       };
     }
     const finalHtml = buildDocumentHtml(normalized, result.text || "", mime);
@@ -501,6 +530,8 @@ export async function renderFileProtocolUrl(viewportIframe, url, opts = {}) {
       status: result.status,
       title: result.title,
       contentType: mime,
+      usedWispUrl,
+      fallbackUsed,
     };
   } catch (err) {
     const message = err && err.message ? err.message : String(err);

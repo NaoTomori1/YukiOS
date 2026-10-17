@@ -1,6 +1,11 @@
 import { os, $ } from "../framework.js";
 import { BusEvents } from "../core/EventBus.js";
-import { animateWindowClose, animateWindowMinimize, applyFocusGlow, applyZDepthLift } from "./AnimationSystem.js";
+import {
+  animateWindowClose,
+  animateWindowMinimize,
+  applyFocusGlow,
+  applyZDepthLift,
+} from "./AnimationSystem.js";
 import { getSetting } from "../utils/utils.js";
 
 export class WindowStateManager {
@@ -29,7 +34,9 @@ export class WindowStateManager {
       .filter(Boolean);
     allWins.forEach((w) => applyZDepthLift(w, false));
 
-    this.manager.openWindows.forEach(({ taskbarItem }) => taskbarItem.classList.remove("active"));
+    this.manager.openWindows.forEach(({ taskbarItem }) =>
+      taskbarItem.classList.remove("active"),
+    );
 
     const entry = this.manager.openWindows.get(win.id);
     if (entry?.taskbarItem) {
@@ -70,7 +77,10 @@ export class WindowStateManager {
     const header = win.querySelector(".window-header");
 
     if (wasFullscreen) {
-      if (document.fullscreenElement === win || document.fullscreenElement === document.documentElement) {
+      if (
+        document.fullscreenElement === win ||
+        document.fullscreenElement === document.documentElement
+      ) {
         document.exitFullscreen();
       }
 
@@ -79,7 +89,7 @@ export class WindowStateManager {
         height: win.dataset.prevHeight,
         left: win.dataset.prevLeft,
         top: win.dataset.prevTop,
-        zIndex: win.dataset.prevZIndex || win.style.zIndex
+        zIndex: win.dataset.prevZIndex || win.style.zIndex,
       });
 
       if (header) header.style.display = "";
@@ -92,10 +102,11 @@ export class WindowStateManager {
         prevHeight: win.style.height,
         prevLeft: win.style.left,
         prevTop: win.style.top,
-        prevZIndex: win.style.zIndex
+        prevZIndex: win.style.zIndex,
       });
 
-      const overFullscreen = getSetting("notificationsOverFullscreen", false) === true;
+      const overFullscreen =
+        getSetting("notificationsOverFullscreen", false) === true;
 
       const makeFullscreen = () => {
         Object.assign(win.style, {
@@ -103,14 +114,17 @@ export class WindowStateManager {
           height: "100vh",
           left: "0",
           top: "0",
-          zIndex: overFullscreen ? "99999" : win.style.zIndex
+          zIndex: overFullscreen ? "99999" : win.style.zIndex,
         });
         if (header) header.style.display = "none";
       };
 
       if (overFullscreen) {
         if (document.documentElement.requestFullscreen) {
-          document.documentElement.requestFullscreen().then(makeFullscreen).catch(makeFullscreen);
+          document.documentElement
+            .requestFullscreen()
+            .then(makeFullscreen)
+            .catch(makeFullscreen);
         } else {
           makeFullscreen();
         }
@@ -134,7 +148,7 @@ export class WindowStateManager {
             height: win.dataset.prevHeight || win.style.height,
             left: win.dataset.prevLeft || win.style.left,
             top: win.dataset.prevTop || win.style.top,
-            zIndex: win.dataset.prevZIndex || win.style.zIndex
+            zIndex: win.dataset.prevZIndex || win.style.zIndex,
           });
           win.dataset.fullscreen = "false";
           const entry = this.manager.openWindows.get(win.id);

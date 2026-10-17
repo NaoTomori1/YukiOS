@@ -1,4 +1,17 @@
-const { app, BrowserWindow, Tray, Menu, globalShortcut, ipcMain, nativeImage, desktopCapturer, screen, Notification, session, clipboard } = require("electron");
+const {
+  app,
+  BrowserWindow,
+  Tray,
+  Menu,
+  globalShortcut,
+  ipcMain,
+  nativeImage,
+  desktopCapturer,
+  screen,
+  Notification,
+  session,
+  clipboard,
+} = require("electron");
 const path = require("path");
 const fs = require("fs");
 const crypto = require("crypto");
@@ -19,7 +32,7 @@ function getFFmpegFilename() {
     "darwin-x64": "darwin-x64",
     "darwin-arm64": "darwin-arm64",
     "linux-x64": "linux-x64",
-    "linux-arm64": "linux-arm64"
+    "linux-arm64": "linux-arm64",
   };
   return map[key];
 }
@@ -34,7 +47,7 @@ function getFFmpegDownloadURLs() {
   if (!filename) return [];
   return [
     `https://github.com/nickel-org/ffmpeg-static/releases/download/v5.1.0/${filename}`,
-    `https://github.com/eugeneware/ffmpeg-static/releases/download/v5.1.0/${filename}`
+    `https://github.com/eugeneware/ffmpeg-static/releases/download/v5.1.0/${filename}`,
   ];
 }
 
@@ -70,7 +83,7 @@ async function ensureFFmpeg() {
 
   if (!downloaded) {
     throw new Error(
-      "Could not download FFmpeg. The file converter will use the browser-based (WASM) FFmpeg instead, which is slower but works."
+      "Could not download FFmpeg. The file converter will use the browser-based (WASM) FFmpeg instead, which is slower but works.",
     );
   }
 
@@ -83,7 +96,7 @@ function sendAnalytics(endpoint, payload) {
     fetch(endpoint, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body
+      body,
     }).catch(() => {});
   } catch {}
 }
@@ -108,9 +121,9 @@ function createWindow() {
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: false,
-      additionalArguments: [`--yukios-dev=${!app.isPackaged}`]
+      additionalArguments: [`--yukios-dev=${!app.isPackaged}`],
     },
-    icon: ICON_PATH
+    icon: ICON_PATH,
   });
 
   mainWindow.loadFile(path.join(__dirname, "..", "dist", "index.html"));
@@ -158,7 +171,7 @@ app.whenReady().then(() => {
     version: app.getVersion(),
     details: "Electron app started",
     isDev,
-    timestamp: Date.now()
+    timestamp: Date.now(),
   });
 
   mainWindow.webContents.on("did-finish-load", () => {
@@ -168,7 +181,7 @@ app.whenReady().then(() => {
       version: app.getVersion(),
       details: "Main window loaded",
       isDev,
-      timestamp: Date.now()
+      timestamp: Date.now(),
     });
   });
 
@@ -190,15 +203,17 @@ app.on("window-all-closed", () => {
 
 app.on("activate", () => {
   if (mainWindow === null) {
-  createWindow();
+    createWindow();
 
-  session.defaultSession.setPermissionRequestHandler((webContents, permission, callback) => {
-    if (permission === "media") {
-      callback(true);
-    } else {
-      callback(false);
-    }
-  });
+    session.defaultSession.setPermissionRequestHandler(
+      (webContents, permission, callback) => {
+        if (permission === "media") {
+          callback(true);
+        } else {
+          callback(false);
+        }
+      },
+    );
   } else {
     mainWindow.show();
   }
@@ -217,13 +232,14 @@ app.on("before-quit", () => {
     version: app.getVersion(),
     details: "Electron app quitting",
     isDev,
-    timestamp: Date.now()
+    timestamp: Date.now(),
   });
 });
 
 // ---- Input Simulation ----
 
-const isWayland = process.env.XDG_SESSION_TYPE === "wayland" || !!process.env.WAYLAND_DISPLAY;
+const isWayland =
+  process.env.XDG_SESSION_TYPE === "wayland" || !!process.env.WAYLAND_DISPLAY;
 
 function getScreenSize() {
   const primary = screen.getPrimaryDisplay();
@@ -248,14 +264,20 @@ function simulateInput(input) {
         lastMouseY = py;
         if (platform === "linux") {
           if (isWayland) {
-            execSync(`ydotool mousemove --absolute -x ${px} -y ${py} 2>/dev/null || true`);
+            execSync(
+              `ydotool mousemove --absolute -x ${px} -y ${py} 2>/dev/null || true`,
+            );
           } else {
             execSync(`xdotool mousemove ${px} ${py} 2>/dev/null || true`);
           }
         } else if (platform === "darwin") {
-          execSync(`osascript -e 'tell application "System Events" to set mouse position to {${px}, ${py}}' 2>/dev/null || true`);
+          execSync(
+            `osascript -e 'tell application "System Events" to set mouse position to {${px}, ${py}}' 2>/dev/null || true`,
+          );
         } else if (platform === "win32") {
-          execSync(`powershell -Command "[System.Windows.Forms.Cursor]::Position = New-Object System.Drawing.Point(${px}, ${py})" 2>/dev/null || true`);
+          execSync(
+            `powershell -Command "[System.Windows.Forms.Cursor]::Position = New-Object System.Drawing.Point(${px}, ${py})" 2>/dev/null || true`,
+          );
         }
         break;
       }
@@ -267,23 +289,36 @@ function simulateInput(input) {
         if (platform === "linux") {
           const btn = isRight ? 3 : 1;
           if (isWayland) {
-            execSync(`ydotool ${isDown ? "mousedown" : "mouseup"} ${btn} 2>/dev/null || true`);
+            execSync(
+              `ydotool ${isDown ? "mousedown" : "mouseup"} ${btn} 2>/dev/null || true`,
+            );
           } else {
-            execSync(`xdotool ${isDown ? "mousedown" : "mouseup"} ${btn} 2>/dev/null || true`);
+            execSync(
+              `xdotool ${isDown ? "mousedown" : "mouseup"} ${btn} 2>/dev/null || true`,
+            );
           }
         } else if (platform === "darwin") {
           try {
-            execSync(`cliclick ${isRight ? "rc" : "c"}:${lastMouseX},${lastMouseY} 2>/dev/null || true`, { timeout: 500 });
+            execSync(
+              `cliclick ${isRight ? "rc" : "c"}:${lastMouseX},${lastMouseY} 2>/dev/null || true`,
+              { timeout: 500 },
+            );
           } catch {
             const btn = isRight ? " using {control down}" : "";
             if (isDown) {
-              execSync(`osascript -e 'tell application "System Events" to click at {${lastMouseX}, ${lastMouseY}}${btn}' 2>/dev/null || true`);
+              execSync(
+                `osascript -e 'tell application "System Events" to click at {${lastMouseX}, ${lastMouseY}}${btn}' 2>/dev/null || true`,
+              );
             }
           }
         } else if (platform === "win32") {
-          const [dn, up] = isRight ? ["0x0008", "0x0010"] : ["0x0002", "0x0004"];
+          const [dn, up] = isRight
+            ? ["0x0008", "0x0010"]
+            : ["0x0002", "0x0004"];
           const cmd = isDown ? dn : up;
-          execSync(`powershell -Command "Add-Type @\\\"using System;using System.Runtime.InteropServices;public class W{public delegate void m(int f,int x,int y,int d,int e);[DllImport(\\\"user32\\\")]public static extern void mouse_event(int f,int x,int y,int d,int e);}\\\";[W]::mouse_event(${cmd},0,0,0,0)" 2>/dev/null || true`);
+          execSync(
+            `powershell -Command "Add-Type @\\\"using System;using System.Runtime.InteropServices;public class W{public delegate void m(int f,int x,int y,int d,int e);[DllImport(\\\"user32\\\")]public static extern void mouse_event(int f,int x,int y,int d,int e);}\\\";[W]::mouse_event(${cmd},0,0,0,0)" 2>/dev/null || true`,
+          );
         }
         break;
       }
@@ -294,21 +329,29 @@ function simulateInput(input) {
           if (isWayland) {
             const code = mapKeyToYdotool(input.key, input.code);
             if (code !== null) {
-              execSync(`ydotool ${input.type === "keydown" ? "keydown" : "keyup"} ${code} 2>/dev/null || true`);
+              execSync(
+                `ydotool ${input.type === "keydown" ? "keydown" : "keyup"} ${code} 2>/dev/null || true`,
+              );
             }
           } else {
             const key = mapKeyToXdotool(input.key);
             if (key) {
-              execSync(`xdotool ${input.type === "keydown" ? "keydown" : "keyup"} ${key} 2>/dev/null || true`);
+              execSync(
+                `xdotool ${input.type === "keydown" ? "keydown" : "keyup"} ${key} 2>/dev/null || true`,
+              );
             }
           }
         } else if (platform === "darwin") {
           const k = input.key === " " ? "space" : input.key;
-          exec(`osascript -e 'tell application "System Events" to ${input.type === "keydown" ? "key down" : "key up"} "${k}"' 2>/dev/null || true`);
+          exec(
+            `osascript -e 'tell application "System Events" to ${input.type === "keydown" ? "key down" : "key up"} "${k}"' 2>/dev/null || true`,
+          );
         } else if (platform === "win32") {
           const k = mapKeyToWindows(input.key);
           if (k) {
-            execSync(`powershell -Command "$wshell = New-Object -ComObject wscript.shell; $wshell.SendKeys('${k}')" 2>/dev/null || true`);
+            execSync(
+              `powershell -Command "$wshell = New-Object -ComObject wscript.shell; $wshell.SendKeys('${k}')" 2>/dev/null || true`,
+            );
           }
         }
         break;
@@ -328,21 +371,26 @@ function simulateInput(input) {
           const dy = input.deltaY || 0;
           if (dy !== 0) {
             try {
-              execSync(`python3 -c "
+              execSync(
+                `python3 -c "
 import ctypes,ctypes.util,sys
 f=ctypes.cdll.LoadLibrary(ctypes.util.find_library('CoreGraphics'))
 C=f.CGEventCreateScrollWheelEvent;C.restype=ctypes.c_void_p;C.argtypes=[ctypes.c_void_p,ctypes.c_uint32,ctypes.c_uint32,ctypes.c_int32]
 p=f.CGEventPost;p.restype=None;p.argtypes=[ctypes.c_void_p,ctypes.c_void_p]
 e=C(None,1,1,${Math.round(dy)})
 p(0,e)
-" 2>/dev/null`, { timeout: 500 });
+" 2>/dev/null`,
+                { timeout: 500 },
+              );
             } catch {}
           }
         } else if (platform === "win32") {
           const dy = Math.round(input.deltaY);
           if (dy !== 0) {
             const d = Math.min(Math.max(dy, -120), 120);
-            execSync(`powershell -Command "Add-Type @\\\"using System;using System.Runtime.InteropServices;public class W{public delegate void m(int f,int x,int y,int d,int e);[DllImport(\\\"user32\\\")]public static extern void mouse_event(int f,int x,int y,int d,int e);}\\\";[W]::mouse_event(0x0800,0,0,${d},0)" 2>/dev/null || true`);
+            execSync(
+              `powershell -Command "Add-Type @\\\"using System;using System.Runtime.InteropServices;public class W{public delegate void m(int f,int x,int y,int d,int e);[DllImport(\\\"user32\\\")]public static extern void mouse_event(int f,int x,int y,int d,int e);}\\\";[W]::mouse_event(0x0800,0,0,${d},0)" 2>/dev/null || true`,
+            );
           }
         }
         break;
@@ -358,12 +406,25 @@ p(0,e)
 
 function mapKeyToXdotool(key) {
   const map = {
-    "Enter": "Return", "Escape": "Escape", "Tab": "Tab",
-    "Backspace": "BackSpace", "Delete": "Delete", "Home": "Home",
-    "End": "End", "PageUp": "Page_Up", "PageDown": "Page_Down",
-    "ArrowUp": "Up", "ArrowDown": "Down", "ArrowLeft": "Left", "ArrowRight": "Right",
-    "Control": "Control_L", "Shift": "Shift_L", "Alt": "Alt_L", "Meta": "Super_L",
-    "CapsLock": "Caps_Lock", " ": "space"
+    Enter: "Return",
+    Escape: "Escape",
+    Tab: "Tab",
+    Backspace: "BackSpace",
+    Delete: "Delete",
+    Home: "Home",
+    End: "End",
+    PageUp: "Page_Up",
+    PageDown: "Page_Down",
+    ArrowUp: "Up",
+    ArrowDown: "Down",
+    ArrowLeft: "Left",
+    ArrowRight: "Right",
+    Control: "Control_L",
+    Shift: "Shift_L",
+    Alt: "Alt_L",
+    Meta: "Super_L",
+    CapsLock: "Caps_Lock",
+    " ": "space",
   };
   if (map[key]) return map[key];
   if (key && key.length === 1) return key;
@@ -372,12 +433,35 @@ function mapKeyToXdotool(key) {
 
 function mapKeyToYdotool(key, code) {
   const map = {
-    "Escape": 1, "1": 2, "2": 3, "3": 4, "4": 5, "5": 6, "6": 7,
-    "7": 8, "8": 9, "9": 10, "0": 11,
-    "Backspace": 14, "Tab": 15,
-    "CapsLock": 58, "Enter": 28, "Shift": 42, "Control": 29, "Alt": 56, "Meta": 125, " ": 57,
-    "Delete": 111, "Home": 102, "End": 107, "PageUp": 104, "PageDown": 109,
-    "ArrowUp": 103, "ArrowDown": 108, "ArrowLeft": 105, "ArrowRight": 106,
+    Escape: 1,
+    1: 2,
+    2: 3,
+    3: 4,
+    4: 5,
+    5: 6,
+    6: 7,
+    7: 8,
+    8: 9,
+    9: 10,
+    0: 11,
+    Backspace: 14,
+    Tab: 15,
+    CapsLock: 58,
+    Enter: 28,
+    Shift: 42,
+    Control: 29,
+    Alt: 56,
+    Meta: 125,
+    " ": 57,
+    Delete: 111,
+    Home: 102,
+    End: 107,
+    PageUp: 104,
+    PageDown: 109,
+    ArrowUp: 103,
+    ArrowDown: 108,
+    ArrowLeft: 105,
+    ArrowRight: 106,
   };
 
   if (code && code.startsWith("Key") && code.length === 4) {
@@ -397,12 +481,24 @@ function mapKeyToYdotool(key, code) {
 
 function mapKeyToWindows(key) {
   const map = {
-    "Enter": "{ENTER}", "Escape": "{ESC}", "Tab": "{TAB}",
-    "Backspace": "{BACKSPACE}", "Delete": "{DELETE}", "Home": "{HOME}",
-    "End": "{END}", "PageUp": "{PGUP}", "PageDown": "{PGDN}",
-    "ArrowUp": "{UP}", "ArrowDown": "{DOWN}", "ArrowLeft": "{LEFT}", "ArrowRight": "{RIGHT}",
-    "Control": "^", "Shift": "+", "Alt": "%",
-    "CapsLock": "{CAPSLOCK}", " ": " "
+    Enter: "{ENTER}",
+    Escape: "{ESC}",
+    Tab: "{TAB}",
+    Backspace: "{BACKSPACE}",
+    Delete: "{DELETE}",
+    Home: "{HOME}",
+    End: "{END}",
+    PageUp: "{PGUP}",
+    PageDown: "{PGDN}",
+    ArrowUp: "{UP}",
+    ArrowDown: "{DOWN}",
+    ArrowLeft: "{LEFT}",
+    ArrowRight: "{RIGHT}",
+    Control: "^",
+    Shift: "+",
+    Alt: "%",
+    CapsLock: "{CAPSLOCK}",
+    " ": " ",
   };
   if (map[key]) return map[key];
   if (key && key.length === 1) return `{${key}}`;
@@ -410,22 +506,22 @@ function mapKeyToWindows(key) {
 }
 
 const GAMEPAD_BUTTON_MAP = [
-  { key: " ", code: "Space" },       // 0: A
+  { key: " ", code: "Space" }, // 0: A
   { key: "Escape", code: "Escape" }, // 1: B
-  { key: "Shift", code: "ShiftLeft" },// 2: X
-  { key: "Tab", code: "Tab" },       // 3: Y
-  { key: "q", code: "KeyQ" },        // 4: LB
-  { key: "e", code: "KeyE" },        // 5: RB
-  { key: "Control", code: "ControlLeft" },// 6: LT
-  { key: "Alt", code: "AltLeft" },   // 7: RT
-  { key: "Tab", code: "Tab" },       // 8: Select
-  { key: "Enter", code: "Enter" },   // 9: Start
-  { key: "Shift", code: "ShiftLeft" },// 10: L3
-  { key: "Control", code: "ControlLeft" },// 11: R3
-  { key: "ArrowUp", code: "ArrowUp" },   // 12: D-pad Up
-  { key: "ArrowDown", code: "ArrowDown" },// 13: D-pad Down
-  { key: "ArrowLeft", code: "ArrowLeft" },// 14: D-pad Left
-  { key: "ArrowRight", code: "ArrowRight" }// 15: D-pad Right
+  { key: "Shift", code: "ShiftLeft" }, // 2: X
+  { key: "Tab", code: "Tab" }, // 3: Y
+  { key: "q", code: "KeyQ" }, // 4: LB
+  { key: "e", code: "KeyE" }, // 5: RB
+  { key: "Control", code: "ControlLeft" }, // 6: LT
+  { key: "Alt", code: "AltLeft" }, // 7: RT
+  { key: "Tab", code: "Tab" }, // 8: Select
+  { key: "Enter", code: "Enter" }, // 9: Start
+  { key: "Shift", code: "ShiftLeft" }, // 10: L3
+  { key: "Control", code: "ControlLeft" }, // 11: R3
+  { key: "ArrowUp", code: "ArrowUp" }, // 12: D-pad Up
+  { key: "ArrowDown", code: "ArrowDown" }, // 13: D-pad Down
+  { key: "ArrowLeft", code: "ArrowLeft" }, // 14: D-pad Left
+  { key: "ArrowRight", code: "ArrowRight" }, // 15: D-pad Right
 ];
 
 const GAMEPAD_AXIS_THRESHOLD = 0.4;
@@ -448,17 +544,28 @@ function simulateGamepad(input) {
     if (platform === "linux") {
       if (isWayland) {
         const code = mapKeyToYdotool(map.key, map.code);
-        if (code !== null) execSync(`ydotool ${b.p ? "keydown" : "keyup"} ${code} 2>/dev/null || true`);
+        if (code !== null)
+          execSync(
+            `ydotool ${b.p ? "keydown" : "keyup"} ${code} 2>/dev/null || true`,
+          );
       } else {
         const key = mapKeyToXdotool(map.key);
-        if (key) execSync(`xdotool ${b.p ? "keydown" : "keyup"} ${key} 2>/dev/null || true`);
+        if (key)
+          execSync(
+            `xdotool ${b.p ? "keydown" : "keyup"} ${key} 2>/dev/null || true`,
+          );
       }
     } else if (platform === "darwin") {
       const k = map.key === " " ? "space" : map.key;
-      execSync(`osascript -e 'tell application "System Events" to ${b.p ? "key down" : "key up"} "${k}"' 2>/dev/null || true`);
+      execSync(
+        `osascript -e 'tell application "System Events" to ${b.p ? "key down" : "key up"} "${k}"' 2>/dev/null || true`,
+      );
     } else if (platform === "win32") {
       const k = mapKeyToWindows(map.key);
-      if (k) execSync(`powershell -Command "$wshell = New-Object -ComObject wscript.shell; $wshell.SendKeys('${k}')" 2>/dev/null || true`);
+      if (k)
+        execSync(
+          `powershell -Command "$wshell = New-Object -ComObject wscript.shell; $wshell.SendKeys('${k}')" 2>/dev/null || true`,
+        );
     }
   }
 
@@ -469,8 +576,12 @@ function simulateGamepad(input) {
       const moveX = Math.round(dx * 10);
       const moveY = Math.round(dy * 10);
       if (platform === "linux") {
-        if (isWayland) execSync(`ydotool mousemove ${moveX} ${moveY} 2>/dev/null || true`);
-        else execSync(`xdotool mousemove_relative -- ${moveX} ${moveY} 2>/dev/null || true`);
+        if (isWayland)
+          execSync(`ydotool mousemove ${moveX} ${moveY} 2>/dev/null || true`);
+        else
+          execSync(
+            `xdotool mousemove_relative -- ${moveX} ${moveY} 2>/dev/null || true`,
+          );
       }
     }
   }
@@ -479,35 +590,50 @@ function simulateGamepad(input) {
     const lx = Math.abs(axes[2]) > GAMEPAD_AXIS_THRESHOLD ? axes[2] : 0;
     const ly = Math.abs(axes[3]) > GAMEPAD_AXIS_THRESHOLD ? axes[3] : 0;
     const wasdInput = [];
-    if (ly < -GAMEPAD_AXIS_THRESHOLD) wasdInput.push({ type: "keydown", key: "w", code: "KeyW" });
+    if (ly < -GAMEPAD_AXIS_THRESHOLD)
+      wasdInput.push({ type: "keydown", key: "w", code: "KeyW" });
     else wasdInput.push({ type: "keyup", key: "w", code: "KeyW" });
-    if (ly > GAMEPAD_AXIS_THRESHOLD) wasdInput.push({ type: "keydown", key: "s", code: "KeyS" });
+    if (ly > GAMEPAD_AXIS_THRESHOLD)
+      wasdInput.push({ type: "keydown", key: "s", code: "KeyS" });
     else wasdInput.push({ type: "keyup", key: "s", code: "KeyS" });
-    if (lx < -GAMEPAD_AXIS_THRESHOLD) wasdInput.push({ type: "keydown", key: "a", code: "KeyA" });
+    if (lx < -GAMEPAD_AXIS_THRESHOLD)
+      wasdInput.push({ type: "keydown", key: "a", code: "KeyA" });
     else wasdInput.push({ type: "keyup", key: "a", code: "KeyA" });
-    if (lx > GAMEPAD_AXIS_THRESHOLD) wasdInput.push({ type: "keydown", key: "d", code: "KeyD" });
+    if (lx > GAMEPAD_AXIS_THRESHOLD)
+      wasdInput.push({ type: "keydown", key: "d", code: "KeyD" });
     else wasdInput.push({ type: "keyup", key: "d", code: "KeyD" });
     for (const ev of wasdInput) {
       if (platform === "linux") {
         if (isWayland) {
           const code = mapKeyToYdotool(ev.key, ev.code);
-          if (code !== null) execSync(`ydotool ${ev.type === "keydown" ? "keydown" : "keyup"} ${code} 2>/dev/null || true`);
+          if (code !== null)
+            execSync(
+              `ydotool ${ev.type === "keydown" ? "keydown" : "keyup"} ${code} 2>/dev/null || true`,
+            );
         } else {
           const key = mapKeyToXdotool(ev.key);
-          if (key) execSync(`xdotool ${ev.type === "keydown" ? "keydown" : "keyup"} ${key} 2>/dev/null || true`);
+          if (key)
+            execSync(
+              `xdotool ${ev.type === "keydown" ? "keydown" : "keyup"} ${key} 2>/dev/null || true`,
+            );
         }
       } else if (platform === "darwin") {
-        execSync(`osascript -e 'tell application "System Events" to ${ev.type === "keydown" ? "key down" : "key up"} "${ev.key}"' 2>/dev/null || true`);
+        execSync(
+          `osascript -e 'tell application "System Events" to ${ev.type === "keydown" ? "key down" : "key up"} "${ev.key}"' 2>/dev/null || true`,
+        );
       } else if (platform === "win32") {
         const k = mapKeyToWindows(ev.key);
-        if (k) execSync(`powershell -Command "$wshell = New-Object -ComObject wscript.shell; $wshell.SendKeys('${k}')" 2>/dev/null || true`);
+        if (k)
+          execSync(
+            `powershell -Command "$wshell = New-Object -ComObject wscript.shell; $wshell.SendKeys('${k}')" 2>/dev/null || true`,
+          );
       }
     }
   }
 
   prevGamepadState = {
-    buttons: buttons.map(b => ({ p: b.p })),
-    axes: [...axes]
+    buttons: buttons.map((b) => ({ p: b.p })),
+    axes: [...axes],
   };
 }
 
@@ -526,13 +652,15 @@ function checkGstreamer() {
 
 function startGstreamerPipeline(quality, fps, onFrame, onError) {
   const height = quality === "1080p" ? 1080 : 720;
-  const width = Math.round(height * 16 / 9);
+  const width = Math.round((height * 16) / 9);
   const framerate = fps || 30;
   const platform = process.platform;
 
   let source;
   if (platform === "linux") {
-    const wl = process.env.XDG_SESSION_TYPE === "wayland" || !!process.env.WAYLAND_DISPLAY;
+    const wl =
+      process.env.XDG_SESSION_TYPE === "wayland" ||
+      !!process.env.WAYLAND_DISPLAY;
     source = wl ? "pipewiresrc" : "ximagesrc use-damage=false";
   } else if (platform === "win32") {
     source = "dxgiscreencapsrc";
@@ -547,14 +675,17 @@ function startGstreamerPipeline(quality, fps, onFrame, onError) {
     "gst-launch-1.0 -q",
     source,
     `! videoconvert ! videoscale ! video/x-raw,width=${width},height=${height},framerate=${framerate}/1,format=I420`,
-    "! x264enc speed-preset=ultrafast tune=zerolatency bitrate=2000 key-int-max=" + (framerate * 2),
+    "! x264enc speed-preset=ultrafast tune=zerolatency bitrate=2000 key-int-max=" +
+      framerate * 2,
     "! h264parse config-interval=1",
     "! video/x-h264,alignment=nal",
-    "! fdsink fd=1"
+    "! fdsink fd=1",
   ].join(" ");
 
   try {
-    const proc = spawn("sh", ["-c", pipeline], { stdio: ["pipe", "pipe", "pipe"] });
+    const proc = spawn("sh", ["-c", pipeline], {
+      stdio: ["pipe", "pipe", "pipe"],
+    });
     gstreamerProc = proc;
 
     let nalBuf = Buffer.alloc(0);
@@ -562,11 +693,24 @@ function startGstreamerPipeline(quality, fps, onFrame, onError) {
     proc.stdout.on("data", (data) => {
       nalBuf = Buffer.concat([nalBuf, data]);
       while (nalBuf.length >= 4) {
-        let scLen = 0, scPos = -1;
+        let scLen = 0,
+          scPos = -1;
         for (let i = 0; i <= nalBuf.length - 3; i++) {
           if (nalBuf[i] === 0 && nalBuf[i + 1] === 0) {
-            if (nalBuf[i + 2] === 1) { scLen = 3; scPos = i; break; }
-            if (i <= nalBuf.length - 4 && nalBuf[i + 2] === 0 && nalBuf[i + 3] === 1) { scLen = 4; scPos = i; break; }
+            if (nalBuf[i + 2] === 1) {
+              scLen = 3;
+              scPos = i;
+              break;
+            }
+            if (
+              i <= nalBuf.length - 4 &&
+              nalBuf[i + 2] === 0 &&
+              nalBuf[i + 3] === 1
+            ) {
+              scLen = 4;
+              scPos = i;
+              break;
+            }
           }
         }
         if (scPos === -1) break;
@@ -574,30 +718,46 @@ function startGstreamerPipeline(quality, fps, onFrame, onError) {
         let nextSc = -1;
         for (let i = scPos + scLen; i <= nalBuf.length - 3; i++) {
           if (nalBuf[i] === 0 && nalBuf[i + 1] === 0) {
-            if (nalBuf[i + 2] === 1) { nextSc = i; break; }
-            if (i <= nalBuf.length - 4 && nalBuf[i + 2] === 0 && nalBuf[i + 3] === 1) { nextSc = i; break; }
+            if (nalBuf[i + 2] === 1) {
+              nextSc = i;
+              break;
+            }
+            if (
+              i <= nalBuf.length - 4 &&
+              nalBuf[i + 2] === 0 &&
+              nalBuf[i + 3] === 1
+            ) {
+              nextSc = i;
+              break;
+            }
           }
         }
         if (nextSc === -1) {
           if (nalBuf.length > 1048576) {
             const data = nalBuf.slice(scPos + scLen);
             nalBuf = Buffer.alloc(0);
-            if (data.length > 0) onFrame(data, (data[0] & 0x1F) === 5);
+            if (data.length > 0) onFrame(data, (data[0] & 0x1f) === 5);
           }
           break;
         }
         const nal = nalBuf.slice(scPos + scLen, nextSc);
         nalBuf = nalBuf.slice(nextSc);
-        if (nal.length > 0) onFrame(nal, (nal[0] & 0x1F) === 5);
+        if (nal.length > 0) onFrame(nal, (nal[0] & 0x1f) === 5);
       }
     });
 
-    proc.stderr.on("data", (d) => { if (isDev) process.stderr.write("[GStreamer] " + d); });
+    proc.stderr.on("data", (d) => {
+      if (isDev) process.stderr.write("[GStreamer] " + d);
+    });
 
-    proc.on("error", (err) => { gstreamerProc = null; onError(err.message); });
+    proc.on("error", (err) => {
+      gstreamerProc = null;
+      onError(err.message);
+    });
     proc.on("close", (code) => {
       gstreamerProc = null;
-      if (code !== 0 && code !== null) onError("GStreamer exited with code " + code);
+      if (code !== 0 && code !== null)
+        onError("GStreamer exited with code " + code);
     });
 
     return proc;
@@ -611,7 +771,10 @@ function stopGstreamerPipeline() {
   if (gstreamerProc) {
     gstreamerProc.kill("SIGTERM");
     setTimeout(() => {
-      if (gstreamerProc) { gstreamerProc.kill("SIGKILL"); gstreamerProc = null; }
+      if (gstreamerProc) {
+        gstreamerProc.kill("SIGKILL");
+        gstreamerProc = null;
+      }
     }, 3000);
     gstreamerProc = null;
   }
@@ -633,7 +796,10 @@ function getTurnCreds() {
   if (!TURN_SECRET) return null;
   const expiry = Math.floor(Date.now() / 1000) + 86400;
   const username = expiry + ":yukios";
-  const credential = crypto.createHmac("sha1", TURN_SECRET).update(username).digest("base64");
+  const credential = crypto
+    .createHmac("sha1", TURN_SECRET)
+    .update(username)
+    .digest("base64");
   return { urls: [TURN_URL, TURNS_URL].filter(Boolean), username, credential };
 }
 
@@ -643,7 +809,7 @@ let trayState = {
   powerMode: "balanced",
   sessionMode: "normal",
   remoteDesktopActive: false,
-  remoteDesktopCode: null
+  remoteDesktopCode: null,
 };
 
 function setupTray() {
@@ -662,19 +828,21 @@ function setupTray() {
           {
             label: "Copy Code",
             click: () => {
-              clipboard.writeText(trayState.remoteDesktopCode.replace(/-/g, ""));
-            }
+              clipboard.writeText(
+                trayState.remoteDesktopCode.replace(/-/g, ""),
+              );
+            },
           },
           {
             label: "Stop Sharing",
             click: () => {
-              mainWindow.webContents.send("tray:action", { action: "remote-stop" });
-            }
-          }
+              mainWindow.webContents.send("tray:action", {
+                action: "remote-stop",
+              });
+            },
+          },
         ]
-      : [
-          { label: "Status: Inactive", enabled: false }
-        ];
+      : [{ label: "Status: Inactive", enabled: false }];
 
     const menu = Menu.buildFromTemplate([
       {
@@ -685,7 +853,7 @@ function setupTray() {
           trayState.dnd = !trayState.dnd;
           mainWindow.webContents.send("tray:action", { action: "toggle-dnd" });
           rebuildTrayMenu();
-        }
+        },
       },
       {
         label: "Mute",
@@ -695,7 +863,7 @@ function setupTray() {
           trayState.muted = !trayState.muted;
           mainWindow.webContents.send("tray:action", { action: "toggle-mute" });
           rebuildTrayMenu();
-        }
+        },
       },
       { type: "separator" },
       {
@@ -707,9 +875,12 @@ function setupTray() {
             checked: trayState.powerMode === "performance",
             click: () => {
               trayState.powerMode = "performance";
-              mainWindow.webContents.send("tray:action", { action: "set-power-mode", value: "performance" });
+              mainWindow.webContents.send("tray:action", {
+                action: "set-power-mode",
+                value: "performance",
+              });
               rebuildTrayMenu();
-            }
+            },
           },
           {
             label: "Balanced",
@@ -717,9 +888,12 @@ function setupTray() {
             checked: trayState.powerMode === "balanced",
             click: () => {
               trayState.powerMode = "balanced";
-              mainWindow.webContents.send("tray:action", { action: "set-power-mode", value: "balanced" });
+              mainWindow.webContents.send("tray:action", {
+                action: "set-power-mode",
+                value: "balanced",
+              });
               rebuildTrayMenu();
-            }
+            },
           },
           {
             label: "High Quality",
@@ -727,11 +901,14 @@ function setupTray() {
             checked: trayState.powerMode === "high",
             click: () => {
               trayState.powerMode = "high";
-              mainWindow.webContents.send("tray:action", { action: "set-power-mode", value: "high" });
+              mainWindow.webContents.send("tray:action", {
+                action: "set-power-mode",
+                value: "high",
+              });
               rebuildTrayMenu();
-            }
-          }
-        ]
+            },
+          },
+        ],
       },
       {
         label: "Desktop Mode",
@@ -742,9 +919,12 @@ function setupTray() {
             checked: trayState.sessionMode === "normal",
             click: () => {
               trayState.sessionMode = "normal";
-              mainWindow.webContents.send("tray:action", { action: "set-session-mode", value: "normal" });
+              mainWindow.webContents.send("tray:action", {
+                action: "set-session-mode",
+                value: "normal",
+              });
               rebuildTrayMenu();
-            }
+            },
           },
           {
             label: "Mac",
@@ -752,9 +932,12 @@ function setupTray() {
             checked: trayState.sessionMode === "mac",
             click: () => {
               trayState.sessionMode = "mac";
-              mainWindow.webContents.send("tray:action", { action: "set-session-mode", value: "mac" });
+              mainWindow.webContents.send("tray:action", {
+                action: "set-session-mode",
+                value: "mac",
+              });
               rebuildTrayMenu();
-            }
+            },
           },
           {
             label: "ChromeOS",
@@ -762,9 +945,12 @@ function setupTray() {
             checked: trayState.sessionMode === "chromeos",
             click: () => {
               trayState.sessionMode = "chromeos";
-              mainWindow.webContents.send("tray:action", { action: "set-session-mode", value: "chromeos" });
+              mainWindow.webContents.send("tray:action", {
+                action: "set-session-mode",
+                value: "chromeos",
+              });
               rebuildTrayMenu();
-            }
+            },
           },
           {
             label: "Tiling",
@@ -772,23 +958,26 @@ function setupTray() {
             checked: trayState.sessionMode === "tiling",
             click: () => {
               trayState.sessionMode = "tiling";
-              mainWindow.webContents.send("tray:action", { action: "set-session-mode", value: "tiling" });
+              mainWindow.webContents.send("tray:action", {
+                action: "set-session-mode",
+                value: "tiling",
+              });
               rebuildTrayMenu();
-            }
-          }
-        ]
+            },
+          },
+        ],
       },
       { type: "separator" },
       {
         label: "Lock Screen",
         click: () => {
           mainWindow.webContents.send("tray:action", { action: "lock-screen" });
-        }
+        },
       },
       { type: "separator" },
       {
         label: "Remote Desktop",
-        submenu: remoteSubmenu
+        submenu: remoteSubmenu,
       },
       { type: "separator" },
       {
@@ -799,7 +988,7 @@ function setupTray() {
           const newVal = !app.getLoginItemSettings().openAtLogin;
           app.setLoginItemSettings({ openAtLogin: newVal });
           rebuildTrayMenu();
-        }
+        },
       },
       { type: "separator" },
       {
@@ -807,15 +996,15 @@ function setupTray() {
         click: () => {
           mainWindow.show();
           mainWindow.focus();
-        }
+        },
       },
       {
         label: "Quit YukiOS",
         click: () => {
           app.isQuitting = true;
           app.quit();
-        }
-      }
+        },
+      },
     ]);
     tray.setContextMenu(menu);
   };
@@ -842,9 +1031,12 @@ function setupInputHandlers() {
     if (state.dnd !== undefined) trayState.dnd = state.dnd;
     if (state.muted !== undefined) trayState.muted = state.muted;
     if (state.powerMode !== undefined) trayState.powerMode = state.powerMode;
-    if (state.sessionMode !== undefined) trayState.sessionMode = state.sessionMode;
-    if (state.remoteDesktopActive !== undefined) trayState.remoteDesktopActive = state.remoteDesktopActive;
-    if (state.remoteDesktopCode !== undefined) trayState.remoteDesktopCode = state.remoteDesktopCode;
+    if (state.sessionMode !== undefined)
+      trayState.sessionMode = state.sessionMode;
+    if (state.remoteDesktopActive !== undefined)
+      trayState.remoteDesktopActive = state.remoteDesktopActive;
+    if (state.remoteDesktopCode !== undefined)
+      trayState.remoteDesktopCode = state.remoteDesktopCode;
     if (rebuildTrayMenu) rebuildTrayMenu();
   });
 
@@ -854,10 +1046,10 @@ function setupInputHandlers() {
 
   ipcMain.handle("desktop-capturer:get-sources", async () => {
     const sources = await desktopCapturer.getSources({ types: ["screen"] });
-    return sources.map(s => ({
+    return sources.map((s) => ({
       id: s.id,
       name: s.name,
-      thumbnail: s.thumbnail.toDataURL()
+      thumbnail: s.thumbnail.toDataURL(),
     }));
   });
 
@@ -870,8 +1062,8 @@ function setupInputHandlers() {
       displayCount: screen.getAllDisplays().length,
       primaryBounds: {
         width: primaryDisplay.size.width,
-        height: primaryDisplay.size.height
-      }
+        height: primaryDisplay.size.height,
+      },
     };
   });
 
@@ -887,7 +1079,7 @@ function setupAnalyticsHandlers() {
         fileSize: typeof info.fileSize === "number" ? info.fileSize : 0,
         fileType: info.fileType || "",
         source: info.source || "electron-filesave",
-        timestamp: Date.now()
+        timestamp: Date.now(),
       };
       sendAnalytics(ANALYTICS_BASE + "/api/download", payload);
       return { success: true };
@@ -904,7 +1096,7 @@ function setupAnalyticsHandlers() {
         version: app.getVersion(),
         details: info.details || "",
         isDev,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       };
       sendAnalytics(ANALYTICS_BASE + "/api/electron-usage", payload);
       return { success: true };
@@ -928,44 +1120,70 @@ function setupFFmpegHandlers() {
     }
   });
 
-  ipcMain.handle("ffmpeg:convert", async (event, { fileData, inputExt, outputExt, extraArgs }) => {
-    try {
-      if (!_ffmpegPath || !fs.existsSync(_ffmpegPath)) {
-        _ffmpegPath = await ensureFFmpeg();
-      }
+  ipcMain.handle(
+    "ffmpeg:convert",
+    async (event, { fileData, inputExt, outputExt, extraArgs }) => {
+      try {
+        if (!_ffmpegPath || !fs.existsSync(_ffmpegPath)) {
+          _ffmpegPath = await ensureFFmpeg();
+        }
 
-      const tmpDir = app.getPath("temp");
-      const inputFile = path.join(tmpDir, `ffmpeg-input-${Date.now()}.${inputExt}`);
-      const outputFile = path.join(tmpDir, `ffmpeg-output-${Date.now()}.${outputExt}`);
+        const tmpDir = app.getPath("temp");
+        const inputFile = path.join(
+          tmpDir,
+          `ffmpeg-input-${Date.now()}.${inputExt}`,
+        );
+        const outputFile = path.join(
+          tmpDir,
+          `ffmpeg-output-${Date.now()}.${outputExt}`,
+        );
 
-      const buf = fileData.buffer
-        ? Buffer.from(fileData.buffer, fileData.byteOffset, fileData.byteLength)
-        : Buffer.from(fileData);
-      fs.writeFileSync(inputFile, buf);
+        const buf = fileData.buffer
+          ? Buffer.from(
+              fileData.buffer,
+              fileData.byteOffset,
+              fileData.byteLength,
+            )
+          : Buffer.from(fileData);
+        fs.writeFileSync(inputFile, buf);
 
-      const args = ["-y", "-i", inputFile, ...(extraArgs || []), outputFile];
+        const args = ["-y", "-i", inputFile, ...(extraArgs || []), outputFile];
 
-      await new Promise((resolve, reject) => {
-        const proc = spawn(_ffmpegPath, args, { stdio: ["ignore", "pipe", "pipe"] });
-        let stderr = "";
-        proc.stderr.on("data", (d) => { stderr += d.toString(); });
-        proc.on("close", (code) => {
-          if (code === 0) resolve();
-          else reject(new Error(`FFmpeg exited with code ${code}: ${stderr.slice(-200)}`));
+        await new Promise((resolve, reject) => {
+          const proc = spawn(_ffmpegPath, args, {
+            stdio: ["ignore", "pipe", "pipe"],
+          });
+          let stderr = "";
+          proc.stderr.on("data", (d) => {
+            stderr += d.toString();
+          });
+          proc.on("close", (code) => {
+            if (code === 0) resolve();
+            else
+              reject(
+                new Error(
+                  `FFmpeg exited with code ${code}: ${stderr.slice(-200)}`,
+                ),
+              );
+          });
+          proc.on("error", reject);
         });
-        proc.on("error", reject);
-      });
 
-      const outBuf = fs.readFileSync(outputFile);
+        const outBuf = fs.readFileSync(outputFile);
 
-      try { fs.unlinkSync(inputFile); } catch {}
-      try { fs.unlinkSync(outputFile); } catch {}
+        try {
+          fs.unlinkSync(inputFile);
+        } catch {}
+        try {
+          fs.unlinkSync(outputFile);
+        } catch {}
 
-      return { success: true, data: outBuf };
-    } catch (err) {
-      return { success: false, error: err.message };
-    }
-  });
+        return { success: true, data: outBuf };
+      } catch (err) {
+        return { success: false, error: err.message };
+      }
+    },
+  );
 
   ipcMain.handle("ffmpeg:probe", async (event, { fileData, inputExt }) => {
     try {
@@ -974,12 +1192,19 @@ function setupFFmpegHandlers() {
       }
 
       const tmpDir = app.getPath("temp");
-      const inputFile = path.join(tmpDir, `ffmpeg-probe-${Date.now()}.${inputExt}`);
+      const inputFile = path.join(
+        tmpDir,
+        `ffmpeg-probe-${Date.now()}.${inputExt}`,
+      );
       fs.writeFileSync(inputFile, Buffer.from(fileData));
 
-      const result = execSync(`"${_ffmpegPath}" -i "${inputFile}" 2>&1`, { timeout: 10000 }).toString();
+      const result = execSync(`"${_ffmpegPath}" -i "${inputFile}" 2>&1`, {
+        timeout: 10000,
+      }).toString();
 
-      try { fs.unlinkSync(inputFile); } catch {}
+      try {
+        fs.unlinkSync(inputFile);
+      } catch {}
 
       const info = {};
       const dur = result.match(/Duration:\s*(\d+:\d+:\d+\.\d+)/);
@@ -1033,16 +1258,24 @@ function setupRemoteHostHandlers() {
           contextIsolation: true,
           nodeIntegration: false,
           sandbox: false,
-          webSecurity: false
-        }
+          webSecurity: false,
+        },
       });
 
       const quality = (config && config.quality) || "1080p";
       const fps = (config && config.fps) || 30;
       const pb = primary.workAreaSize || primary.size;
       const useGst = config && config.useGstreamer === true;
-      const qs = new URLSearchParams({ quality, fps: String(fps), mw: String(pb.width), mh: String(pb.height), gstreamer: useGst ? "1" : "0" });
-      remoteHostWindow.loadFile(path.join(__dirname, "remote-host.html"), { query: Object.fromEntries(qs) });
+      const qs = new URLSearchParams({
+        quality,
+        fps: String(fps),
+        mw: String(pb.width),
+        mh: String(pb.height),
+        gstreamer: useGst ? "1" : "0",
+      });
+      remoteHostWindow.loadFile(path.join(__dirname, "remote-host.html"), {
+        query: Object.fromEntries(qs),
+      });
 
       if (isDev) {
         remoteHostWindow.webContents.openDevTools({ mode: "detach" });
@@ -1068,14 +1301,16 @@ function setupRemoteHostHandlers() {
 
   ipcMain.handle("remote-host:toggle-audio", () => {
     if (remoteHostWindow && !remoteHostWindow.isDestroyed()) {
-      remoteHostWindow.webContents.executeJavaScript("setAudioEnabled(!hostAudioEnabled)");
+      remoteHostWindow.webContents.executeJavaScript(
+        "setAudioEnabled(!hostAudioEnabled)",
+      );
     }
     return { success: true };
   });
 
   ipcMain.handle("remote-host:status", () => {
     return {
-      running: remoteHostWindow !== null && !remoteHostWindow.isDestroyed()
+      running: remoteHostWindow !== null && !remoteHostWindow.isDestroyed(),
     };
   });
 
@@ -1087,23 +1322,28 @@ function setupRemoteHostHandlers() {
     const fps = (config && config.fps) || 30;
 
     return new Promise((resolve) => {
-      startGstreamerPipeline(quality, fps,
+      startGstreamerPipeline(
+        quality,
+        fps,
         (nalData, keyframe) => {
           if (remoteHostWindow && !remoteHostWindow.isDestroyed()) {
             remoteHostWindow.webContents.send("remote-host:event", {
               type: "gstreamer-frame",
               data: Array.from(nalData),
               keyframe,
-              ts: Date.now() * 1000
+              ts: Date.now() * 1000,
             });
           }
         },
         (error) => {
           if (remoteHostWindow && !remoteHostWindow.isDestroyed()) {
-            remoteHostWindow.webContents.send("remote-host:event", { type: "gstreamer-error", error });
+            remoteHostWindow.webContents.send("remote-host:event", {
+              type: "gstreamer-error",
+              error,
+            });
           }
           resolve({ success: false, error });
-        }
+        },
       );
       resolve({ success: true });
     });
@@ -1128,7 +1368,7 @@ function setupRemoteHostHandlers() {
           fileSize: Buffer.from(data).length,
           fileType: ext || "unknown",
           source: (analytics && analytics.source) || "electron-filesave",
-          timestamp: Date.now()
+          timestamp: Date.now(),
         });
       }
 
@@ -1179,61 +1419,77 @@ function setupRemoteHostHandlers() {
         fs.mkdirSync(homeDir, { recursive: true });
       }
       const userHomeDir = require("os").homedir();
-      return { success: true, homeDir: userHomeDir && userHomeDir !== "/" ? userHomeDir : null };
+      return {
+        success: true,
+        homeDir: userHomeDir && userHomeDir !== "/" ? userHomeDir : null,
+      };
     } catch (err) {
       return { success: false, error: err.message };
     }
   });
 
-  ipcMain.handle("fs:writeFile", async (event, { filePath, content, encoding, absolute }) => {
-    try {
-      const fullPath = resolveFsPath(filePath, absolute);
-      const dir = path.dirname(fullPath);
-      if (!fs.existsSync(dir)) {
-        fs.mkdirSync(dir, { recursive: true });
+  ipcMain.handle(
+    "fs:writeFile",
+    async (event, { filePath, content, encoding, absolute }) => {
+      try {
+        const fullPath = resolveFsPath(filePath, absolute);
+        const dir = path.dirname(fullPath);
+        if (!fs.existsSync(dir)) {
+          fs.mkdirSync(dir, { recursive: true });
+        }
+        if (content === undefined || content === null) {
+          fs.writeFileSync(fullPath, "");
+        } else if (encoding === "base64") {
+          fs.writeFileSync(fullPath, Buffer.from(content, "base64"));
+        } else if (typeof content === "string") {
+          fs.writeFileSync(fullPath, content, "utf-8");
+        } else {
+          fs.writeFileSync(fullPath, Buffer.from(content));
+        }
+        return { success: true };
+      } catch (err) {
+        return { success: false, error: err.message };
       }
-      if (content === undefined || content === null) {
-        fs.writeFileSync(fullPath, "");
-      } else if (encoding === "base64") {
-        fs.writeFileSync(fullPath, Buffer.from(content, "base64"));
-      } else if (typeof content === "string") {
-        fs.writeFileSync(fullPath, content, "utf-8");
-      } else {
-        fs.writeFileSync(fullPath, Buffer.from(content));
-      }
-      return { success: true };
-    } catch (err) {
-      return { success: false, error: err.message };
-    }
-  });
+    },
+  );
 
-  ipcMain.handle("fs:readFile", async (event, { filePath, encoding, absolute }) => {
-    try {
-      const fullPath = resolveFsPath(filePath, absolute);
-      if (encoding === "base64") {
-        const buf = fs.readFileSync(fullPath);
-        return { success: true, data: buf.toString("base64"), encoding: "base64" };
+  ipcMain.handle(
+    "fs:readFile",
+    async (event, { filePath, encoding, absolute }) => {
+      try {
+        const fullPath = resolveFsPath(filePath, absolute);
+        if (encoding === "base64") {
+          const buf = fs.readFileSync(fullPath);
+          return {
+            success: true,
+            data: buf.toString("base64"),
+            encoding: "base64",
+          };
+        }
+        const data = fs.readFileSync(fullPath, "utf-8");
+        return { success: true, data, encoding: "utf8" };
+      } catch (err) {
+        return { success: false, error: err.message };
       }
-      const data = fs.readFileSync(fullPath, "utf-8");
-      return { success: true, data, encoding: "utf8" };
-    } catch (err) {
-      return { success: false, error: err.message };
-    }
-  });
+    },
+  );
 
-  ipcMain.handle("fs:mkdir", async (event, { filePath, recursive, absolute }) => {
-    try {
-      const fullPath = resolveFsPath(filePath, absolute);
-      if (recursive) {
-        fs.mkdirSync(fullPath, { recursive: true });
-      } else {
-        fs.mkdirSync(fullPath);
+  ipcMain.handle(
+    "fs:mkdir",
+    async (event, { filePath, recursive, absolute }) => {
+      try {
+        const fullPath = resolveFsPath(filePath, absolute);
+        if (recursive) {
+          fs.mkdirSync(fullPath, { recursive: true });
+        } else {
+          fs.mkdirSync(fullPath);
+        }
+        return { success: true };
+      } catch (err) {
+        return { success: false, error: err.message };
       }
-      return { success: true };
-    } catch (err) {
-      return { success: false, error: err.message };
-    }
-  });
+    },
+  );
 
   ipcMain.handle("fs:readdir", async (event, { filePath, absolute }) => {
     try {
@@ -1288,8 +1544,8 @@ function setupRemoteHostHandlers() {
           isFile: stat.isFile(),
           size: stat.size,
           mtimeMs: stat.mtimeMs,
-          birthtimeMs: stat.birthtimeMs
-        }
+          birthtimeMs: stat.birthtimeMs,
+        },
       };
     } catch (err) {
       return { success: false, error: err.message };
@@ -1298,7 +1554,10 @@ function setupRemoteHostHandlers() {
 
   ipcMain.handle("fs:exists", async (event, { filePath, absolute }) => {
     try {
-      return { success: true, exists: fs.existsSync(resolveFsPath(filePath, absolute)) };
+      return {
+        success: true,
+        exists: fs.existsSync(resolveFsPath(filePath, absolute)),
+      };
     } catch {
       return { success: true, exists: false };
     }
@@ -1319,23 +1578,26 @@ function setupRemoteHostHandlers() {
     }
   });
 
-  ipcMain.handle("native-window:open-url", async (event, { url, title, width, height, icon }) => {
-    if (!url) return { success: false, error: "No URL provided" };
-    const nativeWin = new BrowserWindow({
-      width: parseInt(width) || 1280,
-      height: parseInt(height) || 720,
-      title: title || "Game",
-      icon: icon || undefined,
-      webPreferences: {
-        nodeIntegration: false,
-        contextIsolation: true,
-        sandbox: false
-      },
-      autoHideMenuBar: true,
-      backgroundColor: "#0d0d0f"
-    });
-    nativeWin.loadURL(url);
-    nativeWin.on("closed", () => {});
-    return { success: true };
-  });
+  ipcMain.handle(
+    "native-window:open-url",
+    async (event, { url, title, width, height, icon }) => {
+      if (!url) return { success: false, error: "No URL provided" };
+      const nativeWin = new BrowserWindow({
+        width: parseInt(width) || 1280,
+        height: parseInt(height) || 720,
+        title: title || "Game",
+        icon: icon || undefined,
+        webPreferences: {
+          nodeIntegration: false,
+          contextIsolation: true,
+          sandbox: false,
+        },
+        autoHideMenuBar: true,
+        backgroundColor: "#0d0d0f",
+      });
+      nativeWin.loadURL(url);
+      nativeWin.on("closed", () => {});
+      return { success: true };
+    },
+  );
 }

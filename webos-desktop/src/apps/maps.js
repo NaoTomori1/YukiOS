@@ -6,13 +6,13 @@ import { $, $$, bindEvent } from "../shared/domUtils.js";
 
 const SOURCE_OPTIONS = [
   { value: "osm", label: "OpenStreetMap" },
-  { value: "google", label: "Google Maps" }
+  { value: "google", label: "Google Maps" },
 ];
 
 const LAYER_OPTIONS = [
   { value: "mapnik", label: "Standard" },
   { value: "cycle", label: "Cycle Map" },
-  { value: "transport", label: "Transport" }
+  { value: "transport", label: "Transport" },
 ];
 
 export class MapsApp extends BaseApp {
@@ -29,10 +29,12 @@ export class MapsApp extends BaseApp {
       osmZoom: 5,
       osmLat: 20,
       osmLng: 0,
-      settingsOpen: false
+      settingsOpen: false,
     };
 
-    const win = os.window.create("maps-window", "Maps", "900px", "650px", { icon: "fas fa-map" });
+    const win = os.window.create("maps-window", "Maps", "900px", "650px", {
+      icon: "fas fa-map",
+    });
     win.innerHTML = `
 <div class="maps-container">
   <div class="maps-toolbar">
@@ -118,11 +120,15 @@ export class MapsApp extends BaseApp {
     bindEvent($("#maps-apply-btn"), "click", (e) => {
       e.stopPropagation();
       const sourceText = $("#maps-source-trigger .maps-custom-select-text");
-      const source = sourceText ? this.getValueForLabel(sourceText.textContent, SOURCE_OPTIONS) : "osm";
+      const source = sourceText
+        ? this.getValueForLabel(sourceText.textContent, SOURCE_OPTIONS)
+        : "osm";
       this.state.source = source;
       if (source === "osm") {
         const layerText = $("#maps-layer-trigger .maps-custom-select-text");
-        this.state.osmLayer = layerText ? this.getValueForLabel(layerText.textContent, LAYER_OPTIONS) : "mapnik";
+        this.state.osmLayer = layerText
+          ? this.getValueForLabel(layerText.textContent, LAYER_OPTIONS)
+          : "mapnik";
         this.state.osmLat = parseFloat($("#maps-lat-input").value) || 20;
         this.state.osmLng = parseFloat($("#maps-lng-input").value) || 0;
         this.state.osmZoom = parseInt($("#maps-zoom-input").value, 10) || 5;
@@ -194,15 +200,26 @@ export class MapsApp extends BaseApp {
   }
 
   initMaps(payload, event, element, state) {
-    this.initCustomSelect("maps-source-trigger", "maps-source-options", SOURCE_OPTIONS, state.source, (val) => {
-      const label = this.getLabelForValue(val, SOURCE_OPTIONS);
-      const sourceLabel = $("#maps-source-label");
-      if (sourceLabel) sourceLabel.textContent = label;
-      const osmSettings = $("#maps-osm-settings");
-      if (osmSettings) osmSettings.classList.toggle("hidden", val !== "osm");
-    });
+    this.initCustomSelect(
+      "maps-source-trigger",
+      "maps-source-options",
+      SOURCE_OPTIONS,
+      state.source,
+      (val) => {
+        const label = this.getLabelForValue(val, SOURCE_OPTIONS);
+        const sourceLabel = $("#maps-source-label");
+        if (sourceLabel) sourceLabel.textContent = label;
+        const osmSettings = $("#maps-osm-settings");
+        if (osmSettings) osmSettings.classList.toggle("hidden", val !== "osm");
+      },
+    );
 
-    this.initCustomSelect("maps-layer-trigger", "maps-layer-options", LAYER_OPTIONS, state.osmLayer);
+    this.initCustomSelect(
+      "maps-layer-trigger",
+      "maps-layer-options",
+      LAYER_OPTIONS,
+      state.osmLayer,
+    );
 
     bindEvent(document, "click", () => {
       this.closeAllDropdowns();
@@ -225,15 +242,26 @@ export class MapsApp extends BaseApp {
     if (overlay) overlay.classList.toggle("open", state.settingsOpen);
 
     if (sourceLabel) {
-      sourceLabel.textContent = this.getLabelForValue(state.source, SOURCE_OPTIONS);
+      sourceLabel.textContent = this.getLabelForValue(
+        state.source,
+        SOURCE_OPTIONS,
+      );
     }
 
     const sourceText = $("#maps-source-trigger .maps-custom-select-text");
-    if (sourceText) sourceText.textContent = this.getLabelForValue(state.source, SOURCE_OPTIONS);
+    if (sourceText)
+      sourceText.textContent = this.getLabelForValue(
+        state.source,
+        SOURCE_OPTIONS,
+      );
     this.selectOptionByValue("maps-source-options", state.source);
 
     const layerText = $("#maps-layer-trigger .maps-custom-select-text");
-    if (layerText) layerText.textContent = this.getLabelForValue(state.osmLayer, LAYER_OPTIONS);
+    if (layerText)
+      layerText.textContent = this.getLabelForValue(
+        state.osmLayer,
+        LAYER_OPTIONS,
+      );
     this.selectOptionByValue("maps-layer-options", state.osmLayer);
 
     if (latInput) latInput.value = state.osmLat;
@@ -265,8 +293,12 @@ export class MapsApp extends BaseApp {
     const n = Math.pow(2, zoom);
     const latRad = (lat * Math.PI) / 180;
     const mercN = Math.log(Math.tan(Math.PI / 4 + latRad / 2));
-    const top = ((2 * Math.atan(Math.exp(mercN - Math.PI / n)) - Math.PI / 2) * 180) / Math.PI;
-    const bottom = ((2 * Math.atan(Math.exp(mercN + Math.PI / n)) - Math.PI / 2) * 180) / Math.PI;
+    const top =
+      ((2 * Math.atan(Math.exp(mercN - Math.PI / n)) - Math.PI / 2) * 180) /
+      Math.PI;
+    const bottom =
+      ((2 * Math.atan(Math.exp(mercN + Math.PI / n)) - Math.PI / 2) * 180) /
+      Math.PI;
     const lngDiff = 360 / n;
     const left = lng - lngDiff / 2;
     const right = lng + lngDiff / 2;

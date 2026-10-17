@@ -27,33 +27,43 @@ export class TimerWidget extends WidgetBase {
       </div>
     `;
 
-    contentEl.querySelector(`#w-timer-start-${this.id}`).addEventListener("click", () => {
-      this.toggleTimer(contentEl);
-    });
+    contentEl
+      .querySelector(`#w-timer-start-${this.id}`)
+      .addEventListener("click", () => {
+        this.toggleTimer(contentEl);
+      });
 
-    contentEl.querySelector(`#w-timer-reset-${this.id}`).addEventListener("click", () => {
-      this.reset(contentEl);
-    });
+    contentEl
+      .querySelector(`#w-timer-reset-${this.id}`)
+      .addEventListener("click", () => {
+        this.reset(contentEl);
+      });
 
-    contentEl.querySelector(`#w-timer-mode-${this.id}`).addEventListener("click", () => {
-      this.toggleMode(contentEl);
-    });
+    contentEl
+      .querySelector(`#w-timer-mode-${this.id}`)
+      .addEventListener("click", () => {
+        this.toggleMode(contentEl);
+      });
 
-    contentEl.querySelector(`#w-timer-inc-${this.id}`).addEventListener("click", () => {
-      if (!this.running) {
-        this.time = Math.min(this.time + 60, 5940);
-        this.remaining = this.time;
-        this.updateDisplay(contentEl);
-      }
-    });
+    contentEl
+      .querySelector(`#w-timer-inc-${this.id}`)
+      .addEventListener("click", () => {
+        if (!this.running) {
+          this.time = Math.min(this.time + 60, 5940);
+          this.remaining = this.time;
+          this.updateDisplay(contentEl);
+        }
+      });
 
-    contentEl.querySelector(`#w-timer-dec-${this.id}`).addEventListener("click", () => {
-      if (!this.running && this.time >= 60) {
-        this.time = Math.max(this.time - 60, 60);
-        this.remaining = this.time;
-        this.updateDisplay(contentEl);
-      }
-    });
+    contentEl
+      .querySelector(`#w-timer-dec-${this.id}`)
+      .addEventListener("click", () => {
+        if (!this.running && this.time >= 60) {
+          this.time = Math.max(this.time - 60, 60);
+          this.remaining = this.time;
+          this.updateDisplay(contentEl);
+        }
+      });
 
     this.updateDisplay(contentEl);
   }
@@ -65,8 +75,8 @@ export class TimerWidget extends WidgetBase {
         label: "Default minutes",
         type: "number",
         value: Math.floor(this.time / 60),
-        default: 5
-      }
+        default: 5,
+      },
     ];
   }
 

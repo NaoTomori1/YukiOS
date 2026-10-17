@@ -4,7 +4,7 @@ export const Signal = {
   SIGKILL: "SIGKILL",
   SIGPIPE: "SIGPIPE",
   SIGHUP: "SIGHUP",
-  SIGQUIT: "SIGQUIT"
+  SIGQUIT: "SIGQUIT",
 };
 
 export class OutputStream {

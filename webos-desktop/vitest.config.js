@@ -10,11 +10,11 @@ export default defineConfig({
     coverage: {
       provider: "v8",
       reporter: ["text", "lcov"],
-      include: ["src/**/*.{js,ts}"]
-    }
+      include: ["src/**/*.{js,ts}"],
+    },
   },
   esbuild: {
     loader: "ts",
-    include: /\.(ts|js)$/
-  }
+    include: /\.(ts|js)$/,
+  },
 });

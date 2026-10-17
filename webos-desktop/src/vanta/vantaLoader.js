@@ -1,6 +1,7 @@
 import { createElement } from "../shared/domUtils.js";
 
-const CDN_THREE = "https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js";
+const CDN_THREE =
+  "https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js";
 const CDN_VANTA = "https://cdn.jsdelivr.net/npm/vanta@0.5.24/dist/vanta";
 
 const EFFECT_FILES = {
@@ -11,7 +12,7 @@ const EFFECT_FILES = {
   GLOBE: "globe",
   HALO: "halo",
   FOG: "fog",
-  CELLS: "cells"
+  CELLS: "cells",
 };
 
 function loadScript(src) {

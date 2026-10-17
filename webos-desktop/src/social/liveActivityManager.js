@@ -9,6 +9,8 @@ import {
   SOCIAL_ACTIVITY_ENDPOINT,
   SOCIAL_NOW_PLAYING_ENDPOINT,
   SOCIAL_BASE,
+  analyticsFetch,
+  analyticsBeaconAvailable,
 } from "./endpoints.js";
 import { isBroadcastAllowed, isPopupAllowed } from "./presence.js";
 import { areFriends } from "./friendsApi.js";
@@ -174,10 +176,10 @@ export class LiveActivityManager {
     }
     const batch = this.queue.splice(0);
     const payload = JSON.stringify(batch);
-    if (navigator.sendBeacon) {
+    if (analyticsBeaconAvailable()) {
       navigator.sendBeacon(SOCIAL_ACTIVITY_ENDPOINT, payload);
     } else {
-      fetch(SOCIAL_ACTIVITY_ENDPOINT, {
+      analyticsFetch(SOCIAL_ACTIVITY_ENDPOINT, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: payload,
@@ -188,7 +190,7 @@ export class LiveActivityManager {
   async poll() {
     if (!this.isEnabled()) return;
     try {
-      const res = await fetch(SOCIAL_NOW_PLAYING_ENDPOINT);
+      const res = await analyticsFetch(SOCIAL_NOW_PLAYING_ENDPOINT);
       if (!res.ok) return;
       const data = await res.json();
       if (!data || !Array.isArray(data.users)) return;
@@ -226,7 +228,7 @@ export class LiveActivityManager {
     if (this.nowPlayingCache.data && now - this.nowPlayingCache.time < 30000)
       return this.nowPlayingCache.data;
     try {
-      const res = await fetch(SOCIAL_NOW_PLAYING_ENDPOINT);
+      const res = await analyticsFetch(SOCIAL_NOW_PLAYING_ENDPOINT);
       if (!res.ok) return this.nowPlayingCache.data || [];
       const data = await res.json();
       const users = Array.isArray(data.users) ? data.users : [];
@@ -242,7 +244,7 @@ export class LiveActivityManager {
     const cached = this.recentPlayersCache.get(appId);
     if (cached && now - cached.time < 30000) return cached.data;
     try {
-      const res = await fetch(
+      const res = await analyticsFetch(
         SOCIAL_BASE + "/live/recent-players?app=" + encodeURIComponent(appId),
       );
       if (!res.ok) return cached?.data || [];

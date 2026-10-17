@@ -1,23 +1,92 @@
 import { ADSTERRA_KEYS } from "../../ads.js";
 
 const closeTimers = new WeakMap();
-const DISMISS_KEY = "yukiBrowserAdDismissed";
+const showTimers = new WeakMap();
+const DISMISS_KEY = "yukiBrowserAdDismissedAt";
+const INITIAL_DELAY_MS = 12000;
+const RESHOW_COOLDOWN_MS = 8 * 60 * 1000;
+const CLOSE_LOCK_MS = 2000;
 
-function isDismissed() {
+function getDismissedAt() {
   try {
-    return sessionStorage.getItem(DISMISS_KEY) === "1";
+    const raw = sessionStorage.getItem(DISMISS_KEY);
+    const parsed = parseInt(raw, 10);
+    return Number.isFinite(parsed) ? parsed : 0;
   } catch (dismissErr) {
     void dismissErr;
-    return false;
+    return 0;
   }
+}
+
+function getCooldownRemaining() {
+  const dismissedAt = getDismissedAt();
+  if (!dismissedAt) return 0;
+  return Math.max(0, dismissedAt + RESHOW_COOLDOWN_MS - Date.now());
+}
+
+function isCoolingDown() {
+  return getCooldownRemaining() > 0;
 }
 
 function markDismissed() {
   try {
-    sessionStorage.setItem(DISMISS_KEY, "1");
+    sessionStorage.setItem(DISMISS_KEY, String(Date.now()));
   } catch (markErr) {
     void markErr;
   }
+}
+
+function clearShowTimer(adBar) {
+  const pending = showTimers.get(adBar);
+  if (pending) {
+    clearTimeout(pending);
+    showTimers.delete(adBar);
+  }
+}
+
+function injectAdScripts(adSlot) {
+  adSlot.setAttribute("data-ads-loaded", "1");
+  const cfg = document.createElement("script");
+  cfg.text =
+    "atOptions = { 'key': '" +
+    ADSTERRA_KEYS.leaderboard +
+    "', 'format': 'iframe', 'height': 90, 'width': 728, 'params': {} };";
+  adSlot.appendChild(cfg);
+  const invoke = document.createElement("script");
+  invoke.async = true;
+  invoke.src =
+    "https://www.highperformanceformat.com/" +
+    ADSTERRA_KEYS.leaderboard +
+    "/invoke.js";
+  adSlot.appendChild(invoke);
+}
+
+function renderAd(adBar, adClose, adSlot) {
+  if (!adBar || !adSlot || !adBar.isConnected) return;
+  if (isCoolingDown()) {
+    scheduleReshow(adBar, adClose, adSlot);
+    return;
+  }
+  if (adSlot.getAttribute("data-ads-loaded") === "1") {
+    adBar.style.display = "flex";
+  } else {
+    injectAdScripts(adSlot);
+    adBar.style.display = "flex";
+  }
+  bindBrowserAdClose(adBar, adClose, adSlot);
+}
+
+function scheduleReshow(adBar, adClose, adSlot) {
+  if (!adBar) return;
+  clearShowTimer(adBar);
+  const wait = Math.max(getCooldownRemaining(), 1000);
+  showTimers.set(
+    adBar,
+    setTimeout(() => {
+      showTimers.delete(adBar);
+      renderAd(adBar, adClose, adSlot);
+    }, wait),
+  );
 }
 
 export function bindBrowserAdClose(adBar, adClose, adSlot) {
@@ -37,6 +106,7 @@ export function bindBrowserAdClose(adBar, adClose, adSlot) {
         clearTimeout(pending);
         closeTimers.delete(adClose);
       }
+      scheduleReshow(adBar, adClose, adSlot);
     });
   }
   adClose.disabled = true;
@@ -47,41 +117,36 @@ export function bindBrowserAdClose(adBar, adClose, adSlot) {
     setTimeout(() => {
       adClose.disabled = false;
       closeTimers.delete(adClose);
-    }, 4000),
+    }, CLOSE_LOCK_MS),
   );
 }
 
 export function enableBrowserAds(adBar, adClose, adSlot) {
   if (!adBar || !adSlot) return;
-  if (isDismissed()) {
-    adBar.style.display = "none";
-    return;
-  }
+  adBar.style.display = "none";
+  clearShowTimer(adBar);
   if (adSlot.getAttribute("data-ads-loaded") === "1") {
-    adBar.style.display = "flex";
-    bindBrowserAdClose(adBar, adClose, adSlot);
+    renderAd(adBar, adClose, adSlot);
     return;
   }
-  adSlot.setAttribute("data-ads-loaded", "1");
-  const cfg = document.createElement("script");
-  cfg.text =
-    "atOptions = { 'key': '" +
-    ADSTERRA_KEYS.leaderboard +
-    "', 'format': 'iframe', 'height': 90, 'width': 728, 'params': {} };";
-  adSlot.appendChild(cfg);
-  const invoke = document.createElement("script");
-  invoke.async = true;
-  invoke.src =
-    "https://www.highperformanceformat.com/" +
-    ADSTERRA_KEYS.leaderboard +
-    "/invoke.js";
-  adSlot.appendChild(invoke);
-  adBar.style.display = "flex";
-  bindBrowserAdClose(adBar, adClose, adSlot);
+  if (isCoolingDown()) {
+    scheduleReshow(adBar, adClose, adSlot);
+    return;
+  }
+  showTimers.set(
+    adBar,
+    setTimeout(() => {
+      showTimers.delete(adBar);
+      renderAd(adBar, adClose, adSlot);
+    }, INITIAL_DELAY_MS),
+  );
 }
 
 export function disableBrowserAds(adBar, adSlot) {
-  if (adBar) adBar.style.display = "none";
+  if (adBar) {
+    clearShowTimer(adBar);
+    adBar.style.display = "none";
+  }
   if (adSlot) {
     adSlot.removeAttribute("data-ads-loaded");
     adSlot.replaceChildren();

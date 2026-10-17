@@ -82,7 +82,7 @@ export class InputHandler {
         e.preventDefault();
         const current = os.storage.get(StorageKeys.wallpaperKey);
         const idx = WALLPAPER_NAME_URL_PAIRS.findIndex(
-          (w) => current && (w.url === current || current.endsWith(w.url))
+          (w) => current && (w.url === current || current.endsWith(w.url)),
         );
         const next = (idx + 1) % WALLPAPER_NAME_URL_PAIRS.length;
         SystemUtilities.setWallpaper(WALLPAPER_NAME_URL_PAIRS[next].url);
@@ -260,12 +260,15 @@ export class InputHandler {
         if (!wm) return;
         const idx = wm.workspaces.findIndex((w) => w.id === wm.activeId);
         const delta = e.deltaY > 0 ? 1 : -1;
-        const nextIdx = Math.max(0, Math.min(wm.workspaces.length - 1, idx + delta));
+        const nextIdx = Math.max(
+          0,
+          Math.min(wm.workspaces.length - 1, idx + delta),
+        );
         if (nextIdx !== idx) {
           wm.switchTo(wm.workspaces[nextIdx].id);
         }
       },
-      { passive: false }
+      { passive: false },
     );
   }
 
@@ -275,14 +278,17 @@ export class InputHandler {
       (e) => {
         const target = e.target;
         if (target?.closest?.(".window")) this.manager.lastFocusZone = "window";
-        else if (target?.closest?.("#start-menu")) this.manager.lastFocusZone = "start-menu";
+        else if (target?.closest?.("#start-menu"))
+          this.manager.lastFocusZone = "start-menu";
         else this.manager.lastFocusZone = "desktop";
 
         if (this.manager.lastFocusZone === "desktop") {
-          this.manager.openWindows.forEach(({ taskbarItem }) => taskbarItem?.classList?.remove("active"));
+          this.manager.openWindows.forEach(({ taskbarItem }) =>
+            taskbarItem?.classList?.remove("active"),
+          );
         }
       },
-      { capture: true }
+      { capture: true },
     );
 
     document.addEventListener("keydown", (e) => {
@@ -295,7 +301,13 @@ export class InputHandler {
   shouldOpenStartMenuFromKeyEvent(e) {
     if (isStartMenuBlocked()) return false;
 
-    const nonDefaultModes = [MODES.MAC, MODES.TILING, MODES.STEAMDECK, MODES.CHROME_OS, MODES["3D"]];
+    const nonDefaultModes = [
+      MODES.MAC,
+      MODES.TILING,
+      MODES.STEAMDECK,
+      MODES.CHROME_OS,
+      MODES["3D"],
+    ];
     if (nonDefaultModes.some((m) => os.modes.isActive(m))) return false;
 
     const isTrigger = KeybindManager.matches(e, "global.startMenu.ctrl");
@@ -309,7 +321,11 @@ export class InputHandler {
     const active = document.activeElement;
     if (active) {
       const tag = active.tagName;
-      const isEditable = tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || active.isContentEditable === true;
+      const isEditable =
+        tag === "INPUT" ||
+        tag === "TEXTAREA" ||
+        tag === "SELECT" ||
+        active.isContentEditable === true;
       if (isEditable) return false;
       if (tag === "IFRAME") return false;
       if (active.closest?.(".window")) return false;
@@ -318,8 +334,8 @@ export class InputHandler {
 
     if (this.manager.lastFocusZone !== "desktop") return false;
 
-    const anyWindowActive = Array.from(this.manager.openWindows.values()).some((v) =>
-      v.taskbarItem?.classList?.contains("active")
+    const anyWindowActive = Array.from(this.manager.openWindows.values()).some(
+      (v) => v.taskbarItem?.classList?.contains("active"),
     );
     if (anyWindowActive) return false;
 
@@ -329,7 +345,10 @@ export class InputHandler {
   initWindowSwitcher() {
     document.addEventListener("keydown", (e) => {
       const isForward = KeybindManager.matches(e, "global.windowSwitcher");
-      const isReverse = KeybindManager.matches(e, "global.windowSwitcherReverse");
+      const isReverse = KeybindManager.matches(
+        e,
+        "global.windowSwitcherReverse",
+      );
       if (isForward || isReverse) {
         e.preventDefault();
         if (!this.windowSwitcherActive) {
@@ -351,7 +370,10 @@ export class InputHandler {
     return {
       mode: os.storage.get(StorageKeys.windowSwitcherMode) || "mru",
       ui: os.storage.get(StorageKeys.windowSwitcherUI) || "overlay",
-      includeMinimized: parseBool(os.storage.get(StorageKeys.windowSwitcherIncludeMinimized), true)
+      includeMinimized: parseBool(
+        os.storage.get(StorageKeys.windowSwitcherIncludeMinimized),
+        true,
+      ),
     };
   }
 
@@ -369,9 +391,13 @@ export class InputHandler {
     if (windows.length === 0) return [];
 
     if (settings.mode === "mru") {
-      windows.sort((a, b) => parseInt(b.style.zIndex) - parseInt(a.style.zIndex));
+      windows.sort(
+        (a, b) => parseInt(b.style.zIndex) - parseInt(a.style.zIndex),
+      );
     } else {
-      windows.sort((a, b) => parseInt(a.style.zIndex) - parseInt(b.style.zIndex));
+      windows.sort(
+        (a, b) => parseInt(a.style.zIndex) - parseInt(b.style.zIndex),
+      );
     }
 
     return windows;
@@ -394,7 +420,9 @@ export class InputHandler {
       this.highlightTaskbarItem(this.windowSwitcherIndex);
     }
 
-    this.revealMinimizedWindow(this.windowSwitcherWindows[this.windowSwitcherIndex]);
+    this.revealMinimizedWindow(
+      this.windowSwitcherWindows[this.windowSwitcherIndex],
+    );
     this.bringToFront(this.windowSwitcherWindows[this.windowSwitcherIndex]);
   }
 
@@ -421,7 +449,8 @@ export class InputHandler {
   revealMinimizedWindow(win) {
     if (!win) return;
     const entry = this.manager.openWindows.get(win.id);
-    const isMinimized = Boolean(entry?.record?.minimized) || win.style.display === "none";
+    const isMinimized =
+      Boolean(entry?.record?.minimized) || win.style.display === "none";
     if (!isMinimized) return;
 
     win.getAnimations().forEach((animation) => {
@@ -477,7 +506,9 @@ export class InputHandler {
   }
 
   updateSwitcherOverlay() {
-    const content = this.windowSwitcherOverlay?.querySelector("#window-switcher-content");
+    const content = this.windowSwitcherOverlay?.querySelector(
+      "#window-switcher-content",
+    );
     if (!content) return;
 
     content.innerHTML = "";
@@ -547,8 +578,13 @@ export class InputHandler {
       }
       icon.className = `${effective.startsWith("fa") ? effective : `fa ${effective}`} ws-icon ${isActive ? "active" : ""}`;
     } else {
-      const fallbackEff = getEffectiveIcon("papirus:apps/application-default-icon");
-      if (typeof fallbackEff === "string" && fallbackEff.startsWith("papirus:")) {
+      const fallbackEff = getEffectiveIcon(
+        "papirus:apps/application-default-icon",
+      );
+      if (
+        typeof fallbackEff === "string" &&
+        fallbackEff.startsWith("papirus:")
+      ) {
         const img = createElement("img");
         img.src = resolveIconUrl(fallbackEff);
         img.className = "papirus-icon papirus-icon--22 ws-icon fallback";

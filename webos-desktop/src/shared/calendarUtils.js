@@ -11,7 +11,9 @@ export function parseDateKey(key) {
 }
 
 export function getWeekNumber(date) {
-  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  const d = new Date(
+    Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()),
+  );
   const dayNum = d.getUTCDay() || 7;
   d.setUTCDate(d.getUTCDate() + 4 - dayNum);
   const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
@@ -26,7 +28,16 @@ export function generateEventId() {
   return generateId();
 }
 
-export const EVENT_COLORS = ["#7c5cfc", "#f59e0b", "#ef4444", "#22c55e", "#3b82f6", "#ec4899", "#14b8a6", "#f97316"];
+export const EVENT_COLORS = [
+  "#7c5cfc",
+  "#f59e0b",
+  "#ef4444",
+  "#22c55e",
+  "#3b82f6",
+  "#ec4899",
+  "#14b8a6",
+  "#f97316",
+];
 
 export function loadEvents() {
   const saved = os.storage.get(StorageKeys.calendarAppEvents);
@@ -44,7 +55,7 @@ export function loadEvents() {
           color: EVENT_COLORS[0],
           recurring: "",
           reminder: 0,
-          notes: ""
+          notes: "",
         });
       }
     }
@@ -79,9 +90,12 @@ export function getEventsForDate(events, dateKey) {
       } else if (ev.recurring === "monthly") {
         if (evDate.day === target.day) results.push(ev);
       } else if (ev.recurring === "yearly") {
-        if (evDate.month === target.month && evDate.day === target.day) results.push(ev);
+        if (evDate.month === target.month && evDate.day === target.day)
+          results.push(ev);
       }
     }
   }
-  return results.sort((a, b) => (a.time || "00:00").localeCompare(b.time || "00:00"));
+  return results.sort((a, b) =>
+    (a.time || "00:00").localeCompare(b.time || "00:00"),
+  );
 }

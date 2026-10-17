@@ -11,10 +11,20 @@ const repoRoot = resolve(packageRoot, "..");
 const repoFolderName = "webos-desktop";
 const cacheLocation = ".prettier-cache";
 const batchSize = 150;
-const formattableExtensions = new Set([".js", ".jsx", ".css", ".json", ".html"]);
+const formattableExtensions = new Set([
+  ".js",
+  ".jsx",
+  ".css",
+  ".json",
+  ".html",
+]);
 
 function runGit(args) {
-  const result = spawnSync("git", args, { cwd: repoRoot, encoding: "utf-8", shell: false });
+  const result = spawnSync("git", args, {
+    cwd: repoRoot,
+    encoding: "utf-8",
+    shell: false,
+  });
   if (result.error) return [];
   if (result.status !== 0) return [];
   return result.stdout
@@ -40,7 +50,8 @@ function toPackageRelativePaths(paths) {
 function isFormattable(relativePath) {
   const dotIndex = relativePath.lastIndexOf(".");
   if (dotIndex === -1) return false;
-  if (!formattableExtensions.has(relativePath.slice(dotIndex).toLowerCase())) return false;
+  if (!formattableExtensions.has(relativePath.slice(dotIndex).toLowerCase()))
+    return false;
   return existsSync(join(packageRoot, relativePath));
 }
 
@@ -62,8 +73,14 @@ function runPrettier(files) {
     const batch = files.slice(start, start + batchSize);
     const result = spawnSync(
       process.execPath,
-      [prettierBin, "--write", "--cache", `--cache-location=${cacheLocation}`, ...batch],
-      { cwd: packageRoot, stdio: "inherit", shell: false }
+      [
+        prettierBin,
+        "--write",
+        "--cache",
+        `--cache-location=${cacheLocation}`,
+        ...batch,
+      ],
+      { cwd: packageRoot, stdio: "inherit", shell: false },
     );
     if (result.status !== 0) {
       return result.status === null ? 1 : result.status;

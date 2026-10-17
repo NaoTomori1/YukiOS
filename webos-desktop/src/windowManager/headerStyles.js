@@ -10,10 +10,17 @@ export const HEADER_STYLES = {
   gnome: { id: "gnome", label: "GNOME", headerClass: "gnome-header" },
   kde: { id: "kde", label: "KDE Plasma", headerClass: "gnome-header" },
   winxp: { id: "winxp", label: "Windows XP", headerClass: "winxp-header" },
-  winvista: { id: "winvista", label: "Windows Vista", headerClass: "winvista-header", controls: "win7" }
+  winvista: {
+    id: "winvista",
+    label: "Windows Vista",
+    headerClass: "winvista-header",
+    controls: "win7",
+  },
 };
 
-const AVAILABLE_HEADER_STYLES = Object.values(HEADER_STYLES).filter((style) => style.available !== false);
+const AVAILABLE_HEADER_STYLES = Object.values(HEADER_STYLES).filter(
+  (style) => style.available !== false,
+);
 
 export function getAvailableHeaderStyles() {
   return AVAILABLE_HEADER_STYLES;
@@ -116,7 +123,7 @@ const CONTROL_BUILDERS = {
   win11: buildWin11Controls,
   gnome: buildGnomeControls,
   kde: buildKdeControls,
-  winxp: buildWinXpControls
+  winxp: buildWinXpControls,
 };
 
 export function getStoredHeaderStyleId() {
@@ -136,7 +143,11 @@ export function getHeaderStyle(styleId) {
   return HEADER_STYLES[styleId] ?? HEADER_STYLES.default;
 }
 
-export function buildControlsForStyle(styleId, externalUrl = null, showDownload = false) {
+export function buildControlsForStyle(
+  styleId,
+  externalUrl = null,
+  showDownload = false,
+) {
   const style = HEADER_STYLES[styleId] ?? HEADER_STYLES.default;
   const builderKey = style.controls ?? styleId;
   const buildControls = CONTROL_BUILDERS[builderKey] ?? buildDefaultControls;
@@ -147,6 +158,8 @@ export function buildControlsForStyle(styleId, externalUrl = null, showDownload 
 
 export function buildHeaderForStyle(title, iconHtml, controlsHtml, styleId) {
   const style = getHeaderStyle(styleId);
-  const classes = ["window-header", style.headerClass].filter(Boolean).join(" ");
+  const classes = ["window-header", style.headerClass]
+    .filter(Boolean)
+    .join(" ");
   return `<div class="${classes}"><span>${iconHtml}${title}</span>${controlsHtml}</div>`;
 }

@@ -250,7 +250,10 @@ function buildBridgeScript() {
 }
 
 function stripContentSecurityPolicy(html) {
-  return html.replace(/<meta\b[^>]*http-equiv\s*=\s*(["'])content-security-policy\1[^>]*>\s*/gi, "");
+  return html.replace(
+    /<meta\b[^>]*http-equiv\s*=\s*(["'])content-security-policy\1[^>]*>\s*/gi,
+    "",
+  );
 }
 
 function injectBridgeIntoHtml(html, baseHref) {
@@ -260,7 +263,10 @@ function injectBridgeIntoHtml(html, baseHref) {
   const injected = `${baseTag}\n${bridgeScript}`;
 
   if (/<head\b[^>]*>/i.test(sanitizedHtml)) {
-    return sanitizedHtml.replace(/<head\b[^>]*>/i, (match) => `${match}\n${injected}`);
+    return sanitizedHtml.replace(
+      /<head\b[^>]*>/i,
+      (match) => `${match}\n${injected}`,
+    );
   }
 
   return `${injected}\n${sanitizedHtml}`;

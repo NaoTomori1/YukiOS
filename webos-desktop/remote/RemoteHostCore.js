@@ -1,11 +1,12 @@
-const SIGNALING_BASE = "wss://yukios-remote-signaling.liventcord-a60.workers.dev";
+const SIGNALING_BASE =
+  "wss://yukios-remote-signaling.liventcord-a60.workers.dev";
 const STUN_SERVERS = [
   { urls: "stun:stun.cloudflare.com:3478" },
   { urls: "stun:stun.l.google.com:19302" },
   { urls: "stun:stun1.l.google.com:19302" },
   { urls: "stun:stun2.l.google.com:19302" },
   { urls: "stun:stun3.l.google.com:19302" },
-  { urls: "stun:stun4.l.google.com:19302" }
+  { urls: "stun:stun4.l.google.com:19302" },
 ];
 
 let _turnCreds = null;
@@ -15,7 +16,11 @@ function setTurnCreds(creds) {
 function getIceConfig() {
   const servers = [...STUN_SERVERS];
   if (_turnCreds) {
-    servers.push({ urls: _turnCreds.urls, username: _turnCreds.username, credential: _turnCreds.credential });
+    servers.push({
+      urls: _turnCreds.urls,
+      username: _turnCreds.username,
+      credential: _turnCreds.credential,
+    });
   }
   return { iceServers: servers, iceCandidatePoolSize: 5 };
 }
@@ -51,14 +56,22 @@ class RemoteHostCore {
 
     try {
       this.captureStream = await navigator.mediaDevices.getDisplayMedia({
-        video: { width: { ideal: res.w }, height: { ideal: res.h }, frameRate: { ideal: frameRate } },
-        audio: true
+        video: {
+          width: { ideal: res.w },
+          height: { ideal: res.h },
+          frameRate: { ideal: frameRate },
+        },
+        audio: true,
       });
     } catch (e) {
       try {
         this.captureStream = await navigator.mediaDevices.getDisplayMedia({
-          video: { width: { ideal: res.w }, height: { ideal: res.h }, frameRate: { ideal: frameRate } },
-          audio: false
+          video: {
+            width: { ideal: res.w },
+            height: { ideal: res.h },
+            frameRate: { ideal: frameRate },
+          },
+          audio: false,
         });
       } catch (e2) {
         this.options.onError("Screen capture permission denied or unavailable");
@@ -66,7 +79,10 @@ class RemoteHostCore {
       }
     }
 
-    if (!this.captureStream || this.captureStream.getVideoTracks().length === 0) {
+    if (
+      !this.captureStream ||
+      this.captureStream.getVideoTracks().length === 0
+    ) {
       this.options.onError("No video track in captured stream");
       return false;
     }
@@ -180,7 +196,11 @@ class RemoteHostCore {
       this.pc.restartIce();
       this.consecutiveFailedAttempts++;
       this.connectionTimeout = setTimeout(() => {
-        if (this.pc && this.pc.iceConnectionState !== "connected" && this.pc.iceConnectionState !== "completed") {
+        if (
+          this.pc &&
+          this.pc.iceConnectionState !== "connected" &&
+          this.pc.iceConnectionState !== "completed"
+        ) {
           if (!this.fallbackMode) this.activateFallback();
         }
       }, 15000);
@@ -192,8 +212,11 @@ class RemoteHostCore {
   activateFallback() {
     if (this.fallbackMode) return;
     this.fallbackMode = true;
-    this.options.onStatus("P2P blocked by network, fallback mode active (1fps, low quality)");
-    if (this.options.onConnectionState) this.options.onConnectionState("fallback");
+    this.options.onStatus(
+      "P2P blocked by network, fallback mode active (1fps, low quality)",
+    );
+    if (this.options.onConnectionState)
+      this.options.onConnectionState("fallback");
 
     const video = document.createElement("video");
     video.srcObject = this.captureStream;
@@ -220,21 +243,25 @@ class RemoteHostCore {
             if (!blob || this.cleaned) return;
             const reader = new FileReader();
             reader.onloadend = () => {
-              if (this.ws && this.ws.readyState === WebSocket.OPEN && !this.cleaned) {
+              if (
+                this.ws &&
+                this.ws.readyState === WebSocket.OPEN &&
+                !this.cleaned
+              ) {
                 this.ws.send(
                   JSON.stringify({
                     type: "frame-data",
                     data: reader.result,
                     ts: Date.now(),
-                    from: "host"
-                  })
+                    from: "host",
+                  }),
                 );
               }
             };
             reader.readAsDataURL(blob);
           },
           "image/jpeg",
-          0.3
+          0.3,
         );
       } catch (e) {
         console.error("Fallback capture error:", e);
@@ -253,15 +280,23 @@ class RemoteHostCore {
     switch (msg.type) {
       case "answer":
         if (this.useWebCodecs) break;
-        if (this.pc && this.pc.localDescription && this.pc.localDescription.type === "offer") {
+        if (
+          this.pc &&
+          this.pc.localDescription &&
+          this.pc.localDescription.type === "offer"
+        ) {
           this.pc
-            .setRemoteDescription(new RTCSessionDescription({ type: "answer", sdp: msg.sdp }))
+            .setRemoteDescription(
+              new RTCSessionDescription({ type: "answer", sdp: msg.sdp }),
+            )
             .catch(console.error);
         }
         break;
       case "ice-candidate":
         if (this.pc && msg.candidate) {
-          this.pc.addIceCandidate(new RTCIceCandidate(msg.candidate)).catch(console.error);
+          this.pc
+            .addIceCandidate(new RTCIceCandidate(msg.candidate))
+            .catch(console.error);
         }
         break;
       case "frame-data":
@@ -277,12 +312,20 @@ class RemoteHostCore {
         this.iceRestartAttempted = true;
         this.options.onStatus("P2P connection failed, retrying...");
         this.restartIce();
-      } else if (state === "failed" && this.iceRestartAttempted && !this.fallbackMode) {
+      } else if (
+        state === "failed" &&
+        this.iceRestartAttempted &&
+        !this.fallbackMode
+      ) {
         this.activateFallback();
       }
     };
     this.connectionTimeout = setTimeout(() => {
-      if (this.pc && this.pc.iceConnectionState !== "connected" && this.pc.iceConnectionState !== "completed") {
+      if (
+        this.pc &&
+        this.pc.iceConnectionState !== "connected" &&
+        this.pc.iceConnectionState !== "completed"
+      ) {
         if (!this.iceRestartAttempted) {
           this.iceRestartAttempted = true;
           this.options.onStatus("P2P timed out, retrying...");
@@ -295,7 +338,13 @@ class RemoteHostCore {
 
     this.pc.onicecandidate = (event) => {
       if (event.candidate && this.ws && this.ws.readyState === WebSocket.OPEN) {
-        this.ws.send(JSON.stringify({ type: "ice-candidate", candidate: event.candidate.toJSON(), from: "host" }));
+        this.ws.send(
+          JSON.stringify({
+            type: "ice-candidate",
+            candidate: event.candidate.toJSON(),
+            from: "host",
+          }),
+        );
       }
     };
 
@@ -334,7 +383,9 @@ class RemoteHostCore {
               data.set(new Uint8Array(chunk), off);
               off += chunk.byteLength;
             }
-            const blob = new Blob([data], { type: fileMeta.mime || "application/octet-stream" });
+            const blob = new Blob([data], {
+              type: fileMeta.mime || "application/octet-stream",
+            });
             const url = URL.createObjectURL(blob);
             const a = document.createElement("a");
             a.href = url;
@@ -354,7 +405,10 @@ class RemoteHostCore {
   }
 
   checkWebCodecs() {
-    if (typeof MediaStreamTrackProcessor !== "undefined" && typeof VideoEncoder !== "undefined") {
+    if (
+      typeof MediaStreamTrackProcessor !== "undefined" &&
+      typeof VideoEncoder !== "undefined"
+    ) {
       VideoEncoder.isConfigSupported({
         codec: "avc1.42001E",
         width: 640,
@@ -362,7 +416,7 @@ class RemoteHostCore {
         bitrate: 1_000_000,
         framerate: 30,
         hardwareAcceleration: "prefer-hardware",
-        avc: { format: "annexb" }
+        avc: { format: "annexb" },
       })
         .then((support) => {
           if (support.supported) {
@@ -398,7 +452,9 @@ class RemoteHostCore {
     try {
       const offer = await this.pc.createOffer();
       await this.pc.setLocalDescription(offer);
-      this.ws.send(JSON.stringify({ type: "offer", sdp: this.pc.localDescription.sdp }));
+      this.ws.send(
+        JSON.stringify({ type: "offer", sdp: this.pc.localDescription.sdp }),
+      );
     } catch (err) {
       this.options.onError("Failed to create offer: " + err.message);
     }
@@ -410,7 +466,10 @@ class RemoteHostCore {
     const height = s.height || 720;
     const frameRate = s.frameRate || 30;
     const totalPixels = width * height;
-    const bitrate = Math.min(Math.max(Math.round((totalPixels / (1280 * 720)) * 2_500_000), 1_000_000), 20_000_000);
+    const bitrate = Math.min(
+      Math.max(Math.round((totalPixels / (1280 * 720)) * 2_500_000), 1_000_000),
+      20_000_000,
+    );
 
     const encoderConfig = {
       codec: "avc1.42001E",
@@ -419,13 +478,15 @@ class RemoteHostCore {
       bitrate,
       framerate: frameRate,
       hardwareAcceleration: "prefer-hardware",
-      avc: { format: "annexb" }
+      avc: { format: "annexb" },
     };
 
-    let supported = (await VideoEncoder.isConfigSupported(encoderConfig)).supported;
+    let supported = (await VideoEncoder.isConfigSupported(encoderConfig))
+      .supported;
     if (!supported) {
       encoderConfig.hardwareAcceleration = "prefer-software";
-      supported = (await VideoEncoder.isConfigSupported(encoderConfig)).supported;
+      supported = (await VideoEncoder.isConfigSupported(encoderConfig))
+        .supported;
       if (!supported) throw new Error("H.264 encoding not supported");
     }
 
@@ -442,7 +503,7 @@ class RemoteHostCore {
           const header = new Uint8Array([
             typeByte,
             ...new Uint8Array(tsView.buffer),
-            ...new Uint8Array(durView.buffer)
+            ...new Uint8Array(durView.buffer),
           ]);
           const merged = new Uint8Array(header.length + raw.length);
           merged.set(header);
@@ -450,7 +511,7 @@ class RemoteHostCore {
           this.dataChannel.send(merged.buffer);
         }
       },
-      error: (err) => console.error("VideoEncoder error:", err)
+      error: (err) => console.error("VideoEncoder error:", err),
     });
     this.videoEncoder.configure(encoderConfig);
 
@@ -459,7 +520,13 @@ class RemoteHostCore {
 
     const offer = await this.pc.createOffer();
     await this.pc.setLocalDescription(offer);
-    this.ws.send(JSON.stringify({ type: "offer", sdp: this.pc.localDescription.sdp, codec: "h264" }));
+    this.ws.send(
+      JSON.stringify({
+        type: "offer",
+        sdp: this.pc.localDescription.sdp,
+        codec: "h264",
+      }),
+    );
 
     this.readEncoderFrames();
   }

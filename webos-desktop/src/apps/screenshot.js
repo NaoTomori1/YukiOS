@@ -46,7 +46,7 @@ export class ScreenshotApp extends BaseApp {
   open() {
     const winId = "screenshot";
     const win = os.window.create(winId, "Screenshot", "600px", "480px", {
-      icon: "fas fa-camera"
+      icon: "fas fa-camera",
     });
 
     win.classList.add("sc-window");
@@ -92,12 +92,24 @@ export class ScreenshotApp extends BaseApp {
   }
 
   setupEvents(win) {
-    win.querySelector('[data-mode="full"]').addEventListener("click", () => this.captureFull());
-    win.querySelector('[data-mode="area"]').addEventListener("click", () => this.captureArea(true));
-    win.querySelector('[data-mode="record"]').addEventListener("click", () => this.toggleRecording());
-    win.querySelector("#sc-download").addEventListener("click", () => this.downloadCurrent());
-    win.querySelector("#sc-save").addEventListener("click", () => this.saveCurrent());
-    win.querySelector("#sc-copy").addEventListener("click", () => this.copyCurrent());
+    win
+      .querySelector('[data-mode="full"]')
+      .addEventListener("click", () => this.captureFull());
+    win
+      .querySelector('[data-mode="area"]')
+      .addEventListener("click", () => this.captureArea(true));
+    win
+      .querySelector('[data-mode="record"]')
+      .addEventListener("click", () => this.toggleRecording());
+    win
+      .querySelector("#sc-download")
+      .addEventListener("click", () => this.downloadCurrent());
+    win
+      .querySelector("#sc-save")
+      .addEventListener("click", () => this.saveCurrent());
+    win
+      .querySelector("#sc-copy")
+      .addEventListener("click", () => this.copyCurrent());
   }
 
   async loadHtml2canvasPro() {
@@ -115,14 +127,17 @@ export class ScreenshotApp extends BaseApp {
     try {
       await this.loadHtml2canvasPro();
     } catch (e) {
-      console.warn("[Screenshot] html2canvas-pro CDN failed, trying getDisplayMedia fallback:", e);
+      console.warn(
+        "[Screenshot] html2canvas-pro CDN failed, trying getDisplayMedia fallback:",
+        e,
+      );
       return await this.fallbackCapture();
     }
     const win = $("#screenshot");
     if (win) setStyle(win, { display: "none" });
     const opts = [
       { useCORS: true, allowTaint: true, backgroundColor: null },
-      { useCORS: false, allowTaint: false, backgroundColor: "#1a1a2e" }
+      { useCORS: false, allowTaint: false, backgroundColor: "#1a1a2e" },
     ];
     for (const extra of opts) {
       try {
@@ -132,7 +147,7 @@ export class ScreenshotApp extends BaseApp {
           width: window.innerWidth,
           height: window.innerHeight,
           x: window.scrollX,
-          y: window.scrollY
+          y: window.scrollY,
         });
         if (win) setStyle(win, { display: "" });
         const blob = await new Promise((resolve) => {
@@ -142,14 +157,21 @@ export class ScreenshotApp extends BaseApp {
         return blob;
       } catch (e) {
         if (e.name === "SecurityError") {
-          console.warn("[Screenshot] canvas tainted with", extra, "retrying with safer options:", e);
+          console.warn(
+            "[Screenshot] canvas tainted with",
+            extra,
+            "retrying with safer options:",
+            e,
+          );
           continue;
         }
         throw e;
       }
     }
     if (win) setStyle(win, { display: "" });
-    console.warn("[Screenshot] all html2canvas options tainted, trying getDisplayMedia fallback");
+    console.warn(
+      "[Screenshot] all html2canvas options tainted, trying getDisplayMedia fallback",
+    );
     try {
       return await this.fallbackCapture();
     } catch (fbErr) {
@@ -160,7 +182,7 @@ export class ScreenshotApp extends BaseApp {
   async fallbackCapture() {
     const stream = await navigator.mediaDevices.getDisplayMedia({
       preferCurrentTab: false,
-      video: { displaySurface: "monitor" }
+      video: { displaySurface: "monitor" },
     });
     const track = stream.getVideoTracks()[0];
     const capture = new ImageCapture(track);
@@ -222,9 +244,18 @@ export class ScreenshotApp extends BaseApp {
       await os.fs.mkdir(["Pictures", "Screenshots"]);
       let finalName = name;
       try {
-        finalName = await os.fs.getUniqueFileName(["Pictures", "Screenshots"], name);
+        finalName = await os.fs.getUniqueFileName(
+          ["Pictures", "Screenshots"],
+          name,
+        );
       } catch {}
-      await os.fs.writeBinaryFile(["Pictures", "Screenshots"], finalName, blob, "video", "@content");
+      await os.fs.writeBinaryFile(
+        ["Pictures", "Screenshots"],
+        finalName,
+        blob,
+        "video",
+        "@content",
+      );
       this.currentBlob = blob;
       this.currentType = "recording";
       os.notify.send("Recording saved to Pictures/Screenshots");
@@ -251,11 +282,13 @@ export class ScreenshotApp extends BaseApp {
       this.showStatus("Select a screen to record...");
       const stream = await navigator.mediaDevices.getDisplayMedia({
         video: { displaySurface: "monitor" },
-        audio: false
+        audio: false,
       });
       this.stream = stream;
       this.recordedChunks = [];
-      this.mediaRecorder = new MediaRecorder(stream, { mimeType: "video/webm" });
+      this.mediaRecorder = new MediaRecorder(stream, {
+        mimeType: "video/webm",
+      });
       this.mediaRecorder.ondataavailable = (e) => {
         if (e.data.size > 0) this.recordedChunks.push(e.data);
       };
@@ -274,7 +307,10 @@ export class ScreenshotApp extends BaseApp {
           if (this.isRecording()) this.stopRecording();
         };
       }
-      os.notify.send("Screenshot", "Recording started. Press Ctrl+Shift+R to stop.");
+      os.notify.send(
+        "Screenshot",
+        "Recording started. Press Ctrl+Shift+R to stop.",
+      );
     } catch {
       this.showStatus("Recording cancelled");
     }
@@ -283,7 +319,7 @@ export class ScreenshotApp extends BaseApp {
   async startOverlayRecording() {
     const stream = await navigator.mediaDevices.getDisplayMedia({
       video: { displaySurface: "monitor" },
-      audio: false
+      audio: false,
     });
     this.stream = stream;
     this.recordedChunks = [];
@@ -328,7 +364,8 @@ export class ScreenshotApp extends BaseApp {
     const label = this.win.querySelector(".sc-record-label");
     if (!label) return;
     if (this.recording) {
-      label.innerHTML = '<span class="sc-recording-indicator"><span class="sc-rec-dot"></span> Recording</span>';
+      label.innerHTML =
+        '<span class="sc-recording-indicator"><span class="sc-rec-dot"></span> Recording</span>';
     } else {
       label.textContent = "Record";
     }
@@ -408,7 +445,12 @@ export class ScreenshotApp extends BaseApp {
       const y = Math.min(dragStart.y, cy);
       const w = Math.abs(cx - dragStart.x);
       const h = Math.abs(cy - dragStart.y);
-      setStyle(rectEl, { left: `${x}px`, top: `${y}px`, width: `${w}px`, height: `${h}px` });
+      setStyle(rectEl, {
+        left: `${x}px`,
+        top: `${y}px`,
+        width: `${w}px`,
+        height: `${h}px`,
+      });
       const btn = $("#sc-crop-confirm");
       if (btn) btn.disabled = w < 5 || h < 5;
     };
@@ -424,7 +466,8 @@ export class ScreenshotApp extends BaseApp {
       const imgR = img.getBoundingClientRect();
       const scaleX = img.naturalWidth / imgR.width;
       const scaleY = img.naturalHeight / imgR.height;
-      const rx = (parseFloat(rectEl.style.left) - (imgR.left - r.left)) * scaleX;
+      const rx =
+        (parseFloat(rectEl.style.left) - (imgR.left - r.left)) * scaleX;
       const ry = (parseFloat(rectEl.style.top) - (imgR.top - r.top)) * scaleY;
       const rw = parseFloat(rectEl.style.width) * scaleX;
       const rh = parseFloat(rectEl.style.height) * scaleY;
@@ -507,17 +550,27 @@ export class ScreenshotApp extends BaseApp {
       const ext = this.currentType === "recording" ? "webm" : "png";
       const name = `Screenshot-${Date.now()}.${ext}`;
       await os.fs.mkdir(["Pictures", "Screenshots"]);
-      await os.fs.writeBinaryFile(["Pictures", "Screenshots"], name, this.currentBlob, "image", "@content");
+      await os.fs.writeBinaryFile(
+        ["Pictures", "Screenshots"],
+        name,
+        this.currentBlob,
+        "image",
+        "@content",
+      );
       os.notify.send("Screenshot saved to Pictures/Screenshots");
     } catch {
-      os.notify.send("Screenshot", "Failed to save to Pictures", { type: "error" });
+      os.notify.send("Screenshot", "Failed to save to Pictures", {
+        type: "error",
+      });
     }
   }
 
   async copyCurrent() {
     if (!this.currentBlob) return;
     try {
-      await navigator.clipboard.write([new ClipboardItem({ [this.currentBlob.type]: this.currentBlob })]);
+      await navigator.clipboard.write([
+        new ClipboardItem({ [this.currentBlob.type]: this.currentBlob }),
+      ]);
     } catch {
       os.notify.send("Screenshot", "Failed to copy", { type: "error" });
     }

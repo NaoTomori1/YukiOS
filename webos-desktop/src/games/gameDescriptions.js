@@ -1,7 +1,8 @@
 import { APP_MANIFESTS } from "../registry/AppManifest.js";
 
 const APP_DESCRIPTIONS = APP_MANIFESTS.reduce((acc, manifest) => {
-  const key = manifest.serviceKey || manifest.title.toLowerCase().replace(/\s+/g, "");
+  const key =
+    manifest.serviceKey || manifest.title.toLowerCase().replace(/\s+/g, "");
   if (manifest.description) {
     acc[key] = manifest.description;
   }
@@ -404,32 +405,48 @@ export const descriptionMap = {
     "400 Years is a 2013 puzzle adventure by Scriptwelder. Players control a stone golem with the goal of preventing a cataclysm 400 years in the future, with the ability to wait centuries between actions.",
   smashyCity:
     "Smashy City is a 2015 destruction game by The Binary Mill. Players control giant monsters and stomp through blocky cities, smashing buildings and battling military forces.",
-  taskManagerApp: "Monitor running apps, track system performance, and force-close unruly windows from one dashboard.",
-  weatherApp: "Real-time weather and forecasts served up in a clean, no-nonsense dashboard.",
-  calculatorApp: "Quick arithmetic and everyday calculations, modeled after classic OS calculators.",
-  settingsApp: "Tweak themes, behavior, and system preferences from one central panel.",
+  taskManagerApp:
+    "Monitor running apps, track system performance, and force-close unruly windows from one dashboard.",
+  weatherApp:
+    "Real-time weather and forecasts served up in a clean, no-nonsense dashboard.",
+  calculatorApp:
+    "Quick arithmetic and everyday calculations, modeled after classic OS calculators.",
+  settingsApp:
+    "Tweak themes, behavior, and system preferences from one central panel.",
   aboutApp: "Version numbers, developer credits, and the story behind YukiOS.",
-  newsApp: "Catch up on what's new with changelogs, features, and recent updates at a glance.",
-  explorer: "Browse, organize, and manage your virtual files with familiar folder navigation.",
+  newsApp:
+    "Catch up on what's new with changelogs, features, and recent updates at a glance.",
+  explorer:
+    "Browse, organize, and manage your virtual files with familiar folder navigation.",
   notepad: "Jot down notes, draft ideas, or edit plain text without any fuss.",
-  browserApp: "Surf the web from inside your virtual desktop with the built-in Yuki Browser.",
-  yukiDevTools: "Yuki Dev Tools loads IT Tools in a themed iframe and keeps it synced with YukiOS CSS variables.",
-  terminal: "Fire up the command line for scripts, system commands, and developer tools.",
-  music: "Stream and play audio while you work, browse, or relax on the desktop.",
-  cameraApp: "Snap screenshots or record webcam footage right from your desktop.",
-  steamApp: "Your game library, wrapped in a Steam-style storefront interface built right into YukiOS.",
-  flash: "Classic Flash games live on through Ruffle and Flashpoint Archive, all in one hub.",
+  browserApp:
+    "Surf the web from inside your virtual desktop with the built-in Yuki Browser.",
+  yukiDevTools:
+    "Yuki Dev Tools loads IT Tools in a themed iframe and keeps it synced with YukiOS CSS variables.",
+  terminal:
+    "Fire up the command line for scripts, system commands, and developer tools.",
+  music:
+    "Stream and play audio while you work, browse, or relax on the desktop.",
+  cameraApp:
+    "Snap screenshots or record webcam footage right from your desktop.",
+  steamApp:
+    "Your game library, wrapped in a Steam-style storefront interface built right into YukiOS.",
+  flash:
+    "Classic Flash games live on through Ruffle and Flashpoint Archive, all in one hub.",
   vscode:
     "Visual Studio Code is a free, lightweight code editor by Microsoft, released in 2015. It supports virtually every programming language with extensions, debugging, and integrated Git.",
-  yukiCode: "A Monaco-powered code editor built into YukiOS, based on the same engine that runs Visual Studio Code.",
+  yukiCode:
+    "A Monaco-powered code editor built into YukiOS, based on the same engine that runs Visual Studio Code.",
   jsDosApp:
     "JsDos is a JavaScript port of the DOSBox emulator, allowing classic DOS programs and games to run natively inside a web browser.",
   v86app:
     "v86 is an x86 emulator written in JavaScript by Fabian Hemmer, capable of booting full operating systems like Linux, Windows, and ReactOS directly inside the browser.",
   libreSprite:
     "LibreSprite is an open-source pixel art and animation editor, forked from the original free version of Aseprite. It's tailored for creating sprites, tilesets, and small animations.",
-  officeApp: "Word processing, spreadsheets, and presentations without ever leaving your desktop.",
-  appCreatorApp: "Build your own apps by pointing to a URL and adding them straight to the desktop.",
+  officeApp:
+    "Word processing, spreadsheets, and presentations without ever leaving your desktop.",
+  appCreatorApp:
+    "Build your own apps by pointing to a URL and adding them straight to the desktop.",
   kiwiIRC:
     "KiwiIRC is a free, web-based IRC client first released in 2011. It allows users to join classic Internet Relay Chat networks like Libera.Chat and OFTC directly from the browser.",
   slitherIO:
@@ -630,5 +647,5 @@ export const descriptionMap = {
     "Your Only Move Is HUSTLE is a 2023 turn-based fighter by Ivy Sly. Players choreograph seconds-long brawls frame by frame, then execute flawlessly timed super-powered strings.",
   zuma: "Zuma is a 2003 ball-matching puzzler by PopCap Games. Players fire colored spheres from a stone frog to clear spiraling chains before they reach the skull.",
   miside:
-    "MiSide is a 2024 horror adventure by AIHASTO. Players are pulled into a sweet life sim with the clingy Mita, where cozy routines curdle into reality-bending, meta horror."
+    "MiSide is a 2024 horror adventure by AIHASTO. Players are pulled into a sweet life sim with the clingy Mita, where cozy routines curdle into reality-bending, meta horror.",
 };

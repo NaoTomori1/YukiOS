@@ -22,24 +22,28 @@ img.effect-icon {
 }
 @keyframes bounce {
   0% {
-    transform: translate(-50%, -50%) translateY(0) scaleX(1) scaleY(1) rotate(0deg) scale(0.6);
+    transform: translate(-50%, -50%) translateY(0) scaleX(1) scaleY(1)
+      rotate(0deg) scale(0.6);
   }
   20% {
-    transform: translate(-50%, -50%) translateY(var(--rise)) scaleX(var(--sx-up)) scaleY(var(--sy-up))
-      rotate(var(--shake)) scale(0.6);
+    transform: translate(-50%, -50%) translateY(var(--rise))
+      scaleX(var(--sx-up)) scaleY(var(--sy-up)) rotate(var(--shake)) scale(0.6);
   }
   35% {
-    transform: translate(-50%, -50%) translateY(0) scaleX(var(--sx-dn)) scaleY(var(--sy-dn))
-      rotate(calc(var(--shake) * -1)) scale(0.6);
+    transform: translate(-50%, -50%) translateY(0) scaleX(var(--sx-dn))
+      scaleY(var(--sy-dn)) rotate(calc(var(--shake) * -1)) scale(0.6);
   }
   55% {
-    transform: translate(-50%, -50%) translateY(var(--rise2)) scaleX(var(--sx-up2)) scaleY(var(--sy-up2))
-      rotate(var(--shake)) scale(0.6);
+    transform: translate(-50%, -50%) translateY(var(--rise2))
+      scaleX(var(--sx-up2)) scaleY(var(--sy-up2)) rotate(var(--shake))
+      scale(0.6);
   }
   75% {
-    transform: translate(-50%, -50%) translateY(0) scaleX(1.01) scaleY(0.99) rotate(0deg) scale(0.6);
+    transform: translate(-50%, -50%) translateY(0) scaleX(1.01) scaleY(0.99)
+      rotate(0deg) scale(0.6);
   }
   100% {
-    transform: translate(-50%, -50%) translateY(0) scaleX(1) scaleY(1) rotate(0deg) scale(0.6);
+    transform: translate(-50%, -50%) translateY(0) scaleX(1) scaleY(1)
+      rotate(0deg) scale(0.6);
   }
 }

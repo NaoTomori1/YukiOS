@@ -19,7 +19,10 @@ async function loadOverridesFromCache() {
 async function storeOverride(pathname, content) {
   overrideMap.set(pathname, content);
   const cache = await caches.open(OVERRIDES_CACHE);
-  await cache.put(new Request(self.location.origin + pathname), new Response(content));
+  await cache.put(
+    new Request(self.location.origin + pathname),
+    new Response(content),
+  );
 }
 
 async function clearOverride(pathname) {
@@ -41,7 +44,7 @@ const PRECACHE_URLS = [
   asUrl("./favicon.ico"),
   asUrl("./manifest.webmanifest"),
   asUrl("./icons/icon-128.png"),
-  asUrl("./icons/icon-256.png")
+  asUrl("./icons/icon-256.png"),
 ];
 
 self.addEventListener("install", (event) => {
@@ -50,7 +53,7 @@ self.addEventListener("install", (event) => {
     (async () => {
       const cache = await caches.open(CACHE);
       await cache.addAll(PRECACHE_URLS);
-    })()
+    })(),
   );
 });
 
@@ -59,11 +62,13 @@ self.addEventListener("activate", (event) => {
     (async () => {
       const keys = await caches.keys();
       await Promise.all(
-        keys.filter((k) => k.startsWith("yukios-pwa-cache-") && k !== CACHE).map((k) => caches.delete(k))
+        keys
+          .filter((k) => k.startsWith("yukios-pwa-cache-") && k !== CACHE)
+          .map((k) => caches.delete(k)),
       );
       await self.clients.claim();
       loadOverridesFromCache();
-    })()
+    })(),
   );
 });
 
@@ -75,14 +80,15 @@ self.addEventListener("message", (event) => {
     event.waitUntil(
       (async () => {
         for (const pathname of [...overrideMap.keys()]) {
-          if (!Object.prototype.hasOwnProperty.call(incoming, pathname)) await clearOverride(pathname);
+          if (!Object.prototype.hasOwnProperty.call(incoming, pathname))
+            await clearOverride(pathname);
         }
         for (const pathname of Object.keys(incoming)) {
           await storeOverride(pathname, incoming[pathname]);
         }
         const port = event.ports && event.ports[0];
         if (port) port.postMessage({ ok: true });
-      })()
+      })(),
     );
   }
 });
@@ -108,7 +114,9 @@ async function networkFirst(request) {
     if (response && response.ok) cache.put(request, response.clone());
     return response;
   } catch {
-    return (await cache.match(request)) || (await cache.match(asUrl("./index.html")));
+    return (
+      (await cache.match(request)) || (await cache.match(asUrl("./index.html")))
+    );
   }
 }
 
@@ -129,8 +137,8 @@ self.addEventListener("fetch", (event) => {
   if (overrideMap.has(url.pathname)) {
     event.respondWith(
       new Response(overrideMap.get(url.pathname), {
-        headers: { "Content-Type": mimeForOverride(url.pathname) }
-      })
+        headers: { "Content-Type": mimeForOverride(url.pathname) },
+      }),
     );
     return;
   }

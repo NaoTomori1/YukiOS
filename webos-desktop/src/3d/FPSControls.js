@@ -72,7 +72,7 @@ export class FPSControls {
       right: false,
       sprint: false,
       jump: false,
-      crouch: false
+      crouch: false,
     };
 
     this.animTarget = null;
@@ -114,7 +114,7 @@ export class FPSControls {
               this.lock();
             }
           },
-          { once: true }
+          { once: true },
         );
       }
       return false;
@@ -131,7 +131,9 @@ export class FPSControls {
             } catch {}
           };
           if (document.fullscreenElement !== null) {
-            document.addEventListener("fullscreenchange", retry, { once: true });
+            document.addEventListener("fullscreenchange", retry, {
+              once: true,
+            });
           } else {
             retry();
           }
@@ -158,14 +160,20 @@ export class FPSControls {
   onMouseMove(event) {
     if (!this.isLocked || !this.enabled) return;
     if (this.walkTarget) return;
-    const sens = this.zoomFactor > 0 ? this.lookSensitivity * 0.5 : this.lookSensitivity;
+    const sens =
+      this.zoomFactor > 0 ? this.lookSensitivity * 0.5 : this.lookSensitivity;
     this.yaw -= event.movementX * sens;
     this.pitch -= event.movementY * sens;
     this.pitch = Math.max(-Math.PI / 2.5, Math.min(Math.PI / 2.5, this.pitch));
   }
 
   onMouseDown(event) {
-    if (event.button === 2 && this.isLocked && this.enabled && this.zoomEnabled) {
+    if (
+      event.button === 2 &&
+      this.isLocked &&
+      this.enabled &&
+      this.zoomEnabled
+    ) {
       this.zoomTarget = 1;
     }
   }
@@ -274,7 +282,10 @@ export class FPSControls {
     this.THREE = THREE;
     this.enabled = true;
     if (!this.basePos) this.basePos = this.camera.position.clone();
-    document.addEventListener("pointerlockchange", this.onPointerLockChangeBound);
+    document.addEventListener(
+      "pointerlockchange",
+      this.onPointerLockChangeBound,
+    );
     document.addEventListener("mousemove", this.onMouseMoveBound);
     document.addEventListener("keydown", this.onKeyDownBound);
     document.addEventListener("keyup", this.onKeyUpBound);
@@ -287,7 +298,10 @@ export class FPSControls {
     this.enabled = false;
     this.cancelWalk();
     this.unlock();
-    document.removeEventListener("pointerlockchange", this.onPointerLockChangeBound);
+    document.removeEventListener(
+      "pointerlockchange",
+      this.onPointerLockChangeBound,
+    );
     document.removeEventListener("mousemove", this.onMouseMoveBound);
     document.removeEventListener("keydown", this.onKeyDownBound);
     document.removeEventListener("keyup", this.onKeyUpBound);
@@ -306,7 +320,11 @@ export class FPSControls {
       const t = Math.min(this.animElapsed / this.animDuration, 1);
       const ease = t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
 
-      this.camera.position.lerpVectors(this.animStartPos, this.animTarget.pos, ease);
+      this.camera.position.lerpVectors(
+        this.animStartPos,
+        this.animTarget.pos,
+        ease,
+      );
       this.camera.lookAt(this.animTarget.lookAt);
 
       if (t >= 1) {
@@ -394,7 +412,9 @@ export class FPSControls {
       }
     } else {
       let mx, my;
-      const gpMag = this.gamepadActive ? Math.hypot(this.moveAxis.x, this.moveAxis.y) : 0;
+      const gpMag = this.gamepadActive
+        ? Math.hypot(this.moveAxis.x, this.moveAxis.y)
+        : 0;
       if (gpMag > 0.001) {
         mx = this.moveAxis.x;
         my = this.moveAxis.y;
@@ -447,7 +467,8 @@ export class FPSControls {
     const speedNow = Math.sqrt(this.velX * this.velX + this.velZ * this.velZ);
     const moving = speedNow > 0.05;
     this.gaitSpeed = speedNow;
-    this.gaitNormalized = maxSpeed > 0.001 ? Math.min(1, speedNow / maxSpeed) : 0;
+    this.gaitNormalized =
+      maxSpeed > 0.001 ? Math.min(1, speedNow / maxSpeed) : 0;
     this.gaitMoving = moving;
     this.gaitForward = gaitInputY;
     this.gaitStrafe = gaitInputX;
@@ -458,8 +479,14 @@ export class FPSControls {
 
     this.basePos.x += this.velX * delta;
     this.basePos.z += this.velZ * delta;
-    this.basePos.x = Math.max(this.bounds.minX, Math.min(this.bounds.maxX, this.basePos.x));
-    this.basePos.z = Math.max(this.bounds.minZ, Math.min(this.bounds.maxZ, this.basePos.z));
+    this.basePos.x = Math.max(
+      this.bounds.minX,
+      Math.min(this.bounds.maxX, this.basePos.x),
+    );
+    this.basePos.z = Math.max(
+      this.bounds.minZ,
+      Math.min(this.bounds.maxZ, this.basePos.z),
+    );
 
     if (this.keys.jump && this.isGrounded && !this.walkTarget) {
       this.velocityY = this.jumpSpeed;
@@ -469,10 +496,14 @@ export class FPSControls {
     if (!this.isGrounded) {
       this.velocityY += this.gravity * delta;
       this.basePos.y += this.velocityY * delta;
-      const feetY = this.basePos.y - (this.keys.crouch ? this.crouchHeight : this.normalHeight);
+      const feetY =
+        this.basePos.y -
+        (this.keys.crouch ? this.crouchHeight : this.normalHeight);
       if (feetY <= 0) {
         const impact = Math.abs(this.velocityY);
-        this.basePos.y = this.keys.crouch ? this.crouchHeight : this.normalHeight;
+        this.basePos.y = this.keys.crouch
+          ? this.crouchHeight
+          : this.normalHeight;
         this.velocityY = 0;
         this.isGrounded = true;
         if (impact > 1.5) {
@@ -488,8 +519,11 @@ export class FPSControls {
     }
 
     if (this.isGrounded) {
-      const targetHeight = this.keys.crouch ? this.crouchHeight : this.normalHeight;
-      this.currentHeight += (targetHeight - this.currentHeight) * Math.min(1, delta * 10);
+      const targetHeight = this.keys.crouch
+        ? this.crouchHeight
+        : this.normalHeight;
+      this.currentHeight +=
+        (targetHeight - this.currentHeight) * Math.min(1, delta * 10);
       this.basePos.y = this.currentHeight;
 
       let bob = 0;
@@ -498,11 +532,19 @@ export class FPSControls {
         const crouchBob = this.keys.crouch ? 0.5 : 1;
         this.bobPhase += delta * speedNow * this.gaitFreq * bobMul;
         const tgtIntensity = bobMul * crouchBob;
-        this.bobIntensity += (tgtIntensity - this.bobIntensity) * Math.min(1, delta * 6);
+        this.bobIntensity +=
+          (tgtIntensity - this.bobIntensity) * Math.min(1, delta * 6);
         bob = Math.sin(this.bobPhase) * 0.04 * this.bobIntensity;
         const s = Math.sin(this.bobPhase);
-        if ((this.prevBobSign <= 0 && s > 0) || (this.prevBobSign >= 0 && s < 0)) {
-          if (this.onFootstep) this.onFootstep(!!this.keys.sprint, Math.min(1, speedNow / this.moveSpeed));
+        if (
+          (this.prevBobSign <= 0 && s > 0) ||
+          (this.prevBobSign >= 0 && s < 0)
+        ) {
+          if (this.onFootstep)
+            this.onFootstep(
+              !!this.keys.sprint,
+              Math.min(1, speedNow / this.moveSpeed),
+            );
         }
         this.prevBobSign = s;
       } else {
@@ -512,14 +554,19 @@ export class FPSControls {
       this.landDip += (0 - this.landDip) * Math.min(1, delta * 7);
       this.landFov += (0 - this.landFov) * Math.min(1, delta * 5);
 
-      this.camera.position.set(this.basePos.x, this.basePos.y + bob + this.landDip, this.basePos.z);
+      this.camera.position.set(
+        this.basePos.x,
+        this.basePos.y + bob + this.landDip,
+        this.basePos.z,
+      );
       this.bobRoll = 0;
     } else {
       this.camera.position.copy(this.basePos);
       this.bobRoll = 0;
     }
 
-    this.zoomFactor += (this.zoomTarget - this.zoomFactor) * Math.min(1, delta * 8);
+    this.zoomFactor +=
+      (this.zoomTarget - this.zoomFactor) * Math.min(1, delta * 8);
 
     const targetFov =
       this.baseFov -
@@ -527,7 +574,8 @@ export class FPSControls {
       (this.keys.sprint && moving && this.isGrounded ? 9 : 0) +
       this.landFov;
     if (this.camera.fov !== targetFov) {
-      this.camera.fov += (targetFov - this.camera.fov) * Math.min(1, delta * 12);
+      this.camera.fov +=
+        (targetFov - this.camera.fov) * Math.min(1, delta * 12);
       this.camera.updateProjectionMatrix();
     }
 
@@ -548,9 +596,11 @@ export class FPSControls {
       this.shakeVelocity -= this.shakeDamping * this.shakeOffset * delta * 8;
       this.shakeOffset += this.shakeVelocity * delta;
       if (this.shakeOffset < 0.001) this.shakeOffset = 0;
-      const roll = (this.shakeOffset * 1.2 + Math.random() * this.shakeOffset * 0.3) / 90;
+      const roll =
+        (this.shakeOffset * 1.2 + Math.random() * this.shakeOffset * 0.3) / 90;
       this.camera.position.y +=
-        Math.max(0, Math.min(0.05, Math.abs(this.shakeOffset))) * (Math.sin(performance.now() / 90) * 0.4);
+        Math.max(0, Math.min(0.05, Math.abs(this.shakeOffset))) *
+        (Math.sin(performance.now() / 90) * 0.4);
       const shakeZ = new this.THREE.Vector3(0, 0, 1);
       this.camera.rotateOnWorldAxis(shakeZ, roll);
     }
@@ -571,12 +621,15 @@ export class FPSControls {
       bobPhase: this.bobPhase,
       bobIntensity: this.bobIntensity,
       velX: this.velX,
-      velZ: this.velZ
+      velZ: this.velZ,
     };
   }
 
   addShake(intensity) {
-    this.shakeOffset = Math.max(this.shakeOffset, Math.max(0.005, Math.min(1, intensity)));
+    this.shakeOffset = Math.max(
+      this.shakeOffset,
+      Math.max(0.005, Math.min(1, intensity)),
+    );
     this.shakeVelocity = this.shakeOffset * 30;
   }
 
@@ -647,9 +700,12 @@ export class FPSControls {
   walkTo(targetPos, onArrive) {
     const target = {
       x: targetPos.x,
-      z: targetPos.z
+      z: targetPos.z,
     };
-    this.yaw = Math.atan2(this.camera.position.x - target.x, this.camera.position.z - target.z);
+    this.yaw = Math.atan2(
+      this.camera.position.x - target.x,
+      this.camera.position.z - target.z,
+    );
     this.walkTarget = target;
     this.walkOnArrive = onArrive;
     this.walkLastDist = Infinity;

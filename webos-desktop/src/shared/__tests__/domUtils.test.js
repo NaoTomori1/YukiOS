@@ -11,7 +11,7 @@ import {
   setStyle,
   setText,
   setHTML,
-  createElement
+  createElement,
 } from "../domUtils.js";
 
 describe("domUtils", () => {
@@ -85,7 +85,7 @@ describe("domUtils", () => {
         },
         focus: () => {
           focusCount++;
-        }
+        },
       });
       el.click();
       el.dispatchEvent(new Event("focus"));
@@ -212,13 +212,17 @@ describe("domUtils", () => {
     });
 
     it("creates with attributes", () => {
-      const el = createElement("a", { attributes: { href: "#", "data-test": "val" } });
+      const el = createElement("a", {
+        attributes: { href: "#", "data-test": "val" },
+      });
       expect(el.getAttribute("href")).toBe("#");
       expect(el.getAttribute("data-test")).toBe("val");
     });
 
     it("creates with styles", () => {
-      const el = createElement("div", { styles: { color: "blue", marginTop: "10px" } });
+      const el = createElement("div", {
+        styles: { color: "blue", marginTop: "10px" },
+      });
       expect(el.style.color).toBe("blue");
       expect(el.style.marginTop).toBe("10px");
     });

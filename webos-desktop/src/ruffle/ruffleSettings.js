@@ -14,7 +14,7 @@ export const RUFFLE_DEFAULTS = {
   maxExecutionDuration: 15,
   logLevel: "error",
   openUrlMode: "allow",
-  warnOnUnsupportedContent: true
+  warnOnUnsupportedContent: true,
 };
 
 export function loadRuffleConfig() {
@@ -23,8 +23,12 @@ export function loadRuffleConfig() {
     if (!raw) return { ...RUFFLE_DEFAULTS };
     const parsed = typeof raw === "string" ? JSON.parse(raw) : raw;
     const merged = { ...RUFFLE_DEFAULTS, ...parsed };
-    if (merged.maxExecutionDuration && typeof merged.maxExecutionDuration === "object") {
-      merged.maxExecutionDuration = Number(merged.maxExecutionDuration.secs) || 15;
+    if (
+      merged.maxExecutionDuration &&
+      typeof merged.maxExecutionDuration === "object"
+    ) {
+      merged.maxExecutionDuration =
+        Number(merged.maxExecutionDuration.secs) || 15;
     }
     return merged;
   } catch {
@@ -54,7 +58,7 @@ export function buildPlayerConfig(overrides = {}) {
     maxExecutionDuration: Number(cfg.maxExecutionDuration) || 15,
     logLevel: cfg.logLevel,
     openUrlMode: cfg.openUrlMode,
-    warnOnUnsupportedContent: cfg.warnOnUnsupportedContent
+    warnOnUnsupportedContent: cfg.warnOnUnsupportedContent,
   };
   if (cfg.base) playerConfig.base = cfg.base;
   return playerConfig;

@@ -30,7 +30,10 @@ class EventBus {
       try {
         fn(data);
       } catch (err) {
-        console.error(`[EventBus] Uncaught error in handler for "${event}":`, err);
+        console.error(
+          `[EventBus] Uncaught error in handler for "${event}":`,
+          err,
+        );
       }
     });
   }

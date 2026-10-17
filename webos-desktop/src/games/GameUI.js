@@ -1,7 +1,18 @@
 import { refreshIcons, showContextMenu } from "../shared/contextMenu.js";
-import { SteamDataManager, desktopUI, steamAudio, refreshSteamUI, updateSteamProfileCoins } from "./games.js";
+import {
+  SteamDataManager,
+  desktopUI,
+  steamAudio,
+  refreshSteamUI,
+  updateSteamProfileCoins,
+} from "./games.js";
 import { observeLazyImages } from "./games.js";
-import { buildSteamShell, initDropdowns, initStorePage, getCdnBase } from "./steam.js";
+import {
+  buildSteamShell,
+  initDropdowns,
+  initStorePage,
+  getCdnBase,
+} from "./steam.js";
 import { initSettingsPage } from "./steamSettings.js";
 import { KeybindManager } from "../keybindManager.js";
 import { sendLaunchAnalytics, getAnalyticsBase } from "../analytics.js";
@@ -21,16 +32,29 @@ import {
   renderSocialDisabledPage,
   openStatusPicker,
   toggleFriendFavorite,
-  isFriendFavorite
+  isFriendFavorite,
 } from "./steamSocial.js";
-import { fetchFriends, fetchMessages, removeFriend, sendMessage } from "../social/friendsApi.js";
-import { $, $$, bindEvent, setText, setHTML, createElement } from "../shared/domUtils.js";
+import {
+  fetchFriends,
+  fetchMessages,
+  removeFriend,
+  sendMessage,
+} from "../social/friendsApi.js";
+import {
+  $,
+  $$,
+  bindEvent,
+  setText,
+  setHTML,
+  createElement,
+} from "../shared/domUtils.js";
 import { isSocialDisabled } from "../social/socialSettings.js";
 import { getCurrentUser } from "../desktopui/startMenu.js";
 import { resolveAppId } from "../utils/utils.js";
 import { resolveAvatarUrl } from "../social/avatarResolver.js";
 import { registerLiveIdentity, getLiveUserId } from "../social/userIdentity.js";
 import { fetchDiscover, SOCIAL_BASE } from "../social/socialApi.js";
+import { analyticsFetch } from "../social/endpoints.js";
 import { getPresence } from "../social/presence.js";
 import { BusEvents } from "../core/EventBus.js";
 
@@ -46,7 +70,9 @@ export class GameUI {
     const allGames = this.renderer.getGames();
     const hidden = SteamDataManager.getHidden();
 
-    const sidebarHiddenSection = container.querySelector(".sidebar-hidden-section");
+    const sidebarHiddenSection = container.querySelector(
+      ".sidebar-hidden-section",
+    );
 
     const visibleGames = allGames.filter((g) => !hidden.includes(g.app));
     this.renderSidebarChunked(container, visibleGames, onLaunch);
@@ -58,7 +84,9 @@ export class GameUI {
         sidebarHiddenSection.style.display = "none";
       } else {
         sidebarHiddenSection.style.display = "block";
-        const countEl = sidebarHiddenSection.querySelector(".sidebar-hidden-count");
+        const countEl = sidebarHiddenSection.querySelector(
+          ".sidebar-hidden-count",
+        );
         if (countEl) countEl.textContent = hiddenGames.length;
         this.renderHiddenSidebar(container, hiddenGames, onLaunch);
       }
@@ -67,7 +95,11 @@ export class GameUI {
 
   appendArchiveSidebarGames(container, onLaunch) {
     (this.renderer.archiveGamesCache || []).forEach((archiveGame) => {
-      this.renderer.appendArchiveGameToSidebar(container, archiveGame, onLaunch);
+      this.renderer.appendArchiveGameToSidebar(
+        container,
+        archiveGame,
+        onLaunch,
+      );
     });
   }
 
@@ -91,9 +123,17 @@ export class GameUI {
     item.addEventListener("click", () => {
       steamAudio.playSelect();
       if (isArchive) {
-        this.renderer.gameRenderer.renderArchiveGameOverview(container, game, onLaunch);
+        this.renderer.gameRenderer.renderArchiveGameOverview(
+          container,
+          game,
+          onLaunch,
+        );
       } else {
-        this.renderer.gameRenderer.renderGameOverview(container, appId, onLaunch);
+        this.renderer.gameRenderer.renderGameOverview(
+          container,
+          appId,
+          onLaunch,
+        );
       }
     });
     item.addEventListener("mouseenter", () => {
@@ -112,7 +152,11 @@ export class GameUI {
           .replace(/[^a-z0-9]+/g, "");
         const analyticsBase = getAnalyticsBase(gameId);
         sendLaunchAnalytics(gameId);
-        os.app.launchGame(gameId, false, { source: game.url, originalName: game.title, analyticsBase });
+        os.app.launchGame(gameId, false, {
+          source: game.url,
+          originalName: game.title,
+          analyticsBase,
+        });
       } else {
         onLaunch(appId);
       }
@@ -133,7 +177,11 @@ export class GameUI {
               .replace(/[^a-z0-9]+/g, "");
             const analyticsBase = getAnalyticsBase(gameId);
             sendLaunchAnalytics(gameId);
-            os.app.launchGame(gameId, false, { source: game.url, originalName: game.title, analyticsBase });
+            os.app.launchGame(gameId, false, {
+              source: game.url,
+              originalName: game.title,
+              analyticsBase,
+            });
           }
         : onLaunch;
       this.showContextMenu(e, appId, container, launchFn);
@@ -155,7 +203,9 @@ export class GameUI {
         const end = Math.min(index + CHUNK, games.length);
         const fragment = document.createDocumentFragment();
         for (let i = index; i < end; i++) {
-          fragment.appendChild(this.makeSidebarItem(games[i], container, onLaunch, false));
+          fragment.appendChild(
+            this.makeSidebarItem(games[i], container, onLaunch, false),
+          );
         }
         sidebarList.appendChild(fragment);
         observeLazyImages(sidebarList);
@@ -166,9 +216,13 @@ export class GameUI {
       if (index < games.length) {
         requestIdleCallback(renderChunk, { timeout: 200 });
       } else {
-        if (this.renderer.currentGame) this.setActiveSidebarItem(container, this.renderer.currentGame);
+        if (this.renderer.currentGame)
+          this.setActiveSidebarItem(container, this.renderer.currentGame);
         else if (this.renderer.currentArchiveGame)
-          this.setActiveSidebarItem(container, this.renderer.currentArchiveGame.appId);
+          this.setActiveSidebarItem(
+            container,
+            this.renderer.currentArchiveGame.appId,
+          );
       }
     };
 
@@ -188,12 +242,14 @@ export class GameUI {
   }
 
   navigateSidebar(container, onLaunch, direction) {
-    const items = Array.from(container.querySelectorAll(".sidebar-game-list .sidebar-game-item")).filter(
-      (item) => item.offsetParent !== null
-    );
+    const items = Array.from(
+      container.querySelectorAll(".sidebar-game-list .sidebar-game-item"),
+    ).filter((item) => item.offsetParent !== null);
     if (items.length === 0) return;
 
-    const currentIndex = items.findIndex((item) => item.classList.contains("active"));
+    const currentIndex = items.findIndex((item) =>
+      item.classList.contains("active"),
+    );
     const nextIndex =
       currentIndex === -1
         ? direction > 0
@@ -212,13 +268,18 @@ export class GameUI {
     const libraryPage = container.querySelector(".steam-library-page");
     if (!libraryPage) return;
 
-    const cards = Array.from(libraryPage.querySelectorAll(".steam-game-card")).filter(
-      (card) => card.offsetParent !== null
-    );
+    const cards = Array.from(
+      libraryPage.querySelectorAll(".steam-game-card"),
+    ).filter((card) => card.offsetParent !== null);
     if (cards.length === 0) return;
 
-    const currentAppId = this.renderer.currentGame || this.renderer.currentArchiveGame?.appId || null;
-    const currentIndex = currentAppId ? cards.findIndex((card) => card.dataset.app === currentAppId) : -1;
+    const currentAppId =
+      this.renderer.currentGame ||
+      this.renderer.currentArchiveGame?.appId ||
+      null;
+    const currentIndex = currentAppId
+      ? cards.findIndex((card) => card.dataset.app === currentAppId)
+      : -1;
     const nextIndex =
       currentIndex === -1
         ? direction > 0
@@ -288,7 +349,7 @@ export class GameUI {
         ${Object.keys(collections)
           .map(
             (name) =>
-              `<div class="steam-context-item ctx-col-item" data-name="${name}"><i class="fas fa-folder" style="width:16px;margin-right:8px;opacity:0.6;"></i>${name}</div>`
+              `<div class="steam-context-item ctx-col-item" data-name="${name}"><i class="fas fa-folder" style="width:16px;margin-right:8px;opacity:0.6;"></i>${name}</div>`,
           )
           .join("")}
       </div>
@@ -353,7 +414,12 @@ export class GameUI {
       const title = game.title;
       const icon = game.icon || game.thumb;
       const fileName = `${title}.desktop`;
-      const fileContent = JSON.stringify({ app: "steamApp", steamGameId: appId, name: title, path: icon });
+      const fileContent = JSON.stringify({
+        app: "steamApp",
+        steamGameId: appId,
+        name: title,
+        path: icon,
+      });
 
       try {
         await os.fs.createFile(["Desktop"], fileName, fileContent, "text");
@@ -370,19 +436,28 @@ export class GameUI {
     menu.querySelector("#ctx-report").onclick = async () => {
       const game = this.renderer.getGames().find((g) => g.app === appId);
       const title = game ? game.title : appId;
-      const reason = await os.dialog.prompt("Prompt", `Report ${title} as broken? Please provide a reason:`);
+      const reason = await os.dialog.prompt(
+        "Prompt",
+        `Report ${title} as broken? Please provide a reason:`,
+      );
       if (reason === null) return;
 
       try {
-        const res = await fetch(`${SOCIAL_BASE}/api/report-broken`, {
+        const res = await analyticsFetch(`${SOCIAL_BASE}/api/report-broken`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ appId, title, reason })
+          body: JSON.stringify({ appId, title, reason }),
         });
         if (res.ok) {
-          os.dialog.alert("Alert", "Thank you! Your report has been sent to the developers.");
+          os.dialog.alert(
+            "Alert",
+            "Thank you! Your report has been sent to the developers.",
+          );
         } else {
-          os.dialog.alert("Alert", "Failed to send report. Please try again later.");
+          os.dialog.alert(
+            "Alert",
+            "Failed to send report. Please try again later.",
+          );
         }
       } catch (err) {
         os.dialog.alert("Alert", "An error occurred while sending the report.");
@@ -408,13 +483,23 @@ export class GameUI {
       const game = gameMap.get(appId);
       if (game) {
         steamAudio.playSelect();
-        this.renderer.gameRenderer.renderGameOverview(container, appId, onLaunch);
+        this.renderer.gameRenderer.renderGameOverview(
+          container,
+          appId,
+          onLaunch,
+        );
         return;
       }
-      const archiveGame = this.renderer.archiveGamesCache.find((g) => g.appId === appId);
+      const archiveGame = this.renderer.archiveGamesCache.find(
+        (g) => g.appId === appId,
+      );
       if (archiveGame) {
         steamAudio.playSelect();
-        this.renderer.gameRenderer.renderArchiveGameOverview(container, archiveGame, onLaunch);
+        this.renderer.gameRenderer.renderArchiveGameOverview(
+          container,
+          archiveGame,
+          onLaunch,
+        );
       }
     });
 
@@ -424,7 +509,8 @@ export class GameUI {
       const appId = card.dataset.app;
       const cardUrl = card.dataset.url || null;
       if (cardUrl) {
-        const title = card.querySelector(".steam-game-title")?.textContent || appId;
+        const title =
+          card.querySelector(".steam-game-title")?.textContent || appId;
         const gameId = cardUrl
           .split("?")[0]
           .replace(/\/index\.html$/, "")
@@ -436,7 +522,11 @@ export class GameUI {
           .replace(/[^a-z0-9]+/g, "");
         const analyticsBase = getAnalyticsBase(gameId);
         sendLaunchAnalytics(gameId);
-        await os.app.launchGame(gameId, false, { source: cardUrl, originalName: title, analyticsBase });
+        await os.app.launchGame(gameId, false, {
+          source: cardUrl,
+          originalName: title,
+          analyticsBase,
+        });
       } else {
         onLaunch(appId);
       }
@@ -461,8 +551,15 @@ export class GameUI {
         const game = gameMap.get(appId);
         const totalMin = Number(stats[appId]?.totalMin) || 0;
         const recentMin = SteamDataManager.getRecentMinutes(appId);
-        const icon = game?.icon || card.querySelector("img")?.src || card.querySelector("img")?.dataset.src || "";
-        const title = game?.title || card.querySelector(".steam-game-title")?.textContent || appId;
+        const icon =
+          game?.icon ||
+          card.querySelector("img")?.src ||
+          card.querySelector("img")?.dataset.src ||
+          "";
+        const title =
+          game?.title ||
+          card.querySelector(".steam-game-title")?.textContent ||
+          appId;
 
         popover.innerHTML = `
         <img class="popover-banner" src="${icon}" />
@@ -486,10 +583,12 @@ export class GameUI {
         popover.style.left = `${rect.right - containerRect.left + 10}px`;
         popover.style.top = `${rect.top - containerRect.top}px`;
         const popRect = popover.getBoundingClientRect();
-        if (popRect.right > window.innerWidth) popover.style.left = `${rect.left - popRect.width - 10}px`;
-        if (popRect.bottom > window.innerHeight) popover.style.top = `${window.innerHeight - popRect.height - 10}px`;
+        if (popRect.right > window.innerWidth)
+          popover.style.left = `${rect.left - popRect.width - 10}px`;
+        if (popRect.bottom > window.innerHeight)
+          popover.style.top = `${window.innerHeight - popRect.height - 10}px`;
       },
-      true
+      true,
     );
 
     mainContent.addEventListener(
@@ -498,7 +597,7 @@ export class GameUI {
         const card = e.target.closest?.(".steam-game-card");
         if (card) popover.style.display = "none";
       },
-      true
+      true,
     );
   }
 
@@ -522,7 +621,13 @@ export class GameUI {
       winRootn.appendChild(existingControls);
     }
 
-    container.innerHTML = buildSteamShell(container, username, profilePic, hiddenGames.length, getCdnBase());
+    container.innerHTML = buildSteamShell(
+      container,
+      username,
+      profilePic,
+      hiddenGames.length,
+      getCdnBase(),
+    );
 
     resolveAvatarUrl(profilePic, "static/icons/guest.webp").then((url) => {
       const headerImg = container.querySelector(".steam-user-profile img");
@@ -538,7 +643,9 @@ export class GameUI {
         slot.innerHTML = wm ? wm.getWindowControls() : "";
       }
 
-      const header = winRoot.querySelector(".window-header:not(.steam-top-bar)");
+      const header = winRoot.querySelector(
+        ".window-header:not(.steam-top-bar)",
+      );
       if (header) header.style.display = "none";
     }
 
@@ -552,18 +659,30 @@ export class GameUI {
       if (loader) {
         loader.style.transition = "opacity 200ms ease";
         loader.style.opacity = "0";
-        loader.addEventListener("transitionend", () => loader.classList.add("hidden"), { once: true });
+        loader.addEventListener(
+          "transitionend",
+          () => loader.classList.add("hidden"),
+          { once: true },
+        );
       }
     };
 
     if (isFirstOpen) {
       setTimeout(() => {
-        this.renderer.gameRenderer.renderGrid(container, onLaunch, focusCollection);
+        this.renderer.gameRenderer.renderGrid(
+          container,
+          onLaunch,
+          focusCollection,
+        );
         initSettingsPage(container);
         setTimeout(revealUI, 600);
       }, 50);
     } else {
-      this.renderer.gameRenderer.renderGrid(container, onLaunch, focusCollection);
+      this.renderer.gameRenderer.renderGrid(
+        container,
+        onLaunch,
+        focusCollection,
+      );
       initSettingsPage(container);
       revealUI();
     }
@@ -576,7 +695,7 @@ export class GameUI {
         if (sectionEl && mainContent) {
           mainContent.scrollTo({
             top: sectionEl.offsetTop - 20,
-            behavior: "smooth"
+            behavior: "smooth",
           });
         }
       }, 1500);
@@ -592,7 +711,9 @@ export class GameUI {
     const editPage = container.querySelector(".steam-edit-page");
     const loginPage = container.querySelector(".steam-login-page");
     const gamesPage = container.querySelector(".steam-games-page");
-    const achievementsPage = container.querySelector(".steam-achievements-page");
+    const achievementsPage = container.querySelector(
+      ".steam-achievements-page",
+    );
     const questsPage = container.querySelector(".steam-quests-page");
     const shopPage = container.querySelector(".steam-shop-page");
     const friendsPage = container.querySelector(".steam-friends-page");
@@ -619,7 +740,7 @@ export class GameUI {
         shopPage,
         friendsPage,
         downloadsPage,
-        settingsPage
+        settingsPage,
       ].forEach((p) => p && p.classList.add("hidden"));
       tabs.forEach((t) => t.classList.remove("active"));
       sidebar.classList.add("hidden");
@@ -629,17 +750,29 @@ export class GameUI {
         libraryPage.classList.remove("hidden");
         sidebar.classList.remove("hidden");
         observeLazyImages(sidebar);
-        container.querySelector(".steam-tab[data-page='library']").classList.add("active");
+        container
+          .querySelector(".steam-tab[data-page='library']")
+          .classList.add("active");
       } else if (page === "store") {
         storePage.classList.remove("hidden");
-        container.querySelector(".steam-tab[data-page='store']").classList.add("active");
+        container
+          .querySelector(".steam-tab[data-page='store']")
+          .classList.add("active");
         if (!storePage.storeInited) {
           storePage.storeInited = true;
-          initStorePage(container, onLaunch, navigateTo, getCdnBase(), this.renderer.imgObserver);
+          initStorePage(
+            container,
+            onLaunch,
+            navigateTo,
+            getCdnBase(),
+            this.renderer.imgObserver,
+          );
         }
       } else if (page === "community") {
         communityPage.classList.remove("hidden");
-        container.querySelector(".steam-tab[data-page='community']").classList.add("active");
+        container
+          .querySelector(".steam-tab[data-page='community']")
+          .classList.add("active");
         if (isSocialDisabled()) {
           renderSocialDisabledPage(communityPage);
         } else {
@@ -647,7 +780,9 @@ export class GameUI {
         }
       } else if (page === "user") {
         userPage.classList.remove("hidden");
-        container.querySelector(".steam-tab[data-page='user']").classList.add("active");
+        container
+          .querySelector(".steam-tab[data-page='user']")
+          .classList.add("active");
         if (isSocialDisabled()) {
           renderSocialDisabledPage(userPage);
         } else {
@@ -663,7 +798,7 @@ export class GameUI {
               navigateTo("achievements");
             },
             onShowQuests: () => navigateTo("quests"),
-            onShowStore: () => navigateTo("shop")
+            onShowStore: () => navigateTo("shop"),
           });
         }
       } else if (page === "profile") {
@@ -682,7 +817,7 @@ export class GameUI {
             onShowAchievements: (uid) => {
               this.renderer.profileUserId = uid;
               navigateTo("achievements");
-            }
+            },
           });
         }
       } else if (page === "games") {
@@ -693,7 +828,7 @@ export class GameUI {
           renderGamesPage(gamesPage, {
             userId: this.renderer.profileUserId,
             onLaunch,
-            onOpenGame: openGameOverview
+            onOpenGame: openGameOverview,
           });
         }
       } else if (page === "achievements") {
@@ -703,7 +838,7 @@ export class GameUI {
         } else {
           renderAchievementsPage(achievementsPage, {
             userId: this.renderer.profileUserId,
-            onLaunch
+            onLaunch,
           });
         }
       } else if (page === "downloads") {
@@ -723,7 +858,7 @@ export class GameUI {
           renderSocialDisabledPage(questsPage);
         } else {
           renderQuestsPage(questsPage, {
-            onShowLogin: () => navigateTo("login")
+            onShowLogin: () => navigateTo("login"),
           });
         }
       } else if (page === "shop") {
@@ -732,7 +867,7 @@ export class GameUI {
           renderSocialDisabledPage(shopPage);
         } else {
           renderStorePage(shopPage, {
-            onShowLogin: () => navigateTo("login")
+            onShowLogin: () => navigateTo("login"),
           });
         }
       } else if (page === "friends" || page === "friends-add") {
@@ -744,23 +879,29 @@ export class GameUI {
             view: page === "friends-add" ? "add" : "list",
             userId: getLiveUserId(),
             onNavigate: (next) => navigateTo(next),
-            onLaunch
+            onLaunch,
           });
         }
       }
       let addressUrl = "";
       if (page === "community") addressUrl = "yukisteam://community";
-      else if (page === "user") addressUrl = `yukisteam://profiles/${getLiveUserId() || "me"}`;
-      else if (page === "edit") addressUrl = `yukisteam://profiles/${getLiveUserId() || "me"}/edit`;
+      else if (page === "user")
+        addressUrl = `yukisteam://profiles/${getLiveUserId() || "me"}`;
+      else if (page === "edit")
+        addressUrl = `yukisteam://profiles/${getLiveUserId() || "me"}/edit`;
       else if (page === "login") addressUrl = "yukisteam://login";
-      else if (page === "profile") addressUrl = `yukisteam://profiles/${this.renderer.profileUserId || "unknown"}`;
-      else if (page === "games") addressUrl = `yukisteam://profiles/${this.renderer.profileUserId || "unknown"}/games`;
+      else if (page === "profile")
+        addressUrl = `yukisteam://profiles/${this.renderer.profileUserId || "unknown"}`;
+      else if (page === "games")
+        addressUrl = `yukisteam://profiles/${this.renderer.profileUserId || "unknown"}/games`;
       else if (page === "achievements")
         addressUrl = `yukisteam://profiles/${this.renderer.profileUserId || "unknown"}/achievements`;
       else if (page === "quests") addressUrl = "yukisteam://quests";
       else if (page === "shop") addressUrl = "yukisteam://shop";
-      else if (page === "friends") addressUrl = `yukisteam://profiles/${getLiveUserId() || "me"}/friends`;
-      else if (page === "friends-add") addressUrl = `yukisteam://profiles/${getLiveUserId() || "me"}/friends/add`;
+      else if (page === "friends")
+        addressUrl = `yukisteam://profiles/${getLiveUserId() || "me"}/friends`;
+      else if (page === "friends-add")
+        addressUrl = `yukisteam://profiles/${getLiveUserId() || "me"}/friends/add`;
       if (addressBar) {
         const addressText = addressBar.querySelector(".steam-address-text");
         if (addressUrl) {
@@ -774,7 +915,10 @@ export class GameUI {
 
     const navigateTo = (page) => {
       if (this.renderer.history[this.renderer.historyIndex] !== page) {
-        this.renderer.history = this.renderer.history.slice(0, this.renderer.historyIndex + 1);
+        this.renderer.history = this.renderer.history.slice(
+          0,
+          this.renderer.historyIndex + 1,
+        );
         this.renderer.history.push(page);
         this.renderer.historyIndex++;
         os.storage.set(StorageKeys.steamLastPage, page);
@@ -799,22 +943,37 @@ export class GameUI {
         }
       });
       container.addEventListener("click", (e) => {
-        const profileRow = e.target.closest(".steam-overview-friend[data-profile-user-id]");
+        const profileRow = e.target.closest(
+          ".steam-overview-friend[data-profile-user-id]",
+        );
         if (!profileRow) return;
         container.dispatchEvent(
-          new CustomEvent("steam-navigate", { detail: { page: "profile", userId: profileRow.dataset.profileUserId } })
+          new CustomEvent("steam-navigate", {
+            detail: {
+              page: "profile",
+              userId: profileRow.dataset.profileUserId,
+            },
+          }),
         );
       });
-      const reloadBtn = addressBar && addressBar.querySelector(".steam-address-reload");
+      const reloadBtn =
+        addressBar && addressBar.querySelector(".steam-address-reload");
       if (reloadBtn) {
         reloadBtn.addEventListener("click", async () => {
-          const socialPages = ["community", "user", "profile", "games", "achievements"];
+          const socialPages = [
+            "community",
+            "user",
+            "profile",
+            "games",
+            "achievements",
+          ];
           if (!currentPage || !socialPages.includes(currentPage)) return;
           updatePageUI(currentPage);
           reloadBtn.classList.add("is-refreshing");
           try {
             await fetchDiscover({ refresh: true });
-            if (currentPage && socialPages.includes(currentPage)) updatePageUI(currentPage);
+            if (currentPage && socialPages.includes(currentPage))
+              updatePageUI(currentPage);
           } finally {
             reloadBtn.classList.remove("is-refreshing");
           }
@@ -843,7 +1002,7 @@ export class GameUI {
               navigateTo("achievements");
             },
             onShowQuests: () => navigateTo("quests"),
-            onShowStore: () => navigateTo("shop")
+            onShowStore: () => navigateTo("shop"),
           });
         }
       };
@@ -870,7 +1029,7 @@ export class GameUI {
               navigateTo("achievements");
             },
             onShowQuests: () => navigateTo("quests"),
-            onShowStore: () => navigateTo("shop")
+            onShowStore: () => navigateTo("shop"),
           });
         }
         if (profileEl && !profileEl.classList.contains("hidden")) {
@@ -885,12 +1044,14 @@ export class GameUI {
             onShowAchievements: (uid) => {
               this.renderer.profileUserId = uid;
               navigateTo("achievements");
-            }
+            },
           });
         }
         const questsEl = container.querySelector(".steam-quests-page");
         if (questsEl && !questsEl.classList.contains("hidden")) {
-          renderQuestsPage(questsEl, { onShowLogin: () => navigateTo("login") });
+          renderQuestsPage(questsEl, {
+            onShowLogin: () => navigateTo("login"),
+          });
         }
         const shopEl = container.querySelector(".steam-shop-page");
         if (shopEl && !shopEl.classList.contains("hidden")) {
@@ -924,7 +1085,13 @@ export class GameUI {
           const sp = container.querySelector(".steam-store-page");
           if (sp && !sp.storeInited) {
             sp.storeInited = true;
-            initStorePage(container, onLaunch, navigateTo, getCdnBase(), this.renderer.imgObserver);
+            initStorePage(
+              container,
+              onLaunch,
+              navigateTo,
+              getCdnBase(),
+              this.renderer.imgObserver,
+            );
           }
         }
       });
@@ -937,12 +1104,14 @@ export class GameUI {
       }
     });
 
-    container.querySelector(".steam-forward-btn").addEventListener("click", () => {
-      if (this.renderer.historyIndex < this.renderer.history.length - 1) {
-        this.renderer.historyIndex++;
-        updatePageUI(this.renderer.history[this.renderer.historyIndex]);
-      }
-    });
+    container
+      .querySelector(".steam-forward-btn")
+      .addEventListener("click", () => {
+        if (this.renderer.historyIndex < this.renderer.history.length - 1) {
+          this.renderer.historyIndex++;
+          updatePageUI(this.renderer.history[this.renderer.historyIndex]);
+        }
+      });
 
     mainContent.addEventListener("scroll", () => {
       if (mainContent.scrollTop > 300) scrollTop.classList.add("visible");
@@ -968,8 +1137,12 @@ export class GameUI {
         return;
       }
 
-      const matchedGames = visibleGames.filter((g) => g.title.toLowerCase().includes(query));
-      const archiveMatches = this.renderer.archiveGamesCache.filter((g) => g.title.toLowerCase().includes(query));
+      const matchedGames = visibleGames.filter((g) =>
+        g.title.toLowerCase().includes(query),
+      );
+      const archiveMatches = this.renderer.archiveGamesCache.filter((g) =>
+        g.title.toLowerCase().includes(query),
+      );
 
       sidebarList.innerHTML = "";
       [...matchedGames, ...archiveMatches].forEach((g) => {
@@ -986,9 +1159,17 @@ export class GameUI {
         item.addEventListener("click", () => {
           steamAudio.playSelect();
           if (isArchive) {
-            this.renderer.gameRenderer.renderArchiveGameOverview(container, g, onLaunch);
+            this.renderer.gameRenderer.renderArchiveGameOverview(
+              container,
+              g,
+              onLaunch,
+            );
           } else {
-            this.renderer.gameRenderer.renderGameOverview(container, appId, onLaunch);
+            this.renderer.gameRenderer.renderGameOverview(
+              container,
+              appId,
+              onLaunch,
+            );
           }
         });
         item.addEventListener("mouseenter", () => {
@@ -1000,7 +1181,9 @@ export class GameUI {
 
       const gridCards = container.querySelectorAll(".steam-game-card");
       gridCards.forEach((card) => {
-        const title = card.querySelector(".steam-game-title").textContent.toLowerCase();
+        const title = card
+          .querySelector(".steam-game-title")
+          .textContent.toLowerCase();
         card.style.display = title.includes(query) ? "" : "none";
       });
     });
@@ -1032,11 +1215,15 @@ export class GameUI {
 
     this.initSidebarDrag(container);
 
-    container.querySelector(".steam-downloads-btn").addEventListener("click", () => navigateTo("downloads"));
-    container.querySelector(".steam-friends-btn").addEventListener("click", (e) => {
-      e.stopPropagation();
-      this.openFriendsWindow(wm);
-    });
+    container
+      .querySelector(".steam-downloads-btn")
+      .addEventListener("click", () => navigateTo("downloads"));
+    container
+      .querySelector(".steam-friends-btn")
+      .addEventListener("click", (e) => {
+        e.stopPropagation();
+        this.openFriendsWindow(wm);
+      });
 
     if (!this.renderer.ctrlFBound) {
       this.renderer.ctrlFBound = true;
@@ -1059,17 +1246,21 @@ export class GameUI {
           input.focus();
           input.select?.();
         },
-        true
+        true,
       );
     }
     window.addEventListener(
       "beforeinput",
       (e) => {
-        if (e.inputType === "insertText" && e.data === "f" && (e.ctrlKey || e.metaKey)) {
+        if (
+          e.inputType === "insertText" &&
+          e.data === "f" &&
+          (e.ctrlKey || e.metaKey)
+        ) {
           e.preventDefault();
         }
       },
-      true
+      true,
     );
 
     if (!this.renderer.arrowNavBound) {
@@ -1083,7 +1274,12 @@ export class GameUI {
           if (root.offsetParent === null) return;
 
           const active = document.activeElement;
-          if (active && (active.tagName === "INPUT" || active.tagName === "TEXTAREA" || active.isContentEditable)) {
+          if (
+            active &&
+            (active.tagName === "INPUT" ||
+              active.tagName === "TEXTAREA" ||
+              active.isContentEditable)
+          ) {
             return;
           }
 
@@ -1092,13 +1288,21 @@ export class GameUI {
 
           if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
             e.preventDefault();
-            this.navigateGamesList(root, onLaunch, e.key === "ArrowRight" ? 1 : -1);
+            this.navigateGamesList(
+              root,
+              onLaunch,
+              e.key === "ArrowRight" ? 1 : -1,
+            );
           } else if (e.key === "ArrowUp" || e.key === "ArrowDown") {
             e.preventDefault();
-            this.navigateSidebar(root, onLaunch, e.key === "ArrowDown" ? 1 : -1);
+            this.navigateSidebar(
+              root,
+              onLaunch,
+              e.key === "ArrowDown" ? 1 : -1,
+            );
           }
         },
-        true
+        true,
       );
     }
 
@@ -1113,7 +1317,13 @@ export class GameUI {
       if (lastPage === "store") {
         const sp = container.querySelector(".steam-store-page");
         if (sp) sp.storeInited = true;
-        initStorePage(container, onLaunch, navigateTo, getCdnBase(), this.renderer.imgObserver);
+        initStorePage(
+          container,
+          onLaunch,
+          navigateTo,
+          getCdnBase(),
+          this.renderer.imgObserver,
+        );
       } else {
         this.renderer.gameRenderer.renderGrid(container, onLaunch);
       }
@@ -1121,15 +1331,25 @@ export class GameUI {
       const sp = container.querySelector(".steam-store-page");
       if (sp) sp.storeInited = true;
       updatePageUI("store");
-      initStorePage(container, onLaunch, navigateTo, getCdnBase(), this.renderer.imgObserver);
+      initStorePage(
+        container,
+        onLaunch,
+        navigateTo,
+        getCdnBase(),
+        this.renderer.imgObserver,
+      );
     }
   }
 
   async openFriendsWindow(wm) {
     if (isSocialDisabled()) {
-      os.notify.send("Social features are disabled", "Enable them in Yuki Steam Settings to use Friends & Chat.", {
-        type: "info"
-      });
+      os.notify.send(
+        "Social features are disabled",
+        "Enable them in Yuki Steam Settings to use Friends & Chat.",
+        {
+          type: "info",
+        },
+      );
       return;
     }
     if (!wm) return;
@@ -1145,10 +1365,18 @@ export class GameUI {
     const username = user.name;
     const profilePic = user.avatar;
 
-    const resolvedProfilePic = await resolveAvatarUrl(profilePic, "static/icons/guest.webp");
+    const resolvedProfilePic = await resolveAvatarUrl(
+      profilePic,
+      "static/icons/guest.webp",
+    );
 
     const presence = getPresence();
-    const statusText = presence === "invisible" ? "Invisible" : presence === "offline" ? "Offline" : "Online";
+    const statusText =
+      presence === "invisible"
+        ? "Invisible"
+        : presence === "offline"
+          ? "Offline"
+          : "Online";
     const statusCls =
       presence === "invisible"
         ? "friends-status-text--invisible"
@@ -1156,7 +1384,9 @@ export class GameUI {
           ? "friends-status-text--offline"
           : "friends-status-text--online";
 
-    const bannerDismissed = !!os.storage.get(StorageKeys.steamFriendsBannerDismissed);
+    const bannerDismissed = !!os.storage.get(
+      StorageKeys.steamFriendsBannerDismissed,
+    );
 
     const content = `
       <div class="window-content steam-friends-window" style="display:flex; flex-direction:column; height:100%; color:var(--text-primary);">
@@ -1198,15 +1428,19 @@ export class GameUI {
       style: { background: "var(--bg-secondary)" },
       icon: "fas fa-user-friends",
       skipHeader: true,
-      skipAutoSetup: true
+      skipAutoSetup: true,
     });
 
-    const headerHtml = '<div class="window-header steam-popup-header">' + wm.utils.getWindowControls() + "</div>";
+    const headerHtml =
+      '<div class="window-header steam-popup-header">' +
+      wm.utils.getWindowControls() +
+      "</div>";
     win.insertAdjacentHTML("afterbegin", headerHtml);
 
     const contentDiv = createElement("div");
     contentDiv.className = "window-content";
-    contentDiv.style.cssText = "width:100%; height:100%; overflow:hidden; position:relative;";
+    contentDiv.style.cssText =
+      "width:100%; height:100%; overflow:hidden; position:relative;";
     contentDiv.innerHTML = content;
     win.appendChild(contentDiv);
 
@@ -1227,7 +1461,9 @@ export class GameUI {
         const container = $("#games-app-container");
         if (container) {
           container.dispatchEvent(
-            new CustomEvent("steam-navigate", { detail: { page: "friends-add", userId: getLiveUserId() } })
+            new CustomEvent("steam-navigate", {
+              detail: { page: "friends-add", userId: getLiveUserId() },
+            }),
           );
         }
         const steamWin = $("#games-app-win");
@@ -1244,7 +1480,8 @@ export class GameUI {
           const reloadRequests = () =>
             renderRequestsPanel(panel, {
               onChange: reloadRequests,
-              onOpenContextMenu: (event, request) => this.showFriendContextMenu(event, request)
+              onOpenContextMenu: (event, request) =>
+                this.showFriendContextMenu(event, request),
             }).catch(() => {});
           reloadRequests();
         }
@@ -1281,7 +1518,10 @@ export class GameUI {
       bindEvent(searchInput, "input", () => {
         clearTimeout(searchDebounce);
         const query = searchInput.value;
-        searchDebounce = setTimeout(() => this.loadFriendsPanel(win, query), 250);
+        searchDebounce = setTimeout(
+          () => this.loadFriendsPanel(win, query),
+          250,
+        );
       });
     }
     const pickerBtn = win.querySelector(".steam-status-picker-btn--presence");
@@ -1295,7 +1535,12 @@ export class GameUI {
     const onPresenceChanged = () => {
       if (!statusTextEl || !statusTextEl.isConnected) return;
       const current = getPresence();
-      statusTextEl.textContent = current === "invisible" ? "Invisible" : current === "offline" ? "Offline" : "Online";
+      statusTextEl.textContent =
+        current === "invisible"
+          ? "Invisible"
+          : current === "offline"
+            ? "Offline"
+            : "Online";
       statusTextEl.className = `friends-status-text ${
         current === "invisible"
           ? "friends-status-text--invisible"
@@ -1310,7 +1555,11 @@ export class GameUI {
       const queryInput = win.querySelector("[data-friends-search-input]");
       const searchWrap = win.querySelector("[data-friends-search]");
       const query =
-        searchWrap && searchWrap.classList.contains("steam-friends-search--open") && queryInput ? queryInput.value : "";
+        searchWrap &&
+        searchWrap.classList.contains("steam-friends-search--open") &&
+        queryInput
+          ? queryInput.value
+          : "";
       await this.loadFriendsPanel(win, query);
     };
     this.friendsPollTimer = setInterval(refreshFriends, 8000);
@@ -1338,11 +1587,12 @@ export class GameUI {
           this.openDmWindow(this.wm, {
             friendId: friend.userId,
             username: friend.username,
-            presence: friend.presence
+            presence: friend.presence,
           });
         }
       },
-      onOpenContextMenu: (event, friend) => this.showFriendContextMenu(event, friend)
+      onOpenContextMenu: (event, friend) =>
+        this.showFriendContextMenu(event, friend),
     });
     this.updateFriendRequestsBadge(win);
   }
@@ -1350,16 +1600,31 @@ export class GameUI {
   showFriendContextMenu(event, friend) {
     const isFavorite = isFriendFavorite(friend.userId);
     const items = [
-      { id: "friend-chat", label: "Send Message", icon: "fa-comment-dots", action: "chat" },
-      { id: "friend-profile", label: "View Profile", icon: "fa-id-badge", action: "profile" },
+      {
+        id: "friend-chat",
+        label: "Send Message",
+        icon: "fa-comment-dots",
+        action: "chat",
+      },
+      {
+        id: "friend-profile",
+        label: "View Profile",
+        icon: "fa-id-badge",
+        action: "profile",
+      },
       {
         id: "friend-favorite",
         label: isFavorite ? "Remove from Favorites" : "Add to Favorites",
         icon: "fa-star",
-        action: "favorite"
+        action: "favorite",
       },
       "hr",
-      { id: "friend-remove", label: "Remove Friend", icon: "fa-user-slash", action: "remove" }
+      {
+        id: "friend-remove",
+        label: "Remove Friend",
+        icon: "fa-user-slash",
+        action: "remove",
+      },
     ];
     const handlers = {
       chat: () => {
@@ -1367,11 +1632,14 @@ export class GameUI {
         this.openDmWindow(this.wm, {
           friendId: friend.userId,
           username: friend.username,
-          presence: friend.presence
+          presence: friend.presence,
         });
       },
       profile: () => {
-        os.app.launch("steamApp", { steamPage: "profile", steamUserId: friend.userId });
+        os.app.launch("steamApp", {
+          steamPage: "profile",
+          steamUserId: friend.userId,
+        });
       },
       favorite: () => {
         toggleFriendFavorite(friend.userId);
@@ -1383,7 +1651,7 @@ export class GameUI {
       remove: async () => {
         const confirmed = await os.dialog.confirm(
           "Remove Friend",
-          `Remove ${friend.username || "this friend"} from your friends list?`
+          `Remove ${friend.username || "this friend"} from your friends list?`,
         );
         if (!confirmed) return;
         const res = await removeFriend(friend.userId);
@@ -1391,7 +1659,7 @@ export class GameUI {
           const win = $("#steam-friends-win");
           this.loadFriendsPanel(win);
         }
-      }
+      },
     };
     showContextMenu(event, items, handlers);
   }
@@ -1419,7 +1687,7 @@ export class GameUI {
           <input type="text" class="dm-input" data-dm-input placeholder="Message" maxlength="1000" />
           <button type="button" class="steam-friend-btn steam-friend-btn--accept dm-send"><i class="fas fa-paper-plane"></i></button>
         </div>
-      `
+      `,
     });
 
     const win = os.window.create(winId, title, "320px", "420px", {
@@ -1427,7 +1695,7 @@ export class GameUI {
       style: { background: "var(--bg-secondary)" },
       icon: "fas fa-comment-dots",
       skipHeader: true,
-      skipAutoSetup: true
+      skipAutoSetup: true,
     });
     win.appendChild(host);
     this.dmPollTimers = this.dmPollTimers || {};
@@ -1439,7 +1707,10 @@ export class GameUI {
     });
 
     wm.mountWindow(win, winId, title, "fas fa-comment-dots");
-    const headerHtml = '<div class="window-header steam-popup-header">' + wm.utils.getWindowControls() + "</div>";
+    const headerHtml =
+      '<div class="window-header steam-popup-header">' +
+      wm.utils.getWindowControls() +
+      "</div>";
     win.insertAdjacentHTML("afterbegin", headerHtml);
     wm.bringToFront(win);
     windowMakeDraggable(win, wm);
@@ -1454,7 +1725,8 @@ export class GameUI {
     if (nameEl) nameEl.textContent = conversation.username || "Friend";
     const statusEl = win.querySelector(".dm-header-status");
     if (statusEl) {
-      statusEl.textContent = conversation.presence === "online" ? "Online" : "Offline";
+      statusEl.textContent =
+        conversation.presence === "online" ? "Online" : "Offline";
     }
 
     const poll = async () => {
@@ -1471,11 +1743,14 @@ export class GameUI {
         const isMe = message.fromId === myUserId;
         const bubble = createElement("div", {
           className: `dm-bubble ${isMe ? "dm-bubble--me" : ""}`,
-          text: message.body
+          text: message.body,
         });
         const time = createElement("div", {
           className: "dm-bubble-time",
-          text: new Date(message.sentAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+          text: new Date(message.sentAt).toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
         });
         bubble.appendChild(time);
         messagesEl.appendChild(bubble);

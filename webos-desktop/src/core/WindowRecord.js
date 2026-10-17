@@ -38,7 +38,7 @@ export class WindowRecord {
       x: this.x,
       y: this.y,
       width: this.width,
-      height: this.height
+      height: this.height,
     };
   }
 
@@ -77,7 +77,7 @@ export class WindowRecord {
       tiled: this.tiled,
       floating: this.floating,
       tileNodeId: this.tileNodeId,
-      tileGeometry: this.tileGeometry
+      tileGeometry: this.tileGeometry,
     };
   }
 }

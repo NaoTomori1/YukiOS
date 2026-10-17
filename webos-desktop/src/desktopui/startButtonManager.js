@@ -19,8 +19,15 @@ export function getStoredStartIcon() {
 }
 
 function resolveImageUrl(value) {
-  if (value.startsWith("data:") || value.startsWith("blob:") || value.startsWith("http://") || value.startsWith("https://")) return value;
-  if (value.startsWith("static/") || value.startsWith("/static/")) return resolveIconUrl(value);
+  if (
+    value.startsWith("data:") ||
+    value.startsWith("blob:") ||
+    value.startsWith("http://") ||
+    value.startsWith("https://")
+  )
+    return value;
+  if (value.startsWith("static/") || value.startsWith("/static/"))
+    return resolveIconUrl(value);
   if (!value.includes("/")) return resolveIconUrl(`static/icons/${value}`);
   return value;
 }
@@ -30,14 +37,20 @@ export function applyStartButtonIcon() {
   const btn = $("#start-button");
   const fallbackUrl = getFallbackUrl();
   if (!stored) {
-    document.documentElement.style.setProperty("--start-logo-url", `url("${fallbackUrl}")`);
+    document.documentElement.style.setProperty(
+      "--start-logo-url",
+      `url("${fallbackUrl}")`,
+    );
     if (btn) {
       btn.innerHTML = "";
     }
     return;
   }
   const url = resolveImageUrl(stored);
-  document.documentElement.style.setProperty("--start-logo-url", `url("${url}")`);
+  document.documentElement.style.setProperty(
+    "--start-logo-url",
+    `url("${url}")`,
+  );
   if (btn) {
     btn.innerHTML = "";
   }
@@ -83,15 +96,25 @@ function triggerFilePicker() {
 export function showStartButtonContextMenu(e) {
   e.preventDefault();
   showDynamicContextMenu(e, (menu, item, hr) => {
-    menu.appendChild(item("Change Start Icon", () => showStartButtonPicker(), "fa-palette"));
+    menu.appendChild(
+      item("Change Start Icon", () => showStartButtonPicker(), "fa-palette"),
+    );
     if (getStoredStartIcon()) {
-      menu.appendChild(item("Reset to Default", () => {
-        resetStartButtonIcon();
-        os.notify.send("Start button reset to default");
-      }, "fa-undo"));
+      menu.appendChild(
+        item(
+          "Reset to Default",
+          () => {
+            resetStartButtonIcon();
+            os.notify.send("Start button reset to default");
+          },
+          "fa-undo",
+        ),
+      );
     }
     menu.appendChild(hr());
-    menu.appendChild(item("Upload Custom Icon", () => triggerFilePicker(), "fa-upload"));
+    menu.appendChild(
+      item("Upload Custom Icon", () => triggerFilePicker(), "fa-upload"),
+    );
   });
 }
 
@@ -108,6 +131,6 @@ export function showStartButtonPicker() {
         setStartButtonIcon(value);
         os.notify.send("Start button updated");
       }
-    }
+    },
   });
 }

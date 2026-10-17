@@ -17,9 +17,18 @@ export async function isAppOnDesktop(appId) {
 
 export async function addAppToDesktop(appId, appData) {
   const title = (appData && (appData.title || appData.displayName)) || appId;
-  const fileContent = JSON.stringify({ app: appId, name: title, path: appData?.icon || "" });
+  const fileContent = JSON.stringify({
+    app: appId,
+    name: title,
+    path: appData?.icon || "",
+  });
   await os.fs.mkdir(["Desktop"]);
-  const fileName = await os.fs.createFile(["Desktop"], `${title}.desktop`, fileContent, "text");
+  const fileName = await os.fs.createFile(
+    ["Desktop"],
+    `${title}.desktop`,
+    fileContent,
+    "text",
+  );
   try {
     await os.desktopUI?.iconManager?.createDesktopFileIcon(fileName);
   } catch (e) {}

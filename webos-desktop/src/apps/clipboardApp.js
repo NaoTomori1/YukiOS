@@ -1,4 +1,10 @@
-import { $, createElement, setStyle, setText, setHTML } from "../shared/domUtils.js";
+import {
+  $,
+  createElement,
+  setStyle,
+  setText,
+  setHTML,
+} from "../shared/domUtils.js";
 import { BaseApp, StorageKeys, os, MODES } from "../framework.js";
 import { isTaskbarTop } from "../utils/utils.js";
 import { getTrayPosition } from "../tray/tray.js";
@@ -9,8 +15,10 @@ class ClipboardManagerApp extends BaseApp {
     this.clipboardManager = os.clipboardManager;
     this.winId = "clipboard-manager-window";
     this.popupId = "clipboard-tray-popup";
-    this.enabled = os.storage.get(StorageKeys.clipboardManagerEnabled) !== "false";
-    this.saveHistoryAcrossSessions = os.storage.get(StorageKeys.clipboardSaveHistory) !== "false";
+    this.enabled =
+      os.storage.get(StorageKeys.clipboardManagerEnabled) !== "false";
+    this.saveHistoryAcrossSessions =
+      os.storage.get(StorageKeys.clipboardSaveHistory) !== "false";
     this.historySize = os.storage.get(StorageKeys.clipboardHistorySize) || 50;
     this.popupVisible = false;
     this.pinned = false;
@@ -24,7 +32,8 @@ class ClipboardManagerApp extends BaseApp {
 
   updateTrayVisibility() {
     if (!this.enabled || os.modes.isActive(MODES.MAC)) return;
-    const trayAppVisibility = os.storage.get(StorageKeys.trayAppVisibility) || {};
+    const trayAppVisibility =
+      os.storage.get(StorageKeys.trayAppVisibility) || {};
     const hasItems = this.clipboardManager.getHistory().length > 0;
     trayAppVisibility[this.winId] = hasItems;
     os.storage.set(StorageKeys.trayAppVisibility, trayAppVisibility);
@@ -32,7 +41,8 @@ class ClipboardManagerApp extends BaseApp {
   }
 
   shouldSuppressNotification() {
-    const position = os.storage.get(StorageKeys.notificationsPosition) || "bottom-right";
+    const position =
+      os.storage.get(StorageKeys.notificationsPosition) || "bottom-right";
     return position === "bottom-right";
   }
 
@@ -44,7 +54,7 @@ class ClipboardManagerApp extends BaseApp {
         showInTray: true,
         onClick: () => {
           this.togglePopup();
-        }
+        },
       });
     }
   }
@@ -55,8 +65,14 @@ class ClipboardManagerApp extends BaseApp {
   }
 
   saveSettings() {
-    os.storage.set(StorageKeys.clipboardSaveHistory, this.saveHistoryAcrossSessions.toString());
-    os.storage.set(StorageKeys.clipboardHistorySize, this.historySize.toString());
+    os.storage.set(
+      StorageKeys.clipboardSaveHistory,
+      this.saveHistoryAcrossSessions.toString(),
+    );
+    os.storage.set(
+      StorageKeys.clipboardHistorySize,
+      this.historySize.toString(),
+    );
   }
 
   togglePopup() {
@@ -142,7 +158,7 @@ class ClipboardManagerApp extends BaseApp {
         () => {
           popup.remove();
         },
-        { once: true }
+        { once: true },
       );
     }
     this.popupVisible = false;
@@ -158,7 +174,11 @@ class ClipboardManagerApp extends BaseApp {
     }
     const popup = $("#" + this.popupId);
     const trayEl = $("#app-tray");
-    if (popup && !e.target.closest("#clipboard-tray-popup") && !e.target.closest("#app-tray")) {
+    if (
+      popup &&
+      !e.target.closest("#clipboard-tray-popup") &&
+      !e.target.closest("#app-tray")
+    ) {
       this.closePopup();
     }
   };
@@ -172,7 +192,8 @@ class ClipboardManagerApp extends BaseApp {
     if (!container) return;
 
     if (history.length === 0) {
-      container.innerHTML = '<div class="clipboard-empty">No clipboard history</div>';
+      container.innerHTML =
+        '<div class="clipboard-empty">No clipboard history</div>';
       return;
     }
 
@@ -227,7 +248,7 @@ class ClipboardManagerApp extends BaseApp {
             background: "var(--brand-dim)",
             borderColor: "var(--brand)",
             boxShadow: "0 0 30px var(--brand-glow)",
-            transition: "all 0.3s ease"
+            transition: "all 0.3s ease",
           });
 
           const copiedIndicator = createElement("div");
@@ -247,14 +268,17 @@ class ClipboardManagerApp extends BaseApp {
             pointerEvents: "none",
             zIndex: "10000",
             boxShadow: "0 4px 12px var(--brand-glow)",
-            transition: "opacity 0.3s ease"
+            transition: "opacity 0.3s ease",
           });
           document.body.appendChild(copiedIndicator);
 
           try {
             await navigator.clipboard.writeText(String(item.data));
           } catch (e) {
-            console.error("[ClipboardApp] Failed to copy to browser clipboard:", e);
+            console.error(
+              "[ClipboardApp] Failed to copy to browser clipboard:",
+              e,
+            );
             copiedIndicator.textContent = "Failed";
             setStyle(copiedIndicator, { background: "var(--error)" });
           }
@@ -267,7 +291,7 @@ class ClipboardManagerApp extends BaseApp {
             setStyle(el, {
               background: originalBackground,
               borderColor: originalBorder,
-              boxShadow: originalBoxShadow
+              boxShadow: originalBoxShadow,
             });
             copiedIndicator.remove();
             this.isCopyingFromHistory = false;
@@ -287,12 +311,16 @@ class ClipboardManagerApp extends BaseApp {
             "Edit Clipboard Contents",
             "Edit clipboard contents:",
             String(item.data),
-            "Save"
+            "Save",
           );
           this.dialogOpen = false;
           if (newData !== null && newData !== item.data) {
             this.clipboardManager.updateItem(index, newData);
-            this.renderHistory(currentPopup, this.clipboardManager.getHistory(), this.clipboardManager.get());
+            this.renderHistory(
+              currentPopup,
+              this.clipboardManager.getHistory(),
+              this.clipboardManager.get(),
+            );
           }
         }
       });
@@ -303,7 +331,11 @@ class ClipboardManagerApp extends BaseApp {
         e.stopPropagation();
         const index = parseInt(btn.dataset.index);
         this.clipboardManager.removeFromHistory(index);
-        this.renderHistory(currentPopup, this.clipboardManager.getHistory(), this.clipboardManager.get());
+        this.renderHistory(
+          currentPopup,
+          this.clipboardManager.getHistory(),
+          this.clipboardManager.get(),
+        );
       });
     });
 
@@ -314,7 +346,11 @@ class ClipboardManagerApp extends BaseApp {
         const item = history[index];
         if (item) {
           this.clipboardManager.toggleStar(item.id);
-          this.renderHistory(currentPopup, this.clipboardManager.getHistory(), this.clipboardManager.get());
+          this.renderHistory(
+            currentPopup,
+            this.clipboardManager.getHistory(),
+            this.clipboardManager.get(),
+          );
         }
       });
     });
@@ -322,7 +358,9 @@ class ClipboardManagerApp extends BaseApp {
 
   getPreview(item) {
     if (item.type === "text") {
-      return item.data.length > 100 ? item.data.substring(0, 100) + "..." : item.data;
+      return item.data.length > 100
+        ? item.data.substring(0, 100) + "..."
+        : item.data;
     } else if (item.type === "json") {
       try {
         const str = JSON.stringify(item.data);
@@ -358,7 +396,11 @@ class ClipboardManagerApp extends BaseApp {
     if (clearBtn) {
       clearBtn.addEventListener("click", () => {
         this.clipboardManager.clear();
-        this.renderHistory(popup, this.clipboardManager.getHistory(), this.clipboardManager.get());
+        this.renderHistory(
+          popup,
+          this.clipboardManager.getHistory(),
+          this.clipboardManager.get(),
+        );
       });
     }
 
@@ -384,7 +426,7 @@ class ClipboardManagerApp extends BaseApp {
               : "History will not be saved across sessions",
             "info",
             2000,
-            "fa-save"
+            "fa-save",
           );
         }
       });
@@ -403,7 +445,7 @@ class ClipboardManagerApp extends BaseApp {
               `History size set to ${this.historySize} items`,
               "info",
               2000,
-              "fa-list-ol"
+              "fa-list-ol",
             );
           }
         } else {
@@ -414,7 +456,7 @@ class ClipboardManagerApp extends BaseApp {
               "History size must be between 5 and 100",
               "error",
               2000,
-              "fa-exclamation-triangle"
+              "fa-exclamation-triangle",
             );
           }
         }
@@ -425,7 +467,11 @@ class ClipboardManagerApp extends BaseApp {
       if (this.isCopyingFromHistory) return;
       const currentPopup = $("#" + this.popupId);
       if (currentPopup) {
-        this.renderHistory(currentPopup, this.clipboardManager.getHistory(), this.clipboardManager.get());
+        this.renderHistory(
+          currentPopup,
+          this.clipboardManager.getHistory(),
+          this.clipboardManager.get(),
+        );
       }
     });
   }

@@ -43,7 +43,11 @@ html.steamdeck-mode,
   user-select: none;
   overflow: hidden;
   background:
-    radial-gradient(120% 90% at 50% 0%, rgba(42, 71, 94, 0.55) 0%, transparent 55%),
+    radial-gradient(
+      120% 90% at 50% 0%,
+      rgba(42, 71, 94, 0.55) 0%,
+      transparent 55%
+    ),
     linear-gradient(180deg, #151921 0%, #16243a 100%);
 }
 
@@ -414,7 +418,11 @@ html.steamdeck-mode,
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(to bottom, rgba(6, 10, 13, 0.55), rgba(6, 10, 13, 0.88));
+  background: linear-gradient(
+    to bottom,
+    rgba(6, 10, 13, 0.55),
+    rgba(6, 10, 13, 0.88)
+  );
 }
 
 .deck-bg-layer {
@@ -2804,7 +2812,12 @@ body:has(#steamdeck-qta.open) #context-menu {
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(90deg, rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0.15) 60%, rgba(0, 0, 0, 0.3));
+  background: linear-gradient(
+    90deg,
+    rgba(0, 0, 0, 0.55),
+    rgba(0, 0, 0, 0.15) 60%,
+    rgba(0, 0, 0, 0.3)
+  );
 }
 
 .deck-overview-banner-bg img {
@@ -4297,7 +4310,11 @@ html.steamdeck-mode #audio-mixer-panel.closing {
   border-radius: 20px;
   padding: 30px 34px;
   overflow: hidden;
-  background: linear-gradient(160deg, rgba(27, 40, 56, 0.98) 0%, rgba(12, 17, 23, 0.98) 100%);
+  background: linear-gradient(
+    160deg,
+    rgba(27, 40, 56, 0.98) 0%,
+    rgba(12, 17, 23, 0.98) 100%
+  );
   border: 1px solid var(--glass-border);
   box-shadow:
     0 24px 64px rgba(0, 0, 0, 0.65),
@@ -4322,7 +4339,11 @@ html.steamdeck-mode #audio-mixer-panel.closing {
   position: absolute;
   inset: 0;
   border-radius: 50%;
-  background: radial-gradient(circle at 50% 50%, color-mix(in srgb, var(--brand) 42%, transparent) 0%, transparent 70%);
+  background: radial-gradient(
+    circle at 50% 50%,
+    color-mix(in srgb, var(--brand) 42%, transparent) 0%,
+    transparent 70%
+  );
   filter: blur(6px);
   animation: deckLaunchGlow 1.8s ease-in-out infinite;
 }
@@ -4396,7 +4417,11 @@ html.steamdeck-mode #audio-mixer-panel.closing {
   inset: 0 auto 0 0;
   width: 40%;
   border-radius: 999px;
-  background: linear-gradient(90deg, var(--brand), color-mix(in srgb, var(--brand) 60%, #fff));
+  background: linear-gradient(
+    90deg,
+    var(--brand),
+    color-mix(in srgb, var(--brand) 60%, #fff)
+  );
   animation: deckLaunchProgress 1.4s cubic-bezier(0.45, 0, 0.55, 1) infinite;
 }
 
@@ -4617,7 +4642,11 @@ html.steamdeck-mode #context-menu.context-menu-glass hr {
 html.steamdeck-mode #context-menu.context-menu-glass > div,
 html.steamdeck-mode #context-menu.context-menu-glass .context-menu > div,
 html.steamdeck-mode #context-menu.context-menu-glass .context-menu-item > div,
-html.steamdeck-mode #context-menu.context-menu-glass .context-menu .context-menu-item > div {
+html.steamdeck-mode
+  #context-menu.context-menu-glass
+  .context-menu
+  .context-menu-item
+  > div {
   display: flex;
   align-items: center;
   gap: 16px;
@@ -4640,40 +4669,89 @@ html.steamdeck-mode #context-menu.context-menu-glass .context-menu .context-menu
 }
 
 html.steamdeck-mode #context-menu.context-menu-glass > div:first-child,
-html.steamdeck-mode #context-menu.context-menu-glass .context-menu > div:first-child,
-html.steamdeck-mode #context-menu.context-menu-glass .context-menu-item > div:first-child,
-html.steamdeck-mode #context-menu.context-menu-glass .context-menu .context-menu-item > div:first-child {
+html.steamdeck-mode
+  #context-menu.context-menu-glass
+  .context-menu
+  > div:first-child,
+html.steamdeck-mode
+  #context-menu.context-menu-glass
+  .context-menu-item
+  > div:first-child,
+html.steamdeck-mode
+  #context-menu.context-menu-glass
+  .context-menu
+  .context-menu-item
+  > div:first-child {
   border-top: none;
 }
 
 html.steamdeck-mode #context-menu.context-menu-glass > div:hover,
 html.steamdeck-mode #context-menu.context-menu-glass .context-menu > div:hover,
-html.steamdeck-mode #context-menu.context-menu-glass .context-menu-item > div:hover,
-html.steamdeck-mode #context-menu.context-menu-glass .context-menu .context-menu-item > div:hover {
+html.steamdeck-mode
+  #context-menu.context-menu-glass
+  .context-menu-item
+  > div:hover,
+html.steamdeck-mode
+  #context-menu.context-menu-glass
+  .context-menu
+  .context-menu-item
+  > div:hover {
   background: #fff;
   color: var(--bg-primary) !important;
 }
 
 html.steamdeck-mode #context-menu.context-menu-glass > div.deck-ctx-play:hover,
-html.steamdeck-mode #context-menu.context-menu-glass .context-menu > div.deck-ctx-play:hover,
-html.steamdeck-mode #context-menu.context-menu-glass .context-menu-item > div.deck-ctx-play:hover,
-html.steamdeck-mode #context-menu.context-menu-glass .context-menu .context-menu-item > div.deck-ctx-play:hover {
+html.steamdeck-mode
+  #context-menu.context-menu-glass
+  .context-menu
+  > div.deck-ctx-play:hover,
+html.steamdeck-mode
+  #context-menu.context-menu-glass
+  .context-menu-item
+  > div.deck-ctx-play:hover,
+html.steamdeck-mode
+  #context-menu.context-menu-glass
+  .context-menu
+  .context-menu-item
+  > div.deck-ctx-play:hover {
   background: #59bf40;
   color: #fff;
 }
 
 html.steamdeck-mode #context-menu.context-menu-glass > div.cm-focused,
-html.steamdeck-mode #context-menu.context-menu-glass .context-menu > div.cm-focused,
-html.steamdeck-mode #context-menu.context-menu-glass .context-menu-item > div.cm-focused,
-html.steamdeck-mode #context-menu.context-menu-glass .context-menu .context-menu-item > div.cm-focused {
+html.steamdeck-mode
+  #context-menu.context-menu-glass
+  .context-menu
+  > div.cm-focused,
+html.steamdeck-mode
+  #context-menu.context-menu-glass
+  .context-menu-item
+  > div.cm-focused,
+html.steamdeck-mode
+  #context-menu.context-menu-glass
+  .context-menu
+  .context-menu-item
+  > div.cm-focused {
   background: #fff !important;
   color: var(--bg-primary) !important;
 }
 
-html.steamdeck-mode #context-menu.context-menu-glass > div.cm-focused.deck-ctx-play,
-html.steamdeck-mode #context-menu.context-menu-glass .context-menu > div.cm-focused.deck-ctx-play,
-html.steamdeck-mode #context-menu.context-menu-glass .context-menu-item > div.cm-focused.deck-ctx-play,
-html.steamdeck-mode #context-menu.context-menu-glass .context-menu .context-menu-item > div.cm-focused.deck-ctx-play {
+html.steamdeck-mode
+  #context-menu.context-menu-glass
+  > div.cm-focused.deck-ctx-play,
+html.steamdeck-mode
+  #context-menu.context-menu-glass
+  .context-menu
+  > div.cm-focused.deck-ctx-play,
+html.steamdeck-mode
+  #context-menu.context-menu-glass
+  .context-menu-item
+  > div.cm-focused.deck-ctx-play,
+html.steamdeck-mode
+  #context-menu.context-menu-glass
+  .context-menu
+  .context-menu-item
+  > div.cm-focused.deck-ctx-play {
   background: #59bf40 !important;
   color: #fff;
 }
@@ -4681,21 +4759,63 @@ html.steamdeck-mode #context-menu.context-menu-glass .context-menu .context-menu
 html.steamdeck-mode #context-menu.context-menu-glass > div i,
 html.steamdeck-mode #context-menu.context-menu-glass .context-menu > div i,
 html.steamdeck-mode #context-menu.context-menu-glass .context-menu-item > div i,
-html.steamdeck-mode #context-menu.context-menu-glass .context-menu .context-menu-item > div i,
+html.steamdeck-mode
+  #context-menu.context-menu-glass
+  .context-menu
+  .context-menu-item
+  > div
+  i,
 html.steamdeck-mode #context-menu.context-menu-glass > div svg.svg-inline--fa,
-html.steamdeck-mode #context-menu.context-menu-glass .context-menu > div svg.svg-inline--fa,
-html.steamdeck-mode #context-menu.context-menu-glass .context-menu-item > div svg.svg-inline--fa,
-html.steamdeck-mode #context-menu.context-menu-glass .context-menu .context-menu-item > div svg.svg-inline--fa {
+html.steamdeck-mode
+  #context-menu.context-menu-glass
+  .context-menu
+  > div
+  svg.svg-inline--fa,
+html.steamdeck-mode
+  #context-menu.context-menu-glass
+  .context-menu-item
+  > div
+  svg.svg-inline--fa,
+html.steamdeck-mode
+  #context-menu.context-menu-glass
+  .context-menu
+  .context-menu-item
+  > div
+  svg.svg-inline--fa {
   display: none;
 }
 
 html.steamdeck-mode #context-menu.context-menu-glass > div.deck-ctx-play i,
-html.steamdeck-mode #context-menu.context-menu-glass .context-menu > div.deck-ctx-play i,
-html.steamdeck-mode #context-menu.context-menu-glass .context-menu-item > div.deck-ctx-play i,
-html.steamdeck-mode #context-menu.context-menu-glass .context-menu .context-menu-item > div.deck-ctx-play i,
-html.steamdeck-mode #context-menu.context-menu-glass > div.deck-ctx-play svg.svg-inline--fa,
-html.steamdeck-mode #context-menu.context-menu-glass .context-menu > div.deck-ctx-play svg.svg-inline--fa,
-html.steamdeck-mode #context-menu.context-menu-glass .context-menu-item > div.deck-ctx-play svg.svg-inline--fa,
+html.steamdeck-mode
+  #context-menu.context-menu-glass
+  .context-menu
+  > div.deck-ctx-play
+  i,
+html.steamdeck-mode
+  #context-menu.context-menu-glass
+  .context-menu-item
+  > div.deck-ctx-play
+  i,
+html.steamdeck-mode
+  #context-menu.context-menu-glass
+  .context-menu
+  .context-menu-item
+  > div.deck-ctx-play
+  i,
+html.steamdeck-mode
+  #context-menu.context-menu-glass
+  > div.deck-ctx-play
+  svg.svg-inline--fa,
+html.steamdeck-mode
+  #context-menu.context-menu-glass
+  .context-menu
+  > div.deck-ctx-play
+  svg.svg-inline--fa,
+html.steamdeck-mode
+  #context-menu.context-menu-glass
+  .context-menu-item
+  > div.deck-ctx-play
+  svg.svg-inline--fa,
 html.steamdeck-mode
   #context-menu.context-menu-glass
   .context-menu
@@ -4710,25 +4830,75 @@ html.steamdeck-mode
   flex-shrink: 0;
 }
 
-html.steamdeck-mode #context-menu.context-menu-glass > div.deck-ctx-play:hover i,
-html.steamdeck-mode #context-menu.context-menu-glass .context-menu > div.deck-ctx-play:hover i,
-html.steamdeck-mode #context-menu.context-menu-glass .context-menu-item > div.deck-ctx-play:hover i,
-html.steamdeck-mode #context-menu.context-menu-glass .context-menu .context-menu-item > div.deck-ctx-play:hover i,
-html.steamdeck-mode #context-menu.context-menu-glass > div.deck-ctx-play.cm-focused i,
-html.steamdeck-mode #context-menu.context-menu-glass .context-menu > div.deck-ctx-play.cm-focused i,
-html.steamdeck-mode #context-menu.context-menu-glass .context-menu-item > div.deck-ctx-play.cm-focused i,
-html.steamdeck-mode #context-menu.context-menu-glass .context-menu .context-menu-item > div.deck-ctx-play.cm-focused i,
-html.steamdeck-mode #context-menu.context-menu-glass > div.deck-ctx-play:hover svg.svg-inline--fa,
-html.steamdeck-mode #context-menu.context-menu-glass .context-menu > div.deck-ctx-play:hover svg.svg-inline--fa,
-html.steamdeck-mode #context-menu.context-menu-glass .context-menu-item > div.deck-ctx-play:hover svg.svg-inline--fa,
+html.steamdeck-mode
+  #context-menu.context-menu-glass
+  > div.deck-ctx-play:hover
+  i,
+html.steamdeck-mode
+  #context-menu.context-menu-glass
+  .context-menu
+  > div.deck-ctx-play:hover
+  i,
+html.steamdeck-mode
+  #context-menu.context-menu-glass
+  .context-menu-item
+  > div.deck-ctx-play:hover
+  i,
+html.steamdeck-mode
+  #context-menu.context-menu-glass
+  .context-menu
+  .context-menu-item
+  > div.deck-ctx-play:hover
+  i,
+html.steamdeck-mode
+  #context-menu.context-menu-glass
+  > div.deck-ctx-play.cm-focused
+  i,
+html.steamdeck-mode
+  #context-menu.context-menu-glass
+  .context-menu
+  > div.deck-ctx-play.cm-focused
+  i,
+html.steamdeck-mode
+  #context-menu.context-menu-glass
+  .context-menu-item
+  > div.deck-ctx-play.cm-focused
+  i,
+html.steamdeck-mode
+  #context-menu.context-menu-glass
+  .context-menu
+  .context-menu-item
+  > div.deck-ctx-play.cm-focused
+  i,
+html.steamdeck-mode
+  #context-menu.context-menu-glass
+  > div.deck-ctx-play:hover
+  svg.svg-inline--fa,
+html.steamdeck-mode
+  #context-menu.context-menu-glass
+  .context-menu
+  > div.deck-ctx-play:hover
+  svg.svg-inline--fa,
+html.steamdeck-mode
+  #context-menu.context-menu-glass
+  .context-menu-item
+  > div.deck-ctx-play:hover
+  svg.svg-inline--fa,
 html.steamdeck-mode
   #context-menu.context-menu-glass
   .context-menu
   .context-menu-item
   > div.deck-ctx-play:hover
   svg.svg-inline--fa,
-html.steamdeck-mode #context-menu.context-menu-glass > div.deck-ctx-play.cm-focused svg.svg-inline--fa,
-html.steamdeck-mode #context-menu.context-menu-glass .context-menu > div.deck-ctx-play.cm-focused svg.svg-inline--fa,
+html.steamdeck-mode
+  #context-menu.context-menu-glass
+  > div.deck-ctx-play.cm-focused
+  svg.svg-inline--fa,
+html.steamdeck-mode
+  #context-menu.context-menu-glass
+  .context-menu
+  > div.deck-ctx-play.cm-focused
+  svg.svg-inline--fa,
 html.steamdeck-mode
   #context-menu.context-menu-glass
   .context-menu-item
@@ -4745,14 +4915,27 @@ html.steamdeck-mode
 
 html.steamdeck-mode #context-menu.context-menu-glass > div span,
 html.steamdeck-mode #context-menu.context-menu-glass .context-menu > div span,
-html.steamdeck-mode #context-menu.context-menu-glass .context-menu-item > div span,
-html.steamdeck-mode #context-menu.context-menu-glass .context-menu .context-menu-item > div span {
+html.steamdeck-mode
+  #context-menu.context-menu-glass
+  .context-menu-item
+  > div
+  span,
+html.steamdeck-mode
+  #context-menu.context-menu-glass
+  .context-menu
+  .context-menu-item
+  > div
+  span {
   flex: 1;
   white-space: nowrap;
   min-width: 0;
 }
 
-html.steamdeck-mode #context-menu.context-menu-glass .context-menu-item.has-submenu > div .submenu-arrow {
+html.steamdeck-mode
+  #context-menu.context-menu-glass
+  .context-menu-item.has-submenu
+  > div
+  .submenu-arrow {
   font-size: 12px;
   color: var(--text-secondary);
   margin-left: auto;
@@ -4760,7 +4943,11 @@ html.steamdeck-mode #context-menu.context-menu-glass .context-menu-item.has-subm
   flex-shrink: 0;
 }
 
-html.steamdeck-mode #context-menu.context-menu-glass .context-menu-item.has-submenu > div:hover .submenu-arrow,
+html.steamdeck-mode
+  #context-menu.context-menu-glass
+  .context-menu-item.has-submenu
+  > div:hover
+  .submenu-arrow,
 html.steamdeck-mode
   #context-menu.context-menu-glass
   .context-menu

@@ -5,7 +5,14 @@ import "./styles/bootScreen.css";
 import { pickAnimation } from "./bootAnimations.js";
 import gsap from "gsap";
 import { KeybindManager } from "./keybindManager.js";
-import { $, $$, bindEvent, createElement, setStyle, addClass } from "./shared/domUtils.js";
+import {
+  $,
+  $$,
+  bindEvent,
+  createElement,
+  setStyle,
+  addClass,
+} from "./shared/domUtils.js";
 import { parseBool } from "./utils/utils.js";
 import { isFunction } from "./shared/functionUtils.js";
 
@@ -32,7 +39,9 @@ export function showBootScreen() {
   const animation = pickAnimation(savedId);
 
   const lettersHTML = BRAND.split("")
-    .map((ch) => `<span class="boot-letter">${ch === " " ? "\u00A0" : ch}</span>`)
+    .map(
+      (ch) => `<span class="boot-letter">${ch === " " ? "\u00A0" : ch}</span>`,
+    )
     .join("");
 
   const div = createElement("div", { className: "boot-overlay" });
@@ -88,7 +97,11 @@ export function showBootScreen() {
     });
   }
 
-  const isSkipKey = (e) => e.key === "Escape" || e.key === "Enter" || e.key === " " || e.key === "Spacebar";
+  const isSkipKey = (e) =>
+    e.key === "Escape" ||
+    e.key === "Enter" ||
+    e.key === " " ||
+    e.key === "Spacebar";
 
   const doSkip = () => {
     if (hidden) return;
@@ -133,14 +146,14 @@ export function showBootScreen() {
               onComplete: () => {
                 div.remove();
                 resolve();
-              }
+              },
             });
             animation.hide(hideTl, els);
           } else {
             setStyle(div, {
               transition: "opacity 0.35s ease, transform 0.35s ease",
               opacity: "0",
-              transform: "scale(1.04)"
+              transform: "scale(1.04)",
             });
             setTimeout(() => {
               div.remove();
@@ -152,13 +165,15 @@ export function showBootScreen() {
         if (delay > 0) setTimeout(doHide, delay);
         else doHide();
       });
-    }
+    },
   };
 }
 
 export function runLoopingBootPreview(anim) {
   const lettersHTML = BRAND.split("")
-    .map((ch) => `<span class="boot-letter">${ch === " " ? "\u00A0" : ch}</span>`)
+    .map(
+      (ch) => `<span class="boot-letter">${ch === " " ? "\u00A0" : ch}</span>`,
+    )
     .join("");
 
   const div = createElement("div", { className: "boot-overlay" });
@@ -193,7 +208,7 @@ export function runLoopingBootPreview(anim) {
       currentTl = gsap.timeline({
         onComplete: () => {
           timer = setTimeout(play, 900);
-        }
+        },
       });
       anim.show(currentTl, els);
     } else {
@@ -224,7 +239,9 @@ export function runLoopingBootPreview(anim) {
 
 export function runBootPreview(anim, onDone) {
   const lettersHTML = BRAND.split("")
-    .map((ch) => `<span class="boot-letter">${ch === " " ? "\u00A0" : ch}</span>`)
+    .map(
+      (ch) => `<span class="boot-letter">${ch === " " ? "\u00A0" : ch}</span>`,
+    )
     .join("");
 
   const div = createElement("div", { className: "boot-overlay" });
@@ -256,7 +273,7 @@ export function runBootPreview(anim, onDone) {
         onComplete: () => {
           div.remove();
           if (onDone) onDone();
-        }
+        },
       });
       anim.hide(hideTl, els);
     }, 2000);

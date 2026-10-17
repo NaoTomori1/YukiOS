@@ -226,7 +226,8 @@
   background: var(--bg-primary);
   color: var(--brand);
   border-bottom-color: var(--bg-primary);
-  border-color: var(--glass-border) var(--glass-border) var(--bg-primary) var(--glass-border);
+  border-color: var(--glass-border) var(--glass-border) var(--bg-primary)
+    var(--glass-border);
 }
 
 .office-table-wrap {
@@ -633,7 +634,9 @@ html[data-theme-mode="light"] .office-menu-dropdown__trigger {
 }
 
 html[data-theme-mode="light"] .office-menu-dropdown__trigger:hover,
-html[data-theme-mode="light"] .office-menu-dropdown.active .office-menu-dropdown__trigger {
+html[data-theme-mode="light"]
+  .office-menu-dropdown.active
+  .office-menu-dropdown__trigger {
   background: var(--glass-hover);
 }
 

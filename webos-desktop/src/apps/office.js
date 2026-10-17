@@ -15,7 +15,7 @@ import {
   createElement,
   BaseApp,
   os,
-  ServiceKeys
+  ServiceKeys,
 } from "../framework.js";
 import { getLibraryUrl } from "../shared/cdnConfig.js";
 import { audioMixer } from "../audioMixer.js";
@@ -49,7 +49,9 @@ class OfficeModuleLoader {
     }
 
     const promise = new Promise((resolve, reject) => {
-      const link = createElement("link", { attributes: { rel: "stylesheet", href: url } });
+      const link = createElement("link", {
+        attributes: { rel: "stylesheet", href: url },
+      });
       link.onload = () => resolve();
       link.onerror = () => reject(new Error(`Failed to load ${url}`));
       document.head.appendChild(link);
@@ -80,7 +82,7 @@ class OfficeModuleLoader {
     await Promise.all([
       this.loadScript(getLibraryUrl("pdfjs", "js")),
       this.loadScript(getLibraryUrl("pdfjs", "viewer")),
-      this.loadStylesheet(getLibraryUrl("pdfjs", "viewerCss"))
+      this.loadStylesheet(getLibraryUrl("pdfjs", "viewerCss")),
     ]);
     const pdfjs = window.pdfjsLib;
     pdfjs.GlobalWorkerOptions.workerSrc = getLibraryUrl("pdfjs", "worker");
@@ -121,7 +123,8 @@ class OfficeModuleLoader {
   async jsPDF() {
     if (this.cache.has("jsPDF")) return this.cache.get("jsPDF");
     await this.loadScript(getLibraryUrl("jspdf"));
-    const mod = window.jspdf && window.jspdf.jsPDF ? window.jspdf.jsPDF : window.jsPDF;
+    const mod =
+      window.jspdf && window.jspdf.jsPDF ? window.jspdf.jsPDF : window.jsPDF;
     if (!mod) throw new Error("jsPDF failed to load");
     this.cache.set("jsPDF", mod);
     return mod;
@@ -159,15 +162,17 @@ const FileUtils = {
 
   mimeForExtension(ext) {
     const mimeMap = {
-      ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-      ".xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      ".docx":
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      ".xlsx":
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
       ".xls": "application/vnd.ms-excel",
       ".odt": "application/vnd.oasis.opendocument.text",
       ".pdf": "application/pdf",
       ".odp": "application/vnd.oasis.opendocument.presentation",
       ".csv": "text/csv",
       ".txt": "text/plain",
-      ".html": "text/html"
+      ".html": "text/html",
     };
     return mimeMap[ext] || "application/octet-stream";
   },
@@ -214,7 +219,11 @@ const FileUtils = {
     if (content instanceof Uint8Array) return content.buffer;
     if (content instanceof Blob) return content.arrayBuffer();
     if (typeof content === "string") {
-      if (content.startsWith("data:") || content.startsWith("http") || content.startsWith("/")) {
+      if (
+        content.startsWith("data:") ||
+        content.startsWith("http") ||
+        content.startsWith("/")
+      ) {
         const resp = await fetch(content);
         return resp.arrayBuffer();
       }
@@ -241,14 +250,17 @@ const FileUtils = {
     if (val.endsWith("in")) return num * 96;
     if (val.endsWith("pt")) return num * 1.333;
     return num;
-  }
+  },
 };
 
 class FileIO {
   static triggerUpload(multiple = false) {
     return new Promise((resolve) => {
       const input = createElement("input", {
-        attributes: { type: "file", accept: ".docx,.xlsx,.xls,.csv,.odt,.pdf,.odp,.txt,.html" }
+        attributes: {
+          type: "file",
+          accept: ".docx,.xlsx,.xls,.csv,.odt,.pdf,.odp,.txt,.html",
+        },
       });
       input.multiple = multiple;
       setStyle(input, { display: "none" });
@@ -293,7 +305,9 @@ class FileIO {
       blob = new Blob([data]);
     }
     const url = URL.createObjectURL(blob);
-    const a = createElement("a", { attributes: { href: url, download: fileName } });
+    const a = createElement("a", {
+      attributes: { href: url, download: fileName },
+    });
     setStyle(a, { display: "none" });
     document.body.appendChild(a);
     a.click();
@@ -316,33 +330,49 @@ class OdfStyleParser {
       "margin-left",
       "margin-bottom",
       "margin-top",
-      "background-color"
+      "background-color",
     ];
     for (const xml of xmlStrings) {
       if (!xml) continue;
       const doc = new DOMParser().parseFromString(xml, "application/xml");
-      const styles = doc.getElementsByTagNameNS("urn:oasis:names:tc:opendocument:xmlns:style:1.0", "style");
+      const styles = doc.getElementsByTagNameNS(
+        "urn:oasis:names:tc:opendocument:xmlns:style:1.0",
+        "style",
+      );
       for (let i = 0; i < styles.length; i++) {
         const s = styles[i];
         const name = s.getAttribute("style:name");
         if (!name) continue;
         const css = {};
-        const props = s.getElementsByTagNameNS("urn:oasis:names:tc:opendocument:xmlns:xsl-fo-compatible:1.0", "*");
+        const props = s.getElementsByTagNameNS(
+          "urn:oasis:names:tc:opendocument:xmlns:xsl-fo-compatible:1.0",
+          "*",
+        );
         for (let j = 0; j < props.length; j++) {
           for (let a = 0; a < props[j].attributes.length; a++) {
             const attr = props[j].attributes[a];
-            if (allowedProps.includes(attr.localName)) css[attr.localName] = attr.value;
+            if (allowedProps.includes(attr.localName))
+              css[attr.localName] = attr.value;
           }
         }
-        const tp = s.getElementsByTagNameNS("urn:oasis:names:tc:opendocument:xmlns:style:1.0", "text-properties");
+        const tp = s.getElementsByTagNameNS(
+          "urn:oasis:names:tc:opendocument:xmlns:style:1.0",
+          "text-properties",
+        );
         for (let j = 0; j < tp.length; j++) {
-          if (tp[j].getAttribute("style:text-underline-style") === "solid") css["text-decoration"] = "underline";
-          if (tp[j].getAttribute("style:font-name")) css["font-family"] = tp[j].getAttribute("style:font-name");
+          if (tp[j].getAttribute("style:text-underline-style") === "solid")
+            css["text-decoration"] = "underline";
+          if (tp[j].getAttribute("style:font-name"))
+            css["font-family"] = tp[j].getAttribute("style:font-name");
         }
         if (extraGraphicProps) {
-          const gp = s.getElementsByTagNameNS("urn:oasis:names:tc:opendocument:xmlns:style:1.0", "graphic-properties");
+          const gp = s.getElementsByTagNameNS(
+            "urn:oasis:names:tc:opendocument:xmlns:style:1.0",
+            "graphic-properties",
+          );
           for (let j = 0; j < gp.length; j++) {
-            if (gp[j].getAttribute("draw:fill-color")) css["background-color"] = gp[j].getAttribute("draw:fill-color");
+            if (gp[j].getAttribute("draw:fill-color"))
+              css["background-color"] = gp[j].getAttribute("draw:fill-color");
           }
         }
         map[name] = css;
@@ -379,11 +409,11 @@ class HtmlConverter {
     const JSZip = await modules.jszip();
     const zip = new JSZip();
     zip.file("mimetype", "application/vnd.oasis.opendocument.text", {
-      compression: "STORE"
+      compression: "STORE",
     });
     zip.file(
       "META-INF/manifest.xml",
-      `<?xml version="1.0" encoding="UTF-8"?><manifest:manifest xmlns:manifest="urn:oasis:names:tc:opendocument:xmlns:manifest:1.0" manifest:version="1.2"><manifest:file-entry manifest:full-path="/" manifest:version="1.2" manifest:media-type="application/vnd.oasis.opendocument.text"/><manifest:file-entry manifest:full-path="content.xml" manifest:media-type="text/xml"/></manifest:manifest>`
+      `<?xml version="1.0" encoding="UTF-8"?><manifest:manifest xmlns:manifest="urn:oasis:names:tc:opendocument:xmlns:manifest:1.0" manifest:version="1.2"><manifest:file-entry manifest:full-path="/" manifest:version="1.2" manifest:media-type="application/vnd.oasis.opendocument.text"/><manifest:file-entry manifest:full-path="content.xml" manifest:media-type="text/xml"/></manifest:manifest>`,
     );
     const tempDiv = createElement("div", { html });
     let odtText = "";
@@ -394,25 +424,31 @@ class HtmlConverter {
       let inner = "";
       for (const c of node.childNodes) inner += walkOdt(c);
       if (tag === "p" || tag === "div") return `<text:p>${inner}</text:p>`;
-      if (tag.match(/^h[1-6]$/)) return `<text:h text:outline-level="${tag[1]}">${inner}</text:h>`;
-      if (tag === "ul" || tag === "ol") return `<text:list>${inner}</text:list>`;
-      if (tag === "li") return `<text:list-item><text:p>${inner}</text:p></text:list-item>`;
+      if (tag.match(/^h[1-6]$/))
+        return `<text:h text:outline-level="${tag[1]}">${inner}</text:h>`;
+      if (tag === "ul" || tag === "ol")
+        return `<text:list>${inner}</text:list>`;
+      if (tag === "li")
+        return `<text:list-item><text:p>${inner}</text:p></text:list-item>`;
       if (tag === "br") return `<text:line-break/>`;
-      if (["b", "strong", "i", "em", "span", "u"].includes(tag)) return `<text:span>${inner}</text:span>`;
+      if (["b", "strong", "i", "em", "span", "u"].includes(tag))
+        return `<text:span>${inner}</text:span>`;
       return inner;
     };
     for (const c of tempDiv.childNodes) odtText += walkOdt(c);
-    if (!odtText) odtText = `<text:p>${FileUtils.escapeXml(tempDiv.textContent || "")}</text:p>`;
+    if (!odtText)
+      odtText = `<text:p>${FileUtils.escapeXml(tempDiv.textContent || "")}</text:p>`;
     zip.file(
       "content.xml",
-      `<?xml version="1.0" encoding="UTF-8"?><office:document-content xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0" xmlns:text="urn:oasis:names:tc:opendocument:xmlns:text:1.0" office:version="1.2"><office:body><office:text>${odtText}</office:text></office:body></office:document-content>`
+      `<?xml version="1.0" encoding="UTF-8"?><office:document-content xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0" xmlns:text="urn:oasis:names:tc:opendocument:xmlns:text:1.0" office:version="1.2"><office:body><office:text>${odtText}</office:text></office:body></office:document-content>`,
     );
     const blob = await zip.generateAsync({ type: "blob" });
     return new Uint8Array(await blob.arrayBuffer());
   }
 
   static async toDocxParagraphs(html) {
-    const { Paragraph, TextRun, HeadingLevel, UnderlineType } = await modules.docx();
+    const { Paragraph, TextRun, HeadingLevel, UnderlineType } =
+      await modules.docx();
 
     const div = createElement("div", { html });
     const paras = [];
@@ -422,7 +458,7 @@ class HtmlConverter {
       3: HeadingLevel.HEADING_3,
       4: HeadingLevel.HEADING_4,
       5: HeadingLevel.HEADING_5,
-      6: HeadingLevel.HEADING_6
+      6: HeadingLevel.HEADING_6,
     };
     const extractRuns = (node) => {
       const runs = [];
@@ -452,18 +488,22 @@ class HtmlConverter {
     };
     const process = (node) => {
       if (node.nodeType === 3) {
-        if (node.textContent.trim()) paras.push(new Paragraph({ children: [new TextRun(node.textContent)] }));
+        if (node.textContent.trim())
+          paras.push(
+            new Paragraph({ children: [new TextRun(node.textContent)] }),
+          );
         return;
       }
       if (node.nodeType !== 1) return;
       const tag = node.tagName.toLowerCase();
-      if (tag === "p" || tag === "div") paras.push(new Paragraph({ children: extractRuns(node) }));
+      if (tag === "p" || tag === "div")
+        paras.push(new Paragraph({ children: extractRuns(node) }));
       else if (tag.match(/^h[1-6]$/))
         paras.push(
           new Paragraph({
             children: extractRuns(node),
-            heading: headingMap[parseInt(tag[1])]
-          })
+            heading: headingMap[parseInt(tag[1])],
+          }),
         );
       else if (tag === "ul" || tag === "ol") {
         for (const li of node.children)
@@ -471,13 +511,16 @@ class HtmlConverter {
             paras.push(
               new Paragraph({
                 children: extractRuns(li),
-                bullet: tag === "ul" ? { level: 0 } : undefined
-              })
+                bullet: tag === "ul" ? { level: 0 } : undefined,
+              }),
             );
       } else for (const c of node.childNodes) process(c);
     };
     for (const c of div.childNodes) process(c);
-    if (!paras.length) paras.push(new Paragraph({ children: [new TextRun(div.textContent || "")] }));
+    if (!paras.length)
+      paras.push(
+        new Paragraph({ children: [new TextRun(div.textContent || "")] }),
+      );
     return paras;
   }
 }
@@ -494,12 +537,18 @@ class RichTextEditor {
       { label: "OL", cmd: "insertOrderedList", cls: "" },
       { label: "←", cmd: "justifyLeft", cls: "" },
       { label: "↔", cmd: "justifyCenter", cls: "" },
-      { label: "→", cmd: "justifyRight", cls: "" }
+      { label: "→", cmd: "justifyRight", cls: "" },
     ];
-    const editorDiv = createElement("div", { className: "office-richtext-editor", html: htmlContent || "" });
+    const editorDiv = createElement("div", {
+      className: "office-richtext-editor",
+      html: htmlContent || "",
+    });
     editorDiv.contentEditable = "true";
     btns.forEach((b) => {
-      const btn = createElement("button", { text: b.label, className: `office-toolbar__btn ${b.cls}` });
+      const btn = createElement("button", {
+        text: b.label,
+        className: `office-toolbar__btn ${b.cls}`,
+      });
       btn.title = b.cmd;
       bindEvent(btn, "mousedown", (e) => {
         e.preventDefault();
@@ -508,9 +557,22 @@ class RichTextEditor {
       });
       toolbar.appendChild(btn);
     });
-    const fontSelect = createElement("select", { className: "office-toolbar__select" });
-    ["Serif", "Sans-Serif", "Monospace", "Arial", "Georgia", "Times New Roman", "Courier New"].forEach((f) => {
-      const opt = createElement("option", { text: f, attributes: { value: f } });
+    const fontSelect = createElement("select", {
+      className: "office-toolbar__select",
+    });
+    [
+      "Serif",
+      "Sans-Serif",
+      "Monospace",
+      "Arial",
+      "Georgia",
+      "Times New Roman",
+      "Courier New",
+    ].forEach((f) => {
+      const opt = createElement("option", {
+        text: f,
+        attributes: { value: f },
+      });
       fontSelect.appendChild(opt);
     });
     bindEvent(fontSelect, "change", () => {
@@ -518,9 +580,14 @@ class RichTextEditor {
       editorDiv.focus();
     });
     toolbar.appendChild(fontSelect);
-    const sizeSelect = createElement("select", { className: "office-toolbar__select" });
+    const sizeSelect = createElement("select", {
+      className: "office-toolbar__select",
+    });
     [1, 2, 3, 4, 5, 6, 7].forEach((s) => {
-      const opt = createElement("option", { text: s * 4 + 8 + "px", attributes: { value: String(s) } });
+      const opt = createElement("option", {
+        text: s * 4 + 8 + "px",
+        attributes: { value: String(s) },
+      });
       if (s === 3) opt.selected = true;
       sizeSelect.appendChild(opt);
     });
@@ -553,7 +620,9 @@ class SpreadsheetEditor extends EditorStrategy {
 
     let buffer = arrayBuffer;
     if (!buffer || !(buffer instanceof ArrayBuffer)) {
-      console.warn("SpreadsheetEditor: Invalid buffer, creating empty workbook");
+      console.warn(
+        "SpreadsheetEditor: Invalid buffer, creating empty workbook",
+      );
       buffer = null;
     }
 
@@ -579,7 +648,11 @@ class SpreadsheetEditor extends EditorStrategy {
   createEmptyWorkbook(XLSX) {
     const wb = XLSX.utils.book_new();
     const emptyData = Array.from({ length: 50 }, () => Array(26).fill(""));
-    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(emptyData), "Sheet1");
+    XLSX.utils.book_append_sheet(
+      wb,
+      XLSX.utils.aoa_to_sheet(emptyData),
+      "Sheet1",
+    );
     return wb;
   }
 
@@ -592,11 +665,14 @@ class SpreadsheetEditor extends EditorStrategy {
       while (row.length < 26) row.push("");
     });
 
-    const colLetters = Array.from({ length: 26 }, (_, i) => String.fromCharCode(65 + i));
+    const colLetters = Array.from({ length: 26 }, (_, i) =>
+      String.fromCharCode(65 + i),
+    );
 
     let html = '<div class="office-sheet-wrapper">';
     html += this.renderSheetTabs(workbook, state);
-    html += '<div class="office-table-wrap"><table class="office-spreadsheet" cellspacing="0">';
+    html +=
+      '<div class="office-table-wrap"><table class="office-spreadsheet" cellspacing="0">';
 
     html += '<thead><tr><th class="office-th-corner"></th>';
     colLetters.forEach((l) => {
@@ -639,7 +715,7 @@ class SpreadsheetEditor extends EditorStrategy {
         (name) => `
         <button class="office-sheet-tab ${name === state.activeSheet ? "office-sheet-tab--active" : ""}"
                 data-sheet="${name}">${name}</button>
-      `
+      `,
       ).join("")}
     </div>`;
   }
@@ -657,7 +733,7 @@ class SpreadsheetEditor extends EditorStrategy {
           editing = false;
         }
       },
-      true
+      true,
     );
     table.addEventListener("keydown", (e) => {
       if (e.key === "Enter" && !e.shiftKey) {
@@ -743,17 +819,21 @@ class OdtViewer extends EditorStrategy {
         return;
       }
       const images = await OdfMediaLoader.loadPictures(zip);
-      const htmlContent = OdtViewer.renderContent(contentXml, stylesXml, images);
+      const htmlContent = OdtViewer.renderContent(
+        contentXml,
+        stylesXml,
+        images,
+      );
       const iframe = createElement("iframe", {
         className: "office-odt-iframe",
-        attributes: { sandbox: "allow-same-origin" }
+        attributes: { sandbox: "allow-same-origin" },
       });
       wrapper.appendChild(iframe);
       container.appendChild(wrapper);
       const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
       iframeDoc.open();
       iframeDoc.write(
-        `<!DOCTYPE html><html><head><link rel="stylesheet" href="../styles/style.css"><link rel="stylesheet" href="../styles/office.css"></head><body class="office-odt-content">${htmlContent}</body></html>`
+        `<!DOCTYPE html><html><head><link rel="stylesheet" href="../styles/style.css"><link rel="stylesheet" href="../styles/office.css"></head><body class="office-odt-content">${htmlContent}</body></html>`,
       );
       iframeDoc.close();
       state.editor = iframe;
@@ -781,12 +861,18 @@ class OdtViewer extends EditorStrategy {
         }
         if (c.nodeType !== 1) continue;
         const ln = c.localName;
-        const sn = c.getAttribute("text:style-name") || c.getAttribute("table:style-name") || "";
+        const sn =
+          c.getAttribute("text:style-name") ||
+          c.getAttribute("table:style-name") ||
+          "";
         const st = getStyle(sn);
         const sa = st ? ` style="${st}"` : "";
         switch (ln) {
           case "h": {
-            const lvl = Math.min(parseInt(c.getAttribute("text:outline-level") || "1"), 6);
+            const lvl = Math.min(
+              parseInt(c.getAttribute("text:outline-level") || "1"),
+              6,
+            );
             html += `<h${lvl}${sa}>${walk(c)}</h${lvl}>`;
             break;
           }
@@ -831,8 +917,10 @@ class OdtViewer extends EditorStrategy {
           }
           case "frame": {
             const img =
-              c.getElementsByTagNameNS("urn:oasis:names:tc:opendocument:xmlns:drawing:1.0", "image")[0] ||
-              c.querySelector("image");
+              c.getElementsByTagNameNS(
+                "urn:oasis:names:tc:opendocument:xmlns:drawing:1.0",
+                "image",
+              )[0] || c.querySelector("image");
             if (img) {
               const href = img.getAttribute("xlink:href");
               const src = href && images[href] ? images[href] : "";
@@ -859,7 +947,10 @@ class OdtViewer extends EditorStrategy {
   }
 }
 
-const ZOOM_STEPS = [0.25, 0.35, 0.5, 0.65, 0.8, 0.9, 1, 1.1, 1.25, 1.5, 1.75, 2, 2.5, 3, 3.5, 4, 5];
+const ZOOM_STEPS = [
+  0.25, 0.35, 0.5, 0.65, 0.8, 0.9, 1, 1.1, 1.25, 1.5, 1.75, 2, 2.5, 3, 3.5, 4,
+  5,
+];
 const DEFAULT_ZOOM_INDEX = ZOOM_STEPS.indexOf(1.5);
 
 class PdfViewer extends EditorStrategy {
@@ -884,9 +975,12 @@ class PdfViewer extends EditorStrategy {
 
   updateZoomControls(state) {
     const scale = ZOOM_STEPS[state.pdfZoomIndex];
-    if (state.pdfZoomLabel) state.pdfZoomLabel.textContent = `${Math.round(scale * 100)}%`;
-    if (state.pdfZoomOutBtn) state.pdfZoomOutBtn.disabled = state.pdfZoomIndex <= 0;
-    if (state.pdfZoomInBtn) state.pdfZoomInBtn.disabled = state.pdfZoomIndex >= ZOOM_STEPS.length - 1;
+    if (state.pdfZoomLabel)
+      state.pdfZoomLabel.textContent = `${Math.round(scale * 100)}%`;
+    if (state.pdfZoomOutBtn)
+      state.pdfZoomOutBtn.disabled = state.pdfZoomIndex <= 0;
+    if (state.pdfZoomInBtn)
+      state.pdfZoomInBtn.disabled = state.pdfZoomIndex >= ZOOM_STEPS.length - 1;
   }
 
   async renderPdfPages(pdf, pdfjsLib, state, token, isFirst) {
@@ -919,19 +1013,27 @@ class PdfViewer extends EditorStrategy {
       if (token !== this.renderToken) return;
       const viewport = page.getViewport({ scale });
       const pageDiv = createElement("div", { className: "office-pdf-page" });
-      const canvas = createElement("canvas", { className: "office-pdf-canvas" });
+      const canvas = createElement("canvas", {
+        className: "office-pdf-canvas",
+      });
       canvas.width = viewport.width;
       canvas.height = viewport.height;
-      await page.render({ canvasContext: canvas.getContext("2d"), viewport }).promise;
+      await page.render({ canvasContext: canvas.getContext("2d"), viewport })
+        .promise;
       if (token !== this.renderToken) return;
       pageDiv.appendChild(canvas);
       const textContent = await page.getTextContent();
       if (token !== this.renderToken) return;
-      const textLayer = createElement("div", { className: "office-pdf-text-layer" });
+      const textLayer = createElement("div", {
+        className: "office-pdf-text-layer",
+      });
       for (const item of textContent.items) {
         if (!item.str) continue;
         const tx = pdfjsLib.Util.transform(viewport.transform, item.transform);
-        const span = createElement("span", { className: "office-pdf-text-span", text: item.str });
+        const span = createElement("span", {
+          className: "office-pdf-text-span",
+          text: item.str,
+        });
         span.style.left = `${tx[4]}px`;
         span.style.top = `${tx[5]}px`;
         span.style.fontSize = `${Math.abs(tx[0])}px`;
@@ -941,7 +1043,7 @@ class PdfViewer extends EditorStrategy {
       viewer.appendChild(pageDiv);
       const label = createElement("div", {
         className: "office-pdf-page-label",
-        text: `Page ${num} of ${pdf.numPages}`
+        text: `Page ${num} of ${pdf.numPages}`,
       });
       viewer.appendChild(label);
     }
@@ -961,28 +1063,39 @@ class PdfViewer extends EditorStrategy {
         const canvas = createElement("canvas");
         canvas.width = viewport.width;
         canvas.height = viewport.height;
-        await page.render({ canvasContext: canvas.getContext("2d"), viewport }).promise;
+        await page.render({ canvasContext: canvas.getContext("2d"), viewport })
+          .promise;
         urls.push(canvas.toDataURL("image/png"));
       }
       const printWin = window.open("", "", "width=800,height=600");
       if (!printWin) {
-        os.notify.send("Print blocked", "Allow popups to print this PDF", { type: "warning" });
+        os.notify.send("Print blocked", "Allow popups to print this PDF", {
+          type: "warning",
+        });
         return;
       }
       const safeTitle = String(state.title || "PDF")
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;");
-      const images = urls.map((url) => `<img class="office-print-page" src="${url}">`).join("");
+      const images = urls
+        .map((url) => `<img class="office-print-page" src="${url}">`)
+        .join("");
       printWin.document.write(
-        `<!DOCTYPE html><html><head><title>${safeTitle}</title><style>body{margin:0}img.office-print-page{width:100%;display:block;margin:0 auto;page-break-after:always}</style></head><body>${images}<script>window.onload=function(){window.print();}<\/script></body></html>`
+        `<!DOCTYPE html><html><head><title>${safeTitle}</title><style>body{margin:0}img.office-print-page{width:100%;display:block;margin:0 auto;page-break-after:always}</style></head><body>${images}<script>window.onload=function(){window.print();}<\/script></body></html>`,
       );
       printWin.document.close();
       printWin.focus();
     } catch (printError) {
-      os.notify.send("Print failed", String(printError && printError.message ? printError.message : printError), {
-        type: "error"
-      });
+      os.notify.send(
+        "Print failed",
+        String(
+          printError && printError.message ? printError.message : printError,
+        ),
+        {
+          type: "error",
+        },
+      );
     }
   }
 
@@ -999,7 +1112,9 @@ class PdfViewer extends EditorStrategy {
     try {
       const pdfjsLib = await modules.pdfjs();
       if (currentToken !== this.renderToken) return;
-      const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(arrayBuffer) }).promise;
+      const pdf = await pdfjsLib.getDocument({
+        data: new Uint8Array(arrayBuffer),
+      }).promise;
       if (currentToken !== this.renderToken) {
         try {
           await pdf.destroy();
@@ -1012,24 +1127,40 @@ class PdfViewer extends EditorStrategy {
         const metaTitle = metadata && metadata.info && metadata.info.Title;
         if (metaTitle) {
           state.title = metaTitle;
-          if (state.winId) os.window.setTitle(state.winId, `${metaTitle} - Office`);
+          if (state.winId)
+            os.window.setTitle(state.winId, `${metaTitle} - Office`);
         }
       } catch (metaError) {}
       state.pdfZoomIndex = DEFAULT_ZOOM_INDEX;
       container.innerHTML = "";
       const root = createElement("div", { className: "office-pdf-root" });
       const toolbar = createElement("div", { className: "office-pdf-toolbar" });
-      const zoomOutBtn = createElement("button", { className: "office-pdf-btn", text: "-" });
+      const zoomOutBtn = createElement("button", {
+        className: "office-pdf-btn",
+        text: "-",
+      });
       zoomOutBtn.title = "Zoom out";
       zoomOutBtn.setAttribute("aria-label", "Zoom out");
-      const zoomLabel = createElement("span", { className: "office-pdf-zoom-label", text: "150%" });
-      const zoomInBtn = createElement("button", { className: "office-pdf-btn", text: "+" });
+      const zoomLabel = createElement("span", {
+        className: "office-pdf-zoom-label",
+        text: "150%",
+      });
+      const zoomInBtn = createElement("button", {
+        className: "office-pdf-btn",
+        text: "+",
+      });
       zoomInBtn.title = "Zoom in";
       zoomInBtn.setAttribute("aria-label", "Zoom in");
-      const fitBtn = createElement("button", { className: "office-pdf-btn", text: "Fit" });
+      const fitBtn = createElement("button", {
+        className: "office-pdf-btn",
+        text: "Fit",
+      });
       fitBtn.title = "Fit to width";
       fitBtn.setAttribute("aria-label", "Fit to width");
-      const printBtn = createElement("button", { className: "office-pdf-btn", text: "Print" });
+      const printBtn = createElement("button", {
+        className: "office-pdf-btn",
+        text: "Print",
+      });
       printBtn.title = "Print";
       printBtn.setAttribute("aria-label", "Print");
       toolbar.appendChild(zoomOutBtn);
@@ -1038,7 +1169,10 @@ class PdfViewer extends EditorStrategy {
       toolbar.appendChild(fitBtn);
       toolbar.appendChild(printBtn);
       const viewer = createElement("div", { className: "office-pdf-viewer" });
-      const info = createElement("div", { className: "office-pdf-info", text: `PDF - ${pdf.numPages} page(s)` });
+      const info = createElement("div", {
+        className: "office-pdf-info",
+        text: `PDF - ${pdf.numPages} page(s)`,
+      });
       viewer.appendChild(info);
       root.appendChild(toolbar);
       root.appendChild(viewer);
@@ -1104,8 +1238,14 @@ class OdpViewer extends EditorStrategy {
       }
       const stylesXml = (await zip.file("styles.xml")?.async("string")) || "";
       const mediaMap = await OdfMediaLoader.loadPictures(zip);
-      const doc = new DOMParser().parseFromString(contentXml, "application/xml");
-      const odpStyles = OdfStyleParser.collectStyles([contentXml, stylesXml], true);
+      const doc = new DOMParser().parseFromString(
+        contentXml,
+        "application/xml",
+      );
+      const odpStyles = OdfStyleParser.collectStyles(
+        [contentXml, stylesXml],
+        true,
+      );
       const body = doc.getElementsByTagName("office:body")[0];
       const pres = body?.getElementsByTagName("office:presentation")[0];
       if (!pres) {
@@ -1113,20 +1253,27 @@ class OdpViewer extends EditorStrategy {
         return;
       }
       const pages = pres.getElementsByTagName("draw:page");
-      const viewer = createElement("div", { className: "office-presentation-viewer" });
+      const viewer = createElement("div", {
+        className: "office-presentation-viewer",
+      });
       const info = createElement("div", {
         className: "office-presentation-info",
-        text: `Presentation - ${pages.length} slide(s)`
+        text: `Presentation - ${pages.length} slide(s)`,
       });
       viewer.appendChild(info);
       for (let i = 0; i < pages.length; i++) {
         const slideHtml = OdpViewer.renderSlide(pages[i], odpStyles, mediaMap);
-        const slideWrapper = createElement("div", { className: "office-slide-wrapper" });
-        const slideContent = createElement("div", { className: "office-slide-content", html: slideHtml });
+        const slideWrapper = createElement("div", {
+          className: "office-slide-wrapper",
+        });
+        const slideContent = createElement("div", {
+          className: "office-slide-content",
+          html: slideHtml,
+        });
         slideWrapper.appendChild(slideContent);
         const label = createElement("div", {
           className: "office-slide-label",
-          text: `Slide ${i + 1} of ${pages.length}`
+          text: `Slide ${i + 1} of ${pages.length}`,
         });
         viewer.appendChild(slideWrapper);
         viewer.appendChild(label);
@@ -1149,12 +1296,18 @@ class OdpViewer extends EditorStrategy {
       if (child.nodeType !== 1) continue;
       const ln = child.localName;
       if (ln !== "frame" && ln !== "custom-shape") continue;
-      const x = FileUtils.odpUnitToPx(child.getAttribute("svg:x") || "0cm") * SX;
-      const y = FileUtils.odpUnitToPx(child.getAttribute("svg:y") || "0cm") * SY;
-      const w = FileUtils.odpUnitToPx(child.getAttribute("svg:width") || "10cm") * SX;
-      const h = FileUtils.odpUnitToPx(child.getAttribute("svg:height") || "5cm") * SY;
+      const x =
+        FileUtils.odpUnitToPx(child.getAttribute("svg:x") || "0cm") * SX;
+      const y =
+        FileUtils.odpUnitToPx(child.getAttribute("svg:y") || "0cm") * SY;
+      const w =
+        FileUtils.odpUnitToPx(child.getAttribute("svg:width") || "10cm") * SX;
+      const h =
+        FileUtils.odpUnitToPx(child.getAttribute("svg:height") || "5cm") * SY;
       const sn = child.getAttribute("draw:style-name") || "";
-      const bg = styleMap[sn]?.["background-color"] ? `background-color:${styleMap[sn]["background-color"]};` : "";
+      const bg = styleMap[sn]?.["background-color"]
+        ? `background-color:${styleMap[sn]["background-color"]};`
+        : "";
       const img = child.getElementsByTagName("draw:image")[0];
       if (img) {
         const href = img.getAttribute("xlink:href");
@@ -1186,14 +1339,18 @@ class OdpViewer extends EditorStrategy {
       const ln = c.localName;
       const sn = c.getAttribute("text:style-name") || "";
       const st = OdfStyleParser.styleStringFor(sn, styleMap);
-      if (ln === "p") html += `<div style="margin:1px 0;${st}">${OdpViewer.renderText(c, styleMap) || "&nbsp;"}</div>`;
-      else if (ln === "span") html += `<span style="${st}">${OdpViewer.renderText(c, styleMap)}</span>`;
+      if (ln === "p")
+        html += `<div style="margin:1px 0;${st}">${OdpViewer.renderText(c, styleMap) || "&nbsp;"}</div>`;
+      else if (ln === "span")
+        html += `<span style="${st}">${OdpViewer.renderText(c, styleMap)}</span>`;
       else if (ln === "list")
         html += `<ul style="margin:0;padding-left:1.5em;">${OdpViewer.renderText(c, styleMap)}</ul>`;
-      else if (ln === "list-item") html += `<li>${OdpViewer.renderText(c, styleMap)}</li>`;
+      else if (ln === "list-item")
+        html += `<li>${OdpViewer.renderText(c, styleMap)}</li>`;
       else if (ln === "tab") html += "&emsp;";
       else if (ln === "line-break") html += "<br>";
-      else if (ln === "s") html += "&nbsp;".repeat(parseInt(c.getAttribute("text:c") || "1"));
+      else if (ln === "s")
+        html += "&nbsp;".repeat(parseInt(c.getAttribute("text:c") || "1"));
       else if (ln === "a")
         html += `<a href="${escapeHtml(c.getAttribute("xlink:href") || "#")}">${OdpViewer.renderText(c, styleMap)}</a>`;
       else html += OdpViewer.renderText(c, styleMap);
@@ -1242,14 +1399,19 @@ export class OfficeApp extends BaseApp {
   }
 
   get explorerApp() {
-    if (!this.explorerAppService) this.explorerAppService = this.getService(ServiceKeys.EXPLORER);
+    if (!this.explorerAppService)
+      this.explorerAppService = this.getService(ServiceKeys.EXPLORER);
     return this.explorerAppService;
   }
 
   open(titleOrOptions = "Untitled", content = null, filePath = null) {
     let title = "Untitled";
     let options = {};
-    if (titleOrOptions && typeof titleOrOptions === "object" && !Array.isArray(titleOrOptions)) {
+    if (
+      titleOrOptions &&
+      typeof titleOrOptions === "object" &&
+      !Array.isArray(titleOrOptions)
+    ) {
       options = titleOrOptions;
       title = options.title || "Untitled";
       content = options.content || null;
@@ -1269,7 +1431,9 @@ export class OfficeApp extends BaseApp {
     }
 
     const winId = options.forceId || `office-${safeTitle}-${Date.now()}`;
-    const ext = FileUtils.getExtension(typeof filePath === "string" ? filePath : title);
+    const ext = FileUtils.getExtension(
+      typeof filePath === "string" ? filePath : title,
+    );
 
     const windowContent = `
 <div class="app-menubar">
@@ -1572,10 +1736,16 @@ export class OfficeApp extends BaseApp {
       </div>
     `;
 
-    const win = os.window.create(winId, `${title} - Office`, options.width || "800px", options.height || "600px", {
-      icon: "static/icons/office.webp",
-      style: { left: "200px", top: "100px", ...(options.style || {}) }
-    });
+    const win = os.window.create(
+      winId,
+      `${title} - Office`,
+      options.width || "800px",
+      options.height || "600px",
+      {
+        icon: "static/icons/office.webp",
+        style: { left: "200px", top: "100px", ...(options.style || {}) },
+      },
+    );
 
     const contentDiv = createElement("div", { className: "window-content" });
     setStyle(contentDiv, { width: "100%", height: "100%", overflow: "hidden" });
@@ -1592,7 +1762,7 @@ export class OfficeApp extends BaseApp {
       workbook: null,
       activeSheet: null,
       editorType: null,
-      rawArrayBuffer: null
+      rawArrayBuffer: null,
     };
     this.setupMenuBar(win, state);
 
@@ -1602,7 +1772,10 @@ export class OfficeApp extends BaseApp {
     if (content !== null) {
       this.initEditor(editorArea, content, state, win).catch((e) => {
         console.error("Editor init error:", e);
-        setHTML(editorArea, `<div class="office-error-msg">Error loading file: ${e.message}</div>`);
+        setHTML(
+          editorArea,
+          `<div class="office-error-msg">Error loading file: ${e.message}</div>`,
+        );
       });
     } else {
       $(".office-loading-indicator", editorArea)?.remove();
@@ -1633,7 +1806,7 @@ export class OfficeApp extends BaseApp {
         savedFiles.push({
           name: fileData.name,
           path: documentsPath,
-          arrayBuffer: fileData.arrayBuffer
+          arrayBuffer: fileData.arrayBuffer,
         });
       } catch (e) {
         console.error(`Error saving ${fileData.name}:`, e);
@@ -1647,7 +1820,7 @@ export class OfficeApp extends BaseApp {
         savedFiles.length === 1
           ? "All saved to your Documents folder!"
           : `I've saved ${savedFiles.length} files to your Documents folder!`,
-        ClippyAnimation.Greeting
+        ClippyAnimation.Greeting,
       );
     }
 
@@ -1661,7 +1834,7 @@ export class OfficeApp extends BaseApp {
     <div class="office-dropzone__icon"><i class="fas fa-file-upload fa-3x"></i></div>
     <div class="office-dropzone__title">Drop file(s) here or click to upload</div>
     <div class="office-dropzone__subtitle">Supports: DOCX, XLSX, XLS, CSV, ODT, PDF, ODP, TXT, HTML (Multiple files supported)</div>
-  `
+  `,
     });
 
     bindEvent(dropZone, "dragover", (e) => {
@@ -1721,7 +1894,12 @@ export class OfficeApp extends BaseApp {
       const firstFile = savedFiles[0];
       this.applyFileToState(firstFile.name, state, win);
       state.filePath = firstFile.path;
-      await this.replaceEditorContent(container, firstFile.arrayBuffer, state, win);
+      await this.replaceEditorContent(
+        container,
+        firstFile.arrayBuffer,
+        state,
+        win,
+      );
 
       for (let i = 1; i < savedFiles.length; i++) {
         const file = savedFiles[i];
@@ -1738,7 +1916,10 @@ export class OfficeApp extends BaseApp {
 
   async replaceEditorContent(container, content, state, win) {
     container.innerHTML = "";
-    const loadingDiv = createElement("div", { className: "office-loading-indicator", text: "Loading..." });
+    const loadingDiv = createElement("div", {
+      className: "office-loading-indicator",
+      text: "Loading...",
+    });
     container.appendChild(loadingDiv);
     await this.initEditor(container, content, state, win);
   }
@@ -1818,7 +1999,7 @@ export class OfficeApp extends BaseApp {
       sortAsc: () => this.sortSpreadsheet(state, true),
       sortDesc: () => this.sortSpreadsheet(state, false),
       shortcuts: () => this.showShortcuts(win),
-      about: () => this.showAbout(win)
+      about: () => this.showAbout(win),
     };
 
     $$(".office-menu-item[data-action]", win).forEach((item) => {
@@ -1826,7 +2007,9 @@ export class OfficeApp extends BaseApp {
       if (action) {
         bindEvent(item, "click", (e) => {
           e.stopPropagation();
-          $$(".office-menu-dropdown", win).forEach((d) => removeClass(d, "active"));
+          $$(".office-menu-dropdown", win).forEach((d) =>
+            removeClass(d, "active"),
+          );
           action();
         });
       }
@@ -1963,7 +2146,9 @@ export class OfficeApp extends BaseApp {
   insertImage(state) {
     if (state.editorType !== "contenteditable") return;
 
-    const input = createElement("input", { attributes: { type: "file", accept: "image/*" } });
+    const input = createElement("input", {
+      attributes: { type: "file", accept: "image/*" },
+    });
     input.onchange = async (e) => {
       const file = e.target.files[0];
       if (!file) return;
@@ -1989,7 +2174,8 @@ export class OfficeApp extends BaseApp {
     for (let r = 0; r < parseInt(rows); r++) {
       html += "<tr>";
       for (let c = 0; c < parseInt(cols); c++) {
-        html += '<td style="border:1px solid var(--glass-border);padding:8px">&nbsp;</td>';
+        html +=
+          '<td style="border:1px solid var(--glass-border);padding:8px">&nbsp;</td>';
       }
       html += "</tr>";
     }
@@ -2062,9 +2248,10 @@ export class OfficeApp extends BaseApp {
     showAboutDialog({
       title: "Office",
       version: "1.0.0",
-      description: "YukiOS Office Suite for editing documents, spreadsheets, and presentations.",
+      description:
+        "YukiOS Office Suite for editing documents, spreadsheets, and presentations.",
       icon: "static/icons/office.webp",
-      iconType: "image"
+      iconType: "image",
     });
   }
 
@@ -2092,7 +2279,12 @@ export class OfficeApp extends BaseApp {
   }
 
   async createNewFile(win, state) {
-    if (await os.dialog.confirm("Confirm", "Start a new file? Any unsaved changes will be lost.")) {
+    if (
+      await os.dialog.confirm(
+        "Confirm",
+        "Start a new file? Any unsaved changes will be lost.",
+      )
+    ) {
       const editorArea = $(".office-editor-area", win);
       state.title = "Untitled";
       state.filePath = null;
@@ -2143,7 +2335,8 @@ export class OfficeApp extends BaseApp {
     } else if (state.editorType === "spreadsheet") {
       const focused = document.activeElement;
       if (focused?.classList.contains("office-spreadsheet__cell")) {
-        const selection = window.getSelection().toString() || focused.textContent;
+        const selection =
+          window.getSelection().toString() || focused.textContent;
         try {
           await navigator.clipboard.writeText(selection);
         } catch (err) {
@@ -2252,7 +2445,7 @@ export class OfficeApp extends BaseApp {
         left: win.style.left,
         top: win.style.top,
         width: win.style.width,
-        height: win.style.height
+        height: win.style.height,
       });
       setStyle(win, { left: "0", top: "0", width: "100vw", height: "100vh" });
       addClass(win, "office-fullscreen");
@@ -2272,11 +2465,17 @@ export class OfficeApp extends BaseApp {
     const colCount = rows[0]?.querySelectorAll("td").length || 26;
     const rowIndex = rows.length;
     const tr = createElement("tr");
-    const th = createElement("th", { className: "office-th-row", text: String(rowIndex + 1) });
+    const th = createElement("th", {
+      className: "office-th-row",
+      text: String(rowIndex + 1),
+    });
     tr.appendChild(th);
     const fragment = document.createDocumentFragment();
     for (let c = 0; c < colCount; c++) {
-      const td = createElement("td", { className: "office-cell", attributes: { contentEditable: "true" } });
+      const td = createElement("td", {
+        className: "office-cell",
+        attributes: { contentEditable: "true" },
+      });
       td.dataset.row = rowIndex;
       td.dataset.col = c;
       fragment.appendChild(td);
@@ -2294,11 +2493,14 @@ export class OfficeApp extends BaseApp {
     const colIndex = thead.querySelectorAll("th").length - 1;
     const th = createElement("th", {
       className: "office-th-col",
-      text: String.fromCharCode(65 + colIndex)
+      text: String.fromCharCode(65 + colIndex),
     });
     thead.querySelector("tr").appendChild(th);
     tbody.querySelectorAll("tr").forEach((tr, r) => {
-      const td = createElement("td", { className: "office-cell", attributes: { contentEditable: "true" } });
+      const td = createElement("td", {
+        className: "office-cell",
+        attributes: { contentEditable: "true" },
+      });
       td.dataset.row = r;
       td.dataset.col = colIndex;
       tr.appendChild(td);
@@ -2308,24 +2510,41 @@ export class OfficeApp extends BaseApp {
   async addSpreadsheetSheet(state) {
     if (state.editorType !== "spreadsheet" || !state.workbook) return;
 
-    const name = await os.dialog.prompt("Prompt", "Name your sheet:", `Sheet${state.workbook.SheetNames.length + 1}`);
+    const name = await os.dialog.prompt(
+      "Prompt",
+      "Name your sheet:",
+      `Sheet${state.workbook.SheetNames.length + 1}`,
+    );
     if (!name) return;
 
     const XLSX = await modules.xlsx();
     const emptyData = Array.from({ length: 50 }, () => Array(26).fill(""));
-    XLSX.utils.book_append_sheet(state.workbook, XLSX.utils.aoa_to_sheet(emptyData), name);
+    XLSX.utils.book_append_sheet(
+      state.workbook,
+      XLSX.utils.aoa_to_sheet(emptyData),
+      name,
+    );
 
     state.activeSheet = name;
 
     const container = $(`#${state.winId} .office-editor-area`);
     container.innerHTML = "";
-    new SpreadsheetEditor().renderNativeTable(container, state.workbook, state, XLSX);
+    new SpreadsheetEditor().renderNativeTable(
+      container,
+      state.workbook,
+      state,
+      XLSX,
+    );
   }
 
   async exportToPDF(state) {
     const readOnlyFormats = [".pdf", ".odp"];
     if (readOnlyFormats.includes(state.ext) || !state.editor) {
-      os.notify.send("Export to PDF", "This format cannot be exported to PDF.", { type: "warning" });
+      os.notify.send(
+        "Export to PDF",
+        "This format cannot be exported to PDF.",
+        { type: "warning" },
+      );
       return;
     }
 
@@ -2335,12 +2554,16 @@ export class OfficeApp extends BaseApp {
 
       const source = this.getExportSourceNode(state);
       if (!source) {
-        os.notify.send("Export to PDF", "Nothing to export.", { type: "warning" });
+        os.notify.send("Export to PDF", "Nothing to export.", {
+          type: "warning",
+        });
         return;
       }
 
       const clone = source.cloneNode(true);
-      const wrapper = createElement("div", { className: "office-pdf-export-source" });
+      const wrapper = createElement("div", {
+        className: "office-pdf-export-source",
+      });
       setStyle(wrapper, {
         position: "fixed",
         left: "-10000px",
@@ -2353,7 +2576,7 @@ export class OfficeApp extends BaseApp {
         fontFamily: "sans-serif",
         fontSize: "14px",
         lineHeight: "1.5",
-        zIndex: "-1"
+        zIndex: "-1",
       });
       wrapper.appendChild(clone);
       document.body.appendChild(wrapper);
@@ -2364,7 +2587,12 @@ export class OfficeApp extends BaseApp {
       const contentWidth = pageWidth - margin * 2;
 
       await pdf.html(wrapper, {
-        html2canvas: { scale: 2, backgroundColor: "#ffffff", useCORS: true, allowTaint: true },
+        html2canvas: {
+          scale: 2,
+          backgroundColor: "#ffffff",
+          useCORS: true,
+          allowTaint: true,
+        },
         x: margin,
         y: margin,
         width: contentWidth,
@@ -2374,21 +2602,29 @@ export class OfficeApp extends BaseApp {
           doc.save(`${state.title}.pdf`);
           wrapper.remove();
           os.notify.send("Export to PDF", `Saved ${state.title}.pdf`);
-        }
+        },
       });
     } catch (e) {
       console.error("PDF export error:", e);
-      os.notify.send("Export to PDF", "Failed to generate PDF.", { type: "error" });
+      os.notify.send("Export to PDF", "Failed to generate PDF.", {
+        type: "error",
+      });
     }
   }
 
   getExportSourceNode(state) {
-    if (state.editorType === "contenteditable" && state.editor) return state.editor;
-    if (state.editorType === "odt-iframe" && state.editor && state.editor.contentDocument) {
+    if (state.editorType === "contenteditable" && state.editor)
+      return state.editor;
+    if (
+      state.editorType === "odt-iframe" &&
+      state.editor &&
+      state.editor.contentDocument
+    ) {
       return state.editor.contentDocument.body;
     }
     if (state.editorType === "spreadsheet" && state.editor) return state.editor;
-    if (state.editorType === "pdf" || state.editorType === "presentation") return null;
+    if (state.editorType === "pdf" || state.editorType === "presentation")
+      return null;
     return state.editor || null;
   }
 
@@ -2459,9 +2695,11 @@ export class OfficeApp extends BaseApp {
       setStyle(item, { display: isSpreadsheet ? "" : "none" });
     });
 
-    $$(".office-menu-divider.office-menu-item--spreadsheet", win).forEach((divider) => {
-      setStyle(divider, { display: isSpreadsheet ? "" : "none" });
-    });
+    $$(".office-menu-divider.office-menu-item--spreadsheet", win).forEach(
+      (divider) => {
+        setStyle(divider, { display: isSpreadsheet ? "" : "none" });
+      },
+    );
 
     $$('[data-action="toggleGrid"]', win).forEach((item) => {
       setStyle(item, { display: isSpreadsheet ? "" : "none" });
@@ -2517,7 +2755,9 @@ export class OfficeApp extends BaseApp {
   }
 
   setupIdleDetection(win, ext) {
-    const el = win.querySelector(".office-richtext-editor") || win.querySelector(".office-spreadsheet");
+    const el =
+      win.querySelector(".office-richtext-editor") ||
+      win.querySelector(".office-spreadsheet");
     if (!el) return;
     const reset = () => {
       if (this.idleTimer) clearTimeout(this.idleTimer);
@@ -2540,8 +2780,10 @@ export class OfficeApp extends BaseApp {
   }
 
   getEditorContent(state) {
-    if (state.editorType === "contenteditable" && state.editor) return state.editor.innerHTML;
-    if (state.editorType === "spreadsheet" && state.workbook) return state.workbook;
+    if (state.editorType === "contenteditable" && state.editor)
+      return state.editor.innerHTML;
+    if (state.editorType === "spreadsheet" && state.workbook)
+      return state.workbook;
     return "";
   }
 
@@ -2556,8 +2798,8 @@ export class OfficeApp extends BaseApp {
         return new Uint8Array(
           XLSX.write(state.workbook, {
             bookType: ext === ".xls" ? "xls" : "xlsx",
-            type: "array"
-          })
+            type: "array",
+          }),
         );
       }
       return new Uint8Array();
@@ -2566,7 +2808,9 @@ export class OfficeApp extends BaseApp {
       if (state.workbook) {
         const XLSX = await modules.xlsx();
         await SpreadsheetEditor.syncTable(state);
-        return XLSX.utils.sheet_to_csv(state.workbook.Sheets[state.activeSheet]);
+        return XLSX.utils.sheet_to_csv(
+          state.workbook.Sheets[state.activeSheet],
+        );
       }
       return "";
     }
@@ -2581,7 +2825,8 @@ export class OfficeApp extends BaseApp {
         return new Blob([html], { type: "text/html" });
       }
     }
-    if (ext === ".odt") return HtmlConverter.toOdtBlob(this.getEditorContent(state));
+    if (ext === ".odt")
+      return HtmlConverter.toOdtBlob(this.getEditorContent(state));
     if (readOnlyFormats.includes(ext)) {
       if (state.rawArrayBuffer) return new Uint8Array(state.rawArrayBuffer);
       speak("This format is read-only.", ClippyAnimation.CheckingSomething);
@@ -2604,10 +2849,22 @@ export class OfficeApp extends BaseApp {
 
         if (ext === ".pdf" && content instanceof Uint8Array) {
           const blob = new Blob([content], { type: "application/pdf" });
-          await os.fs.write(state.filePath, state.title, blob, FileKind.OTHER, "/static/icons/pdf.webp");
-        } else if (FileUtils.isBinaryExtension(ext) && content instanceof Uint8Array) {
+          await os.fs.write(
+            state.filePath,
+            state.title,
+            blob,
+            FileKind.OTHER,
+            "/static/icons/pdf.webp",
+          );
+        } else if (
+          FileUtils.isBinaryExtension(ext) &&
+          content instanceof Uint8Array
+        ) {
           const mime = FileUtils.mimeForExtension(ext);
-          const storageContent = FileUtils.arrayBufferToDataUrl(content.buffer, mime);
+          const storageContent = FileUtils.arrayBufferToDataUrl(
+            content.buffer,
+            mime,
+          );
           await os.fs.write(state.filePath, storageContent);
         } else {
           await os.fs.write(state.filePath, content);
@@ -2627,7 +2884,9 @@ export class OfficeApp extends BaseApp {
 
   async saveAsFile(state) {
     if (this.explorerApp) {
-      const def = state.title.includes(".") ? state.title : `${state.title}${state.ext || ".docx"}`;
+      const def = state.title.includes(".")
+        ? state.title
+        : `${state.title}${state.ext || ".docx"}`;
       this.explorerApp.openSaveDialog(def, async (path, fileName) => {
         try {
           const se = FileUtils.getExtension(fileName);
@@ -2636,13 +2895,21 @@ export class OfficeApp extends BaseApp {
           if (content === null) return;
 
           let storageContent = content;
-          if (FileUtils.isBinaryExtension(state.ext) && content instanceof Uint8Array) {
+          if (
+            FileUtils.isBinaryExtension(state.ext) &&
+            content instanceof Uint8Array
+          ) {
             const mime = FileUtils.mimeForExtension(state.ext);
-            storageContent = FileUtils.arrayBufferToDataUrl(content.buffer, mime);
+            storageContent = FileUtils.arrayBufferToDataUrl(
+              content.buffer,
+              mime,
+            );
           }
 
           await os.fs.write([...path, fileName], storageContent);
-          const ps = path.length ? `/${path.join("/")}/${fileName}` : `/${fileName}`;
+          const ps = path.length
+            ? `/${path.join("/")}/${fileName}`
+            : `/${fileName}`;
           state.title = fileName;
           state.filePath = [...path, fileName];
           os.notify.send(`Saved: ${ps}`);
@@ -2661,7 +2928,9 @@ export class OfficeApp extends BaseApp {
     try {
       const content = await this.generateFileContent(state);
       if (content === null) return;
-      const fileName = state.title.includes(".") ? state.title : `${state.title}${state.ext || ".txt"}`;
+      const fileName = state.title.includes(".")
+        ? state.title
+        : `${state.title}${state.ext || ".txt"}`;
       FileIO.triggerDownload(fileName, content);
       os.notify.send(`Downloaded ${fileName}`);
       speak("Great, your file has been downloaded!", ClippyAnimation.Greeting);

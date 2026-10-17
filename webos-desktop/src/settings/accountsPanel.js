@@ -3,7 +3,11 @@ import { refreshSteamUI } from "../games/games.js";
 import { resolveAvatarUrl } from "../social/avatarResolver.js";
 import { PREDEFINED_AVATARS, generateUUID } from "../utils/avatarData.js";
 import { escapeHtml, formatSize, timeAgo } from "../utils/utils.js";
-import { ACCOUNT_DISCLAIMER, buildAccountBlockHtml, bindAccountBlock } from "../social/accountUI.js";
+import {
+  ACCOUNT_DISCLAIMER,
+  buildAccountBlockHtml,
+  bindAccountBlock,
+} from "../social/accountUI.js";
 import { isSocialDisabled } from "../social/socialSettings.js";
 import {
   SYNC_COMPONENTS,
@@ -14,12 +18,19 @@ import {
   buildBundle,
   syncPush,
   syncPull,
-  getCloudSummary
+  getCloudSummary,
 } from "../account/syncEngine.js";
 import { isLoggedIn, getSession } from "../account/session.js";
 import { getLiveUserId } from "../social/userIdentity.js";
 import { StorageKeys, os } from "../framework.js";
-import { $, $$, bindEvent, setText, setHTML, createElement } from "../shared/domUtils.js";
+import {
+  $,
+  $$,
+  bindEvent,
+  setText,
+  setHTML,
+  createElement,
+} from "../shared/domUtils.js";
 import { showContextMenu } from "../shared/contextMenu.js";
 
 let win = null;
@@ -35,8 +46,9 @@ function getCurrentUser() {
   return (
     userHistory.find((u) => u.userId === currentUserId) || {
       name: os.storage.get(StorageKeys.username) || "Guest",
-      avatar: os.storage.get(StorageKeys.profilePicture) || PREDEFINED_AVATARS[0],
-      userId: currentUserId || generateUUID()
+      avatar:
+        os.storage.get(StorageKeys.profilePicture) || PREDEFINED_AVATARS[0],
+      userId: currentUserId || generateUUID(),
     }
   );
 }
@@ -47,7 +59,9 @@ function getUserHistory() {
 
 function getSelectedUser() {
   const history = getUserHistory();
-  const user = selectedUserId ? history.find((u) => u.userId === selectedUserId) : null;
+  const user = selectedUserId
+    ? history.find((u) => u.userId === selectedUserId)
+    : null;
   return user || getCurrentUser();
 }
 
@@ -84,7 +98,9 @@ export function renderUserList() {
     .map((user) => {
       const isCurrentUser = user.userId === currentUser.userId;
       const isSelected = user.userId === (selectedUserId || currentUser.userId);
-      const lastLogin = user.lastLogin ? timeAgo(new Date(user.lastLogin)) : "Never";
+      const lastLogin = user.lastLogin
+        ? timeAgo(new Date(user.lastLogin))
+        : "Never";
       const isCloud = Boolean(user.cloudAccountId);
       return `
         <div class="accounts-user-item ${isSelected ? "selected" : ""} ${isCurrentUser ? "current" : ""}"
@@ -205,7 +221,7 @@ async function refreshAvatarImages() {
         const resolvedUrl = await resolveAvatarUrl(avatarRef);
         img.src = resolvedUrl;
       }
-    })
+    }),
   );
 }
 
@@ -232,11 +248,21 @@ function buildUserContextMenu(userId) {
   const items = [];
 
   if (!isCurrentUser) {
-    items.push({ id: "cm-accounts-switch", label: "Switch", icon: "fa-sign-in-alt", action: "switch" });
+    items.push({
+      id: "cm-accounts-switch",
+      label: "Switch",
+      icon: "fa-sign-in-alt",
+      action: "switch",
+    });
   }
   if (!isCurrentUser) {
     items.push("hr");
-    items.push({ id: "cm-accounts-delete", label: "Delete", icon: "fa-trash", action: "delete" });
+    items.push({
+      id: "cm-accounts-delete",
+      label: "Delete",
+      icon: "fa-trash",
+      action: "delete",
+    });
   }
   return items;
 }
@@ -274,7 +300,7 @@ function bindUserListItemEvents() {
         },
         delete: () => {
           deleteUser();
-        }
+        },
       });
     });
   });
@@ -311,7 +337,9 @@ function saveUser() {
   const editingUserId = selectedUserId;
   if (!editingUserId) return;
 
-  const existingIndex = userHistory.findIndex((u) => u.userId === editingUserId);
+  const existingIndex = userHistory.findIndex(
+    (u) => u.userId === editingUserId,
+  );
   if (existingIndex >= 0) {
     userHistory[existingIndex].name = name;
     userHistory[existingIndex].avatar = avatar;
@@ -325,7 +353,7 @@ function saveUser() {
     os.events.emit(BusEvents.PROFILE_UPDATED, {
       userId: currentUserId,
       name,
-      avatar
+      avatar,
     });
   }
 
@@ -346,7 +374,9 @@ function startCreateNewUser() {
 
 function createNewUser() {
   const usernameInput = $("#accounts-username-input", win);
-  const name = usernameInput ? usernameInput.value.trim() || "New User" : "New User";
+  const name = usernameInput
+    ? usernameInput.value.trim() || "New User"
+    : "New User";
   const avatar = customImageDataUrl || selectedAvatar || PREDEFINED_AVATARS[0];
   const userHistory = getUserHistory();
 
@@ -356,7 +386,7 @@ function createNewUser() {
     key: newUserId,
     name,
     avatar,
-    lastLogin: Date.now()
+    lastLogin: Date.now(),
   };
 
   userHistory.unshift(newUser);
@@ -379,7 +409,10 @@ function createNewUser() {
 async function deleteUser() {
   const currentUser = getCurrentUser();
   if (selectedUserId === currentUser.userId) {
-    os.dialog.alert("Cannot Delete", "You cannot delete the currently active user. Switch to another user first.");
+    os.dialog.alert(
+      "Cannot Delete",
+      "You cannot delete the currently active user. Switch to another user first.",
+    );
     return;
   }
 
@@ -387,7 +420,10 @@ async function deleteUser() {
   const user = userHistory.find((u) => u.userId === selectedUserId);
   if (!user) return;
 
-  const confirmed = await os.dialog.confirm("Delete User", `Delete "${user.name}"? This cannot be undone.`);
+  const confirmed = await os.dialog.confirm(
+    "Delete User",
+    `Delete "${user.name}"? This cannot be undone.`,
+  );
   if (!confirmed) return;
 
   const filtered = userHistory.filter((u) => u.userId !== selectedUserId);
@@ -411,7 +447,10 @@ async function switchUser() {
   const user = userHistory.find((u) => u.userId === selectedUserId);
   if (!user) return;
 
-  const confirmed = await os.dialog.confirm("Switch User", `Switch to ${user.name}?`);
+  const confirmed = await os.dialog.confirm(
+    "Switch User",
+    `Switch to ${user.name}?`,
+  );
   if (!confirmed) return;
 
   os.storage.set(StorageKeys.userId, selectedUserId);
@@ -436,7 +475,7 @@ function openAvatarPicker() {
         <div class="accounts-avatar-option" data-src="${avatar}" style="width: 64px; height: 64px; border-radius: 25px; overflow: hidden; cursor: pointer; border: 2px solid var(--glass-border); transition: all 0.15s;">
           <img src="${avatar}" style="width: 100%; height: 100%; object-fit: cover;" />
         </div>
-      `
+      `,
       ).join("")}
     </div>
     <div style="padding: 0 16px 16px;">
@@ -451,12 +490,19 @@ function openAvatarPicker() {
     avatarWindow = null;
   }
 
-  avatarWindow = os.window.create("accounts-avatar-picker", "Choose Avatar", "320px", "400px", {
-    icon: "fas fa-images",
-    iconColor: "var(--brand)"
-  });
+  avatarWindow = os.window.create(
+    "accounts-avatar-picker",
+    "Choose Avatar",
+    "320px",
+    "400px",
+    {
+      icon: "fas fa-images",
+      iconColor: "var(--brand)",
+    },
+  );
 
-  const windowContent = avatarWindow.querySelector(".window-content") || avatarWindow;
+  const windowContent =
+    avatarWindow.querySelector(".window-content") || avatarWindow;
   windowContent.innerHTML = avatarGridHtml;
 
   const user = getSelectedUser();
@@ -468,7 +514,11 @@ function openAvatarPicker() {
     bindEvent(opt, "click", () => selectAvatar(opt));
   });
 
-  bindEvent($("#accounts-avatar-upload-btn", avatarWindow), "click", uploadAvatar);
+  bindEvent(
+    $("#accounts-avatar-upload-btn", avatarWindow),
+    "click",
+    uploadAvatar,
+  );
   os.window.bringToFront(avatarWindow);
 }
 
@@ -494,7 +544,8 @@ function selectAvatar(option) {
 async function uploadAvatar() {
   const input = createElement("input");
   input.type = "file";
-  input.accept = "image/png,image/jpeg,image/gif,image/webp,.png,.jpg,.jpeg,.gif,.webp";
+  input.accept =
+    "image/png,image/jpeg,image/gif,image/webp,.png,.jpg,.jpeg,.gif,.webp";
   input.style.display = "none";
   document.body.appendChild(input);
 
@@ -509,10 +560,17 @@ async function uploadAvatar() {
         return;
       }
 
-      const currentUserId = os.storage.get(StorageKeys.userId) || generateUUID();
+      const currentUserId =
+        os.storage.get(StorageKeys.userId) || generateUUID();
       const fileName = `avatar-${currentUserId}.${file.name.split(".").pop()}`;
 
-      await os.fs.writeBinaryFile(["Pictures"], fileName, file, "image", "static/icons/image.webp");
+      await os.fs.writeBinaryFile(
+        ["Pictures"],
+        fileName,
+        file,
+        "image",
+        "static/icons/image.webp",
+      );
       const fileRef = `fs://Pictures/${fileName}`;
 
       customImageDataUrl = fileRef;
@@ -530,7 +588,10 @@ async function uploadAvatar() {
       }
     } catch (e) {
       console.error("Upload failed:", e);
-      os.dialog.alert("Upload Failed", "Couldn't save that avatar. Try a smaller image.");
+      os.dialog.alert(
+        "Upload Failed",
+        "Couldn't save that avatar. Try a smaller image.",
+      );
     }
   });
 
@@ -557,7 +618,9 @@ async function loadCloudStatus() {
   } else if (summary.error) {
     extra = `<p class="sync-hint">${escapeHtml(summary.error)}</p>`;
   } else {
-    const lastSynced = summary.updatedAt ? new Date(summary.updatedAt).toLocaleString() : "Never";
+    const lastSynced = summary.updatedAt
+      ? new Date(summary.updatedAt).toLocaleString()
+      : "Never";
     let quotaHtml = "";
     if (summary.quota && summary.quota.limit > 0) {
       const used = summary.quota.used || 0;
@@ -575,7 +638,7 @@ async function loadCloudStatus() {
         .map(
           (c) => `
           <div class="sync-cloud-item"><i class="fas ${c.icon}"></i><span>${escapeHtml(c.label)}</span><span class="sync-cloud-item-size">${formatSize(c.bytes)}</span></div>
-        `
+        `,
         )
         .join("");
       listHtml = `<div class="sync-cloud-list">${listHtml}</div>`;
@@ -599,7 +662,7 @@ async function renderSyncPanel(bodyEl) {
   if (!loggedIn) {
     setHTML(
       bodyEl,
-      `<p class="accounts-cloud-note"><i class="fas fa-lock"></i> Sign in to your YukiOS Account above to sync settings across devices. Cloud sync is off by default and everything works locally without it.</p>`
+      `<p class="accounts-cloud-note"><i class="fas fa-lock"></i> Sign in to your YukiOS Account above to sync settings across devices. Cloud sync is off by default and everything works locally without it.</p>`,
     );
     return;
   }
@@ -652,7 +715,7 @@ async function renderSyncPanel(bodyEl) {
       <button class="settings-btn" id="sync-pull-btn" ${enabled ? "" : "disabled"}><i class="fas fa-cloud-arrow-down"></i> Pull from cloud</button>
     </div>
     <div id="sync-status" class="accounts-status"></div>
-  `
+  `,
   );
 
   loadCloudStatus();
@@ -735,13 +798,15 @@ export function bindAccountsCategory(settingsWin) {
   if (cloudHost) {
     const renderCloud = () => {
       markCurrentUserCloud();
-      const localName = String(os.storage.get(StorageKeys.username) || "").slice(0, 32);
+      const localName = String(
+        os.storage.get(StorageKeys.username) || "",
+      ).slice(0, 32);
       setHTML(
         cloudHost,
         buildAccountBlockHtml(undefined, {
           socialDisabled: isSocialDisabled(),
-          prefillNickname: localName
-        })
+          prefillNickname: localName,
+        }),
       );
       bindAccountBlock(cloudHost, {
         onChange: () => {
@@ -756,7 +821,8 @@ export function bindAccountsCategory(settingsWin) {
           refreshDetailPanel();
           refreshSteamUI();
         },
-        onEnableSocial: () => os.app.launch("steamApp", { steamPage: "settings" })
+        onEnableSocial: () =>
+          os.app.launch("steamApp", { steamPage: "settings" }),
       });
     };
     renderCloud();

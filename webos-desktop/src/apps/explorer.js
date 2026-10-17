@@ -11,7 +11,7 @@ import {
   addClass,
   removeClass,
   setStyle,
-  createElement
+  createElement,
 } from "../shared/domUtils.js";
 import {
   isImageFile,
@@ -20,7 +20,7 @@ import {
   buildFileIconHTML,
   openMediaViewer,
   openFileWith,
-  generateThumbnail
+  generateThumbnail,
 } from "../fileDisplay.js";
 import { scheduleFileTooltip, hideFileTooltip } from "../shared/fileTooltip.js";
 import { ClippyAnimation, speak } from "../ai/clippy.js";
@@ -31,7 +31,7 @@ import {
   isWindowFocused,
   buildClipboardIcons,
   isTextFile,
-  rectsIntersect
+  rectsIntersect,
 } from "../utils/utils.js";
 import { resolveDesktopIcon } from "../shared/iconUtils.js";
 import { resolveIconUrl } from "../shared/assetResolver.js";
@@ -41,19 +41,39 @@ import { AppSource } from "../AppSource.js";
 import { showDynamicContextMenu } from "../shared/contextMenu.js";
 
 import { makePaneResizable } from "../shared/paneResizer.js";
-import { showConfirmDialog, showInputDialog, showArchiveDialog } from "./explorer/dialogs.js";
+import {
+  showConfirmDialog,
+  showInputDialog,
+  showArchiveDialog,
+} from "./explorer/dialogs.js";
 import {
   showFileContextMenu,
   showBackgroundContextMenu,
   showSidebarItemContextMenu,
-  showTrashContextMenu
+  showTrashContextMenu,
 } from "./explorer/contextMenus.js";
-import { handleFileUpload, uploadSingleFile, saveToWallpapers } from "./explorer/upload.js";
+import {
+  handleFileUpload,
+  uploadSingleFile,
+  saveToWallpapers,
+} from "./explorer/upload.js";
 import { showTrashView, renderTrashView } from "./explorer/trash.js";
 import { startInlineRename, spawnInlineItem } from "./explorer/inlineRename.js";
-import { pasteToPath, copyItem, downloadItems, createArchiveFromItems } from "./explorer/transfer.js";
+import {
+  pasteToPath,
+  copyItem,
+  downloadItems,
+  createArchiveFromItems,
+} from "./explorer/transfer.js";
 
-function explorerIcon(papirusIcon, size = 14, extraStyle = "", extraClass = "", extraId = "", extraTitle = "") {
+function explorerIcon(
+  papirusIcon,
+  size = 14,
+  extraStyle = "",
+  extraClass = "",
+  extraId = "",
+  extraTitle = "",
+) {
   const effective = getEffectiveIcon(papirusIcon);
   const idAttr = extraId ? ` id="${extraId}"` : "";
   const titleAttr = extraTitle ? ` title="${extraTitle}"` : "";
@@ -62,8 +82,11 @@ function explorerIcon(papirusIcon, size = 14, extraStyle = "", extraClass = "", 
     return `<img src="${resolveIconUrl(effective)}" style="width:${size}px;height:${size}px;${extraStyle}"${cls}${idAttr}${titleAttr} alt="" />`;
   }
   let cls = effective;
-  if (typeof cls === "string" && cls.startsWith("fa-") && !cls.includes(" ")) cls = "fas " + cls;
-  const faExtra = extraStyle.replace(/width:[^;]*;?/g, "").replace(/height:[^;]*;?/g, "");
+  if (typeof cls === "string" && cls.startsWith("fa-") && !cls.includes(" "))
+    cls = "fas " + cls;
+  const faExtra = extraStyle
+    .replace(/width:[^;]*;?/g, "")
+    .replace(/height:[^;]*;?/g, "");
   const style = `font-size:${size}px;${faExtra}`;
   const combined = extraClass ? `${cls} ${extraClass}` : cls;
   return `<i class="${combined}" style="${style}"${idAttr}${titleAttr}></i>`;
@@ -97,7 +120,8 @@ function readExplorerPayload(e) {
     const raw = e.dataTransfer.getData(EXPLORER_DRAG_TYPE);
     if (!raw) return null;
     const payload = JSON.parse(raw);
-    if (!payload || !Array.isArray(payload.items) || !payload.items.length) return null;
+    if (!payload || !Array.isArray(payload.items) || !payload.items.length)
+      return null;
     return payload;
   } catch {
     return null;
@@ -129,7 +153,11 @@ export class ExplorerApp extends BaseApp {
     this.open = this.open.bind(this);
     this.instances = new Map();
     this.thumbnailCache = new Map();
-    this.archiveExtractor = new ArchiveExtractor(os.fs, (msg) => os.notify.send(msg), AppSource.EXPLORER);
+    this.archiveExtractor = new ArchiveExtractor(
+      os.fs,
+      (msg) => os.notify.send(msg),
+      AppSource.EXPLORER,
+    );
   }
   createInstance(winId, callback, notepadRef, mode) {
     const inst = {
@@ -151,7 +179,7 @@ export class ExplorerApp extends BaseApp {
       searchContentCache: new Map(),
       recSearchView: false,
       split: false,
-      splitTabId: null
+      splitTabId: null,
     };
     if (inst.mode === "browse") {
       const firstTab = {
@@ -167,7 +195,7 @@ export class ExplorerApp extends BaseApp {
         sortDir: "asc",
         lastClickedIndex: -1,
         searchContentCache: new Map(),
-        cachedFolder: null
+        cachedFolder: null,
       };
       inst.tabs = [firstTab];
       inst.activeTabId = firstTab.id;
@@ -249,7 +277,7 @@ export class ExplorerApp extends BaseApp {
       sortDir: "asc",
       lastClickedIndex: -1,
       searchContentCache: new Map(),
-      cachedFolder: null
+      cachedFolder: null,
     };
     inst.tabs.push(fresh);
     this.loadTabState(inst, fresh);
@@ -318,14 +346,20 @@ export class ExplorerApp extends BaseApp {
       const label = this.tabLabelFor(tab);
       const tabEl = createElement("div", { className: "explorer-tab" });
       if (tab.id === inst.activeTabId) addClass(tabEl, "active");
-      const title = tab.isTrashView || tab.isDiskView ? label : "/" + tab.currentPath.join("/");
+      const title =
+        tab.isTrashView || tab.isDiskView
+          ? label
+          : "/" + tab.currentPath.join("/");
       tabEl.setAttribute("title", title);
       let tabIconName = "papirus:places/folder-blue";
       if (tab.isTrashView) tabIconName = "papirus:places/user-trash";
       else if (tab.isDiskView) tabIconName = "papirus:devices/drive-harddisk";
-      else if (!tab.currentPath || tab.currentPath.length === 0) tabIconName = "papirus:places/user-blue-home";
+      else if (!tab.currentPath || tab.currentPath.length === 0)
+        tabIconName = "papirus:places/user-blue-home";
       setHTML(tabEl, explorerIcon(tabIconName, 14, "", "explorer-tab-icon"));
-      const labelEl = createElement("span", { className: "explorer-tab-label" });
+      const labelEl = createElement("span", {
+        className: "explorer-tab-label",
+      });
       setText(labelEl, label);
       labelEl.setAttribute("title", title);
       tabEl.appendChild(labelEl);
@@ -335,7 +369,10 @@ export class ExplorerApp extends BaseApp {
       tabEl.draggable = true;
       bindEvent(tabEl, "dragstart", (e) => {
         try {
-          e.dataTransfer.setData(EXPLORER_TAB_TYPE, JSON.stringify({ winId: inst.winId, tabId: tab.id }));
+          e.dataTransfer.setData(
+            EXPLORER_TAB_TYPE,
+            JSON.stringify({ winId: inst.winId, tabId: tab.id }),
+          );
           e.dataTransfer.effectAllowed = "move";
         } catch {}
         const tabWin = $(`#${inst.winId}`);
@@ -361,7 +398,13 @@ export class ExplorerApp extends BaseApp {
         if (tabWin) {
           $$(".explorer-dock-zone", tabWin).forEach((zone) => {
             const rect = zone.getBoundingClientRect();
-            if (cx >= rect.left && cx <= rect.right && cy >= rect.top && cy <= rect.bottom) matched = zone;
+            if (
+              cx >= rect.left &&
+              cx <= rect.right &&
+              cy >= rect.top &&
+              cy <= rect.bottom
+            )
+              matched = zone;
           });
         }
         if (matched) {
@@ -390,7 +433,12 @@ export class ExplorerApp extends BaseApp {
         if (!tabWin) return;
         $$(".explorer-dock-zone", tabWin).forEach((zone) => {
           const rect = zone.getBoundingClientRect();
-          if (e.clientX >= rect.left && e.clientX <= rect.right && e.clientY >= rect.top && e.clientY <= rect.bottom)
+          if (
+            e.clientX >= rect.left &&
+            e.clientX <= rect.right &&
+            e.clientY >= rect.top &&
+            e.clientY <= rect.bottom
+          )
             addClass(zone, "active");
           else removeClass(zone, "active");
         });
@@ -406,13 +454,22 @@ export class ExplorerApp extends BaseApp {
       bindEvent(tabEl, "pointerdown", (e) => {
         if (e.button !== undefined && e.button !== 0) return;
         if (e.target.closest?.(".explorer-tab-close")) return;
-        pressInfo = { x: e.clientX, y: e.clientY, dragging: false, pointerId: e.pointerId };
+        pressInfo = {
+          x: e.clientX,
+          y: e.clientY,
+          dragging: false,
+          pointerId: e.pointerId,
+        };
         document.addEventListener("pointermove", onPointerTabMove);
         document.addEventListener("pointerup", onPointerTabUp);
         document.addEventListener("pointercancel", onPointerTabCancel);
       });
       bindEvent(tabEl, "click", () => {
-        if (inst.suppressTabClickUntil && Date.now() < inst.suppressTabClickUntil) return;
+        if (
+          inst.suppressTabClickUntil &&
+          Date.now() < inst.suppressTabClickUntil
+        )
+          return;
         this.switchTab(inst, tab.id);
       });
       bindEvent(closeEl, "click", (e) => {
@@ -452,7 +509,7 @@ export class ExplorerApp extends BaseApp {
         sortDir: inst.sortDir,
         lastClickedIndex: -1,
         searchContentCache: new Map(),
-        cachedFolder: null
+        cachedFolder: null,
       };
       inst.tabs.push(fresh);
       inst.split = true;
@@ -496,7 +553,7 @@ export class ExplorerApp extends BaseApp {
         sortDir: tab.sortDir,
         lastClickedIndex: -1,
         searchContentCache: new Map(),
-        cachedFolder: null
+        cachedFolder: null,
       };
       inst.tabs.push(companion);
       inst.split = true;
@@ -561,7 +618,10 @@ export class ExplorerApp extends BaseApp {
           if (!ev.buttons) return;
           const rect = container.getBoundingClientRect();
           if (!rect || !rect.width) return;
-          const pct = Math.min(80, Math.max(20, ((ev.clientX - rect.left) / rect.width) * 100));
+          const pct = Math.min(
+            80,
+            Math.max(20, ((ev.clientX - rect.left) / rect.width) * 100),
+          );
           const target = $(`#${inst.winId}-view`, win);
           if (!target) return;
           setStyle(target, { width: `calc(${pct}% - 3px)` });
@@ -601,7 +661,7 @@ export class ExplorerApp extends BaseApp {
     win.appendChild(right);
     const zones = [
       { el: left, side: "left" },
-      { el: right, side: "right" }
+      { el: right, side: "right" },
     ];
     zones.forEach(({ el, side }) => {
       bindEvent(el, "dragover", (e) => {
@@ -643,14 +703,22 @@ export class ExplorerApp extends BaseApp {
       if (!wrapper) {
         wrapper = createElement("div", { className: "explorer-split-pane" });
         wrapper.id = `${inst.winId}-view-split-wrap`;
-        const header = createElement("div", { className: "explorer-split-header" });
-        const backBtn = createElement("div", { className: "back-btn explorer-split-back" });
+        const header = createElement("div", {
+          className: "explorer-split-header",
+        });
+        const backBtn = createElement("div", {
+          className: "back-btn explorer-split-back",
+        });
         backBtn.setAttribute("title", "Back");
         setText(backBtn, "<");
-        const upBtn = createElement("div", { className: "back-btn explorer-split-up" });
+        const upBtn = createElement("div", {
+          className: "back-btn explorer-split-up",
+        });
         upBtn.setAttribute("title", "Up");
         setText(upBtn, "^");
-        const pathLabel = createElement("span", { className: "explorer-split-path" });
+        const pathLabel = createElement("span", {
+          className: "explorer-split-path",
+        });
         header.appendChild(backBtn);
         header.appendChild(upBtn);
         header.appendChild(pathLabel);
@@ -683,7 +751,8 @@ export class ExplorerApp extends BaseApp {
             addClass(splitView, "explorer-drop-active");
           },
           dragleave: (e) => {
-            if (!splitView.contains(e.relatedTarget)) removeClass(splitView, "explorer-drop-active");
+            if (!splitView.contains(e.relatedTarget))
+              removeClass(splitView, "explorer-drop-active");
           },
           drop: async (e) => {
             removeClass(splitView, "explorer-drop-active");
@@ -693,9 +762,11 @@ export class ExplorerApp extends BaseApp {
             const payload = readExplorerPayload(e);
             const destTab = this.getSplitTab(inst);
             if (!payload || !destTab) return;
-            if (payload.sourcePath.join("/") === destTab.currentPath.join("/")) return;
+            if (payload.sourcePath.join("/") === destTab.currentPath.join("/"))
+              return;
             const sourceInst = this.instances.get(payload.winId);
-            if (sourceInst && (sourceInst.isTrashView || sourceInst.isDiskView)) return;
+            if (sourceInst && (sourceInst.isTrashView || sourceInst.isDiskView))
+              return;
             await this.moveDraggedItems(
               payload.items,
               payload.fileTypes || {},
@@ -705,9 +776,9 @@ export class ExplorerApp extends BaseApp {
               e.ctrlKey,
               inst,
               payload.pane || 0,
-              1
+              1,
             );
-          }
+          },
         });
       }
       this.ensureSplitDivider(win, inst);
@@ -747,7 +818,7 @@ export class ExplorerApp extends BaseApp {
       try {
         iconEl = await this.buildItemIconHTML(name, isFile, itemData, {
           currentPath: st.currentPath,
-          thumbnailCache: this.thumbnailCache
+          thumbnailCache: this.thumbnailCache,
         });
       } catch {
         iconEl = buildFileIconHTML(name, { isFolder: !isFile });
@@ -756,7 +827,9 @@ export class ExplorerApp extends BaseApp {
     }
     let list = built;
     if (this.viewMode === "list") {
-      const header = createElement("div", { className: "explorer-list-header" });
+      const header = createElement("div", {
+        className: "explorer-list-header",
+      });
       const nameCol = createElement("span", { className: "list-h-name" });
       setText(nameCol, "Name");
       const dateCol = createElement("span", { className: "list-h-date" });
@@ -779,32 +852,46 @@ export class ExplorerApp extends BaseApp {
       if (this.viewMode === "list") {
         setHTML(
           item,
-          `${iconEl}<span class="file-item-name">${name}</span><span class="file-col-date">-</span><span class="file-col-type">${isFile ? "File" : "File Folder"}</span><span class="file-col-size"></span>`
+          `${iconEl}<span class="file-item-name">${name}</span><span class="file-col-date">-</span><span class="file-col-type">${isFile ? "File" : "File Folder"}</span><span class="file-col-size"></span>`,
         );
       } else {
         setHTML(item, `${iconEl}<span class="file-item-name">${name}</span>`);
       }
       bindEvent(item, "click", () => {
-        $$(".file-item.explorer-selected", splitView).forEach((el) => removeClass(el, "explorer-selected"));
+        $$(".file-item.explorer-selected", splitView).forEach((el) =>
+          removeClass(el, "explorer-selected"),
+        );
         st.selectedItems = new Set([name]);
         st.selectedFile = name;
         addClass(item, "explorer-selected");
       });
       bindEvent(item, "dblclick", () => {
         if (!isFile) this.splitNavigate(inst, [...st.currentPath, name]);
-        else this.openItemForInstance({ ...inst, currentPath: [...st.currentPath] }, name, true);
+        else
+          this.openItemForInstance(
+            { ...inst, currentPath: [...st.currentPath] },
+            name,
+            true,
+          );
       });
-      bindEvent(item, "mouseenter", (e) => scheduleFileTooltip(e, st.currentPath, name, !isFile));
+      bindEvent(item, "mouseenter", (e) =>
+        scheduleFileTooltip(e, st.currentPath, name, !isFile),
+      );
       bindEvent(item, "mouseleave", () => hideFileTooltip());
       item.draggable = true;
-      bindEvent(item, "dragstart", (e) => this.handleItemDragStart(e, item, name, isFile, inst, 1));
+      bindEvent(item, "dragstart", (e) =>
+        this.handleItemDragStart(e, item, name, isFile, inst, 1),
+      );
       bindEvent(item, "dragend", () => this.clearDropHighlights());
       if (!isFile) {
         bindEvent(item, "dragover", (e) => this.handleFolderDragOver(e, item));
         bindEvent(item, "dragleave", (e) => {
-          if (!item.contains(e.relatedTarget)) removeClass(item, "explorer-drop-target");
+          if (!item.contains(e.relatedTarget))
+            removeClass(item, "explorer-drop-target");
         });
-        bindEvent(item, "drop", (e) => this.handleFolderDrop(e, item, name, inst));
+        bindEvent(item, "drop", (e) =>
+          this.handleFolderDrop(e, item, name, inst),
+        );
       }
       splitView.appendChild(item);
     }
@@ -849,18 +936,23 @@ export class ExplorerApp extends BaseApp {
       itemName || [...inst.selectedItems][0],
       isFile ?? true,
       view,
-      inst.currentPath
+      inst.currentPath,
     );
-    this.setClipboard({ source: "explorer", action, icons: items, sourceInst: inst });
+    this.setClipboard({
+      source: "explorer",
+      action,
+      icons: items,
+      sourceInst: inst,
+    });
 
     if (action === "cut" && view) {
       items.forEach(({ data: { name: n } }) => {
-        const el = $$(".file-item", view).find((el) => el.querySelector("span")?.textContent === n);
+        const el = $$(".file-item", view).find(
+          (el) => el.querySelector("span")?.textContent === n,
+        );
         if (el) setStyle(el, { opacity: "0.5" });
       });
     }
-
-    os.notify.send(`${items.length} ${pluralize(items.length, "item")} ${action}`);
   }
 
   pasteToCurrentPath(inst) {
@@ -885,7 +977,8 @@ export class ExplorerApp extends BaseApp {
 
   sidebarHTML(variant = "browse") {
     const isDialog = variant !== "browse";
-    const collapsed = os.storage.get(StorageKeys.explorerSidebarCollapsed) || {};
+    const collapsed =
+      os.storage.get(StorageKeys.explorerSidebarCollapsed) || {};
     const quickCollapsed = collapsed.quick ? "collapsed" : "";
     const pcCollapsed = collapsed.pc ? "collapsed" : "";
 
@@ -893,41 +986,41 @@ export class ExplorerApp extends BaseApp {
       {
         path: "",
         icon: explorerIcon("papirus:places/user-blue-home", 14),
-        label: "Home"
+        label: "Home",
       },
       {
         path: "Desktop",
         icon: explorerIcon("papirus:devices/computer", 14),
-        label: "Desktop"
+        label: "Desktop",
       },
       {
         path: "Downloads",
         icon: explorerIcon("papirus:actions/edit-download", 14),
-        label: "Downloads"
+        label: "Downloads",
       },
       {
         path: "Documents",
         icon: explorerIcon("papirus:mimetypes/text-x-generic", 14),
-        label: "Documents"
+        label: "Documents",
       },
       {
         path: "Pictures",
         icon: explorerIcon("papirus:mimetypes/image-x-generic", 14),
-        label: "Pictures"
-      }
+        label: "Pictures",
+      },
     ];
     if (variant !== "directory") {
       quickItems.push(
         {
           path: "Music",
           icon: explorerIcon("papirus:mimetypes/audio-x-generic", 14),
-          label: "Music"
+          label: "Music",
         },
         {
           path: "Videos",
           icon: explorerIcon("papirus:mimetypes/video-x-generic", 14),
-          label: "Videos"
-        }
+          label: "Videos",
+        },
       );
     }
 
@@ -938,7 +1031,9 @@ export class ExplorerApp extends BaseApp {
     html += explorerIcon("papirus:actions/go-down", 10, "", "sidebar-chevron");
     html += "<span>Quick Access</span></div>";
     html += '<div class="sidebar-section-body">';
-    const qaHidden = new Set(os.storage.get(StorageKeys.explorerQuickAccessHidden) || []);
+    const qaHidden = new Set(
+      os.storage.get(StorageKeys.explorerQuickAccessHidden) || [],
+    );
     const visibleDefaults = quickItems.filter((q) => !qaHidden.has(q.path));
     for (const { path, icon, label } of visibleDefaults) {
       html += `<div class="nav-item" data-path="${path}">${icon}<span>${label}</span></div>`;
@@ -975,7 +1070,10 @@ export class ExplorerApp extends BaseApp {
     const sidebar = win.querySelector(".explorer-sidebar");
     if (!container || !sidebar) return;
     if (sidebar.querySelector(".explorer-resizer")) return;
-    if (win.querySelector(".explorer-resizer") && win.querySelector(".explorer-resizer").parentElement !== sidebar) {
+    if (
+      win.querySelector(".explorer-resizer") &&
+      win.querySelector(".explorer-resizer").parentElement !== sidebar
+    ) {
       const existing = win.querySelector(".explorer-resizer");
       if (existing) existing.remove();
     }
@@ -988,7 +1086,7 @@ export class ExplorerApp extends BaseApp {
       storageKey: StorageKeys.explorerSidebarWidth,
       min: 140,
       max: 320,
-      defaultWidth: 155
+      defaultWidth: 155,
     });
   }
 
@@ -1012,7 +1110,8 @@ export class ExplorerApp extends BaseApp {
       } else if (rawPath === "__disk__") {
         item.onclick = () => this.showDiskView(inst);
       } else if (mountPoint) {
-        item.onclick = () => this.navigateInstance(inst, mountPoint.split("/").filter(Boolean));
+        item.onclick = () =>
+          this.navigateInstance(inst, mountPoint.split("/").filter(Boolean));
         const label = item.dataset.label;
         const isISO = mountPoint.startsWith("ISOs/");
         item.oncontextmenu = (e) => {
@@ -1022,50 +1121,59 @@ export class ExplorerApp extends BaseApp {
             menu.appendChild(
               menuItem(
                 "Open",
-                () => this.navigateInstance(inst, mountPoint.split("/").filter(Boolean)),
-                "fa-folder-open"
-              )
+                () =>
+                  this.navigateInstance(
+                    inst,
+                    mountPoint.split("/").filter(Boolean),
+                  ),
+                "fa-folder-open",
+              ),
             );
             menu.appendChild(
               menuItem(
                 "Open in New Window",
                 () => this.open([...mountPoint.split("/").filter(Boolean)]),
-                "fa-external-link-alt"
-              )
+                "fa-external-link-alt",
+              ),
             );
             menu.appendChild(hr());
             menu.appendChild(
               menuItem(
                 "Copy Path",
                 () => {
-                  navigator.clipboard.writeText("/" + mountPoint).catch(() => {});
+                  navigator.clipboard
+                    .writeText("/" + mountPoint)
+                    .catch(() => {});
                 },
-                "fa-copy"
-              )
+                "fa-copy",
+              ),
             );
             menu.appendChild(
               menuItem(
                 "Unmount",
                 () => {
-                  os.dialog.confirm("Unmount", `Eject "${label}"?`).then((confirmed) => {
-                    if (confirmed) {
-                      if (isISO) {
-                        os.fs.unmountISO(label);
-                      } else {
-                        os.fs.unmount(label);
+                  os.dialog
+                    .confirm("Unmount", `Eject "${label}"?`)
+                    .then((confirmed) => {
+                      if (confirmed) {
+                        if (isISO) {
+                          os.fs.unmountISO(label);
+                        } else {
+                          os.fs.unmount(label);
+                        }
+                        this.renderMountsInSidebar(win, inst);
+                        this.renderInstance(inst);
                       }
-                      this.renderMountsInSidebar(win, inst);
-                      this.renderInstance(inst);
-                    }
-                  });
+                    });
                 },
-                isISO ? "fa-eject" : "fa-eject"
-              )
+                isISO ? "fa-eject" : "fa-eject",
+              ),
             );
           });
         };
       } else {
-        item.onclick = () => this.navigateInstance(inst, rawPath.split("/").filter(Boolean));
+        item.onclick = () =>
+          this.navigateInstance(inst, rawPath.split("/").filter(Boolean));
         item.oncontextmenu = (e) => {
           const label = item.textContent.trim();
           showSidebarItemContextMenu(this, e, rawPath || "", label, inst);
@@ -1078,7 +1186,8 @@ export class ExplorerApp extends BaseApp {
         const section = header.parentElement;
         if (!section) return;
         section.classList.toggle("collapsed");
-        const collapsed = os.storage.get(StorageKeys.explorerSidebarCollapsed) || {};
+        const collapsed =
+          os.storage.get(StorageKeys.explorerSidebarCollapsed) || {};
         const key = header.dataset.section;
         if (key) {
           collapsed[key] = section.classList.contains("collapsed");
@@ -1103,7 +1212,9 @@ export class ExplorerApp extends BaseApp {
       });
       sidebar.addEventListener("dragleave", (e) => {
         if (!sidebar.contains(e.relatedTarget)) {
-          $$(".nav-item.explorer-drop-target", sidebar).forEach((el) => removeClass(el, "explorer-drop-target"));
+          $$(".nav-item.explorer-drop-target", sidebar).forEach((el) =>
+            removeClass(el, "explorer-drop-target"),
+          );
         }
       });
       sidebar.addEventListener("drop", (e) => {
@@ -1127,7 +1238,7 @@ export class ExplorerApp extends BaseApp {
       container.innerHTML = storageMounts
         .map(
           (m) =>
-            `<div class="nav-item" data-mount="${m.mountPoint}" data-label="${m.label}">${explorerIcon("papirus:devices/drive-harddisk", 14, "opacity:0.7;flex-shrink:0;")}<span>${m.label}</span></div>`
+            `<div class="nav-item" data-mount="${m.mountPoint}" data-label="${m.label}">${explorerIcon("papirus:devices/drive-harddisk", 14, "opacity:0.7;flex-shrink:0;")}<span>${m.label}</span></div>`,
         )
         .join("");
     }
@@ -1146,7 +1257,7 @@ export class ExplorerApp extends BaseApp {
     container.innerHTML = isoMounts
       .map(
         (m) =>
-          `<div class="nav-item" data-mount="${m.mountPoint}" data-label="${m.label}">${explorerIcon("papirus:devices/media-optical", 14, "opacity:0.7;flex-shrink:0;")}<span>${m.label}</span></div>`
+          `<div class="nav-item" data-mount="${m.mountPoint}" data-label="${m.label}">${explorerIcon("papirus:devices/media-optical", 14, "opacity:0.7;flex-shrink:0;")}<span>${m.label}</span></div>`,
       )
       .join("");
   }
@@ -1170,7 +1281,11 @@ export class ExplorerApp extends BaseApp {
   async open(pathOrOptions = [], callback = null, notepadRef = null) {
     let path = [];
     let options = {};
-    if (pathOrOptions && typeof pathOrOptions === "object" && !Array.isArray(pathOrOptions)) {
+    if (
+      pathOrOptions &&
+      typeof pathOrOptions === "object" &&
+      !Array.isArray(pathOrOptions)
+    ) {
       options = pathOrOptions;
       path = options.path || [];
     } else {
@@ -1184,15 +1299,30 @@ export class ExplorerApp extends BaseApp {
     }
 
     const isSelector = typeof callback === "function";
-    const winId = options.forceId || (isSelector ? `explorer-selector-${Date.now()}` : `explorer-${Date.now()}`);
+    const winId =
+      options.forceId ||
+      (isSelector
+        ? `explorer-selector-${Date.now()}`
+        : `explorer-${Date.now()}`);
 
-    const inst = this.createInstance(winId, callback, notepadRef, isSelector ? "select" : "browse");
+    const inst = this.createInstance(
+      winId,
+      callback,
+      notepadRef,
+      isSelector ? "select" : "browse",
+    );
     const title = isSelector ? "Select File" : "Explorer";
-    const win = os.window.create(winId, title, options.width || "700px", options.height || "500px", {
-      ...options,
-      icon: "static/icons/file.webp",
-      skipHeader: true
-    });
+    const win = os.window.create(
+      winId,
+      title,
+      options.width || "700px",
+      options.height || "500px",
+      {
+        ...options,
+        icon: "static/icons/explorerwin11.png",
+        skipHeader: true,
+      },
+    );
     addClass(win, "explorer-window");
 
     win.innerHTML = `
@@ -1266,7 +1396,7 @@ export class ExplorerApp extends BaseApp {
     const inst = this.createInstance(winId, null, null, "browse");
     inst.tabs = null;
     const win = os.window.create(winId, "Trash", "700px", "500px", {
-      icon: getEffectiveIcon("papirus:places/user-trash")
+      icon: getEffectiveIcon("papirus:places/user-trash"),
     });
     addClass(win, "explorer-window");
 
@@ -1311,7 +1441,7 @@ export class ExplorerApp extends BaseApp {
     inst.saveCallback = onSave;
 
     const win = os.window.create(winId, "Save As", "700px", "540px", {
-      icon: "static/icons/file.webp"
+      icon: "static/icons/explorerwin11.png",
     });
     addClass(win, "explorer-window");
 
@@ -1360,7 +1490,7 @@ export class ExplorerApp extends BaseApp {
       keydown: (e) => {
         if (e.key === "Enter") saveBtn.click();
         if (e.key === "Escape") cancelBtn.click();
-      }
+      },
     });
 
     saveBtn.onclick = () => {
@@ -1391,7 +1521,7 @@ export class ExplorerApp extends BaseApp {
     inst.directoryCallback = onSelect;
 
     const win = os.window.create(winId, "Select Directory", "700px", "500px", {
-      icon: "static/icons/file.webp"
+      icon: "static/icons/explorerwin11.png",
     });
     addClass(win, "explorer-window");
 
@@ -1509,7 +1639,8 @@ export class ExplorerApp extends BaseApp {
             if (content === undefined) {
               try {
                 const raw = await os.fs.read(fullPath);
-                content = typeof raw === "string" ? raw : raw?.toString?.() || "";
+                content =
+                  typeof raw === "string" ? raw : raw?.toString?.() || "";
                 cache.set(cacheKey, content);
               } catch {
                 continue;
@@ -1523,7 +1654,7 @@ export class ExplorerApp extends BaseApp {
               path: fullPath,
               dirPath,
               contentMatch: contentMatch && !nameMatch,
-              isFolder: data.type !== "file"
+              isFolder: data.type !== "file",
             });
           }
         }
@@ -1539,7 +1670,7 @@ export class ExplorerApp extends BaseApp {
       const header = createElement("div", { className: "rec-search-header" });
       setHTML(
         header,
-        `<span>Results for "<strong>${query}</strong>"</span><span class="rec-search-count">${results.length} ${pluralize(results.length, "match")}</span>`
+        `<span>Results for "<strong>${query}</strong>"</span><span class="rec-search-count">${results.length} ${pluralize(results.length, "match")}</span>`,
       );
       view.appendChild(header);
       if (results.length === 0) {
@@ -1549,15 +1680,19 @@ export class ExplorerApp extends BaseApp {
         return;
       }
       for (const r of results) {
-        const item = createElement("div", { className: "file-item rec-search-item" });
+        const item = createElement("div", {
+          className: "file-item rec-search-item",
+        });
         const relPath = r.dirPath.length ? r.dirPath.join("/") + "/" : "";
         setHTML(
           item,
-          `${buildFileIconHTML(r.name, { isFolder: r.isFolder })}<span class="file-item-name">${r.name}</span><span class="rec-search-path">${relPath}</span>`
+          `${buildFileIconHTML(r.name, { isFolder: r.isFolder })}<span class="file-item-name">${r.name}</span><span class="rec-search-path">${relPath}</span>`,
         );
         if (r.contentMatch) item.classList.add("cs-match");
         item.addEventListener("click", () => {
-          $$(".rec-search-item.selected", view).forEach((el) => el.classList.remove("selected"));
+          $$(".rec-search-item.selected", view).forEach((el) =>
+            el.classList.remove("selected"),
+          );
           item.classList.add("selected");
         });
         item.addEventListener("dblclick", async () => {
@@ -1565,7 +1700,8 @@ export class ExplorerApp extends BaseApp {
           const newView = $(`#${winId}-view`, win);
           if (newView) {
             const target = $$(".file-item", newView).find(
-              (el) => el.querySelector(".file-item-name")?.textContent === r.name
+              (el) =>
+                el.querySelector(".file-item-name")?.textContent === r.name,
             );
             if (target) {
               this.selectExplorerItem(inst, r.name, target, false, false);
@@ -1591,12 +1727,17 @@ export class ExplorerApp extends BaseApp {
               return;
             }
             const cache = inst.searchContentCache;
-            const results = await searchRecursive(inst.currentPath, query, cache, currentVersion);
+            const results = await searchRecursive(
+              inst.currentPath,
+              query,
+              cache,
+              currentVersion,
+            );
             if (currentVersion !== searchVersion) return;
             renderRecSearchResults(results, query);
           }, 150);
         },
-        keydown: (e) => e.stopPropagation()
+        keydown: (e) => e.stopPropagation(),
       });
     }
 
@@ -1618,7 +1759,13 @@ export class ExplorerApp extends BaseApp {
         return;
       }
       const active = document.activeElement;
-      if (active && (active.tagName === "INPUT" || active.tagName === "TEXTAREA" || active.isContentEditable)) return;
+      if (
+        active &&
+        (active.tagName === "INPUT" ||
+          active.tagName === "TEXTAREA" ||
+          active.isContentEditable)
+      )
+        return;
       if (!win.contains(document.activeElement)) return;
 
       if (KeybindManager.matches(e, "explorer.deleteItem")) {
@@ -1626,8 +1773,12 @@ export class ExplorerApp extends BaseApp {
         if (!inst.selectedItems.size) return;
         const names = [...inst.selectedItems];
         inst.selectedItems = new Set();
-        Promise.all(names.map((n) => os.fs.trashFile(inst.currentPath, n))).then(() => {
-          os.notify.send(`${names.length} ${pluralize(names.length, "item")} moved to trash`);
+        Promise.all(
+          names.map((n) => os.fs.trashFile(inst.currentPath, n)),
+        ).then(() => {
+          os.notify.send(
+            `${names.length} ${pluralize(names.length, "item")} moved to trash`,
+          );
           this.renderInstance(inst);
         });
         return;
@@ -1641,11 +1792,16 @@ export class ExplorerApp extends BaseApp {
 
       if (KeybindManager.matches(e, "explorer.rename")) {
         e.preventDefault();
-        const selectedName = inst.selectedFile || (inst.selectedItems.size === 1 ? [...inst.selectedItems][0] : null);
+        const selectedName =
+          inst.selectedFile ||
+          (inst.selectedItems.size === 1 ? [...inst.selectedItems][0] : null);
         if (!selectedName) return;
         const view = $(`#${winId}-view`, win);
         const itemEl =
-          view && $$(".file-item", view).find((el) => el.querySelector("span")?.textContent === selectedName);
+          view &&
+          $$(".file-item", view).find(
+            (el) => el.querySelector("span")?.textContent === selectedName,
+          );
         if (itemEl) startInlineRename(this, itemEl, selectedName, inst);
         return;
       }
@@ -1661,14 +1817,17 @@ export class ExplorerApp extends BaseApp {
         return;
       }
 
-      if (KeybindManager.matches(e, "explorer.navigateUp") || KeybindManager.matches(e, "explorer.navigateDown")) {
+      if (
+        KeybindManager.matches(e, "explorer.navigateUp") ||
+        KeybindManager.matches(e, "explorer.navigateDown")
+      ) {
         e.preventDefault();
         const view = $(`#${winId}-view`, win);
         if (!view) return;
         const items = $$(".file-item", view);
         if (!items.length) return;
         const selectedIdx = items.findIndex((el) =>
-          inst.selectedItems.has(el.querySelector("span")?.textContent || "")
+          inst.selectedItems.has(el.querySelector("span")?.textContent || ""),
         );
         let nextIdx;
         if (KeybindManager.matches(e, "explorer.navigateDown")) {
@@ -1680,7 +1839,9 @@ export class ExplorerApp extends BaseApp {
         const name = el.querySelector("span")?.textContent;
         if (name) {
           if (!e.shiftKey) {
-            $$(".file-item.explorer-selected", view).forEach((el) => removeClass(el, "explorer-selected"));
+            $$(".file-item.explorer-selected", view).forEach((el) =>
+              removeClass(el, "explorer-selected"),
+            );
             inst.selectedItems = new Set();
           }
           this.selectExplorerItem(inst, name, el, false, false);
@@ -1785,8 +1946,8 @@ export class ExplorerApp extends BaseApp {
               const fullPath = "/" + inst.currentPath.join("/");
               navigator.clipboard.writeText(fullPath).catch(() => {});
             },
-            "fa-copy"
-          )
+            "fa-copy",
+          ),
         );
       });
     });
@@ -1830,7 +1991,7 @@ export class ExplorerApp extends BaseApp {
       },
       focus: () => {
         pathInput.select();
-      }
+      },
     });
 
     const reloadBtn = $(`#${inst.winId}-reload`, win);
@@ -1850,7 +2011,9 @@ export class ExplorerApp extends BaseApp {
     };
 
     const handler = (e) => {
-      const btn = e.target.closest(`#${inst.winId}-view-grid, #${inst.winId}-view-list`);
+      const btn = e.target.closest(
+        `#${inst.winId}-view-grid, #${inst.winId}-view-list`,
+      );
       if (!btn) return;
       const mode = btn.id && btn.id.endsWith("grid") ? "grid" : "list";
       this.viewMode = mode;
@@ -1871,7 +2034,13 @@ export class ExplorerApp extends BaseApp {
   }
 
   kindLabel(kind) {
-    const LABELS = { text: "Text Document", image: "Image", video: "Video", audio: "Audio", rom: "ROM File" };
+    const LABELS = {
+      text: "Text Document",
+      image: "Image",
+      video: "Video",
+      audio: "Audio",
+      rom: "ROM File",
+    };
     return LABELS[kind] || null;
   }
 
@@ -1898,7 +2067,9 @@ export class ExplorerApp extends BaseApp {
       let cmp = 0;
       switch (sortBy) {
         case "name":
-          cmp = a.name.localeCompare(b.name, undefined, { sensitivity: "base" });
+          cmp = a.name.localeCompare(b.name, undefined, {
+            sensitivity: "base",
+          });
           break;
         case "date": {
           const aD = aStat.mtime ? new Date(aStat.mtime).getTime() : 0;
@@ -1910,7 +2081,10 @@ export class ExplorerApp extends BaseApp {
           const aK = KIND_ORDER[aData.kind] || 99;
           const bK = KIND_ORDER[bData.kind] || 99;
           cmp = aK - bK;
-          if (cmp === 0) cmp = a.name.localeCompare(b.name, undefined, { sensitivity: "base" });
+          if (cmp === 0)
+            cmp = a.name.localeCompare(b.name, undefined, {
+              sensitivity: "base",
+            });
           break;
         }
         case "size":
@@ -1928,7 +2102,7 @@ export class ExplorerApp extends BaseApp {
       { key: "name", label: "Name", cls: "list-h-name" },
       { key: "date", label: "Date modified", cls: "list-h-date" },
       { key: "type", label: "Type", cls: "list-h-type" },
-      { key: "size", label: "Size", cls: "list-h-size" }
+      { key: "size", label: "Size", cls: "list-h-size" },
     ];
     cols.forEach((col) => {
       const span = createElement("span");
@@ -1937,9 +2111,12 @@ export class ExplorerApp extends BaseApp {
       if (inst.sortBy === col.key) {
         span.classList.add("list-h-active");
         const sortEffective = getEffectiveIcon(
-          `papirus:actions/view-sort${inst.sortDir === "asc" ? "ascending" : "descending"}`
+          `papirus:actions/view-sort${inst.sortDir === "asc" ? "ascending" : "descending"}`,
         );
-        if (typeof sortEffective === "string" && sortEffective.startsWith("papirus:")) {
+        if (
+          typeof sortEffective === "string" &&
+          sortEffective.startsWith("papirus:")
+        ) {
           const arrow = createElement("img");
           arrow.src = resolveIconUrl(sortEffective);
           arrow.style.width = "10px";
@@ -1950,7 +2127,12 @@ export class ExplorerApp extends BaseApp {
         } else {
           const arrow = createElement("i");
           let cls = sortEffective;
-          if (typeof cls === "string" && cls.startsWith("fa-") && !cls.includes(" ")) cls = "fas " + cls;
+          if (
+            typeof cls === "string" &&
+            cls.startsWith("fa-") &&
+            !cls.includes(" ")
+          )
+            cls = "fas " + cls;
           arrow.className = cls;
           arrow.style.fontSize = "10px";
           arrow.style.marginLeft = "4px";
@@ -1986,7 +2168,9 @@ export class ExplorerApp extends BaseApp {
     items.forEach((item) => {
       const dataPath = item.dataset.path;
       const mountPoint = item.dataset.mount;
-      const mountPath = mountPoint ? mountPoint.split("/").filter(Boolean).join("/") : null;
+      const mountPath = mountPoint
+        ? mountPoint.split("/").filter(Boolean).join("/")
+        : null;
       let isMatch = false;
       if (mountPoint) {
         isMatch = mountPath === currentPath;
@@ -2022,7 +2206,7 @@ export class ExplorerApp extends BaseApp {
           left: selState.startX + "px",
           top: selState.startY + "px",
           width: "0px",
-          height: "0px"
+          height: "0px",
         });
     });
 
@@ -2042,7 +2226,13 @@ export class ExplorerApp extends BaseApp {
       const h = Math.abs(curY - selState.startY);
 
       const sb = view.querySelector(".explorer-selbox");
-      if (sb) setStyle(sb, { left: x + "px", top: y + "px", width: w + "px", height: h + "px" });
+      if (sb)
+        setStyle(sb, {
+          left: x + "px",
+          top: y + "px",
+          width: w + "px",
+          height: h + "px",
+        });
 
       if (selRafId) return;
       selRafId = requestAnimationFrame(() => {
@@ -2053,7 +2243,9 @@ export class ExplorerApp extends BaseApp {
         const boxRect = { left: x, top: y, right: x + w, bottom: y + h };
 
         if (!e.ctrlKey) {
-          $$(".file-item.explorer-selected", view).forEach((el) => removeClass(el, "explorer-selected"));
+          $$(".file-item.explorer-selected", view).forEach((el) =>
+            removeClass(el, "explorer-selected"),
+          );
           i.selectedItems = new Set();
         }
 
@@ -2064,7 +2256,7 @@ export class ExplorerApp extends BaseApp {
             left: r.left - vr.left + view.scrollLeft,
             top: r.top - vr.top + view.scrollTop,
             right: r.right - vr.left + view.scrollLeft,
-            bottom: r.bottom - vr.top + view.scrollTop
+            bottom: r.bottom - vr.top + view.scrollTop,
           };
           const overlaps = rectsIntersect(ir, boxRect);
           const name = item.querySelector("span")?.textContent;
@@ -2104,13 +2296,15 @@ export class ExplorerApp extends BaseApp {
           addClass(view, "explorer-drop-active");
           return;
         }
-        if (![...(e.dataTransfer?.items || [])].some((i) => i.kind === "file")) return;
+        if (![...(e.dataTransfer?.items || [])].some((i) => i.kind === "file"))
+          return;
         e.preventDefault();
         e.stopPropagation();
         addClass(view, "explorer-drop-active");
       },
       dragleave: (e) => {
-        if (!view.contains(e.relatedTarget)) removeClass(view, "explorer-drop-active");
+        if (!view.contains(e.relatedTarget))
+          removeClass(view, "explorer-drop-active");
       },
       drop: async (e) => {
         removeClass(view, "explorer-drop-active");
@@ -2121,7 +2315,8 @@ export class ExplorerApp extends BaseApp {
         if (!payload || !inst || inst.isTrashView || inst.isDiskView) return;
         if (payload.sourcePath.join("/") === inst.currentPath.join("/")) return;
         const sourceInst = this.instances.get(payload.winId);
-        if (sourceInst && (sourceInst.isTrashView || sourceInst.isDiskView)) return;
+        if (sourceInst && (sourceInst.isTrashView || sourceInst.isDiskView))
+          return;
         await this.moveDraggedItems(
           payload.items,
           payload.fileTypes || {},
@@ -2131,9 +2326,9 @@ export class ExplorerApp extends BaseApp {
           e.ctrlKey,
           inst,
           payload.pane || 0,
-          0
+          0,
         );
-      }
+      },
     });
   }
 
@@ -2219,7 +2414,8 @@ export class ExplorerApp extends BaseApp {
 
       const folder = await os.fs.readdir(inst.currentPath);
       inst.cachedFolder = folder;
-      if (inst.mode === "browse") inst.cachedFolderStats = await this.buildFolderStats(inst);
+      if (inst.mode === "browse")
+        inst.cachedFolderStats = await this.buildFolderStats(inst);
 
       const entries = Object.entries(folder).filter(([name]) => {
         if (name === "system" && inst.currentPath.length === 0) return false;
@@ -2229,14 +2425,25 @@ export class ExplorerApp extends BaseApp {
       const items = await Promise.all(
         entries.map(async ([name, itemData]) => {
           const isFile = itemData?.type === "file";
-          const iconEl = await this.buildItemIconHTML(name, isFile, itemData, inst);
+          const iconEl = await this.buildItemIconHTML(
+            name,
+            isFile,
+            itemData,
+            inst,
+          );
           return { name, isFile, iconEl, itemData };
-        })
+        }),
       );
 
       if (this.viewMode === "list") {
         const stats = inst.cachedFolderStats || {};
-        const sorted = this.sortItems(items, inst.sortBy, inst.sortDir, folder, stats);
+        const sorted = this.sortItems(
+          items,
+          inst.sortBy,
+          inst.sortDir,
+          folder,
+          stats,
+        );
 
         const header = this.createListHeader(inst);
         view.appendChild(header);
@@ -2248,10 +2455,12 @@ export class ExplorerApp extends BaseApp {
           const kind = itemData?.kind || "";
           const size = isFile ? (itemData?.size ?? stat.size ?? 0) : "";
           const mtime = stat.mtime;
-          const typeLabel = isFile ? this.kindLabel(kind) || "File" : "File Folder";
+          const typeLabel = isFile
+            ? this.kindLabel(kind) || "File"
+            : "File Folder";
           setHTML(
             row,
-            `${iconEl}<span class="file-item-name">${name}</span><span class="file-col-date">${mtime ? this.formatFriendlyDate(mtime) : "-"}</span><span class="file-col-type">${typeLabel}</span><span class="file-col-size">${isFile ? formatSize(size) : ""}</span>`
+            `${iconEl}<span class="file-item-name">${name}</span><span class="file-col-date">${mtime ? this.formatFriendlyDate(mtime) : "-"}</span><span class="file-col-type">${typeLabel}</span><span class="file-col-size">${isFile ? formatSize(size) : ""}</span>`,
           );
           this.bindItemInteractions(row, name, isFile, inst, win);
           view.appendChild(row);
@@ -2267,7 +2476,10 @@ export class ExplorerApp extends BaseApp {
       }
 
       if (Object.keys(folder).length === 0 && inst.mode === "browse") {
-        speak("This folder is empty. Want me to help you organize?", ClippyAnimation.Searching);
+        speak(
+          "This folder is empty. Want me to help you organize?",
+          ClippyAnimation.Searching,
+        );
       }
 
       if (inst.mode === "browse") await this.updateStatusBar(inst, folder);
@@ -2282,12 +2494,16 @@ export class ExplorerApp extends BaseApp {
         const items = cb.items || cb.icons || [];
         const src = cb.sourceInst?.winId;
         const sameInst =
-          src === inst.winId || (cb.sourcePath && cb.sourcePath.join("/") === inst.currentPath.join("/"));
+          src === inst.winId ||
+          (cb.sourcePath &&
+            cb.sourcePath.join("/") === inst.currentPath.join("/"));
         if (sameInst && items.length) {
           const view = $(`#${inst.winId}-view`, win);
           if (view) {
             items.forEach(({ data: { name: n } }) => {
-              const el = $$(".file-item", view).find((el) => el.querySelector("span")?.textContent === n);
+              const el = $$(".file-item", view).find(
+                (el) => el.querySelector("span")?.textContent === n,
+              );
               if (el) setStyle(el, { opacity: "0.5" });
             });
           }
@@ -2313,7 +2529,10 @@ export class ExplorerApp extends BaseApp {
     try {
       folder = await os.fs.readdir(path);
     } catch {
-      setHTML(container, `<div class="deck-note">Could not open this folder.</div>`);
+      setHTML(
+        container,
+        `<div class="deck-note">Could not open this folder.</div>`,
+      );
       return 0;
     }
     const entries = Object.entries(folder);
@@ -2323,16 +2542,20 @@ export class ExplorerApp extends BaseApp {
       try {
         iconEl = await this.buildItemIconHTML(name, isFile, itemData, {
           currentPath: path,
-          thumbnailCache: this.thumbnailCache
+          thumbnailCache: this.thumbnailCache,
         });
       } catch {
-        iconEl = buildFileIconHTML(name, { isFolder: itemData?.type !== "file" });
+        iconEl = buildFileIconHTML(name, {
+          isFolder: itemData?.type !== "file",
+        });
       }
       const item = createElement("div", { className: "file-item" });
       item.dataset.isFile = String(isFile);
       setHTML(item, `${iconEl}<span class="file-item-name">${name}</span>`);
       item.addEventListener("click", () => {
-        container.querySelectorAll(".file-item.selected").forEach((el) => el.classList.remove("selected"));
+        container
+          .querySelectorAll(".file-item.selected")
+          .forEach((el) => el.classList.remove("selected"));
         item.classList.add("selected");
       });
       item.addEventListener("dblclick", async () => {
@@ -2368,7 +2591,9 @@ export class ExplorerApp extends BaseApp {
     if (name === "flymetothemoon.mp4") {
       thumbnailSrc = resolveIconUrl("static/flymetothemoon-preview.webp");
     } else if (name === "serial-experiments-lain.mp4") {
-      thumbnailSrc = resolveIconUrl("https://cdn.jsdelivr.net/gh/Yangmoooo/lain-sddm-theme@master/VisLain.gif");
+      thumbnailSrc = resolveIconUrl(
+        "https://cdn.jsdelivr.net/gh/Yangmoooo/lain-sddm-theme@master/VisLain.gif",
+      );
     } else if (isImageFile(name) && !inSystem) {
       const cacheKey = inst.currentPath.join("/") + "/" + name;
       const cached = this.thumbnailCache.get(cacheKey);
@@ -2377,7 +2602,10 @@ export class ExplorerApp extends BaseApp {
       } else {
         try {
           const content = await os.fs.getFileContent(inst.currentPath, name);
-          const src = content instanceof Blob ? await readFileAsDataURL(content) : content;
+          const src =
+            content instanceof Blob
+              ? await readFileAsDataURL(content)
+              : content;
           thumbnailSrc = await generateThumbnail(src);
           if (thumbnailSrc) this.thumbnailCache.set(cacheKey, thumbnailSrc);
         } catch (e) {
@@ -2386,7 +2614,11 @@ export class ExplorerApp extends BaseApp {
       }
     }
 
-    return buildFileIconHTML(name, { thumbnailSrc, storedIcon: itemData.faIcon || itemData.icon, isFolder: !isFile });
+    return buildFileIconHTML(name, {
+      thumbnailSrc,
+      storedIcon: itemData.faIcon || itemData.icon,
+      isFolder: !isFile,
+    });
   }
 
   bindItemInteractions(item, name, isFile, inst, win) {
@@ -2399,30 +2631,42 @@ export class ExplorerApp extends BaseApp {
       }
     } else if (inst.mode === "save") {
       if (!isFile) {
-        item.ondblclick = () => this.navigateInstance(inst, [...inst.currentPath, name]);
+        item.ondblclick = () =>
+          this.navigateInstance(inst, [...inst.currentPath, name]);
       } else {
         item.onclick = () => {
           const input = $(`#${inst.winId}-filename-input`, win);
           if (input) input.value = name;
-          $$(".file-item.explorer-selected", win).forEach((el) => removeClass(el, "explorer-selected"));
+          $$(".file-item.explorer-selected", win).forEach((el) =>
+            removeClass(el, "explorer-selected"),
+          );
           addClass(item, "explorer-selected");
         };
       }
     } else {
       item.onclick = (e) => {
-        if (e.detail === 1) this.selectExplorerItem(inst, name, item, e.ctrlKey, e.shiftKey);
+        if (e.detail === 1)
+          this.selectExplorerItem(inst, name, item, e.ctrlKey, e.shiftKey);
       };
       item.ondblclick = () => this.openItemForInstance(inst, name, isFile);
-      item.oncontextmenu = (e) => showFileContextMenu(this, e, name, isFile, inst);
+      item.oncontextmenu = (e) =>
+        showFileContextMenu(this, e, name, isFile, inst);
       item.draggable = true;
-      item.addEventListener("dragstart", (e) => this.handleItemDragStart(e, item, name, isFile, inst));
+      item.addEventListener("dragstart", (e) =>
+        this.handleItemDragStart(e, item, name, isFile, inst),
+      );
       item.addEventListener("dragend", () => this.clearDropHighlights());
       if (!isFile) {
-        item.addEventListener("dragover", (e) => this.handleFolderDragOver(e, item));
+        item.addEventListener("dragover", (e) =>
+          this.handleFolderDragOver(e, item),
+        );
         item.addEventListener("dragleave", (e) => {
-          if (!item.contains(e.relatedTarget)) removeClass(item, "explorer-drop-target");
+          if (!item.contains(e.relatedTarget))
+            removeClass(item, "explorer-drop-target");
         });
-        item.addEventListener("drop", (e) => this.handleFolderDrop(e, item, name, inst));
+        item.addEventListener("drop", (e) =>
+          this.handleFolderDrop(e, item, name, inst),
+        );
       }
     }
 
@@ -2435,7 +2679,9 @@ export class ExplorerApp extends BaseApp {
   selectFile(inst, name, itemEl) {
     const win = $(`#${inst.winId}`);
     if (!win) return;
-    $$(".file-item.explorer-selected", win).forEach((el) => removeClass(el, "explorer-selected"));
+    $$(".file-item.explorer-selected", win).forEach((el) =>
+      removeClass(el, "explorer-selected"),
+    );
     addClass(itemEl, "explorer-selected");
     inst.selectedFile = name;
     const label = $(`#${inst.winId}-select-label`, win);
@@ -2517,9 +2763,16 @@ export class ExplorerApp extends BaseApp {
         const raw = await os.fs.read(inst.currentPath.concat(name));
         const content = JSON.parse(raw);
         if (content && content.app) {
-          triggerCursorEffect(getEffectiveIcon(content.icon || "papirus:apps/kjumpingcube"));
-          os.storage.set(StorageKeys.launchTimePrefix + content.app, Date.now());
-          const extra = content.steamGameId ? { steamGameId: content.steamGameId } : null;
+          triggerCursorEffect(
+            getEffectiveIcon(content.icon || "papirus:apps/kjumpingcube"),
+          );
+          os.storage.set(
+            StorageKeys.launchTimePrefix + content.app,
+            Date.now(),
+          );
+          const extra = content.steamGameId
+            ? { steamGameId: content.steamGameId }
+            : null;
           os.app.launch(content.app, false, extra);
           return;
         } else if (content && content.type === "youtube-embed") {
@@ -2544,14 +2797,20 @@ export class ExplorerApp extends BaseApp {
       triggerCursorEffect(getEffectiveIcon("papirus:devices/media-optical"));
       try {
         const mountPoint = await os.fs.mountISO(inst.currentPath, name);
-        os.notify.send("Disc Image", `Mounted "${name}"`, { icon: getEffectiveIcon("papirus:devices/media-optical") });
+        os.notify.send("Disc Image", `Mounted "${name}"`, {
+          icon: getEffectiveIcon("papirus:devices/media-optical"),
+        });
         if (mountPoint) {
           const win = $(`#${inst.winId}`);
           if (win) this.sidebarRebuild(win, inst);
           this.navigateInstance(inst, mountPoint.split("/").filter(Boolean));
         }
       } catch (e) {
-        os.notify.send("Disc Image", `Failed to mount "${name}": ${e.message}`, { type: "error" });
+        os.notify.send(
+          "Disc Image",
+          `Failed to mount "${name}": ${e.message}`,
+          { type: "error" },
+        );
       }
       return;
     }
@@ -2559,7 +2818,7 @@ export class ExplorerApp extends BaseApp {
     triggerCursorEffect();
     await openFileWith({
       name,
-      path: [...inst.currentPath]
+      path: [...inst.currentPath],
     });
   }
 
@@ -2569,16 +2828,25 @@ export class ExplorerApp extends BaseApp {
 
   openYouTubeEmbedDesktop(content) {
     const winId = `yt-embed-${Date.now()}`;
-    const win = os.window.create(winId, content.name || "YouTube Embed", "800px", "600px", {
-      icon: "static/icons/file.webp"
-    });
+    const win = os.window.create(
+      winId,
+      content.name || "YouTube Embed",
+      "800px",
+      "600px",
+      {
+        icon: "static/icons/explorerwin11.png",
+      },
+    );
 
-    const base = content.nocookie ? "https://www.youtube-nocookie.com" : "https://www.youtube.com";
+    const base = content.nocookie
+      ? "https://www.youtube-nocookie.com"
+      : "https://www.youtube.com";
     const params = new URLSearchParams();
     if (content.autoplay) params.set("autoplay", "1");
     if (!content.controls) params.set("controls", "0");
     if (content.mute && content.autoplay) params.set("mute", "1");
-    if (content.startSeconds > 0) params.set("start", String(content.startSeconds));
+    if (content.startSeconds > 0)
+      params.set("start", String(content.startSeconds));
     if (content.endSeconds > 0) params.set("end", String(content.endSeconds));
     if (content.loop) params.set("loop", "1");
     params.set("rel", "0");
@@ -2591,7 +2859,10 @@ export class ExplorerApp extends BaseApp {
       if (content.loop) params.set("playlist", content.videoId);
       embedUrl = `${base}/embed/${encodeURIComponent(content.videoId)}?${params.toString()}`;
     } else {
-      os.notify.send("Invalid YouTube embed data", "Missing videoId or playlistId");
+      os.notify.send(
+        "Invalid YouTube embed data",
+        "Missing videoId or playlistId",
+      );
       return;
     }
 
@@ -2627,7 +2898,8 @@ export class ExplorerApp extends BaseApp {
     if (!win) return;
     const view = $(`#${inst.winId}-view`, win);
     if (!view) return;
-    if (document.activeElement !== view && document.activeElement !== win) view.focus({ preventScroll: true });
+    if (document.activeElement !== view && document.activeElement !== win)
+      view.focus({ preventScroll: true });
 
     if (isShift && inst.lastClickedIndex >= 0) {
       const items = $$(".file-item", view);
@@ -2636,7 +2908,9 @@ export class ExplorerApp extends BaseApp {
         const start = Math.min(inst.lastClickedIndex, currentIdx);
         const end = Math.max(inst.lastClickedIndex, currentIdx);
         if (!isCtrl) {
-          $$(".file-item.explorer-selected", view).forEach((el) => removeClass(el, "explorer-selected"));
+          $$(".file-item.explorer-selected", view).forEach((el) =>
+            removeClass(el, "explorer-selected"),
+          );
           inst.selectedItems = new Set();
         }
         for (let i = start; i <= end; i++) {
@@ -2650,13 +2924,16 @@ export class ExplorerApp extends BaseApp {
         inst.lastClickedIndex = currentIdx;
         inst.selectedFile = name;
         if (this.desktopUI) this.desktopUI.lastFocusedContext = "explorer";
-        if (inst.mode === "browse") this.updateStatusBar(inst, inst.cachedFolder);
+        if (inst.mode === "browse")
+          this.updateStatusBar(inst, inst.cachedFolder);
         return;
       }
     }
 
     if (!isCtrl) {
-      win.querySelectorAll(".file-item.explorer-selected").forEach((el) => el.classList.remove("explorer-selected"));
+      win
+        .querySelectorAll(".file-item.explorer-selected")
+        .forEach((el) => el.classList.remove("explorer-selected"));
       inst.selectedItems = new Set();
     }
 
@@ -2678,7 +2955,8 @@ export class ExplorerApp extends BaseApp {
   resolveSidebarDest(sidebarEl) {
     if (!sidebarEl) return null;
     const mountPoint = sidebarEl.dataset.mount;
-    if (mountPoint) return { path: mountPoint.split("/").filter(Boolean), kind: "folder" };
+    if (mountPoint)
+      return { path: mountPoint.split("/").filter(Boolean), kind: "folder" };
     const rawPath = sidebarEl.dataset.path;
     if (rawPath === "__trash__") return { path: null, kind: "trash" };
     if (rawPath === "__disk__") return null;
@@ -2695,7 +2973,7 @@ export class ExplorerApp extends BaseApp {
     copyOnly,
     targetInst,
     sourcePane = 0,
-    destPane = 0
+    destPane = 0,
   ) {
     const sourceStr = sourcePath.join("/");
     const destStr = destPath.join("/");
@@ -2728,11 +3006,16 @@ export class ExplorerApp extends BaseApp {
     if (sourcePane === 1 && sourceSplit) {
       const splitView = win && $(`#${sourceInst.winId}-view-split`, win);
       if (splitView)
-        $$(".file-item.explorer-selected", splitView).forEach((el) => removeClass(el, "explorer-selected"));
+        $$(".file-item.explorer-selected", splitView).forEach((el) =>
+          removeClass(el, "explorer-selected"),
+        );
       sourceSplit.selectedItems = new Set();
       sourceSplit.selectedFile = null;
     } else {
-      if (view) $$(".file-item.explorer-selected", view).forEach((el) => removeClass(el, "explorer-selected"));
+      if (view)
+        $$(".file-item.explorer-selected", view).forEach((el) =>
+          removeClass(el, "explorer-selected"),
+        );
       sourceInst.selectedItems = new Set();
       sourceInst.selectedFile = null;
     }
@@ -2753,7 +3036,8 @@ export class ExplorerApp extends BaseApp {
       }
     }
     if (sourceInst.split) await this.renderSplitPane(sourceInst);
-    if (targetInst && targetInst.split && targetInst !== sourceInst) await this.renderSplitPane(targetInst);
+    if (targetInst && targetInst.split && targetInst !== sourceInst)
+      await this.renderSplitPane(targetInst);
     return count;
   }
 
@@ -2767,13 +3051,16 @@ export class ExplorerApp extends BaseApp {
         os.notify.send(`Could not move "${itemName}" to trash`);
       }
     }
-    if (count > 0) os.notify.send(`${count} ${pluralize(count, "item")} moved to trash`);
+    if (count > 0)
+      os.notify.send(`${count} ${pluralize(count, "item")} moved to trash`);
     const trashSplit = this.getSplitTab(sourceInst);
     if (sourcePane === 1 && trashSplit) {
       const win = $(`#${sourceInst.winId}`);
       const splitView = win && $(`#${sourceInst.winId}-view-split`, win);
       if (splitView)
-        $$(".file-item.explorer-selected", splitView).forEach((el) => removeClass(el, "explorer-selected"));
+        $$(".file-item.explorer-selected", splitView).forEach((el) =>
+          removeClass(el, "explorer-selected"),
+        );
       trashSplit.selectedItems = new Set();
       trashSplit.selectedFile = null;
     } else {
@@ -2796,7 +3083,9 @@ export class ExplorerApp extends BaseApp {
       const splitView = win && $(`#${inst.winId}-view-split`, win);
       if (!dragSplit.selectedItems.has(name)) {
         if (splitView)
-          $$(".file-item.explorer-selected", splitView).forEach((el) => removeClass(el, "explorer-selected"));
+          $$(".file-item.explorer-selected", splitView).forEach((el) =>
+            removeClass(el, "explorer-selected"),
+          );
         dragSplit.selectedItems = new Set([name]);
         dragSplit.selectedFile = name;
         addClass(itemEl, "explorer-selected");
@@ -2804,22 +3093,33 @@ export class ExplorerApp extends BaseApp {
     } else if (!inst.selectedItems.has(name)) {
       this.selectExplorerItem(inst, name, itemEl, false, false);
     }
-    const viewId = pane === 1 ? `#${inst.winId}-view-split` : `#${inst.winId}-view`;
+    const viewId =
+      pane === 1 ? `#${inst.winId}-view-split` : `#${inst.winId}-view`;
     const view = win && $(viewId, win);
     const fileTypes = {};
     if (view) {
       $$(".file-item", view).forEach((el) => {
-        const itemName = el.querySelector(".file-item-name")?.textContent || el.querySelector("span")?.textContent;
+        const itemName =
+          el.querySelector(".file-item-name")?.textContent ||
+          el.querySelector("span")?.textContent;
         if (itemName) fileTypes[itemName] = el.dataset.isFile === "true";
       });
     }
-    const selSet = pane === 1 && dragSplit ? dragSplit.selectedItems : inst.selectedItems;
-    const srcPath = pane === 1 && dragSplit ? dragSplit.currentPath : inst.currentPath;
+    const selSet =
+      pane === 1 && dragSplit ? dragSplit.selectedItems : inst.selectedItems;
+    const srcPath =
+      pane === 1 && dragSplit ? dragSplit.currentPath : inst.currentPath;
     const items = selSet.size > 0 ? [...selSet] : [name];
     try {
       e.dataTransfer.setData(
         EXPLORER_DRAG_TYPE,
-        JSON.stringify({ winId: inst.winId, pane, sourcePath: srcPath, items, fileTypes })
+        JSON.stringify({
+          winId: inst.winId,
+          pane,
+          sourcePath: srcPath,
+          items,
+          fileTypes,
+        }),
       );
       e.dataTransfer.effectAllowed = "copyMove";
     } catch {
@@ -2828,8 +3128,12 @@ export class ExplorerApp extends BaseApp {
   }
 
   clearDropHighlights() {
-    $$(".explorer-drop-target").forEach((el) => removeClass(el, "explorer-drop-target"));
-    $$(".explorer-main.explorer-drop-active").forEach((el) => removeClass(el, "explorer-drop-active"));
+    $$(".explorer-drop-target").forEach((el) =>
+      removeClass(el, "explorer-drop-target"),
+    );
+    $$(".explorer-main.explorer-drop-active").forEach((el) =>
+      removeClass(el, "explorer-drop-active"),
+    );
   }
 
   handleFolderDragOver(e, itemEl) {
@@ -2851,10 +3155,14 @@ export class ExplorerApp extends BaseApp {
     const inSplit = splitMain && splitMain.id === `${inst.winId}-view-split`;
     const dropSplit = this.getSplitTab(inst);
     if (inSplit && dropSplit) {
-      if (payload.sourcePath.join("/") === dropSplit.currentPath.join("/") && payload.items.includes(folderName))
+      if (
+        payload.sourcePath.join("/") === dropSplit.currentPath.join("/") &&
+        payload.items.includes(folderName)
+      )
         return;
       const sourceInst = this.instances.get(payload.winId);
-      if (sourceInst && (sourceInst.isTrashView || sourceInst.isDiskView)) return;
+      if (sourceInst && (sourceInst.isTrashView || sourceInst.isDiskView))
+        return;
       await this.moveDraggedItems(
         payload.items,
         payload.fileTypes || {},
@@ -2864,11 +3172,15 @@ export class ExplorerApp extends BaseApp {
         e.ctrlKey,
         inst,
         payload.pane || 0,
-        1
+        1,
       );
       return;
     }
-    if (payload.sourcePath.join("/") === inst.currentPath.join("/") && payload.items.includes(folderName)) return;
+    if (
+      payload.sourcePath.join("/") === inst.currentPath.join("/") &&
+      payload.items.includes(folderName)
+    )
+      return;
     const sourceInst = this.instances.get(payload.winId);
     if (sourceInst && (sourceInst.isTrashView || sourceInst.isDiskView)) return;
     await this.moveDraggedItems(
@@ -2880,7 +3192,7 @@ export class ExplorerApp extends BaseApp {
       e.ctrlKey,
       inst,
       payload.pane || 0,
-      0
+      0,
     );
   }
 
@@ -2895,7 +3207,12 @@ export class ExplorerApp extends BaseApp {
     if (sourceInst && (sourceInst.isTrashView || sourceInst.isDiskView)) return;
     if (dest.kind === "trash") {
       if (e.ctrlKey) return;
-      await this.trashDraggedItems(payload.items, payload.sourcePath, sourceInst || inst, payload.pane || 0);
+      await this.trashDraggedItems(
+        payload.items,
+        payload.sourcePath,
+        sourceInst || inst,
+        payload.pane || 0,
+      );
       return;
     }
     await this.moveDraggedItems(
@@ -2905,7 +3222,7 @@ export class ExplorerApp extends BaseApp {
       dest.path,
       sourceInst || inst,
       e.ctrlKey,
-      null
+      null,
     );
   }
 
@@ -2930,7 +3247,13 @@ export class ExplorerApp extends BaseApp {
       for (const itemName of payload.items) {
         const itemIsFile = payload.fileTypes?.[itemName] ?? true;
         try {
-          await this.desktopUI.dropFromExplorer(itemName, itemIsFile, payload.sourcePath, e.clientX, e.clientY);
+          await this.desktopUI.dropFromExplorer(
+            itemName,
+            itemIsFile,
+            payload.sourcePath,
+            e.clientX,
+            e.clientY,
+          );
         } catch {}
       }
       const sourceInst = this.instances.get(payload.winId);
@@ -3017,25 +3340,30 @@ export class ExplorerApp extends BaseApp {
     } catch {}
     const pct = quota > 0 ? Math.min((used / quota) * 100, 100) : 0;
 
-    const iconUrl = resolveIconUrl("static/icons/file.webp");
+    const iconUrl = resolveIconUrl("static/icons/explorerwin11.png");
     const folderItems = [
       { path: "Desktop", label: "Desktop" },
       { path: "Documents", label: "Documents" },
       { path: "Downloads", label: "Downloads" },
       { path: "Music", label: "Music" },
       { path: "Pictures", label: "Pictures" },
-      { path: "Videos", label: "Videos" }
+      { path: "Videos", label: "Videos" },
     ];
 
     const mounts = os.fs.getMounts();
     const driveCount = 1 + mounts.length;
 
-    const collapsed = os.storage.get(StorageKeys.explorerSidebarCollapsed) || {};
+    const collapsed =
+      os.storage.get(StorageKeys.explorerSidebarCollapsed) || {};
 
     let html = "";
 
-    const hiddenFolders = new Set(os.storage.get(StorageKeys.explorerDiskViewHidden) || []);
-    const visibleFolders = folderItems.filter((f) => !hiddenFolders.has(f.path));
+    const hiddenFolders = new Set(
+      os.storage.get(StorageKeys.explorerDiskViewHidden) || [],
+    );
+    const visibleFolders = folderItems.filter(
+      (f) => !hiddenFolders.has(f.path),
+    );
     html += `<div class="disk-section ${collapsed.diskFolders ? "collapsed" : ""}">`;
     html += '<div class="disk-section-header" data-section="diskFolders">';
     html +=
@@ -3096,11 +3424,15 @@ export class ExplorerApp extends BaseApp {
       };
     });
 
-    for (const card of view.querySelectorAll(".explorer-disk-card[data-mount-calc]")) {
+    for (const card of view.querySelectorAll(
+      ".explorer-disk-card[data-mount-calc]",
+    )) {
       const mountPath = card.dataset.mountCalc;
       let mountUsed = 0;
       try {
-        mountUsed = await this.calcDirSize(mountPath.split("/").filter(Boolean));
+        mountUsed = await this.calcDirSize(
+          mountPath.split("/").filter(Boolean),
+        );
       } catch {}
       const infoEl = card.querySelector(".explorer-disk-card-info");
       const fillEl = card.querySelector(".explorer-disk-progress-fill");
@@ -3112,27 +3444,40 @@ export class ExplorerApp extends BaseApp {
     view.querySelectorAll(".disk-folder-item").forEach((item) => {
       const path = item.dataset.path;
       const label = item.querySelector("span")?.textContent || path;
-      item.onclick = () => this.navigateInstance(inst, path.split("/").filter(Boolean));
+      item.onclick = () =>
+        this.navigateInstance(inst, path.split("/").filter(Boolean));
       item.oncontextmenu = (e) => {
         e.preventDefault();
         e.stopPropagation();
         showDynamicContextMenu(e, (menu, menuItem, hr) => {
           menu.appendChild(
-            menuItem("Open", () => this.navigateInstance(inst, path.split("/").filter(Boolean)), "fa-folder-open")
+            menuItem(
+              "Open",
+              () =>
+                this.navigateInstance(inst, path.split("/").filter(Boolean)),
+              "fa-folder-open",
+            ),
           );
-          menu.appendChild(menuItem("Open in New Window", () => this.open([path]), "fa-external-link-alt"));
+          menu.appendChild(
+            menuItem(
+              "Open in New Window",
+              () => this.open([path]),
+              "fa-external-link-alt",
+            ),
+          );
           menu.appendChild(hr());
           menu.appendChild(
             menuItem(
               "Remove from Folders",
               () => {
-                const hidden = os.storage.get(StorageKeys.explorerDiskViewHidden) || [];
+                const hidden =
+                  os.storage.get(StorageKeys.explorerDiskViewHidden) || [];
                 if (!hidden.includes(path)) hidden.push(path);
                 os.storage.set(StorageKeys.explorerDiskViewHidden, hidden);
                 this.renderDiskView(inst, view, win);
               },
-              "fa-times"
-            )
+              "fa-times",
+            ),
           );
         });
       };
@@ -3161,7 +3506,13 @@ export class ExplorerApp extends BaseApp {
     showConfirmDialog({ title, message, confirmText, onConfirm });
   }
 
-  showInputDialog({ title, label, defaultValue, confirmText = "Create", onConfirm }) {
+  showInputDialog({
+    title,
+    label,
+    defaultValue,
+    confirmText = "Create",
+    onConfirm,
+  }) {
     showInputDialog({ title, label, defaultValue, confirmText, onConfirm });
   }
 
@@ -3202,7 +3553,9 @@ export class ExplorerApp extends BaseApp {
 
     const sizeStr = formatSize(totalSize);
     selectedEl.textContent =
-      selCount === 1 ? ` | 1 item selected  ${sizeStr}` : ` | ${selCount} items selected  (${sizeStr})`;
+      selCount === 1
+        ? ` | 1 item selected  ${sizeStr}`
+        : ` | ${selCount} items selected  (${sizeStr})`;
   }
 
   makeExplorerIconInteractable(icon) {

@@ -33,10 +33,13 @@ export class DialogAPI {
   async fileSave(options) {
     if (!this.explorerApp) return null;
     return new Promise((resolve) => {
-      this.explorerApp.openSaveDialog(options?.defaultFileName ?? "untitled", (path, filename) => {
-        const fullPath = path.join("/");
-        resolve(`${fullPath}/${filename}`);
-      });
+      this.explorerApp.openSaveDialog(
+        options?.defaultFileName ?? "untitled",
+        (path, filename) => {
+          const fullPath = path.join("/");
+          resolve(`${fullPath}/${filename}`);
+        },
+      );
     });
   }
 

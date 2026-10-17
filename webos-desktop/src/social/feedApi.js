@@ -8,8 +8,11 @@ const FEED_TTL = 20 * 1000;
 export async function fetchFeed({ refresh = false } = {}) {
   const userId = getLiveUserId();
   if (!userId) return [];
-  if (!refresh && feedCache && Date.now() - feedTime < FEED_TTL) return feedCache;
-  const data = await socialGet(`/live/feed?userId=${encodeURIComponent(userId)}`);
+  if (!refresh && feedCache && Date.now() - feedTime < FEED_TTL)
+    return feedCache;
+  const data = await socialGet(
+    `/live/feed?userId=${encodeURIComponent(userId)}`,
+  );
   const result = Array.isArray(data?.feed) ? data.feed : [];
   feedCache = result;
   feedTime = Date.now();

@@ -4,8 +4,18 @@ import { FileKind } from "../../shared/fileKindDetector.js";
 import { BusEvents } from "../../core/EventBus.js";
 import { Achievements } from "../../achievements.js";
 import { showDynamicContextMenu } from "../../shared/contextMenu.js";
-import { isFontFile, isISOFile, getExt } from "../../shared/fileKindDetector.js";
-import { fileKindFromName, showFileProperties, isImageFile, readFontBlob, openFileWithApp } from "../../fileDisplay.js";
+import {
+  isFontFile,
+  isISOFile,
+  getExt,
+} from "../../shared/fileKindDetector.js";
+import {
+  fileKindFromName,
+  showFileProperties,
+  isImageFile,
+  readFontBlob,
+  openFileWithApp,
+} from "../../fileDisplay.js";
 import { isVideoFile } from "../../shared/fileKindDetector.js";
 import { getCompatibleApps, getDefaultApp } from "../../fileAssociations.js";
 import { showChooseAppDialog } from "../../shared/chooseAppDialog.js";
@@ -16,9 +26,17 @@ import { showConflictDialog } from "../../shared/conflictDialog.js";
 import { showConfirmDialog as showConfirmDialogDlg } from "./dialogs.js";
 import { speak, ClippyAnimation } from "../../ai/clippy.js";
 import { openFileConverter } from "../../utils/fileConverter.js";
-import { getTargetFormats, detectCategory, convertFileBlob } from "../../utils/converterCore.js";
+import {
+  getTargetFormats,
+  detectCategory,
+  convertFileBlob,
+} from "../../utils/converterCore.js";
 import { showTransferDialog } from "../../shared/transferDialog.js";
-import { pasteToPath, downloadItems, createArchiveFromItems } from "./transfer.js";
+import {
+  pasteToPath,
+  downloadItems,
+  createArchiveFromItems,
+} from "./transfer.js";
 import { startInlineRename, spawnInlineItem } from "./inlineRename.js";
 import { SystemUtilities } from "../../system.js";
 import { renderTrashView, showTrashView } from "./trash.js";
@@ -92,7 +110,10 @@ async function createItemShortcut(explorer, itemName, inst) {
     const targetPath = [...inst.currentPath, itemName].join("/");
     const payload = buildShortcutPayload(targetPath, itemName);
     const baseName = `${itemName}.shortcut.json`;
-    const shortcutName = await os.fs.getUniqueFileName(inst.currentPath, baseName);
+    const shortcutName = await os.fs.getUniqueFileName(
+      inst.currentPath,
+      baseName,
+    );
     await os.fs.write([...inst.currentPath, shortcutName], payload);
     await explorer.renderInstance(inst);
     os.notify.send(`Shortcut created for "${itemName}"`);
@@ -107,7 +128,9 @@ function showConfirmDialog({ title, message, confirmText, onConfirm }) {
 
 async function openMarkdownPreview(explorer, fileName, inst) {
   try {
-    const content = await decodeFileContent(await explorer.fs.getFileContent(inst.currentPath, fileName));
+    const content = await decodeFileContent(
+      await explorer.fs.getFileContent(inst.currentPath, fileName),
+    );
     if (explorer.markdownApp?.open) {
       explorer.markdownApp.open(fileName, content, inst.currentPath.join("/"));
       speak("Opening markdown preview. Looking good!", ClippyAnimation.Show);
@@ -122,7 +145,9 @@ async function openMarkdownPreview(explorer, fileName, inst) {
 
 async function openMarkdownInNotepad(explorer, fileName, inst) {
   try {
-    const content = await decodeFileContent(await explorer.fs.getFileContent(inst.currentPath, fileName));
+    const content = await decodeFileContent(
+      await explorer.fs.getFileContent(inst.currentPath, fileName),
+    );
     if (explorer.notepadApp?.open) {
       explorer.notepadApp.open(fileName, content, inst.currentPath.join("/"));
       speak("Opening in Notepad. Time to edit!", ClippyAnimation.Writing);
@@ -137,7 +162,9 @@ async function openMarkdownInNotepad(explorer, fileName, inst) {
 
 async function openTextInNotepad(explorer, fileName, inst) {
   try {
-    const content = await decodeFileContent(await explorer.fs.getFileContent(inst.currentPath, fileName));
+    const content = await decodeFileContent(
+      await explorer.fs.getFileContent(inst.currentPath, fileName),
+    );
     if (explorer.notepadApp?.open) {
       explorer.notepadApp.open(fileName, content, inst.currentPath.join("/"));
       speak("Opening in Notepad. Time to edit!", ClippyAnimation.Writing);
@@ -181,7 +208,8 @@ async function readConvertSource(explorer, dirParts, fileName) {
   try {
     const content = await explorer.fs.getFileContent(dirParts, fileName);
     if (content instanceof Blob && content.size) return content;
-    if (typeof content === "string" && content.length) return new Blob([content]);
+    if (typeof content === "string" && content.length)
+      return new Blob([content]);
   } catch {}
   try {
     const blob = await os.fs.readBinaryFile(dirParts, fileName);
@@ -191,7 +219,13 @@ async function readConvertSource(explorer, dirParts, fileName) {
   return toConvertBlob(fallback);
 }
 
-async function writeConvertResult(explorer, dirParts, baseName, targetFormat, result) {
+async function writeConvertResult(
+  explorer,
+  dirParts,
+  baseName,
+  targetFormat,
+  result,
+) {
   const candidate = `${baseName}.${targetFormat}`;
   let uniqueName = candidate;
   try {
@@ -232,15 +266,25 @@ async function quickConvertSingle(explorer, dirParts, fileName, targetFormat) {
     text,
     sourceExt: ext,
     targetFormat,
-    options: getConvertDefaults(category)
+    options: getConvertDefaults(category),
   });
-  const result = out instanceof Blob || typeof out === "string" ? out : out.blob || out.text;
-  return writeConvertResult(explorer, dirParts, getConvertBaseName(fileName), targetFormat, result);
+  const result =
+    out instanceof Blob || typeof out === "string" ? out : out.blob || out.text;
+  return writeConvertResult(
+    explorer,
+    dirParts,
+    getConvertBaseName(fileName),
+    targetFormat,
+    result,
+  );
 }
 
 async function quickConvertItems(explorer, inst, items, targetFormat) {
   const label = targetFormat.toUpperCase();
-  const dialog = showTransferDialog({ title: `Converting to ${label}`, total: items.length });
+  const dialog = showTransferDialog({
+    title: `Converting to ${label}`,
+    total: items.length,
+  });
   let doneCount = 0;
   let okCount = 0;
   const failedNames = [];
@@ -248,33 +292,51 @@ async function quickConvertItems(explorer, inst, items, targetFormat) {
   for (const entryName of items) {
     dialog.update(doneCount, entryName);
     try {
-      await quickConvertSingle(explorer, inst.currentPath, entryName, targetFormat);
+      await quickConvertSingle(
+        explorer,
+        inst.currentPath,
+        entryName,
+        targetFormat,
+      );
       okCount += 1;
     } catch {
       const entryCategory = detectCategory(getConvertExtension(entryName));
       if (entryCategory === "audio" || entryCategory === "video") {
         fallbackNames.push(entryName);
-        openFileConverter(entryName, inst.currentPath, os, () => explorer.renderInstance(inst));
+        openFileConverter(entryName, inst.currentPath, os, () =>
+          explorer.renderInstance(inst),
+        );
       } else {
         failedNames.push(entryName);
       }
     }
     doneCount += 1;
-    dialog.update(doneCount, doneCount >= items.length ? "Finishing" : entryName);
+    dialog.update(
+      doneCount,
+      doneCount >= items.length ? "Finishing" : entryName,
+    );
   }
   dialog.complete();
   await explorer.renderInstance(inst);
   if (failedNames.length === 0) {
-    os.notify.send("Convert to", `Converted ${okCount} ${okCount === 1 ? "file" : "files"} to ${label}`, {
-      type: "success"
-    });
+    os.notify.send(
+      "Convert to",
+      `Converted ${okCount} ${okCount === 1 ? "file" : "files"} to ${label}`,
+      {
+        type: "success",
+      },
+    );
   } else if (okCount === 0 && fallbackNames.length === 0) {
     os.dialog.alert(
       "Convert to",
-      `Could not convert ${failedNames.length} ${failedNames.length === 1 ? "file" : "files"}.`
+      `Could not convert ${failedNames.length} ${failedNames.length === 1 ? "file" : "files"}.`,
     );
   } else {
-    os.notify.send("Convert to", `Converted ${okCount} of ${items.length} files to ${label}`, { type: "info" });
+    os.notify.send(
+      "Convert to",
+      `Converted ${okCount} of ${items.length} files to ${label}`,
+      { type: "info" },
+    );
   }
 }
 
@@ -284,13 +346,18 @@ export function showFileContextMenu(explorer, e, itemName, isFile, inst) {
 
   const folderData = inst.cachedFolder || {};
   const itemData = folderData[itemName] || {};
-  const insideSystem = Array.isArray(inst.currentPath) && inst.currentPath[0] === "System";
+  const insideSystem =
+    Array.isArray(inst.currentPath) && inst.currentPath[0] === "System";
 
   showDynamicContextMenu(e, (menu, item, hr, submenu) => {
     if (isFile) {
       const defaultApp = getDefaultApp(itemName);
       menu.appendChild(
-        item("Open", () => explorer.openItemForInstance(inst, itemName, true), defaultApp?.icon || "fa-file-alt")
+        item(
+          "Open",
+          () => explorer.openItemForInstance(inst, itemName, true),
+          defaultApp?.icon || "fa-file-alt",
+        ),
       );
       menu.appendChild(
         submenu(
@@ -301,22 +368,31 @@ export function showFileContextMenu(explorer, e, itemName, isFile, inst) {
               subMenuEl.appendChild(
                 subItem(
                   app.title,
-                  () => openFileWithApp(app.appId, { name: itemName, path: inst.currentPath }),
-                  app.icon
-                )
+                  () =>
+                    openFileWithApp(app.appId, {
+                      name: itemName,
+                      path: inst.currentPath,
+                    }),
+                  app.icon,
+                ),
               );
             }
             subMenuEl.appendChild(subHr());
             subMenuEl.appendChild(
               subItem(
                 "Choose another app",
-                () => showChooseAppDialog({ ext: getExt(itemName), name: itemName, path: inst.currentPath }),
-                "fa-sliders-h"
-              )
+                () =>
+                  showChooseAppDialog({
+                    ext: getExt(itemName),
+                    name: itemName,
+                    path: inst.currentPath,
+                  }),
+                "fa-sliders-h",
+              ),
             );
           },
-          "fa-share-alt"
-        )
+          "fa-share-alt",
+        ),
       );
       menu.appendChild(hr());
       if (insideSystem && itemData.overridden) {
@@ -332,33 +408,63 @@ export function showFileContextMenu(explorer, e, itemName, isFile, inst) {
                   try {
                     await os.fs.delete(inst.currentPath, itemName);
                     await explorer.renderInstance(inst);
-                    os.notify.send(`Restored original "${itemName}"`, { type: "success" });
+                    os.notify.send(`Restored original "${itemName}"`, {
+                      type: "success",
+                    });
                   } catch {
                     os.notify.send(`Could not restore "${itemName}"`);
                   }
-                }
+                },
               });
             },
-            "fa-rotate-left"
-          )
+            "fa-rotate-left",
+          ),
         );
       }
     }
 
     if (isFile && itemName.toLowerCase().endsWith(".md")) {
-      menu.appendChild(item("Preview", () => openMarkdownPreview(explorer, itemName, inst), "fa-eye"));
-      menu.appendChild(item("Edit with Notepad", () => openMarkdownInNotepad(explorer, itemName, inst), "fa-edit"));
+      menu.appendChild(
+        item(
+          "Preview",
+          () => openMarkdownPreview(explorer, itemName, inst),
+          "fa-eye",
+        ),
+      );
+      menu.appendChild(
+        item(
+          "Edit with Notepad",
+          () => openMarkdownInNotepad(explorer, itemName, inst),
+          "fa-edit",
+        ),
+      );
       menu.appendChild(hr());
     } else if (isFile && itemName.toLowerCase().endsWith(".desktop")) {
-      menu.appendChild(item("Edit with Notepad", () => openTextInNotepad(explorer, itemName, inst), "fa-edit"));
+      menu.appendChild(
+        item(
+          "Edit with Notepad",
+          () => openTextInNotepad(explorer, itemName, inst),
+          "fa-edit",
+        ),
+      );
       menu.appendChild(hr());
     } else if (isFile && fileKindFromName(itemName) === FileKind.TEXT) {
-      menu.appendChild(item("Edit with Notepad", () => openTextInNotepad(explorer, itemName, inst), "fa-edit"));
+      menu.appendChild(
+        item(
+          "Edit with Notepad",
+          () => openTextInNotepad(explorer, itemName, inst),
+          "fa-edit",
+        ),
+      );
       menu.appendChild(hr());
     } else {
       if (!isFile) {
         menu.appendChild(
-          item("Open Folder", () => explorer.openItemForInstance(inst, itemName, false), "fa-folder-open")
+          item(
+            "Open Folder",
+            () => explorer.openItemForInstance(inst, itemName, false),
+            "fa-folder-open",
+          ),
         );
         menu.appendChild(
           item(
@@ -367,10 +473,11 @@ export function showFileContextMenu(explorer, e, itemName, isFile, inst) {
               const fullPath = [...inst.currentPath, itemName];
               explorer.open(fullPath);
             },
-            "fa-external-link-alt"
-          )
+            "fa-external-link-alt",
+          ),
         );
-        const quickAccess = os.storage.get(StorageKeys.explorerQuickAccess) || [];
+        const quickAccess =
+          os.storage.get(StorageKeys.explorerQuickAccess) || [];
         const relPath = [...inst.currentPath, itemName].join("/");
         const isPinned = quickAccess.some((p) => p.path === relPath);
         menu.appendChild(
@@ -387,31 +494,39 @@ export function showFileContextMenu(explorer, e, itemName, isFile, inst) {
               const win = $("#" + inst.winId);
               if (win) explorer.sidebarRebuild(win, inst);
             },
-            "fa-thumbtack"
-          )
+            "fa-thumbtack",
+          ),
         );
       }
       menu.appendChild(hr());
     }
 
     const effectiveItems =
-      inst.selectedItems.size > 1 && inst.selectedItems.has(itemName) ? [...inst.selectedItems] : [itemName];
-    const convertableItems = effectiveItems.filter((entryName) => detectCategory(getConvertExtension(entryName)));
+      inst.selectedItems.size > 1 && inst.selectedItems.has(itemName)
+        ? [...inst.selectedItems]
+        : [itemName];
+    const convertableItems = effectiveItems.filter((entryName) =>
+      detectCategory(getConvertExtension(entryName)),
+    );
 
     if (isFile && convertableItems.length > 0) {
       const firstExt = getConvertExtension(convertableItems[0]);
       const rawTargets = getTargetFormats(firstExt);
-      const convertTargets = Array.isArray(rawTargets) ? rawTargets.filter((target) => target !== firstExt) : [];
+      const convertTargets = Array.isArray(rawTargets)
+        ? rawTargets.filter((target) => target !== firstExt)
+        : [];
       if (convertTargets.length > 0) {
         menu.appendChild(
           submenu(
-            convertableItems.length > 1 ? `Convert ${convertableItems.length} items to` : "Convert to",
+            convertableItems.length > 1
+              ? `Convert ${convertableItems.length} items to`
+              : "Convert to",
             (subMenuEl, subItem, subHr) => {
               for (const target of convertTargets) {
                 subMenuEl.appendChild(
                   subItem(target.toUpperCase(), () => {
                     quickConvertItems(explorer, inst, convertableItems, target);
-                  })
+                  }),
                 );
               }
               subMenuEl.appendChild(subHr());
@@ -420,25 +535,42 @@ export function showFileContextMenu(explorer, e, itemName, isFile, inst) {
                   "Convert / Transform...",
                   () => {
                     convertableItems.forEach((convertItem) => {
-                      openFileConverter(convertItem, inst.currentPath, os, () => {
-                        explorer.renderInstance(inst);
-                      });
+                      openFileConverter(
+                        convertItem,
+                        inst.currentPath,
+                        os,
+                        () => {
+                          explorer.renderInstance(inst);
+                        },
+                      );
                     });
                   },
-                  "fa-exchange-alt"
-                )
+                  "fa-exchange-alt",
+                ),
               );
             },
-            "fa-exchange-alt"
-          )
+            "fa-exchange-alt",
+          ),
         );
         menu.appendChild(hr());
       }
     }
 
-    menu.appendChild(item("Copy", () => explorer.clipboardAction("copy", inst, itemName, isFile), "fa-copy"));
+    menu.appendChild(
+      item(
+        "Copy",
+        () => explorer.clipboardAction("copy", inst, itemName, isFile),
+        "fa-copy",
+      ),
+    );
     if (!insideSystem) {
-      menu.appendChild(item("Cut", () => explorer.clipboardAction("cut", inst, itemName, isFile), "fa-cut"));
+      menu.appendChild(
+        item(
+          "Cut",
+          () => explorer.clipboardAction("cut", inst, itemName, isFile),
+          "fa-cut",
+        ),
+      );
     }
 
     const cb = explorer.getClipboard();
@@ -449,8 +581,8 @@ export function showFileContextMenu(explorer, e, itemName, isFile, inst) {
           async () => {
             await pasteToPath(explorer, inst.currentPath, inst);
           },
-          "fa-paste"
-        )
+          "fa-paste",
+        ),
       );
     }
 
@@ -462,35 +594,39 @@ export function showFileContextMenu(explorer, e, itemName, isFile, inst) {
         async () => {
           await downloadItems(explorer, itemName, isFile, inst);
         },
-        "fa-download"
-      )
+        "fa-download",
+      ),
     );
     menu.appendChild(
       item(
-        "Create Archive",
+        "Compress...",
         async () => {
           await createArchiveFromItems(explorer, itemName, isFile, inst);
         },
-        "fa-file-archive"
-      )
+        "fa-file-archive",
+      ),
     );
     menu.appendChild(hr());
 
     if (!insideSystem) {
       menu.appendChild(
         item(
-          "Move to Trash",
+          "Delete",
           () => {
             const effItems =
-              inst.selectedItems.size > 1 && inst.selectedItems.has(itemName) ? [...inst.selectedItems] : [itemName];
+              inst.selectedItems.size > 1 && inst.selectedItems.has(itemName)
+                ? [...inst.selectedItems]
+                : [itemName];
             for (const name of effItems) {
               os.fs.trashFile(inst.currentPath, name);
             }
             explorer.renderInstance(inst);
-            os.notify.send(`${effItems.length} ${effItems.length > 1 ? "items" : "item"} moved to trash`);
+            os.notify.send(
+              `${effItems.length} ${effItems.length > 1 ? "items" : "item"} moved to trash`,
+            );
           },
-          "fa-trash-alt"
-        )
+          "fa-trash-alt",
+        ),
       );
 
       menu.appendChild(
@@ -498,7 +634,9 @@ export function showFileContextMenu(explorer, e, itemName, isFile, inst) {
           "Delete Permanently",
           () => {
             const effItems =
-              inst.selectedItems.size > 1 && inst.selectedItems.has(itemName) ? [...inst.selectedItems] : [itemName];
+              inst.selectedItems.size > 1 && inst.selectedItems.has(itemName)
+                ? [...inst.selectedItems]
+                : [itemName];
             const msg =
               effItems.length > 1
                 ? `Permanently delete ${effItems.length} items? This cannot be undone.`
@@ -512,12 +650,14 @@ export function showFileContextMenu(explorer, e, itemName, isFile, inst) {
                   await os.fs.delete(inst.currentPath, name);
                 }
                 await explorer.renderInstance(inst);
-                os.notify.send(`${effItems.length} ${effItems.length > 1 ? "items" : "item"} permanently deleted`);
-              }
+                os.notify.send(
+                  `${effItems.length} ${effItems.length > 1 ? "items" : "item"} permanently deleted`,
+                );
+              },
             });
           },
-          "fa-times-circle"
-        )
+          "fa-times-circle",
+        ),
       );
 
       menu.appendChild(
@@ -527,19 +667,25 @@ export function showFileContextMenu(explorer, e, itemName, isFile, inst) {
             const win = $(`#${inst.winId}`);
             const view = win && $(`#${inst.winId}-view`, win);
             const itemEl =
-              view && $$(".file-item", view).find((el) => el.querySelector("span")?.textContent === itemName);
+              view &&
+              $$(".file-item", view).find(
+                (el) => el.querySelector("span")?.textContent === itemName,
+              );
             if (itemEl) {
               startInlineRename(explorer, itemEl, itemName, inst);
             }
           },
-          "fa-edit"
-        )
+          "fa-edit",
+        ),
       );
     }
 
     if (isFile && (isImageFile(itemName) || isVideoFile(itemName))) {
       const getContent = async () => {
-        const content = await explorer.fs.getFileContent(inst.currentPath, itemName);
+        const content = await explorer.fs.getFileContent(
+          inst.currentPath,
+          itemName,
+        );
         if (content instanceof Blob) {
           return new Promise((resolve, reject) => {
             const reader = new FileReader();
@@ -565,8 +711,8 @@ export function showFileContextMenu(explorer, e, itemName, isFile, inst) {
               os.dialog.alert("Error", "Could not set wallpaper");
             }
           },
-          isVideoWallpaper ? "fa-video" : "fa-image"
-        )
+          isVideoWallpaper ? "fa-video" : "fa-image",
+        ),
       );
       menu.appendChild(
         item(
@@ -575,14 +721,20 @@ export function showFileContextMenu(explorer, e, itemName, isFile, inst) {
             try {
               const content = await getContent();
               const kind = fileKindFromName(itemName);
-              await saveToWallpapers(explorer, itemName, content, kind, "@content");
+              await saveToWallpapers(
+                explorer,
+                itemName,
+                content,
+                kind,
+                "@content",
+              );
             } catch (err) {
               console.error("Save wallpaper error:", err);
               os.dialog.alert("Error", "Could not save wallpaper");
             }
           },
-          "fa-save"
-        )
+          "fa-save",
+        ),
       );
     }
 
@@ -593,8 +745,13 @@ export function showFileContextMenu(explorer, e, itemName, isFile, inst) {
           "Set as System Font",
           async () => {
             try {
-              const blob = await readFontBlob(itemName, inst.currentPath, explorer.fs);
-              if (!blob || !blob.size) throw new Error("Could not read font file");
+              const blob = await readFontBlob(
+                itemName,
+                inst.currentPath,
+                explorer.fs,
+              );
+              if (!blob || !blob.size)
+                throw new Error("Could not read font file");
               const dataUrl = await new Promise((resolve, reject) => {
                 const reader = new FileReader();
                 reader.onload = () => resolve(reader.result);
@@ -602,26 +759,33 @@ export function showFileContextMenu(explorer, e, itemName, isFile, inst) {
                 reader.readAsDataURL(blob);
               });
               const ext = itemName.split(".").pop().toLowerCase();
-              const formatMap = { ttf: "truetype", otf: "opentype", woff: "woff", woff2: "woff2" };
+              const formatMap = {
+                ttf: "truetype",
+                otf: "opentype",
+                woff: "woff",
+                woff2: "woff2",
+              };
               const fontFamily = itemName.replace(/\.[^.]+$/, "");
               const customFontData = {
                 family: fontFamily,
                 stack: `"${fontFamily}", sans-serif`,
                 url: dataUrl,
                 format: formatMap[ext] || "truetype",
-                weight: "normal"
+                weight: "normal",
               };
               os.storage.set(StorageKeys.fontFamily, "__custom__");
               os.storage.set(StorageKeys.customFont, customFontData);
               applyFontFamily("custom", customFontData);
-              os.events.emit(BusEvents.ACHIEVEMENT_TRIGGER, { achievementId: Achievements.FontCustomizer });
+              os.events.emit(BusEvents.ACHIEVEMENT_TRIGGER, {
+                achievementId: Achievements.FontCustomizer,
+              });
             } catch (err) {
               console.error("Set system font error:", err);
               os.dialog.alert("Error", "Could not set system font");
             }
           },
-          "fa-font"
-        )
+          "fa-font",
+        ),
       );
     }
 
@@ -635,13 +799,17 @@ export function showFileContextMenu(explorer, e, itemName, isFile, inst) {
               explorer.renderInstance(inst);
             };
             if (isISOFile(itemName)) {
-              explorer.archiveExtractor.extractISO(itemName, inst.currentPath, cb);
+              explorer.archiveExtractor.extractISO(
+                itemName,
+                inst.currentPath,
+                cb,
+              );
             } else {
               explorer.archiveExtractor.extract(itemName, inst.currentPath, cb);
             }
           },
-          "fa-box-open"
-        )
+          "fa-box-open",
+        ),
       );
     }
 
@@ -651,8 +819,8 @@ export function showFileContextMenu(explorer, e, itemName, isFile, inst) {
         () => {
           createItemShortcut(explorer, itemName, inst);
         },
-        "fa-link"
-      )
+        "fa-link",
+      ),
     );
 
     if (isFile && isCursorFile(itemName)) {
@@ -662,25 +830,30 @@ export function showFileContextMenu(explorer, e, itemName, isFile, inst) {
           () => {
             setPointerFromFile(itemName, inst.currentPath, explorer.fs);
           },
-          "fa-mouse-pointer"
-        )
+          "fa-mouse-pointer",
+        ),
       );
     }
 
     if (isCustomCursorActive()) {
-      menu.appendChild(item("Reset mouse pointer", () => resetPointerCursor(), "fa-undo"));
+      menu.appendChild(
+        item("Reset mouse pointer", () => resetPointerCursor(), "fa-undo"),
+      );
     }
 
     menu.appendChild(
       item(
         "Properties",
         async () => {
-          await showFileProperties([...inst.currentPath, itemName], itemName, !isFile, () =>
-            explorer.renderInstance(inst)
+          await showFileProperties(
+            [...inst.currentPath, itemName],
+            itemName,
+            !isFile,
+            () => explorer.renderInstance(inst),
           );
         },
-        "fa-info-circle"
-      )
+        "fa-info-circle",
+      ),
     );
   });
 }
@@ -698,28 +871,35 @@ export function showBackgroundContextMenu(explorer, e, inst) {
           () => {
             const view = $(`#${inst.winId}-view`, $(`#${inst.winId}`));
             os.fs.restoreAllTrashItems().then(() => {
-              if (view) renderTrashView(explorer, inst, view, $(`#${inst.winId}`));
+              if (view)
+                renderTrashView(explorer, inst, view, $(`#${inst.winId}`));
               os.notify.send("All items restored from trash");
             });
           },
-          "fa-undo"
-        )
+          "fa-undo",
+        ),
       );
       menu.appendChild(
         item(
           "Empty Trash",
           () => {
-            os.dialog.confirm("Empty Trash", "Empty the trash for good? You can't undo this.").then((confirmed) => {
-              if (!confirmed) return;
-              const view = $(`#${inst.winId}-view`, $(`#${inst.winId}`));
-              os.fs.emptyTrash().then(() => {
-                if (view) renderTrashView(explorer, inst, view, $(`#${inst.winId}`));
-                os.notify.send("Trash emptied");
+            os.dialog
+              .confirm(
+                "Empty Trash",
+                "Empty the trash for good? You can't undo this.",
+              )
+              .then((confirmed) => {
+                if (!confirmed) return;
+                const view = $(`#${inst.winId}-view`, $(`#${inst.winId}`));
+                os.fs.emptyTrash().then(() => {
+                  if (view)
+                    renderTrashView(explorer, inst, view, $(`#${inst.winId}`));
+                  os.notify.send("Trash emptied");
+                });
               });
-            });
           },
-          "fa-trash-alt"
-        )
+          "fa-trash-alt",
+        ),
       );
       menu.appendChild(hr());
       menu.appendChild(
@@ -727,26 +907,28 @@ export function showBackgroundContextMenu(explorer, e, inst) {
           "Refresh",
           () => {
             const view = $(`#${inst.winId}-view`, $(`#${inst.winId}`));
-            if (view) renderTrashView(explorer, inst, view, $(`#${inst.winId}`));
+            if (view)
+              renderTrashView(explorer, inst, view, $(`#${inst.winId}`));
           },
-          "fa-sync-alt"
-        )
+          "fa-sync-alt",
+        ),
       );
     });
     return;
   }
 
   showDynamicContextMenu(e, (menu, item, hr) => {
-    const insideSystem = Array.isArray(inst.currentPath) && inst.currentPath[0] === "System";
+    const insideSystem =
+      Array.isArray(inst.currentPath) && inst.currentPath[0] === "System";
     if (!insideSystem) {
       menu.appendChild(
         item(
-          "Add file(s)",
+          "Upload files",
           () => {
             triggerFileUpload(explorer, inst);
           },
-          "fa-file-upload"
-        )
+          "fa-file-upload",
+        ),
       );
       menu.appendChild(
         item(
@@ -764,8 +946,8 @@ export function showBackgroundContextMenu(explorer, e, inst) {
             });
             input.click();
           },
-          "fa-folder-plus"
-        )
+          "fa-folder-plus",
+        ),
       );
       menu.appendChild(
         item(
@@ -773,8 +955,8 @@ export function showBackgroundContextMenu(explorer, e, inst) {
           () => {
             spawnInlineItem(explorer, inst, true);
           },
-          "fa-file-medical"
-        )
+          "fa-file-medical",
+        ),
       );
       menu.appendChild(
         item(
@@ -782,8 +964,8 @@ export function showBackgroundContextMenu(explorer, e, inst) {
           () => {
             spawnInlineItem(explorer, inst, false);
           },
-          "fa-folder-plus"
-        )
+          "fa-folder-plus",
+        ),
       );
     }
     if (!insideSystem && hasClipboard) {
@@ -794,8 +976,8 @@ export function showBackgroundContextMenu(explorer, e, inst) {
           async () => {
             await pasteToPath(explorer, inst.currentPath, inst);
           },
-          "fa-paste"
-        )
+          "fa-paste",
+        ),
       );
     }
     if (!insideSystem) {
@@ -806,7 +988,11 @@ export function showBackgroundContextMenu(explorer, e, inst) {
           async () => {
             try {
               const handle = await os.fs.pickDirectory();
-              const label = await os.dialog.prompt("Mount Directory", `Name for "${handle.name}":`, handle.name);
+              const label = await os.dialog.prompt(
+                "Mount Directory",
+                `Name for "${handle.name}":`,
+                handle.name,
+              );
               if (!label || !label.trim()) return;
               os.fs.registerMount(handle, label.trim());
               os.notify.send(`Mounted "${label.trim()}"`, { type: "success" });
@@ -817,16 +1003,21 @@ export function showBackgroundContextMenu(explorer, e, inst) {
               await explorer.renderInstance(inst);
             } catch (err) {
               if (err.name !== "AbortError" && err.name !== "SecurityError") {
-                os.dialog.alert("Mount Error", err.message || "Failed to mount directory");
+                os.dialog.alert(
+                  "Mount Error",
+                  err.message || "Failed to mount directory",
+                );
               }
             }
           },
-          "fa-hdd"
-        )
+          "fa-hdd",
+        ),
       );
       menu.appendChild(hr());
     }
-    menu.appendChild(item("Sort by", () => showSortSubmenu(explorer, inst), "fa-sort"));
+    menu.appendChild(
+      item("Sort by", () => showSortSubmenu(explorer, inst), "fa-sort"),
+    );
     menu.appendChild(
       item(
         "Open in Terminal",
@@ -835,10 +1026,12 @@ export function showBackgroundContextMenu(explorer, e, inst) {
           const termPath = ["ys", "users", sessionKey, ...inst.currentPath];
           os.app.launch("terminalApp", { initialPath: termPath });
         },
-        "fa-terminal"
-      )
+        "fa-terminal",
+      ),
     );
-    menu.appendChild(item("Refresh", () => explorer.renderInstance(inst), "fa-sync-alt"));
+    menu.appendChild(
+      item("Refresh", () => explorer.renderInstance(inst), "fa-sync-alt"),
+    );
   });
 }
 
@@ -849,10 +1042,13 @@ function showSortSubmenu(explorer, inst) {
     { key: "name", label: "Name", icon: "fa-font" },
     { key: "mtime", label: "Date modified", icon: "fa-calendar" },
     { key: "kind", label: "Type", icon: "fa-tag" },
-    { key: "size", label: "Size", icon: "fa-weight" }
+    { key: "size", label: "Size", icon: "fa-weight" },
   ];
   showDynamicContextMenu(
-    { clientX: window.event?.clientX || 0, clientY: window.event?.clientY || 0 },
+    {
+      clientX: window.event?.clientX || 0,
+      clientY: window.event?.clientY || 0,
+    },
     (menu, item, hr) => {
       for (const opt of options) {
         menu.appendChild(
@@ -867,11 +1063,11 @@ function showSortSubmenu(explorer, inst) {
               }
               explorer.renderInstance(inst);
             },
-            opt.icon
-          )
+            opt.icon,
+          ),
         );
       }
-    }
+    },
   );
 }
 
@@ -881,14 +1077,28 @@ export function showSidebarItemContextMenu(explorer, e, path, label, inst) {
 
   const quickAccess = os.storage.get(StorageKeys.explorerQuickAccess) || [];
   const isPinned = quickAccess.some((p) => p.path === path);
-  const defaultQuickPaths = new Set(["", "Desktop", "Documents", "Downloads", "Pictures", "Music", "Videos"]);
+  const defaultQuickPaths = new Set([
+    "",
+    "Desktop",
+    "Documents",
+    "Downloads",
+    "Pictures",
+    "Music",
+    "Videos",
+  ]);
   const isDefault = defaultQuickPaths.has(path);
-  const hiddenDefaults = new Set(os.storage.get(StorageKeys.explorerQuickAccessHidden) || []);
+  const hiddenDefaults = new Set(
+    os.storage.get(StorageKeys.explorerQuickAccessHidden) || [],
+  );
   const isDefaultHidden = isDefault && hiddenDefaults.has(path);
 
   showDynamicContextMenu(e, (menu, item, hr) => {
     menu.appendChild(
-      item("Open", () => explorer.navigateInstance(inst, path.split("/").filter(Boolean)), "fa-folder-open")
+      item(
+        "Open",
+        () => explorer.navigateInstance(inst, path.split("/").filter(Boolean)),
+        "fa-folder-open",
+      ),
     );
     menu.appendChild(
       item(
@@ -896,8 +1106,8 @@ export function showSidebarItemContextMenu(explorer, e, path, label, inst) {
         () => {
           explorer.open([...path.split("/").filter(Boolean)]);
         },
-        "fa-external-link-alt"
-      )
+        "fa-external-link-alt",
+      ),
     );
     menu.appendChild(hr());
     if (isDefault) {
@@ -905,21 +1115,26 @@ export function showSidebarItemContextMenu(explorer, e, path, label, inst) {
         item(
           isDefaultHidden ? "Add to Quick Access" : "Remove from Quick Access",
           () => {
-            const hiddenDefaultsList = os.storage.get(StorageKeys.explorerQuickAccessHidden) || [];
+            const hiddenDefaultsList =
+              os.storage.get(StorageKeys.explorerQuickAccessHidden) || [];
             if (isDefaultHidden) {
               os.storage.set(
                 StorageKeys.explorerQuickAccessHidden,
-                hiddenDefaultsList.filter((p) => p !== path)
+                hiddenDefaultsList.filter((p) => p !== path),
               );
             } else {
-              if (!hiddenDefaultsList.includes(path)) hiddenDefaultsList.push(path);
-              os.storage.set(StorageKeys.explorerQuickAccessHidden, hiddenDefaultsList);
+              if (!hiddenDefaultsList.includes(path))
+                hiddenDefaultsList.push(path);
+              os.storage.set(
+                StorageKeys.explorerQuickAccessHidden,
+                hiddenDefaultsList,
+              );
             }
             const win = $("#" + inst.winId);
             if (win) explorer.sidebarRebuild(win, inst);
           },
-          "fa-thumbtack"
-        )
+          "fa-thumbtack",
+        ),
       );
     } else {
       menu.appendChild(
@@ -936,8 +1151,8 @@ export function showSidebarItemContextMenu(explorer, e, path, label, inst) {
             const win = $("#" + inst.winId);
             if (win) explorer.sidebarRebuild(win, inst);
           },
-          "fa-thumbtack"
-        )
+          "fa-thumbtack",
+        ),
       );
     }
     menu.appendChild(hr());
@@ -948,8 +1163,8 @@ export function showSidebarItemContextMenu(explorer, e, path, label, inst) {
           const fullPath = "/" + path.split("/").filter(Boolean).join("/");
           navigator.clipboard.writeText(fullPath).catch(() => {});
         },
-        "fa-copy"
-      )
+        "fa-copy",
+      ),
     );
   });
 }
@@ -974,27 +1189,32 @@ export function showTrashContextMenu(explorer, e, inst) {
               os.notify.send("All items restored from trash");
             });
           },
-          "fa-undo"
-        )
+          "fa-undo",
+        ),
       );
       menu.appendChild(
         item(
           "Empty Trash",
           () => {
-            os.dialog.confirm("Empty Trash", "Empty the trash for good? You can't undo this.").then((confirmed) => {
-              if (!confirmed) return;
-              os.fs.emptyTrash().then(() => {
-                const win = $(`#${inst.winId}`);
-                const view = win && $(`#${inst.winId}-view`, win);
-                if (view) {
-                  renderTrashView(explorer, inst, view, win);
-                }
-                os.notify.send("Trash emptied");
+            os.dialog
+              .confirm(
+                "Empty Trash",
+                "Empty the trash for good? You can't undo this.",
+              )
+              .then((confirmed) => {
+                if (!confirmed) return;
+                os.fs.emptyTrash().then(() => {
+                  const win = $(`#${inst.winId}`);
+                  const view = win && $(`#${inst.winId}-view`, win);
+                  if (view) {
+                    renderTrashView(explorer, inst, view, win);
+                  }
+                  os.notify.send("Trash emptied");
+                });
               });
-            });
           },
-          "fa-trash-alt"
-        )
+          "fa-trash-alt",
+        ),
       );
     } else {
       menu.appendChild(
@@ -1003,25 +1223,32 @@ export function showTrashContextMenu(explorer, e, inst) {
           () => {
             showTrashView(explorer, inst);
           },
-          "fa-trash"
-        )
+          "fa-trash",
+        ),
       );
       menu.appendChild(
         item(
           "Empty Trash",
           () => {
-            os.dialog.confirm("Empty Trash", "Empty the trash for good? You can't undo this.").then((confirmed) => {
-              if (!confirmed) return;
-              os.fs.emptyTrash().then(() => {
-                os.notify.send("Trash emptied");
+            os.dialog
+              .confirm(
+                "Empty Trash",
+                "Empty the trash for good? You can't undo this.",
+              )
+              .then((confirmed) => {
+                if (!confirmed) return;
+                os.fs.emptyTrash().then(() => {
+                  os.notify.send("Trash emptied");
+                });
               });
-            });
           },
-          "fa-trash-alt"
-        )
+          "fa-trash-alt",
+        ),
       );
     }
     menu.appendChild(hr());
-    menu.appendChild(item("Refresh", () => explorer.renderInstance(inst), "fa-sync-alt"));
+    menu.appendChild(
+      item("Refresh", () => explorer.renderInstance(inst), "fa-sync-alt"),
+    );
   });
 }

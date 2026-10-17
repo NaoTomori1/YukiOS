@@ -10,11 +10,17 @@ export class RhythmsApp extends BaseApp {
   }
 
   open() {
-    const win = os.window.create("rhythms-window", "Rhythms", "800px", "600px", {
-      icon: "fas fa-wave-square",
-      appId: "rhythms",
-      transparent: true
-    });
+    const win = os.window.create(
+      "rhythms-window",
+      "Rhythms",
+      "800px",
+      "600px",
+      {
+        icon: "fas fa-wave-square",
+        appId: "rhythms",
+        transparent: true,
+      },
+    );
     win.innerHTML = `
             <div class="rhythms-container">
               <button class="rhythms-settings-toggle" id="rhythms-settings-toggle">
@@ -82,7 +88,9 @@ export class RhythmsApp extends BaseApp {
     const tilesSlider = element.querySelector("#rhythms-tiles");
     const tilesValue = element.querySelector("#rhythms-tiles-value");
     const sensitivitySlider = element.querySelector("#rhythms-sensitivity");
-    const sensitivityValue = element.querySelector("#rhythms-sensitivity-value");
+    const sensitivityValue = element.querySelector(
+      "#rhythms-sensitivity-value",
+    );
     const roundnessSlider = element.querySelector("#rhythms-roundness");
     const roundnessValue = element.querySelector("#rhythms-roundness-value");
     const filledToggle = element.querySelector("#rhythms-filled-toggle");
@@ -94,7 +102,8 @@ export class RhythmsApp extends BaseApp {
     });
 
     modeButtons.forEach((btn) => {
-      if (btn.dataset.mode === this.visualizer.displayMode) btn.classList.add("active");
+      if (btn.dataset.mode === this.visualizer.displayMode)
+        btn.classList.add("active");
       else btn.classList.remove("active");
       btn.addEventListener("click", () => {
         modeButtons.forEach((b) => b.classList.remove("active"));
@@ -104,7 +113,8 @@ export class RhythmsApp extends BaseApp {
     });
 
     effectButtons.forEach((btn) => {
-      if (btn.dataset.effect === this.visualizer.effectMode) btn.classList.add("active");
+      if (btn.dataset.effect === this.visualizer.effectMode)
+        btn.classList.add("active");
       else btn.classList.remove("active");
       btn.addEventListener("click", () => {
         effectButtons.forEach((b) => b.classList.remove("active"));
@@ -146,7 +156,9 @@ export class RhythmsApp extends BaseApp {
       filledToggle.textContent = next ? "Filled" : "Outlined";
     });
 
-    colorPicker.value = this.visualizer.color.startsWith("var(") ? "#7c5cfc" : this.visualizer.color;
+    colorPicker.value = this.visualizer.color.startsWith("var(")
+      ? "#7c5cfc"
+      : this.visualizer.color;
     colorPicker.addEventListener("input", (e) => {
       this.visualizer.setColor(e.target.value);
     });

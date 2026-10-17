@@ -1,11 +1,12 @@
-const SIGNALING_URL = "wss://yukios-remote-signaling.liventcord-a60.workers.dev";
+const SIGNALING_URL =
+  "wss://yukios-remote-signaling.liventcord-a60.workers.dev";
 const STUN_SERVERS = [
   { urls: "stun:stun.cloudflare.com:3478" },
   { urls: "stun:stun.l.google.com:19302" },
   { urls: "stun:stun1.l.google.com:19302" },
   { urls: "stun:stun2.l.google.com:19302" },
   { urls: "stun:stun3.l.google.com:19302" },
-  { urls: "stun:stun4.l.google.com:19302" }
+  { urls: "stun:stun4.l.google.com:19302" },
 ];
 const MAX_RECONNECT = 20;
 
@@ -16,7 +17,11 @@ function setTurnCreds(creds) {
 function getIceConfig() {
   const servers = [...STUN_SERVERS];
   if (_turnCreds) {
-    servers.push({ urls: _turnCreds.urls, username: _turnCreds.username, credential: _turnCreds.credential });
+    servers.push({
+      urls: _turnCreds.urls,
+      username: _turnCreds.username,
+      credential: _turnCreds.credential,
+    });
   }
   return { iceServers: servers, iceCandidatePoolSize: 5 };
 }
@@ -85,7 +90,11 @@ class RemoteClientCore {
     };
 
     this.ws.onclose = () => {
-      if (this.isIntentionalDisconnect || !this.roomCode || this.reconnectAttempts >= MAX_RECONNECT) {
+      if (
+        this.isIntentionalDisconnect ||
+        !this.roomCode ||
+        this.reconnectAttempts >= MAX_RECONNECT
+      ) {
         if (this.connected) {
           this.options.onError("Disconnected from host");
         }
@@ -106,18 +115,30 @@ class RemoteClientCore {
       this.pc.restartIce();
       if (this.connectionTimeout) clearTimeout(this.connectionTimeout);
       this.connectionTimeout = setTimeout(() => {
-        if (this.pc && this.pc.iceConnectionState !== "connected" && this.pc.iceConnectionState !== "completed") {
-          this.options.onStatus("P2P unavailable, waiting for host fallback...", false);
+        if (
+          this.pc &&
+          this.pc.iceConnectionState !== "connected" &&
+          this.pc.iceConnectionState !== "completed"
+        ) {
+          this.options.onStatus(
+            "P2P unavailable, waiting for host fallback...",
+            false,
+          );
         }
       }, 15000);
     } catch (e) {
-      this.options.onStatus("ICE restart failed, waiting for host fallback...", false);
+      this.options.onStatus(
+        "ICE restart failed, waiting for host fallback...",
+        false,
+      );
     }
   }
 
   renderFallbackFrame(dataUrl) {
     if (!this.fallbackCanvas) {
-      const parent = this.options.videoElement ? this.options.videoElement.parentElement : null;
+      const parent = this.options.videoElement
+        ? this.options.videoElement.parentElement
+        : null;
       if (!parent) return;
       this.fallbackCanvas = document.createElement("canvas");
       this.fallbackCanvas.className = "decoder-canvas";
@@ -133,7 +154,8 @@ class RemoteClientCore {
       this.fallbackCanvas.width = img.width;
       this.fallbackCanvas.height = img.height;
       this.fallbackCtx.drawImage(img, 0, 0);
-      if (this.options.videoElement) this.options.videoElement.style.display = "none";
+      if (this.options.videoElement)
+        this.options.videoElement.style.display = "none";
       this.options.onOverlay(false);
       if (!this.fallbackMode) {
         this.fallbackMode = true;
@@ -155,11 +177,18 @@ class RemoteClientCore {
       case "offer":
         if (!this.pc) this.initWebRTC();
         this.pc
-          .setRemoteDescription(new RTCSessionDescription({ type: "offer", sdp: msg.sdp }))
+          .setRemoteDescription(
+            new RTCSessionDescription({ type: "offer", sdp: msg.sdp }),
+          )
           .then(() => this.pc.createAnswer())
           .then((answer) => this.pc.setLocalDescription(answer))
           .then(() => {
-            this.ws.send(JSON.stringify({ type: "answer", sdp: this.pc.localDescription.sdp }));
+            this.ws.send(
+              JSON.stringify({
+                type: "answer",
+                sdp: this.pc.localDescription.sdp,
+              }),
+            );
             if (msg.codec === "h264") {
               this.options.onStatus("H.264 stream starting...", true);
               this.options.onOverlay(false);
@@ -207,18 +236,32 @@ class RemoteClientCore {
         this.iceRestartAttempted = true;
         this.options.onStatus("P2P failed, retrying ICE...", false);
         this.restartIce();
-      } else if (state === "failed" && this.iceRestartAttempted && !this.fallbackMode) {
-        this.options.onStatus("P2P failed, waiting for host fallback...", false);
+      } else if (
+        state === "failed" &&
+        this.iceRestartAttempted &&
+        !this.fallbackMode
+      ) {
+        this.options.onStatus(
+          "P2P failed, waiting for host fallback...",
+          false,
+        );
       }
     };
     this.connectionTimeout = setTimeout(() => {
-      if (this.pc && this.pc.iceConnectionState !== "connected" && this.pc.iceConnectionState !== "completed") {
+      if (
+        this.pc &&
+        this.pc.iceConnectionState !== "connected" &&
+        this.pc.iceConnectionState !== "completed"
+      ) {
         if (!this.iceRestartAttempted) {
           this.iceRestartAttempted = true;
           this.options.onStatus("P2P timed out, retrying ICE...", false);
           this.restartIce();
         } else {
-          this.options.onStatus("P2P unavailable, waiting for host fallback...", false);
+          this.options.onStatus(
+            "P2P unavailable, waiting for host fallback...",
+            false,
+          );
         }
       }
     }, 15000);
@@ -233,14 +276,22 @@ class RemoteClientCore {
       }
       if (event.track.kind === "audio" && this.options.onAudio) {
         this.options.onAudio(true);
-        event.track.onmute = () => this.options.onAudio && this.options.onAudio(false);
-        event.track.onunmute = () => this.options.onAudio && this.options.onAudio(true);
+        event.track.onmute = () =>
+          this.options.onAudio && this.options.onAudio(false);
+        event.track.onunmute = () =>
+          this.options.onAudio && this.options.onAudio(true);
       }
     };
 
     this.pc.onicecandidate = (event) => {
       if (event.candidate) {
-        this.ws.send(JSON.stringify({ type: "ice-candidate", candidate: event.candidate.toJSON(), from: "client" }));
+        this.ws.send(
+          JSON.stringify({
+            type: "ice-candidate",
+            candidate: event.candidate.toJSON(),
+            from: "client",
+          }),
+        );
       }
     };
 
@@ -276,14 +327,20 @@ class RemoteClientCore {
             try {
               const buf = new Uint8Array(msgEvent.data);
               const typeByte = buf[0];
-              const timestamp = new DataView(buf.buffer, 1, 4).getUint32(0, true);
-              const duration = new DataView(buf.buffer, 5, 4).getUint32(0, true);
+              const timestamp = new DataView(buf.buffer, 1, 4).getUint32(
+                0,
+                true,
+              );
+              const duration = new DataView(buf.buffer, 5, 4).getUint32(
+                0,
+                true,
+              );
               const h264Data = buf.subarray(9);
               const chunk = new EncodedVideoChunk({
                 type: typeByte === 1 ? "key" : "delta",
                 timestamp: timestamp,
                 duration: duration || 33000,
-                data: h264Data
+                data: h264Data,
               });
               this.videoDecoder.decode(chunk);
             } catch (e) {
@@ -342,7 +399,13 @@ class RemoteClientCore {
           existingCanvas.width = this.decoderCanvas.width;
           existingCanvas.height = this.decoderCanvas.height;
           const ctx = existingCanvas.getContext("2d");
-          ctx.drawImage(this.decoderCanvas, 0, 0, existingCanvas.width, existingCanvas.height);
+          ctx.drawImage(
+            this.decoderCanvas,
+            0,
+            0,
+            existingCanvas.width,
+            existingCanvas.height,
+          );
           this.options.onOverlay(false);
           this.options.onStatus("Streaming (H.264)", true);
         }
@@ -350,7 +413,7 @@ class RemoteClientCore {
       error: (err) => {
         console.error("VideoDecoder error:", err);
         this.useWebCodecs = false;
-      }
+      },
     });
 
     this.useWebCodecs = true;
@@ -368,7 +431,7 @@ class RemoteClientCore {
         type: typeByte === 1 ? "key" : "delta",
         timestamp: timestamp,
         duration: duration || 33000,
-        data: h264Data
+        data: h264Data,
       });
       this.videoDecoder.decode(chunk);
     } catch (e) {
@@ -395,7 +458,9 @@ class RemoteClientCore {
               data.set(new Uint8Array(chunk), off);
               off += chunk.byteLength;
             }
-            const blob = new Blob([data], { type: fileMeta.mime || "application/octet-stream" });
+            const blob = new Blob([data], {
+              type: fileMeta.mime || "application/octet-stream",
+            });
             const url = URL.createObjectURL(blob);
             const a = document.createElement("a");
             a.href = url;
@@ -431,8 +496,8 @@ class RemoteClientCore {
           type: "file-start",
           name: file.name,
           size: file.size,
-          mime: file.type || "application/octet-stream"
-        })
+          mime: file.type || "application/octet-stream",
+        }),
       );
 
       for (let offset = 0; offset < data.length; offset += chunkSize) {
@@ -453,20 +518,31 @@ class RemoteClientCore {
       const rect = container.getBoundingClientRect();
       const x = (e.clientX - rect.left) / rect.width;
       const y = (e.clientY - rect.top) / rect.height;
-      this.sendInput({ type: "mousemove", x: Math.round(x * 10000) / 10000, y: Math.round(y * 10000) / 10000 });
+      this.sendInput({
+        type: "mousemove",
+        x: Math.round(x * 10000) / 10000,
+        y: Math.round(y * 10000) / 10000,
+      });
     };
     this.containerMouseDown = (e) => {
-      this.sendInput({ type: "mousedown", button: e.button === 2 ? "right" : "left" });
+      this.sendInput({
+        type: "mousedown",
+        button: e.button === 2 ? "right" : "left",
+      });
     };
     this.containerMouseUp = (e) => {
-      this.sendInput({ type: "mouseup", button: e.button === 2 ? "right" : "left" });
+      this.sendInput({
+        type: "mouseup",
+        button: e.button === 2 ? "right" : "left",
+      });
     };
     this.containerWheel = (e) => {
       e.preventDefault();
       this.sendInput({ type: "scroll", deltaX: e.deltaX, deltaY: e.deltaY });
     };
     this.docKeydown = (e) => {
-      if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") return;
+      if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA")
+        return;
       if (this.options.onKeydown && this.options.onKeydown(e)) {
         return;
       }
@@ -478,11 +554,12 @@ class RemoteClientCore {
         alt: e.altKey,
         ctrl: e.ctrlKey,
         shift: e.shiftKey,
-        meta: e.metaKey
+        meta: e.metaKey,
       });
     };
     this.docKeyup = (e) => {
-      if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") return;
+      if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA")
+        return;
       e.preventDefault();
       this.sendInput({
         type: "keyup",
@@ -491,7 +568,7 @@ class RemoteClientCore {
         alt: e.altKey,
         ctrl: e.ctrlKey,
         shift: e.shiftKey,
-        meta: e.metaKey
+        meta: e.metaKey,
       });
     };
     this.docContextMenu = (e) => {
@@ -505,7 +582,9 @@ class RemoteClientCore {
     container.addEventListener("mousemove", this.containerMouseMove);
     container.addEventListener("mousedown", this.containerMouseDown);
     container.addEventListener("mouseup", this.containerMouseUp);
-    container.addEventListener("wheel", this.containerWheel, { passive: false });
+    container.addEventListener("wheel", this.containerWheel, {
+      passive: false,
+    });
     document.addEventListener("keydown", this.docKeydown);
     document.addEventListener("keyup", this.docKeyup);
     document.addEventListener("contextmenu", this.docContextMenu);
@@ -539,7 +618,7 @@ class RemoteClientCore {
             id: gp.id,
             buttons,
             axes,
-            timestamp: performance.now()
+            timestamp: performance.now(),
           });
         }
       } catch (e) {
@@ -558,16 +637,26 @@ class RemoteClientCore {
 
   startReconnect() {
     this.reconnectAttempts++;
-    const delay = Math.min(1000 * Math.pow(2, this.reconnectAttempts - 1), 30000);
+    const delay = Math.min(
+      1000 * Math.pow(2, this.reconnectAttempts - 1),
+      30000,
+    );
     const secs = (delay / 1000).toFixed(0);
     this.options.onStatus(
-      "Reconnecting in " + secs + "s... (" + this.reconnectAttempts + "/" + MAX_RECONNECT + ")",
-      false
+      "Reconnecting in " +
+        secs +
+        "s... (" +
+        this.reconnectAttempts +
+        "/" +
+        MAX_RECONNECT +
+        ")",
+      false,
     );
     this.options.onOverlay(true);
 
     this.reconnectTimer = setTimeout(() => {
-      const wsUrl = SIGNALING_URL + "?room=" + encodeURIComponent(this.roomCode);
+      const wsUrl =
+        SIGNALING_URL + "?room=" + encodeURIComponent(this.roomCode);
       let newWs;
       try {
         newWs = new WebSocket(wsUrl);
@@ -602,7 +691,11 @@ class RemoteClientCore {
         };
 
         this.ws.onclose = () => {
-          if (!this.isIntentionalDisconnect && this.roomCode && this.reconnectAttempts < MAX_RECONNECT) {
+          if (
+            !this.isIntentionalDisconnect &&
+            this.roomCode &&
+            this.reconnectAttempts < MAX_RECONNECT
+          ) {
             this.startReconnect();
           } else {
             this.options.onStatus("Disconnected", false);
@@ -632,14 +725,20 @@ class RemoteClientCore {
   removeInputListeners() {
     const container = this.options.videoContainer;
     if (container) {
-      if (this.containerMouseMove) container.removeEventListener("mousemove", this.containerMouseMove);
-      if (this.containerMouseDown) container.removeEventListener("mousedown", this.containerMouseDown);
-      if (this.containerMouseUp) container.removeEventListener("mouseup", this.containerMouseUp);
-      if (this.containerWheel) container.removeEventListener("wheel", this.containerWheel);
+      if (this.containerMouseMove)
+        container.removeEventListener("mousemove", this.containerMouseMove);
+      if (this.containerMouseDown)
+        container.removeEventListener("mousedown", this.containerMouseDown);
+      if (this.containerMouseUp)
+        container.removeEventListener("mouseup", this.containerMouseUp);
+      if (this.containerWheel)
+        container.removeEventListener("wheel", this.containerWheel);
     }
-    if (this.docKeydown) document.removeEventListener("keydown", this.docKeydown);
+    if (this.docKeydown)
+      document.removeEventListener("keydown", this.docKeydown);
     if (this.docKeyup) document.removeEventListener("keyup", this.docKeyup);
-    if (this.docContextMenu) document.removeEventListener("contextmenu", this.docContextMenu);
+    if (this.docContextMenu)
+      document.removeEventListener("contextmenu", this.docContextMenu);
     this.containerMouseMove = null;
     this.containerMouseDown = null;
     this.containerMouseUp = null;
@@ -670,7 +769,9 @@ class RemoteClientCore {
     }
     this.useWebCodecs = false;
     const existingCanvas = this.options.videoElement
-      ? this.options.videoElement.parentElement?.querySelectorAll(".decoder-canvas")
+      ? this.options.videoElement.parentElement?.querySelectorAll(
+          ".decoder-canvas",
+        )
       : null;
     if (existingCanvas) existingCanvas.forEach((c) => c.remove());
     this.decoderCanvas = null;

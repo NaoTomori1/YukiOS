@@ -22,7 +22,11 @@ export class DecorManager {
         mesh.visible = true;
         this.activeDecorations[def.id] = true;
         if (def.defaultPos) {
-          mesh.position.set(def.defaultPos.x, def.defaultPos.y, def.defaultPos.z);
+          mesh.position.set(
+            def.defaultPos.x,
+            def.defaultPos.y,
+            def.defaultPos.z,
+          );
         }
         mesh.traverse((child) => {
           if (child.isMesh) {
@@ -35,7 +39,7 @@ export class DecorManager {
           title: def.title,
           icon: def.icon,
           mesh,
-          defaultPos: def.defaultPos
+          defaultPos: def.defaultPos,
         });
       }
     }
@@ -95,7 +99,7 @@ export class DecorManager {
         positions[item.id] = {
           x: item.mesh.position.x,
           y: item.mesh.position.y,
-          z: item.mesh.position.z
+          z: item.mesh.position.z,
         };
       }
     }
@@ -161,7 +165,7 @@ export class DecorManager {
             Math.random() * 256,
             Math.random() * 192,
             Math.random() * 256,
-            Math.random() * 192
+            Math.random() * 192,
           );
           ctx.stroke();
         }
@@ -177,13 +181,21 @@ export class DecorManager {
         ctx.fill();
 
         const tex = new T.CanvasTexture(canvas);
-        const posterMat = new T.MeshStandardMaterial({ map: tex, roughness: 0.4, metalness: 0.05 });
+        const posterMat = new T.MeshStandardMaterial({
+          map: tex,
+          roughness: 0.4,
+          metalness: 0.05,
+        });
 
         const poster = new T.Mesh(new T.PlaneGeometry(0.7, 0.5), posterMat);
         poster.position.z = 0;
         group.add(poster);
 
-        const frameMat = new T.MeshStandardMaterial({ color: 0x0a0a18, roughness: 0.5, metalness: 0.2 });
+        const frameMat = new T.MeshStandardMaterial({
+          color: 0x0a0a18,
+          roughness: 0.5,
+          metalness: 0.2,
+        });
         const fw = 0.74;
         const fh = 0.54;
         const fd = 0.025;
@@ -192,7 +204,7 @@ export class DecorManager {
           { w: fw, h: fb, x: 0, y: fh / 2 - fb / 2, z: -0.01 },
           { w: fw, h: fb, x: 0, y: -fh / 2 + fb / 2, z: -0.01 },
           { w: fb, h: fh - 2 * fb, x: -fw / 2 + fb / 2, y: 0, z: -0.01 },
-          { w: fb, h: fh - 2 * fb, x: fw / 2 - fb / 2, y: 0, z: -0.01 }
+          { w: fb, h: fh - 2 * fb, x: fw / 2 - fb / 2, y: 0, z: -0.01 },
         ];
         for (const p of frameParts) {
           const m = new T.Mesh(new T.BoxGeometry(p.w, p.h, fd), frameMat);
@@ -202,7 +214,7 @@ export class DecorManager {
 
         return group;
       },
-      { x: 2.0, y: 1.8, z: -3.95 }
+      { x: 2.0, y: 1.8, z: -3.95 },
     );
 
     this.defineItem(
@@ -212,12 +224,35 @@ export class DecorManager {
       (T) => {
         const group = new T.Group();
         const colors = [0x224488, 0x3a5c4a, 0x6c3a3a];
-        const bookMat = colors.map((c) => new T.MeshStandardMaterial({ color: c, roughness: 0.7, metalness: 0.1 }));
+        const bookMat = colors.map(
+          (c) =>
+            new T.MeshStandardMaterial({
+              color: c,
+              roughness: 0.7,
+              metalness: 0.1,
+            }),
+        );
 
         const books = [
           { w: 0.06, h: 0.09, d: 0.04, x: 0, y: 0.045, z: 0, mat: bookMat[0] },
-          { w: 0.07, h: 0.07, d: 0.04, x: 0.01, y: 0.08, z: -0.005, mat: bookMat[1] },
-          { w: 0.05, h: 0.08, d: 0.04, x: -0.008, y: 0.115, z: 0.005, mat: bookMat[2] }
+          {
+            w: 0.07,
+            h: 0.07,
+            d: 0.04,
+            x: 0.01,
+            y: 0.08,
+            z: -0.005,
+            mat: bookMat[1],
+          },
+          {
+            w: 0.05,
+            h: 0.08,
+            d: 0.04,
+            x: -0.008,
+            y: 0.115,
+            z: 0.005,
+            mat: bookMat[2],
+          },
         ];
 
         for (const b of books) {
@@ -228,7 +263,7 @@ export class DecorManager {
 
         return group;
       },
-      { x: -0.3, y: 0.8, z: -1.2 }
+      { x: -0.3, y: 0.8, z: -1.2 },
     );
 
     this.defineItem(
@@ -238,30 +273,46 @@ export class DecorManager {
       (T) => {
         const group = new T.Group();
 
-        const poleMat = new T.MeshStandardMaterial({ color: 0x222222, metalness: 0.7, roughness: 0.3 });
+        const poleMat = new T.MeshStandardMaterial({
+          color: 0x222222,
+          metalness: 0.7,
+          roughness: 0.3,
+        });
         const shadeMat = new T.MeshStandardMaterial({
           color: 0x1a1a30,
           roughness: 0.9,
           metalness: 0,
-          side: T.DoubleSide
+          side: T.DoubleSide,
         });
 
-        const base = new T.Mesh(new T.CylinderGeometry(0.08, 0.1, 0.02, 10), poleMat);
+        const base = new T.Mesh(
+          new T.CylinderGeometry(0.08, 0.1, 0.02, 10),
+          poleMat,
+        );
         base.position.y = 0.01;
         group.add(base);
 
-        const pole = new T.Mesh(new T.CylinderGeometry(0.012, 0.015, 1.2, 6), poleMat);
+        const pole = new T.Mesh(
+          new T.CylinderGeometry(0.012, 0.015, 1.2, 6),
+          poleMat,
+        );
         pole.position.y = 0.61;
         group.add(pole);
 
-        const shade = new T.Mesh(new T.CylinderGeometry(0.1, 0.18, 0.18, 10, 1, true), shadeMat);
+        const shade = new T.Mesh(
+          new T.CylinderGeometry(0.1, 0.18, 0.18, 10, 1, true),
+          shadeMat,
+        );
         shade.position.y = 1.3;
         shade.userData.objectId = "floorlamp";
         shade.userData.interactive = true;
         shade.userData.tooltip = "Click to toggle lamp";
         group.add(shade);
 
-        const bulb = new T.Mesh(new T.SphereGeometry(0.04, 8, 8), new T.MeshBasicMaterial({ color: 0x221100 }));
+        const bulb = new T.Mesh(
+          new T.SphereGeometry(0.04, 8, 8),
+          new T.MeshBasicMaterial({ color: 0x221100 }),
+        );
         bulb.position.y = 1.24;
         group.add(bulb);
 
@@ -274,7 +325,7 @@ export class DecorManager {
 
         return group;
       },
-      { x: 2.2, y: 0, z: -1.5 }
+      { x: 2.2, y: 0, z: -1.5 },
     );
   }
 
@@ -323,7 +374,13 @@ export class DecorManager {
       }
     });
     this.scene.add(mesh);
-    this.items.push({ id: def.id, title: def.title, icon: def.icon, mesh, defaultPos: def.defaultPos });
+    this.items.push({
+      id: def.id,
+      title: def.title,
+      icon: def.icon,
+      mesh,
+      defaultPos: def.defaultPos,
+    });
     this.activeDecorations[def.id] = true;
     return this.items[this.items.length - 1];
   }

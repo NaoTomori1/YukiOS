@@ -20,8 +20,8 @@ function forwardBandDrag(win, e) {
       cancelable: true,
       clientX: x,
       clientY: y,
-      button: 0
-    })
+      button: 0,
+    }),
   );
 }
 
@@ -33,5 +33,7 @@ export function initSteamPopupWindow(win) {
   });
 
   win.addEventListener("mousedown", (e) => forwardBandDrag(win, e));
-  win.addEventListener("touchstart", (e) => forwardBandDrag(win, e), { passive: false });
+  win.addEventListener("touchstart", (e) => forwardBandDrag(win, e), {
+    passive: false,
+  });
 }

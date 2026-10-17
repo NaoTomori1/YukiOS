@@ -17,7 +17,10 @@ export function setTorManager(manager) {
 }
 
 export function getOS() {
-  if (!bridge) throw new Error("[OS Bridge] Not initialized. Call initializeOSBridge() first.");
+  if (!bridge)
+    throw new Error(
+      "[OS Bridge] Not initialized. Call initializeOSBridge() first.",
+    );
   return bridge;
 }
 
@@ -29,7 +32,7 @@ const noopStorage = {
   remove: NOOP,
   clear: NOOP,
   has: () => false,
-  subscribe: () => NOOP
+  subscribe: () => NOOP,
 };
 
 const noopEvents = {
@@ -38,7 +41,7 @@ const noopEvents = {
   emit: NOOP,
   once: NOOP,
   clear: NOOP,
-  listenerCount: () => 0
+  listenerCount: () => 0,
 };
 
 const noopNotify = {
@@ -48,7 +51,7 @@ const noopNotify = {
   getAll: () => [],
   getCount: () => 0,
   setDoNotDisturb: NOOP,
-  getDoNotDisturb: () => false
+  getDoNotDisturb: () => false,
 };
 
 const noopWindow = {
@@ -73,7 +76,7 @@ const noopWindow = {
   pinAppToTaskbar: NOOP,
   getWindowControls: () => "",
   setTitle: NOOP,
-  getTitle: () => null
+  getTitle: () => null,
 };
 
 const noopFs = {
@@ -107,10 +110,10 @@ const noopFs = {
     restoreAll: () => Promise.resolve([]),
     deletePermanently: () => Promise.resolve(),
     emptyTrash: () => Promise.resolve(),
-    getItemCount: () => Promise.resolve(0)
+    getItemCount: () => Promise.resolve(0),
   },
   registerMount: () => Promise.resolve(),
-  unmount: () => Promise.resolve()
+  unmount: () => Promise.resolve(),
 };
 
 const noopDialog = {
@@ -119,7 +122,7 @@ const noopDialog = {
   prompt: () => Promise.resolve(null),
   fileOpen: () => Promise.resolve(null),
   fileSave: () => Promise.resolve(null),
-  openDirectory: () => Promise.resolve(null)
+  openDirectory: () => Promise.resolve(null),
 };
 
 const noopTray = {
@@ -133,7 +136,7 @@ const noopTray = {
   getTrayItems: () => new Map(),
   getAllItems: () => [],
   isRegistered: () => false,
-  updateItemVisibility: NOOP
+  updateItemVisibility: NOOP,
 };
 
 const noopApp = {
@@ -149,7 +152,7 @@ const noopApp = {
   get: () => null,
   require: () => null,
   register: NOOP,
-  close: NOOP
+  close: NOOP,
 };
 
 const noopModes = {
@@ -157,7 +160,7 @@ const noopModes = {
   getActiveModes: () => [],
   enter: NOOP,
   exit: NOOP,
-  exitAll: NOOP
+  exitAll: NOOP,
 };
 
 const noopTiling = {
@@ -175,7 +178,7 @@ const noopTiling = {
   toggleFloating: NOOP,
   toggleFullscreenOnTiled: NOOP,
   toggleSplitType: NOOP,
-  closeFocusedWindow: NOOP
+  closeFocusedWindow: NOOP,
 };
 
 const noopTor = {
@@ -192,7 +195,7 @@ const noopTor = {
   getSnowflakeUrl: () => "",
   setSnowflakeUrl: NOOP,
   getFetchCount: () => 0,
-  reconnect: NOOP
+  reconnect: NOOP,
 };
 
 const noopAchievements = {
@@ -206,7 +209,7 @@ const noopAchievements = {
   incrementTerminalCmd: NOOP,
   incrementFileUploaded: NOOP,
   triggerCommandExecution: NOOP,
-  unlock: () => null
+  unlock: () => null,
 };
 
 const noopPorts = {
@@ -214,11 +217,14 @@ const noopPorts = {
   unregister: NOOP,
   get: () => null,
   isRegistered: () => false,
-  list: () => []
+  list: () => [],
 };
 
 const noopAccount = {
-  client: { signIn: () => Promise.reject(new Error("[OS Bridge] Not initialized")), signOut: () => Promise.reject() },
+  client: {
+    signIn: () => Promise.reject(new Error("[OS Bridge] Not initialized")),
+    signOut: () => Promise.reject(),
+  },
   signIn: () => Promise.reject(new Error("[OS Bridge] Not initialized")),
   signUp: () => Promise.reject(new Error("[OS Bridge] Not initialized")),
   signOut: () => Promise.reject(new Error("[OS Bridge] Not initialized")),
@@ -235,11 +241,11 @@ const noopAccount = {
     getEnabledComponents: () => ({}),
     buildBundle: () => null,
     push: () => Promise.resolve({ error: "Not signed in." }),
-    pull: () => Promise.resolve({ error: "Not signed in." })
+    pull: () => Promise.resolve({ error: "Not signed in." }),
   },
   onAccountChange: () => NOOP,
   getSession: () => null,
-  formatSize: () => ""
+  formatSize: () => "",
 };
 
 const noopAPIs = {
@@ -258,7 +264,7 @@ const noopAPIs = {
   achievements: noopAchievements,
   account: noopAccount,
   clipboardManager: null,
-  fileSystemManager: null
+  fileSystemManager: null,
 };
 
 export const os = new Proxy(
@@ -272,6 +278,6 @@ export const os = new Proxy(
         return undefined;
       }
       return bridge[prop];
-    }
-  }
+    },
+  },
 );

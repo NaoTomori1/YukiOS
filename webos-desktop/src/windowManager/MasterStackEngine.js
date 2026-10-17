@@ -4,7 +4,7 @@ export function createState(orientation = "horizontal", masterSize = 0.6) {
     master: null,
     stack: [],
     orientation,
-    masterSize
+    masterSize,
   };
 }
 
@@ -66,15 +66,18 @@ export function getDirectionalNeighbor(state, winId, direction) {
   if (!state || !state.master) return null;
 
   if (direction === "left" || direction === "right") {
-    if (state.master === winId && state.stack.length > 0) return { winId: state.stack[0] };
-    if (state.stack.includes(winId) && state.master) return { winId: state.master };
+    if (state.master === winId && state.stack.length > 0)
+      return { winId: state.stack[0] };
+    if (state.stack.includes(winId) && state.master)
+      return { winId: state.master };
     return null;
   }
 
   if (direction === "up" || direction === "down") {
     const idx = state.stack.indexOf(winId);
     if (idx > 0) return { winId: state.stack[idx - 1] };
-    if (idx >= 0 && idx < state.stack.length - 1) return { winId: state.stack[idx + 1] };
+    if (idx >= 0 && idx < state.stack.length - 1)
+      return { winId: state.stack[idx + 1] };
     return { winId: state.master };
   }
 
@@ -96,10 +99,16 @@ export function calculateLayout(state, x, y, w, h, gaps) {
   const results = [];
   const inner = gaps && gaps.inner != null ? gaps.inner : 4;
   const outer = gaps && gaps.outer != null ? gaps.outer : 3;
-  const outerBottom = gaps && gaps.outerBottom != null ? gaps.outerBottom : outer;
+  const outerBottom =
+    gaps && gaps.outerBottom != null ? gaps.outerBottom : outer;
 
   const ox = outer;
-  const rect = { x: x + ox, y: y + outer, w: w - ox * 2, h: h - outer - outerBottom };
+  const rect = {
+    x: x + ox,
+    y: y + outer,
+    w: w - ox * 2,
+    h: h - outer - outerBottom,
+  };
 
   if (!state || !state.master) return results;
 
@@ -115,18 +124,20 @@ export function calculateLayout(state, x, y, w, h, gaps) {
       x: Math.round(rect.x),
       y: Math.round(rect.y),
       w: Math.round(Math.max(masterW, 0)),
-      h: Math.round(Math.max(rect.h, 0))
+      h: Math.round(Math.max(rect.h, 0)),
     });
 
     if (state.stack.length > 0) {
-      const stackH = Math.round((rect.h - inner * (state.stack.length - 1)) / state.stack.length);
+      const stackH = Math.round(
+        (rect.h - inner * (state.stack.length - 1)) / state.stack.length,
+      );
       state.stack.forEach((winId, i) => {
         results.push({
           winId,
           x: Math.round(rect.x + masterW + inner),
           y: Math.round(rect.y + i * (stackH + inner)),
           w: Math.round(Math.max(stackW, 0)),
-          h: Math.round(Math.max(stackH, 0))
+          h: Math.round(Math.max(stackH, 0)),
         });
       });
     }
@@ -139,18 +150,20 @@ export function calculateLayout(state, x, y, w, h, gaps) {
       x: Math.round(rect.x),
       y: Math.round(rect.y),
       w: Math.round(Math.max(rect.w, 0)),
-      h: Math.round(Math.max(masterH, 0))
+      h: Math.round(Math.max(masterH, 0)),
     });
 
     if (state.stack.length > 0) {
-      const stackW = Math.round((rect.w - inner * (state.stack.length - 1)) / state.stack.length);
+      const stackW = Math.round(
+        (rect.w - inner * (state.stack.length - 1)) / state.stack.length,
+      );
       state.stack.forEach((winId, i) => {
         results.push({
           winId,
           x: Math.round(rect.x + i * (stackW + inner)),
           y: Math.round(rect.y + masterH + inner),
           w: Math.round(Math.max(stackW, 0)),
-          h: Math.round(Math.max(stackH, 0))
+          h: Math.round(Math.max(stackH, 0)),
         });
       });
     }
@@ -169,5 +182,5 @@ export const MasterStackEngine = {
   swapWindows,
   getDirectionalNeighbor,
   resizeSplit,
-  calculateLayout
+  calculateLayout,
 };

@@ -50,8 +50,8 @@ export const DEFAULT_SYSTEM_MENUS = [
       { label: "Show All", action: "window:showAll" },
       { type: "separator" },
       { label: "Lock Screen", action: "session:lock" },
-      { label: "Log Out YukiOS", action: "session:logout" }
-    ]
+      { label: "Log Out YukiOS", action: "session:logout" },
+    ],
   },
   {
     label: "File",
@@ -63,8 +63,8 @@ export const DEFAULT_SYSTEM_MENUS = [
       { label: "Open", action: "explorer:open" },
       { label: "Close Window", action: "window:close" },
       { label: "Close All", action: "window:closeAll" },
-      { type: "separator" }
-    ]
+      { type: "separator" },
+    ],
   },
   {
     label: "Edit",
@@ -80,22 +80,47 @@ export const DEFAULT_SYSTEM_MENUS = [
       { label: "Select All", action: "edit:selectAll" },
       { type: "separator" },
       { label: "Emoji & Symbols", action: "emoji:open" },
-      { label: "Clipboard History", action: "clipboard:open" }
-    ]
+      { label: "Clipboard History", action: "clipboard:open" },
+    ],
   },
   {
     label: "View",
     items: [
-      { label: "Desktop Icons", type: "checkbox", checked: true, action: "view:desktopIcons" },
-      { label: "Show Widgets", type: "checkbox", checked: true, action: "view:widgets" },
-      { label: "Show Taskbar", type: "checkbox", checked: true, action: "view:taskbar" },
+      {
+        label: "Desktop Icons",
+        type: "checkbox",
+        checked: true,
+        action: "view:desktopIcons",
+      },
+      {
+        label: "Show Widgets",
+        type: "checkbox",
+        checked: true,
+        action: "view:widgets",
+      },
+      {
+        label: "Show Taskbar",
+        type: "checkbox",
+        checked: true,
+        action: "view:taskbar",
+      },
       { type: "separator" },
       { label: "Enter Full Screen", action: "window:fullscreen" },
-      { label: "Always on Top", type: "checkbox", checked: false, action: "window:alwaysOnTop" },
+      {
+        label: "Always on Top",
+        type: "checkbox",
+        checked: false,
+        action: "window:alwaysOnTop",
+      },
       { type: "separator" },
-      { label: "Transparent UI", type: "checkbox", checked: false, action: "view:transparentUI" },
-      { label: "Workspace Overview", action: "workspace:overview" }
-    ]
+      {
+        label: "Transparent UI",
+        type: "checkbox",
+        checked: false,
+        action: "view:transparentUI",
+      },
+      { label: "Workspace Overview", action: "workspace:overview" },
+    ],
   },
   {
     label: "Go",
@@ -108,8 +133,8 @@ export const DEFAULT_SYSTEM_MENUS = [
       { label: "Recents", action: "go:recents" },
       { label: "Computer", action: "go:computer" },
       { type: "separator" },
-      { label: "Go to Folder", action: "go:folder" }
-    ]
+      { label: "Go to Folder", action: "go:folder" },
+    ],
   },
   {
     label: "Window",
@@ -123,8 +148,8 @@ export const DEFAULT_SYSTEM_MENUS = [
       { type: "separator" },
       { label: "Bring All to Front", action: "window:bringAllToFront" },
       { type: "separator" },
-      { label: "Close All Windows", action: "window:closeAll" }
-    ]
+      { label: "Close All Windows", action: "window:closeAll" },
+    ],
   },
   {
     label: "Help",
@@ -137,9 +162,9 @@ export const DEFAULT_SYSTEM_MENUS = [
       { type: "separator" },
       { label: "Report Issue", action: "help:report" },
       { label: "Achievements", action: "achievements:open" },
-      { label: "About YukiOS", action: "about:open" }
-    ]
-  }
+      { label: "About YukiOS", action: "about:open" },
+    ],
+  },
 ];
 
 export const APP_MENU_OVERRIDES = {
@@ -154,8 +179,8 @@ export const APP_MENU_OVERRIDES = {
             { label: "Close", action: "app:close" },
             { label: "Save", action: "notepad:save" },
             { label: "Save As", action: "notepad:saveAs" },
-            { type: "separator" }
-          ]
+            { type: "separator" },
+          ],
         },
         Edit: {
           items: [
@@ -167,18 +192,18 @@ export const APP_MENU_OVERRIDES = {
             { label: "Paste", action: "edit:paste" },
             { label: "Paste and Match Style", action: "edit:pastePlain" },
             { type: "separator" },
-            { label: "Select All", action: "edit:selectAll" }
-          ]
+            { label: "Select All", action: "edit:selectAll" },
+          ],
         },
         View: {
           items: [
             { label: "Zoom In", action: "view:zoomIn" },
             { label: "Zoom Out", action: "view:zoomOut" },
-            { label: "Actual Size", action: "view:zoomReset" }
-          ]
-        }
-      }
-    }
+            { label: "Actual Size", action: "view:zoomReset" },
+          ],
+        },
+      },
+    },
   },
   terminalApp: {
     menus: {
@@ -189,11 +214,11 @@ export const APP_MENU_OVERRIDES = {
             { label: "New Window", action: "terminal:newWindow" },
             { type: "separator" },
             { label: "Close Tab", action: "app:close" },
-            { label: "Close Window", action: "window:close" }
-          ]
-        }
-      }
-    }
+            { label: "Close Window", action: "window:close" },
+          ],
+        },
+      },
+    },
   },
   browserApp: {
     menus: {
@@ -203,38 +228,38 @@ export const APP_MENU_OVERRIDES = {
           items: [
             { label: "New Window", action: "browser:newWindow" },
             { type: "separator" },
-            { label: "Close Tab", action: "app:close" }
-          ]
+            { label: "Close Tab", action: "app:close" },
+          ],
         },
         View: {
           items: [
             { label: "Reload Page", action: "browser:reload" },
             { type: "separator" },
-            { label: "Developer Tools", action: "browser:devtools" }
-          ]
-        }
-      }
-    }
+            { label: "Developer Tools", action: "browser:devtools" },
+          ],
+        },
+      },
+    },
   },
   explorerApp: {
     menus: {
       label: "Explorer",
       overrides: {
         File: {
-          items: [{ label: "New Window", action: "explorer:newWindow" }]
-        }
-      }
-    }
+          items: [{ label: "New Window", action: "explorer:newWindow" }],
+        },
+      },
+    },
   },
   calculatorApp: {
     menus: {
       label: "Calculator",
       overrides: {
         Edit: {
-          items: [{ label: "Paste", action: "edit:paste" }]
-        }
-      }
-    }
+          items: [{ label: "Paste", action: "edit:paste" }],
+        },
+      },
+    },
   },
   settingsApp: {
     menus: {
@@ -247,11 +272,11 @@ export const APP_MENU_OVERRIDES = {
             { label: "Appearance", action: "settings:cat:appearance" },
             { label: "Network", action: "settings:cat:network" },
             { label: "Audio", action: "settings:cat:audio" },
-            { label: "Accounts", action: "settings:cat:accounts" }
-          ]
-        }
-      }
-    }
+            { label: "Accounts", action: "settings:cat:accounts" },
+          ],
+        },
+      },
+    },
   },
   markdownApp: {
     menus: {
@@ -263,8 +288,8 @@ export const APP_MENU_OVERRIDES = {
             { label: "Open", action: "notepad:open" },
             { type: "separator" },
             { label: "Save", action: "notepad:save" },
-            { label: "Save As", action: "notepad:saveAs" }
-          ]
+            { label: "Save As", action: "notepad:saveAs" },
+          ],
         },
         Edit: {
           items: [
@@ -274,10 +299,10 @@ export const APP_MENU_OVERRIDES = {
             { label: "Cut", action: "edit:cut" },
             { label: "Copy", action: "edit:copy" },
             { label: "Paste", action: "edit:paste" },
-            { label: "Select All", action: "edit:selectAll" }
-          ]
-        }
-      }
-    }
-  }
+            { label: "Select All", action: "edit:selectAll" },
+          ],
+        },
+      },
+    },
+  },
 };

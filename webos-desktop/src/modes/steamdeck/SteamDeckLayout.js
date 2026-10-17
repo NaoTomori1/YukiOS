@@ -1,4 +1,12 @@
-import { os, $, $$, createElement, setText, setHTML, StorageKeys } from "../../framework.js";
+import {
+  os,
+  $,
+  $$,
+  createElement,
+  setText,
+  setHTML,
+  StorageKeys,
+} from "../../framework.js";
 import { resolveAvatarUrl } from "../../social/avatarResolver.js";
 import { fetchFriends, getCachedFriends } from "../../social/friendsApi.js";
 import {
@@ -8,14 +16,24 @@ import {
   buildPlayerRows,
   buildFriendCards,
   buildAvatarStrip,
-  achievementsPercent
+  achievementsPercent,
 } from "../../games/steamOverviewData.js";
 import { STEAM_NEWS_ITEMS } from "../../games/steamNewsData.js";
 import { resolveIconHtml } from "../../shared/iconUtils.js";
-import { renderFriendsListPanel, renderRequestsPanel } from "../../games/steamSocial.js";
+import {
+  renderFriendsListPanel,
+  renderRequestsPanel,
+} from "../../games/steamSocial.js";
 import { steamDeckAudio } from "./SteamDeckAudio.js";
-import { renderDeckMediaView, destroyActiveCarousel } from "./deckMediaCarousel.js";
-import { escapeHtml as esc, formatGameActivityTime, formatLastPlayed } from "../../utils/utils.js";
+import {
+  renderDeckMediaView,
+  destroyActiveCarousel,
+} from "./deckMediaCarousel.js";
+import {
+  escapeHtml as esc,
+  formatGameActivityTime,
+  formatLastPlayed,
+} from "../../utils/utils.js";
 import { isUrlIcon } from "../../shared/urlUtils.js";
 import { SteamDataManager } from "../../games/games.js";
 import { collectSpatialFocusables } from "./focusGrid.js";
@@ -27,7 +45,7 @@ const NAV_ITEMS = [
   { id: "archive", label: "Games" },
   { id: "lumin", label: "LuminSdk Games" },
   { id: "favorites", label: "Favorites" },
-  { id: "collections", label: "Collections" }
+  { id: "collections", label: "Collections" },
 ];
 
 const RAIL_ITEMS = [
@@ -37,13 +55,13 @@ const RAIL_ITEMS = [
   { id: "friends", icon: "fa-user-group", label: "Friends & Chat" },
   { id: "media", icon: "fa-photo-film", label: "Media" },
   { id: "settings", icon: "fa-gear", label: "Settings" },
-  { id: "power", icon: "fa-power-off", label: "Power" }
+  { id: "power", icon: "fa-power-off", label: "Power" },
 ];
 
 const NAV_ITEMS_HOME = [
   { id: "news", label: "What's new" },
   { id: "friends", label: "Friends", friendsPill: true },
-  { id: "recommended", label: "Recommended" }
+  { id: "recommended", label: "Recommended" },
 ];
 
 export function getNavSlideDirection(scope, fromTab, toTab) {
@@ -103,7 +121,9 @@ const buildRecentGamesHtml = (games) => {
             const artHtml = isUrlIcon(game.icon)
               ? `<img src="${game.icon}" alt="${esc(game.title)}" loading="lazy" decoding="async">`
               : `<i class="deck-tile-icon ${game.icon}"></i>`;
-            const glowVar = isUrlIcon(game.icon) ? ` style="--tile-art:url('${game.icon}')"` : "";
+            const glowVar = isUrlIcon(game.icon)
+              ? ` style="--tile-art:url('${game.icon}')"`
+              : "";
             return `
           <button class="deck-tile${index === 0 ? " recent-hero" : ""}" data-app-id="${game.appId}"${glowVar}>
             <div class="deck-tile-art">${artHtml}<span class="deck-tile-play"><i class="fas fa-check"></i></span></div>
@@ -137,7 +157,7 @@ const buildNewsFeedHtml = () => {
             <div class="deck-news-title">${esc(item.title)}</div>
             <div class="deck-news-desc">${esc(item.description || "")}</div>
           </a>
-        `
+        `,
           )
           .join("")}
       </div>
@@ -152,7 +172,7 @@ const buildHomeHtml = (games) => `
       <button class="deck-rail-btn" data-rail="${item.id}" title="${item.label}">
         <i class="fas ${item.icon}"></i><span class="deck-rail-label">${item.label}</span>
       </button>
-    `
+    `,
     ).join("")}
   </nav>
   <div class="deck-shell">
@@ -173,7 +193,7 @@ const buildHomeHtml = (games) => `
           <button class="deck-nav-btn" data-action="${item.id}">
             <span>${item.label}</span>${item.friendsPill ? `<span class="deck-nav-friend-pill"><i class="fas fa-user-group"></i><span class="deck-friend-count">0</span></span>` : ""}
           </button>
-        `
+        `,
         ).join("")}
     </div>
       <div id="steamdeck-recents"></div>
@@ -219,7 +239,7 @@ const buildShellHtml = () => `
       <button class="deck-rail-btn" data-rail="${item.id}" title="${item.label}">
         <i class="fas ${item.icon}"></i><span class="deck-rail-label">${item.label}</span>
       </button>
-    `
+    `,
     ).join("")}
   </nav>
   <div class="deck-shell">
@@ -239,7 +259,7 @@ const buildShellHtml = () => `
           <button class="deck-nav-btn" data-action="${item.id}">
             <span>${item.label}</span><span class="deck-nav-count" data-nav-count="${item.id}"></span>
           </button>
-        `
+        `,
         ).join("")}
       </div>
       <div class="deck-total-count"><span id="deck-total-games">0</span> Games</div>
@@ -306,7 +326,9 @@ export class SteamDeckLayout {
     if (isLibraryStart) setHTML(root, buildShellHtml());
     else setHTML(root, buildHomeHtml(this.manager.getContinuePlaying()));
     this.syncRefs(root);
-    this.railDimmer.addEventListener("click", () => this.manager.closeRail({ hideSound: true }));
+    this.railDimmer.addEventListener("click", () =>
+      this.manager.closeRail({ hideSound: true }),
+    );
     this.railBtns.forEach((btn) => {
       btn.addEventListener("click", () => {
         if (btn.dataset.rail === "power") {
@@ -319,28 +341,42 @@ export class SteamDeckLayout {
       });
     });
 
-    $("#steamdeck-topbar-avatar", this.root).addEventListener("click", () => this.manager.openAccountMenu());
-    $("#steamdeck-topbar-time", this.root).addEventListener("click", () => this.manager.openCalendar());
-    $(".deck-topbar-search", this.root).addEventListener("click", () => this.manager.toggleSearchOverlay());
-    $(".deck-topbar-quick", this.root).addEventListener("click", () => this.manager.toggleQuickAccess());
-    $(".deck-topbar-power", this.root).addEventListener("click", () => this.manager.runAction("showPower"));
+    $("#steamdeck-topbar-avatar", this.root).addEventListener("click", () =>
+      this.manager.openAccountMenu(),
+    );
+    $("#steamdeck-topbar-time", this.root).addEventListener("click", () =>
+      this.manager.openCalendar(),
+    );
+    $(".deck-topbar-search", this.root).addEventListener("click", () =>
+      this.manager.toggleSearchOverlay(),
+    );
+    $(".deck-topbar-quick", this.root).addEventListener("click", () =>
+      this.manager.toggleQuickAccess(),
+    );
+    $(".deck-topbar-power", this.root).addEventListener("click", () =>
+      this.manager.runAction("showPower"),
+    );
 
     this.navBtnEls.forEach((btn) =>
       btn.addEventListener("click", () => {
         const action = btn.dataset.action;
-        if (action === "news" || action === "friends" || action === "recommended") {
+        if (
+          action === "news" ||
+          action === "friends" ||
+          action === "recommended"
+        ) {
           this.manager.setHomeTab(action);
         } else {
           this.manager.setLibraryTab(action);
         }
-      })
+      }),
     );
 
     $$(".deck-brand", this.root).forEach((btn) =>
       btn.addEventListener("click", () => {
         if (btn.title === "R1") this.manager.toggleQuickAccess();
         else this.manager.toggleRail();
-      })
+      }),
     );
 
     const recentGamesEl = $("#deck-recent-games", this.root);
@@ -355,7 +391,8 @@ export class SteamDeckLayout {
       }
     });
 
-    if (this.view) this.view.addEventListener("click", (e) => this.handleViewClick(e));
+    if (this.view)
+      this.view.addEventListener("click", (e) => this.handleViewClick(e));
 
     $$(".deck-power-btn", this.root).forEach((btn) => {
       btn.addEventListener("click", () => {
@@ -364,7 +401,9 @@ export class SteamDeckLayout {
           this.manager.runAction(btn.dataset.action);
         } else {
           steamDeckAudio.playNavigation();
-          $$(".deck-power-btn", this.root).forEach((b) => b.classList.remove("deck-power-selected"));
+          $$(".deck-power-btn", this.root).forEach((b) =>
+            b.classList.remove("deck-power-selected"),
+          );
           btn.classList.add("deck-power-selected");
         }
       });
@@ -377,19 +416,34 @@ export class SteamDeckLayout {
           e.preventDefault();
         }
       },
-      true
+      true,
     );
-    this.root.addEventListener("contextmenu", (e) => this.handleTileContextMenu(e));
+    this.root.addEventListener("contextmenu", (e) =>
+      this.handleTileContextMenu(e),
+    );
     this.recentsEl.addEventListener("click", (e) => this.handleRecentsClick(e));
     this.detailEl.addEventListener("click", (e) => this.handleDetailClick(e));
 
-    $$(".deck-foot-left [data-action], .deck-foot-hint[data-action]", this.root).forEach((el) =>
-      el.addEventListener("click", () => this.manager.runAction(el.dataset.action))
+    $$(
+      ".deck-foot-left [data-action], .deck-foot-hint[data-action]",
+      this.root,
+    ).forEach((el) =>
+      el.addEventListener("click", () =>
+        this.manager.runAction(el.dataset.action),
+      ),
     );
-    $('.deck-foot-hint[data-hint="Y"]', this.root).addEventListener("click", () => this.manager.cycleSortByName());
-    $('.deck-foot-hint[data-hint="A"]', this.root).addEventListener("click", () => this.manager.confirmFocus());
+    $('.deck-foot-hint[data-hint="Y"]', this.root).addEventListener(
+      "click",
+      () => this.manager.cycleSortByName(),
+    );
+    $('.deck-foot-hint[data-hint="A"]', this.root).addEventListener(
+      "click",
+      () => this.manager.confirmFocus(),
+    );
 
-    this.root.addEventListener("wheel", (e) => this.handleRowWheel(e), { passive: false });
+    this.root.addEventListener("wheel", (e) => this.handleRowWheel(e), {
+      passive: false,
+    });
 
     this.updateTopbarAvatar();
     this.updateFriendCount();
@@ -416,7 +470,7 @@ export class SteamDeckLayout {
   handleRowWheel(e) {
     const target = e.target.closest(".deck-main *");
     const scroller = target?.closest(
-      ".deck-row, .deck-recent-list, .deck-news-list, .deck-recents-list, .deck-sections-col"
+      ".deck-row, .deck-recent-list, .deck-news-list, .deck-recents-list, .deck-sections-col",
     );
     if (!scroller || scroller.scrollWidth <= scroller.clientWidth) return;
     e.preventDefault();
@@ -442,9 +496,13 @@ export class SteamDeckLayout {
       if (url) os.app.launch("browserApp", { openUrl: url }).catch(() => {});
       return;
     }
-    if (e.target.closest('[data-action="luminFullscreen"]')) return this.toggleLuminFullscreen();
-    const collectionTile = e.target.closest(".deck-collection-tile[data-collection-id]");
-    if (collectionTile) return manager.openCollection(collectionTile.dataset.collectionId);
+    if (e.target.closest('[data-action="luminFullscreen"]'))
+      return this.toggleLuminFullscreen();
+    const collectionTile = e.target.closest(
+      ".deck-collection-tile[data-collection-id]",
+    );
+    if (collectionTile)
+      return manager.openCollection(collectionTile.dataset.collectionId);
     const playBtn = e.target.closest(".deck-tile-play");
     if (playBtn) {
       const tile = playBtn.closest(".deck-tile[data-app-id]");
@@ -453,9 +511,12 @@ export class SteamDeckLayout {
     const tile = e.target.closest(".deck-tile[data-app-id]");
     if (tile) {
       const appId = tile.dataset.appId;
-      const archiveGame = this.manager.archiveGamesCache?.find((g) => g.appId === appId);
+      const archiveGame = this.manager.archiveGamesCache?.find(
+        (g) => g.appId === appId,
+      );
       if (archiveGame) return manager.launchArchiveGame(archiveGame);
-      if (tile.classList.contains("deck-focused")) return manager.openDetail(tile.dataset.appId);
+      if (tile.classList.contains("deck-focused"))
+        return manager.openDetail(tile.dataset.appId);
       return manager.focusElement(tile);
     }
   }
@@ -475,11 +536,16 @@ export class SteamDeckLayout {
   }
 
   handleDetailClick(e) {
-    const profileRow = e.target.closest(".deck-overview-friend[data-profile-user-id]");
+    const profileRow = e.target.closest(
+      ".deck-overview-friend[data-profile-user-id]",
+    );
     if (profileRow) {
       steamDeckAudio.playSwitchNav();
       return os.app
-        .launch("steamApp", { steamPage: "profile", steamUserId: profileRow.dataset.profileUserId })
+        .launch("steamApp", {
+          steamPage: "profile",
+          steamUserId: profileRow.dataset.profileUserId,
+        })
         .catch(() => {});
     }
     const actionEl = e.target.closest("[data-action]");
@@ -494,7 +560,7 @@ export class SteamDeckLayout {
       back: () => this.manager.closeDetail(),
       play: () => this.manager.launchApp(appId),
       favorite: () => this.manager.toggleFavorite(appId),
-      saveToCollection: () => this.manager.addCurrentToCollection(appId)
+      saveToCollection: () => this.manager.addCurrentToCollection(appId),
     };
     actions[action]?.();
   }
@@ -505,7 +571,8 @@ export class SteamDeckLayout {
     const userId = os.storage.get(StorageKeys.userId);
     const history = os.storage.get(StorageKeys.userHistory) || [];
     const current = history.find((u) => u.userId === userId);
-    const avatar = (current && current.avatar) || os.storage.get(StorageKeys.profilePicture);
+    const avatar =
+      (current && current.avatar) || os.storage.get(StorageKeys.profilePicture);
     const url = await resolveAvatarUrl(avatar, "static/icons/guest.webp");
     el.src = url;
   }
@@ -515,7 +582,9 @@ export class SteamDeckLayout {
     if (els.length === 0) return;
     const setCount = (n) => els.forEach((el) => setText(el, String(n)));
     const cached = getCachedFriends();
-    const cachedCount = Array.isArray(cached?.friends) ? cached.friends.length : 0;
+    const cachedCount = Array.isArray(cached?.friends)
+      ? cached.friends.length
+      : 0;
     setCount(cachedCount);
     try {
       const data = await fetchFriends({ refresh: true });
@@ -525,18 +594,24 @@ export class SteamDeckLayout {
   }
 
   setRailActive(id) {
-    this.railBtns.forEach((btn) => btn.classList.toggle("active", btn.dataset.rail === id));
+    this.railBtns.forEach((btn) =>
+      btn.classList.toggle("active", btn.dataset.rail === id),
+    );
   }
 
   setRailExpanded(expanded) {
     this.railExpanded = !!expanded;
     if (this.rail) this.rail.classList.toggle("expanded", this.railExpanded);
-    if (this.railDimmer) this.railDimmer.classList.toggle("on", this.railExpanded);
+    if (this.railDimmer)
+      this.railDimmer.classList.toggle("on", this.railExpanded);
   }
 
   ensureSteamPanel() {
     if (!this.steamPanel) {
-      this.steamPanel = createElement("div", { className: "deck-steam-panel", id: "deck-steam-panel" });
+      this.steamPanel = createElement("div", {
+        className: "deck-steam-panel",
+        id: "deck-steam-panel",
+      });
     }
     return this.steamPanel;
   }
@@ -581,7 +656,11 @@ export class SteamDeckLayout {
     const key = this.manager.activeCollectionId
       ? `collection:${this.manager.activeCollectionId}:${stamp}`
       : `${this.manager.libraryTab}:${stamp}`;
-    if (this.viewCacheKey === key && this.viewCache && this.manager.libraryTab !== "lumin") {
+    if (
+      this.viewCacheKey === key &&
+      this.viewCache &&
+      this.manager.libraryTab !== "lumin"
+    ) {
       setHTML(this.view, this.viewCache);
       this.view.addEventListener("click", (e) => this.handleViewClick(e));
     } else {
@@ -624,8 +703,11 @@ export class SteamDeckLayout {
   updateNavState() {
     this.navBtnEls.forEach((btn) => {
       const action = btn.dataset.action;
-      const isHome = action === "news" || action === "friends" || action === "recommended";
-      const isSelected = isHome ? action === this.manager.homeTab : action === this.manager.libraryTab;
+      const isHome =
+        action === "news" || action === "friends" || action === "recommended";
+      const isSelected = isHome
+        ? action === this.manager.homeTab
+        : action === this.manager.libraryTab;
       btn.classList.toggle("active", isSelected);
       btn.classList.toggle("deck-focused", isSelected);
     });
@@ -638,7 +720,7 @@ export class SteamDeckLayout {
       archive: 1680,
       lumin: 1000,
       favorites: this.manager.getFavoriteEntries().length,
-      collections: this.manager.getCollections().length
+      collections: this.manager.getCollections().length,
     };
     $$(".deck-nav-count", this.root).forEach((el) => {
       const id = el.dataset.navCount;
@@ -665,7 +747,13 @@ export class SteamDeckLayout {
       const end = Math.min(index + CHUNK_SIZE, list.length);
       const frag = document.createDocumentFragment();
       for (let i = index; i < end; i++) {
-        frag.appendChild(this.htmlToElement(this.buildTileHtml(list[i], { eager: eagerBase + i < EAGER_TILE_COUNT })));
+        frag.appendChild(
+          this.htmlToElement(
+            this.buildTileHtml(list[i], {
+              eager: eagerBase + i < EAGER_TILE_COUNT,
+            }),
+          ),
+        );
       }
       if (anchor && anchor.isConnected) grid.insertBefore(frag, anchor);
       else grid.appendChild(frag);
@@ -710,7 +798,14 @@ export class SteamDeckLayout {
       }
       const eager = pageIndex === 0;
       pageIndex++;
-      this.fillGridIncrementally(grid, chunk, manager, () => onPage?.(), sentinel, { eager, eagerBase, token });
+      this.fillGridIncrementally(
+        grid,
+        chunk,
+        manager,
+        () => onPage?.(),
+        sentinel,
+        { eager, eagerBase, token },
+      );
     };
 
     sentinel = createElement("div", { className: "deck-load-sentinel" });
@@ -719,7 +814,7 @@ export class SteamDeckLayout {
       (entries) => {
         if (entries[0]?.isIntersecting) renderPage();
       },
-      { root: this.mainEl || null, rootMargin: "1000px 0px" }
+      { root: this.mainEl || null, rootMargin: "1000px 0px" },
     );
     renderPage();
     io.observe(sentinel);
@@ -742,12 +837,18 @@ export class SteamDeckLayout {
         <div class="deck-grid"></div>
         <div class="deck-ad-block"><div class="deck-ad-label">Advertisement</div><div id="deck-library-ad"></div></div>
       </div>
-    `
+    `,
     );
     const wrap = this.view?.lastElementChild;
     const input = $(".deck-search input", wrap);
     const grid = $(".deck-grid", wrap);
-    injectAdsterraAd("deck-library-ad", ADSTERRA_KEYS.leaderboard, 728, 90, 400);
+    injectAdsterraAd(
+      "deck-library-ad",
+      ADSTERRA_KEYS.leaderboard,
+      728,
+      90,
+      400,
+    );
     this.view?.addEventListener("click", (e) => this.handleViewClick(e));
     let stopLoad = null;
     const fillGrid = (list, cacheResult, preserveScroll = 0) => {
@@ -762,24 +863,37 @@ export class SteamDeckLayout {
           if (cacheResult) this.viewCache = this.view.innerHTML;
           manager.collectFocus();
           manager.updateFocus(false);
-          if (preserveScroll && this.mainEl) this.mainEl.scrollTop = preserveScroll;
-        }
+          if (preserveScroll && this.mainEl)
+            this.mainEl.scrollTop = preserveScroll;
+        },
       });
     };
     input?.addEventListener("input", () => {
       const q = input.value.trim().toLowerCase();
       const preserveScroll = q ? 0 : this.mainEl ? this.mainEl.scrollTop : 0;
-      fillGrid(q ? filterSource.filter((g) => g.title.toLowerCase().includes(q)) : filterSource, false, preserveScroll);
+      fillGrid(
+        q
+          ? filterSource.filter((g) => g.title.toLowerCase().includes(q))
+          : filterSource,
+        false,
+        preserveScroll,
+      );
     });
     fillGrid(initialList, true);
   }
 
   renderGreatGames() {
-    this.renderSearchableLibrary(this.manager.getGreatGames(), this.manager.getGreatGames());
+    this.renderSearchableLibrary(
+      this.manager.getGreatGames(),
+      this.manager.getGreatGames(),
+    );
   }
 
   renderAllGames() {
-    this.renderSearchableLibrary(this.manager.getLibraryList(), this.manager.getLibraryList());
+    this.renderSearchableLibrary(
+      this.manager.getLibraryList(),
+      this.manager.getLibraryList(),
+    );
   }
 
   renderTileSection(icon, titleText, entries, emptyText, headerHtml) {
@@ -791,7 +905,7 @@ export class SteamDeckLayout {
         <div class="deck-section-title">${headerHtml ?? `<i class="fas ${icon}"></i><span>${esc(titleText)}</span>`}</div>
         <div class="deck-grid"></div>
       </div>
-    `
+    `,
     );
     const grid = $(".deck-grid", this.view);
     if (!grid) return;
@@ -801,7 +915,7 @@ export class SteamDeckLayout {
       this.renderScrollableGrid(grid, entries, this.manager, {
         onDone: () => {
           this.viewCache = this.view.innerHTML;
-        }
+        },
       });
     }
   }
@@ -811,7 +925,7 @@ export class SteamDeckLayout {
       "fa-star",
       "Favorites",
       this.manager.getFavoriteEntries(),
-      "No favorites yet. Star something from a detail page."
+      "No favorites yet. Star something from a detail page.",
     );
   }
 
@@ -838,18 +952,23 @@ export class SteamDeckLayout {
           <iframe id="deck-luminsdk-iframe" allowfullscreen class="deck-lumin-iframe"></iframe>
         </div>
       </div>
-    `
+    `,
     );
     if (!this.luminFsBound) {
       this.luminFsBound = true;
-      document.addEventListener("fullscreenchange", () => this.syncLuminFullscreenButton());
-      document.addEventListener("webkitfullscreenchange", () => this.syncLuminFullscreenButton());
+      document.addEventListener("fullscreenchange", () =>
+        this.syncLuminFullscreenButton(),
+      );
+      document.addEventListener("webkitfullscreenchange", () =>
+        this.syncLuminFullscreenButton(),
+      );
     }
     const iframe = this.view.querySelector("#deck-luminsdk-iframe");
     if (iframe) {
       iframe.onload = () => {
         if (!iframe.contentWindow) return;
-        const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+        const iframeDoc =
+          iframe.contentDocument || iframe.contentWindow.document;
         iframeDoc.open();
         iframeDoc.write(`
           <!DOCTYPE html>
@@ -881,7 +1000,10 @@ export class SteamDeckLayout {
     const container = $(".deck-lumin-container", this.view);
     if (!container) return;
     try {
-      if (document.fullscreenElement === container || document.webkitFullscreenElement === container) {
+      if (
+        document.fullscreenElement === container ||
+        document.webkitFullscreenElement === container
+      ) {
         if (document.exitFullscreen) document.exitFullscreen();
         else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
       } else if (container.requestFullscreen) {
@@ -897,7 +1019,9 @@ export class SteamDeckLayout {
     if (!btn) return;
     const container = $(".deck-lumin-container", this.view);
     const active =
-      !!container && (document.fullscreenElement === container || document.webkitFullscreenElement === container);
+      !!container &&
+      (document.fullscreenElement === container ||
+        document.webkitFullscreenElement === container);
     const icon = $(".deck-lumin-fullscreen-icon", btn);
     const label = $(".deck-lumin-fullscreen-label", btn);
     if (icon)
@@ -917,7 +1041,7 @@ export class SteamDeckLayout {
             <div class="deck-tile-art"><i class="deck-tile-icon fas fa-folder"></i><span class="deck-tile-count">${col.gameIds.length}</span></div>
             <span class="deck-tile-label">${esc(col.name)}</span>
           </button>
-        `
+        `,
           )
           .join("")
       : `<div class="deck-note">Create collections to group your games.</div>`;
@@ -929,19 +1053,21 @@ export class SteamDeckLayout {
         <button class="deck-btn" data-action="newCollection"><i class="fas fa-plus"></i><span>New Collection</span></button>
         <div class="deck-grid">${tilesHtml}</div>
       </div>
-    `
+    `,
     );
   }
 
   renderCollectionDetail() {
-    const entries = this.manager.getCollectionEntries(this.manager.activeCollectionId);
+    const entries = this.manager.getCollectionEntries(
+      this.manager.activeCollectionId,
+    );
     const headerHtml = `<button class="deck-btn" data-action="closeCollection"><i class="fas fa-arrow-left"></i><span>All Collections</span></button>`;
     this.renderTileSection(
       null,
       null,
       entries,
       "This collection is empty. Add a game from its detail page.",
-      headerHtml
+      headerHtml,
     );
   }
 
@@ -966,7 +1092,9 @@ export class SteamDeckLayout {
     const artHtml = isUrlIcon(game.icon)
       ? `<img src="${game.icon}" alt="${esc(game.title)}" loading="lazy" decoding="async">`
       : `<i class="deck-tile-icon ${game.icon}"></i>`;
-    const glowVar = isUrlIcon(game.icon) ? ` style="--tile-art:url('${game.icon}')"` : "";
+    const glowVar = isUrlIcon(game.icon)
+      ? ` style="--tile-art:url('${game.icon}')"`
+      : "";
     return `
       <button class="deck-tile" data-app-id="${game.appId}"${glowVar}>
         <div class="deck-tile-art">${artHtml}<span class="deck-tile-play"><i class="fas fa-check"></i></span></div>
@@ -992,13 +1120,16 @@ export class SteamDeckLayout {
   }
 
   buildSection(titleText, iconClass, entries, opts) {
-    return this.htmlToElement(this.buildSectionHtml(titleText, iconClass, entries, opts));
+    return this.htmlToElement(
+      this.buildSectionHtml(titleText, iconClass, entries, opts),
+    );
   }
 
   buildTile(entry, opts) {
     const tile = this.htmlToElement(this.buildTileHtml(entry, opts));
     tile.addEventListener("click", () => {
-      if (tile.classList.contains("deck-focused")) this.manager.openDetail(entry.appId);
+      if (tile.classList.contains("deck-focused"))
+        this.manager.openDetail(entry.appId);
       else this.manager.focusElement(tile);
     });
     return tile;
@@ -1012,35 +1143,44 @@ export class SteamDeckLayout {
     if (tab === "friends") {
       const refresh = async () => {
         const data = await fetchFriends().catch(() => null);
-        const requests = data && Array.isArray(data.requests) ? data.requests : [];
+        const requests =
+          data && Array.isArray(data.requests) ? data.requests : [];
         const requestsHtml = requests.length
           ? '<div id="deck-friends-requests" class="deck-friends-requests"></div>'
           : "";
         setHTML(
           el,
-          `<div class="deck-section deck-home-panel"><h1 class="deck-recent-title">Friends</h1>${requestsHtml}<div class="deck-home-friends" id="deck-home-friends"></div></div>`
+          `<div class="deck-section deck-home-panel"><h1 class="deck-recent-title">Friends</h1>${requestsHtml}<div class="deck-home-friends" id="deck-home-friends"></div></div>`,
         );
         if (requests.length) {
-          renderRequestsPanel($("#deck-friends-requests", el), { onChange: refresh }).catch(() => {});
+          renderRequestsPanel($("#deck-friends-requests", el), {
+            onChange: refresh,
+          }).catch(() => {});
         }
         const friendsBody = $("#deck-home-friends", el);
         if (friendsBody) {
           renderFriendsListPanel(friendsBody, {
             onLaunch: (appId) => os.app.launch(appId).catch(() => {}),
-            onUpdate: refresh
+            onUpdate: refresh,
           }).catch(() => {
-            setHTML(friendsBody, '<div class="deck-note">Could not load friends.</div>');
+            setHTML(
+              friendsBody,
+              '<div class="deck-note">Could not load friends.</div>',
+            );
           });
         }
         this.updateFriendCount();
-        el.insertAdjacentHTML("beforeend", '<div class="deck-home-spacer"></div>');
+        el.insertAdjacentHTML(
+          "beforeend",
+          '<div class="deck-home-spacer"></div>',
+        );
       };
       refresh();
     } else if (tab === "recommended") {
       const games = this.manager.getRecommendedGames();
       setHTML(
         el,
-        `<div class="deck-section deck-home-panel"><h1 class="deck-recent-title">Recommended</h1><div class="deck-row deck-news-list">${games.map((game) => this.buildGameTileHtml(game)).join("")}</div></div>`
+        `<div class="deck-section deck-home-panel"><h1 class="deck-recent-title">Recommended</h1><div class="deck-row deck-news-list">${games.map((game) => this.buildGameTileHtml(game)).join("")}</div></div>`,
       );
     } else {
       setHTML(el, buildNewsFeedHtml());
@@ -1066,12 +1206,15 @@ export class SteamDeckLayout {
       <div class="deck-recents-list">
         ${recents
           .map((r) => {
-            const icon = typeof r.icon === "string" && r.icon.includes("fa-") ? r.icon : "fa-window-restore";
+            const icon =
+              typeof r.icon === "string" && r.icon.includes("fa-")
+                ? r.icon
+                : "fa-window-restore";
             return `<button class="deck-recent-item" data-win-id="${r.winId}"><i class="fas ${icon}"></i><span>${esc(r.title)}</span></button>`;
           })
           .join("")}
       </div>
-    `
+    `,
     );
   }
 
@@ -1092,7 +1235,7 @@ export class SteamDeckLayout {
       { id: "activity", label: "Activity" },
       { id: "stuff", label: "Your Stuff" },
       { id: "community", label: "Community" },
-      { id: "info", label: "Game Info", icon: "fa-circle-info" }
+      { id: "info", label: "Game Info", icon: "fa-circle-info" },
     ];
     return tabs
       .map(
@@ -1100,17 +1243,22 @@ export class SteamDeckLayout {
         <button class="deck-nav-btn${t.id === activeTab ? " active" : ""}" data-action="tab-${t.id}">
           ${t.icon ? `<i class="fas ${t.icon}"></i>` : ""}<span>${t.label}</span>
         </button>
-      `
+      `,
       )
       .join("");
   }
 
   renderDetail(appId) {
     const manager = this.manager;
-    const entry = manager.games.concat(manager.apps).find((g) => g.appId === appId);
+    const entry = manager.games
+      .concat(manager.apps)
+      .find((g) => g.appId === appId);
     if (!entry) return;
     const isFavorite = manager.isFavorite(appId);
-    const gameStats = SteamDataManager.getStats()[appId] || { totalMin: 0, lastPlayed: 0 };
+    const gameStats = SteamDataManager.getStats()[appId] || {
+      totalMin: 0,
+      lastPlayed: 0,
+    };
     const recentMin = SteamDataManager.getRecentMinutes(appId);
     const artHtml = isUrlIcon(entry.icon)
       ? `<img src="${entry.icon}" alt="${esc(entry.title)}" loading="lazy" decoding="async">`
@@ -1149,7 +1297,7 @@ export class SteamDeckLayout {
         </div>
         <div class="deck-overview-content" id="deck-overview-content"></div>
       </div>
-    `
+    `,
     );
     this.detailEl.classList.add("open");
     this.renderDetailContent(tab, entry, isFavorite, gameStats);
@@ -1182,7 +1330,7 @@ export class SteamDeckLayout {
             <p class="deck-overview-note">${esc(entry.title)} · ${entry.type === "game" ? "Game" : "Application"}</p>
           </section>
         </div>
-      `
+      `,
       );
       const fill = $(".deck-overview-ach-fill", contentEl);
       if (fill) fill.style.width = `${pct}%`;
@@ -1203,7 +1351,7 @@ export class SteamDeckLayout {
             <p class="deck-overview-note">Loading community stats…</p>
           </section>
         </div>
-      `
+      `,
       );
       this.renderCommunityContent(contentEl, entry);
       return;
@@ -1224,30 +1372,35 @@ export class SteamDeckLayout {
             <div class="deck-overview-detail-row"><span>Play Time</span><b>${formatGameActivityTime(gameStats.totalMin)}</b></div>
           </section>
         </div>
-      `
+      `,
       );
       this.appendDetailAd(contentEl);
       return;
     }
-    setHTML(contentEl, '<div class="deck-overview-activity"><p class="deck-overview-note">Loading friends…</p></div>');
+    setHTML(
+      contentEl,
+      '<div class="deck-overview-activity"><p class="deck-overview-note">Loading friends…</p></div>',
+    );
     this.renderActivityContent(contentEl);
     this.appendDetailAd(contentEl);
   }
 
   appendDetailAd(contentEl) {
     const slot = createElement("div", { className: "deck-ad-block" });
-    slot.innerHTML = '<div class="deck-ad-label">Advertisement</div><div id="deck-detail-ad"></div>';
+    slot.innerHTML =
+      '<div class="deck-ad-label">Advertisement</div><div id="deck-detail-ad"></div>';
     contentEl.appendChild(slot);
     injectAdsterraAd("deck-detail-ad", ADSTERRA_KEYS.rectangle, 300, 250, 300);
   }
 
   async renderCommunityContent(contentEl, entry) {
     const manager = this.manager;
-    const { playCount, playingNow, recentPlayers } = await fetchCommunityOverview(entry.appId);
+    const { playCount, playingNow, recentPlayers } =
+      await fetchCommunityOverview(entry.appId);
     const playerRows = buildPlayerRows(recentPlayers, playingNow, {
       row: "deck-overview-friend",
       avatar: "deck-overview-friend-avatar",
-      info: "deck-overview-friend-info"
+      info: "deck-overview-friend-info",
     });
     setHTML(
       contentEl,
@@ -1268,7 +1421,7 @@ export class SteamDeckLayout {
           ${playerRows || '<p class="deck-overview-note">No one has played this recently.</p>'}
         </section>
       </div>
-    `
+    `,
     );
     this.appendDetailAd(contentEl);
   }
@@ -1278,7 +1431,7 @@ export class SteamDeckLayout {
     const friendCards = buildFriendCards(friends, count, {
       row: "deck-overview-friend",
       avatar: "deck-overview-friend-avatar",
-      info: "deck-overview-friend-info"
+      info: "deck-overview-friend-info",
     });
     const avatarStrip = buildAvatarStrip(friends, "deck-overview-avatar");
     setHTML(
@@ -1301,7 +1454,7 @@ export class SteamDeckLayout {
           <div class="deck-overview-avatar-row">${avatarStrip || '<span class="deck-overview-note">No activity yet.</span>'}</div>
         </section>
       </div>
-    `
+    `,
     );
   }
 
@@ -1357,7 +1510,9 @@ export class SteamDeckLayout {
     const outX = forward ? "-100%" : "100%";
     const inX = forward ? "100%" : "-100%";
     main.classList.add("deck-grid-slide-active");
-    const oldLayer = createElement("div", { class: "deck-grid-slide-layer deck-grid-slide-old" });
+    const oldLayer = createElement("div", {
+      class: "deck-grid-slide-layer deck-grid-slide-old",
+    });
     oldLayer.style.top = main.scrollTop + "px";
     oldLayer.style.height = panel.offsetHeight + "px";
     setHTML(oldLayer, panel.innerHTML);
@@ -1394,7 +1549,7 @@ export class SteamDeckLayout {
   collectFocusables() {
     return collectSpatialFocusables(this.root, {
       detailEl: this.detailEl,
-      detailOpen: !!this.manager.detailAppId
+      detailOpen: !!this.manager.detailAppId,
     });
   }
 
@@ -1402,7 +1557,10 @@ export class SteamDeckLayout {
     const margin = 12;
     let node = el.parentElement;
     while (node && node !== this.root) {
-      if (node.scrollHeight > node.clientHeight || node.scrollWidth > node.clientWidth) {
+      if (
+        node.scrollHeight > node.clientHeight ||
+        node.scrollWidth > node.clientWidth
+      ) {
         const containerRect = node.getBoundingClientRect();
         const elRect = el.getBoundingClientRect();
         const y =
@@ -1425,12 +1583,15 @@ export class SteamDeckLayout {
 
   applyFocus(index, scroll = true) {
     if (!this.root) return;
-    $$(".deck-focused", this.root).forEach((el) => el.classList.remove("deck-focused"));
+    $$(".deck-focused", this.root).forEach((el) =>
+      el.classList.remove("deck-focused"),
+    );
     const entry = this.manager.focusables[index];
     if (!entry || !entry.el) return;
     entry.el.classList.add("deck-focused");
     const appId = entry.el.dataset.appId;
-    if (appId && appId !== this.lastFocusedGameId) steamDeckAudio.playRailChange();
+    if (appId && appId !== this.lastFocusedGameId)
+      steamDeckAudio.playRailChange();
     if (appId) this.lastFocusedGameId = appId;
     if (scroll) this.scrollFocusedIntoView(entry.el);
     this.updateNavState();
@@ -1443,11 +1604,15 @@ export class SteamDeckLayout {
     const recentSection = $("#deck-recent-games", this.root);
     if (!recentSection || !tile || !recentSection.contains(tile)) {
       bg.classList.remove("deck-recent-bg-visible");
-      $$(".deck-bg-layer-active", bg).forEach((l) => l.classList.remove("deck-bg-layer-active"));
+      $$(".deck-bg-layer-active", bg).forEach((l) =>
+        l.classList.remove("deck-bg-layer-active"),
+      );
       delete bg.dataset.url;
       return;
     }
-    const art = tile.querySelector(".deck-tile-art img, .deck-tile-art .deck-tile-icon");
+    const art = tile.querySelector(
+      ".deck-tile-art img, .deck-tile-art .deck-tile-icon",
+    );
     let bgUrl = "";
     if (art?.tagName === "IMG") bgUrl = art.currentSrc || art.src || "";
     else if (art) bgUrl = art.textContent.trim();
@@ -1455,18 +1620,26 @@ export class SteamDeckLayout {
     if (bg.dataset.url === bgUrl) return;
     bg.dataset.url = bgUrl;
 
-    const layers = [bg.querySelector(".deck-bg-front"), bg.querySelector(".deck-bg-back")];
+    const layers = [
+      bg.querySelector(".deck-bg-front"),
+      bg.querySelector(".deck-bg-back"),
+    ];
     if (!layers[0] || !layers[1]) return;
 
     const wasVisible = bg.classList.contains("deck-recent-bg-visible");
-    const activeIdx = layers.findIndex((l) => l.classList.contains("deck-bg-layer-active"));
+    const activeIdx = layers.findIndex((l) =>
+      l.classList.contains("deck-bg-layer-active"),
+    );
     const incomingIdx = activeIdx >= 0 ? 1 - activeIdx : 0;
     const incoming = layers[incomingIdx];
     const outgoing = layers[1 - incomingIdx];
 
     const setImage = (layer, el) => {
       layer.textContent = "";
-      const child = el?.tagName === "IMG" ? document.createElement("img") : document.createElement("i");
+      const child =
+        el?.tagName === "IMG"
+          ? document.createElement("img")
+          : document.createElement("i");
       if (el?.tagName === "IMG") {
         child.src = bgUrl;
         child.alt = "";
@@ -1483,7 +1656,8 @@ export class SteamDeckLayout {
         void incoming.offsetWidth;
         outgoing.classList.remove("deck-bg-layer-active");
         window.setTimeout(() => {
-          if (!outgoing.classList.contains("deck-bg-layer-active")) outgoing.textContent = "";
+          if (!outgoing.classList.contains("deck-bg-layer-active"))
+            outgoing.textContent = "";
         }, 700);
       });
     } else {

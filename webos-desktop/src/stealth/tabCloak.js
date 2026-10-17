@@ -3,38 +3,86 @@ import { StorageKeys } from "../StorageKeys.js";
 
 export const CLOAK_PRESETS = {
   none: null,
-  google: { label: "Google", title: "Google", icon: "https://www.google.com/favicon.ico" },
+  google: {
+    label: "Google",
+    title: "Google",
+    icon: "https://www.google.com/favicon.ico",
+  },
   classroom: {
     label: "Google Classroom",
     title: "Home - Google Classroom",
-    icon: "https://classroom.google.com/favicon.ico"
+    icon: "https://classroom.google.com/favicon.ico",
   },
-  docs: { label: "Google Docs", title: "Untitled document - Google Docs", icon: "https://docs.google.com/favicon.ico" },
-  drive: { label: "Google Drive", title: "My Drive - Google Drive", icon: "https://drive.google.com/favicon.ico" },
+  docs: {
+    label: "Google Docs",
+    title: "Untitled document - Google Docs",
+    icon: "https://docs.google.com/favicon.ico",
+  },
+  drive: {
+    label: "Google Drive",
+    title: "My Drive - Google Drive",
+    icon: "https://drive.google.com/favicon.ico",
+  },
   slides: {
     label: "Google Slides",
     title: "Untitled presentation - Google Slides",
-    icon: "https://slides.google.com/favicon.ico"
+    icon: "https://slides.google.com/favicon.ico",
   },
   sheets: {
     label: "Google Sheets",
     title: "Untitled spreadsheet - Google Sheets",
-    icon: "https://sheets.google.com/favicon.ico"
+    icon: "https://sheets.google.com/favicon.ico",
   },
-  gmail: { label: "Gmail", title: "Gmail", icon: "https://mail.google.com/favicon.ico" },
-  meet: { label: "Google Meet", title: "Google Meet", icon: "https://meet.google.com/favicon.ico" },
-  canvas: { label: "Canvas", title: "Dashboard - Canvas", icon: "https://www.instructure.com/favicon.ico" },
-  schoology: { label: "Schoology", title: "Home | Schoology", icon: "https://www.schoology.com/favicon.ico" },
-  khan: { label: "Khan Academy", title: "Khan Academy", icon: "https://www.khanacademy.org/favicon.ico" },
-  quizlet: { label: "Quizlet", title: "Quizlet", icon: "https://quizlet.com/favicon.ico" },
-  edpuzzle: { label: "Edpuzzle", title: "Edpuzzle", icon: "https://edpuzzle.com/favicon.ico" },
-  clever: { label: "Clever", title: "Clever | Log in", icon: "https://www.clever.com/favicon.ico" },
-  ixl: { label: "IXL", title: "IXL | Dashboard", icon: "https://www.ixl.com/favicon.ico" },
+  gmail: {
+    label: "Gmail",
+    title: "Gmail",
+    icon: "https://mail.google.com/favicon.ico",
+  },
+  meet: {
+    label: "Google Meet",
+    title: "Google Meet",
+    icon: "https://meet.google.com/favicon.ico",
+  },
+  canvas: {
+    label: "Canvas",
+    title: "Dashboard - Canvas",
+    icon: "https://www.instructure.com/favicon.ico",
+  },
+  schoology: {
+    label: "Schoology",
+    title: "Home | Schoology",
+    icon: "https://www.schoology.com/favicon.ico",
+  },
+  khan: {
+    label: "Khan Academy",
+    title: "Khan Academy",
+    icon: "https://www.khanacademy.org/favicon.ico",
+  },
+  quizlet: {
+    label: "Quizlet",
+    title: "Quizlet",
+    icon: "https://quizlet.com/favicon.ico",
+  },
+  edpuzzle: {
+    label: "Edpuzzle",
+    title: "Edpuzzle",
+    icon: "https://edpuzzle.com/favicon.ico",
+  },
+  clever: {
+    label: "Clever",
+    title: "Clever | Log in",
+    icon: "https://www.clever.com/favicon.ico",
+  },
+  ixl: {
+    label: "IXL",
+    title: "IXL | Dashboard",
+    icon: "https://www.ixl.com/favicon.ico",
+  },
   wikipedia: {
     label: "Wikipedia",
     title: "Wikipedia, the free encyclopedia",
-    icon: "https://www.wikipedia.org/favicon.ico"
-  }
+    icon: "https://www.wikipedia.org/favicon.ico",
+  },
 };
 
 export const PANIC_PRESETS = {
@@ -45,7 +93,7 @@ export const PANIC_PRESETS = {
   quizlet: { label: "Quizlet", url: "https://quizlet.com" },
   canvas: { label: "Canvas", url: "https://www.instructure.com" },
   schoology: { label: "Schoology", url: "https://www.schoology.com" },
-  custom: { label: "Custom…", url: "" }
+  custom: { label: "Custom…", url: "" },
 };
 
 export const DEFAULT_DECOY = "https://classroom.google.com";
@@ -132,7 +180,10 @@ class TabCloak {
 
   setBeforeunloadProtect(enabled) {
     try {
-      os.storage.set(StorageKeys.beforeunloadProtect, enabled ? "true" : "false");
+      os.storage.set(
+        StorageKeys.beforeunloadProtect,
+        enabled ? "true" : "false",
+      );
     } catch {
       /* ignore */
     }
@@ -179,7 +230,9 @@ class TabCloak {
 
   getPanicUrl() {
     try {
-      return os.storage.get(StorageKeys.panicUrl) || PANIC_PRESETS.classroom.url;
+      return (
+        os.storage.get(StorageKeys.panicUrl) || PANIC_PRESETS.classroom.url
+      );
     } catch {
       return PANIC_PRESETS.classroom.url;
     }
@@ -233,7 +286,7 @@ class TabCloak {
           "<style>html,body{margin:0;height:100%;overflow:hidden;background:#000}" +
           "iframe{border:0;width:100%;height:100%}</style></head><body>" +
           `<iframe src="${pageUrl.replace(/"/g, "&quot;")}" allowfullscreen></iframe>` +
-          "</body></html>"
+          "</body></html>",
       );
       popup.document.close();
     } catch {
@@ -273,7 +326,8 @@ class TabCloak {
   isAutoCloakOnBootEnabled() {
     try {
       return (
-        os.storage.get(StorageKeys.autoCloakOnBoot) === "true" || os.storage.get(StorageKeys.autoCloakOnBoot) === "1"
+        os.storage.get(StorageKeys.autoCloakOnBoot) === "true" ||
+        os.storage.get(StorageKeys.autoCloakOnBoot) === "1"
       );
     } catch {
       return false;

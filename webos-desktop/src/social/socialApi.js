@@ -1,10 +1,17 @@
-import { SOCIAL_BASE } from "./endpoints.js";
+import {
+  SOCIAL_BASE,
+  ANALYTICS_NETWORK_DISABLED,
+  analyticsFetch,
+} from "./endpoints.js";
 import { isSocialDisabled } from "./socialSettings.js";
 export { SOCIAL_BASE };
 function fetchWithTimeout(url, options = {}, timeoutMs = 8000) {
+  if (ANALYTICS_NETWORK_DISABLED) return analyticsFetch(url, options);
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
-  return fetch(url, { ...options, signal: controller.signal }).finally(() => clearTimeout(timer));
+  return fetch(url, { ...options, signal: controller.signal }).finally(() =>
+    clearTimeout(timer),
+  );
 }
 const DISCOVER_TTL_MS = 30 * 1000;
 let discoverCache = null;
@@ -45,7 +52,11 @@ export function isUserOnline(user, ttlMs = 5 * 60 * 1000) {
 
 export async function fetchDiscover({ refresh = false } = {}) {
   if (isSocialDisabled()) return [];
-  if (!refresh && discoverCache && Date.now() - discoverCacheTime < DISCOVER_TTL_MS) {
+  if (
+    !refresh &&
+    discoverCache &&
+    Date.now() - discoverCacheTime < DISCOVER_TTL_MS
+  ) {
     return discoverCache;
   }
   if (discoverPromise) return discoverPromise;
@@ -74,7 +85,7 @@ export async function reportAchievements(userId, achievements) {
     await fetchWithTimeout(`${SOCIAL_BASE}/api/achievements`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId, achievements })
+      body: JSON.stringify({ userId, achievements }),
     });
   } catch {}
 }
@@ -94,12 +105,16 @@ export async function socialPost(path, body) {
     const res = await fetchWithTimeout(`${SOCIAL_BASE}${path}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body || {})
+      body: JSON.stringify(body || {}),
     });
     const data = await res.json().catch(() => ({}));
     return { ok: res.ok, status: res.status, data };
   } catch {
-    return { ok: false, status: 0, data: { error: "Could not reach the server." } };
+    return {
+      ok: false,
+      status: 0,
+      data: { error: "Could not reach the server." },
+    };
   }
 }
 
@@ -108,11 +123,15 @@ export async function socialDelete(path, body) {
     const res = await fetchWithTimeout(`${SOCIAL_BASE}${path}`, {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body || {})
+      body: JSON.stringify(body || {}),
     });
     const data = await res.json().catch(() => ({}));
     return { ok: res.ok, status: res.status, data };
   } catch {
-    return { ok: false, status: 0, data: { error: "Could not reach the server." } };
+    return {
+      ok: false,
+      status: 0,
+      data: { error: "Could not reach the server." },
+    };
   }
 }

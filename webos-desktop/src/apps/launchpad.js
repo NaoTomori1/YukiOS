@@ -39,10 +39,12 @@ export class LaunchpadApp extends BaseApp {
       </div>
     `;
 
-    this.overlay.querySelector(".launchpad-close").addEventListener("click", (e) => {
-      e.stopPropagation();
-      this.close();
-    });
+    this.overlay
+      .querySelector(".launchpad-close")
+      .addEventListener("click", (e) => {
+        e.stopPropagation();
+        this.close();
+      });
 
     this.overlay.addEventListener("click", (e) => {
       if (e.target === this.overlay) this.close();
@@ -70,7 +72,7 @@ export class LaunchpadApp extends BaseApp {
           this.overlay.remove();
           this.overlay = null;
         },
-        { once: true }
+        { once: true },
       );
     }
     document.removeEventListener("keydown", this.boundKeydown);
@@ -82,7 +84,13 @@ export class LaunchpadApp extends BaseApp {
       return;
     }
     const input = this.overlay?.querySelector(".launchpad-search");
-    if (document.activeElement !== input && e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
+    if (
+      document.activeElement !== input &&
+      e.key.length === 1 &&
+      !e.ctrlKey &&
+      !e.metaKey &&
+      !e.altKey
+    ) {
       if (input) {
         input.focus();
         input.value = e.key;
@@ -102,22 +110,39 @@ export class LaunchpadApp extends BaseApp {
     const allApps = Object.entries(appMap)
       .filter(([, data]) => {
         if (data.type !== "system" || !data.icon || !data.title) return false;
-        if (appRegistry.isAppUninstalled(data.id) || appRegistry.isAppDisabled(data.id)) return false;
+        if (
+          appRegistry.isAppUninstalled(data.id) ||
+          appRegistry.isAppDisabled(data.id)
+        )
+          return false;
         return true;
       })
       .map(([id, data]) => {
-        return { id, title: data.title, icon: data.icon, targetUrl: data.targetUrl };
+        return {
+          id,
+          title: data.title,
+          icon: data.icon,
+          targetUrl: data.targetUrl,
+        };
       });
 
     const sortByIcon = (arr) => {
-      const image = arr.filter((a) => !isFontAwesomeIcon(a.icon)).sort((a, b) => a.title.localeCompare(b.title));
-      const fa = arr.filter((a) => isFontAwesomeIcon(a.icon)).sort((a, b) => a.title.localeCompare(b.title));
+      const image = arr
+        .filter((a) => !isFontAwesomeIcon(a.icon))
+        .sort((a, b) => a.title.localeCompare(b.title));
+      const fa = arr
+        .filter((a) => isFontAwesomeIcon(a.icon))
+        .sort((a, b) => a.title.localeCompare(b.title));
       return [...image, ...fa];
     };
 
     this.allApps = allApps.sort((a, b) => a.title.localeCompare(b.title));
-    this.nativeApps = sortByIcon(allApps.filter((a) => !a.targetUrl || a.id === "discordApp"));
-    this.webApps = sortByIcon(allApps.filter((a) => a.targetUrl && a.id !== "discordApp"));
+    this.nativeApps = sortByIcon(
+      allApps.filter((a) => !a.targetUrl || a.id === "discordApp"),
+    );
+    this.webApps = sortByIcon(
+      allApps.filter((a) => a.targetUrl && a.id !== "discordApp"),
+    );
     this.sortByIcon = sortByIcon;
     this.query = "";
     this.renderGridItems();
@@ -155,7 +180,7 @@ export class LaunchpadApp extends BaseApp {
           const iconHtml = resolveIconHtml(app.icon, {
             faClass: "launchpad-item-icon",
             imgClass: "launchpad-item-icon",
-            alt: app.title
+            alt: app.title,
           });
           return `
           <div class="launchpad-item" data-app="${app.id}">
@@ -190,7 +215,7 @@ export class LaunchpadApp extends BaseApp {
           const iconHtml = resolveIconHtml(app.icon, {
             faClass: "launchpad-item-icon",
             imgClass: "launchpad-item-icon",
-            alt: app.title
+            alt: app.title,
           });
           return `
           <div class="launchpad-item" data-app="${app.id}">

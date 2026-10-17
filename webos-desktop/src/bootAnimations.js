@@ -29,7 +29,11 @@ const glitchSlice = {
   show: (tl, els) => {
     const ghosts = els.extEls.ghosts;
     tl.to(els.overlay, { opacity: 1, duration: 0.25, ease: "power2.out" })
-      .to(els.logo, { opacity: 1, scale: 1, duration: 0.4, ease: "power2.out" }, "-=0.1")
+      .to(
+        els.logo,
+        { opacity: 1, scale: 1, duration: 0.4, ease: "power2.out" },
+        "-=0.1",
+      )
       .to(ghosts, { opacity: 0.7, duration: 0.08, stagger: 0.06 }, "-=0.3");
     for (let i = 0; i < 5; i++) {
       tl.to(els.logo, { x: i % 2 ? -7 : 7, duration: 0.05, ease: "none" })
@@ -38,15 +42,31 @@ const glitchSlice = {
     }
     tl.to([els.logo, ...ghosts], { x: 0, duration: 0.12, ease: "power3.out" })
       .to(ghosts, { opacity: 0, duration: 0.15 }, "-=0.08")
-      .to(els.letters, { opacity: 1, x: 0, duration: 0.3, stagger: 0.05, ease: "power3.out" }, "-=0.15")
+      .to(
+        els.letters,
+        { opacity: 1, x: 0, duration: 0.3, stagger: 0.05, ease: "power3.out" },
+        "-=0.15",
+      )
       .to(els.version, { opacity: 1, duration: 0.3 }, "-=0.1");
   },
   hide: (tl, els) => {
-    tl.to(els.extEls.ghosts, { opacity: 0.6, x: (i) => (i ? 12 : -12), duration: 0.1 })
-      .to([els.logo, ...els.extEls.ghosts], { opacity: 0, x: 0, duration: 0.18, ease: "power2.in" }, "-=0.02")
-      .to(els.letters, { opacity: 0, x: -10, duration: 0.15, stagger: 0.02 }, "-=0.15")
+    tl.to(els.extEls.ghosts, {
+      opacity: 0.6,
+      x: (i) => (i ? 12 : -12),
+      duration: 0.1,
+    })
+      .to(
+        [els.logo, ...els.extEls.ghosts],
+        { opacity: 0, x: 0, duration: 0.18, ease: "power2.in" },
+        "-=0.02",
+      )
+      .to(
+        els.letters,
+        { opacity: 0, x: -10, duration: 0.15, stagger: 0.02 },
+        "-=0.15",
+      )
       .to(els.overlay, { opacity: 0, duration: 0.3 }, "-=0.1");
-  }
+  },
 };
 
 const ringPulse = {
@@ -76,7 +96,11 @@ const ringPulse = {
   },
   show: (tl, els) => {
     tl.to(els.overlay, { opacity: 1, duration: 0.25, ease: "power2.out" })
-      .to(els.logo, { opacity: 1, scale: 1, duration: 0.5, ease: "back.out(1.6)" }, "-=0.1")
+      .to(
+        els.logo,
+        { opacity: 1, scale: 1, duration: 0.5, ease: "back.out(1.6)" },
+        "-=0.1",
+      )
       .to(
         els.extEls.rings,
         {
@@ -85,18 +109,26 @@ const ringPulse = {
           duration: 1.1,
           stagger: 0.18,
           ease: "power2.out",
-          onStart: () => gsap.set(els.extEls.rings, { opacity: 0.8 })
+          onStart: () => gsap.set(els.extEls.rings, { opacity: 0.8 }),
         },
-        "-=0.45"
+        "-=0.45",
       )
-      .to(els.letters, { opacity: 1, y: 0, duration: 0.35, stagger: 0.06, ease: "power2.out" }, "-=0.9")
+      .to(
+        els.letters,
+        { opacity: 1, y: 0, duration: 0.35, stagger: 0.06, ease: "power2.out" },
+        "-=0.9",
+      )
       .to(els.version, { opacity: 1, duration: 0.3 }, "-=0.3");
   },
   hide: (tl, els) => {
     tl.to(els.letters, { opacity: 0, y: -10, duration: 0.15, stagger: 0.02 })
-      .to(els.logo, { opacity: 0, scale: 0.7, duration: 0.2, ease: "power2.in" }, "-=0.1")
+      .to(
+        els.logo,
+        { opacity: 0, scale: 0.7, duration: 0.2, ease: "power2.in" },
+        "-=0.1",
+      )
       .to(els.overlay, { opacity: 0, duration: 0.3 }, "-=0.05");
-  }
+  },
 };
 
 const auroraBloom = {
@@ -126,18 +158,55 @@ const auroraBloom = {
   show: (tl, els) => {
     const blobs = els.extEls.blobs;
     tl.to(els.overlay, { opacity: 1, duration: 0.3, ease: "power2.out" })
-      .to(blobs, { opacity: 0.9, scale: 1.15, duration: 1.2, stagger: 0.12, ease: "sine.inOut" }, "-=0.15")
-      .to(blobs, { x: (i) => [40, -50, 20][i], y: (i) => [-30, 25, 45][i], duration: 1.2, ease: "sine.inOut" }, "<")
-      .to(els.logo, { opacity: 1, scale: 1, filter: "blur(0px)", duration: 0.7, ease: "power2.out" }, "-=1.0")
-      .to(els.letters, { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.4, stagger: 0.06 }, "-=0.5")
+      .to(
+        blobs,
+        {
+          opacity: 0.9,
+          scale: 1.15,
+          duration: 1.2,
+          stagger: 0.12,
+          ease: "sine.inOut",
+        },
+        "-=0.15",
+      )
+      .to(
+        blobs,
+        {
+          x: (i) => [40, -50, 20][i],
+          y: (i) => [-30, 25, 45][i],
+          duration: 1.2,
+          ease: "sine.inOut",
+        },
+        "<",
+      )
+      .to(
+        els.logo,
+        {
+          opacity: 1,
+          scale: 1,
+          filter: "blur(0px)",
+          duration: 0.7,
+          ease: "power2.out",
+        },
+        "-=1.0",
+      )
+      .to(
+        els.letters,
+        { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.4, stagger: 0.06 },
+        "-=0.5",
+      )
       .to(els.version, { opacity: 1, duration: 0.3 }, "-=0.2");
   },
   hide: (tl, els) => {
     tl.to(els.letters, { opacity: 0, duration: 0.15, stagger: 0.02 })
-      .to(els.logo, { opacity: 0, scale: 1.06, filter: "blur(10px)", duration: 0.25 }, "-=0.1")
+      .to(
+        els.logo,
+        { opacity: 0, scale: 1.06, filter: "blur(10px)", duration: 0.25 },
+        "-=0.1",
+      )
       .to(els.extEls.blobs, { opacity: 0, scale: 1.3, duration: 0.3 }, "-=0.2")
       .to(els.overlay, { opacity: 0, duration: 0.3 }, "-=0.2");
-  }
+  },
 };
 
 const crtPower = {
@@ -167,18 +236,48 @@ const crtPower = {
       .to(els.extEls.flash, { opacity: 1, duration: 0.06 }, "-=0.05")
       .to(els.extEls.line, { opacity: 0, duration: 0.1 }, "<")
       .to(els.extEls.flash, { opacity: 0, duration: 0.15 }, "<")
-      .to(els.logo, { opacity: 1, scaleY: 1, scaleX: 1, duration: 0.35, ease: "power3.out" }, "-=0.15")
-      .to(els.logo, { scaleY: 1.06, duration: 0.08, yoyo: true, repeat: 1, ease: "power1.inOut" })
+      .to(
+        els.logo,
+        {
+          opacity: 1,
+          scaleY: 1,
+          scaleX: 1,
+          duration: 0.35,
+          ease: "power3.out",
+        },
+        "-=0.15",
+      )
+      .to(els.logo, {
+        scaleY: 1.06,
+        duration: 0.08,
+        yoyo: true,
+        repeat: 1,
+        ease: "power1.inOut",
+      })
       .to(els.letters, { opacity: 1, duration: 0.3, stagger: 0.05 }, "-=0.15")
       .to(els.version, { opacity: 1, duration: 0.3 }, "-=0.1");
   },
   hide: (tl, els) => {
     tl.to(els.letters, { opacity: 0, duration: 0.1, stagger: 0.02 })
-      .to(els.logo, { scaleY: 0.02, scaleX: 1.5, opacity: 0, duration: 0.25, ease: "power3.in" }, "-=0.05")
-      .to(els.extEls.line, { opacity: 1, scaleX: 1, scaleY: 1, duration: 0.1 }, "-=0.05")
+      .to(
+        els.logo,
+        {
+          scaleY: 0.02,
+          scaleX: 1.5,
+          opacity: 0,
+          duration: 0.25,
+          ease: "power3.in",
+        },
+        "-=0.05",
+      )
+      .to(
+        els.extEls.line,
+        { opacity: 1, scaleX: 1, scaleY: 1, duration: 0.1 },
+        "-=0.05",
+      )
       .to(els.extEls.line, { scaleX: 0, opacity: 0, duration: 0.2 })
       .to(els.overlay, { opacity: 0, duration: 0.25 }, "-=0.1");
-  }
+  },
 };
 
 const emberIgnite = {
@@ -211,7 +310,17 @@ const emberIgnite = {
     const { embers } = els.extEls;
     const count = embers.length;
     tl.to(els.overlay, { opacity: 1, duration: 0.2, ease: "power2.out" })
-      .to(els.logo, { opacity: 1, scale: 1, filter: "brightness(1)", duration: 0.6, ease: "power3.out" }, "-=0.05")
+      .to(
+        els.logo,
+        {
+          opacity: 1,
+          scale: 1,
+          filter: "brightness(1)",
+          duration: 0.6,
+          ease: "power3.out",
+        },
+        "-=0.05",
+      )
       .to(
         embers,
         {
@@ -221,18 +330,26 @@ const emberIgnite = {
           opacity: 0,
           duration: 0.9,
           stagger: 0.015,
-          ease: "power3.out"
+          ease: "power3.out",
         },
-        "-=0.5"
+        "-=0.5",
       )
-      .to(els.letters, { opacity: 1, y: 0, duration: 0.35, stagger: 0.06 }, "-=0.7")
+      .to(
+        els.letters,
+        { opacity: 1, y: 0, duration: 0.35, stagger: 0.06 },
+        "-=0.7",
+      )
       .to(els.version, { opacity: 1, duration: 0.3 }, "-=0.2");
   },
   hide: (tl, els) => {
     tl.to(els.letters, { opacity: 0, y: -12, duration: 0.15, stagger: 0.02 })
-      .to(els.logo, { opacity: 0, scale: 0.8, filter: "brightness(2)", duration: 0.25 }, "-=0.1")
+      .to(
+        els.logo,
+        { opacity: 0, scale: 0.8, filter: "brightness(2)", duration: 0.25 },
+        "-=0.1",
+      )
       .to(els.overlay, { opacity: 0, duration: 0.3 }, "-=0.05");
-  }
+  },
 };
 
 const current = {
@@ -248,15 +365,41 @@ const current = {
   },
   show: (tl, els) => {
     tl.to(els.overlay, { opacity: 1, duration: 0.3, ease: "power2.out" })
-      .to(els.logo, { opacity: 1, scale: 1, duration: 0.6, ease: "back.out(1.4)" }, "-=0.1")
-      .to(els.letters, { opacity: 1, y: 0, duration: 0.4, stagger: 0.07, ease: "power2.out" }, "-=0.3")
-      .to(els.version, { opacity: 1, duration: 0.35, ease: "power2.out" }, "-=0.15");
+      .to(
+        els.logo,
+        { opacity: 1, scale: 1, duration: 0.6, ease: "back.out(1.4)" },
+        "-=0.1",
+      )
+      .to(
+        els.letters,
+        { opacity: 1, y: 0, duration: 0.4, stagger: 0.07, ease: "power2.out" },
+        "-=0.3",
+      )
+      .to(
+        els.version,
+        { opacity: 1, duration: 0.35, ease: "power2.out" },
+        "-=0.15",
+      );
   },
   hide: (tl, els) => {
-    tl.to(els.letters, { opacity: 0, y: -12, duration: 0.15, stagger: 0.03, ease: "power2.in" })
-      .to(els.logo, { opacity: 0, scale: 0.6, duration: 0.15, ease: "power2.in" }, "-=0.1")
-      .to(els.overlay, { opacity: 0, scale: 1.04, duration: 0.35, ease: "power2.inOut" }, "-=0.1");
-  }
+    tl.to(els.letters, {
+      opacity: 0,
+      y: -12,
+      duration: 0.15,
+      stagger: 0.03,
+      ease: "power2.in",
+    })
+      .to(
+        els.logo,
+        { opacity: 0, scale: 0.6, duration: 0.15, ease: "power2.in" },
+        "-=0.1",
+      )
+      .to(
+        els.overlay,
+        { opacity: 0, scale: 1.04, duration: 0.35, ease: "power2.inOut" },
+        "-=0.1",
+      );
+  },
 };
 
 const digitalScan = {
@@ -280,19 +423,39 @@ const digitalScan = {
   show: (tl, els) => {
     const { scanline } = els.extEls;
     tl.to(els.overlay, { opacity: 1, duration: 0.2, ease: "power2.out" })
-      .to(scanline, { top: "100%", duration: 0.9, ease: "power2.inOut" }, "-=0.1")
-      .to(els.logo, { opacity: 1, y: 0, scale: 1, duration: 0.4, ease: "power2.out" }, "-=0.6")
-      .to(els.letters, { opacity: 1, duration: 0.35, stagger: 0.06, ease: "power2.out" }, "-=0.3")
+      .to(
+        scanline,
+        { top: "100%", duration: 0.9, ease: "power2.inOut" },
+        "-=0.1",
+      )
+      .to(
+        els.logo,
+        { opacity: 1, y: 0, scale: 1, duration: 0.4, ease: "power2.out" },
+        "-=0.6",
+      )
+      .to(
+        els.letters,
+        { opacity: 1, duration: 0.35, stagger: 0.06, ease: "power2.out" },
+        "-=0.3",
+      )
       .to(els.version, { opacity: 1, duration: 0.3 }, "-=0.1");
   },
   hide: (tl, els) => {
     const { scanline } = els.extEls;
     gsap.set(scanline, { top: "100%", opacity: 1 });
     tl.to(scanline, { top: "110%", duration: 0.15, ease: "power2.in" })
-      .to(els.letters, { opacity: 0, duration: 0.1, stagger: 0.02, ease: "power2.in" }, "-=0.05")
+      .to(
+        els.letters,
+        { opacity: 0, duration: 0.1, stagger: 0.02, ease: "power2.in" },
+        "-=0.05",
+      )
       .to(els.logo, { opacity: 0, duration: 0.1, ease: "power2.in" }, "-=0.08")
-      .to(els.overlay, { opacity: 0, duration: 0.3, ease: "power2.inOut" }, "-=0.15");
-  }
+      .to(
+        els.overlay,
+        { opacity: 0, duration: 0.3, ease: "power2.inOut" },
+        "-=0.15",
+      );
+  },
 };
 
 const orbitalConverge = {
@@ -323,7 +486,7 @@ const orbitalConverge = {
       x: (i) => Math.cos((i / count) * Math.PI * 2) * 140,
       y: (i) => Math.sin((i / count) * Math.PI * 2) * 140,
       scale: 1,
-      opacity: 0.9
+      opacity: 0.9,
     });
     g.set(els.logo, { opacity: 0, scale: 0.3 });
     g.set(els.letters, { opacity: 0, y: 20 });
@@ -342,9 +505,9 @@ const orbitalConverge = {
           opacity: 0,
           duration: 1.1,
           stagger: 0.03,
-          ease: "power4.in"
+          ease: "power4.in",
         },
-        "-=0.1"
+        "-=0.1",
       )
       .to(
         els.logo,
@@ -352,19 +515,33 @@ const orbitalConverge = {
           opacity: 1,
           scale: 1,
           duration: 0.5,
-          ease: "back.out(2.5)"
+          ease: "back.out(2.5)",
         },
-        "-=0.4"
+        "-=0.4",
       )
-      .to(els.letters, { opacity: 1, y: 0, duration: 0.35, stagger: 0.06, ease: "power2.out" }, "-=0.3")
+      .to(
+        els.letters,
+        { opacity: 1, y: 0, duration: 0.35, stagger: 0.06, ease: "power2.out" },
+        "-=0.3",
+      )
       .to(els.version, { opacity: 1, duration: 0.3 }, "-=0.1");
   },
   hide: (tl, els) => {
     const { particles } = els.extEls;
     const count = particles.length;
     gsap.set(particles, { x: 0, y: 0, scale: 1, opacity: 1 });
-    tl.to(els.letters, { opacity: 0, y: -15, duration: 0.15, stagger: 0.03, ease: "power2.in" })
-      .to(els.logo, { opacity: 0, scale: 0.3, duration: 0.15, ease: "power2.in" }, "-=0.1")
+    tl.to(els.letters, {
+      opacity: 0,
+      y: -15,
+      duration: 0.15,
+      stagger: 0.03,
+      ease: "power2.in",
+    })
+      .to(
+        els.logo,
+        { opacity: 0, scale: 0.3, duration: 0.15, ease: "power2.in" },
+        "-=0.1",
+      )
       .to(
         particles,
         {
@@ -374,12 +551,12 @@ const orbitalConverge = {
           opacity: 0,
           duration: 0.4,
           stagger: 0.02,
-          ease: "power2.out"
+          ease: "power2.out",
         },
-        "-=0.2"
+        "-=0.2",
       )
       .to(els.overlay, { opacity: 0, duration: 0.35 }, "-=0.3");
-  }
+  },
 };
 
 const lightBeam = {
@@ -416,7 +593,7 @@ const lightBeam = {
       .to(els.letters, { opacity: 0, duration: 0.1, stagger: 0.02 }, "-=0.2")
       .to(els.logo, { opacity: 0, duration: 0.1 }, "-=0.1")
       .to(els.overlay, { opacity: 0, duration: 0.3 }, "-=0.15");
-  }
+  },
 };
 
 const gravityDrop = {
@@ -430,7 +607,7 @@ const gravityDrop = {
     g.set(els.letters, {
       opacity: 1,
       y: -120,
-      rotation: (i) => (Math.random() - 0.5) * 30
+      rotation: (i) => (Math.random() - 0.5) * 30,
     });
     g.set(els.version, { opacity: 0 });
   },
@@ -443,9 +620,9 @@ const gravityDrop = {
           rotation: 0,
           duration: 0.8,
           stagger: 0.08,
-          ease: "elastic.out(1, 0.4)"
+          ease: "elastic.out(1, 0.4)",
         },
-        "-=0.1"
+        "-=0.1",
       )
       .to(
         els.logo,
@@ -454,9 +631,9 @@ const gravityDrop = {
           y: 0,
           scale: 1,
           duration: 0.6,
-          ease: "elastic.out(1, 0.35)"
+          ease: "elastic.out(1, 0.35)",
         },
-        "-=0.3"
+        "-=0.3",
       )
       .to(els.version, { opacity: 1, duration: 0.35 }, "-=0.15");
   },
@@ -466,11 +643,11 @@ const gravityDrop = {
       opacity: 0,
       duration: 0.3,
       stagger: 0.03,
-      ease: "power2.in"
+      ease: "power2.in",
     })
       .to(els.logo, { y: -40, opacity: 0, duration: 0.25 }, "-=0.2")
       .to(els.overlay, { opacity: 0, duration: 0.3 }, "-=0.2");
-  }
+  },
 };
 
 const pixelate = {
@@ -516,7 +693,7 @@ const pixelate = {
         opacity: 0,
         duration: 0.6,
         stagger: 0.02,
-        ease: "power2.inOut"
+        ease: "power2.inOut",
       })
       .to(els.logo, { opacity: 1, scale: 1, duration: 0.4 }, "-=0.15")
       .to(els.letters, { opacity: 1, duration: 0.3, stagger: 0.05 }, "-=0.15")
@@ -526,7 +703,7 @@ const pixelate = {
     tl.to(els.letters, { opacity: 0, duration: 0.1, stagger: 0.02 }, "-=0.2")
       .to(els.logo, { opacity: 0, duration: 0.1 }, "-=0.1")
       .to(els.overlay, { opacity: 0, duration: 0.3 }, "-=0.15");
-  }
+  },
 };
 
 const typewriter = {
@@ -546,7 +723,7 @@ const typewriter = {
     g.set(els.letters, {
       opacity: 0,
       scale: 0.7,
-      y: 10
+      y: 10,
     });
     g.set(els.extEls.cursor, { opacity: 1 });
     g.set(els.version, { opacity: 0 });
@@ -562,9 +739,9 @@ const typewriter = {
           y: 0,
           duration: 0.35,
           stagger: 0.12,
-          ease: "back.out(1.7)"
+          ease: "back.out(1.7)",
         },
-        "-=0.1"
+        "-=0.1",
       )
       .to(cursor, { opacity: 0, duration: 0.1 }, "+=0.15")
       .to(
@@ -574,9 +751,9 @@ const typewriter = {
           scale: 1,
           y: 0,
           duration: 0.4,
-          ease: "back.out(1.3)"
+          ease: "back.out(1.3)",
         },
-        "-=0.1"
+        "-=0.1",
       )
       .to(els.version, { opacity: 1, duration: 0.3 }, "-=0.1");
   },
@@ -588,12 +765,12 @@ const typewriter = {
       y: -6,
       duration: 0.15,
       stagger: 0.04,
-      ease: "power2.in"
+      ease: "power2.in",
     })
       .to(cursor, { opacity: 1, duration: 0.1 }, "-=0.2")
       .to(els.logo, { opacity: 0, scale: 0.6, y: -8, duration: 0.1 }, "-=0.1")
       .to(els.overlay, { opacity: 0, duration: 0.3 }, "-=0.15");
-  }
+  },
 };
 
 export const BOOT_ANIMATIONS = [
@@ -608,7 +785,7 @@ export const BOOT_ANIMATIONS = [
   lightBeam,
   gravityDrop,
   pixelate,
-  typewriter
+  typewriter,
 ];
 
 export function pickAnimation(preferredId) {

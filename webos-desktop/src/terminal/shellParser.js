@@ -10,10 +10,21 @@ import {
   createForExpression,
   createAssignment,
   createRedirection,
-  createSubshell
+  createSubshell,
 } from "./shellAST.js";
 
-const KEYWORDS = new Set(["if", "then", "elif", "else", "fi", "while", "do", "done", "for", "in"]);
+const KEYWORDS = new Set([
+  "if",
+  "then",
+  "elif",
+  "else",
+  "fi",
+  "while",
+  "do",
+  "done",
+  "for",
+  "in",
+]);
 
 export class ShellParser {
   constructor(input) {
@@ -126,7 +137,11 @@ export class ShellParser {
         i++;
         let val = "";
         while (i < str.length && str[i] !== '"') {
-          if (str[i] === "\\" && i + 1 < str.length && '\\"$`'.includes(str[i + 1])) {
+          if (
+            str[i] === "\\" &&
+            i + 1 < str.length &&
+            '\\"$`'.includes(str[i + 1])
+          ) {
             val += str[i + 1];
             i += 2;
           } else {
@@ -160,7 +175,11 @@ export class ShellParser {
         } else if (str[i] === '"') {
           i++;
           while (i < str.length && str[i] !== '"') {
-            if (str[i] === "\\" && i + 1 < str.length && '\\"$`'.includes(str[i + 1])) {
+            if (
+              str[i] === "\\" &&
+              i + 1 < str.length &&
+              '\\"$`'.includes(str[i + 1])
+            ) {
               word += str[i + 1];
               i += 2;
             } else {
@@ -177,12 +196,13 @@ export class ShellParser {
       if (word) {
         const hasEquals = word.includes("=");
         const beforeEq = word.split("=")[0];
-        const isValidAssignment = hasEquals && /^[A-Za-z_][A-Za-z0-9_]*$/.test(beforeEq);
+        const isValidAssignment =
+          hasEquals && /^[A-Za-z_][A-Za-z0-9_]*$/.test(beforeEq);
         tokens.push({
           type: isValidAssignment ? "ASSIGN_WORD" : "WORD",
           value: word,
           isQuoted: false,
-          isDoubleQuoted: word.startsWith('"') && word.endsWith('"')
+          isDoubleQuoted: word.startsWith('"') && word.endsWith('"'),
         });
       }
     }
@@ -190,7 +210,12 @@ export class ShellParser {
   }
 
   makeWordToken(value, isSingleQuoted, isDoubleQuoted) {
-    return { type: "WORD", value, isQuoted: isSingleQuoted || false, isDoubleQuoted: isDoubleQuoted || false };
+    return {
+      type: "WORD",
+      value,
+      isQuoted: isSingleQuoted || false,
+      isDoubleQuoted: isDoubleQuoted || false,
+    };
   }
 
   findPrecedingFd(tokens) {
@@ -203,7 +228,11 @@ export class ShellParser {
   }
 
   peek() {
-    while (this.pos < this.tokens.length && this.tokens[this.pos].type === "SEMI") this.pos++;
+    while (
+      this.pos < this.tokens.length &&
+      this.tokens[this.pos].type === "SEMI"
+    )
+      this.pos++;
     return this.tokens[this.pos] || null;
   }
 
@@ -300,8 +329,21 @@ export class ShellParser {
     while (this.pos < this.tokens.length) {
       const t = this.peek();
       if (!t) break;
-      if (t.type === "PIPE" || t.type === "AND" || t.type === "OR" || t.type === "LPAREN" || t.type === "RPAREN") break;
-      if (t.value === "fi" || t.value === "done" || t.value === "elif" || t.value === "else" || t.value === "then")
+      if (
+        t.type === "PIPE" ||
+        t.type === "AND" ||
+        t.type === "OR" ||
+        t.type === "LPAREN" ||
+        t.type === "RPAREN"
+      )
+        break;
+      if (
+        t.value === "fi" ||
+        t.value === "done" ||
+        t.value === "elif" ||
+        t.value === "else" ||
+        t.value === "then"
+      )
         break;
       if (t.type === "SEMI") break;
 
@@ -334,7 +376,8 @@ export class ShellParser {
                   : t.type === "REDIR_DUP_IN"
                     ? "<&"
                     : ">&";
-        if (target) redirections.push(createRedirection(rType, target.value, fd));
+        if (target)
+          redirections.push(createRedirection(rType, target.value, fd));
         continue;
       }
 
@@ -356,7 +399,12 @@ export class ShellParser {
       break;
     }
 
-    if (assignments.length === 0 && args.length === 0 && redirections.length === 0) return null;
+    if (
+      assignments.length === 0 &&
+      args.length === 0 &&
+      redirections.length === 0
+    )
+      return null;
 
     if (args.length === 0 && assignments.length > 0) {
       return createCommand(null, [], redirections);
@@ -459,7 +507,12 @@ export class ShellParser {
     let expr = "";
     while (this.pos < this.tokens.length) {
       const tok = this.peek();
-      if (!tok || (delim === "))" && tok.value === "))") || (delim === ";" && tok.type === "SEMI")) break;
+      if (
+        !tok ||
+        (delim === "))" && tok.value === "))") ||
+        (delim === ";" && tok.type === "SEMI")
+      )
+        break;
       if (tok.type === "WORD" || tok.type === "ASSIGN_WORD") {
         expr += tok.value + " ";
         this.advance();

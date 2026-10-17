@@ -12,7 +12,7 @@ export function getCurrentUser() {
     userHistory.find((u) => u.userId === currentUserId) || {
       name: os.storage.get(StorageKeys.username) || "Guest",
       avatar: os.storage.get(StorageKeys.profilePicture) || "",
-      userId: currentUserId
+      userId: currentUserId,
     }
   );
 }
@@ -41,7 +41,7 @@ export async function switchToUser(userId) {
 
 export function showAccountSwitchDialog(container, onSwitch) {
   const otherUsers = getOtherUsers();
-  
+
   if (otherUsers.length === 0) {
     return null;
   }
@@ -49,7 +49,7 @@ export function showAccountSwitchDialog(container, onSwitch) {
   const userOptions = otherUsers.map((user) => ({
     id: user.userId,
     label: user.name,
-    avatar: user.avatar
+    avatar: user.avatar,
   }));
 
   let selectedUserId = userOptions[0]?.id;
@@ -113,7 +113,10 @@ export function showAccountSwitchDialog(container, onSwitch) {
     nameLabel.textContent = option.label;
     nameLabel.style.fontSize = "14px";
     nameLabel.style.fontWeight = "600";
-    nameLabel.style.color = option.id === selectedUserId ? "var(--text-on-brand)" : "var(--text-primary)";
+    nameLabel.style.color =
+      option.id === selectedUserId
+        ? "var(--text-on-brand)"
+        : "var(--text-primary)";
 
     userBtn.appendChild(avatarImg);
     userBtn.appendChild(nameLabel);

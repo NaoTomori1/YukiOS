@@ -1,11 +1,23 @@
-export const RARITY = { COMMON: 1, UNCOMMON: 2, RARE: 3, EPIC: 4, LEGENDARY: 5 };
-export const RARITY_ORDER = { common: 1, uncommon: 2, rare: 3, epic: 4, legendary: 5 };
+export const RARITY = {
+  COMMON: 1,
+  UNCOMMON: 2,
+  RARE: 3,
+  EPIC: 4,
+  LEGENDARY: 5,
+};
+export const RARITY_ORDER = {
+  common: 1,
+  uncommon: 2,
+  rare: 3,
+  epic: 4,
+  legendary: 5,
+};
 export const RARITY_COLORS = {
   1: [0.7, 0.7, 0.7],
   2: [0.3, 0.8, 0.5],
   3: [0.3, 0.5, 1],
   4: [0.8, 0.3, 1],
-  5: [1, 0.6, 0.1]
+  5: [1, 0.6, 0.1],
 };
 export const FISH_DATA = [
   {
@@ -18,14 +30,14 @@ export const FISH_DATA = [
     size: 0.8,
     colors: [
       [1.0, 0.42, 0.21],
-      [1.0, 1.0, 1.0]
+      [1.0, 1.0, 1.0],
     ],
     beh: "school",
     zone: "shallows",
     body: "round",
     tail: "rounded",
     fins: "normal",
-    pat: "bands"
+    pat: "bands",
   },
   {
     id: "bluetang",
@@ -37,14 +49,14 @@ export const FISH_DATA = [
     size: 0.85,
     colors: [
       [0.31, 0.765, 0.969],
-      [1.0, 0.922, 0.231]
+      [1.0, 0.922, 0.231],
     ],
     beh: "school",
     zone: "shallows",
     body: "normal",
     tail: "crescent",
     fins: "normal",
-    pat: "none"
+    pat: "none",
   },
   {
     id: "parrotfish",
@@ -56,14 +68,14 @@ export const FISH_DATA = [
     size: 1.0,
     colors: [
       [0.506, 0.784, 0.518],
-      [0.808, 0.576, 0.847]
+      [0.808, 0.576, 0.847],
     ],
     beh: "wander",
     zone: "shallows",
     body: "normal",
     tail: "rounded",
     fins: "normal",
-    pat: "none"
+    pat: "none",
   },
   {
     id: "butterfly",
@@ -75,14 +87,14 @@ export const FISH_DATA = [
     size: 0.85,
     colors: [
       [1.0, 0.945, 0.463],
-      [0.2, 0.2, 0.2]
+      [0.2, 0.2, 0.2],
     ],
     beh: "flutter",
     zone: "shallows",
     body: "round",
     tail: "normal",
     fins: "normal",
-    pat: "bands"
+    pat: "bands",
   },
   {
     id: "pufferfish",
@@ -94,14 +106,14 @@ export const FISH_DATA = [
     size: 1.0,
     colors: [
       [0.6, 0.8, 0.3],
-      [0.9, 0.9, 0.7]
+      [0.9, 0.9, 0.7],
     ],
     beh: "slow",
     zone: "shallows",
     body: "round",
     tail: "rounded",
     fins: "normal",
-    pat: "spots"
+    pat: "spots",
   },
   {
     id: "seahorse",
@@ -113,14 +125,14 @@ export const FISH_DATA = [
     size: 0.7,
     colors: [
       [0.9, 0.6, 0.2],
-      [0.8, 0.4, 0.1]
+      [0.8, 0.4, 0.1],
     ],
     beh: "flutter",
     zone: "shallows",
     body: "tall",
     tail: "rounded",
     fins: "normal",
-    pat: "bands"
+    pat: "bands",
   },
   {
     id: "angelfish",
@@ -132,14 +144,14 @@ export const FISH_DATA = [
     size: 1.1,
     colors: [
       [0.898, 0.451, 0.451],
-      [1.0, 1.0, 1.0]
+      [1.0, 1.0, 1.0],
     ],
     beh: "glide",
     zone: ["shallows", "twilight"],
     body: "tall",
     tail: "fan",
     fins: "long",
-    pat: "stripes"
+    pat: "stripes",
   },
   {
     id: "lionfish",
@@ -151,14 +163,14 @@ export const FISH_DATA = [
     size: 1.0,
     colors: [
       [0.957, 0.263, 0.212],
-      [1.0, 0.718, 0.302]
+      [1.0, 0.718, 0.302],
     ],
     beh: "prowl",
     zone: "twilight",
     body: "normal",
     tail: "normal",
     fins: "spiky",
-    pat: "stripes"
+    pat: "stripes",
   },
   {
     id: "napoleon",
@@ -170,14 +182,14 @@ export const FISH_DATA = [
     size: 1.35,
     colors: [
       [0.31, 0.765, 0.969],
-      [0.486, 0.302, 1.0]
+      [0.486, 0.302, 1.0],
     ],
     beh: "slow",
     zone: ["twilight", "abyss"],
     body: "bulky",
     tail: "rounded",
     fins: "normal",
-    pat: "none"
+    pat: "none",
   },
   {
     id: "moorish",
@@ -189,14 +201,14 @@ export const FISH_DATA = [
     size: 1.0,
     colors: [
       [1.0, 1.0, 1.0],
-      [0.067, 0.067, 0.067]
+      [0.067, 0.067, 0.067],
     ],
     beh: "erratic",
     zone: "twilight",
     body: "tall",
     tail: "crescent",
     fins: "long",
-    pat: "bands"
+    pat: "bands",
   },
   {
     id: "mandarin",
@@ -208,14 +220,14 @@ export const FISH_DATA = [
     size: 0.75,
     colors: [
       [0.0, 0.737, 0.831],
-      [1.0, 0.251, 0.506]
+      [1.0, 0.251, 0.506],
     ],
     beh: "dart",
     zone: ["twilight", "abyss"],
     body: "round",
     tail: "rounded",
     fins: "long",
-    pat: "spots"
+    pat: "spots",
   },
   {
     id: "mantaray",
@@ -227,14 +239,14 @@ export const FISH_DATA = [
     size: 1.5,
     colors: [
       [0.18, 0.18, 0.32],
-      [0.4, 0.38, 0.5]
+      [0.4, 0.38, 0.5],
     ],
     beh: "glide",
     zone: ["twilight", "abyss"],
     body: "mantaray",
     tail: "none",
     fins: "none",
-    pat: "none"
+    pat: "none",
   },
   {
     id: "octopus",
@@ -246,14 +258,14 @@ export const FISH_DATA = [
     size: 1.0,
     colors: [
       [0.65, 0.25, 0.45],
-      [0.55, 0.15, 0.35]
+      [0.55, 0.15, 0.35],
     ],
     beh: "prowl",
     zone: ["twilight", "abyss"],
     body: "octopus",
     tail: "none",
     fins: "none",
-    pat: "none"
+    pat: "none",
   },
   {
     id: "turtle",
@@ -265,14 +277,14 @@ export const FISH_DATA = [
     size: 1.3,
     colors: [
       [0.3, 0.58, 0.3],
-      [0.6, 0.42, 0.22]
+      [0.6, 0.42, 0.22],
     ],
     beh: "slow",
     zone: ["shallows", "twilight"],
     body: "turtle",
     tail: "none",
     fins: "none",
-    pat: "none"
+    pat: "none",
   },
   {
     id: "crab",
@@ -284,14 +296,14 @@ export const FISH_DATA = [
     size: 0.7,
     colors: [
       [0.78, 0.3, 0.18],
-      [0.9, 0.5, 0.28]
+      [0.9, 0.5, 0.28],
     ],
     beh: "wander",
     zone: "shallows",
     body: "crab",
     tail: "none",
     fins: "none",
-    pat: "none"
+    pat: "none",
   },
   {
     id: "seastar",
@@ -303,14 +315,14 @@ export const FISH_DATA = [
     size: 0.7,
     colors: [
       [0.95, 0.5, 0.3],
-      [1.0, 0.65, 0.5]
+      [1.0, 0.65, 0.5],
     ],
     beh: "slow",
     zone: "shallows",
     body: "seastar",
     tail: "none",
     fins: "none",
-    pat: "none"
+    pat: "none",
   },
   {
     id: "guppy",
@@ -322,14 +334,14 @@ export const FISH_DATA = [
     size: 0.6,
     colors: [
       [0.2, 0.8, 0.2],
-      [0.9, 0.2, 0.2]
+      [0.9, 0.2, 0.2],
     ],
     beh: "school",
     zone: "shallows",
     body: "normal",
     tail: "fan",
     fins: "normal",
-    pat: "spots"
+    pat: "spots",
   },
   {
     id: "betta",
@@ -341,14 +353,14 @@ export const FISH_DATA = [
     size: 0.8,
     colors: [
       [0.8, 0.2, 0.2],
-      [0.2, 0.2, 0.8]
+      [0.2, 0.2, 0.8],
     ],
     beh: "dart",
     zone: "shallows",
     body: "tall",
     tail: "fan",
     fins: "long",
-    pat: "none"
+    pat: "none",
   },
   {
     id: "goldfish",
@@ -360,14 +372,14 @@ export const FISH_DATA = [
     size: 1.0,
     colors: [
       [1.0, 0.8, 0.2],
-      [1.0, 0.9, 0.4]
+      [1.0, 0.9, 0.4],
     ],
     beh: "wander",
     zone: "shallows",
     body: "round",
     tail: "fan",
     fins: "normal",
-    pat: "none"
+    pat: "none",
   },
   {
     id: "jellyfish",
@@ -379,14 +391,14 @@ export const FISH_DATA = [
     size: 0.9,
     colors: [
       [0.8, 0.8, 1.0],
-      [0.9, 0.9, 1.0]
+      [0.9, 0.9, 1.0],
     ],
     beh: "slow",
     zone: ["shallows", "twilight"],
     body: "jellyfish",
     tail: "none",
     fins: "none",
-    pat: "none"
+    pat: "none",
   },
   {
     id: "angler",
@@ -398,14 +410,14 @@ export const FISH_DATA = [
     size: 1.2,
     colors: [
       [0.2, 0.2, 0.2],
-      [0.8, 0.9, 1.0]
+      [0.8, 0.9, 1.0],
     ],
     beh: "prowl",
     zone: "abyss",
     body: "bulky",
     tail: "rounded",
     fins: "spiky",
-    pat: "none"
+    pat: "none",
   },
   {
     id: "gulper",
@@ -417,14 +429,14 @@ export const FISH_DATA = [
     size: 1.5,
     colors: [
       [0.1, 0.1, 0.1],
-      [0.3, 0.1, 0.1]
+      [0.3, 0.1, 0.1],
     ],
     beh: "dart",
     zone: "abyss",
     body: "eel",
     tail: "none",
     fins: "none",
-    pat: "bands"
+    pat: "bands",
   },
   {
     id: "vampire_squid",
@@ -436,14 +448,14 @@ export const FISH_DATA = [
     size: 0.9,
     colors: [
       [0.6, 0.1, 0.1],
-      [0.8, 0.2, 0.2]
+      [0.8, 0.2, 0.2],
     ],
     beh: "glide",
     zone: "abyss",
     body: "octopus",
     tail: "none",
     fins: "none",
-    pat: "none"
+    pat: "none",
   },
   {
     id: "ghost_shark",
@@ -455,14 +467,14 @@ export const FISH_DATA = [
     size: 2.0,
     colors: [
       [0.8, 0.8, 0.9],
-      [0.6, 0.6, 0.7]
+      [0.6, 0.6, 0.7],
     ],
     beh: "majestic",
     zone: "abyss",
     body: "bulky",
     tail: "crescent",
     fins: "normal",
-    pat: "none"
+    pat: "none",
   },
   {
     id: "ember_tetra",
@@ -474,14 +486,14 @@ export const FISH_DATA = [
     size: 0.7,
     colors: [
       [0.9, 0.3, 0.1],
-      [1.0, 0.5, 0.1]
+      [1.0, 0.5, 0.1],
     ],
     beh: "school",
     zone: "vents",
     body: "normal",
     tail: "rounded",
     fins: "normal",
-    pat: "none"
+    pat: "none",
   },
   {
     id: "lava_ray",
@@ -493,14 +505,14 @@ export const FISH_DATA = [
     size: 1.3,
     colors: [
       [0.8, 0.2, 0.0],
-      [0.4, 0.1, 0.1]
+      [0.4, 0.1, 0.1],
     ],
     beh: "glide",
     zone: "vents",
     body: "mantaray",
     tail: "none",
     fins: "none",
-    pat: "none"
+    pat: "none",
   },
   {
     id: "obsidian_crab",
@@ -512,14 +524,14 @@ export const FISH_DATA = [
     size: 0.8,
     colors: [
       [0.1, 0.1, 0.1],
-      [0.8, 0.3, 0.0]
+      [0.8, 0.3, 0.0],
     ],
     beh: "wander",
     zone: "vents",
     body: "crab",
     tail: "none",
     fins: "none",
-    pat: "none"
+    pat: "none",
   },
   {
     id: "thermal_eel",
@@ -531,14 +543,14 @@ export const FISH_DATA = [
     size: 1.5,
     colors: [
       [0.9, 0.1, 0.1],
-      [1.0, 0.8, 0.2]
+      [1.0, 0.8, 0.2],
     ],
     beh: "dart",
     zone: "vents",
     body: "eel",
     tail: "none",
     fins: "none",
-    pat: "bands"
+    pat: "bands",
   },
   {
     id: "magma_turtle",
@@ -550,14 +562,14 @@ export const FISH_DATA = [
     size: 1.4,
     colors: [
       [0.3, 0.1, 0.1],
-      [0.9, 0.4, 0.1]
+      [0.9, 0.4, 0.1],
     ],
     beh: "slow",
     zone: "vents",
     body: "turtle",
     tail: "none",
     fins: "none",
-    pat: "none"
+    pat: "none",
   },
   {
     id: "inferno_shark",
@@ -569,14 +581,14 @@ export const FISH_DATA = [
     size: 2.5,
     colors: [
       [0.8, 0.1, 0.1],
-      [1.0, 0.5, 0.0]
+      [1.0, 0.5, 0.0],
     ],
     beh: "majestic",
     zone: "vents",
     body: "bulky",
     tail: "crescent",
     fins: "spiky",
-    pat: "none"
+    pat: "none",
   },
   {
     id: "phoenix_fish",
@@ -588,14 +600,14 @@ export const FISH_DATA = [
     size: 1.2,
     colors: [
       [1.0, 0.3, 0.1],
-      [1.0, 0.8, 0.2]
+      [1.0, 0.8, 0.2],
     ],
     beh: "flutter",
     zone: "vents",
     body: "tall",
     tail: "fan",
     fins: "long",
-    pat: "stripes"
+    pat: "stripes",
   },
   {
     id: "lava_carp",
@@ -607,14 +619,14 @@ export const FISH_DATA = [
     size: 0.8,
     colors: [
       [0.9, 0.3, 0.1],
-      [0.6, 0.2, 0.0]
+      [0.6, 0.2, 0.0],
     ],
     beh: "school",
     zone: "lava",
     body: "normal",
     tail: "rounded",
     fins: "normal",
-    pat: "none"
+    pat: "none",
   },
   {
     id: "sulfur_ray",
@@ -626,14 +638,14 @@ export const FISH_DATA = [
     size: 1.2,
     colors: [
       [0.8, 0.6, 0.1],
-      [0.9, 0.8, 0.2]
+      [0.9, 0.8, 0.2],
     ],
     beh: "glide",
     zone: "lava",
     body: "mantaray",
     tail: "none",
     fins: "none",
-    pat: "none"
+    pat: "none",
   },
   {
     id: "basalt_eel",
@@ -645,14 +657,14 @@ export const FISH_DATA = [
     size: 1.4,
     colors: [
       [0.2, 0.2, 0.2],
-      [0.6, 0.3, 0.1]
+      [0.6, 0.3, 0.1],
     ],
     beh: "dart",
     zone: "lava",
     body: "eel",
     tail: "none",
     fins: "none",
-    pat: "none"
+    pat: "none",
   },
   {
     id: "magma_squid",
@@ -664,14 +676,14 @@ export const FISH_DATA = [
     size: 1.1,
     colors: [
       [0.9, 0.2, 0.1],
-      [1.0, 0.5, 0.0]
+      [1.0, 0.5, 0.0],
     ],
     beh: "prowl",
     zone: "lava",
     body: "octopus",
     tail: "none",
     fins: "none",
-    pat: "none"
+    pat: "none",
   },
   {
     id: "inferno_dragon",
@@ -683,14 +695,14 @@ export const FISH_DATA = [
     size: 2.0,
     colors: [
       [1.0, 0.3, 0.0],
-      [1.0, 0.8, 0.0]
+      [1.0, 0.8, 0.0],
     ],
     beh: "majestic",
     zone: "lava",
     body: "long",
     tail: "fan",
     fins: "long",
-    pat: "stripes"
+    pat: "stripes",
   },
   {
     id: "ice_dart",
@@ -702,14 +714,14 @@ export const FISH_DATA = [
     size: 0.6,
     colors: [
       [0.6, 0.8, 1.0],
-      [0.9, 0.9, 1.0]
+      [0.9, 0.9, 1.0],
     ],
     beh: "dart",
     zone: "frozen",
     body: "normal",
     tail: "crescent",
     fins: "normal",
-    pat: "none"
+    pat: "none",
   },
   {
     id: "frost_ray",
@@ -721,14 +733,14 @@ export const FISH_DATA = [
     size: 1.3,
     colors: [
       [0.4, 0.6, 0.9],
-      [0.8, 0.9, 1.0]
+      [0.8, 0.9, 1.0],
     ],
     beh: "glide",
     zone: "frozen",
     body: "mantaray",
     tail: "none",
     fins: "none",
-    pat: "none"
+    pat: "none",
   },
   {
     id: "yeti_crab",
@@ -740,14 +752,14 @@ export const FISH_DATA = [
     size: 0.8,
     colors: [
       [0.9, 0.9, 0.9],
-      [0.7, 0.7, 0.8]
+      [0.7, 0.7, 0.8],
     ],
     beh: "wander",
     zone: "frozen",
     body: "crab",
     tail: "none",
     fins: "none",
-    pat: "none"
+    pat: "none",
   },
   {
     id: "aurora_jelly",
@@ -759,14 +771,14 @@ export const FISH_DATA = [
     size: 1.1,
     colors: [
       [0.3, 0.9, 0.6],
-      [0.8, 0.4, 0.9]
+      [0.8, 0.4, 0.9],
     ],
     beh: "slow",
     zone: "frozen",
     body: "jelly",
     tail: "none",
     fins: "none",
-    pat: "none"
+    pat: "none",
   },
   {
     id: "crystal_seahorse",
@@ -778,14 +790,14 @@ export const FISH_DATA = [
     size: 0.9,
     colors: [
       [0.7, 0.9, 1.0],
-      [1.0, 1.0, 1.0]
+      [1.0, 1.0, 1.0],
     ],
     beh: "flutter",
     zone: "frozen",
     body: "tall",
     tail: "rounded",
     fins: "normal",
-    pat: "none"
+    pat: "none",
   },
   {
     id: "blizzard_shark",
@@ -797,14 +809,14 @@ export const FISH_DATA = [
     size: 2.4,
     colors: [
       [0.5, 0.7, 0.9],
-      [1.0, 1.0, 1.0]
+      [1.0, 1.0, 1.0],
     ],
     beh: "majestic",
     zone: "frozen",
     body: "bulky",
     tail: "crescent",
     fins: "normal",
-    pat: "none"
+    pat: "none",
   },
   {
     id: "glacier_leviathan",
@@ -816,14 +828,14 @@ export const FISH_DATA = [
     size: 2.0,
     colors: [
       [0.3, 0.5, 0.8],
-      [0.9, 1.0, 1.0]
+      [0.9, 1.0, 1.0],
     ],
     beh: "slow",
     zone: "frozen",
     body: "bulky",
     tail: "lobed",
     fins: "lobed",
-    pat: "bands"
+    pat: "bands",
   },
   {
     id: "void_guppy",
@@ -835,14 +847,14 @@ export const FISH_DATA = [
     size: 0.7,
     colors: [
       [0.1, 0.0, 0.2],
-      [0.4, 0.0, 0.6]
+      [0.4, 0.0, 0.6],
     ],
     beh: "school",
     zone: "midnight",
     body: "normal",
     tail: "rounded",
     fins: "normal",
-    pat: "none"
+    pat: "none",
   },
   {
     id: "shadow_ray",
@@ -854,14 +866,14 @@ export const FISH_DATA = [
     size: 1.4,
     colors: [
       [0.05, 0.05, 0.05],
-      [0.2, 0.0, 0.3]
+      [0.2, 0.0, 0.3],
     ],
     beh: "glide",
     zone: "midnight",
     body: "mantaray",
     tail: "none",
     fins: "none",
-    pat: "none"
+    pat: "none",
   },
   {
     id: "abyssal_crab",
@@ -873,14 +885,14 @@ export const FISH_DATA = [
     size: 0.9,
     colors: [
       [0.1, 0.0, 0.1],
-      [0.3, 0.0, 0.3]
+      [0.3, 0.0, 0.3],
     ],
     beh: "wander",
     zone: "midnight",
     body: "crab",
     tail: "none",
     fins: "none",
-    pat: "none"
+    pat: "none",
   },
   {
     id: "starlight_jelly",
@@ -892,14 +904,14 @@ export const FISH_DATA = [
     size: 1.0,
     colors: [
       [0.0, 0.0, 0.2],
-      [1.0, 1.0, 0.8]
+      [1.0, 1.0, 0.8],
     ],
     beh: "slow",
     zone: "midnight",
     body: "jellyfish",
     tail: "none",
     fins: "none",
-    pat: "spots"
+    pat: "spots",
   },
   {
     id: "phantom_eel",
@@ -911,14 +923,14 @@ export const FISH_DATA = [
     size: 1.6,
     colors: [
       [0.1, 0.1, 0.1],
-      [0.5, 0.5, 0.5]
+      [0.5, 0.5, 0.5],
     ],
     beh: "dart",
     zone: "midnight",
     body: "eel",
     tail: "none",
     fins: "none",
-    pat: "none"
+    pat: "none",
   },
   {
     id: "dark_matter_shark",
@@ -930,14 +942,14 @@ export const FISH_DATA = [
     size: 2.5,
     colors: [
       [0.0, 0.0, 0.0],
-      [0.5, 0.0, 0.5]
+      [0.5, 0.0, 0.5],
     ],
     beh: "majestic",
     zone: "midnight",
     body: "bulky",
     tail: "crescent",
     fins: "spiky",
-    pat: "none"
+    pat: "none",
   },
   {
     id: "nebula_dragon",
@@ -949,14 +961,14 @@ export const FISH_DATA = [
     size: 2.2,
     colors: [
       [0.2, 0.0, 0.4],
-      [0.8, 0.2, 1.0]
+      [0.8, 0.2, 1.0],
     ],
     beh: "prowl",
     zone: "midnight",
     body: "long",
     tail: "fan",
     fins: "long",
-    pat: "bands"
+    pat: "bands",
   },
   {
     id: "sunfish",
@@ -968,14 +980,14 @@ export const FISH_DATA = [
     size: 1.8,
     colors: [
       [0.6, 0.6, 0.6],
-      [0.8, 0.8, 0.8]
+      [0.8, 0.8, 0.8],
     ],
     beh: "slow",
     zone: "twilight",
     body: "round",
     tail: "none",
     fins: "long",
-    pat: "spots"
+    pat: "spots",
   },
   {
     id: "swordfish",
@@ -987,14 +999,14 @@ export const FISH_DATA = [
     size: 1.4,
     colors: [
       [0.4, 0.4, 0.6],
-      [0.8, 0.8, 0.8]
+      [0.8, 0.8, 0.8],
     ],
     beh: "dart",
     zone: "twilight",
     body: "long",
     tail: "crescent",
     fins: "normal",
-    pat: "none"
+    pat: "none",
   },
   {
     id: "blobfish",
@@ -1006,14 +1018,14 @@ export const FISH_DATA = [
     size: 1.0,
     colors: [
       [0.9, 0.7, 0.7],
-      [0.8, 0.6, 0.6]
+      [0.8, 0.6, 0.6],
     ],
     beh: "slow",
     zone: "abyss",
     body: "round",
     tail: "rounded",
     fins: "none",
-    pat: "none"
+    pat: "none",
   },
   {
     id: "goblin_shark",
@@ -1025,14 +1037,14 @@ export const FISH_DATA = [
     size: 2.1,
     colors: [
       [0.8, 0.7, 0.7],
-      [0.6, 0.5, 0.5]
+      [0.6, 0.5, 0.5],
     ],
     beh: "prowl",
     zone: "abyss",
     body: "bulky",
     tail: "crescent",
     fins: "normal",
-    pat: "none"
+    pat: "none",
   },
   {
     id: "great_white_shark",
@@ -1044,14 +1056,14 @@ export const FISH_DATA = [
     size: 2.3,
     colors: [
       [0.22, 0.24, 0.27],
-      [0.55, 0.57, 0.6]
+      [0.55, 0.57, 0.6],
     ],
     beh: "prowl",
     zone: ["shallows", "twilight"],
     body: "bulky",
     tail: "crescent",
     fins: "normal",
-    pat: "none"
+    pat: "none",
   },
   {
     id: "hammerhead_shark",
@@ -1063,14 +1075,14 @@ export const FISH_DATA = [
     size: 2.0,
     colors: [
       [0.28, 0.32, 0.3],
-      [0.6, 0.62, 0.58]
+      [0.6, 0.62, 0.58],
     ],
     beh: "prowl",
     zone: ["shallows", "twilight"],
     body: "bulky",
     tail: "crescent",
     fins: "normal",
-    pat: "none"
+    pat: "none",
   },
   {
     id: "lantern_shark",
@@ -1082,14 +1094,14 @@ export const FISH_DATA = [
     size: 1.2,
     colors: [
       [0.06, 0.07, 0.1],
-      [0.25, 0.75, 0.9]
+      [0.25, 0.75, 0.9],
     ],
     beh: "prowl",
     zone: ["abyss", "midnight"],
     body: "bulky",
     tail: "crescent",
     fins: "normal",
-    pat: "none"
+    pat: "none",
   },
   {
     id: "fire_jelly",
@@ -1101,14 +1113,14 @@ export const FISH_DATA = [
     size: 0.8,
     colors: [
       [1.0, 0.3, 0.0],
-      [1.0, 0.7, 0.1]
+      [1.0, 0.7, 0.1],
     ],
     beh: "erratic",
     zone: "vents",
     body: "jelly",
     tail: "none",
     fins: "none",
-    pat: "none"
+    pat: "none",
   },
   {
     id: "comb_jelly",
@@ -1120,14 +1132,14 @@ export const FISH_DATA = [
     size: 0.7,
     colors: [
       [0.5, 0.8, 1.0],
-      [1.0, 0.5, 0.8]
+      [1.0, 0.5, 0.8],
     ],
     beh: "glide",
     zone: "twilight",
     body: "jellyfish",
     tail: "none",
     fins: "none",
-    pat: "none"
+    pat: "none",
   },
   {
     id: "box_jelly",
@@ -1139,14 +1151,14 @@ export const FISH_DATA = [
     size: 0.85,
     colors: [
       [0.6, 0.2, 0.8],
-      [0.8, 0.3, 0.9]
+      [0.8, 0.3, 0.9],
     ],
     beh: "prowl",
     zone: "shallows",
     body: "jellyfish",
     tail: "none",
     fins: "none",
-    pat: "none"
+    pat: "none",
   },
   {
     id: "void_jelly",
@@ -1158,14 +1170,14 @@ export const FISH_DATA = [
     size: 1.0,
     colors: [
       [0.05, 0.0, 0.1],
-      [0.3, 0.0, 0.5]
+      [0.3, 0.0, 0.5],
     ],
     beh: "slow",
     zone: "midnight",
     body: "jellyfish",
     tail: "none",
     fins: "none",
-    pat: "spots"
+    pat: "spots",
   },
   {
     id: "song_weaver",
@@ -1177,14 +1189,14 @@ export const FISH_DATA = [
     size: 4.0,
     colors: [
       [0.25, 0.27, 0.32],
-      [0.55, 0.58, 0.62]
+      [0.55, 0.58, 0.62],
     ],
     beh: "majestic",
     zone: ["shallows", "twilight"],
     body: "whale",
     tail: "none",
     fins: "none",
-    pat: "none"
+    pat: "none",
   },
   {
     id: "depth_runner",
@@ -1196,14 +1208,14 @@ export const FISH_DATA = [
     size: 3.8,
     colors: [
       [0.15, 0.15, 0.18],
-      [0.35, 0.35, 0.38]
+      [0.35, 0.35, 0.38],
     ],
     beh: "majestic",
     zone: ["twilight", "abyss"],
     body: "whale",
     tail: "none",
     fins: "none",
-    pat: "none"
+    pat: "none",
   },
   {
     id: "titan_whale",
@@ -1215,14 +1227,14 @@ export const FISH_DATA = [
     size: 5.5,
     colors: [
       [0.18, 0.22, 0.35],
-      [0.45, 0.55, 0.68]
+      [0.45, 0.55, 0.68],
     ],
     beh: "majestic",
     zone: ["twilight", "abyss", "vents"],
     body: "whale",
     tail: "none",
     fins: "none",
-    pat: "none"
+    pat: "none",
   },
   {
     id: "ember_whale",
@@ -1234,14 +1246,14 @@ export const FISH_DATA = [
     size: 3.8,
     colors: [
       [0.7, 0.15, 0.1],
-      [1.0, 0.5, 0.1]
+      [1.0, 0.5, 0.1],
     ],
     beh: "majestic",
     zone: "vents",
     body: "whale",
     tail: "none",
     fins: "none",
-    pat: "none"
+    pat: "none",
   },
   {
     id: "lava_leviathan",
@@ -1253,14 +1265,14 @@ export const FISH_DATA = [
     size: 4.5,
     colors: [
       [0.9, 0.25, 0.05],
-      [0.6, 0.1, 0.0]
+      [0.6, 0.1, 0.0],
     ],
     beh: "majestic",
     zone: "lava",
     body: "whale",
     tail: "none",
     fins: "none",
-    pat: "none"
+    pat: "none",
   },
   {
     id: "frost_behemoth",
@@ -1272,14 +1284,14 @@ export const FISH_DATA = [
     size: 4.2,
     colors: [
       [0.35, 0.55, 0.85],
-      [0.8, 0.9, 1.0]
+      [0.8, 0.9, 1.0],
     ],
     beh: "majestic",
     zone: "frozen",
     body: "whale",
     tail: "none",
     fins: "none",
-    pat: "none"
+    pat: "none",
   },
   {
     id: "void_whale",
@@ -1291,14 +1303,14 @@ export const FISH_DATA = [
     size: 4.8,
     colors: [
       [0.02, 0.0, 0.06],
-      [0.15, 0.05, 0.25]
+      [0.15, 0.05, 0.25],
     ],
     beh: "majestic",
     zone: "midnight",
     body: "whale",
     tail: "none",
     fins: "none",
-    pat: "none"
+    pat: "none",
   },
   {
     id: "volcanic_puffer",
@@ -1310,14 +1322,14 @@ export const FISH_DATA = [
     size: 1.0,
     colors: [
       [0.9, 0.3, 0.1],
-      [0.4, 0.2, 0.0]
+      [0.4, 0.2, 0.0],
     ],
     beh: "erratic",
     zone: "lava",
     body: "round",
     tail: "rounded",
     fins: "spiky",
-    pat: "spots"
+    pat: "spots",
   },
   {
     id: "magma_lobster",
@@ -1329,14 +1341,14 @@ export const FISH_DATA = [
     size: 0.9,
     colors: [
       [0.8, 0.2, 0.1],
-      [0.9, 0.4, 0.1]
+      [0.9, 0.4, 0.1],
     ],
     beh: "wander",
     zone: "lava",
     body: "crab",
     tail: "none",
     fins: "none",
-    pat: "none"
+    pat: "none",
   },
   {
     id: "pygmy_drake",
@@ -1348,14 +1360,14 @@ export const FISH_DATA = [
     size: 0.7,
     colors: [
       [1.0, 0.4, 0.1],
-      [0.8, 0.2, 0.0]
+      [0.8, 0.2, 0.0],
     ],
     beh: "dart",
     zone: "lava",
     body: "bulky",
     tail: "fan",
     fins: "long",
-    pat: "bands"
+    pat: "bands",
   },
   {
     id: "narwhal",
@@ -1367,14 +1379,14 @@ export const FISH_DATA = [
     size: 2.0,
     colors: [
       [0.5, 0.6, 0.7],
-      [0.8, 0.85, 0.9]
+      [0.8, 0.85, 0.9],
     ],
     beh: "majestic",
     zone: "frozen",
     body: "whale",
     tail: "none",
     fins: "none",
-    pat: "none"
+    pat: "none",
   },
   {
     id: "penguin",
@@ -1386,14 +1398,14 @@ export const FISH_DATA = [
     size: 0.8,
     colors: [
       [0.05, 0.05, 0.05],
-      [0.9, 0.9, 0.9]
+      [0.9, 0.9, 0.9],
     ],
     beh: "dart",
     zone: "frozen",
     body: "bulky",
     tail: "rounded",
     fins: "none",
-    pat: "none"
+    pat: "none",
   },
   {
     id: "arctic_cod",
@@ -1405,14 +1417,14 @@ export const FISH_DATA = [
     size: 0.6,
     colors: [
       [0.6, 0.7, 0.8],
-      [0.8, 0.9, 1.0]
+      [0.8, 0.9, 1.0],
     ],
     beh: "school",
     zone: "frozen",
     body: "normal",
     tail: "rounded",
     fins: "normal",
-    pat: "none"
+    pat: "none",
   },
   {
     id: "beluga",
@@ -1424,14 +1436,14 @@ export const FISH_DATA = [
     size: 1.8,
     colors: [
       [0.85, 0.88, 0.9],
-      [0.95, 0.96, 0.98]
+      [0.95, 0.96, 0.98],
     ],
     beh: "majestic",
     zone: "frozen",
     body: "whale",
     tail: "none",
     fins: "none",
-    pat: "none"
+    pat: "none",
   },
   {
     id: "lanternfish",
@@ -1443,14 +1455,14 @@ export const FISH_DATA = [
     size: 0.5,
     colors: [
       [0.05, 0.05, 0.1],
-      [0.0, 0.3, 0.5]
+      [0.0, 0.3, 0.5],
     ],
     beh: "school",
     zone: "midnight",
     body: "normal",
     tail: "crescent",
     fins: "normal",
-    pat: "spots"
+    pat: "spots",
   },
   {
     id: "dragonfish",
@@ -1462,14 +1474,14 @@ export const FISH_DATA = [
     size: 1.0,
     colors: [
       [0.02, 0.02, 0.02],
-      [0.1, 0.05, 0.0]
+      [0.1, 0.05, 0.0],
     ],
     beh: "prowl",
     zone: "midnight",
     body: "long",
     tail: "none",
     fins: "none",
-    pat: "none"
+    pat: "none",
   },
   {
     id: "dumbo_octopus",
@@ -1481,14 +1493,14 @@ export const FISH_DATA = [
     size: 0.9,
     colors: [
       [0.3, 0.2, 0.4],
-      [0.5, 0.3, 0.5]
+      [0.5, 0.3, 0.5],
     ],
     beh: "flutter",
     zone: "midnight",
     body: "octopus_ear",
     tail: "none",
     fins: "none",
-    pat: "none"
+    pat: "none",
   },
   {
     id: "giant_isopod",
@@ -1500,14 +1512,14 @@ export const FISH_DATA = [
     size: 0.9,
     colors: [
       [0.2, 0.15, 0.2],
-      [0.35, 0.25, 0.3]
+      [0.35, 0.25, 0.3],
     ],
     beh: "wander",
     zone: "midnight",
     body: "isopod",
     tail: "none",
     fins: "none",
-    pat: "none"
+    pat: "none",
   },
   {
     id: "barreleye",
@@ -1519,14 +1531,14 @@ export const FISH_DATA = [
     size: 0.8,
     colors: [
       [0.3, 0.4, 0.2],
-      [0.6, 0.7, 0.5]
+      [0.6, 0.7, 0.5],
     ],
     beh: "slow",
     zone: "midnight",
     body: "tall",
     tail: "rounded",
     fins: "normal",
-    pat: "spots"
+    pat: "spots",
   },
   {
     id: "viperfish",
@@ -1538,14 +1550,14 @@ export const FISH_DATA = [
     size: 1.2,
     colors: [
       [0.02, 0.02, 0.06],
-      [0.1, 0.0, 0.2]
+      [0.1, 0.0, 0.2],
     ],
     beh: "prowl",
     zone: "midnight",
     body: "long",
     tail: "none",
     fins: "spiky",
-    pat: "none"
+    pat: "none",
   },
   {
     id: "stingray",
@@ -1557,14 +1569,14 @@ export const FISH_DATA = [
     size: 1.2,
     colors: [
       [0.3, 0.25, 0.2],
-      [0.6, 0.55, 0.5]
+      [0.6, 0.55, 0.5],
     ],
     beh: "glide",
     zone: ["shallows", "twilight"],
     body: "mantaray",
     tail: "none",
     fins: "none",
-    pat: "none"
+    pat: "none",
   },
   {
     id: "barracuda",
@@ -1576,14 +1588,14 @@ export const FISH_DATA = [
     size: 1.3,
     colors: [
       [0.5, 0.55, 0.6],
-      [0.8, 0.85, 0.9]
+      [0.8, 0.85, 0.9],
     ],
     beh: "dart",
     zone: ["shallows", "twilight"],
     body: "long",
     tail: "crescent",
     fins: "normal",
-    pat: "none"
+    pat: "none",
   },
   {
     id: "moray_eel",
@@ -1595,14 +1607,14 @@ export const FISH_DATA = [
     size: 1.4,
     colors: [
       [0.3, 0.25, 0.1],
-      [0.6, 0.55, 0.2]
+      [0.6, 0.55, 0.2],
     ],
     beh: "prowl",
     zone: ["shallows", "twilight", "abyss"],
     body: "eel",
     tail: "none",
     fins: "none",
-    pat: "bands"
+    pat: "bands",
   },
   {
     id: "nautilus",
@@ -1614,14 +1626,14 @@ export const FISH_DATA = [
     size: 0.9,
     colors: [
       [0.85, 0.7, 0.5],
-      [0.9, 0.8, 0.65]
+      [0.9, 0.8, 0.65],
     ],
     beh: "slow",
     zone: ["twilight", "abyss"],
     body: "turtle",
     tail: "none",
     fins: "none",
-    pat: "none"
+    pat: "none",
   },
   {
     id: "frogfish",
@@ -1633,14 +1645,14 @@ export const FISH_DATA = [
     size: 0.8,
     colors: [
       [0.6, 0.3, 0.1],
-      [0.4, 0.5, 0.2]
+      [0.4, 0.5, 0.2],
     ],
     beh: "wander",
     zone: ["shallows", "twilight"],
     body: "round",
     tail: "rounded",
     fins: "none",
-    pat: "spots"
+    pat: "spots",
   },
   {
     id: "tuna",
@@ -1652,14 +1664,14 @@ export const FISH_DATA = [
     size: 1.5,
     colors: [
       [0.2, 0.25, 0.4],
-      [0.7, 0.75, 0.8]
+      [0.7, 0.75, 0.8],
     ],
     beh: "dart",
     zone: ["shallows", "twilight", "abyss"],
     body: "bulky",
     tail: "crescent",
     fins: "normal",
-    pat: "none"
+    pat: "none",
   },
   {
     id: "oarfish",
@@ -1671,14 +1683,14 @@ export const FISH_DATA = [
     size: 2.5,
     colors: [
       [0.7, 0.5, 0.3],
-      [0.8, 0.6, 0.4]
+      [0.8, 0.6, 0.4],
     ],
     beh: "majestic",
     zone: ["abyss", "midnight"],
     body: "long",
     tail: "fan",
     fins: "long",
-    pat: "bands"
+    pat: "bands",
   },
   {
     id: "piranha",
@@ -1690,14 +1702,14 @@ export const FISH_DATA = [
     size: 0.7,
     colors: [
       [0.5, 0.5, 0.5],
-      [0.7, 0.2, 0.2]
+      [0.7, 0.2, 0.2],
     ],
     beh: "school",
     zone: "shallows",
     body: "round",
     tail: "normal",
     fins: "normal",
-    pat: "none"
+    pat: "none",
   },
   {
     id: "flounder",
@@ -1709,14 +1721,14 @@ export const FISH_DATA = [
     size: 0.9,
     colors: [
       [0.4, 0.3, 0.2],
-      [0.7, 0.6, 0.5]
+      [0.7, 0.6, 0.5],
     ],
     beh: "slow",
     zone: ["shallows", "twilight"],
     body: "mantaray",
     tail: "none",
     fins: "none",
-    pat: "spots"
+    pat: "spots",
   },
   {
     id: "remora",
@@ -1728,15 +1740,15 @@ export const FISH_DATA = [
     size: 0.6,
     colors: [
       [0.15, 0.15, 0.18],
-      [0.3, 0.3, 0.35]
+      [0.3, 0.3, 0.35],
     ],
     beh: "glide",
     zone: ["shallows", "twilight", "abyss"],
     body: "normal",
     tail: "rounded",
     fins: "normal",
-    pat: "none"
-  }
+    pat: "none",
+  },
 ];
 export function getFishById(id) {
   return FISH_DATA.find((f) => f.id === id) || null;
@@ -1745,7 +1757,9 @@ export function getAllFish() {
   return [...FISH_DATA];
 }
 export function getFishByZone(zone) {
-  return FISH_DATA.filter((f) => f.zone === zone || (Array.isArray(f.zone) && f.zone.includes(zone)));
+  return FISH_DATA.filter(
+    (f) => f.zone === zone || (Array.isArray(f.zone) && f.zone.includes(zone)),
+  );
 }
 export function getFishByRarity(rarity) {
   return FISH_DATA.filter((f) => f.rarity === rarity);

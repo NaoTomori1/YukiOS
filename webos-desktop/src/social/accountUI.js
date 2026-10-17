@@ -1,9 +1,15 @@
-import { loginWithAccount, registerAccount, getAccountStatus, signOutAccount } from "./userIdentity.js";
+import {
+  loginWithAccount,
+  registerAccount,
+  getAccountStatus,
+  signOutAccount,
+} from "./userIdentity.js";
 import { $, $$, bindEvent, setText } from "../shared/domUtils.js";
 import { escapeHtml } from "../utils/utils.js";
 import { callIfFunction } from "../shared/functionUtils.js";
 
-export const ACCOUNT_DISCLAIMER = "This is a YukiOS login. YukiOS is not affiliated with Steam or Valve.";
+export const ACCOUNT_DISCLAIMER =
+  "This is a YukiOS login. YukiOS is not affiliated with Steam or Valve.";
 
 export function buildAccountStatusHtml() {
   const account = getAccountStatus();
@@ -35,10 +41,13 @@ export function buildAccountBlockHtml(startView, options = {}) {
       </div>
     `;
   }
-  const start = startView === "signin" || startView === "register" ? startView : null;
+  const start =
+    startView === "signin" || startView === "register" ? startView : null;
   const signinHidden = start === "signin" ? "" : " hidden";
   const registerHidden = start === "register" ? "" : " hidden";
-  const nicknameValue = options.prefillNickname ? ` value="${escapeHtml(options.prefillNickname)}"` : "";
+  const nicknameValue = options.prefillNickname
+    ? ` value="${escapeHtml(options.prefillNickname)}"`
+    : "";
   const anonymousNote = options.anonymousNote
     ? `<p class="yukios-account-note">${escapeHtml(options.anonymousNote)}</p>`
     : "";
@@ -82,12 +91,14 @@ export function bindAccountBlock(root, { onChange, onEnableSocial } = {}) {
   const registerForm = $(".yukios-account-form--register", root);
   const errorEls = $$(".yukios-account-error", root);
 
-  const setErrorsHidden = () => errorEls.forEach((el) => el.classList.add("hidden"));
+  const setErrorsHidden = () =>
+    errorEls.forEach((el) => el.classList.add("hidden"));
 
   const show = (view) => {
     if (body) body.classList.toggle("hidden", view !== "body");
     if (signinForm) signinForm.classList.toggle("hidden", view !== "signin");
-    if (registerForm) registerForm.classList.toggle("hidden", view !== "register");
+    if (registerForm)
+      registerForm.classList.toggle("hidden", view !== "register");
     setErrorsHidden();
   };
 
@@ -159,7 +170,10 @@ export function bindAccountBlock(root, { onChange, onEnableSocial } = {}) {
           setError(1, "Password must be at least 6 characters.");
           return;
         }
-        result = await registerAccount({ nickname: nickValue, password: passValue });
+        result = await registerAccount({
+          nickname: nickValue,
+          password: passValue,
+        });
       }
       if (result && result.error) {
         setError(action === "signin-submit" ? 0 : 1, result.error);

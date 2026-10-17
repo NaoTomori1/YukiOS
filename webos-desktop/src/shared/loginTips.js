@@ -6,7 +6,6 @@ export const LOGIN_TIPS = [
   "Press Alt+Q to cycle windows.",
   "Press Ctrl+Arrow keys to snap any window into halves or quarters.",
   "Press Alt+Left-Click anywhere on a window to drag it. Alt+Right-Click resizes.",
-  "In tiling mode, Alt+Space toggles tiling and Alt+Arrows move focus between tiles.",
   "Press Ctrl+Shift+S for a full screenshot, Ctrl+Alt+S for an area shot.",
   "Press Alt+H to sample any pixel color with a magnified preview.",
   "Hop to the next wallpaper anytime with Alt+N.",
@@ -19,16 +18,15 @@ export const LOGIN_TIPS = [
   "Ask the local AI assistant to launch apps and manage files for you. (dont)",
   "Eaglercraft plays Minecraft versions and mods from your desktop.",
   "Weak machine? Performance mode trims effects and stretches battery.",
-  "Browse anonymously with the built-in Tor browser and Snowflake transport.",
   "Windows 93 through Windows 11 can boot inside the virtual machine.",
   "Download torrents with magnet links in the built-in torrent client.",
   "Run python -m http.server in Terminal to serve your virtual files on localhost.",
-  "You can browse the YukiOS source code from inside YukiOS itself.",
+  "You can browse the YukiOS source code from inside YukiOS itself in explorer app.",
   "Right-click the Start button to pick a custom Start icon or upload your own.",
-  "Windows can wobble, shatter with Fall Apart, or wear XP and Vista headers.",
+  "Windows can wobble, shatter with Fall Apart, or wear XP and Win7 headers.",
   "Set any TTF or OTF as your system font from the font preview. (Minecraft theme!)",
   "Type yuki in Terminal to control power, themes, wallpaper, and workspaces.",
-  "Type neofetch in Terminal for a full readout of your virtual machine.",
+  "Type neofetch in Terminal for a full summary of os",
   "The 3D room is a walkable world. Grab a game case and press F to launch it.",
   {
     text: "Did you know YukiOS has an early version?",
@@ -39,6 +37,7 @@ export const LOGIN_TIPS = [
   "Turn any website into a desktop app with App Creator.",
   "Back up your system and restore it anywhere with Import and Export in Settings.",
   "Right-click the desktop, taskbar icons, and window headers for hidden actions.",
+  "Launch Code Red to unleash desktop chaos with Red the stickman.",
 ];
 
 export function pickLoginTip() {

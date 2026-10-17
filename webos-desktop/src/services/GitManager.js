@@ -6,8 +6,12 @@ function loadGitLib() {
   if (!gitLibPromise) {
     gitLibPromise = (async () => {
       if (__SINGLE_FILE__) {
-        const git = await import(/* @vite-ignore */ getLibraryUrl("isomorphicGit", "module"));
-        const httpMod = await import(/* @vite-ignore */ getLibraryUrl("isomorphicGit", "httpWeb"));
+        const git = await import(
+          /* @vite-ignore */ getLibraryUrl("isomorphicGit", "module")
+        );
+        const httpMod = await import(
+          /* @vite-ignore */ getLibraryUrl("isomorphicGit", "httpWeb")
+        );
         return { git, http: httpMod.default || httpMod };
       }
       const git = await import("isomorphic-git");
@@ -37,7 +41,12 @@ export class GitManager {
           return await storage.pRead("readFile", path);
         },
         writeFile: async (path, data) => {
-          const dataSize = data instanceof Uint8Array ? data.length : typeof data === "string" ? data.length : 0;
+          const dataSize =
+            data instanceof Uint8Array
+              ? data.length
+              : typeof data === "string"
+                ? data.length
+                : 0;
           try {
             await storage.p("unlink", path);
           } catch {}
@@ -83,7 +92,7 @@ export class GitManager {
             size: r.size,
             mtime: r.mtime instanceof Date ? r.mtime : new Date(r.mtime),
             ctime: r.ctime instanceof Date ? r.ctime : new Date(r.ctime),
-            mode: r.mode
+            mode: r.mode,
           };
         },
         lstat: async (path) => {
@@ -93,8 +102,8 @@ export class GitManager {
         readlink: async () => new Uint8Array(0),
         rename: async (oldPath, newPath) => {
           await storage.p("rename", oldPath, newPath);
-        }
-      }
+        },
+      },
     };
 
     this.gitFs = fs;
@@ -113,7 +122,7 @@ export class GitManager {
       dir,
       url,
       corsProxy: "https://cors.isomorphic-git.org",
-      onProgress
+      onProgress,
     };
     if (depth > 0) opts.depth = depth;
     const result = await git.clone(opts);
@@ -192,7 +201,7 @@ export class GitManager {
       author,
       corsProxy: "https://cors.isomorphic-git.org",
       onAuth,
-      onProgress
+      onProgress,
     });
   }
 
@@ -204,7 +213,7 @@ export class GitManager {
       dir,
       corsProxy: "https://cors.isomorphic-git.org",
       onAuth,
-      onProgress
+      onProgress,
     });
   }
 
@@ -216,7 +225,7 @@ export class GitManager {
       dir,
       corsProxy: "https://cors.isomorphic-git.org",
       onAuth,
-      onProgress
+      onProgress,
     });
   }
 

@@ -23,9 +23,18 @@ export class AICore {
   }
 
   static MODEL_PROFILES = {
-    low: ["Llama-3.2-1B-Instruct-q4f32_1-MLC", "Qwen2.5-0.5B-Instruct-q4f32_1-MLC"],
-    fast: ["Llama-3.2-1B-Instruct-q4f32_1-MLC", "Qwen2.5-0.5B-Instruct-q4f32_1-MLC"],
-    smart: ["Llama-3.1-8B-Instruct-q4f32_1-MLC", "Llama-3-8B-Instruct-q4f32_1-MLC"]
+    low: [
+      "Llama-3.2-1B-Instruct-q4f32_1-MLC",
+      "Qwen2.5-0.5B-Instruct-q4f32_1-MLC",
+    ],
+    fast: [
+      "Llama-3.2-1B-Instruct-q4f32_1-MLC",
+      "Qwen2.5-0.5B-Instruct-q4f32_1-MLC",
+    ],
+    smart: [
+      "Llama-3.1-8B-Instruct-q4f32_1-MLC",
+      "Llama-3-8B-Instruct-q4f32_1-MLC",
+    ],
   };
 
   async loadWebLLM() {
@@ -36,7 +45,8 @@ export class AICore {
     }
 
     try {
-      const webLLMModule = await import("https://cdn.jsdelivr.net/npm/@mlc-ai/web-llm@0.2.46/lib/index.js");
+      const webLLMModule =
+        await import("https://cdn.jsdelivr.net/npm/@mlc-ai/web-llm@0.2.46/lib/index.js");
       if (webLLMModule && webLLMModule.CreateMLCEngine) {
         window.CreateMLCEngine = webLLMModule.CreateMLCEngine;
         this.webLLMModule = webLLMModule;
@@ -59,32 +69,46 @@ export class AICore {
   }
 
   resolveModelCandidates(modelType) {
-    const preferredModels = AICore.MODEL_PROFILES[modelType] || AICore.MODEL_PROFILES.fast;
+    const preferredModels =
+      AICore.MODEL_PROFILES[modelType] || AICore.MODEL_PROFILES.fast;
     const availableModelIds = this.getAvailableModelIds();
 
     if (availableModelIds.length === 0) {
       return preferredModels;
     }
 
-    const directMatches = preferredModels.filter((modelId) => availableModelIds.includes(modelId));
+    const directMatches = preferredModels.filter((modelId) =>
+      availableModelIds.includes(modelId),
+    );
     if (directMatches.length > 0) {
       return directMatches;
     }
 
     if (modelType === "smart") {
       return availableModelIds
-        .filter((modelId) => /(?:Llama|Qwen|Phi).*(?:7B|8B).*(?:Instruct).*q4f32_1-MLC/.test(modelId))
+        .filter((modelId) =>
+          /(?:Llama|Qwen|Phi).*(?:7B|8B).*(?:Instruct).*q4f32_1-MLC/.test(
+            modelId,
+          ),
+        )
         .slice(0, 3);
     }
 
     return availableModelIds
       .filter((modelId) =>
-        /(?:Llama|Qwen|Phi|Gemma).*(?:0\.5B|1B|1\.5B|2B|3B).*(?:Instruct).*q4f32_1-MLC/.test(modelId)
+        /(?:Llama|Qwen|Phi|Gemma).*(?:0\.5B|1B|1\.5B|2B|3B).*(?:Instruct).*q4f32_1-MLC/.test(
+          modelId,
+        ),
       )
       .slice(0, 4);
   }
 
-  async initialize(modelType = "fast", webGPU = true, progressCallback = null, options = {}) {
+  async initialize(
+    modelType = "fast",
+    webGPU = true,
+    progressCallback = null,
+    options = {},
+  ) {
     const force = Boolean(options.force);
     if (this.isLoading) return this.initPromise;
     if (this.isInitialized && !force) return true;
@@ -111,7 +135,10 @@ export class AICore {
 
       const originalConsoleError = console.error;
       console.error = (...args) => {
-        if (typeof args[0] === "string" && args[0].includes("WebGPU error was not captured")) {
+        if (
+          typeof args[0] === "string" &&
+          args[0].includes("WebGPU error was not captured")
+        ) {
           return;
         }
         originalConsoleError.apply(console, args);
@@ -120,7 +147,9 @@ export class AICore {
       try {
         const modelCandidates = this.resolveModelCandidates(modelType);
         if (modelCandidates.length === 0) {
-          throw new Error(`No compatible built-in WebLLM models found for profile "${modelType}"`);
+          throw new Error(
+            `No compatible built-in WebLLM models found for profile "${modelType}"`,
+          );
         }
 
         const engineConfig = {
@@ -129,7 +158,7 @@ export class AICore {
             if (this.initCallback) {
               this.initCallback(report);
             }
-          }
+          },
         };
 
         let selectedModelId = null;
@@ -179,13 +208,13 @@ export class AICore {
       const messages = [
         { role: "system", content: systemPrompt },
         ...chatHistory.slice(-10),
-        { role: "user", content: prompt }
+        { role: "user", content: prompt },
       ];
 
       const reply = await this.engine.chat.completions.create({
         messages,
         temperature: 0.7,
-        max_tokens: 1024
+        max_tokens: 1024,
       });
 
       const content = reply.choices[0].message.content;
@@ -214,7 +243,9 @@ export class AICore {
       }
     }
 
-    const reasoningMatch = content.match(/<reasoning>\n?([\s\S]*?)<\/reasoning>/);
+    const reasoningMatch = content.match(
+      /<reasoning>\n?([\s\S]*?)<\/reasoning>/,
+    );
     if (reasoningMatch) {
       reasoning = reasoningMatch[1].trim();
       text = text.replace(reasoningMatch[0], "").trim();
@@ -226,7 +257,9 @@ export class AICore {
   setWebGPUEnabled(enabled) {
     this.webGPUEnabled = enabled;
     if (this.isInitialized) {
-      return this.initialize(this.selectedModel, enabled, this.initCallback, { force: true });
+      return this.initialize(this.selectedModel, enabled, this.initCallback, {
+        force: true,
+      });
     }
     return Promise.resolve(true);
   }
@@ -234,7 +267,9 @@ export class AICore {
   setModel(modelType) {
     this.selectedModel = modelType;
     if (this.isInitialized) {
-      return this.initialize(modelType, this.webGPUEnabled, this.initCallback, { force: true });
+      return this.initialize(modelType, this.webGPUEnabled, this.initCallback, {
+        force: true,
+      });
     }
     return Promise.resolve(true);
   }
@@ -276,7 +311,7 @@ export class AICore {
   async listRemoteModels(config) {
     const endpoint = this.buildEndpointUrl(
       config?.endpoint || this.remoteEndpoint,
-      config?.autoAppendV1 ?? this.autoAppendV1
+      config?.autoAppendV1 ?? this.autoAppendV1,
     );
     if (!endpoint) throw new Error("Remote endpoint not configured");
     const headers = { "Content-Type": "application/json" };
@@ -292,14 +327,15 @@ export class AICore {
   async generateRemote(prompt, systemPrompt, chatHistory = [], config) {
     const endpoint = this.buildEndpointUrl(
       config?.endpoint || this.remoteEndpoint,
-      config?.autoAppendV1 ?? this.autoAppendV1
+      config?.autoAppendV1 ?? this.autoAppendV1,
     );
     const model = config?.model || this.remoteModel;
-    if (!endpoint || !model) throw new Error("Remote endpoint or model is not configured");
+    if (!endpoint || !model)
+      throw new Error("Remote endpoint or model is not configured");
     const messages = [
       { role: "system", content: systemPrompt },
       ...chatHistory.slice(-10),
-      { role: "user", content: prompt }
+      { role: "user", content: prompt },
     ];
     const headers = { "Content-Type": "application/json" };
     if (this.remoteApiKey) {
@@ -309,7 +345,13 @@ export class AICore {
       const res = await this.fetchWithProxy(`${endpoint}/chat/completions`, {
         method: "POST",
         headers,
-        body: JSON.stringify({ model, messages, temperature: 0.7, max_tokens: 1024, stream: false })
+        body: JSON.stringify({
+          model,
+          messages,
+          temperature: 0.7,
+          max_tokens: 1024,
+          stream: false,
+        }),
       });
       if (!res.ok) {
         const body = await res.text().catch(() => "");

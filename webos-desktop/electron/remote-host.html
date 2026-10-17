@@ -26,7 +26,8 @@
         height: 100%;
         padding: 16px;
         text-align: center;
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       }
       #errorBox h2 {
         font-size: 14px;
@@ -79,7 +80,8 @@
         throw new Error("electronAPI not available in preload");
       }
 
-      const SIGNALING_BASE = "wss://yukios-remote-signaling.liventcord-a60.workers.dev";
+      const SIGNALING_BASE =
+        "wss://yukios-remote-signaling.liventcord-a60.workers.dev";
       let ws = null;
       let pc = null;
       let captureStream = null;
@@ -115,12 +117,16 @@
         { urls: "stun:stun1.l.google.com:19302" },
         { urls: "stun:stun2.l.google.com:19302" },
         { urls: "stun:stun3.l.google.com:19302" },
-        { urls: "stun:stun4.l.google.com:19302" }
+        { urls: "stun:stun4.l.google.com:19302" },
       ];
       function getIceConfig(turnCreds) {
         const servers = [...STUN_SERVERS];
         if (turnCreds) {
-          servers.push({ urls: turnCreds.urls, username: turnCreds.username, credential: turnCreds.credential });
+          servers.push({
+            urls: turnCreds.urls,
+            username: turnCreds.username,
+            credential: turnCreds.credential,
+          });
         }
         return { iceServers: servers, iceCandidatePoolSize: 5 };
       }
@@ -145,15 +151,18 @@
         if (sources && sources.length > 0) {
           const source =
             sources.find(
-              (s) => s.name && (s.name.toLowerCase().includes("entire") || s.name.toLowerCase().includes("screen"))
+              (s) =>
+                s.name &&
+                (s.name.toLowerCase().includes("entire") ||
+                  s.name.toLowerCase().includes("screen")),
             ) || sources[0];
           try {
             stream = await navigator.mediaDevices.getUserMedia({
               audio: {
                 mandatory: {
                   chromeMediaSource: "desktop",
-                  chromeMediaSourceId: source.id
-                }
+                  chromeMediaSourceId: source.id,
+                },
               },
               video: {
                 mandatory: {
@@ -164,9 +173,9 @@
                   minHeight: res.h,
                   maxHeight: res.h,
                   minFrameRate: frameRate,
-                  maxFrameRate: frameRate
-                }
-              }
+                  maxFrameRate: frameRate,
+                },
+              },
             });
           } catch (e) {
             try {
@@ -181,9 +190,9 @@
                     minHeight: res.h,
                     maxHeight: res.h,
                     minFrameRate: frameRate,
-                    maxFrameRate: frameRate
-                  }
-                }
+                    maxFrameRate: frameRate,
+                  },
+                },
               });
               videoOnly = true;
             } catch (e2) {}
@@ -193,14 +202,22 @@
         if (!stream) {
           try {
             stream = await navigator.mediaDevices.getDisplayMedia({
-              video: { width: { ideal: res.w }, height: { ideal: res.h }, frameRate: { ideal: frameRate } },
-              audio: true
+              video: {
+                width: { ideal: res.w },
+                height: { ideal: res.h },
+                frameRate: { ideal: frameRate },
+              },
+              audio: true,
             });
             if (stream.getAudioTracks().length === 0) videoOnly = true;
           } catch (e) {
             stream = await navigator.mediaDevices.getDisplayMedia({
-              video: { width: { ideal: res.w }, height: { ideal: res.h }, frameRate: { ideal: frameRate } },
-              audio: false
+              video: {
+                width: { ideal: res.w },
+                height: { ideal: res.h },
+                frameRate: { ideal: frameRate },
+              },
+              audio: false,
             });
             videoOnly = true;
           }
@@ -210,7 +227,11 @@
           const at = stream.getAudioTracks()[0];
           if (at) {
             audioTrack = at;
-            sendEvent({ type: "audio-state", enabled: hostAudioEnabled, source: "system" });
+            sendEvent({
+              type: "audio-state",
+              enabled: hostAudioEnabled,
+              source: "system",
+            });
           }
         }
 
@@ -223,7 +244,7 @@
           quality: p.get("quality") || null,
           fps: p.get("fps") ? parseInt(p.get("fps")) : null,
           maxWidth: p.get("mw") ? parseInt(p.get("mw")) : null,
-          maxHeight: p.get("mh") ? parseInt(p.get("mh")) : null
+          maxHeight: p.get("mh") ? parseInt(p.get("mh")) : null,
         };
       }
 
@@ -287,18 +308,26 @@
             if (sources && sources.length > 0) {
               const src =
                 sources.find(
-                  (s) => s.name && (s.name.toLowerCase().includes("entire") || s.name.toLowerCase().includes("screen"))
+                  (s) =>
+                    s.name &&
+                    (s.name.toLowerCase().includes("entire") ||
+                      s.name.toLowerCase().includes("screen")),
                 ) || sources[0];
               try {
                 const aStream = await navigator.mediaDevices.getUserMedia({
-                  audio: { mandatory: { chromeMediaSource: "desktop", chromeMediaSourceId: src.id } },
-                  video: false
+                  audio: {
+                    mandatory: {
+                      chromeMediaSource: "desktop",
+                      chromeMediaSourceId: src.id,
+                    },
+                  },
+                  video: false,
                 });
                 captureStream = aStream;
               } catch {
                 const fs = await navigator.mediaDevices.getDisplayMedia({
                   video: { width: { ideal: 1 }, height: { ideal: 1 } },
-                  audio: true
+                  audio: true,
                 });
                 fs.getVideoTracks().forEach((t) => {
                   t.stop();
@@ -309,7 +338,7 @@
             } else {
               const fs = await navigator.mediaDevices.getDisplayMedia({
                 video: { width: { ideal: 1 }, height: { ideal: 1 } },
-                audio: true
+                audio: true,
               });
               fs.getVideoTracks().forEach((t) => {
                 t.stop();
@@ -324,11 +353,18 @@
             const at = captureStream.getAudioTracks()[0];
             if (at) {
               audioTrack = at;
-              sendEvent({ type: "audio-state", enabled: hostAudioEnabled, source: "system" });
+              sendEvent({
+                type: "audio-state",
+                enabled: hostAudioEnabled,
+                source: "system",
+              });
             }
           }
           setStatus("Starting GStreamer pipeline...");
-          const gstResult = await API.gstreamerStart({ quality: settings.quality, fps: frameRate });
+          const gstResult = await API.gstreamerStart({
+            quality: settings.quality,
+            fps: frameRate,
+          });
           if (!gstResult || !gstResult.success) {
             useGstreamer = false;
             setStatus("GStreamer failed, falling back...");
@@ -341,24 +377,40 @@
             const stream = await Promise.race([
               captureScreen(res, frameRate),
               new Promise((_, reject) =>
-                setTimeout(() => reject(new Error("Screen capture timed out after 10s")), 10000)
-              )
+                setTimeout(
+                  () => reject(new Error("Screen capture timed out after 10s")),
+                  10000,
+                ),
+              ),
             ]);
             captureStream = stream;
           } catch (err) {
             const msg = err.message || String(err);
-            if (msg.includes("Permission") || msg.includes("denied") || msg.includes("not allowed")) {
+            if (
+              msg.includes("Permission") ||
+              msg.includes("denied") ||
+              msg.includes("not allowed")
+            ) {
               flashError("Screen capture permission denied");
-              sendEvent({ type: "error", message: "Screen capture permission denied" });
+              sendEvent({
+                type: "error",
+                message: "Screen capture permission denied",
+              });
               return;
             }
             flashError("Screen capture failed: " + msg);
-            sendEvent({ type: "error", message: "Screen capture failed: " + msg });
+            sendEvent({
+              type: "error",
+              message: "Screen capture failed: " + msg,
+            });
             return;
           }
 
           try {
-            if (typeof MediaStreamTrackProcessor !== "undefined" && typeof VideoEncoder !== "undefined") {
+            if (
+              typeof MediaStreamTrackProcessor !== "undefined" &&
+              typeof VideoEncoder !== "undefined"
+            ) {
               const testConfig = {
                 codec: "avc1.42001E",
                 width: 640,
@@ -366,7 +418,7 @@
                 bitrate: 1_000_000,
                 framerate: 30,
                 hardwareAcceleration: "prefer-hardware",
-                avc: { format: "annexb" }
+                avc: { format: "annexb" },
               };
               const support = await VideoEncoder.isConfigSupported(testConfig);
               if (support.supported) useWebCodecs = true;
@@ -410,7 +462,10 @@
         const connTimeout = setTimeout(() => {
           if (!ws || ws.readyState !== WebSocket.OPEN) {
             flashError("Signaling server unreachable after 10s");
-            sendEvent({ type: "error", message: "Signaling server unreachable" });
+            sendEvent({
+              type: "error",
+              message: "Signaling server unreachable",
+            });
           }
         }, 10000);
 
@@ -437,7 +492,11 @@
 
         ws.onclose = () => {
           clearTimeout(connTimeout);
-          if (!isIntentionalDisconnect && roomId && reconnectAttempts < MAX_RECONNECT) {
+          if (
+            !isIntentionalDisconnect &&
+            roomId &&
+            reconnectAttempts < MAX_RECONNECT
+          ) {
             startReconnect();
             return;
           }
@@ -448,9 +507,20 @@
 
       function startReconnect() {
         reconnectAttempts++;
-        const delay = Math.min(1000 * Math.pow(2, reconnectAttempts - 1), 30000);
+        const delay = Math.min(
+          1000 * Math.pow(2, reconnectAttempts - 1),
+          30000,
+        );
         const secs = (delay / 1000).toFixed(0);
-        setStatus("Reconnecting in " + secs + "s... (attempt " + reconnectAttempts + "/" + MAX_RECONNECT + ")");
+        setStatus(
+          "Reconnecting in " +
+            secs +
+            "s... (attempt " +
+            reconnectAttempts +
+            "/" +
+            MAX_RECONNECT +
+            ")",
+        );
         sendEvent({ type: "reconnecting", attempt: reconnectAttempts });
 
         reconnectTimer = setTimeout(() => {
@@ -478,7 +548,11 @@
             };
 
             ws.onclose = () => {
-              if (!isIntentionalDisconnect && roomId && reconnectAttempts < MAX_RECONNECT) {
+              if (
+                !isIntentionalDisconnect &&
+                roomId &&
+                reconnectAttempts < MAX_RECONNECT
+              ) {
                 startReconnect();
               } else {
                 cleanup();
@@ -500,7 +574,10 @@
             } else {
               flashError("Max reconnection attempts reached");
               cleanup();
-              sendEvent({ type: "error", message: "Max reconnection attempts reached" });
+              sendEvent({
+                type: "error",
+                message: "Max reconnection attempts reached",
+              });
             }
           };
         }, delay);
@@ -523,9 +600,15 @@
 
           case "answer":
             if (useWebCodecs) break;
-            if (pc && pc.localDescription && pc.localDescription.type === "offer") {
+            if (
+              pc &&
+              pc.localDescription &&
+              pc.localDescription.type === "offer"
+            ) {
               try {
-                await pc.setRemoteDescription(new RTCSessionDescription({ type: "answer", sdp: msg.sdp }));
+                await pc.setRemoteDescription(
+                  new RTCSessionDescription({ type: "answer", sdp: msg.sdp }),
+                );
               } catch (err) {
                 console.error("Failed to set remote description:", err);
               }
@@ -561,12 +644,20 @@
             iceRestartAttempted = true;
             setStatus("P2P failed, retrying ICE...");
             restartIce();
-          } else if (state === "failed" && iceRestartAttempted && !fallbackMode) {
+          } else if (
+            state === "failed" &&
+            iceRestartAttempted &&
+            !fallbackMode
+          ) {
             activateFallback();
           }
         };
         connectionTimeout = setTimeout(() => {
-          if (pc && pc.iceConnectionState !== "connected" && pc.iceConnectionState !== "completed") {
+          if (
+            pc &&
+            pc.iceConnectionState !== "connected" &&
+            pc.iceConnectionState !== "completed"
+          ) {
             if (!iceRestartAttempted) {
               iceRestartAttempted = true;
               setStatus("P2P timed out, retrying ICE...");
@@ -579,7 +670,13 @@
 
         pc.onicecandidate = (event) => {
           if (event.candidate && ws && ws.readyState === WebSocket.OPEN) {
-            ws.send(JSON.stringify({ type: "ice-candidate", candidate: event.candidate.toJSON(), from: "host" }));
+            ws.send(
+              JSON.stringify({
+                type: "ice-candidate",
+                candidate: event.candidate.toJSON(),
+                from: "host",
+              }),
+            );
           }
         };
 
@@ -613,14 +710,20 @@
                 fileBuffer = [];
               } else if (msg.type === "file-end") {
                 if (fileMeta) {
-                  const total = fileBuffer.reduce((s, c) => s + c.byteLength, 0);
+                  const total = fileBuffer.reduce(
+                    (s, c) => s + c.byteLength,
+                    0,
+                  );
                   const data = new Uint8Array(total);
                   let off = 0;
                   for (const chunk of fileBuffer) {
                     data.set(new Uint8Array(chunk), off);
                     off += chunk.byteLength;
                   }
-                  API.saveFile({ fileName: fileMeta.name, data: Array.from(data) });
+                  API.saveFile({
+                    fileName: fileMeta.name,
+                    data: Array.from(data),
+                  });
                   fileMeta = null;
                   fileBuffer = [];
                 }
@@ -641,7 +744,13 @@
         const frameRate = settings.frameRate || 30;
 
         const totalPixels = width * height;
-        const bitrate = Math.min(Math.max(Math.round((totalPixels / (1280 * 720)) * 2_500_000), 1_000_000), 20_000_000);
+        const bitrate = Math.min(
+          Math.max(
+            Math.round((totalPixels / (1280 * 720)) * 2_500_000),
+            1_000_000,
+          ),
+          20_000_000,
+        );
 
         const encoderConfig = {
           codec: "avc1.42001E",
@@ -650,7 +759,7 @@
           bitrate: bitrate,
           framerate: frameRate,
           hardwareAcceleration: "prefer-hardware",
-          avc: { format: "annexb" }
+          avc: { format: "annexb" },
         };
 
         const support = await VideoEncoder.isConfigSupported(encoderConfig);
@@ -675,7 +784,7 @@
               const header = new Uint8Array([
                 typeByte,
                 ...new Uint8Array(tsView.buffer),
-                ...new Uint8Array(durView.buffer)
+                ...new Uint8Array(durView.buffer),
               ]);
               const merged = new Uint8Array(header.length + raw.length);
               merged.set(header);
@@ -683,7 +792,7 @@
               dataChannel.send(merged.buffer);
             }
           },
-          error: (err) => console.error("VideoEncoder error:", err)
+          error: (err) => console.error("VideoEncoder error:", err),
         });
 
         videoEncoder.configure(encoderConfig);
@@ -693,7 +802,13 @@
 
         const offer = await pc.createOffer();
         await pc.setLocalDescription(offer);
-        ws.send(JSON.stringify({ type: "offer", sdp: pc.localDescription.sdp, codec: "h264" }));
+        ws.send(
+          JSON.stringify({
+            type: "offer",
+            sdp: pc.localDescription.sdp,
+            codec: "h264",
+          }),
+        );
         sendEvent({ type: "stream-started" });
 
         readEncoderFrames();
@@ -725,7 +840,12 @@
           pc.restartIce();
           if (connectionTimeout) clearTimeout(connectionTimeout);
           connectionTimeout = setTimeout(() => {
-            if (pc && pc.iceConnectionState !== "connected" && pc.iceConnectionState !== "completed" && !fallbackMode) {
+            if (
+              pc &&
+              pc.iceConnectionState !== "connected" &&
+              pc.iceConnectionState !== "completed" &&
+              !fallbackMode
+            ) {
               activateFallback();
             }
           }, 15000);
@@ -758,21 +878,25 @@
                 if (!blob) return;
                 const reader = new FileReader();
                 reader.onloadend = () => {
-                  if (ws && ws.readyState === WebSocket.OPEN && !isIntentionalDisconnect) {
+                  if (
+                    ws &&
+                    ws.readyState === WebSocket.OPEN &&
+                    !isIntentionalDisconnect
+                  ) {
                     ws.send(
                       JSON.stringify({
                         type: "frame-data",
                         data: reader.result,
                         ts: Date.now(),
-                        from: "host"
-                      })
+                        from: "host",
+                      }),
                     );
                   }
                 };
                 reader.readAsDataURL(blob);
               },
               "image/jpeg",
-              0.3
+              0.3,
             );
           } catch (e) {
             console.error("Fallback capture error:", e);
@@ -790,7 +914,9 @@
 
       async function startStreaming() {
         if (useGstreamer) {
-          audioTrack = captureStream ? captureStream.getAudioTracks()[0] || null : null;
+          audioTrack = captureStream
+            ? captureStream.getAudioTracks()[0] || null
+            : null;
           if (audioTrack) {
             audioTrack.enabled = hostAudioEnabled;
             pc.addTrack(audioTrack, captureStream);
@@ -799,15 +925,24 @@
             type: "audio-state",
             enabled: hostAudioEnabled,
             muted: !hostAudioEnabled,
-            hasAudio: !!audioTrack
+            hasAudio: !!audioTrack,
           });
           try {
             const offer = await pc.createOffer();
             await pc.setLocalDescription(offer);
-            ws.send(JSON.stringify({ type: "offer", sdp: pc.localDescription.sdp, codec: "h264" }));
+            ws.send(
+              JSON.stringify({
+                type: "offer",
+                sdp: pc.localDescription.sdp,
+                codec: "h264",
+              }),
+            );
             sendEvent({ type: "stream-started" });
           } catch (err) {
-            sendEvent({ type: "error", message: "Failed to create offer: " + err.message });
+            sendEvent({
+              type: "error",
+              message: "Failed to create offer: " + err.message,
+            });
           }
           return;
         }
@@ -821,7 +956,12 @@
         if (audioTrack) {
           audioTrack.enabled = hostAudioEnabled;
         }
-        sendEvent({ type: "audio-state", enabled: hostAudioEnabled, muted: !hostAudioEnabled, hasAudio: !!audioTrack });
+        sendEvent({
+          type: "audio-state",
+          enabled: hostAudioEnabled,
+          muted: !hostAudioEnabled,
+          hasAudio: !!audioTrack,
+        });
 
         if (useWebCodecs) {
           try {
@@ -832,7 +972,10 @@
             }
             return;
           } catch (err) {
-            console.error("WebCodecs failed, falling back to WebRTC track:", err);
+            console.error(
+              "WebCodecs failed, falling back to WebRTC track:",
+              err,
+            );
             sendEvent({ type: "stream-started" });
           }
         }
@@ -845,17 +988,25 @@
         try {
           const offer = await pc.createOffer();
           await pc.setLocalDescription(offer);
-          ws.send(JSON.stringify({ type: "offer", sdp: pc.localDescription.sdp }));
+          ws.send(
+            JSON.stringify({ type: "offer", sdp: pc.localDescription.sdp }),
+          );
           sendEvent({ type: "stream-started" });
         } catch (err) {
-          sendEvent({ type: "error", message: "Failed to create offer: " + err.message });
+          sendEvent({
+            type: "error",
+            message: "Failed to create offer: " + err.message,
+          });
         }
       }
 
       function handleGstreamerError(err) {
         console.error("GStreamer error:", err);
         flashError("GStreamer: " + err);
-        sendEvent({ type: "error", message: "GStreamer pipeline failed: " + err });
+        sendEvent({
+          type: "error",
+          message: "GStreamer pipeline failed: " + err,
+        });
       }
 
       API.onRemoteHostEvent((data) => {
@@ -876,7 +1027,7 @@
           const header = new Uint8Array([
             data.keyframe ? 1 : 0,
             ...new Uint8Array(tsView.buffer),
-            ...new Uint8Array(durView.buffer)
+            ...new Uint8Array(durView.buffer),
           ]);
           const merged = new Uint8Array(header.length + nal.length);
           merged.set(header);
@@ -945,7 +1096,10 @@
       init().catch((err) => {
         flashError(err.message || String(err));
         try {
-          API.sendRemoteHostEvent({ type: "error", message: "Init failed: " + (err.message || String(err)) });
+          API.sendRemoteHostEvent({
+            type: "error",
+            message: "Init failed: " + (err.message || String(err)),
+          });
         } catch {}
       });
     </script>

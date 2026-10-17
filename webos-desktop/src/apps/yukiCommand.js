@@ -28,7 +28,7 @@ export function yukiHelpText() {
     "  yuki notifications clear       Clear all notifications",
     "",
     "  yuki storage report            Storage usage breakdown",
-    ""
+    "",
   ];
 }
 
@@ -53,7 +53,9 @@ export async function cmdYuki(terminal, args) {
     case "power": {
       const mode = args[1];
       if (!mode || !powerModes()[mode]) {
-        await terminal.enqueuePrint("Usage: yuki power <performance|balanced|high>");
+        await terminal.enqueuePrint(
+          "Usage: yuki power <performance|balanced|high>",
+        );
         break;
       }
       performanceManager.setMode(mode);
@@ -75,10 +77,14 @@ export async function cmdYuki(terminal, args) {
         document.documentElement.style.setProperty("--brightness", `${val}%`);
         await terminal.enqueuePrint(`  Brightness set to: ${val}%`);
       } else if (sub === "get" || !sub) {
-        const current = parseInt(os.storage.get(StorageKeys.brightness) || "100");
+        const current = parseInt(
+          os.storage.get(StorageKeys.brightness) || "100",
+        );
         await terminal.enqueuePrint(`  Brightness: ${current}%`);
       } else {
-        await terminal.enqueuePrint("Usage: yuki brightness s|set <0-100>  |  yuki brightness get");
+        await terminal.enqueuePrint(
+          "Usage: yuki brightness s|set <0-100>  |  yuki brightness get",
+        );
       }
       break;
     }
@@ -100,7 +106,9 @@ export async function cmdYuki(terminal, args) {
 
     case "wallpaper": {
       if (args[1] === "random") {
-        const count = parseInt(os.storage.get(StorageKeys.wallpaperCount) || "20");
+        const count = parseInt(
+          os.storage.get(StorageKeys.wallpaperCount) || "20",
+        );
         const idx = Math.floor(Math.random() * count);
         os.storage.set(StorageKeys.wallpaperIndexKey, idx);
         os.events.emit("WALLPAPER_CHANGED", { index: idx });
@@ -141,7 +149,9 @@ export async function cmdYuki(terminal, args) {
         const target = wsManager.workspaces.find((w) => w.id === idx);
         if (target) {
           wsManager.switchTo(target.id);
-          await terminal.enqueuePrint(`  Switched to workspace ${idx} (${target.name})`);
+          await terminal.enqueuePrint(
+            `  Switched to workspace ${idx} (${target.name})`,
+          );
         } else {
           await terminal.enqueuePrint(`  Workspace ${idx} does not exist`);
         }
@@ -156,7 +166,9 @@ export async function cmdYuki(terminal, args) {
           }
         }
       } else {
-        await terminal.enqueuePrint("Usage: yuki workspace <n>  |  yuki workspaces list");
+        await terminal.enqueuePrint(
+          "Usage: yuki workspace <n>  |  yuki workspaces list",
+        );
       }
       break;
     }
@@ -171,7 +183,11 @@ export async function cmdYuki(terminal, args) {
         const query = args.length > 2 ? args.slice(2).join(" ") : null;
         const allApps = appRegistry.getAllApps(appMap);
         const filtered = query
-          ? allApps.filter((a) => a.id.toLowerCase().includes(query) || a.displayName.toLowerCase().includes(query))
+          ? allApps.filter(
+              (a) =>
+                a.id.toLowerCase().includes(query) ||
+                a.displayName.toLowerCase().includes(query),
+            )
           : allApps;
 
         if (!filtered.length) {
@@ -207,10 +223,15 @@ export async function cmdYuki(terminal, args) {
       switch (action) {
         case "uninstall": {
           if (appRegistry.isProtected(id)) {
-            await terminal.enqueuePrint(`  Cannot uninstall protected app: ${id}`);
+            await terminal.enqueuePrint(
+              `  Cannot uninstall protected app: ${id}`,
+            );
             break;
           }
-          const confirmed = await os.dialog.confirm("Uninstall App", `Uninstall "${id}"?`);
+          const confirmed = await os.dialog.confirm(
+            "Uninstall App",
+            `Uninstall "${id}"?`,
+          );
           if (confirmed && appRegistry.uninstallApp(id)) {
             await terminal.enqueuePrint(`  Uninstalled: ${id}`);
           }
@@ -223,7 +244,9 @@ export async function cmdYuki(terminal, args) {
         }
         case "disable": {
           if (appRegistry.isProtected(id)) {
-            await terminal.enqueuePrint(`  Cannot disable protected app: ${id}`);
+            await terminal.enqueuePrint(
+              `  Cannot disable protected app: ${id}`,
+            );
             break;
           }
           if (appRegistry.setAppDisabled(id, true)) {
@@ -240,7 +263,7 @@ export async function cmdYuki(terminal, args) {
         }
         default:
           await terminal.enqueuePrint(
-            `  Unknown subcommand: ${action}. Use: list, uninstall, install, disable, enable`
+            `  Unknown subcommand: ${action}. Use: list, uninstall, install, disable, enable`,
           );
       }
       break;
@@ -270,7 +293,9 @@ export async function cmdYuki(terminal, args) {
           const quota = estimate.quota || 0;
           await terminal.enqueuePrint(`  Storage used: ${formatSize(used)}`);
           await terminal.enqueuePrint(`  Total quota: ${formatSize(quota)}`);
-          await terminal.enqueuePrint(`  Usage: ${quota > 0 ? Math.round((used / quota) * 100) : "?"}%`);
+          await terminal.enqueuePrint(
+            `  Usage: ${quota > 0 ? Math.round((used / quota) * 100) : "?"}%`,
+          );
         } catch {
           await terminal.enqueuePrint("  Storage API not available");
         }

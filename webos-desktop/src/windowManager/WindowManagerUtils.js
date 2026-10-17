@@ -12,7 +12,7 @@ import {
   buildControlsForStyle,
   buildHeaderForStyle,
   resolveHeaderStyleId,
-  getStoredHeaderStyleId
+  getStoredHeaderStyleId,
 } from "./headerStyles.js";
 
 export class WindowManagerUtils {
@@ -47,12 +47,15 @@ export class WindowManagerUtils {
   }
 
   resolveIconType(iconValue) {
-    const isDataUrl = typeof iconValue === "string" && iconValue.startsWith("data:");
-    const isHttpUrl = typeof iconValue === "string" && /^https?:\/\//.test(iconValue);
-    const isPapirus = typeof iconValue === "string" && iconValue.startsWith("papirus:");
+    const isDataUrl =
+      typeof iconValue === "string" && iconValue.startsWith("data:");
+    const isHttpUrl =
+      typeof iconValue === "string" && /^https?:\/\//.test(iconValue);
+    const isPapirus =
+      typeof iconValue === "string" && iconValue.startsWith("papirus:");
     return {
       isImage: isImageFile(iconValue) || isHttpUrl || isPapirus,
-      isDataUrl
+      isDataUrl,
     };
   }
 
@@ -126,7 +129,8 @@ export class WindowManagerUtils {
   getWindowIconHtml(iconValue, color = null) {
     if (!iconValue) return "";
     iconValue = getEffectiveIcon(iconValue);
-    const isPapirusRaw = typeof iconValue === "string" && iconValue.startsWith("papirus:");
+    const isPapirusRaw =
+      typeof iconValue === "string" && iconValue.startsWith("papirus:");
     if (isPapirusRaw) {
       const src = resolveIconUrl(iconValue);
       const size = 16;
@@ -146,12 +150,19 @@ export class WindowManagerUtils {
     return "";
   }
 
-  generateWindowHeader(title, iconValue, color = null, externalUrl = null, macStyle = null) {
+  generateWindowHeader(
+    title,
+    iconValue,
+    color = null,
+    externalUrl = null,
+    macStyle = null,
+  ) {
     const iconHtml = this.getWindowIconHtml(iconValue, color);
     const controlsHtml = this.getWindowControls(externalUrl);
     let styleId;
     if (macStyle === true) styleId = "mac";
-    else if (macStyle === false) styleId = getStoredHeaderStyleId() ?? "default";
+    else if (macStyle === false)
+      styleId = getStoredHeaderStyleId() ?? "default";
     else styleId = resolveHeaderStyleId();
     return buildHeaderForStyle(title, iconHtml, controlsHtml, styleId);
   }
@@ -188,9 +199,10 @@ export class WindowManagerUtils {
         } else {
           const activeEntry =
             Array.from(this.manager.openWindows.values()).findLast((entry) =>
-              entry.taskbarItem?.classList.contains("active")
+              entry.taskbarItem?.classList.contains("active"),
             ) ?? Array.from(this.manager.openWindows.values()).pop();
-          if (activeEntry) this.updatePageFavicon(activeEntry.iconValue, activeEntry.title);
+          if (activeEntry)
+            this.updatePageFavicon(activeEntry.iconValue, activeEntry.title);
         }
       }
     });
@@ -198,7 +210,9 @@ export class WindowManagerUtils {
 
   downloadWindowContent(win) {
     const filename =
-      (this.manager.getWindowTitle(win.id)?.trim() || win.id).replace(/[^\w\s-]/g, "").trim() || "window";
+      (this.manager.getWindowTitle(win.id)?.trim() || win.id)
+        .replace(/[^\w\s-]/g, "")
+        .trim() || "window";
 
     const iframe = win.querySelector("iframe");
     if (iframe) {
@@ -210,7 +224,8 @@ export class WindowManagerUtils {
 
       if (src.startsWith("blob:")) {
         try {
-          const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
+          const iframeDoc =
+            iframe.contentDocument || iframe.contentWindow?.document;
           if (iframeDoc) {
             const html = iframeDoc.documentElement?.outerHTML ?? "";
             this.saveHtmlAsFile(html, filename);
@@ -228,7 +243,8 @@ export class WindowManagerUtils {
       }
 
       try {
-        const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
+        const iframeDoc =
+          iframe.contentDocument || iframe.contentWindow?.document;
         if (iframeDoc) {
           const html = iframeDoc.documentElement?.outerHTML ?? "";
           this.saveHtmlAsFile(html, filename);
@@ -261,7 +277,11 @@ export class WindowManagerUtils {
   }
 
   getWindowControls(externalUrl, showDownload = false) {
-    return buildControlsForStyle(resolveHeaderStyleId(), externalUrl, showDownload);
+    return buildControlsForStyle(
+      resolveHeaderStyleId(),
+      externalUrl,
+      showDownload,
+    );
   }
 
   findAppIdByWinId(winId) {

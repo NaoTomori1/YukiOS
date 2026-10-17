@@ -712,7 +712,12 @@ html[data-theme="star-wars-dark"] .taskbar {
 }
 
 html[data-theme="star-wars-dark"] .window-header {
-  background: linear-gradient(90deg, oklch(48% 0.34 25 / 0.15), oklch(40% 0.28 25 / 0.05), oklch(48% 0.34 25 / 0.15));
+  background: linear-gradient(
+    90deg,
+    oklch(48% 0.34 25 / 0.15),
+    oklch(40% 0.28 25 / 0.05),
+    oklch(48% 0.34 25 / 0.15)
+  );
   border-bottom: 2px solid oklch(52% 0.38 25 / 0.5);
   box-shadow: 0 0 20px oklch(52% 0.35 25 / 0.2);
 }
@@ -788,8 +793,14 @@ html[data-theme="star-wars-dark"] .overlay-dialog {
     0 0 40px oklch(48% 0.3 25 / 0.2);
 }
 
-html[data-theme="star-wars-dark"] .settings-toggle input:checked + .settings-track,
-html[data-theme="star-wars-dark"] .setting-toggle input:checked + .toggle-track {
+html[data-theme="star-wars-dark"]
+  .settings-toggle
+  input:checked
+  + .settings-track,
+html[data-theme="star-wars-dark"]
+  .setting-toggle
+  input:checked
+  + .toggle-track {
   box-shadow: 0 0 12px oklch(52% 0.35 25 / 0.4);
 }
 
@@ -1139,12 +1150,21 @@ html[data-theme="y2k"] .window {
 }
 
 html[data-theme="y2k"] .window-header {
-  background: linear-gradient(180deg, oklch(100% 0 0 / 0.7), oklch(88% 0.02 250 / 0.5), oklch(82% 0.02 250 / 0.4));
+  background: linear-gradient(
+    180deg,
+    oklch(100% 0 0 / 0.7),
+    oklch(88% 0.02 250 / 0.5),
+    oklch(82% 0.02 250 / 0.4)
+  );
   border-bottom: 2px solid oklch(60% 0.1 240 / 0.3);
 }
 
 html[data-theme="y2k"] .taskbar {
-  background: linear-gradient(180deg, oklch(88% 0.02 250 / 0.6), oklch(80% 0.02 250 / 0.5));
+  background: linear-gradient(
+    180deg,
+    oklch(88% 0.02 250 / 0.6),
+    oklch(80% 0.02 250 / 0.5)
+  );
   box-shadow:
     0 -1px 0 oklch(100% 0 0 / 0.4) inset,
     0 1px 0 oklch(0% 0 0 / 0.1) inset;
@@ -1337,7 +1357,12 @@ html[data-theme="aura"] .window {
 }
 
 html[data-theme="aura"] .window-header {
-  background: linear-gradient(90deg, oklch(72% 0.22 330 / 0.18), oklch(65% 0.2 180 / 0.18), oklch(72% 0.22 330 / 0.18));
+  background: linear-gradient(
+    90deg,
+    oklch(72% 0.22 330 / 0.18),
+    oklch(65% 0.2 180 / 0.18),
+    oklch(72% 0.22 330 / 0.18)
+  );
   background-size: 200% 100%;
   animation: aura-shift 4s ease-in-out infinite;
   border-bottom: 1px solid oklch(72% 0.18 330 / 0.2);
@@ -1914,7 +1939,11 @@ html[data-theme="vice-city"] .icon.selectable > div:last-child {
 }
 
 html[data-theme="vice-city"] .am-slider {
-  background: linear-gradient(90deg, oklch(65% 0.22 348 / 0.3), oklch(72% 0.18 195 / 0.3)) !important;
+  background: linear-gradient(
+    90deg,
+    oklch(65% 0.22 348 / 0.3),
+    oklch(72% 0.18 195 / 0.3)
+  ) !important;
   box-shadow: 0 0 8px oklch(65% 0.22 348 / 0.15) !important;
 }
 

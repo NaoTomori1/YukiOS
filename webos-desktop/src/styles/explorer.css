@@ -41,7 +41,13 @@
   left: 1.1em;
   right: 1.1em;
   height: 1px;
-  background: linear-gradient(to right, transparent, var(--brand-dim) 40%, var(--brand-dim) 60%, transparent);
+  background: linear-gradient(
+    to right,
+    transparent,
+    var(--brand-dim) 40%,
+    var(--brand-dim) 60%,
+    transparent
+  );
 }
 
 .explorer-nav button,
@@ -690,7 +696,13 @@ body.pane-resizing {
   left: 1.1em;
   right: 1.1em;
   height: 1px;
-  background: linear-gradient(to right, transparent, var(--brand-dim) 40%, var(--brand-dim) 60%, transparent);
+  background: linear-gradient(
+    to right,
+    transparent,
+    var(--brand-dim) 40%,
+    var(--brand-dim) 60%,
+    transparent
+  );
 }
 
 .explorer-select-label {
@@ -2043,7 +2055,10 @@ span.explorer-status-selected.selectable {
   border-color: var(--glass-border);
   border-bottom-color: var(--bg-secondary);
 }
-.window.explorer-window .explorer-tab-bar--header > .explorer-tab > .explorer-tab-label {
+.window.explorer-window
+  .explorer-tab-bar--header
+  > .explorer-tab
+  > .explorer-tab-label {
   flex: 1;
   min-width: 0;
   overflow: hidden;
@@ -2052,13 +2067,22 @@ span.explorer-status-selected.selectable {
   font-size: 12px;
   color: inherit;
 }
-.window.explorer-window .explorer-tab-bar--header > .explorer-tab > .explorer-tab-icon {
+.window.explorer-window
+  .explorer-tab-bar--header
+  > .explorer-tab
+  > .explorer-tab-icon {
   color: var(--text-secondary);
 }
-.window.explorer-window .explorer-tab-bar--header > .explorer-tab.active > .explorer-tab-icon {
+.window.explorer-window
+  .explorer-tab-bar--header
+  > .explorer-tab.active
+  > .explorer-tab-icon {
   color: var(--brand);
 }
-.window.explorer-window .explorer-tab-bar--header > .explorer-tab > .explorer-tab-close:hover {
+.window.explorer-window
+  .explorer-tab-bar--header
+  > .explorer-tab
+  > .explorer-tab-close:hover {
   color: var(--error);
   background: color-mix(in srgb, var(--error) 14%, transparent);
 }

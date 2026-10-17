@@ -1,13 +1,19 @@
 import { os } from "../framework.js";
 
-export function makePaneResizable(containerEl, sidebarEl, resizerEl, options = {}) {
+export function makePaneResizable(
+  containerEl,
+  sidebarEl,
+  resizerEl,
+  options = {},
+) {
   const { storageKey, min = 140, max = 320, defaultWidth } = options;
   if (!sidebarEl || !resizerEl) return;
   const clamp = (v) => Math.max(min, Math.min(max, v));
   const applyWidth = (w) => {
     const cw = clamp(w);
     sidebarEl.style.width = cw + "px";
-    if (containerEl) containerEl.style.setProperty("--pane-sidebar-w", cw + "px");
+    if (containerEl)
+      containerEl.style.setProperty("--pane-sidebar-w", cw + "px");
   };
   let stored = null;
   try {

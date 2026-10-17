@@ -35,7 +35,7 @@ export class TilingManager {
       mouse_resize: true,
       config_poll_interval: 3000,
       workspace_switch_delay: 320,
-      resize_debounce: 150
+      resize_debounce: 150,
     };
   }
 
@@ -47,7 +47,7 @@ export class TilingManager {
       enabled: c.enabled ?? d.enabled,
       gaps: {
         inner: g.inner ?? d.gaps.inner,
-        outer: g.outer ?? d.gaps.outer
+        outer: g.outer ?? d.gaps.outer,
       },
       layout: c.layout ?? d.layout,
       split_ratio: c.split_ratio ?? d.split_ratio,
@@ -58,13 +58,16 @@ export class TilingManager {
       animation_easing: c.animation_easing ?? d.animation_easing,
       mouse_resize: c.mouse_resize ?? d.mouse_resize,
       config_poll_interval: c.config_poll_interval ?? d.config_poll_interval,
-      workspace_switch_delay: c.workspace_switch_delay ?? d.workspace_switch_delay,
-      resize_debounce: c.resize_debounce ?? d.resize_debounce
+      workspace_switch_delay:
+        c.workspace_switch_delay ?? d.workspace_switch_delay,
+      resize_debounce: c.resize_debounce ?? d.resize_debounce,
     };
   }
 
   getLayoutEngine() {
-    return this.getEffectiveConfig().layout === "master-stack" ? MasterStackEngine : Engine;
+    return this.getEffectiveConfig().layout === "master-stack"
+      ? MasterStackEngine
+      : Engine;
   }
 
   getTransition() {
@@ -76,8 +79,14 @@ export class TilingManager {
 
   applyCssVars() {
     const cfg = this.getEffectiveConfig();
-    document.documentElement.style.setProperty("--tiling-border-width", `${cfg.border_width}px`);
-    document.documentElement.style.setProperty("--tiling-border-radius", `${cfg.border_radius}px`);
+    document.documentElement.style.setProperty(
+      "--tiling-border-width",
+      `${cfg.border_width}px`,
+    );
+    document.documentElement.style.setProperty(
+      "--tiling-border-radius",
+      `${cfg.border_radius}px`,
+    );
   }
 
   async init() {
@@ -158,7 +167,8 @@ export class TilingManager {
             console.log("[Tiling] Config file changed externally, reloading");
             const stored = os.storage.get(StorageKeys.tilingEnabled);
             const configEnabled = this.config.enabled === true;
-            const desiredEnabled = stored !== null ? stored === "true" : configEnabled;
+            const desiredEnabled =
+              stored !== null ? stored === "true" : configEnabled;
             const wasEnabled = this.enabled;
             this.enabled = desiredEnabled;
             this.config.enabled = desiredEnabled;
@@ -197,14 +207,18 @@ export class TilingManager {
       this.rebuildTreeForCurrentWorkspace();
       this.applyLayoutToAllWindows();
       this.tilingBar.show();
-      os.notify.send("Tiling", "Tiling mode enabled", { icon: "fas fa-th-large" });
+      os.notify.send("Tiling", "Tiling mode enabled", {
+        icon: "fas fa-th-large",
+      });
     } else {
       modeManager.exit(MODES.TILING);
       document.body.classList.remove("tiling-layout-master-stack");
       this.restoreAllWindows();
       this.trees.clear();
       this.tilingBar.hide();
-      os.notify.send("Tiling", "Tiling mode disabled", { icon: "fas fa-th-large" });
+      os.notify.send("Tiling", "Tiling mode disabled", {
+        icon: "fas fa-th-large",
+      });
     }
 
     bus.emit(BusEvents.TILING_MODE_CHANGED, { enabled: this.enabled });
@@ -235,7 +249,9 @@ export class TilingManager {
     const engine = this.getLayoutEngine();
     let tree = engine.createState ? engine.createState() : null;
 
-    console.log(`[Tiling] Rebuilding tree for workspace ${wsId} with ${wins.length} windows`);
+    console.log(
+      `[Tiling] Rebuilding tree for workspace ${wsId} with ${wins.length} windows`,
+    );
     for (const winId of wins) {
       const win = $("#" + winId);
       if (!win) continue;
@@ -287,7 +303,7 @@ export class TilingManager {
       x: left,
       y: top,
       w: window.innerWidth - left - right,
-      h: window.innerHeight - top
+      h: window.innerHeight - top,
     };
   }
 
@@ -305,13 +321,18 @@ export class TilingManager {
       }
       this.applyLayoutToAllWindows();
     }
-    os.fs.write(CONFIG_PATH, JSON.stringify(this.config, null, 2)).catch(() => {});
+    os.fs
+      .write(CONFIG_PATH, JSON.stringify(this.config, null, 2))
+      .catch(() => {});
     this.configString = JSON.stringify(this.config);
   }
 
   applyLayoutTypeClass() {
     const layout = this.getEffectiveConfig().layout;
-    document.body.classList.toggle("tiling-layout-master-stack", layout === "master-stack");
+    document.body.classList.toggle(
+      "tiling-layout-master-stack",
+      layout === "master-stack",
+    );
   }
 
   applyLayoutToAllWindows() {
@@ -338,8 +359,14 @@ export class TilingManager {
       if (record) {
         if (!record.tiled) {
           record.tiled = true;
-          record.tileGeometry = { x: record.x, y: record.y, width: record.width, height: record.height };
-          record.tilePosition = win.style.position || getComputedStyle(win).position;
+          record.tileGeometry = {
+            x: record.x,
+            y: record.y,
+            width: record.width,
+            height: record.height,
+          };
+          record.tilePosition =
+            win.style.position || getComputedStyle(win).position;
         }
         record.tileNodeId = rect.nodeId;
         record.x = rect.x;
@@ -356,7 +383,7 @@ export class TilingManager {
         position: "fixed",
         transition: this.getTransition(),
         transform: "",
-        borderRadius: `${cfg.border_radius}px`
+        borderRadius: `${cfg.border_radius}px`,
       });
       win.dataset.tiled = "true";
     }
@@ -388,7 +415,7 @@ export class TilingManager {
       width: `${rect.w}px`,
       height: `${rect.h}px`,
       position: "fixed",
-      transition: this.getTransition()
+      transition: this.getTransition(),
     });
     win.dataset.tiled = "true";
     win.style.borderRadius = `${cfg.border_radius}px`;
@@ -401,9 +428,10 @@ export class TilingManager {
           x: entry.record.x,
           y: entry.record.y,
           width: entry.record.width,
-          height: entry.record.height
+          height: entry.record.height,
         };
-        entry.record.tilePosition = win.style.position || getComputedStyle(win).position;
+        entry.record.tilePosition =
+          win.style.position || getComputedStyle(win).position;
       }
       entry.record.x = rect.x;
       entry.record.y = rect.y;
@@ -428,7 +456,7 @@ export class TilingManager {
           width: `${geom.width}px`,
           height: `${geom.height}px`,
           transition: this.getTransition(),
-          position: origPos || ""
+          position: origPos || "",
         });
       }
       entry.record.tiled = false;
@@ -454,13 +482,14 @@ export class TilingManager {
         x: entry.record.x,
         y: entry.record.y,
         width: entry.record.width,
-        height: entry.record.height
+        height: entry.record.height,
       };
       entry.record.tiled = true;
     }
     const win = $("#" + winId);
     if (win) {
-      entry.record.tilePosition = win.style.position || getComputedStyle(win).position;
+      entry.record.tilePosition =
+        win.style.position || getComputedStyle(win).position;
     }
 
     const engine = this.getLayoutEngine();
@@ -548,14 +577,21 @@ export class TilingManager {
       Array.from(this.wm.openWindows.keys())
         .map((id) => $("#" + id))
         .filter(Boolean)
-        .sort((a, b) => parseInt(b.style.zIndex) - parseInt(a.style.zIndex))[0]?.id
+        .sort((a, b) => parseInt(b.style.zIndex) - parseInt(a.style.zIndex))[0]
+        ?.id,
     );
 
-    const focusedWinId = focusedWin?.record?.tiled ? focusedWin.record.id : null;
+    const focusedWinId = focusedWin?.record?.tiled
+      ? focusedWin.record.id
+      : null;
     if (!focusedWinId) return;
 
     const engine = this.getLayoutEngine();
-    const neighbor = engine.getDirectionalNeighbor(tree, focusedWinId, direction);
+    const neighbor = engine.getDirectionalNeighbor(
+      tree,
+      focusedWinId,
+      direction,
+    );
     if (!neighbor || !neighbor.winId) return;
 
     const win = $("#" + neighbor.winId);
@@ -575,7 +611,11 @@ export class TilingManager {
     if (!focusedWinId) return;
 
     const engine = this.getLayoutEngine();
-    const neighbor = engine.getDirectionalNeighbor(tree, focusedWinId, direction);
+    const neighbor = engine.getDirectionalNeighbor(
+      tree,
+      focusedWinId,
+      direction,
+    );
     if (!neighbor || !neighbor.winId) return;
 
     engine.swapWindows(tree, focusedWinId, neighbor.winId);
@@ -592,7 +632,12 @@ export class TilingManager {
     if (!focusedWinId) return;
 
     const engine = this.getLayoutEngine();
-    engine.resizeSplit(tree, focusedWinId, direction, this.getEffectiveConfig().resize_delta);
+    engine.resizeSplit(
+      tree,
+      focusedWinId,
+      direction,
+      this.getEffectiveConfig().resize_delta,
+    );
     this.applyLayoutToAllWindows();
   }
 
@@ -663,7 +708,7 @@ export class TilingManager {
         x: entry.record.x,
         y: entry.record.y,
         width: entry.record.width,
-        height: entry.record.height
+        height: entry.record.height,
       };
 
       let newTree = engine.remove(tree, focusedWinId);
@@ -677,7 +722,7 @@ export class TilingManager {
         width: `${geom.width}px`,
         height: `${geom.height}px`,
         position: origPos || "",
-        transition: this.getTransition()
+        transition: this.getTransition(),
       });
       delete win.dataset.tiled;
       win.style.borderRadius = "";
@@ -751,7 +796,8 @@ export class TilingManager {
 
     const engine = this.getLayoutEngine();
     if (tree.type === "master-stack") {
-      tree.orientation = tree.orientation === "horizontal" ? "vertical" : "horizontal";
+      tree.orientation =
+        tree.orientation === "horizontal" ? "vertical" : "horizontal";
       this.applyLayoutToAllWindows();
       return;
     }

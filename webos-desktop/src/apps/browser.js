@@ -42,6 +42,7 @@ import {
   isPopupInterceptEnabled,
 } from "../core/ScramjetPopupManager.js";
 import { buildBrowserView } from "./browser/browserView.js";
+import { isEpoxyOnlyWisp } from "../shared/wispConfig.js";
 const THEME_VARS = [
   "--brand",
   "--text-primary",
@@ -292,6 +293,10 @@ export class BrowserApp extends BaseApp {
         if (data.wispUrl) os.storage.set(StorageKeys.wispServer, data.wispUrl);
         if (data.transport)
           os.storage.set(StorageKeys.browserTransport, data.transport);
+        const effectiveWisp =
+          data.wispUrl || os.storage.get(StorageKeys.wispServer);
+        if (isEpoxyOnlyWisp(effectiveWisp))
+          os.storage.set(StorageKeys.browserTransport, "epoxy");
       } else if (data.type === "scram:windowOpenInterceptGet") {
         try {
           e.source?.postMessage(

@@ -1,11 +1,20 @@
 import { createElement, os, StorageKeys, ServiceKeys } from "../framework.js";
 import { $ } from "../shared/domUtils.js";
 import { subscribeTimeTick } from "../services/timeWorker.js";
-import { createCalendarPopup, closeCalendarPopup, isCalendarPinned } from "../apps/calendar.js";
+import {
+  createCalendarPopup,
+  closeCalendarPopup,
+  isCalendarPinned,
+} from "../apps/calendar.js";
 import { getTrayPosition } from "../tray/tray.js";
 import { audioMixer } from "../audioMixer.js";
 import { launchSettingsPane } from "../settings/settingsNav.js";
-import { renderRangeSlider, bindRangeSlider, getRangeSliderValue, setRangeSliderValue } from "../shared/rangeSlider.js";
+import {
+  renderRangeSlider,
+  bindRangeSlider,
+  getRangeSliderValue,
+  setRangeSliderValue,
+} from "../shared/rangeSlider.js";
 import { BusEvents } from "../core/EventBus.js";
 import { trayManager } from "../tray/tray.js";
 import { callIfFunction } from "../shared/functionUtils.js";
@@ -14,7 +23,11 @@ import { downloadPage } from "../utils/utils.js";
 import { toggleStylusMenu } from "./stylusMenu.js";
 import { batteryService } from "../services/batteryService.js";
 
-const HIDDEN_TRAY_IDS = ["audio-mixer", "network-tray-window", "display-performance-window"];
+const HIDDEN_TRAY_IDS = [
+  "audio-mixer",
+  "network-tray-window",
+  "display-performance-window",
+];
 
 export class ChromeOsQuickSettings {
   constructor(shelf) {
@@ -41,7 +54,9 @@ export class ChromeOsQuickSettings {
     this.loadPrefs();
     this.buildPill();
     this.startClock();
-    this.unsubscribeBattery = batteryService.subscribe((snap) => this.onBatteryUpdate(snap));
+    this.unsubscribeBattery = batteryService.subscribe((snap) =>
+      this.onBatteryUpdate(snap),
+    );
     os.events.on(BusEvents.SETTINGS_CHANGED, this.boundSettings);
   }
 
@@ -74,7 +89,9 @@ export class ChromeOsQuickSettings {
     this.iconsEl = createElement("div", { className: "shelf-status-icons" });
     this.el.appendChild(this.clockEl);
     this.el.appendChild(this.iconsEl);
-    this.shelfBatteryBtn = createElement("button", { className: "tray-icon-btn shelf-battery-btn" });
+    this.shelfBatteryBtn = createElement("button", {
+      className: "tray-icon-btn shelf-battery-btn",
+    });
     this.shelfBatteryBtn.title = "Display & Performance";
     this.shelfBatteryBtn.dataset.winId = "display-performance-window";
     this.shelfBatteryBtn.addEventListener("click", (e) => {
@@ -84,7 +101,11 @@ export class ChromeOsQuickSettings {
     this.shelfBatteryBtn.addEventListener("contextmenu", (e) => {
       e.preventDefault();
       e.stopPropagation();
-      trayManager.showContextMenu(e, "display-performance-window", "Display & Performance");
+      trayManager.showContextMenu(
+        e,
+        "display-performance-window",
+        "Display & Performance",
+      );
     });
 
     this.el.appendChild(this.shelfBatteryBtn);
@@ -103,7 +124,9 @@ export class ChromeOsQuickSettings {
       this.toggle();
     });
 
-    const downloadBall = createElement("div", { className: "shelf-status-ball" });
+    const downloadBall = createElement("div", {
+      className: "shelf-status-ball",
+    });
     downloadBall.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>`;
     downloadBall.title = "Download YukiOS";
     downloadBall.addEventListener("click", () => {
@@ -155,15 +178,18 @@ export class ChromeOsQuickSettings {
       month: "long",
       day: "numeric",
       hour: "2-digit",
-      minute: "2-digit"
+      minute: "2-digit",
     });
     if (this.dateEl) {
-      this.dateEl.textContent = now.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+      this.dateEl.textContent = now.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+      });
       this.dateEl.title = now.toLocaleDateString([], {
         weekday: "long",
         year: "numeric",
         month: "long",
-        day: "numeric"
+        day: "numeric",
       });
     }
   }
@@ -248,7 +274,9 @@ export class ChromeOsQuickSettings {
     const panel = $("#chromeos-quick-settings");
     if (panel) {
       panel.classList.add("closing");
-      panel.addEventListener("animationend", () => panel.remove(), { once: true });
+      panel.addEventListener("animationend", () => panel.remove(), {
+        once: true,
+      });
     }
     this.panelVisible = false;
     if (this.dateEl) this.dateEl.classList.remove("selected");
@@ -277,7 +305,8 @@ export class ChromeOsQuickSettings {
   async buildPanelHTML() {
     const mixer = audioMixer();
     const volume = Math.round((mixer.masterVolume || 1) * 100);
-    const brightness = parseInt(os.storage.get(StorageKeys.brightness), 10) || 100;
+    const brightness =
+      parseInt(os.storage.get(StorageKeys.brightness), 10) || 100;
     const dnd = os.notify.getDoNotDisturb();
     const footerText = batteryService.getFooterText();
     const trayItems = this.getTrayItems();
@@ -305,7 +334,9 @@ export class ChromeOsQuickSettings {
                 if (item.winId === "notification") {
                   const notifCount = os.notify.getCount();
                   const notifLabel =
-                    notifCount > 0 ? `${notifCount} Notification${notifCount === 1 ? "" : "s"}` : "Notifications";
+                    notifCount > 0
+                      ? `${notifCount} Notification${notifCount === 1 ? "" : "s"}`
+                      : "Notifications";
                   return `
             <button class="chromeos-qs-tray${notifCount > 0 ? " has-notifications" : ""}" data-tray="notification" title="${notifLabel}">
               <span class="chromeos-qs-tray-icon"><i class="fas fa-bell"></i></span>
@@ -340,7 +371,9 @@ export class ChromeOsQuickSettings {
   }
 
   getTrayItems() {
-    return trayManager.getAllItems().filter((item) => !HIDDEN_TRAY_IDS.includes(item.winId));
+    return trayManager
+      .getAllItems()
+      .filter((item) => !HIDDEN_TRAY_IDS.includes(item.winId));
   }
 
   papirusToFa(ref) {
@@ -353,23 +386,34 @@ export class ChromeOsQuickSettings {
     if (s.includes("camera") || s.includes("video")) return "fas fa-video";
     if (s.includes("configure") || s.includes("settings")) return "fas fa-cog";
     if (s.includes("lock")) return "fas fa-lock";
-    if (s.includes("log-out") || s.includes("logout")) return "fas fa-sign-out-alt";
-    if (s.includes("shutdown") || s.includes("power") || s.includes("system-shut")) return "fas fa-power-off";
+    if (s.includes("log-out") || s.includes("logout"))
+      return "fas fa-sign-out-alt";
+    if (
+      s.includes("shutdown") ||
+      s.includes("power") ||
+      s.includes("system-shut")
+    )
+      return "fas fa-power-off";
     if (s.includes("night") || s.includes("moon")) return "fas fa-moon";
     if (s.includes("weather-clear") || s.includes("sun")) return "fas fa-sun";
-    if (s.includes("notification") || s.includes("bell") || s.includes("dnd")) return "fas fa-ban";
+    if (s.includes("notification") || s.includes("bell") || s.includes("dnd"))
+      return "fas fa-ban";
     if (s.includes("monitor") || s.includes("display")) return "fas fa-desktop";
     return "fas fa-th-large";
   }
 
   trayIconHtml(icon, label) {
-    if (!icon) return `<span class="chromeos-qs-tray-glyph">${(label || "?").charAt(0)}</span>`;
+    if (!icon)
+      return `<span class="chromeos-qs-tray-glyph">${(label || "?").charAt(0)}</span>`;
     const s = String(icon);
     if (s.startsWith("papirus:")) {
       return `<i class="${this.papirusToFa(s)}"></i>`;
     }
     const isUrl =
-      s.startsWith("http") || s.startsWith("data:") || s.startsWith("/") || /\.(webp|png|jpg|jpeg|gif|svg)$/.test(s);
+      s.startsWith("http") ||
+      s.startsWith("data:") ||
+      s.startsWith("/") ||
+      /\.(webp|png|jpg|jpeg|gif|svg)$/.test(s);
     if (isUrl) {
       return `<img src="${s}" alt="${label || ""}" />`;
     }
@@ -381,9 +425,11 @@ export class ChromeOsQuickSettings {
 
     panel.querySelectorAll(".chromeos-qs-slider").forEach((row) => {
       row.addEventListener("pointerdown", () => {
-        panel.querySelectorAll(".chromeos-qs-slider.is-active").forEach((other) => {
-          if (other !== row) other.classList.remove("is-active");
-        });
+        panel
+          .querySelectorAll(".chromeos-qs-slider.is-active")
+          .forEach((other) => {
+            if (other !== row) other.classList.remove("is-active");
+          });
         row.classList.add("is-active");
       });
     });
@@ -397,7 +443,10 @@ export class ChromeOsQuickSettings {
         this.applyBrightness(value);
       });
       brightnessSlider.addEventListener("change", () => {
-        os.storage.set(StorageKeys.brightness, String(getRangeSliderValue("qsBrightness", panel)));
+        os.storage.set(
+          StorageKeys.brightness,
+          String(getRangeSliderValue("qsBrightness", panel)),
+        );
       });
     }
 
@@ -422,7 +471,9 @@ export class ChromeOsQuickSettings {
         mixer.setMaster(value / 100);
         syncMuteIcon();
       });
-      const muteIcon = volumeRow ? volumeRow.querySelector('[data-mute-toggle="volume"]') : null;
+      const muteIcon = volumeRow
+        ? volumeRow.querySelector('[data-mute-toggle="volume"]')
+        : null;
       if (muteIcon) {
         muteIcon.addEventListener("click", (e) => {
           e.stopPropagation();
@@ -460,7 +511,8 @@ export class ChromeOsQuickSettings {
       btn.addEventListener("click", () => {
         this.closePanel();
         if (btn.dataset.settings === "sound") launchSettingsPane("pane-audio");
-        else if (btn.dataset.settings === "display") launchSettingsPane("pane-appearance", "sc-display");
+        else if (btn.dataset.settings === "display")
+          launchSettingsPane("pane-appearance", "sc-display");
         else os.app.launch("settingsApp");
       });
     });
@@ -486,7 +538,8 @@ export class ChromeOsQuickSettings {
     if (!btn) return null;
     if (btn.dataset.tile === "network") return { pane: "pane-network" };
     if (btn.dataset.tile === "bluetooth") return { pane: "pane-network" };
-    if (btn.dataset.tile === "cast") return { pane: "pane-appearance", target: "sc-display" };
+    if (btn.dataset.tile === "cast")
+      return { pane: "pane-appearance", target: "sc-display" };
     if (btn.dataset.tile === "focus") return { pane: "pane-notifications" };
     if (btn.dataset.power === "shutdown") return { pane: "pane-system" };
     return null;

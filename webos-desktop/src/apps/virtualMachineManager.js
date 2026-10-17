@@ -10,29 +10,71 @@ const OS_LIST = [
     name: "Windows 11",
     url: "https://test.webos.tenfell.cn",
     color: "#0078d4",
-    icon: "fab fa-windows"
+    icon: "fab fa-windows",
   },
-  { id: "win10", name: "Windows 10", url: "https://dustinbrett.com/", color: "#005a9e", icon: "fab fa-windows" },
-  { id: "win7", name: "Windows 7", url: "https://win7simu.visnalize.com/", color: "#3a6ea5", icon: "fab fa-windows" },
-  { id: "winxp", name: "Windows XP", url: "https://winxp.vercel.app", color: "#3a6ea5", icon: "fab fa-windows" },
+  {
+    id: "win10",
+    name: "Windows 10",
+    url: "https://dustinbrett.com/",
+    color: "#005a9e",
+    icon: "fab fa-windows",
+  },
+  {
+    id: "win7",
+    name: "Windows 7",
+    url: "https://win7simu.visnalize.com/",
+    color: "#3a6ea5",
+    icon: "fab fa-windows",
+  },
+  {
+    id: "winxp",
+    name: "Windows XP",
+    url: "https://winxp.vercel.app",
+    color: "#3a6ea5",
+    icon: "fab fa-windows",
+  },
   {
     id: "winxpQuenq",
     name: "Windows XP (Reborn XP)",
     url: "https://xp.quenq.com",
     color: "#3a6ea5",
-    icon: "fab fa-windows"
+    icon: "fab fa-windows",
   },
   {
     id: "winxpHeavy",
     name: "Windows XP (Heavy)",
     url: "https://cdn.jsdelivr.net/gh/NaoTomori1/yukios@main/static/apps/winxp/index.html",
     color: "#3a6ea5",
-    icon: "fab fa-windows"
+    icon: "fab fa-windows",
   },
-  { id: "win96", name: "Windows 96", url: "https://windows96.net", color: "#c0c0c0", icon: "fas fa-desktop" },
-  { id: "win93", name: "Windows 93", url: "https://www.windows93.net", color: "#008080", icon: "fas fa-desktop" },
-  { id: "mac", name: "Mac OS", url: "https://www.macos-web.app", color: "#a2aaad", icon: "fab fa-apple" },
-  { id: "emuos", name: "EmuOS", url: "https://emupedia.net/beta/emuos", color: "#4a9eff", icon: "fas fa-gamepad" }
+  {
+    id: "win96",
+    name: "Windows 96",
+    url: "https://windows96.net",
+    color: "#c0c0c0",
+    icon: "fas fa-desktop",
+  },
+  {
+    id: "win93",
+    name: "Windows 93",
+    url: "https://www.windows93.net",
+    color: "#008080",
+    icon: "fas fa-desktop",
+  },
+  {
+    id: "mac",
+    name: "Mac OS",
+    url: "https://www.macos-web.app",
+    color: "#a2aaad",
+    icon: "fab fa-apple",
+  },
+  {
+    id: "emuos",
+    name: "EmuOS",
+    url: "https://emupedia.net/beta/emuos",
+    color: "#4a9eff",
+    icon: "fas fa-gamepad",
+  },
 ];
 
 const CORES = navigator.hardwareConcurrency || 4;
@@ -61,10 +103,16 @@ export class VirtualMachineManagerApp extends BaseApp {
   }
 
   async open() {
-    const win = os.window.create("vm-app", "Virtual Machine Manager", "580px", "480px", {
-      icon: "fas fa-server",
-      appId: "virtualMachineManagerApp"
-    });
+    const win = os.window.create(
+      "vm-app",
+      "Virtual Machine Manager",
+      "580px",
+      "480px",
+      {
+        icon: "fas fa-server",
+        appId: "virtualMachineManagerApp",
+      },
+    );
     win.innerHTML = `<div class="vm-shell"></div>`;
     this.initVM(win);
     return win;
@@ -92,7 +140,8 @@ export class VirtualMachineManagerApp extends BaseApp {
         <div class="vm-list">
           ${this.vms
             .map((vm, i) => {
-              const osInfo = OS_LIST.find((o) => o.id === vm.osId) || OS_LIST[0];
+              const osInfo =
+                OS_LIST.find((o) => o.id === vm.osId) || OS_LIST[0];
               return `
               <div class="vm-card" data-index="${i}">
                 <div class="vm-card-icon" style="background:linear-gradient(135deg,${osInfo.color}66,${osInfo.color}33);">
@@ -116,7 +165,9 @@ export class VirtualMachineManagerApp extends BaseApp {
       }
     `;
 
-    shell.querySelector("#vm-goto-create")?.addEventListener("click", () => this.renderCreate(shell));
+    shell
+      .querySelector("#vm-goto-create")
+      ?.addEventListener("click", () => this.renderCreate(shell));
 
     shell.querySelectorAll(".vm-boot-card-btn").forEach((btn) => {
       btn.addEventListener("click", async () => {
@@ -162,23 +213,27 @@ export class VirtualMachineManagerApp extends BaseApp {
               </div>
               <div class="vm-label">${os.name}</div>
             </div>
-          `
+          `,
           ).join("")}
         </div>
       `;
 
-      shell.querySelector("#vm-back-list").addEventListener("click", () => this.renderList(shell));
+      shell
+        .querySelector("#vm-back-list")
+        .addEventListener("click", () => this.renderList(shell));
 
       shell.querySelectorAll(".vm-os-card").forEach((card) => {
         card.addEventListener("click", () => {
-          shell.querySelectorAll(".vm-os-card").forEach((c) => c.classList.remove("selected"));
+          shell
+            .querySelectorAll(".vm-os-card")
+            .forEach((c) => c.classList.remove("selected"));
           card.classList.add("selected");
           selected = {
             id: card.dataset.osId,
             name: card.dataset.osName,
             url: card.dataset.osUrl,
             color: card.dataset.osColor,
-            icon: card.dataset.osIcon
+            icon: card.dataset.osIcon,
           };
           renderStep2(selected);
         });
@@ -224,26 +279,30 @@ export class VirtualMachineManagerApp extends BaseApp {
         ramVal.textContent = ramSlider.value + " GB";
       });
 
-      shell.querySelector("#vm-back-os").addEventListener("click", () => renderStep1());
+      shell
+        .querySelector("#vm-back-os")
+        .addEventListener("click", () => renderStep1());
 
-      shell.querySelector("#vm-create-boot").addEventListener("click", async () => {
-        const name = osInfo.name + " VM";
-        const vm = {
-          id: osInfo.id + "_" + Date.now(),
-          name,
-          osId: osInfo.id,
-          osName: osInfo.name,
-          url: osInfo.url,
-          cpu: parseInt(cpuSlider.value),
-          ram: parseInt(ramSlider.value),
-          icon: osInfo.icon,
-          color: osInfo.color
-        };
-        this.vms.push(vm);
-        this.saveVMs();
-        await this.bootVM(vm);
-        this.renderList(shell);
-      });
+      shell
+        .querySelector("#vm-create-boot")
+        .addEventListener("click", async () => {
+          const name = osInfo.name + " VM";
+          const vm = {
+            id: osInfo.id + "_" + Date.now(),
+            name,
+            osId: osInfo.id,
+            osName: osInfo.name,
+            url: osInfo.url,
+            cpu: parseInt(cpuSlider.value),
+            ram: parseInt(ramSlider.value),
+            icon: osInfo.icon,
+            color: osInfo.color,
+          };
+          this.vms.push(vm);
+          this.saveVMs();
+          await this.bootVM(vm);
+          this.renderList(shell);
+        });
     };
 
     renderStep1();
@@ -319,13 +378,19 @@ export class VirtualMachineManagerApp extends BaseApp {
       </div>
     `;
 
-    shell.querySelector("#vm-back-list").addEventListener("click", () => this.renderList(shell));
-    shell.querySelector("#vm-boot-from-view").addEventListener("click", () => this.bootVM(vm));
-    shell.querySelector("#vm-delete-from-view").addEventListener("click", () => {
-      this.vms.splice(index, 1);
-      this.saveVMs();
-      this.renderList(shell);
-    });
+    shell
+      .querySelector("#vm-back-list")
+      .addEventListener("click", () => this.renderList(shell));
+    shell
+      .querySelector("#vm-boot-from-view")
+      .addEventListener("click", () => this.bootVM(vm));
+    shell
+      .querySelector("#vm-delete-from-view")
+      .addEventListener("click", () => {
+        this.vms.splice(index, 1);
+        this.saveVMs();
+        this.renderList(shell);
+      });
 
     if (isWinXpHeavy) {
       this.fetchHtmlAsBlobUrl(vm.url).then((blobUrl) => {
@@ -354,7 +419,8 @@ export class VirtualMachineManagerApp extends BaseApp {
       return;
     }
 
-    const usesScramjet = vm.osId === "emuos" || vm.osId === "win7" || vm.osId === "mac";
+    const usesScramjet =
+      vm.osId === "emuos" || vm.osId === "win7" || vm.osId === "mac";
     const isWinXpHeavy = vm.osId === "winxpHeavy";
     let iframeSrc = usesScramjet ? this.scramjetUrl(vm.url) : vm.url;
 
@@ -364,7 +430,7 @@ export class VirtualMachineManagerApp extends BaseApp {
 
     const win = os.window.create(`${vm.id}-win`, vm.name, "85vw", "85vh", {
       isGame: false,
-      icon: "fas fa-server"
+      icon: "fas fa-server",
     });
 
     const bootingHtml = usesScramjet
@@ -426,8 +492,12 @@ export class VirtualMachineManagerApp extends BaseApp {
         if (!doc) return false;
         const loadingEl = doc.querySelector("#loading");
         const hidden =
-          !loadingEl || loadingEl.style.display === "none" || getComputedStyle(loadingEl).display === "none";
-        const hasInnerFrame = doc.querySelector(".scramjet-frame iframe, .frame iframe, .iframe-container iframe");
+          !loadingEl ||
+          loadingEl.style.display === "none" ||
+          getComputedStyle(loadingEl).display === "none";
+        const hasInnerFrame = doc.querySelector(
+          ".scramjet-frame iframe, .frame iframe, .iframe-container iframe",
+        );
         return hidden && hasInnerFrame;
       } catch {
         return false;
@@ -453,7 +523,9 @@ export class VirtualMachineManagerApp extends BaseApp {
       const doc = iframe.contentDocument;
       if (!doc) return;
       doc
-        .querySelectorAll(".flex.tabs, .flex.nav, .loading-bar-container, .bookmark-bar, .message-container, #tooltip")
+        .querySelectorAll(
+          ".flex.tabs, .flex.nav, .loading-bar-container, .bookmark-bar, .message-container, #tooltip",
+        )
         .forEach((el) => el.remove());
     } catch (e) {
       console.error("[VMManager] strip chrome:", e);

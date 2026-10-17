@@ -1,0 +1,140 @@
+html[data-cmstyle="win11"] #context-menu,
+html[data-cmstyle="win11"] .context-menu,
+.cm-preview[data-cmstyle="win11"] .context-menu {
+  background: var(--menu-bg);
+  backdrop-filter: saturate(2) blur(20px);
+  -webkit-backdrop-filter: saturate(2) blur(20px);
+  border: 1px solid var(--glass-border);
+  border-radius: 8px;
+  box-shadow: var(--shadow-lg);
+  padding: 4px;
+  min-width: 180px;
+  color: var(--text-primary);
+  overflow: visible;
+}
+html[data-cmstyle="win11"][data-theme="light"] #context-menu,
+html[data-cmstyle="win11"][data-theme="light"] .context-menu,
+html[data-theme="light"] .cm-preview[data-cmstyle="win11"] .context-menu {
+  background: var(--menu-bg);
+  border-color: var(--glass-border);
+  box-shadow: var(--shadow-md);
+  color: var(--text-primary);
+}
+html[data-cmstyle="win11"] #context-menu > div,
+html[data-cmstyle="win11"] .context-menu > div,
+.cm-preview[data-cmstyle="win11"] .context-menu > div {
+  height: 28px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  position: relative;
+  padding: 4px 6px;
+  margin: 6px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.2;
+  color: var(--text-primary);
+  cursor: default;
+  white-space: nowrap;
+}
+html[data-cmstyle="win11"] #context-menu > div > i,
+html[data-cmstyle="win11"] .context-menu > div > i,
+.cm-preview[data-cmstyle="win11"] .context-menu > div > i {
+  width: 16px;
+  height: 16px;
+  margin-right: 12px;
+  font-size: 12px;
+  line-height: 16px;
+  text-align: center;
+  flex-shrink: 0;
+  color: var(--text-secondary);
+}
+html[data-cmstyle="win11"] #context-menu > div > span:not(.submenu-arrow),
+html[data-cmstyle="win11"] .context-menu > div > span:not(.submenu-arrow),
+.cm-preview[data-cmstyle="win11"]
+  .context-menu
+  > div
+  > span:not(.submenu-arrow) {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-primary);
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+html[data-cmstyle="win11"] #context-menu > div:hover,
+html[data-cmstyle="win11"] .context-menu > div:hover,
+.cm-preview[data-cmstyle="win11"] .context-menu > div:hover,
+html[data-cmstyle="win11"] #context-menu > div.cm-focused,
+html[data-cmstyle="win11"] .context-menu > div.cm-focused,
+.cm-preview[data-cmstyle="win11"] .context-menu > div.cm-focused {
+  background: var(--glass-hover);
+  color: var(--text-primary);
+}
+html[data-cmstyle="win11"] #context-menu > div:hover > i,
+html[data-cmstyle="win11"] .context-menu > div:hover > i,
+.cm-preview[data-cmstyle="win11"] .context-menu > div:hover > i,
+html[data-cmstyle="win11"] #context-menu > div.cm-focused > i,
+html[data-cmstyle="win11"] .context-menu > div.cm-focused > i,
+.cm-preview[data-cmstyle="win11"] .context-menu > div.cm-focused > i {
+  color: var(--text-primary);
+}
+html[data-cmstyle="win11"] #context-menu > hr,
+html[data-cmstyle="win11"] .context-menu > hr,
+.cm-preview[data-cmstyle="win11"] .context-menu > hr {
+  height: 1px;
+  width: 100%;
+  border: none;
+  background: var(--glass-border);
+  margin: 4px 0;
+}
+html[data-cmstyle="win11"] #context-menu .submenu-arrow,
+html[data-cmstyle="win11"] .context-menu .submenu-arrow,
+.cm-preview[data-cmstyle="win11"] .context-menu .submenu-arrow {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  margin-left: auto;
+  font-size: 12px;
+  color: var(--text-muted);
+  pointer-events: none;
+}
+html[data-cmstyle="win11"] #context-menu .context-menu,
+html[data-cmstyle="win11"] .context-menu .context-menu,
+.cm-preview[data-cmstyle="win11"] .context-menu .context-menu {
+  position: absolute;
+  top: 0;
+  left: 99%;
+  min-width: 140px;
+  background: var(--menu-bg);
+  backdrop-filter: saturate(2) blur(20px);
+  -webkit-backdrop-filter: saturate(2) blur(20px);
+  border: 1px solid var(--glass-border);
+  border-radius: 8px;
+  box-shadow: var(--shadow-lg);
+  padding: 4px 0;
+  color: var(--text-primary);
+}
+html[data-cmstyle="win11"] .cm-preview,
+.cm-preview[data-cmstyle="win11"] {
+  display: flex;
+  justify-content: center;
+  padding: 12px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--glass-border);
+  border-radius: 8px;
+  pointer-events: none;
+}
+html[data-cmstyle="win11"] .cm-preview .context-menu,
+.cm-preview[data-cmstyle="win11"] .context-menu {
+  position: static;
+  display: block;
+  pointer-events: none;
+}
+html[data-cmstyle="win11"] .cm-preview .context-menu > div,
+.cm-preview[data-cmstyle="win11"] .context-menu > div {
+  pointer-events: none;
+}

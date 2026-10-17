@@ -18,7 +18,9 @@ export function isDeckBootVideoVisible() {
 function getBootVideoUrl() {
   const hostname = window.location?.hostname || "";
   const isLocal = hostname === "localhost" || hostname === "127.0.0.1";
-  return isLocal ? "http://localhost:4001/static/videos/deckboot.mp4" : resolveYukiAsset("static/videos/deckboot.mp4");
+  return isLocal
+    ? "http://localhost:4001/static/videos/deckboot.mp4"
+    : resolveYukiAsset("static/videos/deckboot.mp4");
 }
 
 export function playDeckBootVideo() {
@@ -29,28 +31,28 @@ export function playDeckBootVideo() {
 
   const overlay = createElement("div", {
     id: BOOT_VIDEO_ID,
-    className: "deck-boot-video-overlay"
+    className: "deck-boot-video-overlay",
   });
 
   const video = createElement("video", {
     attributes: {
       autoplay: "",
       playsinline: "",
-      src: getBootVideoUrl()
-    }
+      src: getBootVideoUrl(),
+    },
   });
 
   overlay.appendChild(video);
 
   const disclaimer = createElement("div", {
     className: "deck-boot-disclaimer",
-    text: "YukiOS is an independent fan recreation and is not affiliated with, endorsed by, or connected to Steam or Valve."
+    text: "YukiOS is an independent fan recreation and is not affiliated with, endorsed by, or connected to Steam or Valve.",
   });
   overlay.appendChild(disclaimer);
 
   const skipHint = createElement("div", {
     className: "deck-boot-skip-hint",
-    text: "Esc \u00B7 Enter \u00B7 Space to skip"
+    text: "Esc \u00B7 Enter \u00B7 Space to skip",
   });
   overlay.appendChild(skipHint);
 
@@ -85,7 +87,11 @@ export function playDeckBootVideo() {
     setTimeout(removeOverlay, 12000);
   }
 
-  const isSkipKey = (e) => e.key === "Escape" || e.key === "Enter" || e.key === " " || e.key === "Spacebar";
+  const isSkipKey = (e) =>
+    e.key === "Escape" ||
+    e.key === "Enter" ||
+    e.key === " " ||
+    e.key === "Spacebar";
 
   skipHandler = (e) => {
     if (!isSkipKey(e) && !KeybindManager.matches(e, "boot.skip")) return;

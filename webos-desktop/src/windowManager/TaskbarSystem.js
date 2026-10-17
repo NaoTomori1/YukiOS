@@ -17,7 +17,7 @@ import {
   addClass,
   removeClass,
   toggleClass,
-  setStyle
+  setStyle,
 } from "../shared/domUtils.js";
 import { StorageKeys, os } from "../framework.js";
 import { createAdaptiveInterval } from "../shared/pollThrottle.js";
@@ -38,18 +38,31 @@ export class TaskbarSystem {
       this.renderPinnedItems();
       this.syncPinnedStates();
     });
-    this.audioIndicatorStop = createAdaptiveInterval(() => this.updateAudioIndicators(), 600, 5000);
+    this.audioIndicatorStop = createAdaptiveInterval(
+      () => this.updateAudioIndicators(),
+      600,
+      5000,
+    );
     os.events.on("icon-pack-changed", () => {
       this.renderPinnedItems?.();
-      for (const [winId, entry] of this.manager?.openWindows || this.openWindows || new Map()) {
+      for (const [winId, entry] of this.manager?.openWindows ||
+        this.openWindows ||
+        new Map()) {
         const raw = entry.rawIcon || entry.iconValue;
         const eff = getEffectiveIcon(raw);
-        const taskEl = $(`#taskbar-${winId} img, #taskbar-${winId} i, #taskbar-${winId} svg`);
+        const taskEl = $(
+          `#taskbar-${winId} img, #taskbar-${winId} i, #taskbar-${winId} svg`,
+        );
         if (taskEl) {
           const parent = taskEl.parentElement;
           taskEl.remove();
           const isPapirus = eff.startsWith("papirus:");
-          if (isPapirus) parent.prepend(createElement("img", { attributes: { src: resolveIconUrl(eff) } }));
+          if (isPapirus)
+            parent.prepend(
+              createElement("img", {
+                attributes: { src: resolveIconUrl(eff) },
+              }),
+            );
           else parent.prepend(createElement("i", { className: eff }));
         }
       }
@@ -63,8 +76,12 @@ export class TaskbarSystem {
     if (!taskbar || !taskbarWindows) return;
     this.scrollInitDone = true;
 
-    const indicator = createElement("div", { className: "taskbar-scroll-indicator" });
-    const thumb = createElement("div", { className: "taskbar-scroll-indicator-thumb" });
+    const indicator = createElement("div", {
+      className: "taskbar-scroll-indicator",
+    });
+    const thumb = createElement("div", {
+      className: "taskbar-scroll-indicator-thumb",
+    });
     indicator.appendChild(thumb);
     taskbar.appendChild(indicator);
 
@@ -76,7 +93,9 @@ export class TaskbarSystem {
     };
 
     const update = () => {
-      const horiz = !taskbar.classList.contains("position-left") && !taskbar.classList.contains("position-right");
+      const horiz =
+        !taskbar.classList.contains("position-left") &&
+        !taskbar.classList.contains("position-right");
       if (!horiz) {
         indicator.classList.remove("visible");
         return;
@@ -89,7 +108,10 @@ export class TaskbarSystem {
       const sl = taskbarWindows.scrollLeft;
       const maxSl = taskbarWindows.scrollWidth - taskbarWindows.clientWidth;
       const iw = indicator.clientWidth;
-      const tw2 = Math.max(24, (taskbarWindows.clientWidth / taskbarWindows.scrollWidth) * iw);
+      const tw2 = Math.max(
+        24,
+        (taskbarWindows.clientWidth / taskbarWindows.scrollWidth) * iw,
+      );
       thumb.style.width = `${tw2}px`;
       thumb.style.transform = `translateX(${(sl / maxSl) * (iw - tw2)}px)`;
     };
@@ -97,13 +119,15 @@ export class TaskbarSystem {
     taskbarWindows.addEventListener(
       "wheel",
       (e) => {
-        const horiz = !taskbar.classList.contains("position-left") && !taskbar.classList.contains("position-right");
+        const horiz =
+          !taskbar.classList.contains("position-left") &&
+          !taskbar.classList.contains("position-right");
         if (!horiz) return;
         if (taskbarWindows.scrollWidth <= taskbarWindows.clientWidth) return;
         e.preventDefault();
         taskbarWindows.scrollLeft += e.deltaY + e.deltaX;
       },
-      { passive: false }
+      { passive: false },
     );
 
     taskbarWindows.addEventListener("scroll", update);
@@ -122,7 +146,7 @@ export class TaskbarSystem {
       childList: true,
       subtree: false,
       attributes: true,
-      attributeFilter: ["class", "style"]
+      attributeFilter: ["class", "style"],
     });
 
     requestAnimationFrame(() => {
@@ -134,16 +158,23 @@ export class TaskbarSystem {
   updateTaskbarAlignment() {
     const taskbarWindows = $("#taskbar-windows");
     if (taskbarWindows) {
-      const taskbarAlignment = os.storage.get(StorageKeys.taskbarAlignment) || "left";
+      const taskbarAlignment =
+        os.storage.get(StorageKeys.taskbarAlignment) || "left";
       const taskbar = $("#taskbar");
 
       if (taskbar) {
         const isHorizontal =
-          taskbar.classList.contains("position-bottom") || taskbar.classList.contains("position-top");
+          taskbar.classList.contains("position-bottom") ||
+          taskbar.classList.contains("position-top");
 
         if (isHorizontal) {
-          const justifyMap = { left: "flex-start", center: "center", right: "flex-end" };
-          taskbarWindows.style.justifyContent = justifyMap[taskbarAlignment] || "flex-start";
+          const justifyMap = {
+            left: "flex-start",
+            center: "center",
+            right: "flex-end",
+          };
+          taskbarWindows.style.justifyContent =
+            justifyMap[taskbarAlignment] || "flex-start";
         } else {
           taskbarWindows.style.justifyContent = "";
           taskbarWindows.style.alignItems = "center";
@@ -154,16 +185,22 @@ export class TaskbarSystem {
 
   buildTaskbarIcon(iconValue, title, color) {
     iconValue = getEffectiveIcon(iconValue);
-    const isPapirusRaw = typeof iconValue === "string" && iconValue.startsWith("papirus:");
+    const isPapirusRaw =
+      typeof iconValue === "string" && iconValue.startsWith("papirus:");
     if (isPapirusRaw) {
       const src = resolveIconUrl(iconValue);
       const icon = createElement("img", { attributes: { src } });
       icon.className = "papirus-icon papirus-icon--16";
       icon.onerror = () => {
-        const fallbackEffective = getEffectiveIcon("papirus:apps/application-default-icon");
-        if (typeof fallbackEffective === "string" && fallbackEffective.startsWith("papirus:")) {
+        const fallbackEffective = getEffectiveIcon(
+          "papirus:apps/application-default-icon",
+        );
+        if (
+          typeof fallbackEffective === "string" &&
+          fallbackEffective.startsWith("papirus:")
+        ) {
           const fallback = createElement("img", {
-            attributes: { src: resolveIconUrl(fallbackEffective) }
+            attributes: { src: resolveIconUrl(fallbackEffective) },
           });
           fallback.className = "papirus-icon papirus-icon--16";
           icon.replaceWith(fallback);
@@ -182,10 +219,15 @@ export class TaskbarSystem {
     if (isImage || isDataUrl) {
       const icon = createElement("img", { attributes: { src: iconValue } });
       icon.onerror = () => {
-        const fallbackEffective = getEffectiveIcon("papirus:apps/application-default-icon");
-        if (typeof fallbackEffective === "string" && fallbackEffective.startsWith("papirus:")) {
+        const fallbackEffective = getEffectiveIcon(
+          "papirus:apps/application-default-icon",
+        );
+        if (
+          typeof fallbackEffective === "string" &&
+          fallbackEffective.startsWith("papirus:")
+        ) {
           const fallback = createElement("img", {
-            attributes: { src: resolveIconUrl(fallbackEffective) }
+            attributes: { src: resolveIconUrl(fallbackEffective) },
           });
           fallback.className = "papirus-icon papirus-icon--16";
           icon.replaceWith(fallback);
@@ -203,17 +245,26 @@ export class TaskbarSystem {
 
     if (typeof iconValue === "string" && iconValue.length > 0) {
       if (iconValue.startsWith("papirus:")) {
-        const img = createElement("img", { attributes: { src: resolveIconUrl(iconValue) } });
+        const img = createElement("img", {
+          attributes: { src: resolveIconUrl(iconValue) },
+        });
         img.className = "papirus-icon papirus-icon--16";
         return img;
       }
-      icon.className = iconValue.startsWith("fa") ? iconValue : `fa ${iconValue}`;
+      icon.className = iconValue.startsWith("fa")
+        ? iconValue
+        : `fa ${iconValue}`;
       icon.style.color = color ?? "var(--text-primary)";
     } else {
-      const fallbackEffective = getEffectiveIcon("papirus:apps/application-default-icon");
-      if (typeof fallbackEffective === "string" && fallbackEffective.startsWith("papirus:")) {
+      const fallbackEffective = getEffectiveIcon(
+        "papirus:apps/application-default-icon",
+      );
+      if (
+        typeof fallbackEffective === "string" &&
+        fallbackEffective.startsWith("papirus:")
+      ) {
         const img = createElement("img", {
-          attributes: { src: resolveIconUrl(fallbackEffective) }
+          attributes: { src: resolveIconUrl(fallbackEffective) },
         });
         img.className = "papirus-icon papirus-icon--16";
         return img;
@@ -229,7 +280,11 @@ export class TaskbarSystem {
   addToTaskbar(winId, title, iconValue, color = null) {
     this.manager.triggerSessionSave();
     if ($(`#taskbar-${winId}`)) return;
-    if (iconValue === "fas fa-video" || iconValue === "papirus:devices/camera-video") color = "var(--brand)";
+    if (
+      iconValue === "fas fa-video" ||
+      iconValue === "papirus:devices/camera-video"
+    )
+      color = "var(--brand)";
     const rawIcon = iconValue;
 
     iconValue = getEffectiveIcon(iconValue);
@@ -237,11 +292,12 @@ export class TaskbarSystem {
 
     const taskbarItem = createElement("div", {
       id: `taskbar-${winId}`,
-      className: "taskbar-item"
+      className: "taskbar-item",
     });
     taskbarItem.dataset.title = title;
     const pinWinEl = $(`#${winId}`);
-    const pinAppId = pinWinEl?.dataset?.appId || this.manager.guessAppIdFromWinId(winId);
+    const pinAppId =
+      pinWinEl?.dataset?.appId || this.manager.guessAppIdFromWinId(winId);
     taskbarItem.dataset.appId = pinAppId;
     taskbarItem.dataset.winId = winId;
     taskbarItem.classList.add("running");
@@ -255,13 +311,21 @@ export class TaskbarSystem {
     }
     taskbarItem.appendChild(this.buildTaskbarIcon(iconValue, title, color));
     if (parseBool(os.storage.get(StorageKeys.taskbarShowLabels))) {
-      const label = createElement("span", { className: "taskbar-item-label", text: title });
+      const label = createElement("span", {
+        className: "taskbar-item-label",
+        text: title,
+      });
       taskbarItem.appendChild(label);
     }
-    const speakerIndicator = createElement("span", { className: "taskbar-speaker-indicator" });
-    const speakerEffective = getEffectiveIcon("papirus:status/audio-volume-high");
+    const speakerIndicator = createElement("span", {
+      className: "taskbar-speaker-indicator",
+    });
+    const speakerEffective = getEffectiveIcon(
+      "papirus:status/audio-volume-high",
+    );
     speakerIndicator.innerHTML =
-      typeof speakerEffective === "string" && speakerEffective.startsWith("papirus:")
+      typeof speakerEffective === "string" &&
+      speakerEffective.startsWith("papirus:")
         ? `<img src="${resolveIconUrl(speakerEffective)}" class="papirus-icon papirus-icon--16" alt="" />`
         : `<i class="${speakerEffective}"></i>`;
     speakerIndicator.addEventListener("click", (e) => {
@@ -276,12 +340,14 @@ export class TaskbarSystem {
     taskbarItem.oncontextmenu = (e) => {
       e.preventDefault();
       this.hideTaskbarPreview();
-      if (this.manager.taskbarPreviewShowTimer) clearTimeout(this.manager.taskbarPreviewShowTimer);
-      if (this.manager.taskbarPreviewHideTimer) clearTimeout(this.manager.taskbarPreviewHideTimer);
+      if (this.manager.taskbarPreviewShowTimer)
+        clearTimeout(this.manager.taskbarPreviewShowTimer);
+      if (this.manager.taskbarPreviewHideTimer)
+        clearTimeout(this.manager.taskbarPreviewHideTimer);
       this.contextMenuOpen = true;
       const win = $(`#${winId}`);
       const menu = showStartStyleMenu(e, (addMenuItem, addSeparator) =>
-        this.manager.buildContextMenuItems(addMenuItem, addSeparator, win)
+        this.manager.buildContextMenuItems(addMenuItem, addSeparator, win),
       );
       const observer = new MutationObserver(() => {
         if (!document.body.contains(menu)) {
@@ -298,15 +364,17 @@ export class TaskbarSystem {
       onDragStart: () => {
         this.taskbarDragging = true;
         this.hideTaskbarPreview();
-        if (this.manager.taskbarPreviewShowTimer) clearTimeout(this.manager.taskbarPreviewShowTimer);
-        if (this.manager.taskbarPreviewHideTimer) clearTimeout(this.manager.taskbarPreviewHideTimer);
+        if (this.manager.taskbarPreviewShowTimer)
+          clearTimeout(this.manager.taskbarPreviewShowTimer);
+        if (this.manager.taskbarPreviewHideTimer)
+          clearTimeout(this.manager.taskbarPreviewHideTimer);
       },
       onDragEnd: () => {
         this.taskbarDragging = false;
       },
       onDrop: () => {
         this.saveTaskbarOrder();
-      }
+      },
     });
 
     const win = $(`#${winId}`);
@@ -318,12 +386,23 @@ export class TaskbarSystem {
         y: geom.y,
         width: geom.width,
         height: geom.height,
-        zIndex: parseInt(win.style.zIndex) || 1000
+        zIndex: parseInt(win.style.zIndex) || 1000,
       };
     }
 
-    const record = new WindowRecord(winId, title, { ...geometry, iconValue, color });
-    this.manager.registerWindow(winId, { taskbarItem, title, iconValue, rawIcon, color, record });
+    const record = new WindowRecord(winId, title, {
+      ...geometry,
+      iconValue,
+      color,
+    });
+    this.manager.registerWindow(winId, {
+      taskbarItem,
+      title,
+      iconValue,
+      rawIcon,
+      color,
+      record,
+    });
 
     if (win) {
       const headerSpan = $(".window-header > span", win);
@@ -342,7 +421,8 @@ export class TaskbarSystem {
 
     taskbarItem.addEventListener("mouseenter", () => {
       if (this.contextMenuOpen || this.taskbarDragging) return;
-      if (this.manager.taskbarPreviewShowTimer) clearTimeout(this.manager.taskbarPreviewShowTimer);
+      if (this.manager.taskbarPreviewShowTimer)
+        clearTimeout(this.manager.taskbarPreviewShowTimer);
       this.manager.taskbarPreviewShowTimer = setTimeout(() => {
         if (!this.contextMenuOpen) {
           this.showTaskbarPreview(winId, taskbarItem);
@@ -351,7 +431,8 @@ export class TaskbarSystem {
     });
 
     taskbarItem.addEventListener("mouseleave", () => {
-      if (this.manager.taskbarPreviewShowTimer) clearTimeout(this.manager.taskbarPreviewShowTimer);
+      if (this.manager.taskbarPreviewShowTimer)
+        clearTimeout(this.manager.taskbarPreviewShowTimer);
       this.scheduleHideTaskbarPreview();
     });
 
@@ -360,16 +441,23 @@ export class TaskbarSystem {
 
     const taskbarWindows = $("#taskbar-windows");
     if (taskbarWindows) {
-      const taskbarAlignment = os.storage.get(StorageKeys.taskbarAlignment) || "left";
+      const taskbarAlignment =
+        os.storage.get(StorageKeys.taskbarAlignment) || "left";
       const taskbar = $("#taskbar");
 
       if (taskbar) {
         const isHorizontal =
-          taskbar.classList.contains("position-bottom") || taskbar.classList.contains("position-top");
+          taskbar.classList.contains("position-bottom") ||
+          taskbar.classList.contains("position-top");
 
         if (isHorizontal) {
-          const justifyMap = { left: "flex-start", center: "center", right: "flex-end" };
-          taskbarWindows.style.justifyContent = justifyMap[taskbarAlignment] || "flex-start";
+          const justifyMap = {
+            left: "flex-start",
+            center: "center",
+            right: "flex-end",
+          };
+          taskbarWindows.style.justifyContent =
+            justifyMap[taskbarAlignment] || "flex-start";
         } else {
           taskbarWindows.style.justifyContent = "";
           taskbarWindows.style.alignItems = "center";
@@ -379,7 +467,8 @@ export class TaskbarSystem {
   }
 
   scheduleHideTaskbarPreview() {
-    if (this.manager.taskbarPreviewHideTimer) clearTimeout(this.manager.taskbarPreviewHideTimer);
+    if (this.manager.taskbarPreviewHideTimer)
+      clearTimeout(this.manager.taskbarPreviewHideTimer);
     this.manager.taskbarPreviewHideTimer = setTimeout(() => {
       if (!this.manager.taskbarPreviewHovering) this.hideTaskbarPreview();
     }, 160);
@@ -389,13 +478,19 @@ export class TaskbarSystem {
     const intensityValues = audioMixer().intensityValues;
     if (!intensityValues) return;
     this.manager.openWindows.forEach((entry, winId) => {
-      const indicator = entry.taskbarItem ? $(".taskbar-speaker-indicator", entry.taskbarItem) : null;
+      const indicator = entry.taskbarItem
+        ? $(".taskbar-speaker-indicator", entry.taskbarItem)
+        : null;
       if (!indicator) return;
       const intensity = intensityValues.get(winId) || 0;
       const channel = audioMixer().channels.get(winId);
-      const isExplicitlyPlaying = channel?.nowPlaying?.playbackState === "playing";
+      const isExplicitlyPlaying =
+        channel?.nowPlaying?.playbackState === "playing";
       const isMuted = channel?.muted === true;
-      indicator.classList.toggle("visible", intensity > 0.5 || isExplicitlyPlaying || isMuted);
+      indicator.classList.toggle(
+        "visible",
+        intensity > 0.5 || isExplicitlyPlaying || isMuted,
+      );
       indicator.classList.toggle("muted", isMuted);
     });
   }
@@ -427,18 +522,22 @@ export class TaskbarSystem {
         <button class="taskbar-preview__close" title="Close">✕</button>
       </div>
       <div class="taskbar-preview__thumb"></div>
-    `
+    `,
     );
     setText($(".taskbar-preview__title-text", preview), title);
 
     const thumb = $(".taskbar-preview__thumb", preview);
     const clone = win.cloneNode(true);
     clone.removeAttribute("id");
-    ["left", "top", "right", "bottom", "z-index", "position"].forEach((p) => clone.style.removeProperty(p));
+    ["left", "top", "right", "bottom", "z-index", "position"].forEach((p) =>
+      clone.style.removeProperty(p),
+    );
     clone.classList.add("taskbar-preview__winclone");
     $$("[id]", clone).forEach((n) => n.removeAttribute("id"));
     $$(".window-controls", clone).forEach((n) => n.remove());
-    $$("input,textarea,button,select", clone).forEach((n) => n.setAttribute("disabled", "disabled"));
+    $$("input,textarea,button,select", clone).forEach((n) =>
+      n.setAttribute("disabled", "disabled"),
+    );
 
     $$("iframe, video, audio, canvas", clone).forEach((n) => {
       const placeholder = createElement("div", {
@@ -448,14 +547,25 @@ export class TaskbarSystem {
           background: "var(--bg-secondary, rgba(0,0,0,0.5))",
           display: "flex",
           alignItems: "center",
-          justifyContent: "center"
-        }
+          justifyContent: "center",
+        },
       });
       const tempDiv = createElement("div");
-      setHTML(tempDiv, this.manager.getWindowIconHtml(meta?.iconValue, meta?.color || "var(--text-primary)"));
+      setHTML(
+        tempDiv,
+        this.manager.getWindowIconHtml(
+          meta?.iconValue,
+          meta?.color || "var(--text-primary)",
+        ),
+      );
       const iconEl2 = tempDiv.firstElementChild;
       if (iconEl2) {
-        setStyle(iconEl2, { fontSize: "48px", width: "48px", height: "48px", opacity: "0.7" });
+        setStyle(iconEl2, {
+          fontSize: "48px",
+          width: "48px",
+          height: "48px",
+          opacity: "0.7",
+        });
         placeholder.appendChild(iconEl2);
       }
       n.replaceWith(placeholder);
@@ -472,7 +582,10 @@ export class TaskbarSystem {
 
     const left = Math.max(
       8,
-      Math.min(rect.left + rect.width / 2 - pRect.width / 2, window.innerWidth - pRect.width - 8)
+      Math.min(
+        rect.left + rect.width / 2 - pRect.width / 2,
+        window.innerWidth - pRect.width - 8,
+      ),
     );
     const top = Math.max(8, rect.top - pRect.height - 10);
 
@@ -489,7 +602,8 @@ export class TaskbarSystem {
 
     preview.addEventListener("mouseenter", () => {
       this.manager.taskbarPreviewHovering = true;
-      if (this.manager.taskbarPreviewHideTimer) clearTimeout(this.manager.taskbarPreviewHideTimer);
+      if (this.manager.taskbarPreviewHideTimer)
+        clearTimeout(this.manager.taskbarPreviewHideTimer);
     });
     preview.addEventListener("mouseleave", () => {
       this.manager.taskbarPreviewHovering = false;
@@ -525,7 +639,8 @@ export class TaskbarSystem {
 
   isWindowPinned(winId) {
     const win = $(`#${winId}`);
-    const appId = win?.dataset?.appId || this.manager.guessAppIdFromWinId(winId);
+    const appId =
+      win?.dataset?.appId || this.manager.guessAppIdFromWinId(winId);
     return !!this.getPinnedItemByAppId(appId);
   }
 
@@ -552,18 +667,23 @@ export class TaskbarSystem {
     try {
       let pinnedData = os.storage.get(StorageKeys.pinnedTaskbarItems) || [];
       const obsoleteIds = ["animesApp"];
-      const filteredPinned = pinnedData.filter((item) => !obsoleteIds.includes(item.appId));
+      const filteredPinned = pinnedData.filter(
+        (item) => !obsoleteIds.includes(item.appId),
+      );
       if (filteredPinned.length !== pinnedData.length) {
         pinnedData = filteredPinned;
         os.storage.set(StorageKeys.pinnedTaskbarItems, pinnedData);
         try {
           const order = os.storage.get(StorageKeys.taskbarOrder) || [];
           const cleanedOrder = order.filter((id) => !obsoleteIds.includes(id));
-          if (cleanedOrder.length !== order.length) os.storage.set(StorageKeys.taskbarOrder, cleanedOrder);
+          if (cleanedOrder.length !== order.length)
+            os.storage.set(StorageKeys.taskbarOrder, cleanedOrder);
         } catch {}
       }
       const tvPinnedWinId = "tv-streaming-pinned";
-      const hasTvDefaultPin = pinnedData.some((item) => item.winId === tvPinnedWinId);
+      const hasTvDefaultPin = pinnedData.some(
+        (item) => item.winId === tvPinnedWinId,
+      );
       if (hasTvDefaultPin) {
         pinnedData = pinnedData.filter((item) => item.winId !== tvPinnedWinId);
         os.storage.set(StorageKeys.pinnedTaskbarItems, pinnedData);
@@ -572,59 +692,62 @@ export class TaskbarSystem {
           if (order.includes("tvStreamingApp")) {
             os.storage.set(
               StorageKeys.taskbarOrder,
-              order.filter((id) => id !== "tvStreamingApp")
+              order.filter((id) => id !== "tvStreamingApp"),
             );
           }
         } catch {}
       }
-      const migrationKey = StorageKeys.defaultsCreatedPrefix + "pinnedTaskbarItems";
+      const migrationKey =
+        StorageKeys.defaultsCreatedPrefix + "pinnedTaskbarItems";
       const defaultApps = [
         {
           winId: "explorer-pinned",
           appId: "explorerApp",
           title: "Explorer",
-          iconValue: resolveIconUrl("static/icons/file.webp"),
-          color: null
+          iconValue: resolveIconUrl("static/icons/explorerwin11.png"),
+          color: null,
         },
         {
           winId: "browser-pinned",
           appId: "browserApp",
           title: "Yuki Browser",
           iconValue: resolveIconUrl("static/icons/chrome.webp"),
-          color: null
+          color: null,
         },
         {
           winId: "discord-pinned",
           appId: "discordApp",
           title: "Discord",
           iconValue: "papirus:apps/discord",
-          color: null
+          color: null,
         },
         {
           winId: "movies-pinned",
           appId: "moviesApp",
           title: "Movies",
           iconValue: "papirus:mimetypes/video-x-generic",
-          color: null
+          color: null,
         },
         {
           winId: "aniwatch-pinned",
           appId: "aniwatchApp",
           title: "Aniwatch Anime",
           iconValue: "papirus:actions/media-playback-start",
-          color: null
+          color: null,
         },
         {
           winId: "launchpad-pinned",
           appId: "launchpadApp",
           title: "Launchpad",
           iconValue: "papirus:actions/view-grid",
-          color: null
-        }
+          color: null,
+        },
       ];
 
       const existingAppIds = pinnedData.map((item) => item.appId);
-      const missingDefaults = defaultApps.filter((app) => !existingAppIds.includes(app.appId));
+      const missingDefaults = defaultApps.filter(
+        (app) => !existingAppIds.includes(app.appId),
+      );
 
       if (missingDefaults.length > 0 && pinnedData.length === 0) {
         const updatedPinnedItems = [...defaultApps];
@@ -651,7 +774,8 @@ export class TaskbarSystem {
     if (!entry) return;
 
     const win = $(`#${winId}`);
-    const appId = win?.dataset?.appId || this.manager.guessAppIdFromWinId(winId);
+    const appId =
+      win?.dataset?.appId || this.manager.guessAppIdFromWinId(winId);
 
     const pinnedItems = this.getPinnedItems();
     if (pinnedItems.some((item) => item.appId === appId)) return;
@@ -661,7 +785,7 @@ export class TaskbarSystem {
       appId,
       title: entry.title,
       iconValue: entry.iconValue,
-      color: entry.color
+      color: entry.color,
     });
 
     this.savePinnedItems(pinnedItems);
@@ -672,7 +796,9 @@ export class TaskbarSystem {
     if (stalePin) stalePin.remove();
 
     this.syncPinnedStates();
-    os.events.emit(BusEvents.ACHIEVEMENT_TRIGGER, { achievementId: Achievements.PinCushion });
+    os.events.emit(BusEvents.ACHIEVEMENT_TRIGGER, {
+      achievementId: Achievements.PinCushion,
+    });
   }
 
   unpinFromTaskbar(winId) {
@@ -683,7 +809,9 @@ export class TaskbarSystem {
     }
     if (!appId) appId = this.manager.guessAppIdFromWinId(winId);
     const pinnedItems = this.getPinnedItems();
-    const target = pinnedItems.find((item) => item.appId === appId) || pinnedItems.find((item) => item.winId === winId);
+    const target =
+      pinnedItems.find((item) => item.appId === appId) ||
+      pinnedItems.find((item) => item.winId === winId);
     if (!target) return;
 
     const filtered = pinnedItems.filter((item) => item !== target);
@@ -707,7 +835,9 @@ export class TaskbarSystem {
     if (!winTask) return;
     const entry = this.manager.openWindows.get(winId);
     const record = entry?.record;
-    const isMinimized = record ? record.minimized : winTask.style.display === "none";
+    const isMinimized = record
+      ? record.minimized
+      : winTask.style.display === "none";
 
     if (isMinimized) {
       if (winTask.style.display === "none") winTask.style.display = "";
@@ -718,7 +848,8 @@ export class TaskbarSystem {
       }
       this.manager.bringToFront(winTask);
     } else {
-      const isFocused = parseInt(winTask.style.zIndex) === this.manager.zIndexCounter - 1;
+      const isFocused =
+        parseInt(winTask.style.zIndex) === this.manager.zIndexCounter - 1;
       if (isFocused) {
         this.manager.minimizeWindow(winTask);
       } else {
@@ -736,23 +867,33 @@ export class TaskbarSystem {
     pinnedItem.oncontextmenu = (e) => {
       e.preventDefault();
       this.hideTaskbarPreview();
-      if (this.manager.taskbarPreviewShowTimer) clearTimeout(this.manager.taskbarPreviewShowTimer);
-      if (this.manager.taskbarPreviewHideTimer) clearTimeout(this.manager.taskbarPreviewHideTimer);
+      if (this.manager.taskbarPreviewShowTimer)
+        clearTimeout(this.manager.taskbarPreviewShowTimer);
+      if (this.manager.taskbarPreviewHideTimer)
+        clearTimeout(this.manager.taskbarPreviewHideTimer);
       this.contextMenuOpen = true;
       const menu = showStartStyleMenu(e, (addMenuItem, addSeparator) => {
         const hasOpenWindow = this.findOpenWindowIdByAppId(appId);
         if (hasOpenWindow) {
-          addMenuItem("New Window", () => os.app.launch(appId), "fa-plus-square");
+          addMenuItem(
+            "New Window",
+            () => os.app.launch(appId),
+            "fa-plus-square",
+          );
           addSeparator();
         }
-        addMenuItem("Unpin from Taskbar", () => this.unpinFromTaskbar(pinWinId), "fa-thumbtack");
+        addMenuItem(
+          "Unpin from Taskbar",
+          () => this.unpinFromTaskbar(pinWinId),
+          "fa-thumbtack",
+        );
         addSeparator();
         addMenuItem(
           "Launch App",
           () => {
             if (appId) os.app.launch(appId);
           },
-          "fa-play"
+          "fa-play",
         );
       });
       const observer = new MutationObserver(() => {
@@ -771,7 +912,8 @@ export class TaskbarSystem {
     if (!taskbarItem || !taskbarItem.classList.contains("pinned")) return false;
 
     taskbarItem.classList.remove("active", "running", "minimized");
-    const appId = taskbarItem.dataset.appId || this.manager.guessAppIdFromWinId(winId);
+    const appId =
+      taskbarItem.dataset.appId || this.manager.guessAppIdFromWinId(winId);
     const pin = this.getPinnedItemByAppId(appId);
     const pinWinId = pin ? pin.winId : `${appId}-pinned`;
     this.applyPinnedClickAndMenu(taskbarItem, appId, pinWinId);
@@ -782,7 +924,10 @@ export class TaskbarSystem {
     const taskbarWindows = $("#taskbar-windows");
     if (!taskbarWindows) return;
 
-    const existingPinned = $$('.taskbar-item[id^="taskbar-pinned-"]', taskbarWindows);
+    const existingPinned = $$(
+      '.taskbar-item[id^="taskbar-pinned-"]',
+      taskbarWindows,
+    );
     existingPinned.forEach((el) => el.remove());
 
     const pinnedItems = this.getPinnedItems();
@@ -798,17 +943,21 @@ export class TaskbarSystem {
         return;
       }
 
-      const existingForApp = $$(".taskbar-item.pinned", taskbarWindows).find((el) => el.dataset.appId === item.appId);
+      const existingForApp = $$(".taskbar-item.pinned", taskbarWindows).find(
+        (el) => el.dataset.appId === item.appId,
+      );
       if (existingForApp) return;
 
       const pinnedItem = createElement("div", {
         id: `taskbar-pinned-${item.winId}`,
-        className: "taskbar-item pinned"
+        className: "taskbar-item pinned",
       });
       pinnedItem.dataset.title = item.title;
       pinnedItem.dataset.appId = item.appId;
       pinnedItem.dataset.winId = item.winId;
-      pinnedItem.appendChild(this.buildTaskbarIcon(item.iconValue, item.title, item.color));
+      pinnedItem.appendChild(
+        this.buildTaskbarIcon(item.iconValue, item.title, item.color),
+      );
 
       this.applyPinnedClickAndMenu(pinnedItem, item.appId, item.winId);
 
@@ -818,15 +967,17 @@ export class TaskbarSystem {
         onDragStart: () => {
           this.taskbarDragging = true;
           this.hideTaskbarPreview();
-          if (this.manager.taskbarPreviewShowTimer) clearTimeout(this.manager.taskbarPreviewShowTimer);
-          if (this.manager.taskbarPreviewHideTimer) clearTimeout(this.manager.taskbarPreviewHideTimer);
+          if (this.manager.taskbarPreviewShowTimer)
+            clearTimeout(this.manager.taskbarPreviewShowTimer);
+          if (this.manager.taskbarPreviewHideTimer)
+            clearTimeout(this.manager.taskbarPreviewHideTimer);
         },
         onDragEnd: () => {
           this.taskbarDragging = false;
         },
         onDrop: () => {
           this.saveTaskbarOrder();
-        }
+        },
       });
 
       taskbarWindows.appendChild(pinnedItem);
@@ -861,7 +1012,9 @@ export class TaskbarSystem {
 
     const resolveAppId = (entry) => {
       if (byApp.has(entry)) return entry;
-      const pin = this.getPinnedItems().find((p) => `pinned-${p.winId}` === entry);
+      const pin = this.getPinnedItems().find(
+        (p) => `pinned-${p.winId}` === entry,
+      );
       return pin ? pin.appId : null;
     };
 
@@ -919,7 +1072,7 @@ export class TaskbarSystem {
         if (!label) {
           label = createElement("span", {
             className: "taskbar-item-label",
-            text: item.dataset.title || ""
+            text: item.dataset.title || "",
           });
           item.appendChild(label);
         }

@@ -19,14 +19,17 @@ export const $$ = (selector, root = document) => {
   } catch {
     if (typeof selector === "string" && selector.startsWith("#")) {
       const id = selector.slice(1);
-      const el = root.getElementById ? root.getElementById(id) : root.querySelector(`#${CSS.escape(id)}`);
+      const el = root.getElementById
+        ? root.getElementById(id)
+        : root.querySelector(`#${CSS.escape(id)}`);
       return el ? [el] : [];
     }
     return [];
   }
 };
 
-export const queryAll = (selectors, root = document) => Object.fromEntries(selectors.map((s) => [s, $(s, root)]));
+export const queryAll = (selectors, root = document) =>
+  Object.fromEntries(selectors.map((s) => [s, $(s, root)]));
 
 export const bindEvent = (element, event, handler, options) => {
   if (element) element.addEventListener(event, handler, options);

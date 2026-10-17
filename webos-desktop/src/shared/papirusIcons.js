@@ -1,9 +1,15 @@
 import { resolveGhUrl } from "./assetResolver.js";
-import { PAPIRUS_AVAILABLE, PAPIRUS_SYMLINKS, papirusReady, ensurePapirusData } from "./papirusDataLoader.js";
+import {
+  PAPIRUS_AVAILABLE,
+  PAPIRUS_SYMLINKS,
+  papirusReady,
+  ensurePapirusData,
+} from "./papirusDataLoader.js";
 
 export { PAPIRUS_AVAILABLE, PAPIRUS_SYMLINKS, papirusReady, ensurePapirusData };
 
-export const PAPIRUS_CDN_BASE = "https://cdn.jsdelivr.net/gh/PapirusDevelopmentTeam/papirus-icon-theme@master";
+export const PAPIRUS_CDN_BASE =
+  "https://cdn.jsdelivr.net/gh/PapirusDevelopmentTeam/papirus-icon-theme@master";
 export const PAPIRUS_VARIANT = "Papirus";
 export const PAPIRUS_SIZES = [16, 22, 24, 32, 48, 64];
 
@@ -42,7 +48,10 @@ function pickAvailableSize(requestedBucket, availableSizes) {
   }
   return parseInt(availableSizes[0].split("x")[0], 10);
 }
-export function resolvePapirusUrl(name, { size = 48, context = "apps", variant = PAPIRUS_VARIANT } = {}) {
+export function resolvePapirusUrl(
+  name,
+  { size = 48, context = "apps", variant = PAPIRUS_VARIANT } = {},
+) {
   if (!name) return null;
   let raw = String(name).trim();
   if (raw.startsWith("papirus:")) raw = raw.slice(8);
@@ -66,7 +75,9 @@ export function resolvePapirusUrl(name, { size = 48, context = "apps", variant =
     key = `${ctx}/${iconName}`;
   }
   const requestedBucket = getPapirusSizeFor(size);
-  const available = PAPIRUS_AVAILABLE[key] || PAPIRUS_AVAILABLE[`${ctx}/${iconName.toLowerCase()}`];
+  const available =
+    PAPIRUS_AVAILABLE[key] ||
+    PAPIRUS_AVAILABLE[`${ctx}/${iconName.toLowerCase()}`];
   let bucket = requestedBucket;
   if (available && available.length) {
     bucket = pickAvailableSize(requestedBucket, available);
@@ -278,7 +289,7 @@ export const FA_TO_PAPIRUS = {
   "fas fa-search-minus": "actions/zoom-out",
   "fas fa-search": "actions/edit-find",
   "fas fa-stop": "actions/media-playback-stop",
-  "fas fa-house": "places/user-home"
+  "fas fa-house": "places/user-home",
 };
 
 export function papirusForFa(faClass) {
@@ -288,7 +299,10 @@ export function papirusForFa(faClass) {
   if (FA_TO_PAPIRUS[trimmed]) return `papirus:${FA_TO_PAPIRUS[trimmed]}`;
   const lower = trimmed.toLowerCase();
   if (FA_TO_PAPIRUS[lower]) return `papirus:${FA_TO_PAPIRUS[lower]}`;
-  const isFa = /^fa[bsr]?\s+fa-/.test(trimmed) || /^fa\s+fa-/.test(trimmed) || /^fa-[a-z0-9-]+$/.test(trimmed);
+  const isFa =
+    /^fa[bsr]?\s+fa-/.test(trimmed) ||
+    /^fa\s+fa-/.test(trimmed) ||
+    /^fa-[a-z0-9-]+$/.test(trimmed);
   if (isFa) return "papirus:apps/application-default-icon";
   return null;
 }

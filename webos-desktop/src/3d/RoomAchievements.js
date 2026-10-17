@@ -13,16 +13,26 @@ export class RoomAchievements {
         id: "game_master",
         title: "Game Master",
         desc: "Complete the sorting minigame for the first time",
-        rarity: "common"
+        rarity: "common",
       },
-      { id: "perfect_sort", title: "Perfect Sort", desc: "Complete the minigame with 100% accuracy", rarity: "rare" },
-      { id: "speed_shelver", title: "Speed Shelver", desc: "Complete the minigame in under 2 minutes", rarity: "epic" },
+      {
+        id: "perfect_sort",
+        title: "Perfect Sort",
+        desc: "Complete the minigame with 100% accuracy",
+        rarity: "rare",
+      },
+      {
+        id: "speed_shelver",
+        title: "Speed Shelver",
+        desc: "Complete the minigame in under 2 minutes",
+        rarity: "epic",
+      },
       {
         id: "interior_designer",
         title: "Interior Designer",
         desc: "Enter the editor mode for the first time",
-        rarity: "uncommon"
-      }
+        rarity: "uncommon",
+      },
     ];
   }
 
@@ -37,7 +47,11 @@ export class RoomAchievements {
   getStats() {
     const total = this.achievements.length;
     const unlocked = this.unlocked.size;
-    return { total, unlocked, percentage: Math.round((unlocked / total) * 100) };
+    return {
+      total,
+      unlocked,
+      percentage: Math.round((unlocked / total) * 100),
+    };
   }
 
   trigger(id) {
@@ -53,7 +67,7 @@ export class RoomAchievements {
     return this.achievements.map((a) => ({
       ...a,
       unlocked: this.unlocked.has(a.id),
-      unlockedAt: this.unlocked.get(a.id) || null
+      unlockedAt: this.unlocked.get(a.id) || null,
     }));
   }
 

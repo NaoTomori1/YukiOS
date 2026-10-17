@@ -31,5 +31,5 @@ export const BusEvents = Object.freeze({
   TILING_LAYOUT_CHANGED: "tiling:layout-changed",
   MODE_ENTERED: "mode:entered",
   MODE_EXITED: "mode:exited",
-  SCREENSHOT_CAPTURED: "screenshot:captured"
+  SCREENSHOT_CAPTURED: "screenshot:captured",
 });

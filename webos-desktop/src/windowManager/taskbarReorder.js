@@ -22,7 +22,9 @@ function getGap(container, axis) {
 }
 
 function midpoint(rect, axis) {
-  return axis === "x" ? (rect.left + rect.right) / 2 : (rect.top + rect.bottom) / 2;
+  return axis === "x"
+    ? (rect.left + rect.right) / 2
+    : (rect.top + rect.bottom) / 2;
 }
 
 function computeTargetIndex(center, sibRects, axis, sign) {
@@ -38,11 +40,15 @@ function computeTargetIndex(center, sibRects, axis, sign) {
 function autoScroll(ev, container, axis) {
   const rect = container.getBoundingClientRect();
   if (axis === "x") {
-    if (ev.clientX > rect.right - EDGE_SCROLL_MARGIN) container.scrollLeft += EDGE_SCROLL_STEP;
-    else if (ev.clientX < rect.left + EDGE_SCROLL_MARGIN) container.scrollLeft -= EDGE_SCROLL_STEP;
+    if (ev.clientX > rect.right - EDGE_SCROLL_MARGIN)
+      container.scrollLeft += EDGE_SCROLL_STEP;
+    else if (ev.clientX < rect.left + EDGE_SCROLL_MARGIN)
+      container.scrollLeft -= EDGE_SCROLL_STEP;
   } else {
-    if (ev.clientY > rect.bottom - EDGE_SCROLL_MARGIN) container.scrollTop += EDGE_SCROLL_STEP;
-    else if (ev.clientY < rect.top + EDGE_SCROLL_MARGIN) container.scrollTop -= EDGE_SCROLL_STEP;
+    if (ev.clientY > rect.bottom - EDGE_SCROLL_MARGIN)
+      container.scrollTop += EDGE_SCROLL_STEP;
+    else if (ev.clientY < rect.top + EDGE_SCROLL_MARGIN)
+      container.scrollTop -= EDGE_SCROLL_STEP;
   }
 }
 
@@ -64,7 +70,7 @@ export function enableTaskbarReorder(item, config) {
     shift: 0,
     lastTarget: 0,
     bounds: null,
-    zoom: 1
+    zoom: 1,
   };
 
   const cleanupListeners = () => {
@@ -114,7 +120,8 @@ export function enableTaskbarReorder(item, config) {
     state.axis = getAxis(container);
     state.sign = getSign(container, state.axis);
     const gap = getGap(container, state.axis);
-    const draggedSize = state.axis === "x" ? state.startRect.width : state.startRect.height;
+    const draggedSize =
+      state.axis === "x" ? state.startRect.width : state.startRect.height;
     state.shift = draggedSize + gap;
     state.lastTarget = -1;
 
@@ -127,7 +134,9 @@ export function enableTaskbarReorder(item, config) {
     const shift = state.shift;
     siblings.forEach((s, i) => {
       s.style.transform =
-        i >= target ? `translate${axis === "x" ? "X" : "Y"}(${(sign * shift) / state.zoom}px)` : "";
+        i >= target
+          ? `translate${axis === "x" ? "X" : "Y"}(${(sign * shift) / state.zoom}px)`
+          : "";
     });
   };
 
@@ -154,12 +163,18 @@ export function enableTaskbarReorder(item, config) {
     if (state.axis === "x") {
       const minLeft = bounds.left;
       const maxLeft = bounds.right - state.startRect.width;
-      const newLeft = Math.max(minLeft, Math.min(state.startRect.left + tx, maxLeft));
+      const newLeft = Math.max(
+        minLeft,
+        Math.min(state.startRect.left + tx, maxLeft),
+      );
       tx = newLeft - state.startRect.left;
     } else {
       const minTop = bounds.top;
       const maxTop = bounds.bottom - state.startRect.height;
-      const newTop = Math.max(minTop, Math.min(state.startRect.top + ty, maxTop));
+      const newTop = Math.max(
+        minTop,
+        Math.min(state.startRect.top + ty, maxTop),
+      );
       ty = newTop - state.startRect.top;
     }
 
@@ -240,7 +255,7 @@ export function enableTaskbarReorder(item, config) {
         e.stopPropagation();
         e.preventDefault();
       },
-      { capture: true, once: true }
+      { capture: true, once: true },
     );
 
     if (typeof onDrop === "function") onDrop();

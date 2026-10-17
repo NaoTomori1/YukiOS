@@ -7,7 +7,7 @@ export const GENRES = {
   adventure: { label: "Adventure", color: 0xffcc00 },
   platformer: { label: "Platformer", color: 0xff8844 },
   simulation: { label: "Simulation", color: 0x66cccc },
-  rpg: { label: "RPG", color: 0xcc8844 }
+  rpg: { label: "RPG", color: 0xcc8844 },
 };
 
 export const GAME_GENRES = {
@@ -30,7 +30,7 @@ export const GAME_GENRES = {
   slenderina: "horror",
   baldiBalds: "horror",
   baldisBasicsTeachingOnTwos: "horror",
-  playtimeHellBear5van: "horror"
+  playtimeHellBear5van: "horror",
 };
 
 export class GameState {
@@ -87,7 +87,8 @@ export class GameState {
 
   placeGameCaseWrongly(gameId) {
     if (!this.active) return;
-    if (this.scoredGameCases.has(gameId) || this.wrongAttempted.has(gameId)) return;
+    if (this.scoredGameCases.has(gameId) || this.wrongAttempted.has(gameId))
+      return;
     this.wrongAttempted.add(gameId);
     this.shelvedWrong++;
     this.wrongPlacements++;
@@ -104,7 +105,10 @@ export class GameState {
   }
 
   getResults() {
-    const accuracy = this.totalGameCases > 0 ? Math.round((this.shelvedCorrect / this.totalGameCases) * 100) : 0;
+    const accuracy =
+      this.totalGameCases > 0
+        ? Math.round((this.shelvedCorrect / this.totalGameCases) * 100)
+        : 0;
     const minutes = Math.floor(this.elapsed / 60);
     const seconds = Math.floor(this.elapsed % 60);
     return {
@@ -113,7 +117,7 @@ export class GameState {
       accuracy,
       correct: this.shelvedCorrect,
       wrong: this.shelvedWrong,
-      total: this.totalGameCases
+      total: this.totalGameCases,
     };
   }
 

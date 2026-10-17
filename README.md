@@ -439,6 +439,16 @@ Shift+Tab overlay with draggable, resizable panels for any running game:
 
 # 🛠 Build & Deployment
 
+## Local Setup
+
+```bash
+cd webos-desktop
+pnpm install
+pnpm serve
+```
+
+`pnpm serve` starts two local static servers for testing site.
+
 ```bash
 pnpm run dev          # Development server
 pnpm run build:dev    # Development build
@@ -501,7 +511,17 @@ top.
 - Scramjet / BareMux / Epoxy Transport
 - [Pyodide](https://github.com/pyodide/pyodide) (WASM Python runtime)
 - [WebContainers](https://github.com/stackblitz/webcontainer-core) (WASM Node.js runtime)
-- [Truffled](https://truffled.lol) (games)
+- [Infared](https://youtube-liard-ten.vercel.app/) Alternative YouTube frontend by maacy on Discord, contact ihatecamouflage@hotmail.com. Used with permission. All rights reserved.
+- [CraxGPT](https://gpt.crax.lol) Free AI chat backend powering the YukiOS assistant.
+- [Nodium Roblox Studio](https://studio.nodium.lol) and [Nodium Roblox Player](https://player.nodium.lol) Roblox webports.
+- [Azerun](https://azerun.com/play/) World of Warcraft in the browser.
+- [Eaglercraft Launcher](https://redflamz.github.io/Eaglercraft-Launcher/) Community Minecraft web launcher.
+- [JSPaint](https://jspaint.app) Classic paint remade for the web by Isaiah Odhner.
+- [LibreSprite](https://libresprite.github.io/online) Pixel art editor.
+- [Emupedia](https://emupedia.net) Retro games, EmuOS, and web ports.
+- [Truffled](https://truffled.lol) Browser game ports.
+- [Aether](https://aether.ist/) Movie streaming frontend used by the Movies app.
+- [Famelack](https://famelack.com) Live TV frontend used by the TV Streaming app.
 </details>
 
 ## Build tooling

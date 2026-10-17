@@ -9,7 +9,7 @@ const Caches = {
   appList: { data: null, time: 0, promise: null },
   themes: {},
   adminThemes: {},
-  social: {}
+  social: {},
 };
 
 const CACHE_TTL = 5 * 60 * 1000;
@@ -47,7 +47,12 @@ async function withCache(cacheObj, key, fetcher, ttl = CACHE_TTL) {
   return entry.promise;
 }
 
-async function cachedJsonResponse(request, cacheKeySuffix, ttlSeconds, computeFn) {
+async function cachedJsonResponse(
+  request,
+  cacheKeySuffix,
+  ttlSeconds,
+  computeFn,
+) {
   const url = new URL(request.url);
   let cache = null;
   try {
@@ -58,7 +63,10 @@ async function cachedJsonResponse(request, cacheKeySuffix, ttlSeconds, computeFn
   let cacheKey = null;
   if (cache) {
     try {
-      cacheKey = new Request(url.origin + url.pathname + "?ck=" + cacheKeySuffix, request);
+      cacheKey = new Request(
+        url.origin + url.pathname + "?ck=" + cacheKeySuffix,
+        request,
+      );
       const hit = await cache.match(cacheKey);
       if (hit) return hit;
     } catch {
@@ -118,14 +126,18 @@ async function deriveDailyId(env, ip) {
       new TextEncoder().encode(secret),
       { name: "HMAC", hash: "SHA-256" },
       false,
-      ["sign"]
+      ["sign"],
     );
     cachedKeySecret = secret;
   }
 
   const date = new Date().toISOString().slice(0, 10);
   const message = `${date}:${ip}`;
-  const signature = await crypto.subtle.sign("HMAC", cachedKey, new TextEncoder().encode(message));
+  const signature = await crypto.subtle.sign(
+    "HMAC",
+    cachedKey,
+    new TextEncoder().encode(message),
+  );
   const hex = Array.from(new Uint8Array(signature))
     .map((b) => b.toString(16).padStart(2, "0"))
     .join("");
@@ -147,7 +159,7 @@ async function sendReportEmbed(env, embed) {
     res = await fetch(webhook, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ embeds: [embed] })
+      body: JSON.stringify({ embeds: [embed] }),
     });
   } catch (err) {
     throw new Error("Report delivery failed: " + getErrorMessage(err));
@@ -169,9 +181,9 @@ const DEBUG_ENABLED = false;
 function errorJsonResponse(err, status = 500) {
   return jsonResponse(
     {
-      error: DEBUG_ENABLED ? getErrorMessage(err) : "Internal Error"
+      error: DEBUG_ENABLED ? getErrorMessage(err) : "Internal Error",
     },
-    status
+    status,
   );
 }
 
@@ -181,7 +193,9 @@ function jsonResponse(data, status = 200) {
     body = JSON.stringify(data);
   } catch (err) {
     status = 500;
-    body = JSON.stringify({ error: getErrorMessage(err) || "Serialization failed" });
+    body = JSON.stringify({
+      error: getErrorMessage(err) || "Serialization failed",
+    });
   }
   return new Response(body, { status, headers: corsHeaders() });
 }
@@ -209,7 +223,8 @@ function escapeHtml(str) {
 
 function isAppAllowed(app, appList) {
   const normalized = normalizeApp(app);
-  if (!appList || !appList.length) return /^[a-z0-9_.-]{1,64}$/.test(normalized);
+  if (!appList || !appList.length)
+    return /^[a-z0-9_.-]{1,64}$/.test(normalized);
   return appList.includes(normalized);
 }
 
@@ -234,7 +249,7 @@ async function fetchAppList(env) {
         return null;
       }
     },
-    10 * 60 * 1000
+    10 * 60 * 1000,
   );
 }
 
@@ -261,9 +276,11 @@ function ensureAnalyticsIndexes(env) {
     "CREATE INDEX IF NOT EXISTS idx_analytics_event ON analytics (json_extract(data, '$.event'))",
     "CREATE INDEX IF NOT EXISTS idx_analytics_app ON analytics (json_extract(data, '$.app'))",
     "CREATE INDEX IF NOT EXISTS idx_analytics_ts_event ON analytics (timestamp, json_extract(data, '$.event'))",
-    "CREATE INDEX IF NOT EXISTS idx_analytics_event_app_ts ON analytics (json_extract(data, '$.event'), json_extract(data, '$.app'), timestamp)"
+    "CREATE INDEX IF NOT EXISTS idx_analytics_event_app_ts ON analytics (json_extract(data, '$.event'), json_extract(data, '$.app'), timestamp)",
   ];
-  analyticsIndexInitPromise = env.DB.batch(statements.map((sql) => env.DB.prepare(sql))).catch((e) => {
+  analyticsIndexInitPromise = env.DB.batch(
+    statements.map((sql) => env.DB.prepare(sql)),
+  ).catch((e) => {
     analyticsIndexInitPromise = null;
     throw e;
   });
@@ -284,7 +301,7 @@ async function fetchStatsData(env, range) {
      FROM analytics
      WHERE timestamp >= datetime('now', '-' || ? || ' days')
      GROUP BY day
-     ORDER BY day DESC`
+     ORDER BY day DESC`,
   )
     .bind(days)
     .all();
@@ -297,7 +314,7 @@ async function fetchStatsData(env, range) {
      FROM analytics
      WHERE timestamp >= datetime('now', '-' || ? || ' days')
        AND json_extract(data, '$.event') = 'launch'
-     GROUP BY day, app`
+     GROUP BY day, app`,
   )
     .bind(days)
     .all();
@@ -325,7 +342,7 @@ async function fetchStatsData(env, range) {
      SELECT day, SUM(session_count) AS total_sessions
      FROM sessions
      GROUP BY day
-     ORDER BY day DESC`
+     ORDER BY day DESC`,
   )
     .bind(days)
     .all();
@@ -346,8 +363,11 @@ async function fetchStatsData(env, range) {
 
   const enrichedDaily = daily.results.map((d) => ({
     ...d,
-    requests_per_user: d.unique_players > 0 ? Math.round((d.requests / d.unique_players) * 10) / 10 : 0,
-    inferred_sessions: sessionMap[d.day] || 0
+    requests_per_user:
+      d.unique_players > 0
+        ? Math.round((d.requests / d.unique_players) * 10) / 10
+        : 0,
+    inferred_sessions: sessionMap[d.day] || 0,
   }));
 
   return { daily: enrichedDaily, topGames: gamesByDay };
@@ -361,7 +381,7 @@ async function fetchGameCounts(env) {
      FROM analytics
      WHERE json_extract(data, '$.event') = 'launch'
      GROUP BY app
-     ORDER BY count DESC`
+     ORDER BY count DESC`,
   ).all();
   return result.results;
 }
@@ -383,7 +403,7 @@ async function fetchTopTime(env) {
        AND json_extract(data, '$.app')        IS NOT NULL
      GROUP BY app
      ORDER BY total_time_ms DESC
-     LIMIT 30`
+     LIMIT 30`,
   ).all();
   return result.results;
 }
@@ -449,7 +469,7 @@ async function buildAggregatedData(env, days = 90) {
       MIN(duration_ms)                  AS shortest_session_ms,
       SUM(CASE WHEN event_count <= 1 OR duration_ms < ? THEN 1 ELSE 0 END) AS bounce_sessions
     FROM session_bounds
-  `
+  `,
   )
     .bind(days, SESSION_GAP_S, BOUNCE_DURATION_MS)
     .first();
@@ -465,7 +485,7 @@ async function buildAggregatedData(env, days = 90) {
     SELECT COUNT(DISTINCT daily_id) AS power_users
     FROM daily_counts
     WHERE event_count >= 20
-  `
+  `,
   )
     .bind(days)
     .first();
@@ -492,7 +512,7 @@ async function buildAggregatedData(env, days = 90) {
     GROUP BY source, destination
     ORDER BY count DESC
     LIMIT 50
-  `
+  `,
   )
     .bind(days, SESSION_GAP_S)
     .all();
@@ -514,7 +534,7 @@ async function buildAggregatedData(env, days = 90) {
     GROUP BY app
     ORDER BY count DESC
     LIMIT 10
-  `
+  `,
   )
     .bind(days)
     .all();
@@ -536,7 +556,7 @@ async function buildAggregatedData(env, days = 90) {
     GROUP BY app
     ORDER BY count DESC
     LIMIT 10
-  `
+  `,
   )
     .bind(days)
     .all();
@@ -580,7 +600,7 @@ async function buildAggregatedData(env, days = 90) {
     FROM user_exploration
     ORDER BY avg_unique DESC
     LIMIT 5
-  `
+  `,
   )
     .bind(SESSION_GAP_S, days)
     .all();
@@ -588,35 +608,36 @@ async function buildAggregatedData(env, days = 90) {
   const avgUnique = explorationRaw.results[0]?.avg_unique_apps_per_session || 0;
   const topExplorers = explorationRaw.results.map((r) => ({
     user_id: r.daily_id.slice(0, 8) + "...",
-    avg_unique: Math.round((r.avg_unique || 0) * 10) / 10
+    avg_unique: Math.round((r.avg_unique || 0) * 10) / 10,
   }));
 
   return {
     sessionsResponse: {
       total_sessions: sessionsRaw?.total_sessions || 0,
       avg_duration_ms: Math.round(sessionsRaw?.avg_duration_ms || 0),
-      avg_apps_per_session: Math.round((sessionsRaw?.avg_apps_per_session || 0) * 10) / 10,
+      avg_apps_per_session:
+        Math.round((sessionsRaw?.avg_apps_per_session || 0) * 10) / 10,
       longest_session_ms: sessionsRaw?.longest_session_ms || 0,
       shortest_session_ms: sessionsRaw?.shortest_session_ms || 0,
       bounce_sessions: sessionsRaw?.bounce_sessions || 0,
-      power_users: powerUsersRaw?.power_users || 0
+      power_users: powerUsersRaw?.power_users || 0,
     },
     flowsResponse: {
       flows: (flowsRaw.results || []).map((r) => ({
         source: r.source,
         destination: r.destination,
-        count: r.count
-      }))
+        count: r.count,
+      })),
     },
     entryExitResponse: {
       top_entry_apps: entryRaw.results || [],
-      top_exit_apps: exitRaw.results || []
+      top_exit_apps: exitRaw.results || [],
     },
     explorationResponse: {
       avg_unique_apps_per_session: Math.round((avgUnique || 0) * 10) / 10,
       top_explorers: topExplorers,
-      top_diverse_sessions: []
-    }
+      top_diverse_sessions: [],
+    },
   };
 }
 
@@ -624,7 +645,7 @@ async function fetchLive(env) {
   const fiveMinAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
 
   const activeUsers = await env.DB.prepare(
-    `SELECT COUNT(DISTINCT daily_id) AS count FROM analytics WHERE timestamp >= ?`
+    `SELECT COUNT(DISTINCT daily_id) AS count FROM analytics WHERE timestamp >= ?`,
   )
     .bind(fiveMinAgo)
     .all();
@@ -632,17 +653,19 @@ async function fetchLive(env) {
   const topActive = await env.DB.prepare(
     `SELECT lower(trim(json_extract(data, '$.app'))) AS app, COUNT(*) AS count
      FROM analytics WHERE timestamp >= ? AND json_extract(data, '$.event') = 'launch'
-     GROUP BY app ORDER BY count DESC LIMIT 5`
+     GROUP BY app ORDER BY count DESC LIMIT 5`,
   )
     .bind(fiveMinAgo)
     .all();
 
   const appList = await fetchAppList(env);
-  topActive.results = topActive.results.filter((row) => isAppAllowed(row.app, appList));
+  topActive.results = topActive.results.filter((row) =>
+    isAppAllowed(row.app, appList),
+  );
 
   const recentSessions = await env.DB.prepare(
     `SELECT daily_id, MIN(timestamp) AS first, MAX(timestamp) AS last
-     FROM analytics WHERE timestamp >= ? GROUP BY daily_id`
+     FROM analytics WHERE timestamp >= ? GROUP BY daily_id`,
   )
     .bind(fiveMinAgo)
     .all();
@@ -657,7 +680,7 @@ async function fetchLive(env) {
   return {
     active_users_5min: activeUsers.results[0]?.count || 0,
     active_sessions: activeSessions,
-    top_active_apps: topActive.results
+    top_active_apps: topActive.results,
   };
 }
 
@@ -687,7 +710,7 @@ async function fetchPeakConcurrent(env, range) {
       (SELECT MIN(pm.minute) FROM per_minute pm WHERE pm.day = dp.day AND pm.concurrent = dp.peak LIMIT 1) AS at_time
     FROM daily_peak dp
     ORDER BY dp.day DESC
-  `
+  `,
   )
     .bind(days)
     .all();
@@ -705,9 +728,9 @@ async function fetchPeakConcurrent(env, range) {
   return {
     overall_peak: {
       concurrent: overallPeak,
-      at_time: overallTime
+      at_time: overallTime,
     },
-    daily: results
+    daily: results,
   };
 }
 
@@ -718,52 +741,60 @@ async function fetchInsights(env, range) {
   if (range === "1y") days = 365;
   const G = 1800;
 
-  const [eventTypes, newReturning, retention, hourly, userActivity, appUnique, appAvgTime, dauWauMau] =
-    await Promise.all([
-      env.DB.prepare(
-        `SELECT COALESCE(lower(trim(json_extract(data,'$.event'))),'unknown') AS et,COUNT(*) AS c FROM analytics WHERE timestamp>=datetime('now',-?||' days') GROUP BY et ORDER BY c DESC`
-      )
-        .bind(days)
-        .all(),
-      env.DB.prepare(
-        `WITH f AS(SELECT daily_id,MIN(date(timestamp)) AS fd FROM analytics GROUP BY daily_id),r AS(SELECT date(timestamp) AS d,daily_id FROM analytics WHERE timestamp>=datetime('now',-?||' days') GROUP BY d,daily_id)SELECT r.d,COUNT(DISTINCT r.daily_id) AS t,COUNT(DISTINCT CASE WHEN r.d=f.fd THEN r.daily_id END) AS n,COUNT(DISTINCT CASE WHEN r.d!=f.fd THEN r.daily_id END) AS rl FROM r JOIN f ON f.daily_id=r.daily_id GROUP BY r.d ORDER BY r.d`
-      )
-        .bind(days)
-        .all(),
-      env.DB.prepare(
-        `WITH u AS(SELECT date(timestamp) AS d,daily_id FROM analytics WHERE timestamp>=datetime('now',-?||' days') GROUP BY d,daily_id)SELECT a.d AS d,COUNT(DISTINCT a.daily_id) AS dau,ROUND(COUNT(DISTINCT b.daily_id)*1.0/NULLIF(COUNT(DISTINCT a.daily_id),0),3) AS d1,ROUND(COUNT(DISTINCT c.daily_id)*1.0/NULLIF(COUNT(DISTINCT a.daily_id),0),3) AS d7 FROM u a LEFT JOIN u b ON a.daily_id=b.daily_id AND b.d=date(a.d,'+1 day') LEFT JOIN u c ON a.daily_id=c.daily_id AND c.d=date(a.d,'+7 days') GROUP BY a.d ORDER BY a.d`
-      )
-        .bind(days)
-        .all(),
-      env.DB.prepare(
-        `SELECT CAST(strftime('%H',timestamp) AS INTEGER) AS h,COUNT(*) AS c FROM analytics WHERE timestamp>=datetime('now',-?||' days') GROUP BY h ORDER BY h`
-      )
-        .bind(days)
-        .all(),
-      env.DB.prepare(
-        `SELECT CASE WHEN c<5 THEN '1-4' WHEN c<10 THEN '5-9' WHEN c<20 THEN '10-19' WHEN c<50 THEN '20-49' WHEN c<100 THEN '50-99' ELSE '100+' END AS b,COUNT(*) AS u FROM(SELECT daily_id,COUNT(*) AS c FROM analytics WHERE timestamp>=datetime('now',-?||' days') GROUP BY daily_id)GROUP BY b ORDER BY MIN(c)`
-      )
-        .bind(days)
-        .all(),
-      env.DB.prepare(
-        `SELECT lower(trim(json_extract(data,'$.app'))) AS a,COUNT(DISTINCT daily_id) AS u,COUNT(*) AS l FROM analytics WHERE timestamp>=datetime('now',-?||' days') AND lower(trim(json_extract(data,'$.event')))='launch' GROUP BY a ORDER BY u DESC LIMIT 20`
-      )
-        .bind(days)
-        .all(),
-      env.DB.prepare(
-        `SELECT lower(trim(json_extract(data,'$.app'))) AS a,AVG(CAST(json_extract(data,'$.durationMs') AS REAL)) AS d,COUNT(*) AS c FROM analytics WHERE timestamp>=datetime('now',-?||' days') AND lower(trim(json_extract(data,'$.event')))='usage' AND json_extract(data,'$.durationMs') IS NOT NULL GROUP BY a ORDER BY d DESC LIMIT 20`
-      )
-        .bind(days)
-        .all(),
-      env.DB.prepare(
-        `WITH u AS(SELECT date(timestamp) AS d,daily_id FROM analytics WHERE timestamp>=datetime('now',-?||' days') GROUP BY d,daily_id),dd AS(SELECT DISTINCT d FROM u)SELECT d.d,(SELECT COUNT(DISTINCT daily_id) FROM u WHERE d.d=u.d) AS dau,(SELECT COUNT(DISTINCT daily_id) FROM u WHERE u.d>=date(d.d,'-6 days') AND u.d<=d.d) AS wau,(SELECT COUNT(DISTINCT daily_id) FROM u WHERE u.d>=date(d.d,'-29 days') AND u.d<=d.d) AS mau FROM dd d ORDER BY d.d`
-      )
-        .bind(days)
-        .all()
-    ]);
+  const [
+    eventTypes,
+    newReturning,
+    retention,
+    hourly,
+    userActivity,
+    appUnique,
+    appAvgTime,
+    dauWauMau,
+  ] = await Promise.all([
+    env.DB.prepare(
+      `SELECT COALESCE(lower(trim(json_extract(data,'$.event'))),'unknown') AS et,COUNT(*) AS c FROM analytics WHERE timestamp>=datetime('now',-?||' days') GROUP BY et ORDER BY c DESC`,
+    )
+      .bind(days)
+      .all(),
+    env.DB.prepare(
+      `WITH f AS(SELECT daily_id,MIN(date(timestamp)) AS fd FROM analytics GROUP BY daily_id),r AS(SELECT date(timestamp) AS d,daily_id FROM analytics WHERE timestamp>=datetime('now',-?||' days') GROUP BY d,daily_id)SELECT r.d,COUNT(DISTINCT r.daily_id) AS t,COUNT(DISTINCT CASE WHEN r.d=f.fd THEN r.daily_id END) AS n,COUNT(DISTINCT CASE WHEN r.d!=f.fd THEN r.daily_id END) AS rl FROM r JOIN f ON f.daily_id=r.daily_id GROUP BY r.d ORDER BY r.d`,
+    )
+      .bind(days)
+      .all(),
+    env.DB.prepare(
+      `WITH u AS(SELECT date(timestamp) AS d,daily_id FROM analytics WHERE timestamp>=datetime('now',-?||' days') GROUP BY d,daily_id)SELECT a.d AS d,COUNT(DISTINCT a.daily_id) AS dau,ROUND(COUNT(DISTINCT b.daily_id)*1.0/NULLIF(COUNT(DISTINCT a.daily_id),0),3) AS d1,ROUND(COUNT(DISTINCT c.daily_id)*1.0/NULLIF(COUNT(DISTINCT a.daily_id),0),3) AS d7 FROM u a LEFT JOIN u b ON a.daily_id=b.daily_id AND b.d=date(a.d,'+1 day') LEFT JOIN u c ON a.daily_id=c.daily_id AND c.d=date(a.d,'+7 days') GROUP BY a.d ORDER BY a.d`,
+    )
+      .bind(days)
+      .all(),
+    env.DB.prepare(
+      `SELECT CAST(strftime('%H',timestamp) AS INTEGER) AS h,COUNT(*) AS c FROM analytics WHERE timestamp>=datetime('now',-?||' days') GROUP BY h ORDER BY h`,
+    )
+      .bind(days)
+      .all(),
+    env.DB.prepare(
+      `SELECT CASE WHEN c<5 THEN '1-4' WHEN c<10 THEN '5-9' WHEN c<20 THEN '10-19' WHEN c<50 THEN '20-49' WHEN c<100 THEN '50-99' ELSE '100+' END AS b,COUNT(*) AS u FROM(SELECT daily_id,COUNT(*) AS c FROM analytics WHERE timestamp>=datetime('now',-?||' days') GROUP BY daily_id)GROUP BY b ORDER BY MIN(c)`,
+    )
+      .bind(days)
+      .all(),
+    env.DB.prepare(
+      `SELECT lower(trim(json_extract(data,'$.app'))) AS a,COUNT(DISTINCT daily_id) AS u,COUNT(*) AS l FROM analytics WHERE timestamp>=datetime('now',-?||' days') AND lower(trim(json_extract(data,'$.event')))='launch' GROUP BY a ORDER BY u DESC LIMIT 20`,
+    )
+      .bind(days)
+      .all(),
+    env.DB.prepare(
+      `SELECT lower(trim(json_extract(data,'$.app'))) AS a,AVG(CAST(json_extract(data,'$.durationMs') AS REAL)) AS d,COUNT(*) AS c FROM analytics WHERE timestamp>=datetime('now',-?||' days') AND lower(trim(json_extract(data,'$.event')))='usage' AND json_extract(data,'$.durationMs') IS NOT NULL GROUP BY a ORDER BY d DESC LIMIT 20`,
+    )
+      .bind(days)
+      .all(),
+    env.DB.prepare(
+      `WITH u AS(SELECT date(timestamp) AS d,daily_id FROM analytics WHERE timestamp>=datetime('now',-?||' days') GROUP BY d,daily_id),dd AS(SELECT DISTINCT d FROM u)SELECT d.d,(SELECT COUNT(DISTINCT daily_id) FROM u WHERE d.d=u.d) AS dau,(SELECT COUNT(DISTINCT daily_id) FROM u WHERE u.d>=date(d.d,'-6 days') AND u.d<=d.d) AS wau,(SELECT COUNT(DISTINCT daily_id) FROM u WHERE u.d>=date(d.d,'-29 days') AND u.d<=d.d) AS mau FROM dd d ORDER BY d.d`,
+    )
+      .bind(days)
+      .all(),
+  ]);
 
   const sdBuckets = await env.DB.prepare(
-    `WITH o AS(SELECT daily_id,timestamp,LAG(timestamp)OVER(PARTITION BY daily_id ORDER BY timestamp) AS p FROM analytics WHERE timestamp>=datetime('now',-?||' days')),s AS(SELECT daily_id,timestamp,SUM(CASE WHEN p IS NULL OR(julianday(timestamp)-julianday(p))*86400>? THEN 1 ELSE 0 END)OVER(PARTITION BY daily_id ORDER BY timestamp) AS sn FROM o),b AS(SELECT daily_id,sn,MIN(timestamp) AS st,MAX(timestamp) AS en FROM s GROUP BY daily_id,sn),x AS(SELECT(julianday(en)-julianday(st))*86400000 AS du FROM b)SELECT COUNT(*) AS t,SUM(CASE WHEN du<60000 THEN 1 ELSE 0 END) AS a,SUM(CASE WHEN du>=60000 AND du<300000 THEN 1 ELSE 0 END) AS b,SUM(CASE WHEN du>=300000 AND du<900000 THEN 1 ELSE 0 END) AS c,SUM(CASE WHEN du>=900000 AND du<1800000 THEN 1 ELSE 0 END) AS d,SUM(CASE WHEN du>=1800000 AND du<3600000 THEN 1 ELSE 0 END) AS e,SUM(CASE WHEN du>=3600000 THEN 1 ELSE 0 END) AS f FROM x`
+    `WITH o AS(SELECT daily_id,timestamp,LAG(timestamp)OVER(PARTITION BY daily_id ORDER BY timestamp) AS p FROM analytics WHERE timestamp>=datetime('now',-?||' days')),s AS(SELECT daily_id,timestamp,SUM(CASE WHEN p IS NULL OR(julianday(timestamp)-julianday(p))*86400>? THEN 1 ELSE 0 END)OVER(PARTITION BY daily_id ORDER BY timestamp) AS sn FROM o),b AS(SELECT daily_id,sn,MIN(timestamp) AS st,MAX(timestamp) AS en FROM s GROUP BY daily_id,sn),x AS(SELECT(julianday(en)-julianday(st))*86400000 AS du FROM b)SELECT COUNT(*) AS t,SUM(CASE WHEN du<60000 THEN 1 ELSE 0 END) AS a,SUM(CASE WHEN du>=60000 AND du<300000 THEN 1 ELSE 0 END) AS b,SUM(CASE WHEN du>=300000 AND du<900000 THEN 1 ELSE 0 END) AS c,SUM(CASE WHEN du>=900000 AND du<1800000 THEN 1 ELSE 0 END) AS d,SUM(CASE WHEN du>=1800000 AND du<3600000 THEN 1 ELSE 0 END) AS e,SUM(CASE WHEN du>=3600000 THEN 1 ELSE 0 END) AS f FROM x`,
   )
     .bind(days, G)
     .first();
@@ -777,7 +808,15 @@ async function fetchInsights(env, range) {
     app_unique_users: appUnique.results || [],
     app_avg_time: appAvgTime.results || [],
     dau_wau_mau: dauWauMau.results || [],
-    session_durations: sdBuckets || { t: 0, a: 0, b: 0, c: 0, d: 0, e: 0, f: 0 }
+    session_durations: sdBuckets || {
+      t: 0,
+      a: 0,
+      b: 0,
+      c: 0,
+      d: 0,
+      e: 0,
+      f: 0,
+    },
   };
 }
 
@@ -788,14 +827,18 @@ function ensureThemesSchema(env) {
     "CREATE TABLE IF NOT EXISTS theme_ratings (theme_id TEXT NOT NULL, daily_id TEXT NOT NULL, vote INTEGER NOT NULL, updated_at TEXT NOT NULL, PRIMARY KEY (theme_id, daily_id))",
     "CREATE TABLE IF NOT EXISTS theme_installs (theme_id TEXT NOT NULL, daily_id TEXT NOT NULL, created_at TEXT NOT NULL, PRIMARY KEY (theme_id, daily_id))",
     "CREATE INDEX IF NOT EXISTS idx_themes_status_score ON themes (status, score DESC)",
-    "CREATE INDEX IF NOT EXISTS idx_themes_status_created ON themes (status, created_at DESC)"
+    "CREATE INDEX IF NOT EXISTS idx_themes_status_created ON themes (status, created_at DESC)",
   ];
   themesInitPromise = (async () => {
     await env.DB.batch(statements.map((sql) => env.DB.prepare(sql)));
     const tableInfo = await env.DB.prepare("PRAGMA table_info(themes)").all();
-    const hasConfig = (tableInfo.results || []).some((column) => column.name === "config");
+    const hasConfig = (tableInfo.results || []).some(
+      (column) => column.name === "config",
+    );
     if (!hasConfig) {
-      await env.DB.prepare("ALTER TABLE themes ADD COLUMN config TEXT NOT NULL DEFAULT '{}'").run();
+      await env.DB.prepare(
+        "ALTER TABLE themes ADD COLUMN config TEXT NOT NULL DEFAULT '{}'",
+      ).run();
     }
   })().catch((e) => {
     themesInitPromise = null;
@@ -831,27 +874,47 @@ function ensureSocialSchema(env) {
     "CREATE INDEX IF NOT EXISTS idx_user_achievements_user ON user_achievements (user_id)",
     "CREATE INDEX IF NOT EXISTS idx_user_playtime_user ON user_playtime (user_id)",
     "CREATE INDEX IF NOT EXISTS idx_accounts_nickname ON accounts (nickname)",
-    "CREATE INDEX IF NOT EXISTS idx_accounts_email ON accounts (email)"
+    "CREATE INDEX IF NOT EXISTS idx_accounts_email ON accounts (email)",
   ];
   socialInitPromise = (async () => {
     await env.DB.batch(statements.map((sql) => env.DB.prepare(sql)));
-    const tableInfo = await env.DB.prepare("PRAGMA table_info(live_users)").all();
-    const hasBio = (tableInfo.results || []).some((column) => column.name === "bio");
+    const tableInfo = await env.DB.prepare(
+      "PRAGMA table_info(live_users)",
+    ).all();
+    const hasBio = (tableInfo.results || []).some(
+      (column) => column.name === "bio",
+    );
     if (!hasBio) {
-      await env.DB.prepare("ALTER TABLE live_users ADD COLUMN bio TEXT NOT NULL DEFAULT ''").run();
+      await env.DB.prepare(
+        "ALTER TABLE live_users ADD COLUMN bio TEXT NOT NULL DEFAULT ''",
+      ).run();
     }
-    const hasPresence = (tableInfo.results || []).some((column) => column.name === "presence");
+    const hasPresence = (tableInfo.results || []).some(
+      (column) => column.name === "presence",
+    );
     if (!hasPresence) {
-      await env.DB.prepare("ALTER TABLE live_users ADD COLUMN presence TEXT NOT NULL DEFAULT 'online'").run();
+      await env.DB.prepare(
+        "ALTER TABLE live_users ADD COLUMN presence TEXT NOT NULL DEFAULT 'online'",
+      ).run();
     }
-    const accountsInfo = await env.DB.prepare("PRAGMA table_info(accounts)").all();
-    const hasSupporter = (accountsInfo.results || []).some((column) => column.name === "supporter");
+    const accountsInfo = await env.DB.prepare(
+      "PRAGMA table_info(accounts)",
+    ).all();
+    const hasSupporter = (accountsInfo.results || []).some(
+      (column) => column.name === "supporter",
+    );
     if (!hasSupporter) {
-      await env.DB.prepare("ALTER TABLE accounts ADD COLUMN supporter INTEGER NOT NULL DEFAULT 0").run();
+      await env.DB.prepare(
+        "ALTER TABLE accounts ADD COLUMN supporter INTEGER NOT NULL DEFAULT 0",
+      ).run();
     }
-    const hasSupporterSince = (accountsInfo.results || []).some((column) => column.name === "supporter_since");
+    const hasSupporterSince = (accountsInfo.results || []).some(
+      (column) => column.name === "supporter_since",
+    );
     if (!hasSupporterSince) {
-      await env.DB.prepare("ALTER TABLE accounts ADD COLUMN supporter_since TEXT").run();
+      await env.DB.prepare(
+        "ALTER TABLE accounts ADD COLUMN supporter_since TEXT",
+      ).run();
     }
   })().catch((e) => {
     socialInitPromise = null;
@@ -863,12 +926,15 @@ function ensureSocialSchema(env) {
 function sanitizeName(value, fallback) {
   if (typeof value !== "string") return fallback || "Anonymous";
   const v = value.trim().slice(0, 32);
-  if (!v || isUrlPrefixed(v) || v.includes("<") || v.includes(">")) return fallback || "Anonymous";
+  if (!v || isUrlPrefixed(v) || v.includes("<") || v.includes(">"))
+    return fallback || "Anonymous";
   return v;
 }
 
 function sanitizePresence(value) {
-  return value === "online" || value === "invisible" || value === "offline" ? value : "online";
+  return value === "online" || value === "invisible" || value === "offline"
+    ? value
+    : "online";
 }
 
 function validUserId(value) {
@@ -882,13 +948,22 @@ function randomHex(bytes) {
 }
 
 async function hashPassword(password, salt) {
-  const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(password), { name: "PBKDF2" }, false, [
-    "deriveBits"
-  ]);
+  const key = await crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(password),
+    { name: "PBKDF2" },
+    false,
+    ["deriveBits"],
+  );
   const bits = await crypto.subtle.deriveBits(
-    { name: "PBKDF2", salt: new TextEncoder().encode(salt), iterations: 100000, hash: "SHA-256" },
+    {
+      name: "PBKDF2",
+      salt: new TextEncoder().encode(salt),
+      iterations: 100000,
+      hash: "SHA-256",
+    },
     key,
-    256
+    256,
   );
   return Array.from(new Uint8Array(bits))
     .map((b) => b.toString(16).padStart(2, "0"))
@@ -903,7 +978,9 @@ async function createSession(env, userId) {
   const token = randomHex(32);
   const now = new Date().toISOString();
   const expiresAt = new Date(Date.now() + SESSION_TTL_MS).toISOString();
-  await env.DB.prepare("INSERT INTO sessions (token, user_id, created_at, expires_at) VALUES (?, ?, ?, ?)")
+  await env.DB.prepare(
+    "INSERT INTO sessions (token, user_id, created_at, expires_at) VALUES (?, ?, ?, ?)",
+  )
     .bind(token, userId, now, expiresAt)
     .run();
   return token;
@@ -911,14 +988,20 @@ async function createSession(env, userId) {
 
 async function destroySession(env, token) {
   if (!token) return;
-  await env.DB.prepare("DELETE FROM sessions WHERE token = ?").bind(token).run();
+  await env.DB.prepare("DELETE FROM sessions WHERE token = ?")
+    .bind(token)
+    .run();
 }
 
 async function authorizeSession(env, request) {
   const header = request.headers.get("Authorization") || "";
   const token = header.startsWith("Bearer ") ? header.slice(7).trim() : "";
   if (!token) return null;
-  const row = await env.DB.prepare("SELECT user_id, expires_at FROM sessions WHERE token = ?").bind(token).first();
+  const row = await env.DB.prepare(
+    "SELECT user_id, expires_at FROM sessions WHERE token = ?",
+  )
+    .bind(token)
+    .first();
   if (!row) return null;
   if (new Date(row.expires_at).getTime() < Date.now()) {
     await destroySession(env, token);
@@ -928,28 +1011,38 @@ async function authorizeSession(env, request) {
 }
 
 async function getAccountQuota(env, userId) {
-  const account = await env.DB.prepare("SELECT supporter FROM accounts WHERE user_id = ?").bind(userId).first();
+  const account = await env.DB.prepare(
+    "SELECT supporter FROM accounts WHERE user_id = ?",
+  )
+    .bind(userId)
+    .first();
   const supporter = !!(account && account.supporter);
   const limit = supporter ? SUPPORTER_SYNC_QUOTA_BYTES : FREE_SYNC_QUOTA_BYTES;
-  const sync = await env.DB.prepare("SELECT payload FROM user_sync WHERE user_id = ?").bind(userId).first();
-  const used = sync && sync.payload ? new TextEncoder().encode(sync.payload).length : 0;
+  const sync = await env.DB.prepare(
+    "SELECT payload FROM user_sync WHERE user_id = ?",
+  )
+    .bind(userId)
+    .first();
+  const used =
+    sync && sync.payload ? new TextEncoder().encode(sync.payload).length : 0;
   return { limit, used, supporter };
 }
 
 function profileUpsertStatement(env, userId, username, avatarIndex, now) {
   const hasName = typeof username === "string" && username.length > 0;
   const insertName = hasName ? username : "Anonymous";
-  const insertAvatar = typeof avatarIndex === "number" && avatarIndex >= 0 ? avatarIndex : -1;
+  const insertAvatar =
+    typeof avatarIndex === "number" && avatarIndex >= 0 ? avatarIndex : -1;
   const updates = [
     hasName ? "username = excluded.username" : "",
     insertAvatar >= 0 ? "avatar_index = excluded.avatar_index" : "",
-    "last_seen = CASE WHEN COALESCE(live_users.presence, 'online') = 'online' THEN excluded.last_seen ELSE live_users.last_seen END"
+    "last_seen = CASE WHEN COALESCE(live_users.presence, 'online') = 'online' THEN excluded.last_seen ELSE live_users.last_seen END",
   ]
     .filter(Boolean)
     .join(", ");
   return env.DB.prepare(
     `INSERT INTO live_users (user_id, username, avatar_index, created_at, last_seen) VALUES (?, ?, ?, ?, ?)
-     ON CONFLICT(user_id) DO UPDATE SET ${updates}`
+     ON CONFLICT(user_id) DO UPDATE SET ${updates}`,
   ).bind(userId, insertName, insertAvatar, now, now);
 }
 const SHOP_CATALOG = [
@@ -963,7 +1056,7 @@ const SHOP_CATALOG = [
     supporterOnly: false,
     rarity: "common",
     availableFrom: null,
-    availableTo: null
+    availableTo: null,
   },
   {
     id: "banner_harbormist",
@@ -975,7 +1068,7 @@ const SHOP_CATALOG = [
     supporterOnly: false,
     rarity: "common",
     availableFrom: null,
-    availableTo: null
+    availableTo: null,
   },
   {
     id: "banner_clayroute",
@@ -987,7 +1080,7 @@ const SHOP_CATALOG = [
     supporterOnly: false,
     rarity: "common",
     availableFrom: null,
-    availableTo: null
+    availableTo: null,
   },
   {
     id: "banner_velvetstatic",
@@ -999,7 +1092,7 @@ const SHOP_CATALOG = [
     supporterOnly: false,
     rarity: "rare",
     availableFrom: null,
-    availableTo: null
+    availableTo: null,
   },
   {
     id: "banner_coralreef",
@@ -1011,7 +1104,7 @@ const SHOP_CATALOG = [
     supporterOnly: false,
     rarity: "rare",
     availableFrom: null,
-    availableTo: null
+    availableTo: null,
   },
   {
     id: "banner_ironbloom",
@@ -1023,7 +1116,7 @@ const SHOP_CATALOG = [
     supporterOnly: false,
     rarity: "rare",
     availableFrom: null,
-    availableTo: null
+    availableTo: null,
   },
   {
     id: "banner_solarflare",
@@ -1035,7 +1128,7 @@ const SHOP_CATALOG = [
     supporterOnly: false,
     rarity: "epic",
     availableFrom: null,
-    availableTo: null
+    availableTo: null,
   },
   {
     id: "banner_tidalsurge",
@@ -1047,7 +1140,7 @@ const SHOP_CATALOG = [
     supporterOnly: false,
     rarity: "epic",
     availableFrom: null,
-    availableTo: null
+    availableTo: null,
   },
   {
     id: "banner_ashenbloom",
@@ -1059,7 +1152,7 @@ const SHOP_CATALOG = [
     supporterOnly: false,
     rarity: "epic",
     availableFrom: null,
-    availableTo: "2026-10-10"
+    availableTo: "2026-10-10",
   },
   {
     id: "banner_wyrmglass",
@@ -1071,7 +1164,7 @@ const SHOP_CATALOG = [
     supporterOnly: false,
     rarity: "prestige",
     availableFrom: null,
-    availableTo: null
+    availableTo: null,
   },
   {
     id: "banner_cindermourn",
@@ -1083,7 +1176,7 @@ const SHOP_CATALOG = [
     supporterOnly: false,
     rarity: "prestige",
     availableFrom: null,
-    availableTo: null
+    availableTo: null,
   },
   {
     id: "banner_starfallveil",
@@ -1095,7 +1188,7 @@ const SHOP_CATALOG = [
     supporterOnly: false,
     rarity: "prestige",
     availableFrom: null,
-    availableTo: "2026-10-31"
+    availableTo: "2026-10-31",
   },
   {
     id: "banner_prismnova",
@@ -1107,7 +1200,7 @@ const SHOP_CATALOG = [
     supporterOnly: false,
     rarity: "mythic",
     availableFrom: null,
-    availableTo: null
+    availableTo: null,
   },
   {
     id: "banner_voidglasseclipse",
@@ -1119,7 +1212,7 @@ const SHOP_CATALOG = [
     supporterOnly: false,
     rarity: "mythic",
     availableFrom: null,
-    availableTo: "2026-11-15"
+    availableTo: "2026-11-15",
   },
   {
     id: "banner_aurumsovereign",
@@ -1131,7 +1224,7 @@ const SHOP_CATALOG = [
     supporterOnly: false,
     rarity: "mythic",
     availableFrom: null,
-    availableTo: "2026-11-30"
+    availableTo: "2026-11-30",
   },
   {
     id: "frame_ash",
@@ -1143,7 +1236,7 @@ const SHOP_CATALOG = [
     supporterOnly: false,
     rarity: "common",
     availableFrom: null,
-    availableTo: null
+    availableTo: null,
   },
   {
     id: "frame_cobalt",
@@ -1155,7 +1248,7 @@ const SHOP_CATALOG = [
     supporterOnly: false,
     rarity: "common",
     availableFrom: null,
-    availableTo: null
+    availableTo: null,
   },
   {
     id: "frame_sable",
@@ -1167,7 +1260,7 @@ const SHOP_CATALOG = [
     supporterOnly: false,
     rarity: "common",
     availableFrom: null,
-    availableTo: null
+    availableTo: null,
   },
   {
     id: "frame_pearl",
@@ -1179,7 +1272,7 @@ const SHOP_CATALOG = [
     supporterOnly: false,
     rarity: "rare",
     availableFrom: null,
-    availableTo: null
+    availableTo: null,
   },
   {
     id: "frame_ember",
@@ -1191,7 +1284,7 @@ const SHOP_CATALOG = [
     supporterOnly: false,
     rarity: "rare",
     availableFrom: null,
-    availableTo: null
+    availableTo: null,
   },
   {
     id: "frame_glacier",
@@ -1203,7 +1296,7 @@ const SHOP_CATALOG = [
     supporterOnly: false,
     rarity: "rare",
     availableFrom: null,
-    availableTo: null
+    availableTo: null,
   },
   {
     id: "frame_wraith",
@@ -1215,7 +1308,7 @@ const SHOP_CATALOG = [
     supporterOnly: false,
     rarity: "epic",
     availableFrom: null,
-    availableTo: null
+    availableTo: null,
   },
   {
     id: "frame_solstice",
@@ -1227,7 +1320,7 @@ const SHOP_CATALOG = [
     supporterOnly: false,
     rarity: "epic",
     availableFrom: null,
-    availableTo: null
+    availableTo: null,
   },
   {
     id: "frame_tempest",
@@ -1239,7 +1332,7 @@ const SHOP_CATALOG = [
     supporterOnly: false,
     rarity: "epic",
     availableFrom: null,
-    availableTo: "2026-10-05"
+    availableTo: "2026-10-05",
   },
   {
     id: "frame_royal",
@@ -1251,7 +1344,7 @@ const SHOP_CATALOG = [
     supporterOnly: false,
     rarity: "prestige",
     availableFrom: null,
-    availableTo: null
+    availableTo: null,
   },
   {
     id: "frame_oracle",
@@ -1263,7 +1356,7 @@ const SHOP_CATALOG = [
     supporterOnly: false,
     rarity: "prestige",
     availableFrom: null,
-    availableTo: null
+    availableTo: null,
   },
   {
     id: "frame_cosmic",
@@ -1275,7 +1368,7 @@ const SHOP_CATALOG = [
     supporterOnly: false,
     rarity: "prestige",
     availableFrom: null,
-    availableTo: "2026-10-20"
+    availableTo: "2026-10-20",
   },
   {
     id: "frame_prismatic",
@@ -1287,7 +1380,7 @@ const SHOP_CATALOG = [
     supporterOnly: false,
     rarity: "mythic",
     availableFrom: null,
-    availableTo: null
+    availableTo: null,
   },
   {
     id: "frame_voidwalker",
@@ -1299,7 +1392,7 @@ const SHOP_CATALOG = [
     supporterOnly: false,
     rarity: "mythic",
     availableFrom: null,
-    availableTo: "2026-11-10"
+    availableTo: "2026-11-10",
   },
   {
     id: "frame_solaris",
@@ -1311,7 +1404,7 @@ const SHOP_CATALOG = [
     supporterOnly: false,
     rarity: "mythic",
     availableFrom: null,
-    availableTo: "2026-11-25"
+    availableTo: "2026-11-25",
   },
   {
     id: "frame_gold",
@@ -1323,7 +1416,7 @@ const SHOP_CATALOG = [
     supporterOnly: true,
     rarity: "prestige",
     availableFrom: null,
-    availableTo: null
+    availableTo: null,
   },
   {
     id: "name_slate",
@@ -1335,7 +1428,7 @@ const SHOP_CATALOG = [
     supporterOnly: false,
     rarity: "common",
     availableFrom: null,
-    availableTo: null
+    availableTo: null,
   },
   {
     id: "name_blossom",
@@ -1347,7 +1440,7 @@ const SHOP_CATALOG = [
     supporterOnly: false,
     rarity: "common",
     availableFrom: null,
-    availableTo: null
+    availableTo: null,
   },
   {
     id: "name_verdant",
@@ -1359,7 +1452,7 @@ const SHOP_CATALOG = [
     supporterOnly: false,
     rarity: "common",
     availableFrom: null,
-    availableTo: null
+    availableTo: null,
   },
   {
     id: "name_gold",
@@ -1371,7 +1464,7 @@ const SHOP_CATALOG = [
     supporterOnly: false,
     rarity: "rare",
     availableFrom: null,
-    availableTo: null
+    availableTo: null,
   },
   {
     id: "name_ice",
@@ -1383,7 +1476,7 @@ const SHOP_CATALOG = [
     supporterOnly: false,
     rarity: "rare",
     availableFrom: null,
-    availableTo: null
+    availableTo: null,
   },
   {
     id: "name_amethyst",
@@ -1395,7 +1488,7 @@ const SHOP_CATALOG = [
     supporterOnly: false,
     rarity: "rare",
     availableFrom: null,
-    availableTo: null
+    availableTo: null,
   },
   {
     id: "name_rainbow",
@@ -1407,7 +1500,7 @@ const SHOP_CATALOG = [
     supporterOnly: false,
     rarity: "epic",
     availableFrom: null,
-    availableTo: null
+    availableTo: null,
   },
   {
     id: "name_fire",
@@ -1419,7 +1512,7 @@ const SHOP_CATALOG = [
     supporterOnly: false,
     rarity: "epic",
     availableFrom: null,
-    availableTo: null
+    availableTo: null,
   },
   {
     id: "name_toxic",
@@ -1431,7 +1524,7 @@ const SHOP_CATALOG = [
     supporterOnly: false,
     rarity: "epic",
     availableFrom: null,
-    availableTo: "2026-09-30"
+    availableTo: "2026-09-30",
   },
   {
     id: "name_chrome",
@@ -1443,7 +1536,7 @@ const SHOP_CATALOG = [
     supporterOnly: false,
     rarity: "prestige",
     availableFrom: null,
-    availableTo: null
+    availableTo: null,
   },
   {
     id: "name_bloodmoon",
@@ -1455,7 +1548,7 @@ const SHOP_CATALOG = [
     supporterOnly: false,
     rarity: "prestige",
     availableFrom: null,
-    availableTo: null
+    availableTo: null,
   },
   {
     id: "name_starlight",
@@ -1467,7 +1560,7 @@ const SHOP_CATALOG = [
     supporterOnly: false,
     rarity: "prestige",
     availableFrom: null,
-    availableTo: "2026-10-15"
+    availableTo: "2026-10-15",
   },
   {
     id: "name_supreme",
@@ -1479,7 +1572,7 @@ const SHOP_CATALOG = [
     supporterOnly: false,
     rarity: "mythic",
     availableFrom: null,
-    availableTo: null
+    availableTo: null,
   },
   {
     id: "name_prismera",
@@ -1491,7 +1584,7 @@ const SHOP_CATALOG = [
     supporterOnly: false,
     rarity: "mythic",
     availableFrom: null,
-    availableTo: "2026-11-05"
+    availableTo: "2026-11-05",
   },
   {
     id: "name_eclipse",
@@ -1503,7 +1596,7 @@ const SHOP_CATALOG = [
     supporterOnly: false,
     rarity: "mythic",
     availableFrom: null,
-    availableTo: "2026-11-20"
+    availableTo: "2026-11-20",
   },
   {
     id: "badge_glow",
@@ -1515,7 +1608,7 @@ const SHOP_CATALOG = [
     supporterOnly: false,
     rarity: "common",
     availableFrom: null,
-    availableTo: null
+    availableTo: null,
   },
   {
     id: "badge_slate",
@@ -1527,7 +1620,7 @@ const SHOP_CATALOG = [
     supporterOnly: false,
     rarity: "common",
     availableFrom: null,
-    availableTo: null
+    availableTo: null,
   },
   {
     id: "badge_coral",
@@ -1539,7 +1632,7 @@ const SHOP_CATALOG = [
     supporterOnly: false,
     rarity: "common",
     availableFrom: null,
-    availableTo: null
+    availableTo: null,
   },
   {
     id: "badge_cyan",
@@ -1551,7 +1644,7 @@ const SHOP_CATALOG = [
     supporterOnly: false,
     rarity: "rare",
     availableFrom: null,
-    availableTo: null
+    availableTo: null,
   },
   {
     id: "badge_mint",
@@ -1563,7 +1656,7 @@ const SHOP_CATALOG = [
     supporterOnly: false,
     rarity: "rare",
     availableFrom: null,
-    availableTo: null
+    availableTo: null,
   },
   {
     id: "badge_rose",
@@ -1575,7 +1668,7 @@ const SHOP_CATALOG = [
     supporterOnly: false,
     rarity: "rare",
     availableFrom: null,
-    availableTo: null
+    availableTo: null,
   },
   {
     id: "badge_ember",
@@ -1587,7 +1680,7 @@ const SHOP_CATALOG = [
     supporterOnly: false,
     rarity: "epic",
     availableFrom: null,
-    availableTo: null
+    availableTo: null,
   },
   {
     id: "badge_frost",
@@ -1599,7 +1692,7 @@ const SHOP_CATALOG = [
     supporterOnly: false,
     rarity: "epic",
     availableFrom: null,
-    availableTo: null
+    availableTo: null,
   },
   {
     id: "badge_venom",
@@ -1611,7 +1704,7 @@ const SHOP_CATALOG = [
     supporterOnly: false,
     rarity: "epic",
     availableFrom: null,
-    availableTo: "2026-09-28"
+    availableTo: "2026-09-28",
   },
   {
     id: "badge_legend",
@@ -1623,7 +1716,7 @@ const SHOP_CATALOG = [
     supporterOnly: false,
     rarity: "prestige",
     availableFrom: null,
-    availableTo: null
+    availableTo: null,
   },
   {
     id: "badge_infinite",
@@ -1635,7 +1728,7 @@ const SHOP_CATALOG = [
     supporterOnly: false,
     rarity: "prestige",
     availableFrom: null,
-    availableTo: null
+    availableTo: null,
   },
   {
     id: "badge_sovereign",
@@ -1647,7 +1740,7 @@ const SHOP_CATALOG = [
     supporterOnly: false,
     rarity: "prestige",
     availableFrom: null,
-    availableTo: "2026-10-12"
+    availableTo: "2026-10-12",
   },
   {
     id: "badge_celestial",
@@ -1659,7 +1752,7 @@ const SHOP_CATALOG = [
     supporterOnly: false,
     rarity: "mythic",
     availableFrom: null,
-    availableTo: null
+    availableTo: null,
   },
   {
     id: "badge_voidheart",
@@ -1671,7 +1764,7 @@ const SHOP_CATALOG = [
     supporterOnly: false,
     rarity: "mythic",
     availableFrom: null,
-    availableTo: "2026-11-08"
+    availableTo: "2026-11-08",
   },
   {
     id: "badge_radiant",
@@ -1683,7 +1776,7 @@ const SHOP_CATALOG = [
     supporterOnly: false,
     rarity: "mythic",
     availableFrom: null,
-    availableTo: "2026-11-22"
+    availableTo: "2026-11-22",
   },
   {
     id: "badge_supporter",
@@ -1695,19 +1788,26 @@ const SHOP_CATALOG = [
     supporterOnly: true,
     rarity: "prestige",
     availableFrom: null,
-    availableTo: null
-  }
+    availableTo: null,
+  },
 ];
 
 const QUEST_POOL = [
-  { id: "play_game", title: "Game Time", desc: "Play any game today", icon: "fa-gamepad", target: 1, rewardCoins: 10 },
+  {
+    id: "play_game",
+    title: "Game Time",
+    desc: "Play any game today",
+    icon: "fa-gamepad",
+    target: 1,
+    rewardCoins: 10,
+  },
   {
     id: "react_friend",
     title: "Show Some Love",
     desc: "React to a friend's profile",
     icon: "fa-heart",
     target: 1,
-    rewardCoins: 10
+    rewardCoins: 10,
   },
   {
     id: "send_message",
@@ -1715,7 +1815,7 @@ const QUEST_POOL = [
     desc: "Send 3 messages to friends",
     icon: "fa-comment",
     target: 3,
-    rewardCoins: 15
+    rewardCoins: 15,
   },
   {
     id: "unlock_achievement",
@@ -1723,7 +1823,7 @@ const QUEST_POOL = [
     desc: "Unlock an achievement today",
     icon: "fa-trophy",
     target: 1,
-    rewardCoins: 15
+    rewardCoins: 15,
   },
   {
     id: "add_friend",
@@ -1731,7 +1831,7 @@ const QUEST_POOL = [
     desc: "Add a friend today",
     icon: "fa-user-plus",
     target: 1,
-    rewardCoins: 10
+    rewardCoins: 10,
   },
   {
     id: "spend_coins",
@@ -1739,8 +1839,8 @@ const QUEST_POOL = [
     desc: "Buy something from the store",
     icon: "fa-store",
     target: 1,
-    rewardCoins: 10
-  }
+    rewardCoins: 10,
+  },
 ];
 
 const ALLOWED_REACTIONS = new Set(["heart", "fire", "gg", "star", "thumbs"]);
@@ -1755,7 +1855,7 @@ function supporterCodes(env) {
     String(raw)
       .split(",")
       .map((code) => code.trim().toUpperCase())
-      .filter(Boolean)
+      .filter(Boolean),
   );
 }
 
@@ -1772,7 +1872,7 @@ function todayIso() {
 
 async function getFriendshipStatus(env, userA, userB) {
   const row = await env.DB.prepare(
-    "SELECT status FROM friendships WHERE (user_id = ? AND friend_id = ?) OR (user_id = ? AND friend_id = ?) LIMIT 1"
+    "SELECT status FROM friendships WHERE (user_id = ? AND friend_id = ?) OR (user_id = ? AND friend_id = ?) LIMIT 1",
   )
     .bind(userA, userB, userB, userA)
     .first();
@@ -1781,7 +1881,7 @@ async function getFriendshipStatus(env, userA, userB) {
 
 async function getActiveFriendIds(env, userId) {
   const rows = await env.DB.prepare(
-    "SELECT user_id, friend_id FROM friendships WHERE status = 'active' AND (user_id = ? OR friend_id = ?)"
+    "SELECT user_id, friend_id FROM friendships WHERE status = 'active' AND (user_id = ? OR friend_id = ?)",
   )
     .bind(userId, userId)
     .all();
@@ -1796,11 +1896,13 @@ async function insertFeedEvent(env, userId, actorId, type, data) {
   if (!validUserId(userId) || !validUserId(actorId)) return;
   const now = new Date().toISOString();
   try {
-    await env.DB.prepare("INSERT INTO feed (user_id, actor_id, type, data, created_at) VALUES (?, ?, ?, ?, ?)")
+    await env.DB.prepare(
+      "INSERT INTO feed (user_id, actor_id, type, data, created_at) VALUES (?, ?, ?, ?, ?)",
+    )
       .bind(userId, actorId, type, JSON.stringify(data || {}), now)
       .run();
     await env.DB.prepare(
-      "DELETE FROM feed WHERE user_id = ? AND id NOT IN (SELECT id FROM feed WHERE user_id = ? ORDER BY id DESC LIMIT 200)"
+      "DELETE FROM feed WHERE user_id = ? AND id NOT IN (SELECT id FROM feed WHERE user_id = ? ORDER BY id DESC LIMIT 200)",
     )
       .bind(userId, userId)
       .run();
@@ -1810,7 +1912,7 @@ async function insertFeedEvent(env, userId, actorId, type, data) {
 async function fetchNowPlayingMap(env) {
   const fiveMinAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
   const rows = await env.DB.prepare(
-    `SELECT data FROM analytics WHERE json_extract(data, '$.event') = 'activity_start' AND timestamp >= ? ORDER BY timestamp DESC`
+    `SELECT data FROM analytics WHERE json_extract(data, '$.event') = 'activity_start' AND timestamp >= ? ORDER BY timestamp DESC`,
   )
     .bind(fiveMinAgo)
     .all();
@@ -1824,7 +1926,7 @@ async function fetchNowPlayingMap(env) {
         appId: String(d.app || "").slice(0, 64),
         gameTitle: String(d.gameTitle || "").slice(0, 128),
         gameIcon: String(d.gameIcon || "").slice(0, 512),
-        startedAt: d.timestamp
+        startedAt: d.timestamp,
       });
     } catch {}
   }
@@ -1833,55 +1935,72 @@ async function fetchNowPlayingMap(env) {
 
 async function fetchCoinsForUser(env, userId) {
   const playtimeRow = await env.DB.prepare(
-    "SELECT COALESCE(SUM(minutes), 0) AS total FROM user_playtime WHERE user_id = ?"
+    "SELECT COALESCE(SUM(minutes), 0) AS total FROM user_playtime WHERE user_id = ?",
   )
     .bind(userId)
     .first();
   const playtimeMinutes = Math.round(Number(playtimeRow?.total) || 0);
-  const achRow = await env.DB.prepare("SELECT COUNT(*) AS c FROM user_achievements WHERE user_id = ?")
+  const achRow = await env.DB.prepare(
+    "SELECT COUNT(*) AS c FROM user_achievements WHERE user_id = ?",
+  )
     .bind(userId)
     .first();
   const achievementsCount = Number(achRow?.c) || 0;
-  const streakRow = await env.DB.prepare("SELECT COALESCE(streak, 0) AS streak FROM daily_streaks WHERE user_id = ?")
+  const streakRow = await env.DB.prepare(
+    "SELECT COALESCE(streak, 0) AS streak FROM daily_streaks WHERE user_id = ?",
+  )
     .bind(userId)
     .first();
   const streak = Number(streakRow?.streak) || 0;
   const currencyRow = await env.DB.prepare(
-    "SELECT COALESCE(bonus_coins, 0) AS bonus, COALESCE(spent_coins, 0) AS spent FROM currency WHERE user_id = ?"
+    "SELECT COALESCE(bonus_coins, 0) AS bonus, COALESCE(spent_coins, 0) AS spent FROM currency WHERE user_id = ?",
   )
     .bind(userId)
     .first();
   const bonus = Number(currencyRow?.bonus) || 0;
   const spent = Number(currencyRow?.spent) || 0;
-  const derived = Math.floor(playtimeMinutes / 15) + achievementsCount * 25 + streak * 5;
-  return { playtimeMinutes, achievementsCount, streak, coins: derived + bonus - spent, derived, bonus, spent };
+  const derived =
+    Math.floor(playtimeMinutes / 15) + achievementsCount * 25 + streak * 5;
+  return {
+    playtimeMinutes,
+    achievementsCount,
+    streak,
+    coins: derived + bonus - spent,
+    derived,
+    bonus,
+    spent,
+  };
 }
 
 async function computeQuestProgress(env, userId, questId) {
   const day = todayIso();
   if (questId === "play_game") {
     const row = await env.DB.prepare(
-      "SELECT COUNT(*) AS c FROM analytics WHERE json_extract(data, '$.event') = 'activity_start' AND json_extract(data, '$.userId') = ? AND timestamp >= ?"
+      "SELECT COUNT(*) AS c FROM analytics WHERE json_extract(data, '$.event') = 'activity_start' AND json_extract(data, '$.userId') = ? AND timestamp >= ?",
     )
       .bind(userId, day)
       .first();
     return Number(row?.c) || 0;
   }
   if (questId === "react_friend") {
-    const row = await env.DB.prepare("SELECT COUNT(*) AS c FROM reactions WHERE reactor_id = ? AND created_at >= ?")
+    const row = await env.DB.prepare(
+      "SELECT COUNT(*) AS c FROM reactions WHERE reactor_id = ? AND created_at >= ?",
+    )
       .bind(userId, day)
       .first();
     return Number(row?.c) || 0;
   }
   if (questId === "send_message") {
-    const row = await env.DB.prepare("SELECT COUNT(*) AS c FROM messages WHERE from_id = ? AND sent_at >= ?")
+    const row = await env.DB.prepare(
+      "SELECT COUNT(*) AS c FROM messages WHERE from_id = ? AND sent_at >= ?",
+    )
       .bind(userId, day)
       .first();
     return Number(row?.c) || 0;
   }
   if (questId === "unlock_achievement") {
     const row = await env.DB.prepare(
-      "SELECT COUNT(*) AS c FROM user_achievements WHERE user_id = ? AND unlocked_at >= ?"
+      "SELECT COUNT(*) AS c FROM user_achievements WHERE user_id = ? AND unlocked_at >= ?",
     )
       .bind(userId, day)
       .first();
@@ -1889,14 +2008,16 @@ async function computeQuestProgress(env, userId, questId) {
   }
   if (questId === "add_friend") {
     const row = await env.DB.prepare(
-      "SELECT COUNT(*) AS c FROM friendships WHERE status = 'active' AND created_at >= ? AND (user_id = ? OR friend_id = ?)"
+      "SELECT COUNT(*) AS c FROM friendships WHERE status = 'active' AND created_at >= ? AND (user_id = ? OR friend_id = ?)",
     )
       .bind(day, userId, userId)
       .first();
     return Number(row?.c) || 0;
   }
   if (questId === "spend_coins") {
-    const row = await env.DB.prepare("SELECT COUNT(*) AS c FROM inventory WHERE user_id = ? AND acquired_at >= ?")
+    const row = await env.DB.prepare(
+      "SELECT COUNT(*) AS c FROM inventory WHERE user_id = ? AND acquired_at >= ?",
+    )
       .bind(userId, day)
       .first();
     return Number(row?.c) || 0;
@@ -1908,7 +2029,7 @@ async function fetchDiscoverData(env) {
   const cutoff = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
 
   const profiles = await env.DB.prepare(
-    "SELECT user_id, username, avatar_index, bio, presence, created_at, last_seen FROM live_users WHERE last_seen >= ? ORDER BY last_seen DESC LIMIT 500"
+    "SELECT user_id, username, avatar_index, bio, presence, created_at, last_seen FROM live_users WHERE last_seen >= ? ORDER BY last_seen DESC LIMIT 500",
   )
     .bind(cutoff)
     .all();
@@ -1922,7 +2043,7 @@ async function fetchDiscoverData(env) {
     `SELECT data FROM analytics
      WHERE json_extract(data, '$.event') = 'activity_start'
        AND timestamp >= ?
-     ORDER BY timestamp DESC`
+     ORDER BY timestamp DESC`,
   )
     .bind(fiveMinAgo)
     .all();
@@ -1938,35 +2059,43 @@ async function fetchDiscoverData(env) {
           appId: String(d.app || "").slice(0, 64),
           gameTitle: String(d.gameTitle || "").slice(0, 128),
           gameIcon: String(d.gameIcon || "").slice(0, 512),
-          startedAt: d.timestamp
+          startedAt: d.timestamp,
         });
       }
     } catch {}
   }
 
   const achievementRows = await env.DB.prepare(
-    `SELECT user_id, achievement_id, unlocked_at FROM user_achievements WHERE user_id IN (${placeholders})`
+    `SELECT user_id, achievement_id, unlocked_at FROM user_achievements WHERE user_id IN (${placeholders})`,
   )
     .bind(...ids)
     .all();
   const achievementsMap = new Map();
   for (const row of achievementRows.results) {
     if (!achievementsMap.has(row.user_id)) achievementsMap.set(row.user_id, []);
-    achievementsMap.get(row.user_id).push({ id: row.achievement_id, unlockedAt: row.unlocked_at });
+    achievementsMap
+      .get(row.user_id)
+      .push({ id: row.achievement_id, unlockedAt: row.unlocked_at });
   }
 
   const playtimeRows = await env.DB.prepare(
-    `SELECT user_id, app, minutes, last_played FROM user_playtime WHERE user_id IN (${placeholders})`
+    `SELECT user_id, app, minutes, last_played FROM user_playtime WHERE user_id IN (${placeholders})`,
   )
     .bind(...ids)
     .all();
   const playtimeMap = new Map();
   for (const row of playtimeRows.results) {
     if (!playtimeMap.has(row.user_id)) playtimeMap.set(row.user_id, []);
-    playtimeMap.get(row.user_id).push({ app: row.app, minutes: row.minutes, lastPlayed: row.last_played });
+    playtimeMap.get(row.user_id).push({
+      app: row.app,
+      minutes: row.minutes,
+      lastPlayed: row.last_played,
+    });
   }
 
-  const invRows = await env.DB.prepare(`SELECT user_id, item_id FROM inventory WHERE user_id IN (${placeholders})`)
+  const invRows = await env.DB.prepare(
+    `SELECT user_id, item_id FROM inventory WHERE user_id IN (${placeholders})`,
+  )
     .bind(...ids)
     .all();
   const inventoryMap = new Map();
@@ -1976,7 +2105,7 @@ async function fetchDiscoverData(env) {
   }
 
   const supporterRows = await env.DB.prepare(
-    `SELECT user_id FROM accounts WHERE supporter = 1 AND user_id IN (${placeholders})`
+    `SELECT user_id FROM accounts WHERE supporter = 1 AND user_id IN (${placeholders})`,
   )
     .bind(...ids)
     .all();
@@ -1993,12 +2122,13 @@ async function fetchDiscoverData(env) {
       bio: p.bio || "",
       createdAt: p.created_at,
       lastSeen: p.last_seen,
-      nowPlaying: p.presence !== "online" ? null : nowPlaying.get(p.user_id) || null,
+      nowPlaying:
+        p.presence !== "online" ? null : nowPlaying.get(p.user_id) || null,
       achievements,
       playtime: playtime.sort((a, b) => b.minutes - a.minutes),
       totalMinutes: Math.round(totalMinutes),
       inventory: inventoryMap.get(p.user_id) || [],
-      supporter: supporterSet.has(p.user_id)
+      supporter: supporterSet.has(p.user_id),
     };
   });
 
@@ -2023,7 +2153,7 @@ function themeRateLimit(env, ip, bucket) {
     feed: [30, 60 * 1000],
     admin_list: [30, 60 * 1000],
     analytics: [30, 60 * 1000],
-    activity: [30, 60 * 1000]
+    activity: [30, 60 * 1000],
   };
   const config = limits[bucket];
   if (!config) return true;
@@ -2048,7 +2178,7 @@ function themeRateLimit(env, ip, bucket) {
       for (const [b, t] of value) {
         value.set(
           b,
-          t.filter((x) => now - x < limits[b][1])
+          t.filter((x) => now - x < limits[b][1]),
         );
         if (value.get(b).length > 0) empty = false;
       }
@@ -2090,7 +2220,7 @@ const THEME_COLOR_KEYS = [
   "charging",
   "menu-bg",
   "window-bg",
-  "shadow-color"
+  "shadow-color",
 ];
 
 const THEME_EFFECT_OPTIONS = {
@@ -2107,7 +2237,7 @@ const THEME_EFFECT_OPTIONS = {
     "blurReveal",
     "perspective3D",
     "cornerUnfold",
-    "slideInGrowth"
+    "slideInGrowth",
   ],
   close: [
     "instant",
@@ -2117,12 +2247,27 @@ const THEME_EFFECT_OPTIONS = {
     "slideDown",
     "burn",
     "shrinkToPoint",
-    "dissolveBlur"
+    "dissolveBlur",
   ],
-  minimize: ["instant", "taskbarShrink", "dockZoomShrink", "magicLamp", "fadeToTaskbar", "elasticStretch", "spiralDown"]
+  minimize: [
+    "instant",
+    "taskbarShrink",
+    "dockZoomShrink",
+    "magicLamp",
+    "fadeToTaskbar",
+    "elasticStretch",
+    "spiralDown",
+  ],
 };
 
-const THEME_CONFIG_FONTS = ["opensans", "inter", "rubik", "sora", "jetbrainsmono", "monocraft"];
+const THEME_CONFIG_FONTS = [
+  "opensans",
+  "inter",
+  "rubik",
+  "sora",
+  "jetbrainsmono",
+  "monocraft",
+];
 const THEME_CONFIG_DENSITIES = ["compact", "comfortable", "spacious"];
 
 function sanitizeColorValue(value) {
@@ -2133,7 +2278,12 @@ function sanitizeColorValue(value) {
     /^(#[0-9a-fA-F]{3,8}|rgba?\([^()]{1,80}\)|hsla?\([^()]{1,80}\)|oklch\([^()]{1,120}\)|var\(--[a-zA-Z0-9-]{1,64}\)|transparent|currentcolor|none|inherit)$/i;
   if (!pattern.test(trimmed)) return null;
   const lower = trimmed.toLowerCase();
-  if (lower.includes("url(") || lower.includes("expression") || lower.includes("javascript")) return null;
+  if (
+    lower.includes("url(") ||
+    lower.includes("expression") ||
+    lower.includes("javascript")
+  )
+    return null;
   return trimmed;
 }
 
@@ -2145,20 +2295,38 @@ function sanitizeBackground(value) {
   const pattern = /^[a-zA-Z0-9#%(),.#\s\-/]+$/;
   if (!pattern.test(trimmed)) return null;
   const lower = trimmed.toLowerCase();
-  if (lower.includes("url(") || lower.includes("expression") || lower.includes("javascript")) return null;
+  if (
+    lower.includes("url(") ||
+    lower.includes("expression") ||
+    lower.includes("javascript")
+  )
+    return null;
   return trimmed;
 }
 
 function sanitizeThemeContract(input) {
-  if (!input || typeof input !== "object") return { ok: false, errors: ["invalid contract"] };
+  if (!input || typeof input !== "object")
+    return { ok: false, errors: ["invalid contract"] };
   const errors = [];
-  if (input.schemaVersion !== 1 && input.schemaVersion !== 2) errors.push("invalid schemaVersion");
+  if (input.schemaVersion !== 1 && input.schemaVersion !== 2)
+    errors.push("invalid schemaVersion");
   if (input.type !== "yukios-theme") errors.push("invalid type");
-  if (typeof input.name !== "string" || input.name.trim().length === 0 || input.name.trim().length > 48)
+  if (
+    typeof input.name !== "string" ||
+    input.name.trim().length === 0 ||
+    input.name.trim().length > 48
+  )
     errors.push("invalid name");
-  const description = typeof input.description === "string" ? input.description.trim().slice(0, 200) : "";
-  const author = typeof input.author === "string" ? input.author.trim().slice(0, 32) : "";
-  const icon = typeof input.icon === "string" ? input.icon.trim().slice(0, 64) : "fas fa-palette";
+  const description =
+    typeof input.description === "string"
+      ? input.description.trim().slice(0, 200)
+      : "";
+  const author =
+    typeof input.author === "string" ? input.author.trim().slice(0, 32) : "";
+  const icon =
+    typeof input.icon === "string"
+      ? input.icon.trim().slice(0, 64)
+      : "fas fa-palette";
   const name = typeof input.name === "string" ? input.name.trim() : "";
   if (errors.length > 0) return { ok: false, errors };
 
@@ -2170,7 +2338,8 @@ function sanitizeThemeContract(input) {
       if (sanitized) colors[key] = sanitized;
     }
   }
-  if (Object.keys(colors).length < 1) return { ok: false, errors: ["theme needs at least one color"] };
+  if (Object.keys(colors).length < 1)
+    return { ok: false, errors: ["theme needs at least one color"] };
 
   let effects = {};
   if (input.effects && typeof input.effects === "object") {
@@ -2195,7 +2364,8 @@ function sanitizeThemeContract(input) {
     ) {
       effects.minimizeAnimation = input.effects.minimizeAnimation || null;
     }
-    if (typeof input.effects.cursorOff === "boolean") effects.cursorOff = input.effects.cursorOff;
+    if (typeof input.effects.cursorOff === "boolean")
+      effects.cursorOff = input.effects.cursorOff;
     if (input.effects.background !== undefined) {
       const bg = sanitizeBackground(input.effects.background);
       if (bg) effects.background = bg;
@@ -2204,10 +2374,18 @@ function sanitizeThemeContract(input) {
 
   const config = {};
   if (input.config && typeof input.config === "object") {
-    if (THEME_CONFIG_FONTS.includes(input.config.fontFamily)) config.fontFamily = input.config.fontFamily;
-    if (THEME_CONFIG_DENSITIES.includes(input.config.density)) config.density = input.config.density;
-    if (typeof input.config.windowTransparency === "number" && Number.isFinite(input.config.windowTransparency)) {
-      config.windowTransparency = Math.max(20, Math.min(100, Math.round(input.config.windowTransparency)));
+    if (THEME_CONFIG_FONTS.includes(input.config.fontFamily))
+      config.fontFamily = input.config.fontFamily;
+    if (THEME_CONFIG_DENSITIES.includes(input.config.density))
+      config.density = input.config.density;
+    if (
+      typeof input.config.windowTransparency === "number" &&
+      Number.isFinite(input.config.windowTransparency)
+    ) {
+      config.windowTransparency = Math.max(
+        20,
+        Math.min(100, Math.round(input.config.windowTransparency)),
+      );
     }
   }
 
@@ -2222,9 +2400,9 @@ function sanitizeThemeContract(input) {
       icon,
       colors,
       effects,
-      config
+      config,
     },
-    errors: []
+    errors: [],
   };
 }
 
@@ -2242,7 +2420,9 @@ async function handleYukiRequest(request, env) {
   }
 
   if (url.pathname === "/") {
-    return new Response("Api is working!", { headers: corsHeaders("text/plain") });
+    return new Response("Api is working!", {
+      headers: corsHeaders("text/plain"),
+    });
   }
 
   if (url.pathname === "/admin") {
@@ -2274,10 +2454,14 @@ async function handleYukiRequest(request, env) {
         fields: [
           { name: "Game Title", value: title, inline: true },
           { name: "App ID", value: appId, inline: true },
-          { name: "Reason", value: reason || "No reason provided", inline: false },
+          {
+            name: "Reason",
+            value: reason || "No reason provided",
+            inline: false,
+          },
           { name: "Reporter ID", value: ipHash, inline: false },
-          { name: "Timestamp", value: new Date().toISOString(), inline: false }
-        ]
+          { name: "Timestamp", value: new Date().toISOString(), inline: false },
+        ],
       });
     } catch (err) {
       return errorJsonResponse(err, 502);
@@ -2309,19 +2493,21 @@ async function handleYukiRequest(request, env) {
       const data = {
         event: "download",
         app: event.app ? normalizeApp(event.app) : "unknown",
-        fileName: typeof event.fileName === "string" ? event.fileName.slice(0, 255) : "",
+        fileName:
+          typeof event.fileName === "string"
+            ? event.fileName.slice(0, 255)
+            : "",
         fileSize: typeof event.fileSize === "number" ? event.fileSize : 0,
-        fileType: typeof event.fileType === "string" ? event.fileType.slice(0, 64) : "",
-        source: typeof event.source === "string" ? event.source.slice(0, 32) : "",
-        timestamp: event.timestamp || Date.now()
+        fileType:
+          typeof event.fileType === "string" ? event.fileType.slice(0, 64) : "",
+        source:
+          typeof event.source === "string" ? event.source.slice(0, 32) : "",
+        timestamp: event.timestamp || Date.now(),
       };
       const id = crypto.randomUUID();
-      return env.DB.prepare("INSERT INTO analytics (id, daily_id, timestamp, data) VALUES (?, ?, ?, ?)").bind(
-        id,
-        dailyId,
-        timestamp,
-        JSON.stringify(data)
-      );
+      return env.DB.prepare(
+        "INSERT INTO analytics (id, daily_id, timestamp, data) VALUES (?, ?, ?, ?)",
+      ).bind(id, dailyId, timestamp, JSON.stringify(data));
     });
 
     if (inserts.length === 0) return jsonResponse({ status: "ok", count: 0 });
@@ -2352,20 +2538,23 @@ async function handleYukiRequest(request, env) {
     const inserts = events.map((event) => {
       const data = {
         event: "electron_usage",
-        action: typeof event.action === "string" ? event.action.slice(0, 64) : "unknown",
-        platform: typeof event.platform === "string" ? event.platform.slice(0, 32) : "",
-        version: typeof event.version === "string" ? event.version.slice(0, 32) : "",
-        details: typeof event.details === "string" ? event.details.slice(0, 512) : "",
+        action:
+          typeof event.action === "string"
+            ? event.action.slice(0, 64)
+            : "unknown",
+        platform:
+          typeof event.platform === "string" ? event.platform.slice(0, 32) : "",
+        version:
+          typeof event.version === "string" ? event.version.slice(0, 32) : "",
+        details:
+          typeof event.details === "string" ? event.details.slice(0, 512) : "",
         isDev: !!event.isDev,
-        timestamp: event.timestamp || Date.now()
+        timestamp: event.timestamp || Date.now(),
       };
       const id = crypto.randomUUID();
-      return env.DB.prepare("INSERT INTO analytics (id, daily_id, timestamp, data) VALUES (?, ?, ?, ?)").bind(
-        id,
-        dailyId,
-        timestamp,
-        JSON.stringify(data)
-      );
+      return env.DB.prepare(
+        "INSERT INTO analytics (id, daily_id, timestamp, data) VALUES (?, ?, ?, ?)",
+      ).bind(id, dailyId, timestamp, JSON.stringify(data));
     });
 
     if (inserts.length === 0) return jsonResponse({ status: "ok", count: 0 });
@@ -2393,7 +2582,10 @@ async function handleYukiRequest(request, env) {
     let events = Array.isArray(payload) ? payload : [payload];
     if (events.length > 20) events = events.slice(0, 20);
     let cleanEvents = events.filter(
-      (e) => !isUrlPrefixed(e.username) && !isUrlPrefixed(e.appId) && !isUrlPrefixed(e.gameTitle)
+      (e) =>
+        !isUrlPrefixed(e.username) &&
+        !isUrlPrefixed(e.appId) &&
+        !isUrlPrefixed(e.gameTitle),
     );
     const timestamp = new Date().toISOString();
     const dailyId = await deriveDailyId(env, clientIP);
@@ -2404,8 +2596,10 @@ async function handleYukiRequest(request, env) {
         if (app !== "unknown" && !/^[a-z0-9_.-]{1,64}$/.test(app)) return false;
       }
       if (
-        (typeof e.username === "string" && (e.username.includes("<") || e.username.includes(">"))) ||
-        (typeof e.gameTitle === "string" && (e.gameTitle.includes("<") || e.gameTitle.includes(">")))
+        (typeof e.username === "string" &&
+          (e.username.includes("<") || e.username.includes(">"))) ||
+        (typeof e.gameTitle === "string" &&
+          (e.gameTitle.includes("<") || e.gameTitle.includes(">")))
       ) {
         return false;
       }
@@ -2417,20 +2611,26 @@ async function handleYukiRequest(request, env) {
       const data = {
         app: event.appId ? normalizeApp(event.appId) : "unknown",
         event: "activity_" + (event.event === "stop" ? "stop" : "start"),
-        name: typeof event.username === "string" ? event.username.slice(0, 32) : "Anonymous",
+        name:
+          typeof event.username === "string"
+            ? event.username.slice(0, 32)
+            : "Anonymous",
         userId: validUserId(event.userId) ? event.userId : null,
-        gameTitle: typeof event.gameTitle === "string" ? event.gameTitle.slice(0, 128) : "",
-        gameIcon: isTrustedIconUrl(event.gameIcon) ? event.gameIcon.slice(0, 512) : "",
-        avatarIndex: typeof event.avatarIndex === "number" ? event.avatarIndex : -1,
-        timestamp: event.timestamp || Date.now()
+        gameTitle:
+          typeof event.gameTitle === "string"
+            ? event.gameTitle.slice(0, 128)
+            : "",
+        gameIcon: isTrustedIconUrl(event.gameIcon)
+          ? event.gameIcon.slice(0, 512)
+          : "",
+        avatarIndex:
+          typeof event.avatarIndex === "number" ? event.avatarIndex : -1,
+        timestamp: event.timestamp || Date.now(),
       };
       const id = crypto.randomUUID();
-      return env.DB.prepare("INSERT INTO analytics (id, daily_id, timestamp, data) VALUES (?, ?, ?, ?)").bind(
-        id,
-        dailyId,
-        timestamp,
-        JSON.stringify(data)
-      );
+      return env.DB.prepare(
+        "INSERT INTO analytics (id, daily_id, timestamp, data) VALUES (?, ?, ?, ?)",
+      ).bind(id, dailyId, timestamp, JSON.stringify(data));
     });
 
     const socialStatements = [];
@@ -2438,21 +2638,30 @@ async function handleYukiRequest(request, env) {
     for (const event of cleanEvents) {
       if (!validUserId(event.userId)) continue;
       const username = sanitizeName(event.username, "");
-      const avatarIndex = typeof event.avatarIndex === "number" ? event.avatarIndex : -1;
-      socialStatements.push(profileUpsertStatement(env, event.userId, username, avatarIndex, now));
+      const avatarIndex =
+        typeof event.avatarIndex === "number" ? event.avatarIndex : -1;
+      socialStatements.push(
+        profileUpsertStatement(env, event.userId, username, avatarIndex, now),
+      );
       if (event.event !== "stop") {
         feedWrites.push(
           insertFeedEvent(env, event.userId, event.userId, "playing", {
             appId: event.appId ? normalizeApp(event.appId) : "unknown",
-            gameTitle: typeof event.gameTitle === "string" ? event.gameTitle.slice(0, 128) : "",
-            gameIcon: isTrustedIconUrl(event.gameIcon) ? event.gameIcon.slice(0, 512) : ""
-          })
+            gameTitle:
+              typeof event.gameTitle === "string"
+                ? event.gameTitle.slice(0, 128)
+                : "",
+            gameIcon: isTrustedIconUrl(event.gameIcon)
+              ? event.gameIcon.slice(0, 512)
+              : "",
+          }),
         );
       }
     }
 
     const allStatements = inserts.concat(socialStatements);
-    if (allStatements.length === 0) return jsonResponse({ status: "ok", count: 0 });
+    if (allStatements.length === 0)
+      return jsonResponse({ status: "ok", count: 0 });
     await env.DB.batch(allStatements);
     await Promise.all(feedWrites);
     return jsonResponse({ status: "ok", count: cleanEvents.length });
@@ -2470,7 +2679,7 @@ async function handleYukiRequest(request, env) {
             `SELECT data FROM analytics
          WHERE json_extract(data, '$.event') = 'activity_start'
            AND timestamp >= ?
-         ORDER BY timestamp DESC`
+         ORDER BY timestamp DESC`,
           )
             .bind(fiveMinAgo)
             .all();
@@ -2478,7 +2687,8 @@ async function handleYukiRequest(request, env) {
           const usersMap = new Map();
           for (const row of result.results) {
             try {
-              const d = typeof row.data === "string" ? JSON.parse(row.data) : row.data;
+              const d =
+                typeof row.data === "string" ? JSON.parse(row.data) : row.data;
               if (!d.name) continue;
               const key = d.userId || d.name;
               if (!usersMap.has(key)) {
@@ -2488,23 +2698,33 @@ async function handleYukiRequest(request, env) {
                   appId: String(d.app || "").slice(0, 64),
                   gameTitle: String(d.gameTitle || "").slice(0, 128),
                   gameIcon: String(d.gameIcon || "").slice(0, 512),
-                  avatarIndex: typeof d.avatarIndex === "number" ? d.avatarIndex : -1,
-                  startedAt: d.timestamp
+                  avatarIndex:
+                    typeof d.avatarIndex === "number" ? d.avatarIndex : -1,
+                  startedAt: d.timestamp,
                 });
               }
             } catch {}
           }
 
-          const presenceRows = await env.DB.prepare("SELECT user_id, presence FROM live_users").all();
-          const presenceMap = new Map((presenceRows.results || []).map((r) => [r.user_id, r.presence]));
+          const presenceRows = await env.DB.prepare(
+            "SELECT user_id, presence FROM live_users",
+          ).all();
+          const presenceMap = new Map(
+            (presenceRows.results || []).map((r) => [r.user_id, r.presence]),
+          );
 
           const users = Array.from(usersMap.values()).filter(
-            (u) => !(u.userId && presenceMap.get(u.userId) && presenceMap.get(u.userId) !== "online")
+            (u) =>
+              !(
+                u.userId &&
+                presenceMap.get(u.userId) &&
+                presenceMap.get(u.userId) !== "online"
+              ),
           );
           return { users };
         },
-        5000
-      )
+        5000,
+      ),
     );
   }
 
@@ -2524,7 +2744,7 @@ async function handleYukiRequest(request, env) {
            WHERE json_extract(data, '$.event') = 'activity_start'
              AND json_extract(data, '$.app') = ?
            ORDER BY timestamp DESC
-           LIMIT 200`
+           LIMIT 200`,
         )
           .bind(app)
           .all();
@@ -2532,7 +2752,8 @@ async function handleYukiRequest(request, env) {
         const usersMap = new Map();
         for (const row of result.results) {
           try {
-            const d = typeof row.data === "string" ? JSON.parse(row.data) : row.data;
+            const d =
+              typeof row.data === "string" ? JSON.parse(row.data) : row.data;
             if (!d.name) continue;
             const key = d.userId || d.name;
             if (!usersMap.has(key)) {
@@ -2542,15 +2763,16 @@ async function handleYukiRequest(request, env) {
                 appId: String(d.app || "").slice(0, 64),
                 gameTitle: String(d.gameTitle || "").slice(0, 128),
                 gameIcon: String(d.gameIcon || "").slice(0, 512),
-                avatarIndex: typeof d.avatarIndex === "number" ? d.avatarIndex : -1,
-                startedAt: d.timestamp
+                avatarIndex:
+                  typeof d.avatarIndex === "number" ? d.avatarIndex : -1,
+                startedAt: d.timestamp,
               });
             }
           } catch {}
         }
         return Array.from(usersMap.values());
       },
-      60 * 1000
+      60 * 1000,
     );
 
     return jsonResponse({ users });
@@ -2576,17 +2798,24 @@ async function handleYukiRequest(request, env) {
     const userId = validUserId(payload.userId) ? payload.userId : null;
     const username = sanitizeName(payload.username, "Anonymous");
     const avatarIndex =
-      typeof payload.avatarIndex === "number" && Number.isInteger(payload.avatarIndex)
+      typeof payload.avatarIndex === "number" &&
+      Number.isInteger(payload.avatarIndex)
         ? Math.max(-1, Math.min(payload.avatarIndex, 1024))
         : -1;
     const created = !userId;
     const resolvedId = userId || crypto.randomUUID();
-    const bio = typeof payload.bio === "string" ? payload.bio.trim().slice(0, 300) : "";
+    const bio =
+      typeof payload.bio === "string" ? payload.bio.trim().slice(0, 300) : "";
     const presenceProvided = payload.presence !== undefined;
-    const presence = presenceProvided ? sanitizePresence(payload.presence) : null;
+    const presence = presenceProvided
+      ? sanitizePresence(payload.presence)
+      : null;
     let lastSeenValue = now;
     if (presenceProvided) {
-      lastSeenValue = presence === "online" ? now : new Date(Date.now() - 10 * 60 * 1000).toISOString();
+      lastSeenValue =
+        presence === "online"
+          ? now
+          : new Date(Date.now() - 10 * 60 * 1000).toISOString();
     }
 
     await env.DB.prepare(
@@ -2600,12 +2829,26 @@ async function handleYukiRequest(request, env) {
            last_seen = CASE
              WHEN COALESCE(excluded.presence, live_users.presence, 'online') = 'online' THEN excluded.last_seen
              WHEN excluded.presence IS NOT NULL THEN excluded.last_seen
-             ELSE live_users.last_seen END`
+             ELSE live_users.last_seen END`,
     )
-      .bind(resolvedId, username, avatarIndex, bio, presence, now, lastSeenValue)
+      .bind(
+        resolvedId,
+        username,
+        avatarIndex,
+        bio,
+        presence,
+        now,
+        lastSeenValue,
+      )
       .run();
 
-    return jsonResponse({ userId: resolvedId, username, avatarIndex, bio, created });
+    return jsonResponse({
+      userId: resolvedId,
+      username,
+      avatarIndex,
+      bio,
+      created,
+    });
   }
 
   if (url.pathname === "/live/account/register" && request.method === "POST") {
@@ -2613,7 +2856,10 @@ async function handleYukiRequest(request, env) {
       return jsonResponse({ error: "Forbidden" }, 403);
     }
     if (!themeRateLimit(env, clientIP, "register")) {
-      return jsonResponse({ error: "Too many attempts. Try again later." }, 429);
+      return jsonResponse(
+        { error: "Too many attempts. Try again later." },
+        429,
+      );
     }
 
     let payload;
@@ -2627,21 +2873,29 @@ async function handleYukiRequest(request, env) {
     if (!nickname || nickname.length < 3 || nickname.length > 32) {
       return jsonResponse({ error: "Nickname must be 3-32 characters." }, 400);
     }
-    const password = typeof payload.password === "string" ? payload.password : "";
+    const password =
+      typeof payload.password === "string" ? payload.password : "";
     if (password.length < 6) {
-      return jsonResponse({ error: "Password must be at least 6 characters." }, 400);
+      return jsonResponse(
+        { error: "Password must be at least 6 characters." },
+        400,
+      );
     }
 
     await ensureSocialSchema(env);
 
-    const existing = await env.DB.prepare("SELECT user_id FROM accounts WHERE lower(nickname) = lower(?)")
+    const existing = await env.DB.prepare(
+      "SELECT user_id FROM accounts WHERE lower(nickname) = lower(?)",
+    )
       .bind(nickname)
       .first();
     if (existing) {
       return jsonResponse({ error: "That nickname is already taken." }, 409);
     }
 
-    const userId = validUserId(payload.userId) ? payload.userId : crypto.randomUUID();
+    const userId = validUserId(payload.userId)
+      ? payload.userId
+      : crypto.randomUUID();
     const now = new Date().toISOString();
     const salt = randomHex(16);
     const passHash = await hashPassword(password, salt);
@@ -2649,12 +2903,14 @@ async function handleYukiRequest(request, env) {
     await env.DB.prepare(
       `INSERT INTO live_users (user_id, username, avatar_index, bio, presence, created_at, last_seen)
          VALUES (?, ?, -1, '', 'online', ?, ?)
-         ON CONFLICT(user_id) DO UPDATE SET username = excluded.username, last_seen = excluded.last_seen`
+         ON CONFLICT(user_id) DO UPDATE SET username = excluded.username, last_seen = excluded.last_seen`,
     )
       .bind(userId, nickname, now, now)
       .run();
 
-    await env.DB.prepare("INSERT INTO accounts (user_id, nickname, pass_hash, salt, created_at) VALUES (?, ?, ?, ?, ?)")
+    await env.DB.prepare(
+      "INSERT INTO accounts (user_id, nickname, pass_hash, salt, created_at) VALUES (?, ?, ?, ?, ?)",
+    )
       .bind(userId, nickname, passHash, salt, now)
       .run();
 
@@ -2667,7 +2923,10 @@ async function handleYukiRequest(request, env) {
       return jsonResponse({ error: "Forbidden" }, 403);
     }
     if (!themeRateLimit(env, clientIP, "login")) {
-      return jsonResponse({ error: "Too many attempts. Try again later." }, 429);
+      return jsonResponse(
+        { error: "Too many attempts. Try again later." },
+        429,
+      );
     }
 
     let payload;
@@ -2677,8 +2936,10 @@ async function handleYukiRequest(request, env) {
       return jsonResponse({ error: "invalid json" }, 400);
     }
 
-    const identifier = typeof payload.identifier === "string" ? payload.identifier.trim() : "";
-    const password = typeof payload.password === "string" ? payload.password : "";
+    const identifier =
+      typeof payload.identifier === "string" ? payload.identifier.trim() : "";
+    const password =
+      typeof payload.password === "string" ? payload.password : "";
     if (!identifier || !password) {
       return jsonResponse({ error: "Enter your nickname and password." }, 400);
     }
@@ -2686,7 +2947,7 @@ async function handleYukiRequest(request, env) {
     await ensureSocialSchema(env);
 
     const row = await env.DB.prepare(
-      "SELECT user_id, nickname, pass_hash, salt FROM accounts WHERE lower(nickname) = lower(?)"
+      "SELECT user_id, nickname, pass_hash, salt FROM accounts WHERE lower(nickname) = lower(?)",
     )
       .bind(identifier)
       .first();
@@ -2700,7 +2961,11 @@ async function handleYukiRequest(request, env) {
     }
 
     const now = new Date().toISOString();
-    await env.DB.prepare("UPDATE live_users SET last_seen = ? WHERE user_id = ?").bind(now, row.user_id).run();
+    await env.DB.prepare(
+      "UPDATE live_users SET last_seen = ? WHERE user_id = ?",
+    )
+      .bind(now, row.user_id)
+      .run();
 
     const token = await createSession(env, row.user_id);
     return jsonResponse({ userId: row.user_id, nickname: row.nickname, token });
@@ -2708,10 +2973,11 @@ async function handleYukiRequest(request, env) {
 
   if (url.pathname === "/live/account/me") {
     const session = await authorizeSession(env, request);
-    if (!session) return jsonResponse({ error: "Unauthorized. Sign in again." }, 401);
+    if (!session)
+      return jsonResponse({ error: "Unauthorized. Sign in again." }, 401);
 
     const user = await env.DB.prepare(
-      "SELECT u.user_id, u.username, u.avatar_index, u.bio, COALESCE(a.supporter,0) AS supporter FROM live_users u LEFT JOIN accounts a ON a.user_id = u.user_id WHERE u.user_id = ?"
+      "SELECT u.user_id, u.username, u.avatar_index, u.bio, COALESCE(a.supporter,0) AS supporter FROM live_users u LEFT JOIN accounts a ON a.user_id = u.user_id WHERE u.user_id = ?",
     )
       .bind(session.userId)
       .first();
@@ -2723,7 +2989,7 @@ async function handleYukiRequest(request, env) {
       avatarIndex: user ? user.avatar_index : -1,
       bio: user ? user.bio : "",
       supporter: !!(user && user.supporter),
-      quota
+      quota,
     });
   }
 
@@ -2751,13 +3017,16 @@ async function handleYukiRequest(request, env) {
 
     const now = new Date().toISOString();
     const updates = { username: null, avatarIndex: undefined, bio: null };
-    if (payload.nickname !== undefined) updates.username = sanitizeName(payload.nickname, null);
-    if (payload.avatarIndex !== undefined) updates.avatarIndex = Number(payload.avatarIndex);
-    if (payload.bio !== undefined) updates.bio = String(payload.bio || "").slice(0, 300);
+    if (payload.nickname !== undefined)
+      updates.username = sanitizeName(payload.nickname, null);
+    if (payload.avatarIndex !== undefined)
+      updates.avatarIndex = Number(payload.avatarIndex);
+    if (payload.bio !== undefined)
+      updates.bio = String(payload.bio || "").slice(0, 300);
 
     if (updates.username) {
       const clash = await env.DB.prepare(
-        "SELECT user_id FROM accounts WHERE lower(nickname) = lower(?) AND user_id <> ?"
+        "SELECT user_id FROM accounts WHERE lower(nickname) = lower(?) AND user_id <> ?",
       )
         .bind(updates.username, session.userId)
         .first();
@@ -2786,18 +3055,22 @@ async function handleYukiRequest(request, env) {
     setClauses.push("last_seen = ?");
     params.push(now);
     params.push(session.userId);
-    await env.DB.prepare(`UPDATE live_users SET ${setClauses.join(", ")} WHERE user_id = ?`)
+    await env.DB.prepare(
+      `UPDATE live_users SET ${setClauses.join(", ")} WHERE user_id = ?`,
+    )
       .bind(...params)
       .run();
 
-    const updated = await env.DB.prepare("SELECT username, avatar_index, bio FROM live_users WHERE user_id = ?")
+    const updated = await env.DB.prepare(
+      "SELECT username, avatar_index, bio FROM live_users WHERE user_id = ?",
+    )
       .bind(session.userId)
       .first();
 
     return jsonResponse({
       nickname: updated ? updated.username : null,
       avatarIndex: updated ? updated.avatar_index : updates.avatarIndex,
-      bio: updated ? updated.bio : updates.bio
+      bio: updated ? updated.bio : updates.bio,
     });
   }
 
@@ -2806,14 +3079,16 @@ async function handleYukiRequest(request, env) {
     if (!session) {
       return jsonResponse({ error: "Unauthorized. Sign in again." }, 401);
     }
-    const row = await env.DB.prepare("SELECT payload, updated_at FROM user_sync WHERE user_id = ?")
+    const row = await env.DB.prepare(
+      "SELECT payload, updated_at FROM user_sync WHERE user_id = ?",
+    )
       .bind(session.userId)
       .first();
     const quota = await getAccountQuota(env, session.userId);
     return jsonResponse({
       payload: row && row.payload ? JSON.parse(row.payload) : null,
       updatedAt: row ? row.updated_at : null,
-      quota
+      quota,
     });
   }
 
@@ -2833,7 +3108,9 @@ async function handleYukiRequest(request, env) {
       return jsonResponse({ error: "invalid json" }, 400);
     }
 
-    const blob = JSON.stringify(payload && payload.data !== undefined ? payload.data : payload);
+    const blob = JSON.stringify(
+      payload && payload.data !== undefined ? payload.data : payload,
+    );
     const byteSize = new TextEncoder().encode(blob).length;
     const quota = await getAccountQuota(env, session.userId);
     if (byteSize > quota.limit - quota.used) {
@@ -2841,20 +3118,24 @@ async function handleYukiRequest(request, env) {
         {
           error: "Sync data exceeds your storage quota.",
           byteSize,
-          quota: { limit: quota.limit, used: quota.used + byteSize }
+          quota: { limit: quota.limit, used: quota.used + byteSize },
         },
-        413
+        413,
       );
     }
 
     const now = new Date().toISOString();
     await env.DB.prepare(
-      "INSERT INTO user_sync (user_id, payload, updated_at) VALUES (?, ?, ?) ON CONFLICT(user_id) DO UPDATE SET payload = excluded.payload, updated_at = excluded.updated_at"
+      "INSERT INTO user_sync (user_id, payload, updated_at) VALUES (?, ?, ?) ON CONFLICT(user_id) DO UPDATE SET payload = excluded.payload, updated_at = excluded.updated_at",
     )
       .bind(session.userId, blob, now)
       .run();
 
-    return jsonResponse({ ok: true, updatedAt: now, quota: { ...quota, used: byteSize } });
+    return jsonResponse({
+      ok: true,
+      updatedAt: now,
+      quota: { ...quota, used: byteSize },
+    });
   }
 
   if (url.pathname === "/live/friends/request" && request.method === "POST") {
@@ -2889,7 +3170,9 @@ async function handleYukiRequest(request, env) {
       return jsonResponse({ error: "Request already pending." }, 409);
     }
 
-    await env.DB.prepare("INSERT INTO friendships (user_id, friend_id, status, created_at) VALUES (?, ?, 'pending', ?)")
+    await env.DB.prepare(
+      "INSERT INTO friendships (user_id, friend_id, status, created_at) VALUES (?, ?, 'pending', ?)",
+    )
       .bind(userId, friendId, now)
       .run();
 
@@ -2924,7 +3207,7 @@ async function handleYukiRequest(request, env) {
     const now = new Date().toISOString();
 
     const incoming = await env.DB.prepare(
-      "SELECT user_id FROM friendships WHERE user_id = ? AND friend_id = ? AND status = 'pending'"
+      "SELECT user_id FROM friendships WHERE user_id = ? AND friend_id = ? AND status = 'pending'",
     )
       .bind(friendId, userId)
       .first();
@@ -2934,11 +3217,11 @@ async function handleYukiRequest(request, env) {
 
     await env.DB.batch([
       env.DB.prepare(
-        "INSERT INTO friendships (user_id, friend_id, status, created_at) VALUES (?, ?, 'active', ?) ON CONFLICT(user_id, friend_id) DO UPDATE SET status = 'active'"
+        "INSERT INTO friendships (user_id, friend_id, status, created_at) VALUES (?, ?, 'active', ?) ON CONFLICT(user_id, friend_id) DO UPDATE SET status = 'active'",
       ).bind(userId, friendId, now),
       env.DB.prepare(
-        "INSERT INTO friendships (user_id, friend_id, status, created_at) VALUES (?, ?, 'active', ?) ON CONFLICT(user_id, friend_id) DO UPDATE SET status = 'active'"
-      ).bind(friendId, userId, now)
+        "INSERT INTO friendships (user_id, friend_id, status, created_at) VALUES (?, ?, 'active', ?) ON CONFLICT(user_id, friend_id) DO UPDATE SET status = 'active'",
+      ).bind(friendId, userId, now),
     ]);
 
     delete Caches.social["friends:" + userId];
@@ -2974,7 +3257,7 @@ async function handleYukiRequest(request, env) {
     await ensureSocialSchema(env);
 
     await env.DB.prepare(
-      "DELETE FROM friendships WHERE (user_id = ? AND friend_id = ?) OR (user_id = ? AND friend_id = ?)"
+      "DELETE FROM friendships WHERE (user_id = ? AND friend_id = ?) OR (user_id = ? AND friend_id = ?)",
     )
       .bind(userId, friendId, friendId, userId)
       .run();
@@ -2990,7 +3273,9 @@ async function handleYukiRequest(request, env) {
       return jsonResponse({ error: "Forbidden" }, 403);
     }
 
-    const userId = validUserId(url.searchParams.get("userId")) ? url.searchParams.get("userId") : null;
+    const userId = validUserId(url.searchParams.get("userId"))
+      ? url.searchParams.get("userId")
+      : null;
     if (!userId) return jsonResponse({ error: "invalid userId" }, 400);
 
     await ensureSocialSchema(env);
@@ -2999,7 +3284,7 @@ async function handleYukiRequest(request, env) {
       "friends:" + userId,
       async () => {
         const rows = await env.DB.prepare(
-          "SELECT user_id, friend_id, status, created_at FROM friendships WHERE user_id = ? OR friend_id = ?"
+          "SELECT user_id, friend_id, status, created_at FROM friendships WHERE user_id = ? OR friend_id = ?",
         )
           .bind(userId, userId)
           .all();
@@ -3018,15 +3303,18 @@ async function handleYukiRequest(request, env) {
         }
 
         const ids = [...friendIds, ...requests, ...sentRequests];
-        if (ids.length === 0) return { friends: [], requests: [], sentRequests: [] };
+        if (ids.length === 0)
+          return { friends: [], requests: [], sentRequests: [] };
 
         const placeholders = ids.map(() => "?").join(", ");
         const profileRows = await env.DB.prepare(
-          `SELECT user_id, username, avatar_index, presence, last_seen FROM live_users WHERE user_id IN (${placeholders})`
+          `SELECT user_id, username, avatar_index, presence, last_seen FROM live_users WHERE user_id IN (${placeholders})`,
         )
           .bind(...ids)
           .all();
-        const profileMap = new Map(profileRows.results.map((p) => [p.user_id, p]));
+        const profileMap = new Map(
+          profileRows.results.map((p) => [p.user_id, p]),
+        );
         const nowPlayingMap = await fetchNowPlayingMap(env);
 
         const enrich = (id) => {
@@ -3038,17 +3326,18 @@ async function handleYukiRequest(request, env) {
             avatarIndex: p.avatar_index,
             presence: p.presence,
             lastSeen: p.last_seen,
-            nowPlaying: p.presence === "online" ? nowPlayingMap.get(id) || null : null
+            nowPlaying:
+              p.presence === "online" ? nowPlayingMap.get(id) || null : null,
           };
         };
 
         return {
           friends: [...friendIds].map(enrich).filter(Boolean),
           requests: requests.map(enrich).filter(Boolean),
-          sentRequests: sentRequests.map(enrich).filter(Boolean)
+          sentRequests: sentRequests.map(enrich).filter(Boolean),
         };
       },
-      10 * 1000
+      10 * 1000,
     );
 
     return jsonResponse(result);
@@ -3062,12 +3351,18 @@ async function handleYukiRequest(request, env) {
       return jsonResponse({ error: "Rate limited" }, 429);
     }
 
-    const targetId = validUserId(url.searchParams.get("targetId")) ? url.searchParams.get("targetId") : null;
+    const targetId = validUserId(url.searchParams.get("targetId"))
+      ? url.searchParams.get("targetId")
+      : null;
     if (!targetId) return jsonResponse({ error: "invalid targetId" }, 400);
-    const viewerId = validUserId(url.searchParams.get("userId")) ? url.searchParams.get("userId") : null;
+    const viewerId = validUserId(url.searchParams.get("userId"))
+      ? url.searchParams.get("userId")
+      : null;
 
     await ensureSocialSchema(env);
-    const rows = await env.DB.prepare("SELECT reactor_id, reaction FROM reactions WHERE target_id = ?")
+    const rows = await env.DB.prepare(
+      "SELECT reactor_id, reaction FROM reactions WHERE target_id = ?",
+    )
       .bind(targetId)
       .all();
     const counts = {};
@@ -3096,8 +3391,14 @@ async function handleYukiRequest(request, env) {
 
     const userId = validUserId(payload.userId) ? payload.userId : null;
     const targetId = validUserId(payload.targetId) ? payload.targetId : null;
-    const reaction = typeof payload.reaction === "string" ? payload.reaction : "";
-    if (!userId || !targetId || targetId === userId || !ALLOWED_REACTIONS.has(reaction)) {
+    const reaction =
+      typeof payload.reaction === "string" ? payload.reaction : "";
+    if (
+      !userId ||
+      !targetId ||
+      targetId === userId ||
+      !ALLOWED_REACTIONS.has(reaction)
+    ) {
       return jsonResponse({ error: "Invalid reaction." }, 400);
     }
 
@@ -3105,7 +3406,7 @@ async function handleYukiRequest(request, env) {
     const now = new Date().toISOString();
 
     await env.DB.prepare(
-      "INSERT INTO reactions (target_id, reactor_id, reaction, created_at) VALUES (?, ?, ?, ?) ON CONFLICT(target_id, reactor_id) DO UPDATE SET reaction = excluded.reaction, created_at = excluded.created_at"
+      "INSERT INTO reactions (target_id, reactor_id, reaction, created_at) VALUES (?, ?, ?, ?) ON CONFLICT(target_id, reactor_id) DO UPDATE SET reaction = excluded.reaction, created_at = excluded.created_at",
     )
       .bind(targetId, userId, reaction, now)
       .run();
@@ -3137,7 +3438,11 @@ async function handleYukiRequest(request, env) {
     }
 
     await ensureSocialSchema(env);
-    await env.DB.prepare("DELETE FROM reactions WHERE target_id = ? AND reactor_id = ?").bind(targetId, userId).run();
+    await env.DB.prepare(
+      "DELETE FROM reactions WHERE target_id = ? AND reactor_id = ?",
+    )
+      .bind(targetId, userId)
+      .run();
 
     return jsonResponse({ status: "ok" });
   }
@@ -3147,7 +3452,9 @@ async function handleYukiRequest(request, env) {
       return jsonResponse({ error: "Forbidden" }, 403);
     }
 
-    const userId = validUserId(url.searchParams.get("userId")) ? url.searchParams.get("userId") : null;
+    const userId = validUserId(url.searchParams.get("userId"))
+      ? url.searchParams.get("userId")
+      : null;
     if (!userId) return jsonResponse({ error: "invalid userId" }, 400);
 
     const data = await withCache(
@@ -3157,15 +3464,21 @@ async function handleYukiRequest(request, env) {
         await ensureSocialSchema(env);
 
         const row = await env.DB.prepare(
-          "SELECT user_id, username, avatar_index, bio, presence, created_at, last_seen FROM live_users WHERE user_id = ?"
+          "SELECT user_id, username, avatar_index, bio, presence, created_at, last_seen FROM live_users WHERE user_id = ?",
         )
           .bind(userId)
           .first();
         if (!row) return null;
 
         const coinsData = await fetchCoinsForUser(env, userId);
-        const invRows = await env.DB.prepare("SELECT item_id FROM inventory WHERE user_id = ?").bind(userId).all();
-        const account = await env.DB.prepare("SELECT supporter, supporter_since FROM accounts WHERE user_id = ?")
+        const invRows = await env.DB.prepare(
+          "SELECT item_id FROM inventory WHERE user_id = ?",
+        )
+          .bind(userId)
+          .all();
+        const account = await env.DB.prepare(
+          "SELECT supporter, supporter_since FROM accounts WHERE user_id = ?",
+        )
           .bind(userId)
           .first();
 
@@ -3183,10 +3496,10 @@ async function handleYukiRequest(request, env) {
           supporterSince: account?.supporter_since || null,
           streak: coinsData.streak,
           achievementsCount: coinsData.achievementsCount,
-          playtimeMinutes: coinsData.playtimeMinutes
+          playtimeMinutes: coinsData.playtimeMinutes,
         };
       },
-      15000
+      15000,
     );
     if (!data) {
       return jsonResponse({ error: "Profile not found." }, 404);
@@ -3200,10 +3513,17 @@ async function handleYukiRequest(request, env) {
     }
 
     const weekParam = url.searchParams.get("week");
-    const week = weekParam && /^\d{4}-\d{2}-\d{2}$/.test(weekParam) ? weekParam : weekStartIso();
+    const week =
+      weekParam && /^\d{4}-\d{2}-\d{2}$/.test(weekParam)
+        ? weekParam
+        : weekStartIso();
     const sortParam = url.searchParams.get("sort");
     const sort =
-      sortParam === "level" || sortParam === "reactions" || sortParam === "achievements" ? sortParam : "playtime";
+      sortParam === "level" ||
+      sortParam === "reactions" ||
+      sortParam === "achievements"
+        ? sortParam
+        : "playtime";
 
     await ensureSocialSchema(env);
     const result = await withCache(
@@ -3226,7 +3546,10 @@ async function handleYukiRequest(request, env) {
           FROM live_users u
           ORDER BY ${orderBy} DESC
           LIMIT 10`;
-        const stmt = sort === "reactions" ? env.DB.prepare(sql).bind(week) : env.DB.prepare(sql);
+        const stmt =
+          sort === "reactions"
+            ? env.DB.prepare(sql).bind(week)
+            : env.DB.prepare(sql);
         const rows = await stmt.all();
         const board = rows.results.map((row) => ({
           userId: row.user_id,
@@ -3235,11 +3558,11 @@ async function handleYukiRequest(request, env) {
           playtimeMinutes: Math.round(Number(row.playtime_minutes) || 0),
           achievements: Number(row.achievements) || 0,
           reactions: Number(row.reactions) || 0,
-          level: Math.max(1, Math.round(Number(row.level) || 1))
+          level: Math.max(1, Math.round(Number(row.level) || 1)),
         }));
         return { week, sort, board };
       },
-      30 * 1000
+      30 * 1000,
     );
 
     return jsonResponse(result);
@@ -3251,8 +3574,10 @@ async function handleYukiRequest(request, env) {
     }
     const now = Date.now();
     const activeItems = SHOP_CATALOG.filter((it) => {
-      if (it.availableFrom && now < new Date(it.availableFrom).getTime()) return false;
-      if (it.availableTo && now > new Date(it.availableTo).getTime()) return false;
+      if (it.availableFrom && now < new Date(it.availableFrom).getTime())
+        return false;
+      if (it.availableTo && now > new Date(it.availableTo).getTime())
+        return false;
       return true;
     }).map((it) => ({ ...it, endsAt: it.availableTo || null }));
     return jsonResponse({ items: activeItems });
@@ -3283,7 +3608,8 @@ async function handleYukiRequest(request, env) {
 
     const purchaseTime = Date.now();
     if (
-      (item.availableFrom && purchaseTime < new Date(item.availableFrom).getTime()) ||
+      (item.availableFrom &&
+        purchaseTime < new Date(item.availableFrom).getTime()) ||
       (item.availableTo && purchaseTime > new Date(item.availableTo).getTime())
     ) {
       return jsonResponse({ error: "This item is no longer available." }, 404);
@@ -3293,7 +3619,11 @@ async function handleYukiRequest(request, env) {
     const now = new Date().toISOString();
 
     if (item.supporterOnly) {
-      const account = await env.DB.prepare("SELECT supporter FROM accounts WHERE user_id = ?").bind(userId).first();
+      const account = await env.DB.prepare(
+        "SELECT supporter FROM accounts WHERE user_id = ?",
+      )
+        .bind(userId)
+        .first();
       if (!(Number(account?.supporter) > 0)) {
         return jsonResponse({ error: "This item is supporter-only." }, 403);
       }
@@ -3306,14 +3636,18 @@ async function handleYukiRequest(request, env) {
 
     await env.DB.batch([
       env.DB.prepare(
-        "INSERT INTO inventory (user_id, item_id, acquired_at) VALUES (?, ?, ?) ON CONFLICT(user_id, item_id) DO NOTHING"
+        "INSERT INTO inventory (user_id, item_id, acquired_at) VALUES (?, ?, ?) ON CONFLICT(user_id, item_id) DO NOTHING",
       ).bind(userId, item.id, now),
       env.DB.prepare(
-        "INSERT INTO currency (user_id, bonus_coins, spent_coins) VALUES (?, 0, ?) ON CONFLICT(user_id) DO UPDATE SET spent_coins = spent_coins + excluded.spent_coins"
-      ).bind(userId, item.priceCoins)
+        "INSERT INTO currency (user_id, bonus_coins, spent_coins) VALUES (?, 0, ?) ON CONFLICT(user_id) DO UPDATE SET spent_coins = spent_coins + excluded.spent_coins",
+      ).bind(userId, item.priceCoins),
     ]);
 
-    return jsonResponse({ status: "ok", itemId: item.id, coins: coinsData.coins - item.priceCoins });
+    return jsonResponse({
+      status: "ok",
+      itemId: item.id,
+      coins: coinsData.coins - item.priceCoins,
+    });
   }
 
   if (url.pathname === "/live/supporter/redeem" && request.method === "POST") {
@@ -3347,12 +3681,18 @@ async function handleYukiRequest(request, env) {
     await ensureSocialSchema(env);
     const now = new Date().toISOString();
 
-    const account = await env.DB.prepare("SELECT user_id FROM accounts WHERE user_id = ?").bind(userId).first();
+    const account = await env.DB.prepare(
+      "SELECT user_id FROM accounts WHERE user_id = ?",
+    )
+      .bind(userId)
+      .first();
     if (!account) {
       return jsonResponse({ error: "Create an account first." }, 403);
     }
 
-    const existing = await env.DB.prepare("SELECT user_id FROM supporter_redemptions WHERE code = ?")
+    const existing = await env.DB.prepare(
+      "SELECT user_id FROM supporter_redemptions WHERE code = ?",
+    )
       .bind(code)
       .first();
     if (existing) {
@@ -3360,12 +3700,12 @@ async function handleYukiRequest(request, env) {
     }
 
     await env.DB.batch([
-      env.DB.prepare("INSERT INTO supporter_redemptions (code, user_id, redeemed_at) VALUES (?, ?, ?)").bind(
-        code,
-        userId,
-        now
-      ),
-      env.DB.prepare("UPDATE accounts SET supporter = 1, supporter_since = ? WHERE user_id = ?").bind(now, userId)
+      env.DB.prepare(
+        "INSERT INTO supporter_redemptions (code, user_id, redeemed_at) VALUES (?, ?, ?)",
+      ).bind(code, userId, now),
+      env.DB.prepare(
+        "UPDATE accounts SET supporter = 1, supporter_since = ? WHERE user_id = ?",
+      ).bind(now, userId),
     ]);
 
     return jsonResponse({ status: "ok", supporter: true });
@@ -3376,7 +3716,9 @@ async function handleYukiRequest(request, env) {
       return jsonResponse({ error: "Forbidden" }, 403);
     }
 
-    const userId = validUserId(url.searchParams.get("userId")) ? url.searchParams.get("userId") : null;
+    const userId = validUserId(url.searchParams.get("userId"))
+      ? url.searchParams.get("userId")
+      : null;
     if (!userId) return jsonResponse({ error: "invalid userId" }, 400);
 
     const data = await withCache(
@@ -3386,7 +3728,7 @@ async function handleYukiRequest(request, env) {
         await ensureSocialSchema(env);
 
         const claimedRows = await env.DB.prepare(
-          "SELECT quest_id FROM quest_claims WHERE user_id = ? AND claim_day = ?"
+          "SELECT quest_id FROM quest_claims WHERE user_id = ? AND claim_day = ?",
         )
           .bind(userId, todayIso())
           .all();
@@ -3403,13 +3745,13 @@ async function handleYukiRequest(request, env) {
             target: item.target,
             rewardCoins: item.rewardCoins,
             progress,
-            claimed: claimedSet.has(item.id)
+            claimed: claimedSet.has(item.id),
           });
         }
 
         return { day: todayIso(), quests };
       },
-      30000
+      30000,
     );
     return jsonResponse(data);
   }
@@ -3442,7 +3784,7 @@ async function handleYukiRequest(request, env) {
     const day = todayIso();
 
     const existing = await env.DB.prepare(
-      "SELECT quest_id FROM quest_claims WHERE user_id = ? AND quest_id = ? AND claim_day = ?"
+      "SELECT quest_id FROM quest_claims WHERE user_id = ? AND quest_id = ? AND claim_day = ?",
     )
       .bind(userId, quest.id, day)
       .first();
@@ -3456,19 +3798,20 @@ async function handleYukiRequest(request, env) {
     }
 
     await env.DB.batch([
-      env.DB.prepare("INSERT INTO quest_claims (user_id, quest_id, claim_day, claimed_at) VALUES (?, ?, ?, ?)").bind(
-        userId,
-        quest.id,
-        day,
-        now
-      ),
       env.DB.prepare(
-        "INSERT INTO currency (user_id, bonus_coins, spent_coins) VALUES (?, ?, 0) ON CONFLICT(user_id) DO UPDATE SET bonus_coins = bonus_coins + excluded.bonus_coins"
-      ).bind(userId, quest.rewardCoins)
+        "INSERT INTO quest_claims (user_id, quest_id, claim_day, claimed_at) VALUES (?, ?, ?, ?)",
+      ).bind(userId, quest.id, day, now),
+      env.DB.prepare(
+        "INSERT INTO currency (user_id, bonus_coins, spent_coins) VALUES (?, ?, 0) ON CONFLICT(user_id) DO UPDATE SET bonus_coins = bonus_coins + excluded.bonus_coins",
+      ).bind(userId, quest.rewardCoins),
     ]);
 
     const me = await fetchCoinsForUser(env, userId);
-    return jsonResponse({ status: "ok", rewardCoins: quest.rewardCoins, coins: me.coins });
+    return jsonResponse({
+      status: "ok",
+      rewardCoins: quest.rewardCoins,
+      coins: me.coins,
+    });
   }
 
   if (url.pathname === "/live/messages" && request.method === "GET") {
@@ -3479,8 +3822,12 @@ async function handleYukiRequest(request, env) {
       return jsonResponse({ error: "Rate limited" }, 429);
     }
 
-    const userId = validUserId(url.searchParams.get("userId")) ? url.searchParams.get("userId") : null;
-    const friendId = validUserId(url.searchParams.get("friendId")) ? url.searchParams.get("friendId") : null;
+    const userId = validUserId(url.searchParams.get("userId"))
+      ? url.searchParams.get("userId")
+      : null;
+    const friendId = validUserId(url.searchParams.get("friendId"))
+      ? url.searchParams.get("friendId")
+      : null;
     if (!userId || (friendId && userId === friendId)) {
       return jsonResponse({ error: "Invalid friends." }, 400);
     }
@@ -3493,33 +3840,46 @@ async function handleYukiRequest(request, env) {
       const conversations = [];
       for (const fid of friendIds) {
         const last = await env.DB.prepare(
-          "SELECT id, from_id, body, sent_at FROM messages WHERE ((from_id = ? AND to_id = ?) OR (from_id = ? AND to_id = ?)) ORDER BY id DESC LIMIT 1"
+          "SELECT id, from_id, body, sent_at FROM messages WHERE ((from_id = ? AND to_id = ?) OR (from_id = ? AND to_id = ?)) ORDER BY id DESC LIMIT 1",
         )
           .bind(userId, fid, fid, userId)
           .first();
         const unreadRow = await env.DB.prepare(
-          "SELECT COUNT(*) AS c FROM messages WHERE from_id = ? AND to_id = ? AND read_at IS NULL"
+          "SELECT COUNT(*) AS c FROM messages WHERE from_id = ? AND to_id = ? AND read_at IS NULL",
         )
           .bind(fid, userId)
           .first();
         const profile = await env.DB.prepare(
-          "SELECT user_id, username, avatar_index, presence, last_seen FROM live_users WHERE user_id = ?"
+          "SELECT user_id, username, avatar_index, presence, last_seen FROM live_users WHERE user_id = ?",
         )
           .bind(fid)
           .first();
         conversations.push({
           friendId: fid,
           username: (profile && profile.username) || "Unknown",
-          avatarIndex: typeof profile?.avatar_index === "number" ? profile.avatar_index : -1,
+          avatarIndex:
+            typeof profile?.avatar_index === "number"
+              ? profile.avatar_index
+              : -1,
           presence: (profile && profile.presence) || "offline",
           lastSeen: (profile && profile.last_seen) || null,
-          lastMessage: last ? { body: last.body, fromMe: last.from_id === userId, sentAt: last.sent_at } : null,
-          unreadCount: Number(unreadRow?.c || 0)
+          lastMessage: last
+            ? {
+                body: last.body,
+                fromMe: last.from_id === userId,
+                sentAt: last.sent_at,
+              }
+            : null,
+          unreadCount: Number(unreadRow?.c || 0),
         });
       }
       conversations.sort((a, b) => {
-        const aTime = a.lastMessage ? new Date(a.lastMessage.sentAt).getTime() : 0;
-        const bTime = b.lastMessage ? new Date(b.lastMessage.sentAt).getTime() : 0;
+        const aTime = a.lastMessage
+          ? new Date(a.lastMessage.sentAt).getTime()
+          : 0;
+        const bTime = b.lastMessage
+          ? new Date(b.lastMessage.sentAt).getTime()
+          : 0;
         if (aTime !== bTime) return bTime - aTime;
         return String(a.username).localeCompare(String(b.username));
       });
@@ -3541,9 +3901,15 @@ async function handleYukiRequest(request, env) {
     const rows = await env.DB.prepare(
       "SELECT id, from_id, to_id, body, sent_at, read_at FROM messages WHERE ((from_id = ? AND to_id = ?) OR (from_id = ? AND to_id = ?))" +
         (afterValue ? " AND sent_at > ?" : "") +
-        " ORDER BY id DESC LIMIT 100"
+        " ORDER BY id DESC LIMIT 100",
     )
-      .bind(userId, friendId, friendId, userId, ...(afterValue ? [afterValue] : []))
+      .bind(
+        userId,
+        friendId,
+        friendId,
+        userId,
+        ...(afterValue ? [afterValue] : []),
+      )
       .all();
 
     const messages = rows.results
@@ -3553,11 +3919,13 @@ async function handleYukiRequest(request, env) {
         toId: row.to_id,
         body: row.body,
         sentAt: row.sent_at,
-        readAt: row.read_at
+        readAt: row.read_at,
       }))
       .reverse();
 
-    await env.DB.prepare("UPDATE messages SET read_at = ? WHERE to_id = ? AND from_id = ? AND read_at IS NULL")
+    await env.DB.prepare(
+      "UPDATE messages SET read_at = ? WHERE to_id = ? AND from_id = ? AND read_at IS NULL",
+    )
       .bind(now, userId, friendId)
       .run();
 
@@ -3603,7 +3971,9 @@ async function handleYukiRequest(request, env) {
       return jsonResponse({ error: "Invalid message." }, 400);
     }
 
-    const result = await env.DB.prepare("INSERT INTO messages (from_id, to_id, body, sent_at) VALUES (?, ?, ?, ?)")
+    const result = await env.DB.prepare(
+      "INSERT INTO messages (from_id, to_id, body, sent_at) VALUES (?, ?, ?, ?)",
+    )
       .bind(userId, friendId, body, now)
       .run();
 
@@ -3618,7 +3988,9 @@ async function handleYukiRequest(request, env) {
       return jsonResponse({ error: "Rate limited" }, 429);
     }
 
-    const userId = validUserId(url.searchParams.get("userId")) ? url.searchParams.get("userId") : null;
+    const userId = validUserId(url.searchParams.get("userId"))
+      ? url.searchParams.get("userId")
+      : null;
     if (!userId) return jsonResponse({ error: "invalid userId" }, 400);
 
     await ensureSocialSchema(env);
@@ -3627,7 +3999,7 @@ async function handleYukiRequest(request, env) {
     const rows = await env.DB.prepare(
       `SELECT id, user_id, actor_id, type, data, created_at FROM feed
        WHERE user_id IN (${placeholders})
-       ORDER BY id DESC LIMIT 50`
+       ORDER BY id DESC LIMIT 50`,
     )
       .bind(...[userId, ...friendIds])
       .all();
@@ -3637,7 +4009,7 @@ async function handleYukiRequest(request, env) {
     if (actors.size > 0) {
       const actorList = [...actors];
       const profileRows = await env.DB.prepare(
-        `SELECT user_id, username, avatar_index FROM live_users WHERE user_id IN (${actorList.map(() => "?").join(", ")})`
+        `SELECT user_id, username, avatar_index FROM live_users WHERE user_id IN (${actorList.map(() => "?").join(", ")})`,
       )
         .bind(...actorList)
         .all();
@@ -3647,7 +4019,8 @@ async function handleYukiRequest(request, env) {
     const items = rows.results.map((row) => {
       let data = {};
       try {
-        data = typeof row.data === "string" ? JSON.parse(row.data) : row.data || {};
+        data =
+          typeof row.data === "string" ? JSON.parse(row.data) : row.data || {};
       } catch {}
       const profile = profiles.get(row.actor_id) || {};
       return {
@@ -3657,10 +4030,13 @@ async function handleYukiRequest(request, env) {
         actor: {
           userId: row.actor_id,
           username: profile.username || "Anonymous",
-          avatarIndex: typeof profile.avatar_index === "number" ? profile.avatar_index : -1
+          avatarIndex:
+            typeof profile.avatar_index === "number"
+              ? profile.avatar_index
+              : -1,
         },
         data,
-        createdAt: row.created_at
+        createdAt: row.created_at,
       };
     });
 
@@ -3687,7 +4063,9 @@ async function handleYukiRequest(request, env) {
 
     await ensureSocialSchema(env);
     const now = new Date().toISOString();
-    const list = Array.isArray(payload.achievements) ? payload.achievements : [];
+    const list = Array.isArray(payload.achievements)
+      ? payload.achievements
+      : [];
     const statements = [];
     let attempted = 0;
     for (const item of list) {
@@ -3700,8 +4078,8 @@ async function handleYukiRequest(request, env) {
           : now;
       statements.push(
         env.DB.prepare(
-          "INSERT OR IGNORE INTO user_achievements (user_id, achievement_id, unlocked_at) VALUES (?, ?, ?)"
-        ).bind(userId, achievementId, unlockedAt)
+          "INSERT OR IGNORE INTO user_achievements (user_id, achievement_id, unlocked_at) VALUES (?, ?, ?)",
+        ).bind(userId, achievementId, unlockedAt),
       );
       attempted++;
     }
@@ -3712,7 +4090,9 @@ async function handleYukiRequest(request, env) {
       if (!item || typeof item.id !== "string") continue;
       const achievementId = item.id.trim().slice(0, 64);
       if (!/^[a-z0-9_.-]{1,64}$/.test(achievementId)) continue;
-      feedWrites.push(insertFeedEvent(env, userId, userId, "achievement", { achievementId }));
+      feedWrites.push(
+        insertFeedEvent(env, userId, userId, "achievement", { achievementId }),
+      );
     }
     if (feedWrites.length > 8) feedWrites.length = 8;
     await Promise.all(feedWrites);
@@ -3725,7 +4105,7 @@ async function handleYukiRequest(request, env) {
     }
     await ensureSocialSchema(env);
     return cachedJsonResponse(request, "discover", 30, () =>
-      withCache(Caches.social, "discover", () => fetchDiscoverData(env), 30000)
+      withCache(Caches.social, "discover", () => fetchDiscoverData(env), 30000),
     );
   }
 
@@ -3762,46 +4142,56 @@ async function handleYukiRequest(request, env) {
       return /^[a-z0-9_.-]{1,64}$/.test(app);
     });
 
-    const launchEvents = cleanEvents.filter((event) => event.event === "launch");
+    const launchEvents = cleanEvents.filter(
+      (event) => event.event === "launch",
+    );
     const usageEvents = cleanEvents.filter(
-      (event) => event.event === "usage" && typeof event.durationMs === "number" && event.durationMs >= 60000
+      (event) =>
+        event.event === "usage" &&
+        typeof event.durationMs === "number" &&
+        event.durationMs >= 60000,
     );
 
     const inserts = launchEvents.map((event) => {
       if (event.app) event.app = normalizeApp(event.app);
       const id = crypto.randomUUID();
-      return env.DB.prepare("INSERT INTO analytics (id, daily_id, timestamp, data) VALUES (?, ?, ?, ?)").bind(
-        id,
-        dailyId,
-        timestamp,
-        JSON.stringify(event)
-      );
+      return env.DB.prepare(
+        "INSERT INTO analytics (id, daily_id, timestamp, data) VALUES (?, ?, ?, ?)",
+      ).bind(id, dailyId, timestamp, JSON.stringify(event));
     });
 
     const socialStatements = [];
     for (const event of launchEvents) {
       if (!validUserId(event.userId)) continue;
-      socialStatements.push(profileUpsertStatement(env, event.userId, "", -1, now));
+      socialStatements.push(
+        profileUpsertStatement(env, event.userId, "", -1, now),
+      );
     }
     for (const event of usageEvents) {
       if (!validUserId(event.userId)) continue;
       if (typeof event.app !== "string" || !event.app) continue;
-      socialStatements.push(profileUpsertStatement(env, event.userId, "", -1, now));
+      socialStatements.push(
+        profileUpsertStatement(env, event.userId, "", -1, now),
+      );
       const minutes = event.durationMs / 60000;
       socialStatements.push(
         env.DB.prepare(
           `INSERT INTO user_playtime (user_id, app, minutes, last_played) VALUES (?, ?, ?, ?)
              ON CONFLICT(user_id, app) DO UPDATE SET
                minutes = minutes + excluded.minutes,
-               last_played = excluded.last_played`
-        ).bind(event.userId, normalizeApp(event.app), minutes, now)
+               last_played = excluded.last_played`,
+        ).bind(event.userId, normalizeApp(event.app), minutes, now),
       );
     }
 
     const allStatements = inserts.concat(socialStatements);
-    if (allStatements.length === 0) return jsonResponse({ status: "ok", count: 0 });
+    if (allStatements.length === 0)
+      return jsonResponse({ status: "ok", count: 0 });
     await env.DB.batch(allStatements);
-    return jsonResponse({ status: "ok", count: launchEvents.length + usageEvents.length });
+    return jsonResponse({
+      status: "ok",
+      count: launchEvents.length + usageEvents.length,
+    });
   }
 
   if (url.pathname === "/admin/stats" && request.method === "GET") {
@@ -3812,13 +4202,16 @@ async function handleYukiRequest(request, env) {
     if (!themeRateLimit(env, clientIP, "admin_list")) {
       return jsonResponse({ error: "Rate limited" }, 429);
     }
-    const limit = Math.min(parseInt(url.searchParams.get("limit") || "50"), 100);
+    const limit = Math.min(
+      parseInt(url.searchParams.get("limit") || "50"),
+      100,
+    );
     const offset = parseInt(url.searchParams.get("offset") || "0");
     const result = await env.DB.prepare(
       `SELECT id, daily_id, timestamp, data
          FROM analytics
          ORDER BY timestamp DESC
-         LIMIT ? OFFSET ?`
+         LIMIT ? OFFSET ?`,
     )
       .bind(limit, offset)
       .all();
@@ -3826,14 +4219,17 @@ async function handleYukiRequest(request, env) {
   }
 
   if (url.pathname === "/admin/downloads" && request.method === "GET") {
-    const limit = Math.min(parseInt(url.searchParams.get("limit") || "50"), 100);
+    const limit = Math.min(
+      parseInt(url.searchParams.get("limit") || "50"),
+      100,
+    );
     const offset = parseInt(url.searchParams.get("offset") || "0");
     const result = await env.DB.prepare(
       `SELECT id, daily_id, timestamp, data
          FROM analytics
          WHERE json_extract(data, '$.event') = 'download'
          ORDER BY timestamp DESC
-         LIMIT ? OFFSET ?`
+         LIMIT ? OFFSET ?`,
     )
       .bind(limit, offset)
       .all();
@@ -3850,7 +4246,7 @@ async function handleYukiRequest(request, env) {
                 COUNT(DISTINCT daily_id) AS unique_users
          FROM analytics
          WHERE json_extract(data, '$.event') = 'download'
-           AND timestamp >= datetime('now', '-' || ? || ' days')`
+           AND timestamp >= datetime('now', '-' || ? || ' days')`,
     )
       .bind(days)
       .first();
@@ -3864,7 +4260,7 @@ async function handleYukiRequest(request, env) {
            AND timestamp >= datetime('now', '-' || ? || ' days')
          GROUP BY fileName, app
          ORDER BY count DESC
-         LIMIT 20`
+         LIMIT 20`,
     )
       .bind(days)
       .all();
@@ -3875,7 +4271,7 @@ async function handleYukiRequest(request, env) {
          WHERE json_extract(data, '$.event') = 'download'
            AND timestamp >= datetime('now', '-' || ? || ' days')
          GROUP BY day
-         ORDER BY day DESC`
+         ORDER BY day DESC`,
     )
       .bind(days)
       .all();
@@ -3884,19 +4280,22 @@ async function handleYukiRequest(request, env) {
       total: total?.count || 0,
       unique_users: total?.unique_users || 0,
       top_files: topFiles.results || [],
-      by_day: byDay.results || []
+      by_day: byDay.results || [],
     });
   }
 
   if (url.pathname === "/admin/electron-usage" && request.method === "GET") {
-    const limit = Math.min(parseInt(url.searchParams.get("limit") || "50"), 100);
+    const limit = Math.min(
+      parseInt(url.searchParams.get("limit") || "50"),
+      100,
+    );
     const offset = parseInt(url.searchParams.get("offset") || "0");
     const result = await env.DB.prepare(
       `SELECT id, daily_id, timestamp, data
          FROM analytics
          WHERE json_extract(data, '$.event') = 'electron_usage'
          ORDER BY timestamp DESC
-         LIMIT ? OFFSET ?`
+         LIMIT ? OFFSET ?`,
     )
       .bind(limit, offset)
       .all();
@@ -3905,7 +4304,9 @@ async function handleYukiRequest(request, env) {
 
   if (url.pathname === "/api/game-play-counts" && request.method === "GET") {
     return cachedJsonResponse(request, "game-play-counts", 300, async () => {
-      const results = await withCache(Caches.games, null, () => fetchGameCounts(env));
+      const results = await withCache(Caches.games, null, () =>
+        fetchGameCounts(env),
+      );
       const playCounts = {};
       for (const row of results) {
         if (row.app) {
@@ -3917,11 +4318,16 @@ async function handleYukiRequest(request, env) {
   }
 
   if (url.pathname === "/admin/games" && request.method === "GET") {
-    const results = await withCache(Caches.games, null, () => fetchGameCounts(env));
+    const results = await withCache(Caches.games, null, () =>
+      fetchGameCounts(env),
+    );
     return jsonResponse({ results });
   }
 
-  if (url.pathname === "/admin/top-played-time-games" && request.method === "GET") {
+  if (
+    url.pathname === "/admin/top-played-time-games" &&
+    request.method === "GET"
+  ) {
     return jsonResponse({ results: [] });
   }
 
@@ -3933,7 +4339,7 @@ async function handleYukiRequest(request, env) {
       longest_session_ms: 0,
       shortest_session_ms: 0,
       bounce_sessions: 0,
-      power_users: 0
+      power_users: 0,
     });
   }
 
@@ -3946,15 +4352,27 @@ async function handleYukiRequest(request, env) {
   }
 
   if (url.pathname === "/admin/exploration" && request.method === "GET") {
-    return jsonResponse({ avg_unique_apps_per_session: 0, top_explorers: [], top_diverse_sessions: [] });
+    return jsonResponse({
+      avg_unique_apps_per_session: 0,
+      top_explorers: [],
+      top_diverse_sessions: [],
+    });
   }
 
-  if ((url.pathname === "/live" || url.pathname === "/admin/live") && request.method === "GET") {
-    return cachedJsonResponse(request, "live", 15, () => withCache(Caches.live, null, () => fetchLive(env), 15000));
+  if (
+    (url.pathname === "/live" || url.pathname === "/admin/live") &&
+    request.method === "GET"
+  ) {
+    return cachedJsonResponse(request, "live", 15, () =>
+      withCache(Caches.live, null, () => fetchLive(env), 15000),
+    );
   }
 
   if (url.pathname === "/admin/peak-concurrent" && request.method === "GET") {
-    return jsonResponse({ overall_peak: { concurrent: 0, at_time: null }, daily: [] });
+    return jsonResponse({
+      overall_peak: { concurrent: 0, at_time: null },
+      daily: [],
+    });
   }
 
   if (url.pathname === "/admin/insights" && request.method === "GET") {
@@ -3967,14 +4385,14 @@ async function handleYukiRequest(request, env) {
       app_unique_users: [],
       app_avg_time: [],
       dau_wau_mau: [],
-      session_durations: { t: 0, a: 0, b: 0, c: 0, d: 0, e: 0, f: 0 }
+      session_durations: { t: 0, a: 0, b: 0, c: 0, d: 0, e: 0, f: 0 },
     });
   }
 
   if (url.pathname === "/admin/export" && request.method === "GET") {
     const headers = {
       ...corsHeaders("application/json"),
-      "Content-Disposition": `attachment; filename="yukios-analytics-${new Date().toISOString().slice(0, 10)}.json"`
+      "Content-Disposition": `attachment; filename="yukios-analytics-${new Date().toISOString().slice(0, 10)}.json"`,
     };
 
     const encoder = new TextEncoder();
@@ -3982,10 +4400,16 @@ async function handleYukiRequest(request, env) {
       async start(controller) {
         try {
           controller.enqueue(
-            encoder.encode('{"version":"1.0","exported_at":"' + new Date().toISOString() + '","total_records":')
+            encoder.encode(
+              '{"version":"1.0","exported_at":"' +
+                new Date().toISOString() +
+                '","total_records":',
+            ),
           );
 
-          const countResult = await env.DB.prepare(`SELECT COUNT(*) as count FROM analytics`).first();
+          const countResult = await env.DB.prepare(
+            `SELECT COUNT(*) as count FROM analytics`,
+          ).first();
           controller.enqueue(encoder.encode(countResult.count.toString()));
           controller.enqueue(encoder.encode(',"records":['));
 
@@ -3995,7 +4419,7 @@ async function handleYukiRequest(request, env) {
 
           while (true) {
             const batch = await env.DB.prepare(
-              `SELECT id, daily_id, timestamp, data FROM analytics ORDER BY timestamp ASC LIMIT ? OFFSET ?`
+              `SELECT id, daily_id, timestamp, data FROM analytics ORDER BY timestamp ASC LIMIT ? OFFSET ?`,
             )
               .bind(BATCH_SIZE, offset)
               .all();
@@ -4017,13 +4441,15 @@ async function handleYukiRequest(request, env) {
           controller.close();
         } catch (error) {
           try {
-            controller.enqueue(encoder.encode(JSON.stringify({ error: getErrorMessage(error) })));
+            controller.enqueue(
+              encoder.encode(JSON.stringify({ error: getErrorMessage(error) })),
+            );
           } catch {
             controller.enqueue(encoder.encode('{"error":"Export failed"}'));
           }
           controller.close();
         }
-      }
+      },
     });
 
     return new Response(stream, { headers });
@@ -4052,18 +4478,20 @@ async function handleYukiRequest(request, env) {
       const statements = [];
 
       for (const record of batch) {
-        if (!record.id || !record.daily_id || !record.timestamp || !record.data) {
+        if (
+          !record.id ||
+          !record.daily_id ||
+          !record.timestamp ||
+          !record.data
+        ) {
           skipped++;
           continue;
         }
 
         statements.push(
-          env.DB.prepare(`INSERT OR REPLACE INTO analytics (id, daily_id, timestamp, data) VALUES (?, ?, ?, ?)`).bind(
-            record.id,
-            record.daily_id,
-            record.timestamp,
-            record.data
-          )
+          env.DB.prepare(
+            `INSERT OR REPLACE INTO analytics (id, daily_id, timestamp, data) VALUES (?, ?, ?, ?)`,
+          ).bind(record.id, record.daily_id, record.timestamp, record.data),
         );
       }
 
@@ -4086,7 +4514,7 @@ async function handleYukiRequest(request, env) {
       success: true,
       imported,
       skipped,
-      errors: errors.length > 0 ? errors : undefined
+      errors: errors.length > 0 ? errors : undefined,
     });
   }
 
@@ -4094,7 +4522,9 @@ async function handleYukiRequest(request, env) {
     if (!themeRateLimit(env, clientIP, "admin_list")) {
       return jsonResponse({ error: "Rate limited" }, 429);
     }
-    const result = await env.DB.prepare(`DELETE FROM analytics WHERE timestamp < datetime('now', '-60 days')`).run();
+    const result = await env.DB.prepare(
+      `DELETE FROM analytics WHERE timestamp < datetime('now', '-60 days')`,
+    ).run();
     const deleted = result.meta?.changes ?? 0;
     Caches.games = { data: null, time: 0, promise: null };
     Caches.live = { data: null, time: 0, promise: null };
@@ -4117,18 +4547,20 @@ async function handleYukiRequest(request, env) {
     } catch {
       return jsonResponse({ error: "invalid json" }, 400);
     }
-    if (!payload.contract) return jsonResponse({ error: "missing contract" }, 400);
+    if (!payload.contract)
+      return jsonResponse({ error: "missing contract" }, 400);
     if (JSON.stringify(payload.contract).length > 12000) {
       return jsonResponse({ error: "Theme too large" }, 413);
     }
     const validated = sanitizeThemeContract(payload.contract);
-    if (!validated.ok) return jsonResponse({ error: validated.errors.join("; ") }, 400);
+    if (!validated.ok)
+      return jsonResponse({ error: validated.errors.join("; ") }, 400);
     const authorId = await deriveDailyId(env, clientIP);
     const id = "theme_" + crypto.randomUUID().replace(/-/g, "").slice(0, 14);
     const now = new Date().toISOString();
     try {
       await env.DB.prepare(
-        `INSERT INTO themes (id, author_id, name, description, author, icon, contract, colors, effects, config, upvotes, downvotes, score, installs, status, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,0,0,0,0,'approved',?,?)`
+        `INSERT INTO themes (id, author_id, name, description, author, icon, contract, colors, effects, config, upvotes, downvotes, score, installs, status, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,0,0,0,0,'approved',?,?)`,
       )
         .bind(
           id,
@@ -4142,7 +4574,7 @@ async function handleYukiRequest(request, env) {
           JSON.stringify(validated.contract.effects),
           JSON.stringify(validated.contract.config || {}),
           now,
-          now
+          now,
         )
         .run();
     } catch {
@@ -4163,9 +4595,9 @@ async function handleYukiRequest(request, env) {
         downvotes: 0,
         score: 0,
         installs: 0,
-        created_at: now
+        created_at: now,
       },
-      201
+      201,
     );
   }
 
@@ -4192,7 +4624,9 @@ async function handleYukiRequest(request, env) {
         const conditions = ["status = 'approved'"];
         const params = [];
         if (search) {
-          conditions.push("(name LIKE ? OR description LIKE ? OR author LIKE ?)");
+          conditions.push(
+            "(name LIKE ? OR description LIKE ? OR author LIKE ?)",
+          );
           const pattern = "%" + search + "%";
           params.push(pattern, pattern, pattern);
         }
@@ -4201,7 +4635,9 @@ async function handleYukiRequest(request, env) {
           params.push(author);
         }
         const where = conditions.join(" AND ");
-        const totalRow = await env.DB.prepare(`SELECT COUNT(*) AS count FROM themes WHERE ${where}`)
+        const totalRow = await env.DB.prepare(
+          `SELECT COUNT(*) AS count FROM themes WHERE ${where}`,
+        )
           .bind(...params)
           .first();
         let orderBy = "score DESC, installs DESC";
@@ -4209,7 +4645,7 @@ async function handleYukiRequest(request, env) {
         if (sort === "installs") orderBy = "installs DESC";
         const offset = (page - 1) * perPage;
         const rows = await env.DB.prepare(
-          `SELECT id, name, description, author, icon, colors, effects, config, upvotes, downvotes, score, installs, created_at FROM themes WHERE ${where} ORDER BY ${orderBy} LIMIT ? OFFSET ?`
+          `SELECT id, name, description, author, icon, colors, effects, config, upvotes, downvotes, score, installs, created_at FROM themes WHERE ${where} ORDER BY ${orderBy} LIMIT ? OFFSET ?`,
         )
           .bind(...params, perPage, offset)
           .all();
@@ -4218,13 +4654,22 @@ async function handleYukiRequest(request, env) {
           let effects = {};
           let config = {};
           try {
-            colors = typeof row.colors === "string" ? JSON.parse(row.colors) : row.colors || {};
+            colors =
+              typeof row.colors === "string"
+                ? JSON.parse(row.colors)
+                : row.colors || {};
           } catch {}
           try {
-            effects = typeof row.effects === "string" ? JSON.parse(row.effects) : row.effects || {};
+            effects =
+              typeof row.effects === "string"
+                ? JSON.parse(row.effects)
+                : row.effects || {};
           } catch {}
           try {
-            config = typeof row.config === "string" ? JSON.parse(row.config) : row.config || {};
+            config =
+              typeof row.config === "string"
+                ? JSON.parse(row.config)
+                : row.config || {};
           } catch {}
           return { ...row, colors, effects, config };
         });
@@ -4232,7 +4677,7 @@ async function handleYukiRequest(request, env) {
         const pages = Math.max(1, Math.ceil(total / perPage));
         return { themes, total, page, per_page: perPage, pages };
       },
-      30000
+      30000,
     );
     return jsonResponse(result);
   }
@@ -4245,31 +4690,49 @@ async function handleYukiRequest(request, env) {
     }
     const id = url.pathname.split("/")[3];
     const row = await env.DB.prepare(
-      `SELECT id, name, description, author, icon, colors, effects, config, upvotes, downvotes, score, installs, created_at FROM themes WHERE id = ? AND status = 'approved'`
+      `SELECT id, name, description, author, icon, colors, effects, config, upvotes, downvotes, score, installs, created_at FROM themes WHERE id = ? AND status = 'approved'`,
     )
       .bind(id)
       .first();
     if (!row) return jsonResponse({ error: "Theme not found" }, 404);
     const viewerId = await deriveDailyId(env, clientIP);
-    const ratingRow = await env.DB.prepare(`SELECT vote FROM theme_ratings WHERE theme_id = ? AND daily_id = ?`)
+    const ratingRow = await env.DB.prepare(
+      `SELECT vote FROM theme_ratings WHERE theme_id = ? AND daily_id = ?`,
+    )
       .bind(id, viewerId)
       .first();
     let colors = {};
     let effects = {};
     let config = {};
     try {
-      colors = typeof row.colors === "string" ? JSON.parse(row.colors) : row.colors || {};
+      colors =
+        typeof row.colors === "string"
+          ? JSON.parse(row.colors)
+          : row.colors || {};
     } catch {}
     try {
-      effects = typeof row.effects === "string" ? JSON.parse(row.effects) : row.effects || {};
+      effects =
+        typeof row.effects === "string"
+          ? JSON.parse(row.effects)
+          : row.effects || {};
     } catch {}
     try {
-      config = typeof row.config === "string" ? JSON.parse(row.config) : row.config || {};
+      config =
+        typeof row.config === "string"
+          ? JSON.parse(row.config)
+          : row.config || {};
     } catch {}
-    return jsonResponse({ theme: { ...row, colors, effects, config }, myVote: ratingRow?.vote ?? null });
+    return jsonResponse({
+      theme: { ...row, colors, effects, config },
+      myVote: ratingRow?.vote ?? null,
+    });
   }
 
-  if (url.pathname.startsWith("/api/themes/") && url.pathname.endsWith("/rate") && request.method === "POST") {
+  if (
+    url.pathname.startsWith("/api/themes/") &&
+    url.pathname.endsWith("/rate") &&
+    request.method === "POST"
+  ) {
     if (!themeRateLimit(env, clientIP, "rate")) {
       return jsonResponse({ error: "Rate limited" }, 429);
     }
@@ -4292,27 +4755,35 @@ async function handleYukiRequest(request, env) {
     const dailyId = await deriveDailyId(env, clientIP);
     const now = new Date().toISOString();
     await env.DB.prepare(
-      `INSERT INTO theme_ratings (theme_id, daily_id, vote, updated_at) VALUES (?,?,?,?) ON CONFLICT (theme_id, daily_id) DO UPDATE SET vote = excluded.vote, updated_at = excluded.updated_at`
+      `INSERT INTO theme_ratings (theme_id, daily_id, vote, updated_at) VALUES (?,?,?,?) ON CONFLICT (theme_id, daily_id) DO UPDATE SET vote = excluded.vote, updated_at = excluded.updated_at`,
     )
       .bind(id, dailyId, vote, now)
       .run();
     await env.DB.prepare(
-      `UPDATE themes SET upvotes = (SELECT COUNT(*) FROM theme_ratings WHERE theme_id = ? AND vote = 1), downvotes = (SELECT COUNT(*) FROM theme_ratings WHERE theme_id = ? AND vote = -1), score = (SELECT COALESCE(SUM(vote), 0) FROM theme_ratings WHERE theme_id = ?), updated_at = ? WHERE id = ?`
+      `UPDATE themes SET upvotes = (SELECT COUNT(*) FROM theme_ratings WHERE theme_id = ? AND vote = 1), downvotes = (SELECT COUNT(*) FROM theme_ratings WHERE theme_id = ? AND vote = -1), score = (SELECT COALESCE(SUM(vote), 0) FROM theme_ratings WHERE theme_id = ?), updated_at = ? WHERE id = ?`,
     )
       .bind(id, id, id, now, id)
       .run();
-    const updated = await env.DB.prepare(`SELECT upvotes, downvotes, score FROM themes WHERE id = ?`).bind(id).first();
+    const updated = await env.DB.prepare(
+      `SELECT upvotes, downvotes, score FROM themes WHERE id = ?`,
+    )
+      .bind(id)
+      .first();
     if (!updated) return jsonResponse({ error: "Theme not found" }, 404);
     return jsonResponse({
       id,
       upvotes: updated.upvotes,
       downvotes: updated.downvotes,
       score: updated.score,
-      myVote: vote
+      myVote: vote,
     });
   }
 
-  if (url.pathname.startsWith("/api/themes/") && url.pathname.endsWith("/install") && request.method === "POST") {
+  if (
+    url.pathname.startsWith("/api/themes/") &&
+    url.pathname.endsWith("/install") &&
+    request.method === "POST"
+  ) {
     try {
       await ensureThemesSchema(env);
     } catch {
@@ -4321,20 +4792,30 @@ async function handleYukiRequest(request, env) {
     const id = url.pathname.split("/")[3];
     const dailyId = await deriveDailyId(env, clientIP);
     const now = new Date().toISOString();
-    await env.DB.prepare(`INSERT OR IGNORE INTO theme_installs (theme_id, daily_id, created_at) VALUES (?, ?, ?)`)
+    await env.DB.prepare(
+      `INSERT OR IGNORE INTO theme_installs (theme_id, daily_id, created_at) VALUES (?, ?, ?)`,
+    )
       .bind(id, dailyId, now)
       .run();
     await env.DB.prepare(
-      `UPDATE themes SET installs = (SELECT COUNT(*) FROM theme_installs WHERE theme_id = ?) WHERE id = ?`
+      `UPDATE themes SET installs = (SELECT COUNT(*) FROM theme_installs WHERE theme_id = ?) WHERE id = ?`,
     )
       .bind(id, id)
       .run();
-    const updated = await env.DB.prepare(`SELECT installs FROM themes WHERE id = ?`).bind(id).first();
+    const updated = await env.DB.prepare(
+      `SELECT installs FROM themes WHERE id = ?`,
+    )
+      .bind(id)
+      .first();
     if (!updated) return jsonResponse({ error: "Theme not found" }, 404);
     return jsonResponse({ installs: updated.installs });
   }
 
-  if (url.pathname.startsWith("/api/themes/") && url.pathname.endsWith("/report") && request.method === "POST") {
+  if (
+    url.pathname.startsWith("/api/themes/") &&
+    url.pathname.endsWith("/report") &&
+    request.method === "POST"
+  ) {
     if (!themeRateLimit(env, clientIP, "report")) {
       return jsonResponse({ error: "Rate limited" }, 429);
     }
@@ -4350,8 +4831,13 @@ async function handleYukiRequest(request, env) {
     } catch {
       return jsonResponse({ error: "invalid json" }, 400);
     }
-    const reason = typeof payload.reason === "string" ? payload.reason.slice(0, 200) : "No reason provided";
-    const theme = await env.DB.prepare(`SELECT name FROM themes WHERE id = ?`).bind(id).first();
+    const reason =
+      typeof payload.reason === "string"
+        ? payload.reason.slice(0, 200)
+        : "No reason provided";
+    const theme = await env.DB.prepare(`SELECT name FROM themes WHERE id = ?`)
+      .bind(id)
+      .first();
     if (!theme) return jsonResponse({ error: "Theme not found" }, 404);
     try {
       await sendReportEmbed(env, {
@@ -4361,9 +4847,13 @@ async function handleYukiRequest(request, env) {
           { name: "Theme", value: theme.name, inline: true },
           { name: "Theme ID", value: id, inline: true },
           { name: "Reason", value: reason, inline: false },
-          { name: "Reporter ID", value: (await deriveDailyId(env, clientIP)).slice(0, 12), inline: false },
-          { name: "Timestamp", value: new Date().toISOString(), inline: false }
-        ]
+          {
+            name: "Reporter ID",
+            value: (await deriveDailyId(env, clientIP)).slice(0, 12),
+            inline: false,
+          },
+          { name: "Timestamp", value: new Date().toISOString(), inline: false },
+        ],
       });
     } catch (err) {
       return errorJsonResponse(err, 502);
@@ -4371,7 +4861,11 @@ async function handleYukiRequest(request, env) {
     return jsonResponse({ success: true });
   }
 
-  if (url.pathname.startsWith("/api/themes/") && url.pathname.endsWith("/delete") && request.method === "POST") {
+  if (
+    url.pathname.startsWith("/api/themes/") &&
+    url.pathname.endsWith("/delete") &&
+    request.method === "POST"
+  ) {
     if (!themeRateLimit(env, clientIP, "delete")) {
       return jsonResponse({ error: "Rate limited" }, 429);
     }
@@ -4384,11 +4878,12 @@ async function handleYukiRequest(request, env) {
     const authorId = await deriveDailyId(env, clientIP);
     const now = new Date().toISOString();
     const result = await env.DB.prepare(
-      `UPDATE themes SET status = 'deleted', updated_at = ? WHERE id = ? AND author_id = ?`
+      `UPDATE themes SET status = 'deleted', updated_at = ? WHERE id = ? AND author_id = ?`,
     )
       .bind(now, id, authorId)
       .run();
-    if (result.meta.changes === 0) return jsonResponse({ error: "Theme not found or not yours" }, 404);
+    if (result.meta.changes === 0)
+      return jsonResponse({ error: "Theme not found or not yours" }, 404);
     return jsonResponse({ success: true });
   }
 
@@ -4399,7 +4894,11 @@ async function handleYukiRequest(request, env) {
       return jsonResponse({ error: "db not ready" }, 500);
     }
     const status = url.searchParams.get("status") || "all";
-    const safeStatus = ["all", "approved", "flagged", "deleted"].includes(status) ? status : "all";
+    const safeStatus = ["all", "approved", "flagged", "deleted"].includes(
+      status,
+    )
+      ? status
+      : "all";
     const rawPage = parseInt(url.searchParams.get("page") || "1");
     const page = Number.isFinite(rawPage) && rawPage >= 1 ? rawPage : 1;
     const rawPerPage = parseInt(url.searchParams.get("per_page") || "25");
@@ -4410,11 +4909,14 @@ async function handleYukiRequest(request, env) {
       Caches.adminThemes,
       "list|" + safeStatus + "|" + page + "|" + perPage,
       async () => {
-        const where = safeStatus === "all" ? "" : "WHERE status = '" + safeStatus + "'";
-        const totalRow = await env.DB.prepare(`SELECT COUNT(*) AS count FROM themes ${where}`).first();
+        const where =
+          safeStatus === "all" ? "" : "WHERE status = '" + safeStatus + "'";
+        const totalRow = await env.DB.prepare(
+          `SELECT COUNT(*) AS count FROM themes ${where}`,
+        ).first();
         const offset = (page - 1) * perPage;
         const rows = await env.DB.prepare(
-          `SELECT id, author_id, name, author, contract, status, score, installs, created_at FROM themes ${where} ORDER BY created_at DESC LIMIT ? OFFSET ?`
+          `SELECT id, author_id, name, author, contract, status, score, installs, created_at FROM themes ${where} ORDER BY created_at DESC LIMIT ? OFFSET ?`,
         )
           .bind(perPage, offset)
           .all();
@@ -4422,60 +4924,90 @@ async function handleYukiRequest(request, env) {
         const pages = Math.max(1, Math.ceil(total / perPage));
         return { themes: rows.results, total, page, per_page: perPage, pages };
       },
-      15000
+      15000,
     );
     return jsonResponse(result);
   }
 
-  if (url.pathname.startsWith("/admin/themes/") && url.pathname.endsWith("/approve") && request.method === "POST") {
+  if (
+    url.pathname.startsWith("/admin/themes/") &&
+    url.pathname.endsWith("/approve") &&
+    request.method === "POST"
+  ) {
     try {
       await ensureThemesSchema(env);
     } catch {
       return jsonResponse({ error: "db not ready" }, 500);
     }
     const id = url.pathname.split("/")[3];
-    await env.DB.prepare(`UPDATE themes SET status = 'approved', updated_at = ? WHERE id = ?`)
+    await env.DB.prepare(
+      `UPDATE themes SET status = 'approved', updated_at = ? WHERE id = ?`,
+    )
       .bind(new Date().toISOString(), id)
       .run();
     return jsonResponse({ success: true });
   }
 
-  if (url.pathname.startsWith("/admin/themes/") && url.pathname.endsWith("/flag") && request.method === "POST") {
+  if (
+    url.pathname.startsWith("/admin/themes/") &&
+    url.pathname.endsWith("/flag") &&
+    request.method === "POST"
+  ) {
     try {
       await ensureThemesSchema(env);
     } catch {
       return jsonResponse({ error: "db not ready" }, 500);
     }
     const id = url.pathname.split("/")[3];
-    await env.DB.prepare(`UPDATE themes SET status = 'flagged', updated_at = ? WHERE id = ?`)
+    await env.DB.prepare(
+      `UPDATE themes SET status = 'flagged', updated_at = ? WHERE id = ?`,
+    )
       .bind(new Date().toISOString(), id)
       .run();
     return jsonResponse({ success: true });
   }
 
-  if (url.pathname.startsWith("/admin/themes/") && url.pathname.endsWith("/delete") && request.method === "POST") {
+  if (
+    url.pathname.startsWith("/admin/themes/") &&
+    url.pathname.endsWith("/delete") &&
+    request.method === "POST"
+  ) {
     try {
       await ensureThemesSchema(env);
     } catch {
       return jsonResponse({ error: "db not ready" }, 500);
     }
     const id = url.pathname.split("/")[3];
-    await env.DB.prepare(`DELETE FROM theme_ratings WHERE theme_id = ?`).bind(id).run();
-    await env.DB.prepare(`DELETE FROM theme_installs WHERE theme_id = ?`).bind(id).run();
+    await env.DB.prepare(`DELETE FROM theme_ratings WHERE theme_id = ?`)
+      .bind(id)
+      .run();
+    await env.DB.prepare(`DELETE FROM theme_installs WHERE theme_id = ?`)
+      .bind(id)
+      .run();
     await env.DB.prepare(`DELETE FROM themes WHERE id = ?`).bind(id).run();
     return jsonResponse({ success: true });
   }
 
-  return new Response("Not Found", { status: 404, headers: corsHeaders("text/plain") });
+  return new Response("Not Found", {
+    status: 404,
+    headers: corsHeaders("text/plain"),
+  });
 }
 
 function withCors(response) {
   const headers = new Headers(response.headers);
   headers.set("Access-Control-Allow-Origin", "*");
-  headers.set("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS");
+  headers.set(
+    "Access-Control-Allow-Methods",
+    "GET, POST, PUT, PATCH, DELETE, OPTIONS",
+  );
   headers.set("Access-Control-Allow-Headers", "*");
   headers.set("Access-Control-Max-Age", "86400");
-  return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  });
 }
 
 export default {
@@ -4486,10 +5018,13 @@ export default {
       } catch {}
       return withCors(await handleYukiRequest(request, env));
     } catch (error) {
-      const status = error && error.status && Number.isInteger(error.status) ? error.status : 500;
+      const status =
+        error && error.status && Number.isInteger(error.status)
+          ? error.status
+          : 500;
       return withCors(errorJsonResponse(error, status));
     }
-  }
+  },
 };
 
 function corsHeaders(type) {
@@ -4497,7 +5032,7 @@ function corsHeaders(type) {
     "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
     "Access-Control-Allow-Headers": "*",
-    "Access-Control-Max-Age": "86400"
+    "Access-Control-Max-Age": "86400",
   };
   if (type === "text/html") return { ...base, "Content-Type": "text/html" };
   if (type === "text/plain") return { ...base, "Content-Type": "text/plain" };

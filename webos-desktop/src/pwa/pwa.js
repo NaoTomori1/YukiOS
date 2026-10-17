@@ -11,7 +11,11 @@ function onNewServiceWorker(registration) {
 
 export function registerPWA() {
   if (!("serviceWorker" in navigator)) return;
-  if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") return;
+  if (
+    window.location.hostname === "localhost" ||
+    window.location.hostname === "127.0.0.1"
+  )
+    return;
 
   window.addEventListener("load", async () => {
     try {
@@ -19,14 +23,15 @@ export function registerPWA() {
       const scope = new URL("./", window.location.href).pathname;
       const registration = await navigator.serviceWorker.register(swUrl, {
         scope,
-        updateViaCache: "none"
+        updateViaCache: "none",
       });
 
       registration.addEventListener("updatefound", () => {
         const installing = registration.installing;
         if (!installing) return;
         installing.addEventListener("statechange", () => {
-          if (installing.state === "installed") onNewServiceWorker(registration);
+          if (installing.state === "installed")
+            onNewServiceWorker(registration);
         });
       });
 

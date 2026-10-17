@@ -36,21 +36,34 @@ export class MountManager {
           if (!entry.label || !entry.mountPoint) continue;
           const handle = handleMap.get(entry.mountPoint);
           if (!handle) {
-            console.warn(`[MountManager] No stored handle for mount "${entry.label}", skipping`);
+            console.warn(
+              `[MountManager] No stored handle for mount "${entry.label}", skipping`,
+            );
             continue;
           }
           try {
             const perm = await handle.queryPermission({ mode: "readwrite" });
             if (perm !== "granted") {
-              const result = await handle.requestPermission({ mode: "readwrite" });
+              const result = await handle.requestPermission({
+                mode: "readwrite",
+              });
               if (result !== "granted") {
-                console.warn(`[MountManager] Permission denied for mount "${entry.label}", skipping`);
+                console.warn(
+                  `[MountManager] Permission denied for mount "${entry.label}", skipping`,
+                );
                 continue;
               }
             }
-            this.mounts.set(entry.mountPoint, { label: entry.label, handle, mountPoint: entry.mountPoint });
+            this.mounts.set(entry.mountPoint, {
+              label: entry.label,
+              handle,
+              mountPoint: entry.mountPoint,
+            });
           } catch (e) {
-            console.warn(`[MountManager] Failed to restore mount "${entry.label}":`, e);
+            console.warn(
+              `[MountManager] Failed to restore mount "${entry.label}":`,
+              e,
+            );
           }
         }
       }
@@ -83,7 +96,13 @@ export class MountManager {
     if (this.mounts.has(mountPoint)) {
       throw new Error(`A mount named "${label}" already exists`);
     }
-    this.mounts.set(mountPoint, { label, mountPoint, path: realPath, internal: true, readOnly: true });
+    this.mounts.set(mountPoint, {
+      label,
+      mountPoint,
+      path: realPath,
+      internal: true,
+      readOnly: true,
+    });
     return mountPoint;
   }
 
@@ -102,14 +121,20 @@ export class MountManager {
   }
 
   getMounts() {
-    return Array.from(this.mounts.values()).map(({ label, mountPoint }) => ({ label, mountPoint }));
+    return Array.from(this.mounts.values()).map(({ label, mountPoint }) => ({
+      label,
+      mountPoint,
+    }));
   }
 
   isMountedPath(absolutePath) {
     if (!this.root || !this.mounts.size) return false;
     for (const mountPoint of this.mounts.keys()) {
       const fullMountPath = this.root + "/" + mountPoint;
-      if (absolutePath === fullMountPath || absolutePath.startsWith(fullMountPath + "/")) {
+      if (
+        absolutePath === fullMountPath ||
+        absolutePath.startsWith(fullMountPath + "/")
+      ) {
         return true;
       }
     }
@@ -124,7 +149,10 @@ export class MountManager {
         return { mount: entry, relativePath: "" };
       }
       if (absolutePath.startsWith(fullMountPath + "/")) {
-        return { mount: entry, relativePath: absolutePath.slice(fullMountPath.length + 1) };
+        return {
+          mount: entry,
+          relativePath: absolutePath.slice(fullMountPath.length + 1),
+        };
       }
     }
     return null;
@@ -134,7 +162,9 @@ export class MountManager {
     if (mount.internal) {
       return this.internalReaddir(mount, relPath);
     }
-    const dirHandle = relPath ? await this.getDirHandle(mount.handle, relPath) : mount.handle;
+    const dirHandle = relPath
+      ? await this.getDirHandle(mount.handle, relPath)
+      : mount.handle;
     const result = {};
     for await (const entry of dirHandle.values()) {
       if (entry.kind === "directory") {
@@ -144,10 +174,10 @@ export class MountManager {
         result[entry.name] = {
           type: "file",
           kind,
-          icon: resolveIconUrl("static/icons/file.webp"),
+          icon: resolveIconUrl("static/icons/explorerwin11.png"),
           faIcon: null,
           content: "",
-          size: 0
+          size: 0,
         };
       }
     }
@@ -169,7 +199,11 @@ export class MountManager {
     }
     const fileHandle = await this.getFileHandle(mount.handle, relPath);
     const file = await fileHandle.getFile();
-    return file.type ? file : new Blob([file], { type: mimeFromName(relPath.split("/").pop() || "") });
+    return file.type
+      ? file
+      : new Blob([file], {
+          type: mimeFromName(relPath.split("/").pop() || ""),
+        });
   }
 
   async writeFile(mount, relPath, content) {
@@ -193,7 +227,9 @@ export class MountManager {
     }
     const dir = this.parentPath(relPath);
     const name = this.baseName(relPath);
-    const dirHandle = dir ? await this.getDirHandle(mount.handle, dir) : mount.handle;
+    const dirHandle = dir
+      ? await this.getDirHandle(mount.handle, dir)
+      : mount.handle;
     await dirHandle.removeEntry(name);
   }
 
@@ -204,7 +240,9 @@ export class MountManager {
     }
     const dir = this.parentPath(relPath);
     const name = this.baseName(relPath);
-    const dirHandle = dir ? await this.getDirHandle(mount.handle, dir) : mount.handle;
+    const dirHandle = dir
+      ? await this.getDirHandle(mount.handle, dir)
+      : mount.handle;
     await dirHandle.removeEntry(name, { recursive: true });
   }
 
@@ -217,15 +255,21 @@ export class MountManager {
     const oldName = this.baseName(oldRelPath);
     const newDir = this.parentPath(newRelPath);
     const newName = this.baseName(newRelPath);
-    const oldDirHandle = oldDir ? await this.getDirHandle(mount.handle, oldDir) : mount.handle;
-    const newDirHandle = newDir ? await this.getDirHandle(mount.handle, newDir) : mount.handle;
+    const oldDirHandle = oldDir
+      ? await this.getDirHandle(mount.handle, oldDir)
+      : mount.handle;
+    const newDirHandle = newDir
+      ? await this.getDirHandle(mount.handle, newDir)
+      : mount.handle;
     try {
       const handle = await oldDirHandle.getFileHandle(oldName);
       if (oldDir === newDir) {
         await handle.move(newDirHandle, newName);
       } else {
         const file = await handle.getFile();
-        const newHandle = await newDirHandle.getFileHandle(newName, { create: true });
+        const newHandle = await newDirHandle.getFileHandle(newName, {
+          create: true,
+        });
         const writable = await newHandle.createWritable();
         try {
           await writable.write(await file.arrayBuffer());
@@ -319,10 +363,10 @@ export class MountManager {
                 result[name] = {
                   type: "file",
                   kind,
-                  icon: "static/icons/file.webp",
+                  icon: "static/icons/explorerwin11.png",
                   faIcon: null,
                   content: "",
-                  size: statRes.stat.size
+                  size: statRes.stat.size,
                 };
               }
             })
@@ -335,22 +379,27 @@ export class MountManager {
 
   internalReadFile(mount, relPath) {
     const filePath = mount.path + "/" + relPath;
-    return window.electronAPI.electronFs.readFileAbsolute(filePath, "utf8").then((res) => {
-      if (!res.success) throw new Error(res.error);
-      return res.data;
-    });
+    return window.electronAPI.electronFs
+      .readFileAbsolute(filePath, "utf8")
+      .then((res) => {
+        if (!res.success) throw new Error(res.error);
+        return res.data;
+      });
   }
 
   internalReadFileBinary(mount, relPath) {
     const filePath = mount.path + "/" + relPath;
-    return window.electronAPI.electronFs.readFileAbsolute(filePath, "base64").then((res) => {
-      if (!res.success) throw new Error(res.error);
-      const binaryStr = atob(res.data);
-      const bytes = new Uint8Array(binaryStr.length);
-      for (let i = 0; i < binaryStr.length; i++) bytes[i] = binaryStr.charCodeAt(i);
-      const name = relPath.split("/").pop() || "file";
-      return new Blob([bytes], { type: mimeFromName(name) });
-    });
+    return window.electronAPI.electronFs
+      .readFileAbsolute(filePath, "base64")
+      .then((res) => {
+        if (!res.success) throw new Error(res.error);
+        const binaryStr = atob(res.data);
+        const bytes = new Uint8Array(binaryStr.length);
+        for (let i = 0; i < binaryStr.length; i++)
+          bytes[i] = binaryStr.charCodeAt(i);
+        const name = relPath.split("/").pop() || "file";
+        return new Blob([bytes], { type: mimeFromName(name) });
+      });
   }
 
   internalWriteFile(mount, relPath, content) {
@@ -375,9 +424,11 @@ export class MountManager {
 
   internalExists(mount, relPath) {
     const filePath = relPath ? mount.path + "/" + relPath : mount.path;
-    return window.electronAPI.electronFs.existsAbsolute(filePath).then((res) => {
-      return res.success && res.exists;
-    });
+    return window.electronAPI.electronFs
+      .existsAbsolute(filePath)
+      .then((res) => {
+        return res.success && res.exists;
+      });
   }
 
   internalIsFile(mount, relPath) {
@@ -463,13 +514,17 @@ export class MountManager {
   }
 
   async copyDirectory(sourceHandle, destParentHandle, newName) {
-    const destHandle = await destParentHandle.getDirectoryHandle(newName, { create: true });
+    const destHandle = await destParentHandle.getDirectoryHandle(newName, {
+      create: true,
+    });
     for await (const entry of sourceHandle.values()) {
       if (entry.kind === "directory") {
         await this.copyDirectory(entry, destHandle, entry.name);
       } else {
         const file = await entry.getFile();
-        const newFileHandle = await destHandle.getFileHandle(entry.name, { create: true });
+        const newFileHandle = await destHandle.getFileHandle(entry.name, {
+          create: true,
+        });
         const writable = await newFileHandle.createWritable();
         try {
           await writable.write(await file.arrayBuffer());

@@ -32,7 +32,14 @@ export class WindowAPI {
 
   create(id, title, width = "80vw", height = "80vh", options = {}) {
     title = sanitizeTitle(title);
-    const win = this.wm.createWindow(id, title, width, height, options.isGame || false, options);
+    const win = this.wm.createWindow(
+      id,
+      title,
+      width,
+      height,
+      options.isGame || false,
+      options,
+    );
 
     const autoMount = options.autoMount !== false;
 
@@ -41,15 +48,17 @@ export class WindowAPI {
         title,
         options.icon,
         options.iconColor,
-        options.externalUrl
+        options.externalUrl,
       );
       this.waitFor(
         win,
-        () => !win.querySelector(":scope > .window-header") && win.innerHTML.trim() !== "",
+        () =>
+          !win.querySelector(":scope > .window-header") &&
+          win.innerHTML.trim() !== "",
         () => {
           win.insertAdjacentHTML("afterbegin", headerHtml);
         },
-        50
+        50,
       );
     }
 
@@ -58,7 +67,7 @@ export class WindowAPI {
       this.wm.mountWindow(win, win.id, title, options.icon, options.iconColor, {
         mountTarget: desktop || document.body,
         autoFocus: options.autoFocus !== false,
-        bindControls: !options.skipAutoSetup
+        bindControls: !options.skipAutoSetup,
       });
     }
 
@@ -106,7 +115,13 @@ export class WindowAPI {
     if (!taskbar || typeof taskbar.getPinnedItems !== "function") return false;
     const pinnedItems = taskbar.getPinnedItems();
     if (pinnedItems.some((item) => item.appId === appId)) return false;
-    pinnedItems.push({ winId: `${appId}-pinned`, appId, title, iconValue, color });
+    pinnedItems.push({
+      winId: `${appId}-pinned`,
+      appId,
+      title,
+      iconValue,
+      color,
+    });
     taskbar.savePinnedItems(pinnedItems);
     taskbar.renderPinnedItems?.();
     return true;

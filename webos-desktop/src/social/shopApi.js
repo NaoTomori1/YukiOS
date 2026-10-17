@@ -8,7 +8,8 @@ let catalogTime = 0;
 const CATALOG_TTL = 60 * 1000;
 
 export async function fetchShopCatalog({ refresh = false } = {}) {
-  if (!refresh && catalogCache && Date.now() - catalogTime < CATALOG_TTL) return catalogCache;
+  if (!refresh && catalogCache && Date.now() - catalogTime < CATALOG_TTL)
+    return catalogCache;
   const data = await socialGet("/live/shop/catalog");
   catalogCache = Array.isArray(data?.items) ? data.items : [];
   catalogTime = Date.now();
@@ -26,12 +27,15 @@ export async function purchaseItem(itemId) {
   const res = await socialPost("/live/coins/purchase", { userId, itemId });
   if (res.ok) {
     invalidateSocialMe();
-    if (typeof res.data.coins === "number") os.storage.set(StorageKeys.socialCoins, res.data.coins);
+    if (typeof res.data.coins === "number")
+      os.storage.set(StorageKeys.socialCoins, res.data.coins);
     const owned = os.storage.get(StorageKeys.socialInventory) || [];
     if (!owned.includes(itemId)) owned.push(itemId);
     os.storage.set(StorageKeys.socialInventory, owned);
   }
-  return res.ok ? { status: "ok", coins: res.data.coins } : { error: res.data.error || "Could not purchase." };
+  return res.ok
+    ? { status: "ok", coins: res.data.coins }
+    : { error: res.data.error || "Could not purchase." };
 }
 
 export async function fetchCoins() {

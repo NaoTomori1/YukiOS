@@ -61,7 +61,9 @@ export function clearAppCustomization(appId) {
     os.events.emit("appCustomizationChanged", { appId });
   } catch {}
   try {
-    window.dispatchEvent(new CustomEvent("app-custom-changed", { detail: { appId } }));
+    window.dispatchEvent(
+      new CustomEvent("app-custom-changed", { detail: { appId } }),
+    );
   } catch {}
 }
 
@@ -81,52 +83,71 @@ export function applyAppCustomizations() {
 
 function resolveImageUrl(value) {
   if (!value) return "";
-  if (value.startsWith("data:") || value.startsWith("blob:") || value.startsWith("http://") || value.startsWith("https://")) return value;
-  if (value.startsWith("static/") || value.startsWith("/static/")) return resolveIconUrl(value);
+  if (
+    value.startsWith("data:") ||
+    value.startsWith("blob:") ||
+    value.startsWith("http://") ||
+    value.startsWith("https://")
+  )
+    return value;
+  if (value.startsWith("static/") || value.startsWith("/static/"))
+    return resolveIconUrl(value);
   if (!value.includes("/")) return resolveYukiAsset(`static/icons/${value}`);
   return value;
 }
 
 function patchAppDom(appId, iconValue, titleValue) {
   const resolvedIcon = iconValue ? resolveImageUrl(iconValue) : null;
-  document.querySelectorAll(`[data-app="${CSS.escape(appId)}"]`).forEach((el) => {
-    if (resolvedIcon) {
-      const img = el.querySelector("img");
-      if (img) {
-        img.src = resolvedIcon;
-      } else {
-        const i = el.querySelector("i");
-        if (i) {
-          const newImg = createElement("img");
-          newImg.src = resolvedIcon;
-          newImg.alt = "";
-          i.replaceWith(newImg);
+  document
+    .querySelectorAll(`[data-app="${CSS.escape(appId)}"]`)
+    .forEach((el) => {
+      if (resolvedIcon) {
+        const img = el.querySelector("img");
+        if (img) {
+          img.src = resolvedIcon;
+        } else {
+          const i = el.querySelector("i");
+          if (i) {
+            const newImg = createElement("img");
+            newImg.src = resolvedIcon;
+            newImg.alt = "";
+            i.replaceWith(newImg);
+          }
+        }
+      } else if (iconValue === null) {
+      }
+      if (titleValue !== null && titleValue !== undefined) {
+        const titleEl =
+          el.querySelector(".app-title") ||
+          el.querySelector("div:last-child") ||
+          el.querySelector("span");
+        if (titleEl && titleEl.textContent !== undefined) {
+          const isTitleEl =
+            titleEl.classList && titleEl.classList.contains("app-title");
+          if (isTitleEl) titleEl.textContent = titleValue;
+          else if (el.dataset.app && titleEl.textContent.trim().length < 100) {
+            const maybeTitle = el.querySelector("div:last-child");
+            if (maybeTitle) maybeTitle.textContent = titleValue;
+          }
+        }
+        const labelDiv = el.querySelector("div:last-child");
+        if (labelDiv && !el.querySelector(".app-title")) {
+          labelDiv.textContent = titleValue;
         }
       }
-    } else if (iconValue === null) {
-    }
-    if (titleValue !== null && titleValue !== undefined) {
-      const titleEl = el.querySelector(".app-title") || el.querySelector("div:last-child") || el.querySelector("span");
-      if (titleEl && titleEl.textContent !== undefined) {
-        const isTitleEl = titleEl.classList && titleEl.classList.contains("app-title");
-        if (isTitleEl) titleEl.textContent = titleValue;
-        else if (el.dataset.app && titleEl.textContent.trim().length < 100) {
-          const maybeTitle = el.querySelector("div:last-child");
-          if (maybeTitle) maybeTitle.textContent = titleValue;
-        }
-      }
-      const labelDiv = el.querySelector("div:last-child");
-      if (labelDiv && !el.querySelector(".app-title")) {
-        labelDiv.textContent = titleValue;
-      }
-    }
-  });
-  document.querySelectorAll(`.start-menu-item[data-app="${CSS.escape(appId)}"] .app-title`).forEach((el) => {
-    if (titleValue) el.textContent = titleValue;
-  });
-  document.querySelectorAll(`.start-menu-item[data-app="${CSS.escape(appId)}"] img`).forEach((img) => {
-    if (resolvedIcon) img.src = resolvedIcon;
-  });
+    });
+  document
+    .querySelectorAll(
+      `.start-menu-item[data-app="${CSS.escape(appId)}"] .app-title`,
+    )
+    .forEach((el) => {
+      if (titleValue) el.textContent = titleValue;
+    });
+  document
+    .querySelectorAll(`.start-menu-item[data-app="${CSS.escape(appId)}"] img`)
+    .forEach((img) => {
+      if (resolvedIcon) img.src = resolvedIcon;
+    });
 }
 
 export function showAppCustomizer(appId, currentTitle, currentIcon) {
@@ -200,14 +221,33 @@ export function showAppCustomizer(appId, currentTitle, currentIcon) {
   previewBox.className = "start-picker-preview-box";
   function getPreviewUrl(val) {
     if (val) return resolveImageUrl(val);
-    if (currentIcon && (currentIcon.startsWith("data:") || currentIcon.startsWith("http") || currentIcon.startsWith("blob:"))) return currentIcon;
-    if (currentIcon && (currentIcon.startsWith("static/") || currentIcon.startsWith("/static/"))) return resolveIconUrl(currentIcon);
-    if (currentIcon && !currentIcon.includes("/") && !currentIcon.startsWith("fa")) return resolveYukiAsset(`static/icons/${currentIcon}`);
+    if (
+      currentIcon &&
+      (currentIcon.startsWith("data:") ||
+        currentIcon.startsWith("http") ||
+        currentIcon.startsWith("blob:"))
+    )
+      return currentIcon;
+    if (
+      currentIcon &&
+      (currentIcon.startsWith("static/") || currentIcon.startsWith("/static/"))
+    )
+      return resolveIconUrl(currentIcon);
+    if (
+      currentIcon &&
+      !currentIcon.includes("/") &&
+      !currentIcon.startsWith("fa")
+    )
+      return resolveYukiAsset(`static/icons/${currentIcon}`);
     return "";
   }
-  const initialPreview = pendingIcon ? getPreviewUrl(pendingIcon) : getPreviewUrl(currentIcon);
-  if (initialPreview) previewBox.innerHTML = `<img src="${initialPreview}" alt="" />`;
-  else previewBox.innerHTML = `<span style="color:var(--text-muted);font-size:11px;">No icon</span>`;
+  const initialPreview = pendingIcon
+    ? getPreviewUrl(pendingIcon)
+    : getPreviewUrl(currentIcon);
+  if (initialPreview)
+    previewBox.innerHTML = `<img src="${initialPreview}" alt="" />`;
+  else
+    previewBox.innerHTML = `<span style="color:var(--text-muted);font-size:11px;">No icon</span>`;
   const previewLabelEl = createElement("span");
   previewLabelEl.className = "start-picker-preview-label";
   previewLabelEl.textContent = "Preview";
@@ -231,10 +271,12 @@ export function showAppCustomizer(appId, currentTitle, currentIcon) {
           previewBox.innerHTML = `<img src="${u}" alt="" />`;
         } else {
           const fallback = getPreviewUrl(currentIcon);
-          if (fallback) previewBox.innerHTML = `<img src="${fallback}" alt="" />`;
-          else previewBox.innerHTML = `<span style="color:var(--text-muted);font-size:11px;">No icon</span>`;
+          if (fallback)
+            previewBox.innerHTML = `<img src="${fallback}" alt="" />`;
+          else
+            previewBox.innerHTML = `<span style="color:var(--text-muted);font-size:11px;">No icon</span>`;
         }
-      }
+      },
     });
   });
   iconSection.appendChild(pickBtn);
@@ -273,7 +315,9 @@ export function showAppCustomizer(appId, currentTitle, currentIcon) {
       os.events.emit("appCustomizationChanged", { appId });
     } catch {}
     try {
-      window.dispatchEvent(new CustomEvent("app-custom-changed", { detail: { appId } }));
+      window.dispatchEvent(
+        new CustomEvent("app-custom-changed", { detail: { appId } }),
+      );
     } catch {}
     try {
       window.dispatchEvent(new Event("app-custom-changed"));

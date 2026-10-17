@@ -46,6 +46,12 @@ import {
   showStartButtonContextMenu,
 } from "./startButtonManager.js";
 import { applyAppCustomizations } from "../shared/appCustomizer.js";
+import {
+  getShardNodes,
+  setShardSelected,
+  clearShardSelection,
+} from "../shared/stickmanSelection.js";
+import { captureCage, isCaged } from "../shared/stickmanCage.js";
 import "../styles/startButtonPicker.css";
 
 let GRID_CONFIG = { width: 84, height: 92, gap: 1, marginX: 24, marginY: 24 };
@@ -642,7 +648,7 @@ class IconDataHelper {
   }
   static getIconPathMap() {
     return {
-      explorer: resolveIconUrl("static/icons/file.webp"),
+      explorer: resolveIconUrl("static/icons/explorerwin11.png"),
       notepad: resolveIconUrl("static/icons/notepad.webp"),
       flash: resolveIconUrl("static/icons/flash.webp"),
       browser: resolveIconUrl("static/icons/chrome.webp"),
@@ -653,7 +659,7 @@ class IconDataHelper {
       photopea: resolveIconUrl("static/icons/photopea.webp"),
       vscode: resolveIconUrl("static/icons/vscode.webp"),
       steamApp: "fab fa-steam",
-      return: resolveIconUrl("static/icons/file.webp"),
+      return: resolveIconUrl("static/icons/explorerwin11.png"),
     };
   }
   static createDesktopFileData(app, name, path = null) {
@@ -673,7 +679,7 @@ class IconDataHelper {
     ) {
       fallback = appInfo.icon;
     } else {
-      fallback = resolveIconUrl("static/icons/file.webp");
+      fallback = resolveIconUrl("static/icons/explorerwin11.png");
     }
     const effectivePath =
       path !== null && path !== undefined && path !== "" ? path : fallback;
@@ -1397,6 +1403,9 @@ export class DesktopUI {
         display: "block",
       });
       this.selectionManager.clear();
+      try {
+        clearShardSelection();
+      } catch {}
       document.addEventListener("mousemove", onMouseMove);
       document.addEventListener("mouseup", onMouseUp);
     };
@@ -1422,11 +1431,47 @@ export class DesktopUI {
           if (overlaps) this.selectionManager.add(icon);
           else this.selectionManager.remove(icon);
         });
+        try {
+          const shards = getShardNodes();
+          for (let i = 0; i < shards.length; i++) {
+            try {
+              const sr = shards[i].getBoundingClientRect();
+              if (sr.width <= 0 || sr.height <= 0) {
+                setShardSelected(shards[i], false);
+                continue;
+              }
+              setShardSelected(shards[i], rectsIntersect(sr, boxRect));
+            } catch {}
+          }
+        } catch {}
       });
     };
 
     const onMouseUp = () => {
       if (!selectionState.isActive) return;
+      try {
+        if (!isCaged()) {
+          const actorNode = $(".stk-layer .stk-actor");
+          if (actorNode) {
+            const boxRect = this.selectionBox.getBoundingClientRect();
+            const ar = actorNode.getBoundingClientRect();
+            if (
+              ar.width > 0 &&
+              ar.height > 0 &&
+              boxRect.left <= ar.left &&
+              boxRect.top <= ar.top &&
+              boxRect.right >= ar.right &&
+              boxRect.bottom >= ar.bottom
+            )
+              captureCage({
+                left: boxRect.left,
+                top: boxRect.top,
+                width: boxRect.width,
+                height: boxRect.height,
+              });
+          }
+        }
+      } catch {}
       this.selectionBox.style.display = "none";
       selectionState.isActive = false;
       document.removeEventListener("mousemove", onMouseMove);

@@ -1,19 +1,29 @@
 import "../styles/chooseAppDialog.css";
 import { os, createElement } from "../framework.js";
-import { getAllPickableApps, getAppsForExtension, getDefaultAppForExt, setDefaultApp } from "../fileAssociations.js";
+import {
+  getAllPickableApps,
+  getAppsForExtension,
+  getDefaultAppForExt,
+  setDefaultApp,
+} from "../fileAssociations.js";
 import { openFileWithApp } from "../fileDisplay.js";
 import { animateWindowClose } from "../windowManager/AnimationSystem.js";
 
 export function showChooseAppDialog({ ext, name, path, setOnly = false }) {
   return new Promise((resolve) => {
     const recommended = getAppsForExtension(ext);
-    const allApps = getAllPickableApps().filter((app) => !recommended.some((rec) => rec.appId === app.appId));
+    const allApps = getAllPickableApps().filter(
+      (app) => !recommended.some((rec) => rec.appId === app.appId),
+    );
     const defaultApp = getDefaultAppForExt(ext);
     const knownApps = new Map();
-    for (const app of [...recommended, ...allApps]) knownApps.set(app.appId, app);
+    for (const app of [...recommended, ...allApps])
+      knownApps.set(app.appId, app);
 
     let selectedAppId =
-      (defaultApp && knownApps.has(defaultApp.appId) ? defaultApp.appId : recommended[0]?.appId) || null;
+      (defaultApp && knownApps.has(defaultApp.appId)
+        ? defaultApp.appId
+        : recommended[0]?.appId) || null;
     let closing = false;
 
     const overlay = createElement("div");
@@ -98,7 +108,10 @@ export function showChooseAppDialog({ ext, name, path, setOnly = false }) {
       if (!app) return close();
       if (alwaysCheckbox.checked) {
         setDefaultApp(ext, app.appId);
-        os.notify.send("Default Apps", `${app.title} is now the default for .${ext} files.`);
+        os.notify.send(
+          "Default Apps",
+          `${app.title} is now the default for .${ext} files.`,
+        );
       }
       if (!setOnly) openFileWithApp(app.appId, { name, path });
       close(app.appId);
@@ -124,7 +137,8 @@ export function showChooseAppDialog({ ext, name, path, setOnly = false }) {
     const otherSection = buildSection("Other options");
     const otherGrid = otherSection.querySelector(".open-with-grid");
     recommended.forEach((app) => {
-      if (app.appId !== defaultApp?.appId) otherGrid.appendChild(buildTile(app));
+      if (app.appId !== defaultApp?.appId)
+        otherGrid.appendChild(buildTile(app));
     });
     allApps.forEach((app) => otherGrid.appendChild(buildTile(app)));
     content.appendChild(otherSection);

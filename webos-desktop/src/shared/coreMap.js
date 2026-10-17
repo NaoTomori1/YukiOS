@@ -8,7 +8,7 @@ export const CORE_EXTENSIONS = {
   psp: ["iso", "cso"],
   segaMD: ["gen", "smd"],
   segaGG: ["gg"],
-  segaMS: ["sms"]
+  segaMS: ["sms"],
 };
 
 export const EXT_TO_CORE = {};

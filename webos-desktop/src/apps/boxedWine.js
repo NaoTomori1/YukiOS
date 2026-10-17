@@ -1,10 +1,22 @@
 import { zipSync, unzipSync } from "fflate";
-import { BaseApp, os, StorageKeys, ServiceKeys, $, $$, createElement } from "../framework.js";
+import {
+  BaseApp,
+  os,
+  StorageKeys,
+  ServiceKeys,
+  $,
+  $$,
+  createElement,
+} from "../framework.js";
 import { showAboutDialog } from "../shared/aboutDialog.js";
 import { CDN_BASES } from "../shared/assetResolver.js";
 
 const CDN_BASE_URL = `${CDN_BASES.MAIN}/static/apps/boxedwine`;
-const LIB_FILES = ["browserfs.boxedwine.js", "boxedwine-shell.js", "boxedwine.js"];
+const LIB_FILES = [
+  "browserfs.boxedwine.js",
+  "boxedwine-shell.js",
+  "boxedwine.js",
+];
 const EXE_SUFFIX = ".exe";
 const ZIP_SUFFIX = ".zip";
 const FALLBACK_DIR = "Games";
@@ -12,7 +24,11 @@ const WIN_ID = "boxedwine-win";
 const CANVAS_ID = "boxedWineCanvas";
 const RESOLUTION = "800x600";
 const ROOT_ZIP = "/fullWine1.7.55-v8";
-const ROOT_ZIP_PARTS = ["fullWine1.7.55-v8.part1", "fullWine1.7.55-v8.part2", "fullWine1.7.55-v8.part3"];
+const ROOT_ZIP_PARTS = [
+  "fullWine1.7.55-v8.part1",
+  "fullWine1.7.55-v8.part2",
+  "fullWine1.7.55-v8.part3",
+];
 const ROOT_ZIP_TOTAL_SIZE = 50012741;
 const OVERLAY_ZIP = "/wine1.7.55-v8-min-online";
 const BOXEDWINE_STYLE_ID = "boxedwine-style";
@@ -49,7 +65,8 @@ function loadBoxedWineLibs(baseUrl) {
         await loadScript(`${baseUrl}/${file}`);
       }
       window.Module = window.Module || {};
-      window.Module.locateFile = (path) => `${baseUrl}/${String(path).split("/").pop()}`;
+      window.Module.locateFile = (path) =>
+        `${baseUrl}/${String(path).split("/").pop()}`;
       await loadScript(`${baseUrl}/${LIB_FILES[2]}`);
     })();
   }
@@ -61,13 +78,17 @@ async function fetchRootZipData(baseUrl, onPart) {
   let offset = 0;
   for (let index = 0; index < ROOT_ZIP_PARTS.length; index++) {
     const response = await fetch(`${baseUrl}/${ROOT_ZIP_PARTS[index]}`);
-    if (!response.ok) throw new Error(`Failed to load ${ROOT_ZIP_PARTS[index]} (${response.status})`);
+    if (!response.ok)
+      throw new Error(
+        `Failed to load ${ROOT_ZIP_PARTS[index]} (${response.status})`,
+      );
     const chunk = new Uint8Array(await response.arrayBuffer());
     target.set(chunk, offset);
     offset += chunk.length;
     if (onPart) onPart(index + 1, ROOT_ZIP_PARTS.length);
   }
-  if (offset !== ROOT_ZIP_TOTAL_SIZE) throw new Error("Wine filesystem size mismatch after joining parts");
+  if (offset !== ROOT_ZIP_TOTAL_SIZE)
+    throw new Error("Wine filesystem size mismatch after joining parts");
   return target;
 }
 
@@ -82,7 +103,9 @@ function bytesToBase64(bytes) {
 
 function largestExeInZip(bytes) {
   const entries = Object.entries(unzipSync(bytes));
-  const matches = entries.filter(([entryName]) => entryName.toLowerCase().endsWith(EXE_SUFFIX));
+  const matches = entries.filter(([entryName]) =>
+    entryName.toLowerCase().endsWith(EXE_SUFFIX),
+  );
   matches.sort(([, aBytes], [, bBytes]) => bBytes.length - aBytes.length);
   const [entryName] = matches[0] || [];
   return entryName ? entryName.split("/").pop() : null;
@@ -103,10 +126,12 @@ export class BoxedWineApp extends BaseApp {
     }
     const win = os.window.create(WIN_ID, "BoxedWine", "860px", "620px", {
       icon: "fas fa-wine-glass",
-      appId: "boxedWineApp"
+      appId: "boxedWineApp",
     });
     this.trackWindow(WIN_ID, win);
-    const styleTag = $(`#${BOXEDWINE_STYLE_ID}`) ? "" : `<style id="${BOXEDWINE_STYLE_ID}">${BOXEDWINE_CSS}</style>`;
+    const styleTag = $(`#${BOXEDWINE_STYLE_ID}`)
+      ? ""
+      : `<style id="${BOXEDWINE_STYLE_ID}">${BOXEDWINE_CSS}</style>`;
     win.innerHTML = `${styleTag}
       <div class="boxedwine-root">
         <div class="app-menubar">
@@ -173,13 +198,19 @@ export class BoxedWineApp extends BaseApp {
   splitFullPath(full) {
     const sep = full.lastIndexOf("/");
     if (sep < 0) return { dir: FALLBACK_DIR, name: full };
-    return { dir: full.slice(0, sep) || FALLBACK_DIR, name: full.slice(sep + 1) };
+    return {
+      dir: full.slice(0, sep) || FALLBACK_DIR,
+      name: full.slice(sep + 1),
+    };
   }
 
   async chooseFile(win) {
     const explorerApp = os.app.getInstance(ServiceKeys.EXPLORER);
     if (!explorerApp) {
-      await os.dialog.alert("BoxedWine", "File browser is unavailable right now.");
+      await os.dialog.alert(
+        "BoxedWine",
+        "File browser is unavailable right now.",
+      );
       return;
     }
     const picked = await os.dialog.fileOpen({ initialPath: [FALLBACK_DIR] });
@@ -237,7 +268,9 @@ export class BoxedWineApp extends BaseApp {
       if (!win.contains(e.target)) closeAllMenus();
     };
     document.addEventListener("click", closeHandler);
-    win.addEventListener("remove", () => document.removeEventListener("click", closeHandler));
+    win.addEventListener("remove", () =>
+      document.removeEventListener("click", closeHandler),
+    );
   }
 
   handleAction(win, action) {
@@ -252,18 +285,24 @@ export class BoxedWineApp extends BaseApp {
       version: "1.7.55",
       description: "Run 16 and 32 bit Windows apps in your browser.",
       icon: "fas fa-wine-glass",
-      iconType: "fontawesome"
+      iconType: "fontawesome",
     });
   }
 
   async loadTarget(dir, name, win) {
     const lower = name.toLowerCase();
     if (!lower.endsWith(EXE_SUFFIX) && !lower.endsWith(ZIP_SUFFIX)) {
-      await os.dialog.alert("BoxedWine", "BoxedWine opens EXE and ZIP files only.");
+      await os.dialog.alert(
+        "BoxedWine",
+        "BoxedWine opens EXE and ZIP files only.",
+      );
       return;
     }
     if (this.booted || this.booting) {
-      await os.dialog.alert("BoxedWine", "BoxedWine is already running. Close the window to run a different file.");
+      await os.dialog.alert(
+        "BoxedWine",
+        "BoxedWine is already running. Close the window to run a different file.",
+      );
       return;
     }
     this.booting = true;
@@ -284,7 +323,10 @@ export class BoxedWineApp extends BaseApp {
     }
     if (!blob || blob.size === 0) {
       this.appendLog(win, `Could not read ${name}`);
-      await os.dialog.alert("BoxedWine", `Could not read ${name} from storage.`);
+      await os.dialog.alert(
+        "BoxedWine",
+        `Could not read ${name} from storage.`,
+      );
       return;
     }
     const bytes = new Uint8Array(await blob.arrayBuffer());
@@ -299,7 +341,10 @@ export class BoxedWineApp extends BaseApp {
         exeName = null;
       }
       if (!exeName) {
-        await os.dialog.alert("BoxedWine", "No EXE found inside this ZIP. Choose an EXE directly.");
+        await os.dialog.alert(
+          "BoxedWine",
+          "No EXE found inside this ZIP. Choose an EXE directly.",
+        );
         return;
       }
       payloadBytes = bytes;
@@ -314,7 +359,10 @@ export class BoxedWineApp extends BaseApp {
       await loadBoxedWineLibs(baseUrl);
     } catch (libErr) {
       this.appendLog(win, "Could not load emulator libraries");
-      await os.dialog.alert("BoxedWine", "Could not load the emulator libraries.");
+      await os.dialog.alert(
+        "BoxedWine",
+        "Could not load the emulator libraries.",
+      );
       libsPromise = null;
       return;
     }
@@ -323,13 +371,13 @@ export class BoxedWineApp extends BaseApp {
       `resolution=${RESOLUTION}`,
       `root=${ROOT_ZIP}`,
       `app-payload=${bytesToBase64(payloadBytes)}`,
-      `p=${exeName.split(" ").join("%20")}`
+      `p=${exeName.split(" ").join("%20")}`,
     ].join("&");
     this.appendLog(win, "Loading Wine filesystem");
     let rootZipData = null;
     try {
       rootZipData = await fetchRootZipData(baseUrl, (done, total) =>
-        this.appendLog(win, `Loading Wine filesystem (${done}/${total})`)
+        this.appendLog(win, `Loading Wine filesystem (${done}/${total})`),
       );
     } catch (partErr) {
       this.appendLog(win, "Could not load Wine filesystem");
@@ -340,7 +388,7 @@ export class BoxedWineApp extends BaseApp {
     window.BoxedWineConfig = {
       ...(window.BoxedWineConfig || {}),
       consoleLog: (log) => this.appendLog(win, String(log)),
-      urlParams
+      urlParams,
     };
     window.BoxedWineConfig.rootZipData = rootZipData;
     window.BoxedWineConfig.locateRootBaseUrl = baseUrl;

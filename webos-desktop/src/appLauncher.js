@@ -3,7 +3,11 @@ import { HIGHLIGHTED_GAMES, getGameName } from "./games/games.js";
 import { appMap } from "./games/gamesList.js";
 import { SYSTEM_APPS } from "./AppRegistryConfig.js";
 import { createAppActions } from "./AppActions.js";
-import { initializeAppGrid, tryGetIcon, trackRecentlyUsed } from "./desktopui/startMenu.js";
+import {
+  initializeAppGrid,
+  tryGetIcon,
+  trackRecentlyUsed,
+} from "./desktopui/startMenu.js";
 const IFRAME_ATTRS =
   'style="width:100%;height:100%;border:none;" allow="autoplay; fullscreen; clipboard-write; encrypted-media; picture-in-picture" sandbox="allow-forms allow-downloads allow-modals allow-pointer-lock allow-popups allow-same-origin allow-scripts allow-top-navigation-by-user-activation"';
 import { getLibraryUrl } from "./shared/cdnConfig.js";
@@ -20,20 +24,41 @@ import {
   isCdnHostname,
   isJsdelivrGhUrl,
   getCurrentCdnRepoBase,
-  resolveGhUrl
+  resolveGhUrl,
 } from "./shared/assetResolver.js";
-import { yukiITDevToolsBridge, YUKI_DEV_TOOLS_URL } from "./yukiITDevToolsBridge.js";
+import {
+  yukiITDevToolsBridge,
+  YUKI_DEV_TOOLS_URL,
+} from "./yukiITDevToolsBridge.js";
 import { ClippyAnimation, initClippy, speak } from "./ai/clippy.js";
 const clippySpeak = speak;
 import { GameOverlayController } from "./gameOverlay.js";
 import "./styles/gameOverlay.css";
-import { initAnalytics, getAnalyticsBase, sendLaunchAnalytics, recordUsageDuration } from "./analytics.js";
-import { maybeTriggerSmartlink, buildGameAdBannerHtml, ADSTERRA_KEYS, shouldEnableAds } from "./ads.js";
+import {
+  initAnalytics,
+  getAnalyticsBase,
+  sendLaunchAnalytics,
+  recordUsageDuration,
+} from "./analytics.js";
+import {
+  maybeTriggerSmartlink,
+  buildGameAdBannerHtml,
+  ADSTERRA_KEYS,
+  shouldEnableAds,
+} from "./ads.js";
 import { getNewsContentSignature, updateNewsBadge } from "./apps/news.js";
 import { SteamSettings } from "./games/steamSettings.js";
-import { PROXIES, clampProxyIndex, buildProxyUrl, fetchHtmlThroughProxy, fetchDirectAsBlobUrl } from "./proxies.js";
+import {
+  PROXIES,
+  clampProxyIndex,
+  buildProxyUrl,
+  fetchHtmlThroughProxy,
+  fetchDirectAsBlobUrl,
+} from "./proxies.js";
 import { trigger as triggerCursorEffect } from "./cursorEffect.js";
-const STATICALLY_BASE = resolveGhUrl("https://cdn.jsdelivr.net/gh/NaoTomori1/yukios-games@main");
+const STATICALLY_BASE = resolveGhUrl(
+  "https://cdn.jsdelivr.net/gh/NaoTomori1/yukios-games@main",
+);
 
 export class AppLauncher {
   wm;
@@ -55,14 +80,19 @@ export class AppLauncher {
     this.wm = windowManager;
     this.fs = fileSystemManager;
 
-    this.services = services instanceof Map ? Object.fromEntries(services) : services;
+    this.services =
+      services instanceof Map ? Object.fromEntries(services) : services;
     Object.assign(this, this.services);
 
     this.taskManager = this.services.taskManagerApp;
     this.adsManager = this.services.adsApp;
     this.brightnessApp = this.services.displayPerformanceApp;
 
-    this.TRANSPARENCY_ALLOWED_APP_IDS = new Set(["paint", "photopea", "vscode"]);
+    this.TRANSPARENCY_ALLOWED_APP_IDS = new Set([
+      "paint",
+      "photopea",
+      "vscode",
+    ]);
 
     this.clippyPromise = initClippy();
 
@@ -97,16 +127,19 @@ export class AppLauncher {
       Object.entries(SYSTEM_APPS).map(([appId, metadata]) => {
         const action = appActions[appId];
         return [appId, { ...metadata, ...(action ? { action } : {}) }];
-      })
+      }),
     );
 
     this.clippyMap = Object.fromEntries(
       Object.entries(SYSTEM_APPS)
         .filter(([, v]) => v.clippy)
-        .map(([k, v]) => [k, v.clippy])
+        .map(([k, v]) => [k, v.clippy]),
     );
 
-    this.clippyMap["vscode"] = { message: "Code editor ready.", animation: ClippyAnimation.GetWizardy };
+    this.clippyMap["vscode"] = {
+      message: "Code editor ready.",
+      animation: ClippyAnimation.GetWizardy,
+    };
     this.appMap = { ...appMap, ...systemAppsWithActions };
     this.launchedAppIds = this.loadLaunchedApps();
     this.appSessions = new Map();
@@ -116,7 +149,9 @@ export class AppLauncher {
     const currentNewsSig = getNewsContentSignature();
     const savedNewsSig = os.storage.get(StorageKeys.newsReadSignatureKey);
     const legacyNewsSeen = parseBool(os.storage.get(StorageKeys.newsSeenKey));
-    const setupCompleted = parseBool(os.storage.get(StorageKeys.setupCompleted));
+    const setupCompleted = parseBool(
+      os.storage.get(StorageKeys.setupCompleted),
+    );
 
     if (!savedNewsSig && legacyNewsSeen) {
       os.storage.set(StorageKeys.newsReadSignatureKey, currentNewsSig);
@@ -152,7 +187,7 @@ export class AppLauncher {
         winId,
         title: entry.title || winId,
         icon: entry.iconValue || "fas fa-window-maximize",
-        status: "Running"
+        status: "Running",
       });
     });
     return apps;
@@ -161,7 +196,8 @@ export class AppLauncher {
   registerAppsFromMap() {
     for (const [appId, metadata] of Object.entries(SYSTEM_APPS)) {
       const serviceKey = metadata.serviceKey || appId;
-      const instance = this.services[serviceKey] || this[appId] || this[appId + "App"];
+      const instance =
+        this.services[serviceKey] || this[appId] || this[appId + "App"];
       if (instance) {
         this.appRegistry.set(appId, instance);
       }
@@ -178,7 +214,8 @@ export class AppLauncher {
 
     window.addEventListener("message", async (event) => {
       const data = event?.data;
-      if (!data || data.__yukios !== "navigate" || typeof data.url !== "string") return;
+      if (!data || data.__yukios !== "navigate" || typeof data.url !== "string")
+        return;
 
       let sourceIframe = null;
       for (const iframe of $("#desktop").querySelectorAll("iframe")) {
@@ -258,7 +295,7 @@ export class AppLauncher {
           source: info.source,
           originalName: app,
           analyticsBase,
-          ...appExtra
+          ...appExtra,
         });
       } else if (info.url) {
         this.openIframeApp({
@@ -267,7 +304,7 @@ export class AppLauncher {
           source: info.url,
           originalName: app,
           analyticsBase,
-          ...appExtra
+          ...appExtra,
         });
       } else if (info.action) {
         await info.action.call(this, appExtra);
@@ -284,21 +321,64 @@ export class AppLauncher {
 
     const handlers = {
       swf: () =>
-        this.openIframeApp({ appId: app, type: "swf", source: info.swf || info.url, originalName: app, ...appExtra }),
-      gba: () => this.openIframeApp({ appId: app, type: "gba", source: info.url, originalName: app, ...appExtra }),
-      psp: () => this.openIframeApp({ appId: app, type: "psp", source: info.url, originalName: app, ...appExtra }),
-      nds: () => this.openIframeApp({ appId: app, type: "nds", source: info.url, originalName: app, ...appExtra }),
+        this.openIframeApp({
+          appId: app,
+          type: "swf",
+          source: info.swf || info.url,
+          originalName: app,
+          ...appExtra,
+        }),
+      gba: () =>
+        this.openIframeApp({
+          appId: app,
+          type: "gba",
+          source: info.url,
+          originalName: app,
+          ...appExtra,
+        }),
+      psp: () =>
+        this.openIframeApp({
+          appId: app,
+          type: "psp",
+          source: info.url,
+          originalName: app,
+          ...appExtra,
+        }),
+      nds: () =>
+        this.openIframeApp({
+          appId: app,
+          type: "nds",
+          source: info.url,
+          originalName: app,
+          ...appExtra,
+        }),
       megadrive: () =>
-        this.openIframeApp({ appId: app, type: "segaMD", source: info.url, originalName: app, ...appExtra }),
+        this.openIframeApp({
+          appId: app,
+          type: "segaMD",
+          source: info.url,
+          originalName: app,
+          ...appExtra,
+        }),
       genesis: () =>
-        this.openIframeApp({ appId: app, type: "segaMD", source: info.url, originalName: app, ...appExtra }),
+        this.openIframeApp({
+          appId: app,
+          type: "segaMD",
+          source: info.url,
+          originalName: app,
+          ...appExtra,
+        }),
       game: async () => {
         let source = info.url;
 
         if (info?.scramjetEnabled) {
           const wispUrl = getWispUrl();
           source = `/sapps/set-template.html?wisp=${encodeURIComponent(wispUrl)}&target=${encodeURIComponent(info.url)}`;
-        } else if (info?.blobEnabled && typeof source === "string" && /^https?:\/\//.test(source)) {
+        } else if (
+          info?.blobEnabled &&
+          typeof source === "string" &&
+          /^https?:\/\//.test(source)
+        ) {
           const proxyIndex = clampProxyIndex(info.proxyIndex, PROXIES);
           try {
             if (info?.proxyEnabled) {
@@ -307,13 +387,20 @@ export class AppLauncher {
               source = await fetchDirectAsBlobUrl(source);
             }
           } catch (e) {
-            console.warn("[AppLauncher blob] fetch failed, fallback to proxy/direct", e);
+            console.warn(
+              "[AppLauncher blob] fetch failed, fallback to proxy/direct",
+              e,
+            );
             if (info?.proxyEnabled) {
               const fallback = buildProxyUrl(source, proxyIndex, PROXIES);
               if (fallback) source = fallback;
             }
           }
-        } else if (info?.proxyEnabled && typeof source === "string" && /^https?:\/\//.test(source)) {
+        } else if (
+          info?.proxyEnabled &&
+          typeof source === "string" &&
+          /^https?:\/\//.test(source)
+        ) {
           const proxyIndex = clampProxyIndex(info.proxyIndex, PROXIES);
           try {
             source = await fetchHtmlThroughProxy(source, proxyIndex, PROXIES);
@@ -321,10 +408,17 @@ export class AppLauncher {
             source = buildProxyUrl(source, proxyIndex, PROXIES);
           }
         }
-        this.openIframeApp({ appId: app, type: "game", source, originalName: app, analyticsBase, ...appExtra });
+        this.openIframeApp({
+          appId: app,
+          type: "game",
+          source,
+          originalName: app,
+          analyticsBase,
+          ...appExtra,
+        });
       },
       html: () => this.openHtmlApp(app, info.html, info),
-      remote: () => this.openRemoteApp(info.url)
+      remote: () => this.openRemoteApp(info.url),
     };
     const handler = handlers[info.type];
     if (handler) {
@@ -381,14 +475,20 @@ export class AppLauncher {
       const sessions = os.storage.get(StorageKeys.steamSessions) || {};
       if (!sessions[appId]) sessions[appId] = [];
       sessions[appId].push({ ts: now, min: minutes });
-      sessions[appId] = sessions[appId].filter((s) => now - s.ts < TWO_WEEKS_MS);
+      sessions[appId] = sessions[appId].filter(
+        (s) => now - s.ts < TWO_WEEKS_MS,
+      );
       os.storage.set(StorageKeys.steamSessions, sessions);
     } catch (e) {}
   }
 
   async openRemoteApp(appUrl) {
     const isStaticallyGh = isCdnGhUrl(window.location.href);
-    if (isStaticallyGh && typeof appUrl === "string" && appUrl.startsWith("/")) {
+    if (
+      isStaticallyGh &&
+      typeof appUrl === "string" &&
+      appUrl.startsWith("/")
+    ) {
       appUrl = `${STATICALLY_BASE}${appUrl}`;
     }
     sendLaunchAnalytics(appUrl);
@@ -418,7 +518,7 @@ export class AppLauncher {
     const contentHtml = `<iframe src="${iframeUrl}" ${IFRAME_ATTRS}></iframe>`;
     this.createWindow(appId, title, contentHtml, YUKI_DEV_TOOLS_URL, appId, {
       type: "game",
-      ...extra
+      ...extra,
     });
   }
 
@@ -430,11 +530,18 @@ export class AppLauncher {
       htmlContent,
       null,
       appName,
-      appMeta
+      appMeta,
     );
   }
 
-  async openIframeApp({ appId, type, source, originalName, analyticsBase = null, ...extra }) {
+  async openIframeApp({
+    appId,
+    type,
+    source,
+    originalName,
+    analyticsBase = null,
+    ...extra
+  }) {
     this.fetchHtmlAsBlobUrl = fetchHtmlAsBlobUrl;
 
     let id;
@@ -453,7 +560,10 @@ export class AppLauncher {
       const swfPath = await resolveUrl(source);
 
       const ruffleConfig = buildPlayerConfig();
-      const ruffleConfigJson = JSON.stringify(ruffleConfig).replace(/</g, "\\u003c");
+      const ruffleConfigJson = JSON.stringify(ruffleConfig).replace(
+        /</g,
+        "\\u003c",
+      );
       const swfHtml = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -478,11 +588,16 @@ player.load("${swfPath}");
 </body>
 </html>`;
 
-      const swfBlob = URL.createObjectURL(new Blob([swfHtml], { type: "text/html" }));
+      const swfBlob = URL.createObjectURL(
+        new Blob([swfHtml], { type: "text/html" }),
+      );
       contentHtml = `<iframe src="${swfBlob}" ${IFRAME_ATTRS}></iframe>`;
       externalUrl = swfBlob;
     } else {
-      id = type === "game" ? appId : `${type}-${source.replace(/\W/g, "")}-${Date.now()}`;
+      id =
+        type === "game"
+          ? appId
+          : `${type}-${source.replace(/\W/g, "")}-${Date.now()}`;
       if (this.bringToFrontIfExists(id)) return;
 
       const shouldBypassResolution =
@@ -495,7 +610,9 @@ player.load("${swfPath}");
         !source.startsWith("https://") &&
         !source.startsWith("/");
 
-      const isCdnGh = isCdnHostname(window.location.hostname) && window.location.pathname.includes("/gh/");
+      const isCdnGh =
+        isCdnHostname(window.location.hostname) &&
+        window.location.pathname.includes("/gh/");
 
       const isLocalhostUrl = (() => {
         if (typeof source !== "string") return false;
@@ -508,15 +625,25 @@ player.load("${swfPath}");
       })();
       let resolvedSource = source;
       if (!shouldBypassResolution && !isCdnGh && !isLocalhostUrl) {
-        resolvedSource = await resolveUrl(source, isCdnGhUrl(window.location.href));
+        resolvedSource = await resolveUrl(
+          source,
+          isCdnGhUrl(window.location.href),
+        );
       }
 
-      if (typeof resolvedSource === "string" && resolvedSource.includes("static/apps/azahar")) {
-        const mirrors = ["https://yukios.netlify.app/", "https://yukios.pages.dev/"];
+      if (
+        typeof resolvedSource === "string" &&
+        resolvedSource.includes("static/apps/azahar")
+      ) {
+        const mirrors = [
+          "https://yukios.netlify.app/",
+          "https://yukios.pages.dev/",
+        ];
 
         for (const mirror of mirrors) {
           try {
-            const testUrl = new URL("static/apps/azahar/index.html", mirror).href;
+            const testUrl = new URL("static/apps/azahar/index.html", mirror)
+              .href;
             const res = await fetch(testUrl, { method: "HEAD" });
             if (res.ok) {
               resolvedSource = testUrl;
@@ -524,12 +651,19 @@ player.load("${swfPath}");
             }
           } catch (e) {}
         }
-      } else if (typeof resolvedSource === "string" && resolvedSource.includes("static/apps/kiwiirc")) {
-        const mirrors = ["https://yukios.netlify.app/", "https://yukios.pages.dev/"];
+      } else if (
+        typeof resolvedSource === "string" &&
+        resolvedSource.includes("static/apps/kiwiirc")
+      ) {
+        const mirrors = [
+          "https://yukios.netlify.app/",
+          "https://yukios.pages.dev/",
+        ];
 
         for (const mirror of mirrors) {
           try {
-            const testUrl = new URL("static/apps/kiwiirc/index.html", mirror).href;
+            const testUrl = new URL("static/apps/kiwiirc/index.html", mirror)
+              .href;
             const res = await fetch(testUrl, { method: "HEAD" });
             if (res.ok) {
               resolvedSource = testUrl;
@@ -537,14 +671,19 @@ player.load("${swfPath}");
             }
           } catch (e) {}
         }
-      } else if (isCdnGh && typeof resolvedSource === "string" && resolvedSource.startsWith("/")) {
+      } else if (
+        isCdnGh &&
+        typeof resolvedSource === "string" &&
+        resolvedSource.startsWith("/")
+      ) {
         if (!resolvedSource.includes("localhost:4000")) {
           const repoBase = getCurrentCdnRepoBase();
           if (repoBase) {
             resolvedSource = `${repoBase}${resolvedSource}`;
           } else {
             try {
-              resolvedSource = new URL(resolvedSource, window.location.href).href;
+              resolvedSource = new URL(resolvedSource, window.location.href)
+                .href;
             } catch {}
           }
         }
@@ -571,7 +710,7 @@ player.load("${swfPath}");
         const resolvedGameIcon = resolveIconUrl(gameIcon);
         const gameIconHtml = this.buildWindowIconHtml(resolvedGameIcon, {
           margin: "6px",
-          iconVerticalAlign: true
+          iconVerticalAlign: true,
         });
 
         if (window.electronAPI) {
@@ -582,16 +721,20 @@ player.load("${swfPath}");
             if (!isNaN(parsed)) nativeWidth = parsed;
           }
           if (extra.height) {
-            const parsed = parseInt(String(extra.height).replace(/[^0-9]/g, ""));
+            const parsed = parseInt(
+              String(extra.height).replace(/[^0-9]/g, ""),
+            );
             if (!isNaN(parsed)) nativeHeight = parsed;
           }
-          const nativeIcon = resolvedGameIcon.startsWith("http") ? resolvedGameIcon : undefined;
+          const nativeIcon = resolvedGameIcon.startsWith("http")
+            ? resolvedGameIcon
+            : undefined;
           window.electronAPI.openNativeWindow({
             url: resolvedSource,
             title: displayTitle,
             icon: nativeIcon,
             width: nativeWidth,
-            height: nativeHeight
+            height: nativeHeight,
           });
           return;
         }
@@ -605,10 +748,11 @@ player.load("${swfPath}");
             ...extra,
             isGame,
             icon: gameIcon,
-            skipHeader: true
-          }
+            skipHeader: true,
+          },
         );
-        if (appId) this.appSessions.set(`${id}-win`, { appId, startTime: Date.now() });
+        if (appId)
+          this.appSessions.set(`${id}-win`, { appId, startTime: Date.now() });
 
         Object.assign(win.dataset, {
           appType: type,
@@ -617,7 +761,7 @@ player.load("${swfPath}");
           swf: type === "swf" ? source : "",
           isGame,
           rom: type !== "game" && type !== "swf" ? source : "",
-          core: type !== "game" && type !== "swf" ? type : ""
+          core: type !== "game" && type !== "swf" ? type : "",
         });
 
         const overlayBtnHtml = isGame
@@ -629,7 +773,7 @@ player.load("${swfPath}");
             gameIconHtml,
             displayTitle,
             overlayBtnHtml,
-            os.window.getWindowControls(resolvedSource, true)
+            os.window.getWindowControls(resolvedSource, true),
           )}
           <div class="window-content" style="width:100%; height:100%; overflow:hidden; display:flex; align-items:center; justify-content:center; background:#1a1a1a;">
             <div class="modern-loader">
@@ -643,9 +787,11 @@ player.load("${swfPath}");
           </div>
         `;
 
-        win.querySelector(".overlay-open-btn")?.addEventListener("click", () => {
-          this.overlayController.openForWindow(win);
-        });
+        win
+          .querySelector(".overlay-open-btn")
+          ?.addEventListener("click", () => {
+            this.overlayController.openForWindow(win);
+          });
 
         win.querySelector(".external-btn")?.addEventListener("click", () => {
           window.open(resolvedSource, "blank");
@@ -661,15 +807,24 @@ player.load("${swfPath}");
         ) {
           try {
             const injectBannerHtml =
-              extra.isArchive && shouldEnableAds() ? buildGameAdBannerHtml(ADSTERRA_KEYS.leaderboard) : "";
+              extra.isArchive && shouldEnableAds()
+                ? buildGameAdBannerHtml(ADSTERRA_KEYS.leaderboard)
+                : "";
             const skipRewrite = !!this.appMap[appId]?.skipRewrite;
-            iframeUrl = await fetchHtmlAsBlobUrl(resolvedSource, { injectBannerHtml, skipRewrite });
+            iframeUrl = await fetchHtmlAsBlobUrl(resolvedSource, {
+              injectBannerHtml,
+              skipRewrite,
+            });
           } catch (err) {
-            const message = err?.message ? String(err.message) : "Unknown error";
+            const message = err?.message
+              ? String(err.message)
+              : "Unknown error";
             const errHtml = `<!doctype html><meta charset="utf-8"><title>Failed to load</title>
 <style>body{font-family:system-ui,Segoe UI,Roboto,Arial;margin:16px}code{background:#f2f2f2;padding:2px 4px;border-radius:4px}</style>
 <h2>Failed to fetch page</h2><p><strong>URL:</strong> <code>${resolvedSource}</code></p><p><strong>Error:</strong> <code>${message}</code></p>`;
-            iframeUrl = URL.createObjectURL(new Blob([errHtml], { type: "text/html" }));
+            iframeUrl = URL.createObjectURL(
+              new Blob([errHtml], { type: "text/html" }),
+            );
           }
         } else {
           iframeUrl = resolvedSource;
@@ -699,7 +854,8 @@ player.load("${swfPath}");
       }
     }
 
-    const displayTitle = this.appMap[appId]?.title || getGameName(originalName) || originalName;
+    const displayTitle =
+      this.appMap[appId]?.title || getGameName(originalName) || originalName;
 
     this.createIframeWindow(
       id,
@@ -710,10 +866,10 @@ player.load("${swfPath}");
         type,
         swf: type === "swf" ? source : undefined,
         rom: type !== "game" && type !== "swf" ? source : undefined,
-        core: type !== "game" && type !== "swf" ? type : undefined
+        core: type !== "game" && type !== "swf" ? type : undefined,
       },
       analyticsBase,
-      externalUrl
+      externalUrl,
     );
   }
 
@@ -723,18 +879,30 @@ player.load("${swfPath}");
     return !!el;
   }
 
-  createIframeWindow(id, title, contentHtml, appId, appMeta, analyticsBase = null, externalUrl = null) {
+  createIframeWindow(
+    id,
+    title,
+    contentHtml,
+    appId,
+    appMeta,
+    analyticsBase = null,
+    externalUrl = null,
+  ) {
     this.createWindow(id, title, contentHtml, externalUrl, appId, appMeta);
   }
 
   isTransparencyBlocked(appId, appMeta) {
-    return !(appMeta.type === "system" || this.TRANSPARENCY_ALLOWED_APP_IDS.has(appId));
+    return !(
+      appMeta.type === "system" || this.TRANSPARENCY_ALLOWED_APP_IDS.has(appId)
+    );
   }
 
   buildWindowIconHtml(resolvedIcon, options = {}) {
     const { margin = "8px", iconVerticalAlign = false } = options;
     const isFontIcon =
-      resolvedIcon.startsWith("fas ") || resolvedIcon.startsWith("fab ") || resolvedIcon.startsWith("far ");
+      resolvedIcon.startsWith("fas ") ||
+      resolvedIcon.startsWith("fab ") ||
+      resolvedIcon.startsWith("far ");
     const vertAlignStyle = iconVerticalAlign ? "vertical-align:middle;" : "";
     return isFontIcon
       ? `<i class="${resolvedIcon}" style="margin-right:${margin};font-size:16px;${vertAlignStyle}"></i>`
@@ -753,10 +921,18 @@ player.load("${swfPath}");
     `;
   }
 
-  createWindow(id, title, contentHtml, externalUrl = null, appId = null, appMeta = {}) {
+  createWindow(
+    id,
+    title,
+    contentHtml,
+    externalUrl = null,
+    appId = null,
+    appMeta = {},
+  ) {
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.has("game") && appId) {
-      if (window.__yukiCloakActive !== true) document.title = sanitizeTitle(title);
+      if (window.__yukiCloakActive !== true)
+        document.title = sanitizeTitle(title);
       document.head.insertAdjacentHTML(
         "beforeend",
         `<style>
@@ -768,7 +944,7 @@ player.load("${swfPath}");
             overflow: hidden;
             background: black;
           }
-        </style>`
+        </style>`,
       );
       document.body.innerHTML = `<div id="electron-game-root" style="width:100vw;height:100vh;margin:0;padding:0;overflow:hidden;">${contentHtml}</div>`;
       return;
@@ -779,7 +955,9 @@ player.load("${swfPath}");
     let icon =
       mapEntry?.iconValue ||
       mapEntry?.icon ||
-      (appMeta.type === "swf" ? "static/icons/flash.webp" : tryGetIcon(appId || id));
+      (appMeta.type === "swf"
+        ? "static/icons/flash.webp"
+        : tryGetIcon(appId || id));
 
     if (!icon) {
       icon = "fas fa-window-maximize";
@@ -787,9 +965,10 @@ player.load("${swfPath}");
 
     const win = os.window.create(`${id}-win`, title, "80vw", "80vh", {
       isGame,
-      icon
+      icon,
     });
-    if (appId) this.appSessions.set(`${id}-win`, { appId, startTime: Date.now() });
+    if (appId)
+      this.appSessions.set(`${id}-win`, { appId, startTime: Date.now() });
 
     Object.assign(win.dataset, {
       appType: appMeta.type || "",
@@ -798,7 +977,7 @@ player.load("${swfPath}");
       swf: appMeta.swf || "",
       isGame,
       rom: appMeta.rom || "",
-      core: appMeta.core || ""
+      core: appMeta.core || "",
     });
 
     const resolvedIcon = resolveIconUrl(icon);
@@ -818,7 +997,10 @@ player.load("${swfPath}");
     });
 
     win.querySelector(".external-btn")?.addEventListener("click", () => {
-      const url = win.dataset.externalUrl || win.querySelector("iframe")?.src || externalUrl;
+      const url =
+        win.dataset.externalUrl ||
+        win.querySelector("iframe")?.src ||
+        externalUrl;
       if (url) window.open(url, "blank", "noopener,noreferrer");
     });
 

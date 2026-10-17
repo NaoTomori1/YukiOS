@@ -1,5 +1,8 @@
 import { ScramjetBaseApp } from "./ScramjetBaseApp.js";
-import { handlePopupMessage, handlePopupTitleMessage } from "./ScramjetPopupManager.js";
+import {
+  handlePopupMessage,
+  handlePopupTitleMessage,
+} from "./ScramjetPopupManager.js";
 import { os, StorageKeys } from "../framework.js";
 import { $, bindEvent, createElement } from "../shared/domUtils.js";
 
@@ -12,7 +15,7 @@ export function createScramjetWebApp(config) {
     windowSize = ["1280px", "800px"],
     trayOptions = null,
     musicUrl = null,
-    startMaximized = false
+    startMaximized = false,
   } = config;
 
   class ScramjetWebApp extends ScramjetBaseApp {
@@ -23,7 +26,8 @@ export function createScramjetWebApp(config) {
       this.appMusic = null;
       this.appMusicTimer = null;
       this.musicBtn = null;
-      this.musicMuted = os.storage.get(StorageKeys.webAppMusicMuted) !== "false";
+      this.musicMuted =
+        os.storage.get(StorageKeys.webAppMusicMuted) !== "false";
     }
 
     getTargetURL() {
@@ -75,14 +79,17 @@ export function createScramjetWebApp(config) {
     refreshMusicButton() {
       if (!this.musicBtn) return;
       this.musicBtn.innerHTML = `<i class="fas ${this.musicMuted ? "fa-volume-xmark" : "fa-volume-high"}"></i>`;
-      this.musicBtn.setAttribute("title", this.musicMuted ? "Unmute music" : "Mute music");
+      this.musicBtn.setAttribute(
+        "title",
+        this.musicMuted ? "Unmute music" : "Mute music",
+      );
     }
 
     buildMusicButton(win) {
       if (!musicUrl || win.querySelector(".webapp-music-btn")) return;
       const btn = createElement("button", {
         className: "webapp-music-btn",
-        attributes: { type: "button", title: "Mute music" }
+        attributes: { type: "button", title: "Mute music" },
       });
       bindEvent(btn, "click", () => this.toggleAppMusic());
       win.appendChild(btn);
@@ -125,7 +132,11 @@ export function createScramjetWebApp(config) {
         element.dataset.popupBridgeBound = "true";
         const popupHandler = (event) => {
           try {
-            const meta = { parentAppId: this.getAppId(), parentName: this.getAppName(), parentIcon: this.getAppIcon() };
+            const meta = {
+              parentAppId: this.getAppId(),
+              parentName: this.getAppName(),
+              parentIcon: this.getAppIcon(),
+            };
             if (handlePopupTitleMessage(event)) {
               return;
             }
@@ -159,7 +170,7 @@ export function createScramjetWebApp(config) {
             } else {
               os.window.close(this.winId);
             }
-          }
+          },
         });
       }
     }

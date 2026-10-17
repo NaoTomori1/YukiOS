@@ -11,16 +11,68 @@ import { KeybindManager } from "../../keybindManager.js";
 import { getEffectiveIcon } from "../../shared/iconPack.js";
 
 const DEFAULT_DOCK_APPS = [
-  { appId: "launchpadApp", title: "Launchpad", icon: "papirus:actions/view-grid", color: "#888" },
-  { appId: "commandPalette", title: "Finder", icon: "papirus:places/folder-blue", color: "#6ea8fe", isFinder: true },
-  { appId: "explorerApp", title: "Explorer", icon: `static/icons/file.webp`, color: "#fff" },
-  { appId: "browserApp", title: "Yuki Browser", icon: "static/icons/chrome.webp", color: "#fff" },
-  { appId: "terminalApp", title: "Terminal", icon: `static/icons/terminal.webp`, color: "#fff" },
-  { appId: "settingsApp", title: "Settings", icon: "papirus:actions/configure", color: "#adb5bd" },
-  { appId: "calculatorApp", title: "Calculator", icon: "papirus:apps/accessories-calculator", color: "#20c997" },
-  { appId: "notepadApp", title: "Notes", icon: "static/icons/notepad.webp", color: "#ffc107" },
-  { appId: "discordApp", title: "Discord", icon: "papirus:apps/discord", color: "#5865f2" },
-  { appId: "trashApp", title: "Trash", icon: "papirus:places/user-trash", color: "#888", isTrash: true }
+  {
+    appId: "launchpadApp",
+    title: "Launchpad",
+    icon: "papirus:actions/view-grid",
+    color: "#888",
+  },
+  {
+    appId: "commandPalette",
+    title: "Finder",
+    icon: "papirus:places/folder-blue",
+    color: "#6ea8fe",
+    isFinder: true,
+  },
+  {
+    appId: "explorerApp",
+    title: "Explorer",
+    icon: `static/icons/explorerwin11.png`,
+    color: "#fff",
+  },
+  {
+    appId: "browserApp",
+    title: "Yuki Browser",
+    icon: "static/icons/chrome.webp",
+    color: "#fff",
+  },
+  {
+    appId: "terminalApp",
+    title: "Terminal",
+    icon: `static/icons/terminal.webp`,
+    color: "#fff",
+  },
+  {
+    appId: "settingsApp",
+    title: "Settings",
+    icon: "papirus:actions/configure",
+    color: "#adb5bd",
+  },
+  {
+    appId: "calculatorApp",
+    title: "Calculator",
+    icon: "papirus:apps/accessories-calculator",
+    color: "#20c997",
+  },
+  {
+    appId: "notepadApp",
+    title: "Notes",
+    icon: "static/icons/notepad.webp",
+    color: "#ffc107",
+  },
+  {
+    appId: "discordApp",
+    title: "Discord",
+    icon: "papirus:apps/discord",
+    color: "#5865f2",
+  },
+  {
+    appId: "trashApp",
+    title: "Trash",
+    icon: "papirus:places/user-trash",
+    color: "#888",
+    isTrash: true,
+  },
 ];
 
 export class MacDock {
@@ -53,7 +105,7 @@ export class MacDock {
       dockMagnifyRange: 3,
       dockIconSize: 43,
       dockScale: 100,
-      dockAnimationSpeed: 0.2
+      dockAnimationSpeed: 0.2,
     };
   }
 
@@ -62,12 +114,16 @@ export class MacDock {
       dockEnabled: getSetting("dockEnabled", false) === true,
       dockPosition: os.storage.get(StorageKeys.dockPosition) || "bottom",
       dockAutoHide: os.storage.get(StorageKeys.dockAutoHide) === "true",
-      dockMagnification: os.storage.get(StorageKeys.dockMagnification) !== "false",
-      dockMagnifyAmount: Number(os.storage.get(StorageKeys.dockMagnifyAmount)) || 1.2,
-      dockMagnifyRange: Number(os.storage.get(StorageKeys.dockMagnifyRange)) || 3,
+      dockMagnification:
+        os.storage.get(StorageKeys.dockMagnification) !== "false",
+      dockMagnifyAmount:
+        Number(os.storage.get(StorageKeys.dockMagnifyAmount)) || 1.2,
+      dockMagnifyRange:
+        Number(os.storage.get(StorageKeys.dockMagnifyRange)) || 3,
       dockIconSize: Number(os.storage.get(StorageKeys.dockIconSize)) || 43,
       dockScale: Number(os.storage.get(StorageKeys.dockScale)) || 100,
-      dockAnimationSpeed: Number(os.storage.get(StorageKeys.dockAnimationSpeed)) || 0.2
+      dockAnimationSpeed:
+        Number(os.storage.get(StorageKeys.dockAnimationSpeed)) || 0.2,
     };
   }
 
@@ -88,7 +144,10 @@ export class MacDock {
   init() {
     if (this.container) return;
     this.readSettings();
-    this.container = createElement("div", { id: "mac-dock", className: "mac-dock" });
+    this.container = createElement("div", {
+      id: "mac-dock",
+      className: "mac-dock",
+    });
     document.body.appendChild(this.container);
     this.applyCSSSettings();
     this.loadPinnedItems();
@@ -152,7 +211,9 @@ export class MacDock {
 
     const win = $("#" + winId);
     const appId = win?.dataset?.appId;
-    const pinned = appId ? this.pinnedItems.find((p) => p.appId === appId) : null;
+    const pinned = appId
+      ? this.pinnedItems.find((p) => p.appId === appId)
+      : null;
 
     if (pinned) {
       pinned.winId = winId;
@@ -162,7 +223,9 @@ export class MacDock {
     }
 
     const effective = getEffectiveIcon(iconValue);
-    iconValue = effective.startsWith("papirus:") ? effective : resolveIconUrl(effective);
+    iconValue = effective.startsWith("papirus:")
+      ? effective
+      : resolveIconUrl(effective);
     const iconEl = this.buildIcon(iconValue, title, color);
     const dot = createElement("span", { className: "dock-running-dot" });
     const iconWrap = createElement("div", { className: "dock-icon-wrap" });
@@ -174,7 +237,7 @@ export class MacDock {
 
     const item = createElement("div", {
       className: "dock-item dock-running",
-      attributes: { "data-win-id": winId }
+      attributes: { "data-win-id": winId },
     });
     item.appendChild(iconWrap);
     item.appendChild(label);
@@ -184,13 +247,23 @@ export class MacDock {
       const targetWin = $("#" + winId);
       if (!targetWin) return;
       showStartStyleMenu(e, (addMenuItem, addSeparator) => {
-        this.manager.buildContextMenuItems(addMenuItem, addSeparator, targetWin);
+        this.manager.buildContextMenuItems(
+          addMenuItem,
+          addSeparator,
+          targetWin,
+        );
       });
     });
     item.classList.add("active");
 
     this.container.appendChild(item);
-    this.runningItems.set(winId, { el: item, isPinned: false, iconValue, title, color });
+    this.runningItems.set(winId, {
+      el: item,
+      isPinned: false,
+      iconValue,
+      title,
+      color,
+    });
     this.triggerRecalc();
   }
 
@@ -237,7 +310,7 @@ export class MacDock {
       color: item.color,
       isFinder: item.isFinder,
       isAudioMixer: item.isAudioMixer,
-      isTrash: item.isTrash
+      isTrash: item.isTrash,
     }));
     os.storage.set(StorageKeys.dockPinnedItems, toSave);
   }
@@ -254,7 +327,9 @@ export class MacDock {
   renderPinnedItems() {
     this.pinnedItems.forEach((app, index) => {
       const effective = getEffectiveIcon(app.icon);
-      const iconValue = effective.startsWith("papirus:") ? effective : resolveIconUrl(effective);
+      const iconValue = effective.startsWith("papirus:")
+        ? effective
+        : resolveIconUrl(effective);
       const iconEl = this.buildIcon(iconValue, app.title, app.color);
       const dot = createElement("span", { className: "dock-running-dot" });
       const iconWrap = createElement("div", { className: "dock-icon-wrap" });
@@ -266,7 +341,7 @@ export class MacDock {
 
       const item = createElement("div", {
         className: "dock-item dock-pinned",
-        attributes: { "data-app-id": app.appId }
+        attributes: { "data-app-id": app.appId },
       });
       item.appendChild(iconWrap);
       item.appendChild(label);
@@ -283,14 +358,25 @@ export class MacDock {
       });
       item.addEventListener("contextmenu", (e) => {
         e.preventDefault();
-        const openWinId = app.winId && this.manager.openWindows?.has(app.winId) ? app.winId : null;
+        const openWinId =
+          app.winId && this.manager.openWindows?.has(app.winId)
+            ? app.winId
+            : null;
         if (openWinId) {
           const targetWin = $("#" + openWinId);
           if (targetWin) {
             showStartStyleMenu(e, (addMenuItem, addSeparator) => {
-              this.manager.buildContextMenuItems(addMenuItem, addSeparator, targetWin);
+              this.manager.buildContextMenuItems(
+                addMenuItem,
+                addSeparator,
+                targetWin,
+              );
               addSeparator();
-              addMenuItem("Unpin from Dock", () => this.unpinItem(app.appId), "papirus:actions/window-pin");
+              addMenuItem(
+                "Unpin from Dock",
+                () => this.unpinItem(app.appId),
+                "papirus:actions/window-pin",
+              );
             });
             return;
           }
@@ -299,15 +385,24 @@ export class MacDock {
           addMenuItem(
             "Launch App",
             () => {
-              if (app.isFinder) os.app.getInstance(ServiceKeys.COMMAND_PALETTE)?.open();
-              else if (app.isAudioMixer) import("../../audioMixer.js").then((m) => m.audioMixer().toggle());
-              else if (app.isTrash) os.app.getInstance(ServiceKeys.EXPLORER)?.openTrash();
+              if (app.isFinder)
+                os.app.getInstance(ServiceKeys.COMMAND_PALETTE)?.open();
+              else if (app.isAudioMixer)
+                import("../../audioMixer.js").then((m) =>
+                  m.audioMixer().toggle(),
+                );
+              else if (app.isTrash)
+                os.app.getInstance(ServiceKeys.EXPLORER)?.openTrash();
               else os.app.launch(app.appId);
             },
-            "papirus:actions/media-playback-start"
+            "papirus:actions/media-playback-start",
           );
           addSeparator();
-          addMenuItem("Unpin from Dock", () => this.unpinItem(app.appId), "papirus:actions/window-pin");
+          addMenuItem(
+            "Unpin from Dock",
+            () => this.unpinItem(app.appId),
+            "papirus:actions/window-pin",
+          );
         });
       });
 
@@ -320,22 +415,31 @@ export class MacDock {
   buildIcon(iconValue, title, color) {
     const effective = getEffectiveIcon(iconValue);
     const inner = createElement("div", { className: "dock-icon-inner" });
-    const isPapirusRaw = typeof effective === "string" && effective.startsWith("papirus:");
+    const isPapirusRaw =
+      typeof effective === "string" && effective.startsWith("papirus:");
     if (isPapirusRaw) {
       const src = resolveIconUrl(effective);
       const img = createElement("img", { attributes: { src, alt: title } });
       img.className = "papirus-icon papirus-icon--32";
       img.onerror = () => {
-        const fallbackEffective = getEffectiveIcon("papirus:apps/application-default-icon");
+        const fallbackEffective = getEffectiveIcon(
+          "papirus:apps/application-default-icon",
+        );
         const fallbackSrc = fallbackEffective.startsWith("papirus:")
           ? resolveIconUrl(fallbackEffective)
           : fallbackEffective;
-        if (fallbackSrc.startsWith("papirus:") || fallbackSrc.startsWith("http") || fallbackSrc.startsWith("data:")) {
+        if (
+          fallbackSrc.startsWith("papirus:") ||
+          fallbackSrc.startsWith("http") ||
+          fallbackSrc.startsWith("data:")
+        ) {
           const fallback = createElement("img", {
             attributes: {
-              src: fallbackSrc.startsWith("papirus:") ? resolveIconUrl(fallbackSrc) : fallbackSrc,
-              alt: title
-            }
+              src: fallbackSrc.startsWith("papirus:")
+                ? resolveIconUrl(fallbackSrc)
+                : fallbackSrc,
+              alt: title,
+            },
           });
           fallback.className = "papirus-icon papirus-icon--32";
           img.replaceWith(fallback);
@@ -351,18 +455,28 @@ export class MacDock {
     const resolved = resolveIconUrl(effective);
     const { isImage, isDataUrl } = this.manager.resolveIconType(resolved);
     if (isImage || isDataUrl) {
-      const img = createElement("img", { attributes: { src: resolved, alt: title } });
+      const img = createElement("img", {
+        attributes: { src: resolved, alt: title },
+      });
       img.onerror = () => {
-        const fallbackEffective = getEffectiveIcon("papirus:apps/application-default-icon");
+        const fallbackEffective = getEffectiveIcon(
+          "papirus:apps/application-default-icon",
+        );
         const fallbackSrc = fallbackEffective.startsWith("papirus:")
           ? resolveIconUrl(fallbackEffective)
           : fallbackEffective;
-        if (fallbackSrc.startsWith("http") || fallbackSrc.startsWith("data:") || fallbackSrc.startsWith("papirus:")) {
+        if (
+          fallbackSrc.startsWith("http") ||
+          fallbackSrc.startsWith("data:") ||
+          fallbackSrc.startsWith("papirus:")
+        ) {
           const fallback = createElement("img", {
             attributes: {
-              src: fallbackSrc.startsWith("papirus:") ? resolveIconUrl(fallbackSrc) : fallbackSrc,
-              alt: title
-            }
+              src: fallbackSrc.startsWith("papirus:")
+                ? resolveIconUrl(fallbackSrc)
+                : fallbackSrc,
+              alt: title,
+            },
           });
           fallback.className = "papirus-icon papirus-icon--32";
           img.replaceWith(fallback);
@@ -375,12 +489,17 @@ export class MacDock {
       inner.appendChild(img);
     } else {
       if (typeof effective === "string" && effective.startsWith("papirus:")) {
-        const img = createElement("img", { attributes: { src: resolveIconUrl(effective), alt: title } });
+        const img = createElement("img", {
+          attributes: { src: resolveIconUrl(effective), alt: title },
+        });
         img.className = "papirus-icon papirus-icon--32";
         inner.appendChild(img);
       } else {
         const icon = createElement("i", { attributes: { alt: title } });
-        icon.className = typeof effective === "string" && effective.startsWith("fa") ? effective : `fa ${effective}`;
+        icon.className =
+          typeof effective === "string" && effective.startsWith("fa")
+            ? effective
+            : `fa ${effective}`;
         icon.style.color = color ?? "var(--text-primary)";
         inner.appendChild(icon);
       }
@@ -394,8 +513,10 @@ export class MacDock {
     if (win.style.display === "none") {
       win.style.display = "";
       const entry = this.runningItems.get(winId);
-      if (entry && !entry.isPinned && entry.el) entry.el.classList.remove("minimized");
-      if (entry && entry.isPinned && entry.pinnedRef) entry.pinnedRef.el.classList.remove("minimized");
+      if (entry && !entry.isPinned && entry.el)
+        entry.el.classList.remove("minimized");
+      if (entry && entry.isPinned && entry.pinnedRef)
+        entry.pinnedRef.el.classList.remove("minimized");
     }
     this.manager.bringToFront(win);
   }
@@ -439,10 +560,17 @@ export class MacDock {
   handleKeydown(e) {
     if (!this.container) return;
     const tag = e.target?.tagName?.toLowerCase();
-    if (tag === "input" || tag === "textarea" || tag === "select" || e.target?.isContentEditable) return;
+    if (
+      tag === "input" ||
+      tag === "textarea" ||
+      tag === "select" ||
+      e.target?.isContentEditable
+    )
+      return;
     try {
       const focused = document.activeElement;
-      if (focused && focused.closest && focused.closest("[id^='explorer-']")) return;
+      if (focused && focused.closest && focused.closest("[id^='explorer-']"))
+        return;
     } catch {}
 
     for (let i = 1; i <= 10; i++) {
@@ -517,7 +645,9 @@ export class MacDock {
 
     const containerRect = this.container.getBoundingClientRect();
     const isHorizontal = s.dockPosition === "bottom";
-    const mousePos = isHorizontal ? clientX - containerRect.left : clientY - containerRect.top;
+    const mousePos = isHorizontal
+      ? clientX - containerRect.left
+      : clientY - containerRect.top;
 
     const affectRange = Math.max(1, Math.min(10, s.dockMagnifyRange));
     const magnifyAmount = Math.max(0.1, Math.min(3, s.dockMagnifyAmount));
@@ -525,7 +655,9 @@ export class MacDock {
     let hoverIdx = 0;
     let minDist = Infinity;
     items.forEach((el, i) => {
-      const cx = isHorizontal ? el.offsetLeft + el.offsetWidth / 2 : el.offsetTop + el.offsetHeight / 2;
+      const cx = isHorizontal
+        ? el.offsetLeft + el.offsetWidth / 2
+        : el.offsetTop + el.offsetHeight / 2;
       const d = Math.abs(mousePos - cx);
       if (d < minDist) {
         minDist = d;
@@ -559,7 +691,8 @@ export class MacDock {
         const wrap = el.querySelector(".dock-icon-wrap");
         if (wrap) {
           if (isHorizontal) {
-            wrap.style.transform = scale !== 1 ? `scale(${scale}) translateY(${-lift}px)` : "";
+            wrap.style.transform =
+              scale !== 1 ? `scale(${scale}) translateY(${-lift}px)` : "";
           } else {
             wrap.style.transform = scale !== 1 ? `scale(${scale})` : "";
           }
@@ -608,7 +741,7 @@ export class MacDock {
         index,
         isPinned,
         startX: e.clientX,
-        startY: e.clientY
+        startY: e.clientY,
       };
       item.classList.add("dragging");
       e.dataTransfer.effectAllowed = "move";

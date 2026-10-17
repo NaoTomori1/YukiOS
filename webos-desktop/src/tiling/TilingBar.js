@@ -133,10 +133,13 @@ export class TilingBar {
         (e) => {
           e.preventDefault();
           this.clock24h = !this.clock24h;
-          os.storage.set(StorageKeys.tilingClock24h, this.clock24h ? "true" : "false");
+          os.storage.set(
+            StorageKeys.tilingClock24h,
+            this.clock24h ? "true" : "false",
+          );
           this.updateClock();
         },
-        { passive: false }
+        { passive: false },
       );
     }
 
@@ -154,7 +157,7 @@ export class TilingBar {
           const next = TURBO_MODES[(idx + 1) % TURBO_MODES.length];
           performanceManager.setMode(next);
         },
-        { passive: false }
+        { passive: false },
       );
     }
 
@@ -171,7 +174,7 @@ export class TilingBar {
           const delta = e.deltaY > 0 ? -0.05 : 0.05;
           mx.setMaster(Math.max(0, Math.min(1, mx.masterVolume + delta)));
         },
-        { passive: false }
+        { passive: false },
       );
     }
 
@@ -202,9 +205,18 @@ export class TilingBar {
     this.el.classList.toggle("position-bottom", position === "bottom");
     this.el.style.setProperty("--tiling-bar-height", `${height}px`);
 
-    const showClock = parseBool(os.storage.get(StorageKeys.tilingBarShowClock), true);
-    const showWorkspace = parseBool(os.storage.get(StorageKeys.tilingBarShowWorkspace), true);
-    const showTray = parseBool(os.storage.get(StorageKeys.tilingBarShowTray), true);
+    const showClock = parseBool(
+      os.storage.get(StorageKeys.tilingBarShowClock),
+      true,
+    );
+    const showWorkspace = parseBool(
+      os.storage.get(StorageKeys.tilingBarShowWorkspace),
+      true,
+    );
+    const showTray = parseBool(
+      os.storage.get(StorageKeys.tilingBarShowTray),
+      true,
+    );
 
     this.clockEl.style.display = showClock ? "flex" : "none";
     this.pillsContainer.style.display = showWorkspace ? "flex" : "none";
@@ -246,7 +258,11 @@ export class TilingBar {
   }
 
   stripDuplicatesFromTray() {
-    const dedicated = ["audio-mixer", "network-tray-window", "display-performance-window"];
+    const dedicated = [
+      "audio-mixer",
+      "network-tray-window",
+      "display-performance-window",
+    ];
     if (!this.trayContainer) return;
     const btns = this.trayContainer.querySelectorAll("[data-win-id]");
     btns.forEach((btn) => {
@@ -307,7 +323,7 @@ export class TilingBar {
       day: "numeric",
       hour: "2-digit",
       minute: "2-digit",
-      second: "2-digit"
+      second: "2-digit",
     });
   }
 
@@ -337,7 +353,11 @@ export class TilingBar {
 
     setTimeout(() => {
       const close = (e) => {
-        if (!this.calendarPopup.contains(e.target) && e.target !== this.clockEl && !this.clockEl.contains(e.target)) {
+        if (
+          !this.calendarPopup.contains(e.target) &&
+          e.target !== this.clockEl &&
+          !this.clockEl.contains(e.target)
+        ) {
           this.closeCalendar();
           document.removeEventListener("click", close);
         }
@@ -381,13 +401,17 @@ export class TilingBar {
       "September",
       "October",
       "November",
-      "December"
+      "December",
     ];
 
     let html = "";
-    for (let i = 0; i < startDow; i++) html += `<div class="tiling-cal-day empty"></div>`;
+    for (let i = 0; i < startDow; i++)
+      html += `<div class="tiling-cal-day empty"></div>`;
     for (let d = 1; d <= daysInMonth; d++) {
-      const isToday = d === today.getDate() && month === today.getMonth() && year === today.getFullYear();
+      const isToday =
+        d === today.getDate() &&
+        month === today.getMonth() &&
+        year === today.getFullYear();
       html += `<div class="tiling-cal-day${isToday ? " today" : ""}">${d}</div>`;
     }
 
@@ -407,27 +431,33 @@ export class TilingBar {
       </div>
     `;
 
-    this.calendarPopup.querySelector("[data-action=prev]").addEventListener("click", () => {
-      this.calendarState.month--;
-      if (this.calendarState.month < 0) {
-        this.calendarState.month = 11;
-        this.calendarState.year--;
-      }
-      this.renderCalendarMonth();
-    });
-    this.calendarPopup.querySelector("[data-action=next]").addEventListener("click", () => {
-      this.calendarState.month++;
-      if (this.calendarState.month > 11) {
-        this.calendarState.month = 0;
-        this.calendarState.year++;
-      }
-      this.renderCalendarMonth();
-    });
-    this.calendarPopup.querySelector(".tiling-cal-today").addEventListener("click", () => {
-      this.calendarState.year = today.getFullYear();
-      this.calendarState.month = today.getMonth();
-      this.renderCalendarMonth();
-    });
+    this.calendarPopup
+      .querySelector("[data-action=prev]")
+      .addEventListener("click", () => {
+        this.calendarState.month--;
+        if (this.calendarState.month < 0) {
+          this.calendarState.month = 11;
+          this.calendarState.year--;
+        }
+        this.renderCalendarMonth();
+      });
+    this.calendarPopup
+      .querySelector("[data-action=next]")
+      .addEventListener("click", () => {
+        this.calendarState.month++;
+        if (this.calendarState.month > 11) {
+          this.calendarState.month = 0;
+          this.calendarState.year++;
+        }
+        this.renderCalendarMonth();
+      });
+    this.calendarPopup
+      .querySelector(".tiling-cal-today")
+      .addEventListener("click", () => {
+        this.calendarState.year = today.getFullYear();
+        this.calendarState.month = today.getMonth();
+        this.renderCalendarMonth();
+      });
   }
 
   async initBattery() {
@@ -435,7 +465,10 @@ export class TilingBar {
     try {
       const b = await navigator.getBattery();
       this.batteryApi = b;
-      this.batteryData = { level: Math.round(b.level * 100), charging: b.charging };
+      this.batteryData = {
+        level: Math.round(b.level * 100),
+        charging: b.charging,
+      };
       this.updateBattery();
       b.addEventListener("levelchange", () => {
         this.batteryData.level = Math.round(b.level * 100);
@@ -488,14 +521,24 @@ export class TilingBar {
     if (level <= 15) el.classList.add("critical");
     else if (level <= 30) el.classList.add("warning");
 
-    const status = charging ? "Charging" : level <= 15 ? "Low Battery" : level <= 30 ? "Warning" : "On Battery";
+    const status = charging
+      ? "Charging"
+      : level <= 15
+        ? "Low Battery"
+        : level <= 30
+          ? "Warning"
+          : "On Battery";
     el.title = `Battery: ${level}% (${status})`;
   }
 
   startVolumePoll() {
     this.stopVolumePoll();
     this.updateVolume();
-    this.volumePollStop = createAdaptiveInterval(() => this.updateVolume(), VOLUME_POLL, 5000);
+    this.volumePollStop = createAdaptiveInterval(
+      () => this.updateVolume(),
+      VOLUME_POLL,
+      5000,
+    );
   }
 
   stopVolumePoll() {
@@ -561,7 +604,11 @@ export class TilingBar {
   startNowPlayingPoll() {
     this.stopNowPlayingPoll();
     this.updateNowPlaying();
-    this.nowPlayingStop = createAdaptiveInterval(() => this.updateNowPlaying(), NOW_PLAYING_POLL, 5000);
+    this.nowPlayingStop = createAdaptiveInterval(
+      () => this.updateNowPlaying(),
+      NOW_PLAYING_POLL,
+      5000,
+    );
   }
 
   stopNowPlayingPoll() {
@@ -586,7 +633,9 @@ export class TilingBar {
     });
 
     if (track && track.track) {
-      const label = track.artist ? `${track.track} – ${track.artist}` : track.track;
+      const label = track.artist
+        ? `${track.track} – ${track.artist}`
+        : track.track;
       this.nowPlayingEl.textContent = `♫ ${label}`;
       this.nowPlayingEl.className = "tiling-now-playing active";
       this.nowPlayingEl.title = label;
@@ -599,7 +648,11 @@ export class TilingBar {
   startSystemMonitor() {
     this.stopSystemMonitor();
     this.updateSystemMonitor();
-    this.sysMonStop = createAdaptiveInterval(() => this.updateSystemMonitor(), SYS_MONITOR_POLL, 30000);
+    this.sysMonStop = createAdaptiveInterval(
+      () => this.updateSystemMonitor(),
+      SYS_MONITOR_POLL,
+      30000,
+    );
   }
 
   stopSystemMonitor() {
@@ -651,7 +704,8 @@ export class TilingBar {
     }
     this.systemEl.innerHTML = html;
     this.systemEl.title =
-      (titleParts.length ? titleParts.join(" | ") + " · " : "System · ") + "Click to toggle CPU/RAM";
+      (titleParts.length ? titleParts.join(" | ") + " · " : "System · ") +
+      "Click to toggle CPU/RAM";
   }
 
   renderPills() {
@@ -676,7 +730,8 @@ export class TilingBar {
 
   getHeight() {
     if (os.storage.get(StorageKeys.tilingBarEnabled) === "false") return 0;
-    if ((os.storage.get(StorageKeys.tilingBarPosition) || "top") !== "top") return 0;
+    if ((os.storage.get(StorageKeys.tilingBarPosition) || "top") !== "top")
+      return 0;
     if (this.el && this.el.style.display !== "none") {
       return Number(os.storage.get(StorageKeys.tilingBarHeight)) || 38;
     }
@@ -685,7 +740,10 @@ export class TilingBar {
 
   getBottomHeight() {
     if (os.storage.get(StorageKeys.tilingBarEnabled) === "false") return 0;
-    if ((os.storage.get(StorageKeys.tilingBarPosition) || "bottom") !== "bottom") return 0;
+    if (
+      (os.storage.get(StorageKeys.tilingBarPosition) || "bottom") !== "bottom"
+    )
+      return 0;
     if (this.el && this.el.style.display !== "none") {
       return Number(os.storage.get(StorageKeys.tilingBarHeight)) || 38;
     }

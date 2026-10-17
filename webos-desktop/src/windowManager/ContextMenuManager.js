@@ -36,21 +36,21 @@ export class ContextMenuManager {
         ["Title", appInfo.title],
         ["Type", dataset.appType || "-"],
         ["App ID", dataset.appId || "-"],
-        ["URL", dataset.externalUrl || "-"]
+        ["URL", dataset.externalUrl || "-"],
       ],
       geometry: [
         ["Width", `${Math.round(rect.width)}px`],
         ["Height", `${Math.round(rect.height)}px`],
         ["Left", `${Math.round(rect.left)}px`],
-        ["Top", `${Math.round(rect.top)}px`]
+        ["Top", `${Math.round(rect.top)}px`],
       ],
       system: [
         ["Z-Index", win.style.zIndex || "-"],
         ["Fullscreen", parseBool(dataset.fullscreen) ? "Yes" : "No"],
         ["SWF", dataset.swf || "-"],
         ["ROM", dataset.rom || "-"],
-        ["Core", dataset.core || "-"]
-      ]
+        ["Core", dataset.core || "-"],
+      ],
     };
 
     const buildSection = (title, rows) => `
@@ -63,7 +63,7 @@ export class ContextMenuManager {
           <div class="props-key">${k}</div>
           <div class="props-val">${v}</div>
         </div>
-      `
+      `,
         )
         .join("")}
     </div>
@@ -85,18 +85,21 @@ export class ContextMenuManager {
     overlay.className = "window-props-overlay";
     overlay.innerHTML = overlayHtml;
 
-    if (!content.dataset.prevDisplay) content.dataset.prevDisplay = content.style.display || "";
+    if (!content.dataset.prevDisplay)
+      content.dataset.prevDisplay = content.style.display || "";
     content.style.display = "none";
 
     win.appendChild(overlay);
-    overlay.querySelector(".window-props-close")?.addEventListener("click", () => {
-      try {
-        overlay.remove();
-      } finally {
-        content.style.display = content.dataset.prevDisplay || "";
-        delete content.dataset.prevDisplay;
-      }
-    });
+    overlay
+      .querySelector(".window-props-close")
+      ?.addEventListener("click", () => {
+        try {
+          overlay.remove();
+        } finally {
+          content.style.display = content.dataset.prevDisplay || "";
+          delete content.dataset.prevDisplay;
+        }
+      });
   }
 
   buildContextMenuItems(addMenuItem, addSeparator, win) {
@@ -112,7 +115,7 @@ export class ContextMenuManager {
         else this.manager.minimizeWindow(win);
         this.manager.bringToFront(win);
       },
-      isMinimized ? "fa-window-restore" : "fa-window-minimize"
+      isMinimized ? "fa-window-restore" : "fa-window-minimize",
     );
 
     const isMaximized = win.dataset.snapZone === "maximize";
@@ -124,7 +127,7 @@ export class ContextMenuManager {
         else this.manager.applySnap(win, "maximize");
         this.manager.bringToFront(win);
       },
-      isMaximized ? "fa-window-restore" : "fa-window-maximize"
+      isMaximized ? "fa-window-restore" : "fa-window-maximize",
     );
 
     addMenuItem(
@@ -133,10 +136,14 @@ export class ContextMenuManager {
         this.manager.toggleFullscreen(win);
         this.manager.bringToFront(win);
       },
-      isFullscreen ? "fa-compress" : "fa-expand"
+      isFullscreen ? "fa-compress" : "fa-expand",
     );
 
-    addMenuItem("Bring to Front", () => this.manager.bringToFront(win), "fa-layer-group");
+    addMenuItem(
+      "Bring to Front",
+      () => this.manager.bringToFront(win),
+      "fa-layer-group",
+    );
 
     addSeparator();
 
@@ -145,13 +152,28 @@ export class ContextMenuManager {
       addSeparator();
     }
 
-    addMenuItem("Snap Left", () => this.manager.applySnap(win, "left"), "fa-columns");
-    addMenuItem("Snap Right", () => this.manager.applySnap(win, "right"), "fa-columns");
-    addMenuItem("Snap Maximize", () => this.manager.applySnap(win, "maximize"), "fa-expand-arrows-alt");
+    addMenuItem(
+      "Snap Left",
+      () => this.manager.applySnap(win, "left"),
+      "fa-columns",
+    );
+    addMenuItem(
+      "Snap Right",
+      () => this.manager.applySnap(win, "right"),
+      "fa-columns",
+    );
+    addMenuItem(
+      "Snap Maximize",
+      () => this.manager.applySnap(win, "maximize"),
+      "fa-expand-arrows-alt",
+    );
 
     addSeparator();
 
-    if (this.manager.workspaceManager && this.manager.workspaceManager.workspaces.length > 1) {
+    if (
+      this.manager.workspaceManager &&
+      this.manager.workspaceManager.workspaces.length > 1
+    ) {
       this.manager.workspaceManager.workspaces.forEach((ws) => {
         if (ws.id !== this.manager.workspaceManager.activeId) {
           addMenuItem(
@@ -159,14 +181,18 @@ export class ContextMenuManager {
             () => {
               this.manager.workspaceManager.moveWindowTo(winId, ws.id);
             },
-            "fa-exchange-alt"
+            "fa-exchange-alt",
           );
         }
       });
       addSeparator();
     }
 
-    addMenuItem("Properties", () => this.buildPropertiesWindow(winId), "fa-info-circle");
+    addMenuItem(
+      "Properties",
+      () => this.buildPropertiesWindow(winId),
+      "fa-info-circle",
+    );
 
     addSeparator();
 
@@ -177,7 +203,7 @@ export class ContextMenuManager {
         if (isPinned) this.manager.unpinFromTaskbar(winId);
         else this.manager.pinToTaskbar(winId);
       },
-      isPinned ? "fa-thumbtack" : "fa-thumbtack"
+      isPinned ? "fa-thumbtack" : "fa-thumbtack",
     );
 
     addSeparator();
@@ -192,7 +218,7 @@ export class ContextMenuManager {
           this.manager.animateAndRemove(winToClose);
         }
       },
-      "fa-times-circle"
+      "fa-times-circle",
     );
 
     const groupKey = this.getAppGroupKey(win);
@@ -207,7 +233,7 @@ export class ContextMenuManager {
             if (winToClose) this.manager.closeWindow(winToClose);
           }
         },
-        "fa-window-close"
+        "fa-window-close",
       );
     }
   }
@@ -216,7 +242,9 @@ export class ContextMenuManager {
     if (win.dataset.appId) return win.dataset.appId;
     if (win.dataset.dupId) return win.dataset.dupId;
     if (this.manager.appRestorationService) {
-      const appId = this.manager.appRestorationService.findAppId({ id: win.id });
+      const appId = this.manager.appRestorationService.findAppId({
+        id: win.id,
+      });
       if (appId) return appId;
     }
     return win.id.replace(/-\d+$/, "");
@@ -233,6 +261,8 @@ export class ContextMenuManager {
   }
 
   showWindowContextMenu(e, win) {
-    showStartStyleMenu(e, (addMenuItem, addSeparator) => this.buildContextMenuItems(addMenuItem, addSeparator, win));
+    showStartStyleMenu(e, (addMenuItem, addSeparator) =>
+      this.buildContextMenuItems(addMenuItem, addSeparator, win),
+    );
   }
 }

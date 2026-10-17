@@ -82,23 +82,55 @@ async function establishTransport() {
 }
 
 async function getWispTransport() {
-  if (!transportPromise) transportPromise = establishTransport();
-  return transportPromise;
+  if (!transportPromise) {
+    transportPromise = establishTransport();
+  }
+  try {
+    const settledTransport = await transportPromise;
+    if (!settledTransport) {
+      transportPromise = null;
+    }
+    return settledTransport;
+  } catch (error) {
+    transportPromise = null;
+    throw error;
+  }
 }
 
 export async function fetchThroughWisp(url, options = {}) {
-  const rawTransport = await getWispTransport();
-  if (!rawTransport) throw new Error("No WISP transport available");
+  const initialTransport = await getWispTransport();
+  if (!initialTransport) throw new Error("No WISP transport available");
   const headersArr = options.headers ? Object.entries(options.headers) : [];
   let body = options.body || null;
   if (typeof body === "string") body = new TextEncoder().encode(body);
-  const res = await rawTransport.request(
-    new URL(url),
-    options.method || "GET",
-    body,
-    headersArr,
-    new AbortController().signal,
-  );
+  const targetUrl = new URL(url);
+  const method = options.method || "GET";
+  let res;
+  try {
+    res = await initialTransport.request(
+      targetUrl,
+      method,
+      body,
+      headersArr,
+      new AbortController().signal,
+    );
+  } catch (requestError) {
+    resetWispTransport();
+    let nextTransport = null;
+    try {
+      nextTransport = await getWispTransport();
+    } catch (establishError) {
+      throw establishError;
+    }
+    if (!nextTransport) throw new Error("No WISP transport available");
+    res = await nextTransport.request(
+      targetUrl,
+      method,
+      body,
+      headersArr,
+      new AbortController().signal,
+    );
+  }
   const headers = new Headers();
   if (Array.isArray(res.headers)) {
     for (const pair of res.headers) {

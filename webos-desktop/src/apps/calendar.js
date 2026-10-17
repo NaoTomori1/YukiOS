@@ -253,7 +253,11 @@ export function closeCalendarPopup() {
 
 function getShelfPos() {
   const shelf = $("#chromeos-shelf");
-  if (shelf && getComputedStyle(shelf).display !== "none" && shelf.dataset.shelfPos) {
+  if (
+    shelf &&
+    getComputedStyle(shelf).display !== "none" &&
+    shelf.dataset.shelfPos
+  ) {
     return shelf.dataset.shelfPos;
   }
   return null;
@@ -269,7 +273,7 @@ function positionCalendarPopup() {
       $("#time-container"),
       $("#date"),
       $(".shelf-status-clock"),
-      $(".shelf-clock")
+      $(".shelf-clock"),
     ];
     const dateEl =
       dateCandidates.find((el) => {
@@ -342,13 +346,13 @@ function updateCalendarTime(data) {
     timeDisplay.textContent = now.toLocaleTimeString([], {
       hour: "2-digit",
       minute: "2-digit",
-      second: "2-digit"
+      second: "2-digit",
     });
   }
   if (digitalText) {
     digitalText.textContent = now.toLocaleTimeString([], {
       hour: "2-digit",
-      minute: "2-digit"
+      minute: "2-digit",
     });
   }
 }
@@ -400,7 +404,7 @@ function renderCalendar() {
 
   monthYear.textContent = new Date(year, month).toLocaleDateString([], {
     month: "long",
-    year: "numeric"
+    year: "numeric",
   });
 
   grid.innerHTML = "";
@@ -423,7 +427,8 @@ function renderCalendar() {
   const daysInMonth = new Date(year, month + 1, 0).getDate();
 
   const today = new Date();
-  const isCurrentMonth = today.getMonth() === month && today.getFullYear() === year;
+  const isCurrentMonth =
+    today.getMonth() === month && today.getFullYear() === year;
   const currentDay = today.getDate();
 
   const rows = 6;
@@ -433,7 +438,9 @@ function renderCalendar() {
   for (let row = 0; row < rows; row++) {
     const weekNum = createElement("div");
     weekNum.className = "calendar-week-number";
-    weekNum.textContent = getWeekNumber(new Date(year, month, Math.max(1, dayCounter)));
+    weekNum.textContent = getWeekNumber(
+      new Date(year, month, Math.max(1, dayCounter)),
+    );
     grid.appendChild(weekNum);
 
     for (let col = 0; col < 7; col++) {

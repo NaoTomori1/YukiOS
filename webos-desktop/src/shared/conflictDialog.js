@@ -29,7 +29,11 @@ export function showConflictDialog(fileName) {
     fileSpan.textContent = `"${fileName}"`;
 
     message.appendChild(fileSpan);
-    message.appendChild(document.createTextNode(" already exists in this location.\nWhat would you like to do?"));
+    message.appendChild(
+      document.createTextNode(
+        " already exists in this location.\nWhat would you like to do?",
+      ),
+    );
 
     const actions = createElement("div");
     actions.className = "conflict-actions";
@@ -90,8 +94,14 @@ export function showConflictDialog(fileName) {
     document.body.appendChild(overlay);
 
     dialog.querySelectorAll("button[data-action]").forEach((btn) => {
-      btn.addEventListener("mouseenter", () => (btn.style.background = "var(--surface-hover)"));
-      btn.addEventListener("mouseleave", () => (btn.style.background = "var(--surface-2)"));
+      btn.addEventListener(
+        "mouseenter",
+        () => (btn.style.background = "var(--surface-hover)"),
+      );
+      btn.addEventListener(
+        "mouseleave",
+        () => (btn.style.background = "var(--surface-2)"),
+      );
       btn.addEventListener("click", () => {
         const action = btn.dataset.action;
         const applyToAll = dialog.querySelector("#conflict-apply-all").checked;

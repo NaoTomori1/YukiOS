@@ -2,10 +2,20 @@ import { appMap } from "../games/gamesList.js";
 import { APP_DESCRIPTIONS, descriptionMap } from "../games/gameDescriptions.js";
 import { resolveIconUrl } from "../shared/assetResolver.js";
 import { getAppRegistry } from "../appRegistry.js";
-import { SETTINGS_CATEGORIES, launchSettingsPane } from "../settings/settingsNav.js";
+import {
+  SETTINGS_CATEGORIES,
+  launchSettingsPane,
+} from "../settings/settingsNav.js";
 import { StorageKeys, os } from "../framework.js";
 import { KeybindManager } from "../keybindManager.js";
-import { $, createElement, setStyle, setText, addClass, removeClass } from "../shared/domUtils.js";
+import {
+  $,
+  createElement,
+  setStyle,
+  setText,
+  addClass,
+  removeClass,
+} from "../shared/domUtils.js";
 import { modeManager, MODES } from "../modeManager.js";
 import { showContextMenu } from "../shared/contextMenu.js";
 
@@ -96,7 +106,9 @@ export class Launcher {
 
   bindDOMEvents() {
     this.searchInput.addEventListener("input", (e) => this.handleSearch(e));
-    this.searchInput.addEventListener("keydown", (e) => this.handleSearchKeybind(e));
+    this.searchInput.addEventListener("keydown", (e) =>
+      this.handleSearchKeybind(e),
+    );
     document.addEventListener("click", this.boundClickOutside);
   }
 
@@ -123,7 +135,10 @@ export class Launcher {
       const items = this.gridContainer.querySelectorAll(".launcher-app-item");
       items.forEach((item) => {
         const appId = item.dataset.appId;
-        const title = item.querySelector(".launcher-app-label")?.textContent?.toLowerCase() || "";
+        const title =
+          item
+            .querySelector(".launcher-app-label")
+            ?.textContent?.toLowerCase() || "";
         const match = this.fuzzyMatch(query, title);
         item.style.display = match ? "flex" : "none";
       });
@@ -195,26 +210,38 @@ export class Launcher {
     const allApps = os.app.getAllApps();
     const results = [];
 
-    const allGameEntries = Object.entries(appMap).filter(([appId, appData]) => appData.type === "game");
+    const allGameEntries = Object.entries(appMap).filter(
+      ([appId, appData]) => appData.type === "game",
+    );
     const allGameIds = new Set(allGameEntries.map(([appId]) => appId));
     const gameEntries = allGameEntries.slice(0, 30);
 
     const addAppResult = (appId, appData) => {
-      if (appRegistry.isAppUninstalled(appId) || appRegistry.isAppDisabled(appId)) {
+      if (
+        appRegistry.isAppUninstalled(appId) ||
+        appRegistry.isAppDisabled(appId)
+      ) {
         return;
       }
 
       const title = (appData.title || appId).toLowerCase();
-      const description = (APP_DESCRIPTIONS[appId] || descriptionMap[appId] || "").toLowerCase();
+      const description = (
+        APP_DESCRIPTIONS[appId] ||
+        descriptionMap[appId] ||
+        ""
+      ).toLowerCase();
 
-      if (!this.fuzzyMatch(query, title) && !this.fuzzyMatch(query, description)) {
+      if (
+        !this.fuzzyMatch(query, title) &&
+        !this.fuzzyMatch(query, description)
+      ) {
         return;
       }
 
       results.push({
         appId,
         appData,
-        title: appData.title || appId
+        title: appData.title || appId,
       });
     };
 
@@ -240,9 +267,9 @@ export class Launcher {
               title,
               icon: cat.icon,
               type: "system",
-              category: "system"
+              category: "system",
             },
-            title
+            title,
           });
         }
       }
@@ -259,7 +286,7 @@ export class Launcher {
 
     if (results.length === 0) {
       const empty = createElement("div", {
-        className: "launcher-empty"
+        className: "launcher-empty",
       });
 
       empty.textContent = "No apps found";
@@ -279,14 +306,19 @@ export class Launcher {
     } else if (iconValue.startsWith("fa")) {
       iconEl.innerHTML = `<i class="${iconValue}"></i>`;
     } else {
-      const img = createElement("img", { attributes: { src: iconValue, alt: appData.title } });
+      const img = createElement("img", {
+        attributes: { src: iconValue, alt: appData.title },
+      });
       iconEl.appendChild(img);
     }
     item.appendChild(iconEl);
 
     const label = createElement("div", { className: "launcher-app-label" });
     const appRegistry = getAppRegistry();
-    label.textContent = appRegistry.getAppDisplayName(appId, appData.title || appId);
+    label.textContent = appRegistry.getAppDisplayName(
+      appId,
+      appData.title || appId,
+    );
     item.appendChild(label);
 
     item.addEventListener("click", () => {
@@ -308,8 +340,13 @@ export class Launcher {
       const isProtected = appRegistry.isProtected(appId);
 
       const items = [
-        { id: "ctx-open", label: "Open", action: "open", icon: "papirus:actions/media-playback-start" },
-        "hr"
+        {
+          id: "ctx-open",
+          label: "Open",
+          action: "open",
+          icon: "papirus:actions/media-playback-start",
+        },
+        "hr",
       ];
 
       if (!isSettings && this.shelf) {
@@ -317,7 +354,9 @@ export class Launcher {
           id: "ctx-pin",
           label: isPinned ? "Unpin from taskbar" : "Pin to taskbar",
           action: "togglePin",
-          icon: isPinned ? "papirus:actions/window-pin" : "papirus:actions/list-add"
+          icon: isPinned
+            ? "papirus:actions/window-pin"
+            : "papirus:actions/list-add",
         });
         items.push("hr");
       }
@@ -326,7 +365,7 @@ export class Launcher {
         id: "ctx-rename",
         label: "Rename",
         action: "rename",
-        icon: "papirus:actions/edit"
+        icon: "papirus:actions/edit",
       });
 
       if (!isSettings && !isProtected) {
@@ -334,7 +373,7 @@ export class Launcher {
           id: "ctx-delete",
           label: "Delete",
           action: "delete",
-          icon: "papirus:actions/entry-delete"
+          icon: "papirus:actions/entry-delete",
         });
       }
 
@@ -354,24 +393,38 @@ export class Launcher {
           if (isPinned) {
             this.shelf.unpinApp(appId);
           } else {
-            this.shelf.pinApp(appId, appData.title || appId, appData.icon || "papirus:actions/bookmark-new");
+            this.shelf.pinApp(
+              appId,
+              appData.title || appId,
+              appData.icon || "papirus:actions/bookmark-new",
+            );
           }
         },
         rename: async () => {
-          const current = appRegistry.getAppDisplayName(appId, appData.title || appId);
-          const newName = await os.dialog.prompt("Rename", "Enter a new name:", current);
+          const current = appRegistry.getAppDisplayName(
+            appId,
+            appData.title || appId,
+          );
+          const newName = await os.dialog.prompt(
+            "Rename",
+            "Enter a new name:",
+            current,
+          );
           if (newName && newName.trim()) {
             appRegistry.setAppName(appId, newName.trim());
             label.textContent = newName.trim();
           }
         },
         delete: async () => {
-          const confirmed = await os.dialog.confirm("Delete", `Delete "${appData.title || appId}"?`);
+          const confirmed = await os.dialog.confirm(
+            "Delete",
+            `Delete "${appData.title || appId}"?`,
+          );
           if (confirmed) {
             appRegistry.uninstallApp(appId);
             item.remove();
           }
-        }
+        },
       });
     });
 

@@ -1,5 +1,12 @@
 import "../styles/dataeditor.css";
-import { $, $$, setText, toggleClass, setHTML, createElement } from "../shared/domUtils.js";
+import {
+  $,
+  $$,
+  setText,
+  toggleClass,
+  setHTML,
+  createElement,
+} from "../shared/domUtils.js";
 import { BaseApp, os } from "../framework.js";
 import { formatSize, downloadBlob } from "../utils/utils.js";
 
@@ -22,7 +29,7 @@ export class DataEditorApp extends BaseApp {
 
     const win = os.window.create(winId, "Storage Editor", "1000px", "650px", {
       icon: "fas fa-database",
-      appId: "dataEditor"
+      appId: "dataEditor",
     });
 
     this.win = win;
@@ -112,7 +119,11 @@ export class DataEditorApp extends BaseApp {
           const container = cb.closest("div");
           const labelEl = container.querySelector("span");
           const key = labelEl.textContent;
-          this.selectedKeys.add({ key, value: null, context: this.currentIdbCtx });
+          this.selectedKeys.add({
+            key,
+            value: null,
+            context: this.currentIdbCtx,
+          });
         }
       });
       this.updateSelectedCount(win);
@@ -254,7 +265,8 @@ export class DataEditorApp extends BaseApp {
     const selectedCountEl = $("#de-selected-count", win);
     const bulkDeleteBtn = $("#de-bulk-delete", win);
     const bulkExportBtn = $("#de-bulk-export", win);
-    if (selectedCountEl) setText(selectedCountEl, `${this.selectedKeys.size} selected`);
+    if (selectedCountEl)
+      setText(selectedCountEl, `${this.selectedKeys.size} selected`);
     if (bulkDeleteBtn) bulkDeleteBtn.disabled = this.selectedKeys.size === 0;
     if (bulkExportBtn) bulkExportBtn.disabled = this.selectedKeys.size === 0;
   }
@@ -270,7 +282,8 @@ export class DataEditorApp extends BaseApp {
   }
 
   selectKey(win, keyEl, keyName, value, typeLabel, idbCtx = null) {
-    if (this.activeKeyEl && this.activeKeyEl.classList) this.activeKeyEl.classList.remove("active");
+    if (this.activeKeyEl && this.activeKeyEl.classList)
+      this.activeKeyEl.classList.remove("active");
     this.activeKeyEl = keyEl;
     if (keyEl && keyEl.classList) keyEl.classList.add("active");
     this.currentIdbCtx = idbCtx;
@@ -285,12 +298,14 @@ export class DataEditorApp extends BaseApp {
     if (editorArea) editorArea.style.display = "flex";
     if (keyInput) keyInput.value = keyName;
     if (keyType) keyType.textContent = typeLabel;
-    if (keySize) keySize.textContent = formatSize(this.getValueSize(value ?? ""));
+    if (keySize)
+      keySize.textContent = formatSize(this.getValueSize(value ?? ""));
     if (valInput) {
       try {
         const parsed = JSON.parse(value);
         valInput.value = JSON.stringify(parsed, null, 2);
-        if (keyType) keyType.textContent = `${typeLabel} (${this.getValueType(parsed)})`;
+        if (keyType)
+          keyType.textContent = `${typeLabel} (${this.getValueType(parsed)})`;
       } catch {
         valInput.value = value ?? "";
         if (keyType) keyType.textContent = `${typeLabel} (string)`;
@@ -307,9 +322,15 @@ export class DataEditorApp extends BaseApp {
     checkbox.type = "checkbox";
     checkbox.addEventListener("change", (e) => {
       e.stopPropagation();
-      const keyId = storeContext ? `${storeContext.dbName}/${storeContext.storeName}/${label}` : label;
+      const keyId = storeContext
+        ? `${storeContext.dbName}/${storeContext.storeName}/${label}`
+        : label;
       if (checkbox.checked) {
-        this.selectedKeys.add({ key: label, value: keyValue, context: storeContext });
+        this.selectedKeys.add({
+          key: label,
+          value: keyValue,
+          context: storeContext,
+        });
       } else {
         this.selectedKeys.delete(keyId);
       }
@@ -349,14 +370,19 @@ export class DataEditorApp extends BaseApp {
     entries.sort((a, b) => a.key.localeCompare(b.key));
 
     for (const { key, value } of entries) {
-      if (q && !key.toLowerCase().includes(q) && !value.toLowerCase().includes(q)) continue;
+      if (
+        q &&
+        !key.toLowerCase().includes(q) &&
+        !value.toLowerCase().includes(q)
+      )
+        continue;
       const el = this.buildKeyItem(
         win,
         key,
         (container) => {
           this.selectKey(win, container, key, value, typeLabel);
         },
-        value
+        value,
       );
       keyList.appendChild(el);
     }
@@ -378,7 +404,7 @@ export class DataEditorApp extends BaseApp {
         return entries;
       },
       "localStorage",
-      "No keys stored yet"
+      "No keys stored yet",
     );
   }
 
@@ -394,7 +420,7 @@ export class DataEditorApp extends BaseApp {
         return entries;
       },
       "sessionStorage",
-      "No keys stored yet"
+      "No keys stored yet",
     );
   }
 
@@ -412,7 +438,7 @@ export class DataEditorApp extends BaseApp {
           });
       },
       "Cookie",
-      "No cookies here"
+      "No cookies here",
     );
   }
 
@@ -425,7 +451,7 @@ export class DataEditorApp extends BaseApp {
 
     setHTML(
       keyList,
-      `<div style="padding:10px;color:var(--text-secondary);font-size:0.8em;text-align:center;"><i class="fas fa-spinner fa-spin"></i> Loading...</div>`
+      `<div style="padding:10px;color:var(--text-secondary);font-size:0.8em;text-align:center;"><i class="fas fa-spinner fa-spin"></i> Loading...</div>`,
     );
     if (emptyState) emptyState.style.display = "flex";
     if (editorArea) editorArea.style.display = "none";
@@ -460,7 +486,8 @@ export class DataEditorApp extends BaseApp {
             });
 
             this.idbPagination.total = allKeys.length;
-            const startIdx = (this.idbPagination.page - 1) * this.idbPagination.pageSize;
+            const startIdx =
+              (this.idbPagination.page - 1) * this.idbPagination.pageSize;
             const endIdx = startIdx + this.idbPagination.pageSize;
             const paginatedKeys = allKeys.slice(startIdx, endIdx);
 
@@ -471,7 +498,8 @@ export class DataEditorApp extends BaseApp {
                 valReq.onsuccess = () => res(valReq.result);
                 valReq.onerror = () => rej(valReq.error);
               });
-              const valStr = typeof val === "string" ? val : JSON.stringify(val);
+              const valStr =
+                typeof val === "string" ? val : JSON.stringify(val);
               if (
                 q &&
                 !keyStr.toLowerCase().includes(q) &&
@@ -485,10 +513,17 @@ export class DataEditorApp extends BaseApp {
                 win,
                 `${storeName} › ${keyStr}`,
                 (container) => {
-                  this.selectKey(win, container, keyStr, valStr, `IDB: ${dbName}/${storeName}`, storeContext);
+                  this.selectKey(
+                    win,
+                    container,
+                    keyStr,
+                    valStr,
+                    `IDB: ${dbName}/${storeName}`,
+                    storeContext,
+                  );
                 },
                 valStr,
-                storeContext
+                storeContext,
               );
               keyList.appendChild(el);
             }
@@ -501,14 +536,18 @@ export class DataEditorApp extends BaseApp {
                 <button class="de-prev-page" ${this.idbPagination.page === 1 ? "disabled" : ""}>Prev</button>
                 <button class="de-next-page" ${endIdx >= this.idbPagination.total ? "disabled" : ""}>Next</button>
               `;
-              paginationEl.querySelector(".de-prev-page").addEventListener("click", () => {
-                this.idbPagination.page--;
-                this.loadIdb(win);
-              });
-              paginationEl.querySelector(".de-next-page").addEventListener("click", () => {
-                this.idbPagination.page++;
-                this.loadIdb(win);
-              });
+              paginationEl
+                .querySelector(".de-prev-page")
+                .addEventListener("click", () => {
+                  this.idbPagination.page--;
+                  this.loadIdb(win);
+                });
+              paginationEl
+                .querySelector(".de-next-page")
+                .addEventListener("click", () => {
+                  this.idbPagination.page++;
+                  this.loadIdb(win);
+                });
               keyList.appendChild(paginationEl);
             }
           }
@@ -543,7 +582,8 @@ export class DataEditorApp extends BaseApp {
   setStorageValue(key, val) {
     if (this.currentTab === "ls") os.storage.set(key, val);
     else if (this.currentTab === "ss") sessionStorage.setItem(key, val);
-    else if (this.currentTab === "cookie") document.cookie = `${key}=${val}; path=/`;
+    else if (this.currentTab === "cookie")
+      document.cookie = `${key}=${val}; path=/`;
   }
 
   removeStorageValue(key) {
@@ -619,7 +659,11 @@ export class DataEditorApp extends BaseApp {
       }
     } else {
       this.setStorageValue(key, val);
-      this.showEditorStatus(win, `Saved to ${this.getStorageLabel()}`, "var(--charging)");
+      this.showEditorStatus(
+        win,
+        `Saved to ${this.getStorageLabel()}`,
+        "var(--charging)",
+      );
       this.reloadCurrentTab(win);
     }
   }
@@ -651,7 +695,11 @@ export class DataEditorApp extends BaseApp {
         freshDb.close();
         this.showEditorStatus(win, "Deleted from IDB", "var(--brand)");
       } catch (e) {
-        this.showEditorStatus(win, "Delete failed: " + e.message, "var(--error)");
+        this.showEditorStatus(
+          win,
+          "Delete failed: " + e.message,
+          "var(--error)",
+        );
         return;
       }
     } else {
@@ -670,12 +718,21 @@ export class DataEditorApp extends BaseApp {
     const valInput = $("#de-val-input", win);
     const oldKey = keyInput.value.trim();
     if (!oldKey) return;
-    const newKey = await os.dialog.prompt("Rename Key", "Enter new key name:", oldKey, "Rename");
+    const newKey = await os.dialog.prompt(
+      "Rename Key",
+      "Enter new key name:",
+      oldKey,
+      "Rename",
+    );
     if (!newKey || newKey === oldKey) return;
 
     const val = valInput.value;
     if (this.currentTab === "idb") {
-      this.showEditorStatus(win, "Rename not supported for IndexedDB", "var(--error)");
+      this.showEditorStatus(
+        win,
+        "Rename not supported for IndexedDB",
+        "var(--error)",
+      );
     } else {
       this.renameStorageValue(oldKey, newKey, val);
       this.showEditorStatus(win, "Renamed", "var(--charging)");
@@ -743,18 +800,26 @@ export class DataEditorApp extends BaseApp {
       "Delete Items",
       `Delete ${this.selectedKeys.size} selected items?`,
       "Delete",
-      "Cancel"
+      "Cancel",
     );
     if (!confirmed) return;
 
     this.selectedKeys.forEach((item) => this.removeStorageValue(item.key));
-    this.showEditorStatus(win, `Deleted ${this.selectedKeys.size} items`, "var(--charging)");
+    this.showEditorStatus(
+      win,
+      `Deleted ${this.selectedKeys.size} items`,
+      "var(--charging)",
+    );
     this.reloadCurrentTab(win);
-    os.notify.send("Storage Editor", `Deleted ${this.selectedKeys.size} items`, {
-      type: "info",
-      duration: 3000,
-      icon: "fas fa-trash"
-    });
+    os.notify.send(
+      "Storage Editor",
+      `Deleted ${this.selectedKeys.size} items`,
+      {
+        type: "info",
+        duration: 3000,
+        icon: "fas fa-trash",
+      },
+    );
     this.selectedKeys.clear();
     this.updateSelectedCount(win);
   }
@@ -766,13 +831,23 @@ export class DataEditorApp extends BaseApp {
     this.selectedKeys.forEach((item) => {
       exportData[item.key] = this.getStorageValue(item.key);
     });
-    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: "application/json" });
-    downloadBlob(blob, `storage-export-${Date.now()}.json`);
-    this.showEditorStatus(win, `Exported ${this.selectedKeys.size} items`, "var(--charging)");
-    os.notify.send("Storage Editor", `Exported ${this.selectedKeys.size} items`, {
-      type: "success",
-      duration: 3000,
-      icon: "fas fa-download"
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], {
+      type: "application/json",
     });
+    downloadBlob(blob, `storage-export-${Date.now()}.json`);
+    this.showEditorStatus(
+      win,
+      `Exported ${this.selectedKeys.size} items`,
+      "var(--charging)",
+    );
+    os.notify.send(
+      "Storage Editor",
+      `Exported ${this.selectedKeys.size} items`,
+      {
+        type: "success",
+        duration: 3000,
+        icon: "fas fa-download",
+      },
+    );
   }
 }

@@ -22,6 +22,7 @@
     "bf": "pnpm format && pnpm build:dev && cp -r dist/* ../desktop/",
     "build-win": "vite build",
     "preview": "vite preview",
+    "serve": "node scripts/serveRoot.js --host 0.0.0.0",
     "format": "node scripts/formatChanged.js",
     "lint": "eslint . --ext .js,.jsx --fix",
     "electron:dev": "pnpm build:electron && node -e \"require('fs').existsSync('dist/favicon.ico')&&require('fs').unlinkSync('dist/favicon.ico')\" && electron .",

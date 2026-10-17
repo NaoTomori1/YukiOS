@@ -96,7 +96,9 @@ export class TorManager {
 
     const originalFetch = globalThis.fetch;
     globalThis.fetch = async (input, init) => {
-      const url = (typeof input === "string" ? input : input?.url || "").toString();
+      const url = (
+        typeof input === "string" ? input : input?.url || ""
+      ).toString();
       if (url.includes("igor53627.github.io/webtor-rs")) {
         const filename = url.split("/").pop();
         const localUrl = await resolveUrl("/wasm/webtor/" + filename);
@@ -169,7 +171,13 @@ export class TorManager {
       },
 
       request: async (method, url, headers, body, timeoutMs) => {
-        const resp = await client.request(method, url, headers || {}, body || null, timeoutMs || null);
+        const resp = await client.request(
+          method,
+          url,
+          headers || {},
+          body || null,
+          timeoutMs || null,
+        );
         return this.wrapResponse(resp);
       },
 
@@ -184,7 +192,7 @@ export class TorManager {
 
       waitForCircuit: async () => {
         await client.waitForCircuit();
-      }
+      },
     };
 
     this.activeClients.push(wrapper);
@@ -212,7 +220,13 @@ export class TorManager {
 
   async request(method, url, headers, body, timeoutMs) {
     if (!this.torClient) throw new Error("Tor not connected");
-    const resp = await this.torClient.request(method, url, headers || {}, body || null, timeoutMs || null);
+    const resp = await this.torClient.request(
+      method,
+      url,
+      headers || {},
+      body || null,
+      timeoutMs || null,
+    );
     return this.wrapResponse(resp);
   }
 
@@ -225,7 +239,7 @@ export class TorManager {
       body,
       url: resp.url,
       text: () => textCache,
-      json: () => JSON.parse(textCache)
+      json: () => JSON.parse(textCache),
     };
   }
 
@@ -239,7 +253,7 @@ export class TorManager {
       running: this.isRunning,
       phase: this.bootstrapPhase,
       ready: this.bootstrapPhase === "ready",
-      snowflakeUrl: this.torSnowflakeUrl
+      snowflakeUrl: this.torSnowflakeUrl,
     };
   }
 
@@ -267,7 +281,11 @@ export class TorManager {
     return this.torSnowflakeUrl;
   }
   set snowflakeUrl(url) {
-    if (url && typeof url === "string" && (url.startsWith("ws://") || url.startsWith("wss://"))) {
+    if (
+      url &&
+      typeof url === "string" &&
+      (url.startsWith("ws://") || url.startsWith("wss://"))
+    ) {
       this.torSnowflakeUrl = url;
     }
   }

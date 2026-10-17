@@ -10,10 +10,19 @@ import {
   buildErrorHTML,
   setLog,
   renderEmulatorFileList,
-  handleEmulatorUpload
+  handleEmulatorUpload,
 } from "../shared/emulatorBase.js";
-import { buildPlayerConfig, loadRuffleConfig, saveRuffleConfig } from "../ruffle/ruffleSettings.js";
-import { renderSelectMenu, getSelectMenuValue, setSelectMenuValue, bindSelectMenu } from "../shared/selectMenu.js";
+import {
+  buildPlayerConfig,
+  loadRuffleConfig,
+  saveRuffleConfig,
+} from "../ruffle/ruffleSettings.js";
+import {
+  renderSelectMenu,
+  getSelectMenuValue,
+  setSelectMenuValue,
+  bindSelectMenu,
+} from "../shared/selectMenu.js";
 const FLASH_DIR = ["Flash"];
 const DESKTOP_DIR = ["Desktop"];
 
@@ -27,7 +36,7 @@ export class RuffleApp extends BaseApp {
 
   async open(opts) {
     const win = os.window.create("ruffle-win", "Ruffle", "800px", "600px", {
-      icon: "static/icons/ruffle.webp"
+      icon: "static/icons/ruffle.webp",
     });
     win.innerHTML = `
       <div class="emu-shell ruf-container">
@@ -65,7 +74,9 @@ export class RuffleApp extends BaseApp {
     uploadZone?.addEventListener("drop", async (e) => {
       e.preventDefault();
       uploadZone.classList.remove("emu-upload-zone--dragover");
-      const files = Array.from(e.dataTransfer.files).filter((f) => f.name.toLowerCase().endsWith(".swf"));
+      const files = Array.from(e.dataTransfer.files).filter((f) =>
+        f.name.toLowerCase().endsWith(".swf"),
+      );
       if (files.length > 0) await this.handleUploadedFiles(files, uploadZone);
     });
 
@@ -75,10 +86,16 @@ export class RuffleApp extends BaseApp {
       fileInput.value = "";
     });
 
-    win.querySelector("#ruffle-open-settings")?.addEventListener("click", () => this.openRuffleSettingsPanel(win));
+    win
+      .querySelector("#ruffle-open-settings")
+      ?.addEventListener("click", () => this.openRuffleSettingsPanel(win));
 
     this.loadUserFiles();
-    if (window.FontAwesome && window.FontAwesome.dom && window.FontAwesome.dom.i2svg) {
+    if (
+      window.FontAwesome &&
+      window.FontAwesome.dom &&
+      window.FontAwesome.dom.i2svg
+    ) {
       const container = win.querySelector(".ruf-container");
       if (container) {
         window.FontAwesome.dom.i2svg({ node: container });
@@ -106,9 +123,9 @@ export class RuffleApp extends BaseApp {
           [
             { value: "off", label: "Off" },
             { value: "on", label: "On" },
-            { value: "fullscreen", label: "Fullscreen" }
+            { value: "fullscreen", label: "Fullscreen" },
           ],
-          cfg.letterbox
+          cfg.letterbox,
         )}
       </div>
       <div class="settings-row" style="flex-direction:column;align-items:stretch;gap:8px;">
@@ -119,9 +136,9 @@ export class RuffleApp extends BaseApp {
             { value: "showAll", label: "Show All" },
             { value: "noBorder", label: "No Border" },
             { value: "exactFit", label: "Exact Fit" },
-            { value: "noScale", label: "No Scale" }
+            { value: "noScale", label: "No Scale" },
           ],
-          cfg.scale
+          cfg.scale,
         )}
       </div>
       <div class="settings-row">
@@ -143,9 +160,9 @@ export class RuffleApp extends BaseApp {
           [
             { value: "on", label: "On" },
             { value: "off", label: "Off" },
-            { value: "auto", label: "Auto" }
+            { value: "auto", label: "Auto" },
           ],
-          cfg.autoplay
+          cfg.autoplay,
         )}
       </div>
       <div class="settings-row" style="flex-direction:column;align-items:stretch;gap:8px;">
@@ -155,9 +172,9 @@ export class RuffleApp extends BaseApp {
           [
             { value: "on", label: "On" },
             { value: "off", label: "Off" },
-            { value: "rightClickOnly", label: "Right-click only" }
+            { value: "rightClickOnly", label: "Right-click only" },
           ],
-          cfg.contextMenu
+          cfg.contextMenu,
         )}
       </div>
       <div style="display:flex;gap:8px;justify-content:space-between;flex-shrink:0;">
@@ -172,39 +189,75 @@ export class RuffleApp extends BaseApp {
     bindSelectMenu(panel);
     const save = (patch) => {
       saveRuffleConfig(patch);
-      os.events.emit(BusEvents.SETTINGS_CHANGED, { key: "yukiOS_ruffle_config", value: patch });
+      os.events.emit(BusEvents.SETTINGS_CHANGED, {
+        key: "yukiOS_ruffle_config",
+        value: patch,
+      });
     };
-    panel.querySelector("#ruffle-settings-close")?.addEventListener("click", () => panel.remove());
-    panel.querySelector("#rufflePanelOpenSettings")?.addEventListener("click", () => {
-      panel.remove();
-      os.app.launch("settingsApp", { section: "pane-ruffle" });
-    });
+    panel
+      .querySelector("#ruffle-settings-close")
+      ?.addEventListener("click", () => panel.remove());
+    panel
+      .querySelector("#rufflePanelOpenSettings")
+      ?.addEventListener("click", () => {
+        panel.remove();
+        os.app.launch("settingsApp", { section: "pane-ruffle" });
+      });
     panel
       .querySelector("#rufflePanelLetterbox")
-      ?.addEventListener("change", () => save({ letterbox: getSelectMenuValue("rufflePanelLetterbox", panel) }));
+      ?.addEventListener("change", () =>
+        save({ letterbox: getSelectMenuValue("rufflePanelLetterbox", panel) }),
+      );
     panel
       .querySelector("#rufflePanelScale")
-      ?.addEventListener("change", () => save({ scale: getSelectMenuValue("rufflePanelScale", panel) }));
+      ?.addEventListener("change", () =>
+        save({ scale: getSelectMenuValue("rufflePanelScale", panel) }),
+      );
     panel
       .querySelector("#rufflePanelAutoplay")
-      ?.addEventListener("change", () => save({ autoplay: getSelectMenuValue("rufflePanelAutoplay", panel) }));
+      ?.addEventListener("change", () =>
+        save({ autoplay: getSelectMenuValue("rufflePanelAutoplay", panel) }),
+      );
     panel
       .querySelector("#rufflePanelContextMenu")
-      ?.addEventListener("change", () => save({ contextMenu: getSelectMenuValue("rufflePanelContextMenu", panel) }));
-    panel.querySelector("#rufflePanelBg")?.addEventListener("input", (e) => save({ backgroundColor: e.target.value }));
+      ?.addEventListener("change", () =>
+        save({
+          contextMenu: getSelectMenuValue("rufflePanelContextMenu", panel),
+        }),
+      );
+    panel
+      .querySelector("#rufflePanelBg")
+      ?.addEventListener("input", (e) =>
+        save({ backgroundColor: e.target.value }),
+      );
     panel
       .querySelector("#rufflePanelSplash")
-      ?.addEventListener("change", (e) => save({ splashScreen: e.target.checked }));
+      ?.addEventListener("change", (e) =>
+        save({ splashScreen: e.target.checked }),
+      );
     panel
       .querySelector("#rufflePanelScript")
-      ?.addEventListener("change", (e) => save({ allowScriptAccess: e.target.checked }));
-    panel.querySelector("#rufflePanelReset")?.addEventListener("click", async () => {
-      if (!(await os.dialog.confirm("Reset Ruffle Settings", "Restore defaults?"))) return;
-      os.storage.remove("yukiOS_ruffle_config");
-      os.events.emit(BusEvents.SETTINGS_CHANGED, { key: "yukiOS_ruffle_config", value: null });
-      panel.remove();
-      this.openRuffleSettingsPanel(anchorWin);
-    });
+      ?.addEventListener("change", (e) =>
+        save({ allowScriptAccess: e.target.checked }),
+      );
+    panel
+      .querySelector("#rufflePanelReset")
+      ?.addEventListener("click", async () => {
+        if (
+          !(await os.dialog.confirm(
+            "Reset Ruffle Settings",
+            "Restore defaults?",
+          ))
+        )
+          return;
+        os.storage.remove("yukiOS_ruffle_config");
+        os.events.emit(BusEvents.SETTINGS_CHANGED, {
+          key: "yukiOS_ruffle_config",
+          value: null,
+        });
+        panel.remove();
+        this.openRuffleSettingsPanel(anchorWin);
+      });
     const dismiss = (e) => {
       if (
         !panel.contains(e.target) &&
@@ -240,7 +293,7 @@ export class RuffleApp extends BaseApp {
       deleteBtnSelector: ".ruf-delete-btn",
       deleteAction: (name) => os.fs.deleteBinaryFile(FLASH_DIR, name),
       onCardClick: (fileName) => this.launchSWF(fileName, FLASH_DIR),
-      onReload: () => this.loadUserFiles()
+      onReload: () => this.loadUserFiles(),
     });
   }
 
@@ -258,7 +311,7 @@ export class RuffleApp extends BaseApp {
       errorHTML: (msg) =>
         `<i class="fa-solid fa-triangle-exclamation emu-state-icon ruf-state-icon emu-state--error"></i><div class="emu-state-text ruf-state-text emu-state--error">${msg}</div>`,
       onSaved: () => os.notify.send(`Saved ${files.length} file(s) to Flash.`),
-      onReload: () => this.loadUserFiles()
+      onReload: () => this.loadUserFiles(),
     });
   }
 
@@ -284,19 +337,22 @@ export class RuffleApp extends BaseApp {
   async launchRuffle(displayName, fileName, swfData) {
     const winId = `ruffle-${Date.now()}`;
     const win = os.window.create(winId, displayName, "800px", "600px", {
-      icon: "static/icons/ruffle.webp"
+      icon: "static/icons/ruffle.webp",
     });
 
-    os.events.emit(BusEvents.ACHIEVEMENT_TRIGGER, { achievementId: Achievements.Flashback });
+    os.events.emit(BusEvents.ACHIEVEMENT_TRIGGER, {
+      achievementId: Achievements.Flashback,
+    });
     win.innerHTML = `
     <div class="window-content emu-window ruf-window">
       ${buildLoadingStateHTML({
         winId,
         iconClass: "fa-solid fa-film fa-spin ruf-state-icon emu-state-icon",
-        wrapperClass: "yuki-loading-indicator emu-state ruf-loading emu-load-wrap",
+        wrapperClass:
+          "yuki-loading-indicator emu-state ruf-loading emu-load-wrap",
         textClass: "emu-state-text ruf-state-text",
         logClass: "emu-state-text--muted ruf-log",
-        displayName
+        displayName,
       })}
       <iframe
         id="${winId}-frame"
@@ -314,8 +370,9 @@ export class RuffleApp extends BaseApp {
         inner.innerHTML = buildErrorHTML({
           msg,
           wrapperClass: "emu-state emu-state--error ruf-error",
-          iconClass: "fa-solid fa-triangle-exclamation ruf-state-icon emu-state-icon emu-state--error",
-          textClass: "emu-state-text ruf-state-text emu-state--error"
+          iconClass:
+            "fa-solid fa-triangle-exclamation ruf-state-icon emu-state-icon emu-state--error",
+          textClass: "emu-state-text ruf-state-text emu-state--error",
         });
       inner.style.display = "flex";
       frame.style.display = "none";
@@ -328,12 +385,17 @@ export class RuffleApp extends BaseApp {
       setLog(log, "Starting Flash player...");
 
       const ruffleConfig = buildPlayerConfig();
-      const ruffleConfigJson = JSON.stringify(ruffleConfig).replace(/</g, "\\u003c");
+      const ruffleConfigJson = JSON.stringify(ruffleConfig).replace(
+        /</g,
+        "\\u003c",
+      );
       const ruffleScriptUrl =
         getLibraryUrl("ruffle") ||
         `${CDN_CONFIG.repos.npm.base}/@ruffle-rs/ruffle@${CDN_CONFIG.libraries.ruffle.version}/ruffle.min.js`;
 
-      const swfBlob = new Blob([swfData], { type: "application/x-shockwave-flash" });
+      const swfBlob = new Blob([swfData], {
+        type: "application/x-shockwave-flash",
+      });
       const swfUrl = URL.createObjectURL(swfBlob);
 
       const iframeDoc = `<!DOCTYPE html>
@@ -416,7 +478,9 @@ export class RuffleApp extends BaseApp {
 
   async launchFromFile(file) {
     if (!file.name.toLowerCase().endsWith(".swf")) {
-      os.notify.send("Ruffle only works with .swf files.", "", { icon: "static/icons/ruffle.webp" });
+      os.notify.send("Ruffle only works with .swf files.", "", {
+        icon: "static/icons/ruffle.webp",
+      });
       return;
     }
     const arrayBuffer = await file.arrayBuffer();

@@ -1,7 +1,8 @@
 import { APP_MANIFESTS } from "./registry/AppManifest.js";
 
 const SYSTEM_APPS = APP_MANIFESTS.reduce((acc, manifest) => {
-  const key = manifest.serviceKey || manifest.title.toLowerCase().replace(/\s+/g, "");
+  const key =
+    manifest.serviceKey || manifest.title.toLowerCase().replace(/\s+/g, "");
   acc[key] = {
     serviceKey: manifest.serviceKey,
     type: manifest.type,
@@ -20,7 +21,7 @@ const SYSTEM_APPS = APP_MANIFESTS.reduce((acc, manifest) => {
     trayOptions: manifest.trayOptions,
     windowSize: manifest.windowSize,
     fileAssociations: manifest.fileAssociations,
-    skipRewrite: manifest.skipRewrite
+    skipRewrite: manifest.skipRewrite,
   };
   return acc;
 }, {});

@@ -10,7 +10,7 @@ export const SystemAudio = Object.freeze({
   SHUTDOWN: "static/audio/shutdown.opus",
   ERROR: "static/audio/error.opus",
   WARNING: "static/audio/warning.opus",
-  DESKTOP_CHANGE: "static/audio/desktopchange.opus"
+  DESKTOP_CHANGE: "static/audio/desktopchange.opus",
 });
 
 const STORAGE_KEY = StorageKeys.audioMixerV1;
@@ -23,7 +23,10 @@ class AudioMixer {
   constructor() {
     this.masterVolume = 1.0;
     this.systemVolume = 1.0;
-    this.systemAudioEnabled = parseBool(os.storage.get(StorageKeys.systemAudioEnabled), true);
+    this.systemAudioEnabled = parseBool(
+      os.storage.get(StorageKeys.systemAudioEnabled),
+      true,
+    );
     this.channels = new Map();
     this.gainNodes = new Map();
     this.audioCtx = null;
@@ -47,7 +50,8 @@ class AudioMixer {
     if (Number.isFinite(settingsSystemVolume)) {
       this.systemVolume = settingsSystemVolume;
     }
-    this.muted = parseBool(os.storage.get(StorageKeys.soundEnabled), true) === false;
+    this.muted =
+      parseBool(os.storage.get(StorageKeys.soundEnabled), true) === false;
   }
 
   save() {
@@ -55,7 +59,11 @@ class AudioMixer {
     this.channels.forEach((ch, winId) => {
       channels[winId] = ch.volume;
     });
-    os.storage.set(STORAGE_KEY, { master: this.masterVolume, systemVolume: this.systemVolume, channels });
+    os.storage.set(STORAGE_KEY, {
+      master: this.masterVolume,
+      systemVolume: this.systemVolume,
+      channels,
+    });
   }
 
   getOrCreateAudioCtx() {
@@ -81,7 +89,8 @@ class AudioMixer {
     const ch = this.channels.get(winId);
     if (!ch) return;
 
-    const effectiveVolume = this.muted || ch.muted ? 0 : this.masterVolume * ch.volume;
+    const effectiveVolume =
+      this.muted || ch.muted ? 0 : this.masterVolume * ch.volume;
     const win = $("#" + winId);
     if (!win) return;
     if (!win.querySelector("iframe, audio, video, ruffle-player")) return;
@@ -94,7 +103,11 @@ class AudioMixer {
           const cw = iframe.contentWindow;
           const gainNode = cw ? gainNodeByWindow.get(cw) : null;
           if (gainNode) {
-            gainNode.gain.setTargetAtTime(effectiveVolume, gainNode.context.currentTime, 0.01);
+            gainNode.gain.setTargetAtTime(
+              effectiveVolume,
+              gainNode.context.currentTime,
+              0.01,
+            );
           }
           const doc = iframe.contentDocument || iframe.contentWindow.document;
           doc.querySelectorAll("audio, video").forEach((el) => {
@@ -102,16 +115,24 @@ class AudioMixer {
             this.connectMediaElement(winId, el);
             const elGainNode = gainNodeByElement.get(el);
             if (elGainNode) {
-              elGainNode.gain.setTargetAtTime(effectiveVolume, this.getOrCreateAudioCtx().currentTime, 0.01);
+              elGainNode.gain.setTargetAtTime(
+                effectiveVolume,
+                this.getOrCreateAudioCtx().currentTime,
+                0.01,
+              );
             }
           });
 
-          const rufflePlayer = iframe.contentWindow?.document?.querySelector("ruffle-player");
+          const rufflePlayer =
+            iframe.contentWindow?.document?.querySelector("ruffle-player");
           if (rufflePlayer && typeof rufflePlayer.volume !== "undefined") {
             rufflePlayer.volume = effectiveVolume;
           }
 
-          iframe.contentWindow?.postMessage({ __shittify_cmd: true, cmd: "volume", value: effectiveVolume }, "*");
+          iframe.contentWindow?.postMessage(
+            { __shittify_cmd: true, cmd: "volume", value: effectiveVolume },
+            "*",
+          );
         } catch (e) {
           console.error("[AudioMixer]", e);
         }
@@ -125,7 +146,11 @@ class AudioMixer {
       this.connectMediaElement(winId, el);
       const gainNode = gainNodeByElement.get(el);
       if (gainNode) {
-        gainNode.gain.setTargetAtTime(effectiveVolume, this.getOrCreateAudioCtx().currentTime, 0.01);
+        gainNode.gain.setTargetAtTime(
+          effectiveVolume,
+          this.getOrCreateAudioCtx().currentTime,
+          0.01,
+        );
       }
     });
 
@@ -154,7 +179,12 @@ class AudioMixer {
       }
     } else {
       const gainNode = this.gainNodes.get(key);
-      if (gainNode) gainNode.gain.setTargetAtTime(effectiveVolume, this.audioCtx.currentTime, 0.01);
+      if (gainNode)
+        gainNode.gain.setTargetAtTime(
+          effectiveVolume,
+          this.audioCtx.currentTime,
+          0.01,
+        );
     }
   }
 
@@ -218,9 +248,11 @@ class AudioMixer {
 
           let currentIntensity = this.intensityValues.get(winId) || 0;
           if (targetIntensity > currentIntensity) {
-            currentIntensity = currentIntensity + (targetIntensity - currentIntensity) * 0.4;
+            currentIntensity =
+              currentIntensity + (targetIntensity - currentIntensity) * 0.4;
           } else {
-            currentIntensity = currentIntensity + (targetIntensity - currentIntensity) * 0.05;
+            currentIntensity =
+              currentIntensity + (targetIntensity - currentIntensity) * 0.05;
           }
           this.intensityValues.set(winId, currentIntensity);
 
@@ -266,7 +298,14 @@ class AudioMixer {
 
   registerWindow(winId, title, iconHtml) {
     const savedVol = this.savedChannels[winId] ?? 1.0;
-    this.channels.set(winId, { title, iconHtml, volume: savedVol, muted: false, nowPlaying: null, sendCommand: null });
+    this.channels.set(winId, {
+      title,
+      iconHtml,
+      volume: savedVol,
+      muted: false,
+      nowPlaying: null,
+      sendCommand: null,
+    });
     this.applyVolumeToWindow(winId);
     this.watchIframesInWindow(winId);
     if (this.panel) this.renderSliders();
@@ -283,7 +322,8 @@ class AudioMixer {
     win.querySelectorAll("iframe").forEach(applyOnLoad);
 
     if (!this.iframeObservers) this.iframeObservers = new Map();
-    if (this.iframeObservers.has(winId)) this.iframeObservers.get(winId).disconnect();
+    if (this.iframeObservers.has(winId))
+      this.iframeObservers.get(winId).disconnect();
 
     let observerTimer = null;
     const observer = new MutationObserver((mutations) => {
@@ -398,7 +438,10 @@ class AudioMixer {
       this.updateSystemLabel();
       this.updateTrayBars();
     };
-    document.addEventListener("AUDIO_SETTINGS_CHANGED", this.settingsChangedHandler);
+    document.addEventListener(
+      "AUDIO_SETTINGS_CHANGED",
+      this.settingsChangedHandler,
+    );
   }
 
   destroy() {
@@ -407,7 +450,10 @@ class AudioMixer {
       this.clickOutsideHandler = null;
     }
     if (this.settingsChangedHandler) {
-      document.removeEventListener("AUDIO_SETTINGS_CHANGED", this.settingsChangedHandler);
+      document.removeEventListener(
+        "AUDIO_SETTINGS_CHANGED",
+        this.settingsChangedHandler,
+      );
       this.settingsChangedHandler = null;
     }
   }
@@ -424,7 +470,7 @@ class AudioMixer {
         const delta = e.deltaY > 0 ? -0.05 : 0.05;
         const newVol = Math.max(0, Math.min(1, this.masterVolume + delta));
         this.setMaster(newVol);
-      }
+      },
     });
     setTimeout(() => this.setupTrayIcon(), 0);
   }
@@ -452,7 +498,7 @@ class AudioMixer {
     const svgHeight = 24;
     const sizes = [
       { h: 10, r: 6, offset: 7 },
-      { h: 14, r: 8.4, offset: 5 }
+      { h: 14, r: 8.4, offset: 5 },
     ];
 
     const vol = this.muted ? 0 : this.masterVolume;
@@ -463,7 +509,10 @@ class AudioMixer {
       if (!path) continue;
       if (i < barCount) {
         const { h, r, offset } = sizes[i];
-        path.setAttribute("d", `M${barX[i]} ${svgHeight - h - offset} a${r} ${r} 0 0 1 0 ${h}`);
+        path.setAttribute(
+          "d",
+          `M${barX[i]} ${svgHeight - h - offset} a${r} ${r} 0 0 1 0 ${h}`,
+        );
         path.setAttribute("opacity", "0.7");
       } else {
         path.setAttribute("d", `M${barX[i]} 22 v0`);
@@ -514,7 +563,9 @@ class AudioMixer {
 
     document.body.appendChild(this.panel);
 
-    this.panel.querySelector(".am-close-btn").addEventListener("click", () => this.close());
+    this.panel
+      .querySelector(".am-close-btn")
+      .addEventListener("click", () => this.close());
 
     const amCloseBtn = this.panel.querySelector(".am-close-btn");
     const pinBtn = createTrayPinButton();
@@ -552,7 +603,9 @@ class AudioMixer {
   updateSystemLabel() {
     const label = $("#am-system-label");
     const slider = this.panel?.querySelector(".am-system-slider");
-    const displayValue = !this.systemAudioEnabled ? 0 : Math.round(this.systemVolume * 100);
+    const displayValue = !this.systemAudioEnabled
+      ? 0
+      : Math.round(this.systemVolume * 100);
     if (label) label.textContent = `${displayValue}%`;
     if (slider) {
       slider.value = displayValue;
@@ -655,7 +708,9 @@ class AudioMixer {
         const rawNode = instance.createGain();
         const gainNode = instance.createGain();
         const ch = self.channels.get(winId);
-        gainNode.gain.value = self.muted ? 0 : self.masterVolume * (ch?.volume ?? 1.0);
+        gainNode.gain.value = self.muted
+          ? 0
+          : self.masterVolume * (ch?.volume ?? 1.0);
 
         rawNode.connect(gainNode);
         gainNode.connect(realDestination);
@@ -665,7 +720,7 @@ class AudioMixer {
 
         Object.defineProperty(instance, "destination", {
           get: () => rawNode,
-          configurable: true
+          configurable: true,
         });
 
         gainNodeByWindow.set(cw, gainNode);
@@ -685,7 +740,11 @@ class AudioMixer {
   }
   togglePin() {
     this.pinned = !this.pinned;
-    setTrayPinState(this.panel, this.panel.querySelector(".tray-pin-btn"), this.pinned);
+    setTrayPinState(
+      this.panel,
+      this.panel.querySelector(".tray-pin-btn"),
+      this.pinned,
+    );
   }
 
   toggle() {
@@ -724,7 +783,7 @@ class AudioMixer {
         this.panel.classList.remove("closing");
         this.panel.style.display = "none";
       },
-      { once: true }
+      { once: true },
     );
   }
 
@@ -739,7 +798,8 @@ class AudioMixer {
 
     const tilingActive = os.modes.isActive(MODES.TILING);
     const chromeShelf = $("#chromeos-shelf");
-    const chromeShelfVisible = chromeShelf && getComputedStyle(chromeShelf).display !== "none";
+    const chromeShelfVisible =
+      chromeShelf && getComputedStyle(chromeShelf).display !== "none";
     let atTop;
     if (os.modes.isActive(MODES.STEAMDECK)) {
       atTop = true;
@@ -747,7 +807,9 @@ class AudioMixer {
       atTop = true;
     } else if (tilingActive) {
       const tilingBar = $("#tiling-bar");
-      atTop = tilingBar ? !tilingBar.classList.contains("position-bottom") : false;
+      atTop = tilingBar
+        ? !tilingBar.classList.contains("position-bottom")
+        : false;
     } else {
       atTop = isTaskbarTop();
     }
@@ -758,7 +820,10 @@ class AudioMixer {
       let left;
       if (chromeShelfVisible && chromeShelf.dataset.shelfPos === "left") {
         left = btnRect.right + 8;
-      } else if (chromeShelfVisible && chromeShelf.dataset.shelfPos === "right") {
+      } else if (
+        chromeShelfVisible &&
+        chromeShelf.dataset.shelfPos === "right"
+      ) {
         left = window.innerWidth - btnRect.left - panelW;
         if (left < 8) left = 8;
       } else {
@@ -766,14 +831,25 @@ class AudioMixer {
         if (left < 8) left = 8;
       }
       if (atTop) {
-        setStyle(this.panel, { top: `${btnRect.bottom + 6}px`, bottom: "auto" });
+        setStyle(this.panel, {
+          top: `${btnRect.bottom + 6}px`,
+          bottom: "auto",
+        });
       } else {
-        setStyle(this.panel, { bottom: `${window.innerHeight - btnRect.top + 6}px`, top: "auto" });
+        setStyle(this.panel, {
+          bottom: `${window.innerHeight - btnRect.top + 6}px`,
+          top: "auto",
+        });
       }
       this.panel.style.left = `${left}px`;
     } else {
       const pos = getTrayPosition();
-      setStyle(this.panel, { left: pos.left, right: pos.right, top: pos.top, bottom: pos.bottom });
+      setStyle(this.panel, {
+        left: pos.left,
+        right: pos.right,
+        top: pos.top,
+        bottom: pos.bottom,
+      });
     }
   }
 
@@ -785,7 +861,8 @@ class AudioMixer {
       iconValue.startsWith("http");
     if (isImg)
       return `<img src="${iconValue}" style="width:14px;height:14px;border-radius:2px;vertical-align:middle;object-fit:contain;" />`;
-    if (iconValue.startsWith("fa")) return `<i class="${iconValue}" style="font-size:12px;"></i>`;
+    if (iconValue.startsWith("fa"))
+      return `<i class="${iconValue}" style="font-size:12px;"></i>`;
     return "🖥";
   }
 
@@ -794,7 +871,11 @@ class AudioMixer {
       if (this.muted || !this.systemAudioEnabled) return;
 
       const soundPath = SystemAudio[audioKey] || audioKey;
-      const audio = new Audio(resolveGhUrl(`https://cdn.jsdelivr.net/gh/NaoTomori1/yukios@main/${soundPath}`));
+      const audio = new Audio(
+        resolveGhUrl(
+          `https://cdn.jsdelivr.net/gh/NaoTomori1/yukios@main/${soundPath}`,
+        ),
+      );
       audio.volume = this.masterVolume * this.systemVolume;
       audio.play().catch(() => {});
     } catch (e) {

@@ -30,22 +30,22 @@ export class PlayerBody {
     const skinMat = new T.MeshStandardMaterial({
       color: 0xf5d0b0,
       roughness: 0.6,
-      metalness: 0.0
+      metalness: 0.0,
     });
     const clothMat = new T.MeshStandardMaterial({
       color: 0x2a1a3a,
       roughness: 0.8,
-      metalness: 0.0
+      metalness: 0.0,
     });
     const darkClothMat = new T.MeshStandardMaterial({
       color: 0x1a122a,
       roughness: 0.9,
-      metalness: 0.0
+      metalness: 0.0,
     });
     const shoeMat = new T.MeshStandardMaterial({
       color: 0x111111,
       roughness: 1.0,
-      metalness: 0.0
+      metalness: 0.0,
     });
 
     const neckBox = new T.Mesh(new T.BoxGeometry(0.16, 0.12, 0.16), skinMat);
@@ -56,11 +56,17 @@ export class PlayerBody {
     head.position.set(0, 1.48, 0);
     this.group.add(head);
 
-    this.leftShoulder = new T.Mesh(new T.BoxGeometry(0.18, 0.1, 0.16), clothMat);
+    this.leftShoulder = new T.Mesh(
+      new T.BoxGeometry(0.18, 0.1, 0.16),
+      clothMat,
+    );
     this.leftShoulder.position.set(-0.34, 1.22, 0);
     this.group.add(this.leftShoulder);
 
-    this.rightShoulder = new T.Mesh(new T.BoxGeometry(0.18, 0.1, 0.16), clothMat);
+    this.rightShoulder = new T.Mesh(
+      new T.BoxGeometry(0.18, 0.1, 0.16),
+      clothMat,
+    );
     this.rightShoulder.position.set(0.34, 1.22, 0);
     this.group.add(this.rightShoulder);
 
@@ -75,7 +81,10 @@ export class PlayerBody {
     chestBox.position.set(0, 1.03, 0);
     this.group.add(chestBox);
 
-    const hipsBox = new T.Mesh(new T.BoxGeometry(0.38, 0.32, 0.2), darkClothMat);
+    const hipsBox = new T.Mesh(
+      new T.BoxGeometry(0.38, 0.32, 0.2),
+      darkClothMat,
+    );
     hipsBox.position.set(0, 0.72, 0);
     this.group.add(hipsBox);
 
@@ -103,7 +112,10 @@ export class PlayerBody {
     this.leftLegPivot.position.set(-0.12, 0.72, 0);
     this.group.add(this.leftLegPivot);
 
-    this.leftLeg = new T.Mesh(new T.BoxGeometry(0.12, 0.55, 0.12), darkClothMat);
+    this.leftLeg = new T.Mesh(
+      new T.BoxGeometry(0.12, 0.55, 0.12),
+      darkClothMat,
+    );
     this.leftLeg.position.set(0, -0.36, 0);
     this.leftLegPivot.add(this.leftLeg);
 
@@ -115,7 +127,10 @@ export class PlayerBody {
     this.rightLegPivot.position.set(0.12, 0.72, 0);
     this.group.add(this.rightLegPivot);
 
-    this.rightLeg = new T.Mesh(new T.BoxGeometry(0.12, 0.55, 0.12), darkClothMat);
+    this.rightLeg = new T.Mesh(
+      new T.BoxGeometry(0.12, 0.55, 0.12),
+      darkClothMat,
+    );
     this.rightLeg.position.set(0, -0.36, 0);
     this.rightLegPivot.add(this.rightLeg);
 
@@ -127,7 +142,7 @@ export class PlayerBody {
       color: 0x000000,
       transparent: true,
       opacity: 0.25,
-      depthWrite: false
+      depthWrite: false,
     });
     this.shadowMesh = new T.Mesh(new T.CircleGeometry(0.5, 16), shadowMat);
     this.shadowMesh.rotation.x = -Math.PI / 2;
@@ -141,9 +156,16 @@ export class PlayerBody {
   update() {
     const cp = this.camera.position;
     const floorY = Math.max(0, cp.y - 1.6);
-    const yaw = new this.THREE.Euler().setFromQuaternion(this.camera.quaternion, "YXZ").y;
+    const yaw = new this.THREE.Euler().setFromQuaternion(
+      this.camera.quaternion,
+      "YXZ",
+    ).y;
     const bodyBack = 0.03;
-    this.group.position.set(cp.x + Math.sin(yaw) * bodyBack, floorY, cp.z + Math.cos(yaw) * bodyBack);
+    this.group.position.set(
+      cp.x + Math.sin(yaw) * bodyBack,
+      floorY,
+      cp.z + Math.cos(yaw) * bodyBack,
+    );
     this.group.quaternion.setFromEuler(new this.THREE.Euler(0, yaw, 0, "YXZ"));
     this.group.updateMatrixWorld();
 
@@ -171,17 +193,27 @@ export class PlayerBody {
       this.walkPhase += dt * WALK_FREQ * walkIntensity;
       const legSwing = walkIntensity * WALK_AMP;
       this.leftLegPivot.rotation.x = legSwing * Math.sin(this.walkPhase);
-      this.rightLegPivot.rotation.x = legSwing * Math.sin(this.walkPhase + Math.PI);
+      this.rightLegPivot.rotation.x =
+        legSwing * Math.sin(this.walkPhase + Math.PI);
 
       const armSwing = walkIntensity * 0.25;
-      this.leftArm.rotation.x = 0.1 + armSwing * Math.sin(this.walkPhase + Math.PI);
+      this.leftArm.rotation.x =
+        0.1 + armSwing * Math.sin(this.walkPhase + Math.PI);
       if (!this.holdRight) {
-        this.rightArm.position.set(this.baseArmR.x, this.baseArmR.y, this.baseArmR.z);
+        this.rightArm.position.set(
+          this.baseArmR.x,
+          this.baseArmR.y,
+          this.baseArmR.z,
+        );
         this.rightArm.quaternion.identity();
         this.rightArm.rotation.x = 0.1 + armSwing * Math.sin(this.walkPhase);
         this.rightArm.rotation.z = -0.2;
         this.rightArm.scale.set(1, 1, 1);
-        this.rightHand.position.set(this.baseHandR.x, this.baseHandR.y, this.baseHandR.z);
+        this.rightHand.position.set(
+          this.baseHandR.x,
+          this.baseHandR.y,
+          this.baseHandR.z,
+        );
       }
 
       const bob = walkIntensity * 0.012;
@@ -195,8 +227,16 @@ export class PlayerBody {
       if (!this.holdRight) {
         this.rightArm.quaternion.identity();
         this.rightArm.scale.set(1, 1, 1);
-        this.rightArm.position.set(this.baseArmR.x, this.baseArmR.y, this.baseArmR.z);
-        this.rightHand.position.set(this.baseHandR.x, this.baseHandR.y, this.baseHandR.z);
+        this.rightArm.position.set(
+          this.baseArmR.x,
+          this.baseArmR.y,
+          this.baseArmR.z,
+        );
+        this.rightHand.position.set(
+          this.baseHandR.x,
+          this.baseHandR.y,
+          this.baseHandR.z,
+        );
       }
     }
 
@@ -207,23 +247,49 @@ export class PlayerBody {
       const float = Math.sin(t * 0.7 + 1.5) * 0.018;
       const rotSway = Math.sin(t * 1.3 + 1) * 0.04;
 
-      this.leftArm.position.set(this.baseArmL.x + sway, this.baseArmL.y + float * 0.8, this.baseArmL.z);
+      this.leftArm.position.set(
+        this.baseArmL.x + sway,
+        this.baseArmL.y + float * 0.8,
+        this.baseArmL.z,
+      );
       this.leftArm.rotation.z = 0.2 + rotSway * 0.4;
-      this.rightArm.position.set(this.baseArmR.x - sway, this.baseArmR.y + float * 0.8, this.baseArmR.z);
+      this.rightArm.position.set(
+        this.baseArmR.x - sway,
+        this.baseArmR.y + float * 0.8,
+        this.baseArmR.z,
+      );
       this.rightArm.rotation.z = -0.2 - rotSway * 0.4;
-      this.leftHand.position.set(this.baseHandL.x + sway * 0.6, this.baseHandL.y + float * 1.2, this.baseHandL.z);
-      this.rightHand.position.set(this.baseHandR.x - sway * 0.6, this.baseHandR.y + float * 1.2, this.baseHandR.z);
+      this.leftHand.position.set(
+        this.baseHandL.x + sway * 0.6,
+        this.baseHandL.y + float * 1.2,
+        this.baseHandL.z,
+      );
+      this.rightHand.position.set(
+        this.baseHandR.x - sway * 0.6,
+        this.baseHandR.y + float * 1.2,
+        this.baseHandR.z,
+      );
     } else if (!isMoving) {
       const sway = Math.sin(t * 1.1) * 0.025;
       const float = Math.sin(t * 0.7 + 1.5) * 0.018;
       const rotSway = Math.sin(t * 1.3 + 1) * 0.04;
-      this.leftArm.position.set(this.baseArmL.x + sway, this.baseArmL.y + float * 0.8, this.baseArmL.z);
+      this.leftArm.position.set(
+        this.baseArmL.x + sway,
+        this.baseArmL.y + float * 0.8,
+        this.baseArmL.z,
+      );
       this.leftArm.rotation.z = 0.2 + rotSway * 0.4;
-      this.leftHand.position.set(this.baseHandL.x + sway * 0.6, this.baseHandL.y + float * 1.2, this.baseHandL.z);
+      this.leftHand.position.set(
+        this.baseHandL.x + sway * 0.6,
+        this.baseHandL.y + float * 1.2,
+        this.baseHandL.z,
+      );
     }
 
-    this.leftShoulder.position.y = this.baseShoulderL.y + Math.sin(t * 0.8) * 0.008;
-    this.rightShoulder.position.y = this.baseShoulderR.y + Math.sin(t * 0.8) * 0.008;
+    this.leftShoulder.position.y =
+      this.baseShoulderL.y + Math.sin(t * 0.8) * 0.008;
+    this.rightShoulder.position.y =
+      this.baseShoulderR.y + Math.sin(t * 0.8) * 0.008;
   }
 
   worldToLocal(point) {
@@ -232,7 +298,8 @@ export class PlayerBody {
 
   destroy() {
     if (this.group.parent) this.scene.remove(this.group);
-    if (this.shadowMesh && this.shadowMesh.parent) this.scene.remove(this.shadowMesh);
+    if (this.shadowMesh && this.shadowMesh.parent)
+      this.scene.remove(this.shadowMesh);
     this.group.traverse((child) => {
       if (child.isMesh) {
         child.geometry.dispose();

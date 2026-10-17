@@ -1,11 +1,9 @@
 import { getLiveUserId } from "./userIdentity.js";
 
-
 const NOW = Date.now();
 const MINUTE = 60 * 1000;
 const HOUR = 60 * MINUTE;
 const DAY = 24 * HOUR;
-
 
 let fakeFriends = [
   {
@@ -16,8 +14,8 @@ let fakeFriends = [
     lastSeen: Date.now(),
     nowPlaying: {
       appId: "half-life-3",
-      gameTitle: "Half-Life 3"
-    }
+      gameTitle: "Half-Life 3",
+    },
   },
   {
     userId: "gordon-freeman",
@@ -27,15 +25,15 @@ let fakeFriends = [
     lastSeen: Date.now(),
     nowPlaying: {
       appId: "",
-      gameTitle: "Staring silently at a crowbar"
-    }
+      gameTitle: "Staring silently at a crowbar",
+    },
   },
   {
     userId: "the-cake",
     username: "The Cake",
     avatarIndex: 17,
     presence: "offline",
-    lastSeen: Date.now() - 15 * MINUTE
+    lastSeen: Date.now() - 15 * MINUTE,
   },
   {
     userId: "clippy",
@@ -45,8 +43,8 @@ let fakeFriends = [
     lastSeen: Date.now(),
     nowPlaying: {
       appId: "",
-      gameTitle: "Trying to help"
-    }
+      gameTitle: "Trying to help",
+    },
   },
   {
     userId: "doomguy",
@@ -56,202 +54,193 @@ let fakeFriends = [
     lastSeen: Date.now(),
     nowPlaying: {
       appId: "",
-      gameTitle: "DOOM"
-    }
-  }
+      gameTitle: "DOOM",
+    },
+  },
 ];
-
 
 let fakeRequests = [
   {
     userId: "demoman-tf2",
     username: "Demoman",
     avatarIndex: 27,
-    note: "I have a bucket of problems"
+    note: "I have a bucket of problems",
   },
   {
     userId: "rick-astley",
     username: "Rick Astley",
     avatarIndex: 18,
-    note: "Never gonna give you up"
-  }
+    note: "Never gonna give you up",
+  },
 ];
-
 
 let fakeSentRequests = [
   {
     userId: "miyamoto",
     username: "Shigeru Miyamoto",
     avatarIndex: 25,
-    note: "Please approve my pipe-related friendship request."
+    note: "Please approve my pipe-related friendship request.",
   },
   {
     userId: "gabe-newell",
     username: "Gabe Newell",
     avatarIndex: 3,
-    note: "Just checking if the number 3 is real."
-  }
+    note: "Just checking if the number 3 is real.",
+  },
 ];
-
 
 let fakeMessageStore = {
   "gabe-newell": [
     {
       body: "So I finally decided to count to 3.",
       fromId: "gabe-newell",
-      sentAt: NOW - 20 * MINUTE
+      sentAt: NOW - 20 * MINUTE,
     },
     {
       body: "Wait. Actually?",
       fromId: null,
-      sentAt: NOW - 19 * MINUTE
+      sentAt: NOW - 19 * MINUTE,
     },
     {
       body: "Half-Life 3 is in development.",
       fromId: "gabe-newell",
-      sentAt: NOW - 18 * MINUTE
+      sentAt: NOW - 18 * MINUTE,
     },
     {
       body: "You actually said it.",
       fromId: null,
-      sentAt: NOW - 17 * MINUTE
+      sentAt: NOW - 17 * MINUTE,
     },
     {
       body: "I didn't say when.",
       fromId: "gabe-newell",
-      sentAt: NOW - 16 * MINUTE
+      sentAt: NOW - 16 * MINUTE,
     },
     {
       body: "Gabe.",
       fromId: null,
-      sentAt: NOW - 15 * MINUTE
+      sentAt: NOW - 15 * MINUTE,
     },
     {
       body: "Gabe please.",
       fromId: null,
-      sentAt: NOW - 14 * MINUTE
-    }
+      sentAt: NOW - 14 * MINUTE,
+    },
   ],
 
   "gordon-freeman": [
     {
       body: "Hey Gordon.",
       fromId: null,
-      sentAt: NOW - 9 * MINUTE
+      sentAt: NOW - 9 * MINUTE,
     },
     {
       body: "...",
       fromId: "gordon-freeman",
-      sentAt: NOW - 8 * MINUTE
+      sentAt: NOW - 8 * MINUTE,
     },
     {
       body: "You good?",
       fromId: null,
-      sentAt: NOW - 7 * MINUTE
+      sentAt: NOW - 7 * MINUTE,
     },
     {
       body: "...",
       fromId: "gordon-freeman",
-      sentAt: NOW - 6 * MINUTE
+      sentAt: NOW - 6 * MINUTE,
     },
     {
       body: "Fair enough.",
       fromId: null,
-      sentAt: NOW - 5 * MINUTE
-    }
+      sentAt: NOW - 5 * MINUTE,
+    },
   ],
-  "clippy": [
+  clippy: [
     {
       body: "It looks like you're trying to open YukiOS.",
       fromId: "clippy",
-      sentAt: NOW - 2 * HOUR
+      sentAt: NOW - 2 * HOUR,
     },
     {
       body: "Would you like help?",
       fromId: "clippy",
-      sentAt: NOW - 119 * MINUTE
+      sentAt: NOW - 119 * MINUTE,
     },
     {
       body: "No.",
       fromId: null,
-      sentAt: NOW - 118 * MINUTE
+      sentAt: NOW - 118 * MINUTE,
     },
     {
       body: "Are you sure?",
       fromId: "clippy",
-      sentAt: NOW - 117 * MINUTE
+      sentAt: NOW - 117 * MINUTE,
     },
     {
       body: "Very.",
       fromId: null,
-      sentAt: NOW - 116 * MINUTE
+      sentAt: NOW - 116 * MINUTE,
     },
     {
       body: "I'll be here.",
       fromId: "clippy",
-      sentAt: NOW - 115 * MINUTE
-    }
+      sentAt: NOW - 115 * MINUTE,
+    },
   ],
 
-
-  "doomguy": [
+  doomguy: [
     {
       body: "hey",
       fromId: null,
-      sentAt: NOW - 12 * MINUTE
+      sentAt: NOW - 12 * MINUTE,
     },
     {
       body: "DOOM",
       fromId: "doomguy",
-      sentAt: NOW - 11 * MINUTE
+      sentAt: NOW - 11 * MINUTE,
     },
     {
       body: "yeah",
       fromId: null,
-      sentAt: NOW - 10 * MINUTE
+      sentAt: NOW - 10 * MINUTE,
     },
     {
       body: "DOOM.",
       fromId: "doomguy",
-      sentAt: NOW - 9 * MINUTE
-    }
+      sentAt: NOW - 9 * MINUTE,
+    },
   ],
-
 
   "the-cake": [
     {
       body: "You should probably stop looking for me.",
       fromId: "the-cake",
-      sentAt: NOW - DAY
+      sentAt: NOW - DAY,
     },
     {
       body: "Seriously.",
       fromId: "the-cake",
-      sentAt: NOW - DAY + MINUTE
+      sentAt: NOW - DAY + MINUTE,
     },
     {
       body: "I'm not in the test chamber.",
       fromId: "the-cake",
-      sentAt: NOW - DAY + 2 * MINUTE
-    }
+      sentAt: NOW - DAY + 2 * MINUTE,
+    },
   ],
-
 };
 
-
 export function fakeFriendsEnabled() {
-  return  location.hostname === "localhost";
+  return location.hostname === "localhost";
 }
-
 
 export function fakeFriendsResult() {
   return {
     friends: fakeFriends.slice(),
     requests: fakeRequests.slice(),
-    sentRequests: fakeSentRequests.slice()
+    sentRequests: fakeSentRequests.slice(),
   };
 }
-
 
 export function fakeSendFriendRequest(friendId) {
   const known = fakeFriends.find((f) => f.userId === friendId);
@@ -262,13 +251,12 @@ export function fakeSendFriendRequest(friendId) {
       userId: friendId,
       username,
       avatarIndex: known ? known.avatarIndex : 0,
-      note: ""
+      note: "",
     });
   }
 
   return { status: "pending" };
 }
-
 
 export function fakeAcceptFriendRequest(friendId) {
   const request = fakeRequests.find((r) => r.userId === friendId);
@@ -279,7 +267,7 @@ export function fakeAcceptFriendRequest(friendId) {
       username: request.username,
       avatarIndex: request.avatarIndex,
       presence: "online",
-      lastSeen: Date.now()
+      lastSeen: Date.now(),
     });
 
     fakeRequests = fakeRequests.filter((r) => r.userId !== friendId);
@@ -287,7 +275,6 @@ export function fakeAcceptFriendRequest(friendId) {
 
   return { status: "accepted" };
 }
-
 
 export function fakeRemoveFriend(friendId) {
   fakeFriends = fakeFriends.filter((f) => f.userId !== friendId);
@@ -298,7 +285,6 @@ export function fakeRemoveFriend(friendId) {
   return { success: true };
 }
 
-
 export function fakeSendMessage(friendId, body) {
   if (!fakeMessageStore[friendId]) {
     fakeMessageStore[friendId] = [];
@@ -307,22 +293,20 @@ export function fakeSendMessage(friendId, body) {
   fakeMessageStore[friendId].push({
     body,
     fromId: null,
-    sentAt: Date.now()
+    sentAt: Date.now(),
   });
 
   return { status: "ok" };
 }
-
 
 export function fakeFetchMessages(friendId) {
   const me = getLiveUserId();
 
   return (fakeMessageStore[friendId] || []).map((msg) => ({
     ...msg,
-    fromId: msg.fromId === null ? me : msg.fromId
+    fromId: msg.fromId === null ? me : msg.fromId,
   }));
 }
-
 
 export function fakeFetchConversations() {
   const me = getLiveUserId();
@@ -331,7 +315,7 @@ export function fakeFetchConversations() {
     .filter(
       (friend) =>
         fakeMessageStore[friend.userId] &&
-        fakeMessageStore[friend.userId].length > 0
+        fakeMessageStore[friend.userId].length > 0,
     )
     .map((friend) => {
       const messages = fakeMessageStore[friend.userId];
@@ -344,12 +328,11 @@ export function fakeFetchConversations() {
         unreadCount: friend.userId === "gabe-newell" ? 1 : 0,
         lastMessage: {
           body: last.body,
-          fromMe: last.fromId === null
-        }
+          fromMe: last.fromId === null,
+        },
       };
     });
 }
-
 
 export function fakeFriendRelation(userId) {
   if (userId === getLiveUserId()) return "self";

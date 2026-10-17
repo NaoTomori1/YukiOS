@@ -1,6 +1,7 @@
 export const WALLPAPER_STATIC_DIR = "/static/wallpapers/";
 export const MAC_WALLPAPER_DIR = "/static/wallpapers/mac-wallpapers/";
-export const CHROME_OS_WALLPAPER_DIR = "/static/wallpapers/chromeos-wallpapers/";
+export const CHROME_OS_WALLPAPER_DIR =
+  "/static/wallpapers/chromeos-wallpapers/";
 
 const MAC_WALLPAPERS = [
   { name: "Adwaita Lock", filename: "adwaitalock.webp" },
@@ -9,27 +10,51 @@ const MAC_WALLPAPERS = [
   { name: "Beach Rock", filename: "beachrockmacosmojavemountainskx.webp" },
   { name: "Blobs Dark", filename: "blobsd.webp" },
   { name: "Drool Dark", filename: "droold.webp" },
-  { name: "El Capitan", filename: "elcapitanyosemitinationalparkmountainsosxelcapitanx.webp" },
+  {
+    name: "El Capitan",
+    filename: "elcapitanyosemitinationalparkmountainsosxelcapitanx.webp",
+  },
   { name: "Grid Dark", filename: "gridd.webp" },
   { name: "Lib Adwaita Light", filename: "libadwaital.webp" },
-  { name: "MacBook Pro Abstract", filename: "macbookpromapplemacbookprostockabstractbackgroundx.webp" },
-  { name: "macOS Big Sur", filename: "macosbigsurapplelayersfluidiccolorfulwwdcstockx.webp" },
+  {
+    name: "MacBook Pro Abstract",
+    filename: "macbookpromapplemacbookprostockabstractbackgroundx.webp",
+  },
+  {
+    name: "macOS Big Sur",
+    filename: "macosbigsurapplelayersfluidiccolorfulwwdcstockx.webp",
+  },
   { name: "macOS Mojave", filename: "macosmojavex.webp" },
-  { name: "macOS Monterey Dark", filename: "macosmontereywwdcstockdarkmodekx.webp" },
+  {
+    name: "macOS Monterey Dark",
+    filename: "macosmontereywwdcstockdarkmodekx.webp",
+  },
   { name: "macOS Monterey", filename: "macosmontereywwdcstockkx.webp" },
   { name: "macOS Sequoia", filename: "macossequoiax.webp" },
-  { name: "macOS Sierra", filename: "macossierramountainpeaksunseteveningstockkx.webp" },
-  { name: "macOS Catalina", filename: "macossurrealdigitalcompositionmacoscatalinamacoshighx.webp" },
+  {
+    name: "macOS Sierra",
+    filename: "macossierramountainpeaksunseteveningstockkx.webp",
+  },
+  {
+    name: "macOS Catalina",
+    filename: "macossurrealdigitalcompositionmacoscatalinamacoshighx.webp",
+  },
   { name: "macOS Tahoe", filename: "macostahoex.webp" },
-  { name: "macOS Ventura Dark", filename: "macosventuramacosmacosstockdarkmodekretinax.webp" },
-  { name: "Mountain Forest", filename: "macosxmountainsforesthillsfoggymorningstockkx.webp" },
+  {
+    name: "macOS Ventura Dark",
+    filename: "macosventuramacosmacosstockdarkmodekretinax.webp",
+  },
+  {
+    name: "Mountain Forest",
+    filename: "macosxmountainsforesthillsfoggymorningstockkx.webp",
+  },
   { name: "OS X Leopard Stock", filename: "osxleopardstockx.webp" },
   { name: "OS X Leopard", filename: "osxleopardx.webp" },
   { name: "OS X Lion Twilight", filename: "osxliontwilightx.webp" },
   { name: "OS X Yosemite", filename: "yosemite.webp" },
   { name: "Pills Dark", filename: "pillsd.webp" },
   { name: "Pixel Pusher Dark", filename: "pixelpusherd.webp" },
-  { name: "Wallpaper", filename: "wp.webp" }
+  { name: "Wallpaper", filename: "wp.webp" },
 ];
 
 const CHROME_OS_WALLPAPERS = [
@@ -49,7 +74,7 @@ const CHROME_OS_WALLPAPERS = [
   { name: "ChromeOS Wind Dark", filename: "Wind-Dark.jpg" },
   { name: "ChromeOS Yellows", filename: "Yellows.jpg" },
   { name: "ChromeOS Yellows Dark", filename: "Yellows-Dark.jpg" },
-  { name: "ChromeOS Default", filename: "chromeos-default.jpg" }
+  { name: "ChromeOS Default", filename: "chromeos-default.jpg" },
 ];
 
 const WALLPAPERS = [
@@ -76,7 +101,7 @@ const WALLPAPERS = [
   { name: "Corndog", filename: "corndog.jpg" },
   { name: "End 4", filename: "end_4.jpg" },
   { name: "Kath", filename: "Kath.jpg" },
-  { name: "Meptl", filename: "Meptl.png" }
+  { name: "Meptl", filename: "Meptl.png" },
 ];
 
 export function getWallpaperFullPaths() {
@@ -90,7 +115,7 @@ export function getWallpaperFilenames() {
 export function getWallpaperNameUrlPairs() {
   return WALLPAPERS.map((w) => ({
     name: w.name,
-    url: `${WALLPAPER_STATIC_DIR}${w.filename}`
+    url: `${WALLPAPER_STATIC_DIR}${w.filename}`,
   }));
 }
 
@@ -100,10 +125,12 @@ export const WALLPAPER_NAME_URL_PAIRS = getWallpaperNameUrlPairs();
 
 export const MAC_WALLPAPER_NAME_URL_PAIRS = MAC_WALLPAPERS.map((w) => ({
   name: w.name,
-  url: `${MAC_WALLPAPER_DIR}${w.filename}`
+  url: `${MAC_WALLPAPER_DIR}${w.filename}`,
 }));
 
-export const CHROME_OS_WALLPAPER_NAME_URL_PAIRS = CHROME_OS_WALLPAPERS.map((w) => ({
-  name: w.name,
-  url: `${CHROME_OS_WALLPAPER_DIR}${w.filename}`
-}));
+export const CHROME_OS_WALLPAPER_NAME_URL_PAIRS = CHROME_OS_WALLPAPERS.map(
+  (w) => ({
+    name: w.name,
+    url: `${CHROME_OS_WALLPAPER_DIR}${w.filename}`,
+  }),
+);

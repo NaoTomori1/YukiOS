@@ -1,18 +1,54 @@
 import { StorageKeys, os } from "../framework.js";
 import { $, $$, bindEvent } from "../shared/domUtils.js";
-import { getRangeSliderValue, bindRangeSlider, renderRangeSlider } from "../shared/rangeSlider.js";
-import { getSelectMenuValue, bindSelectMenu, renderSelectMenu } from "../shared/selectMenu.js";
+import {
+  getRangeSliderValue,
+  bindRangeSlider,
+  renderRangeSlider,
+} from "../shared/rangeSlider.js";
+import {
+  getSelectMenuValue,
+  bindSelectMenu,
+  renderSelectMenu,
+} from "../shared/selectMenu.js";
 import { BusEvents } from "../core/EventBus.js";
 
 const EASING_PRESETS = [
-  { value: "cubic-bezier(0.16, 1, 0.3, 1)", label: "easeOutExpo", desc: "Smooth deceleration (default)" },
-  { value: "cubic-bezier(0, 0.55, 0.45, 1)", label: "easeOutCirc", desc: "Circular deceleration" },
-  { value: "cubic-bezier(0.33, 1, 0.68, 1)", label: "easeOutCubic", desc: "Snappy deceleration" },
-  { value: "cubic-bezier(0.25, 1, 0.5, 1)", label: "easeOutQuart", desc: "Pronounced deceleration" },
-  { value: "cubic-bezier(0.65, 0, 0.35, 1)", label: "easeInOutCubic", desc: "Smooth in and out" },
-  { value: "cubic-bezier(0.85, 0, 0.15, 1)", label: "easeInOutCirc", desc: "Gentle ease in and out" },
-  { value: "cubic-bezier(0.34, 1.56, 0.64, 1)", label: "easeOutBack", desc: "Slight overshoot" },
-  { value: "cubic-bezier(0, 0, 1, 1)", label: "linear", desc: "No easing" }
+  {
+    value: "cubic-bezier(0.16, 1, 0.3, 1)",
+    label: "easeOutExpo",
+    desc: "Smooth deceleration (default)",
+  },
+  {
+    value: "cubic-bezier(0, 0.55, 0.45, 1)",
+    label: "easeOutCirc",
+    desc: "Circular deceleration",
+  },
+  {
+    value: "cubic-bezier(0.33, 1, 0.68, 1)",
+    label: "easeOutCubic",
+    desc: "Snappy deceleration",
+  },
+  {
+    value: "cubic-bezier(0.25, 1, 0.5, 1)",
+    label: "easeOutQuart",
+    desc: "Pronounced deceleration",
+  },
+  {
+    value: "cubic-bezier(0.65, 0, 0.35, 1)",
+    label: "easeInOutCubic",
+    desc: "Smooth in and out",
+  },
+  {
+    value: "cubic-bezier(0.85, 0, 0.15, 1)",
+    label: "easeInOutCirc",
+    desc: "Gentle ease in and out",
+  },
+  {
+    value: "cubic-bezier(0.34, 1.56, 0.64, 1)",
+    label: "easeOutBack",
+    desc: "Slight overshoot",
+  },
+  { value: "cubic-bezier(0, 0, 1, 1)", label: "linear", desc: "No easing" },
 ];
 
 function getConfigVal(key, dflt) {
@@ -36,11 +72,14 @@ export function renderTilingSettings() {
   const barPosition = os.storage.get(StorageKeys.tilingBarPosition) || "top";
   const barHeight = Number(os.storage.get(StorageKeys.tilingBarHeight)) || 36;
   const showClock = os.storage.get(StorageKeys.tilingBarShowClock) !== "false";
-  const showWorkspace = os.storage.get(StorageKeys.tilingBarShowWorkspace) !== "false";
-  const showTitle = os.storage.get(StorageKeys.tilingBarShowFocusedTitle) !== "false";
+  const showWorkspace =
+    os.storage.get(StorageKeys.tilingBarShowWorkspace) !== "false";
+  const showTitle =
+    os.storage.get(StorageKeys.tilingBarShowFocusedTitle) !== "false";
   const showTray = os.storage.get(StorageKeys.tilingBarShowTray) !== "false";
   const rofiEnabled = os.storage.get(StorageKeys.tilingRofiEnabled) !== "false";
-  const rofiMaxResults = Number(os.storage.get(StorageKeys.tilingRofiMaxResults)) || 10;
+  const rofiMaxResults =
+    Number(os.storage.get(StorageKeys.tilingRofiMaxResults)) || 10;
   const rofiWidth = Number(os.storage.get(StorageKeys.tilingRofiWidth)) || 50;
 
   const innerGap = getConfigVal("gaps.inner", 5);
@@ -50,7 +89,10 @@ export function renderTilingSettings() {
   const borderRadius = getConfigVal("border_radius", 4);
   const resizeDelta = getConfigVal("resize_delta", 0.05);
   const animDuration = getConfigVal("animation_duration", 200);
-  const animEasing = getConfigVal("animation_easing", "cubic-bezier(0.16, 1, 0.3, 1)");
+  const animEasing = getConfigVal(
+    "animation_easing",
+    "cubic-bezier(0.16, 1, 0.3, 1)",
+  );
   const layout = getConfigVal("layout", "bsp");
   const mouseResize = getConfigVal("mouse_resize", true);
   const wsDelay = getConfigVal("workspace_switch_delay", 320);
@@ -177,10 +219,14 @@ export function renderTilingSettings() {
             "settingsTilingLayout",
             [
               { value: "bsp", label: "BSP", desc: "Binary Space Partition" },
-              { value: "master-stack", label: "Master-Stack", desc: "Master with side stack" }
+              {
+                value: "master-stack",
+                label: "Master-Stack",
+                desc: "Master with side stack",
+              },
             ],
             layout,
-            "layout-select"
+            "layout-select",
           )}
         </div>
         <div class="settings-row">
@@ -292,7 +338,8 @@ export function bindTilingCategory(win, save, settings) {
     showTitle: $("#settingsTilingShowFocusedTitle", win),
     showTray: $("#settingsTilingShowTray", win),
     rofiEnabled: $("#settingsTilingRofiEnabled", win),
-    rofiMaxResults: () => getRangeSliderValue("settingsTilingRofiMaxResults", win),
+    rofiMaxResults: () =>
+      getRangeSliderValue("settingsTilingRofiMaxResults", win),
     rofiWidth: () => getRangeSliderValue("settingsTilingRofiWidth", win),
     innerGap: () => getRangeSliderValue("settingsTilingInnerGap", win),
     outerGap: () => getRangeSliderValue("settingsTilingOuterGap", win),
@@ -305,7 +352,8 @@ export function bindTilingCategory(win, save, settings) {
     animDuration: () => getRangeSliderValue("settingsTilingAnimDuration", win),
     animEasing: () => getSelectMenuValue("settingsTilingAnimEasing", win),
     wsDelay: () => getRangeSliderValue("settingsTilingWsDelay", win),
-    resizeDebounce: () => getRangeSliderValue("settingsTilingResizeDebounce", win)
+    resizeDebounce: () =>
+      getRangeSliderValue("settingsTilingResizeDebounce", win),
   };
 
   const updateEasingPreview = (easing) => {
@@ -324,7 +372,7 @@ export function bindTilingCategory(win, save, settings) {
       layout: els.layout() || "bsp",
       gaps: {
         inner: Number(els.innerGap()),
-        outer: Number(els.outerGap())
+        outer: Number(els.outerGap()),
       },
       split_ratio: Number(els.splitRatio()),
       border_width: Number(els.borderWidth()),
@@ -334,19 +382,49 @@ export function bindTilingCategory(win, save, settings) {
       animation_easing: easing,
       mouse_resize: els.mouseResize?.checked ?? true,
       workspace_switch_delay: Number(els.wsDelay()),
-      resize_debounce: Number(els.resizeDebounce())
+      resize_debounce: Number(els.resizeDebounce()),
     });
 
-    os.storage.set(StorageKeys.tilingBarEnabled, String(!!els.barEnabled?.checked));
-    os.storage.set(StorageKeys.tilingBarPosition, getSelectMenuValue("settingsTilingBarPosition", win) || "top");
-    os.storage.set(StorageKeys.tilingBarHeight, String(Number(els.barHeight())));
-    os.storage.set(StorageKeys.tilingBarShowClock, String(!!els.showClock?.checked));
-    os.storage.set(StorageKeys.tilingBarShowWorkspace, String(!!els.showWorkspace?.checked));
-    os.storage.set(StorageKeys.tilingBarShowFocusedTitle, String(!!els.showTitle?.checked));
-    os.storage.set(StorageKeys.tilingBarShowTray, String(!!els.showTray?.checked));
-    os.storage.set(StorageKeys.tilingRofiEnabled, String(!!els.rofiEnabled?.checked));
-    os.storage.set(StorageKeys.tilingRofiMaxResults, String(Number(els.rofiMaxResults())));
-    os.storage.set(StorageKeys.tilingRofiWidth, String(Number(els.rofiWidth())));
+    os.storage.set(
+      StorageKeys.tilingBarEnabled,
+      String(!!els.barEnabled?.checked),
+    );
+    os.storage.set(
+      StorageKeys.tilingBarPosition,
+      getSelectMenuValue("settingsTilingBarPosition", win) || "top",
+    );
+    os.storage.set(
+      StorageKeys.tilingBarHeight,
+      String(Number(els.barHeight())),
+    );
+    os.storage.set(
+      StorageKeys.tilingBarShowClock,
+      String(!!els.showClock?.checked),
+    );
+    os.storage.set(
+      StorageKeys.tilingBarShowWorkspace,
+      String(!!els.showWorkspace?.checked),
+    );
+    os.storage.set(
+      StorageKeys.tilingBarShowFocusedTitle,
+      String(!!els.showTitle?.checked),
+    );
+    os.storage.set(
+      StorageKeys.tilingBarShowTray,
+      String(!!els.showTray?.checked),
+    );
+    os.storage.set(
+      StorageKeys.tilingRofiEnabled,
+      String(!!els.rofiEnabled?.checked),
+    );
+    os.storage.set(
+      StorageKeys.tilingRofiMaxResults,
+      String(Number(els.rofiMaxResults())),
+    );
+    os.storage.set(
+      StorageKeys.tilingRofiWidth,
+      String(Number(els.rofiWidth())),
+    );
 
     os.tiling.applyBarSettings();
 
@@ -366,7 +444,9 @@ export function bindTilingCategory(win, save, settings) {
     });
   }
 
-  const inputs = win.querySelectorAll("#pane-tiling input, #pane-tiling .select-menu, #pane-tiling .range-slider");
+  const inputs = win.querySelectorAll(
+    "#pane-tiling input, #pane-tiling .select-menu, #pane-tiling .range-slider",
+  );
   inputs.forEach((el) => {
     bindEvent(el, "change", saveTiling);
     bindEvent(el, "input", saveTiling);

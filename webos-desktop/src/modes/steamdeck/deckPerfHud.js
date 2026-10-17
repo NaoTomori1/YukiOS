@@ -1,4 +1,11 @@
-import { os, StorageKeys, createElement, setHTML, setText, $$ } from "../../framework.js";
+import {
+  os,
+  StorageKeys,
+  createElement,
+  setHTML,
+  setText,
+  $$,
+} from "../../framework.js";
 
 class DeckPerfHud {
   constructor() {
@@ -42,7 +49,7 @@ class DeckPerfHud {
       hud,
       '<div class="deck-perf-hud-row"><span class="deck-perf-hud-label">FPS</span><span class="deck-perf-hud-value" data-hud-fps></span></div>' +
         '<div class="deck-perf-hud-row"><span class="deck-perf-hud-label">MEM</span><span class="deck-perf-hud-value" data-hud-mem></span></div>' +
-        '<div class="deck-perf-hud-row"><span class="deck-perf-hud-label">BATT</span><span class="deck-perf-hud-value" data-hud-batt></span></div>'
+        '<div class="deck-perf-hud-row"><span class="deck-perf-hud-label">BATT</span><span class="deck-perf-hud-value" data-hud-batt></span></div>',
     );
     this.root.appendChild(hud);
     this.hudEl = hud;
@@ -61,7 +68,8 @@ class DeckPerfHud {
       cancelAnimationFrame(this.rafId);
       this.rafId = null;
     }
-    if (this.hudEl && this.hudEl.parentNode) this.hudEl.parentNode.removeChild(this.hudEl);
+    if (this.hudEl && this.hudEl.parentNode)
+      this.hudEl.parentNode.removeChild(this.hudEl);
     this.hudEl = null;
     this.fpsEl = null;
     this.memEl = null;
@@ -142,7 +150,10 @@ class DeckPerfHud {
   detachBattery() {
     if (this.battery) {
       this.battery.removeEventListener("levelchange", this.handleBatteryChange);
-      this.battery.removeEventListener("chargingchange", this.handleBatteryChange);
+      this.battery.removeEventListener(
+        "chargingchange",
+        this.handleBatteryChange,
+      );
       this.battery = null;
     }
   }

@@ -21,7 +21,7 @@ export const ServiceKeys = {
   DESKTOP_UI: "desktopUI",
   INSTALLED_APPS: "systemAppsApp",
   BOXEDWINE: "boxedWineApp",
-  DISPLAY_PERFORMANCE: "displayPerformanceApp"
+  DISPLAY_PERFORMANCE: "displayPerformanceApp",
 };
 
 /**

@@ -23,7 +23,7 @@ export async function getPyodide() {
       },
       stderr: (text) => {
         if (capturing) stderrBuffer += text + "\n";
-      }
+      },
     });
     loadingPromise = null;
     return pyodideInstance;

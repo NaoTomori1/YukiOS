@@ -29,7 +29,7 @@ export class ColorPickerApp extends BaseApp {
     const winId = "color-picker";
 
     const win = os.window.create(winId, "Color Picker", "360px", "480px", {
-      icon: "fas fa-eye-dropper"
+      icon: "fas fa-eye-dropper",
     });
 
     win.classList.add("cp-window");
@@ -82,7 +82,9 @@ export class ColorPickerApp extends BaseApp {
   }
 
   setupEvents(win) {
-    win.querySelector("#cp-activate").addEventListener("click", () => this.pick());
+    win
+      .querySelector("#cp-activate")
+      .addEventListener("click", () => this.pick());
   }
 
   loadHistory() {
@@ -120,7 +122,7 @@ export class ColorPickerApp extends BaseApp {
           <span class="cp-history-swatch" style="background:${c}"></span>
           ${c}
         </div>
-      `
+      `,
       )
       .join("");
 
@@ -138,7 +140,9 @@ export class ColorPickerApp extends BaseApp {
     this.colors.unshift(hex);
     this.saveHistory();
     this.renderHistory();
-    os.events.emit(BusEvents.ACHIEVEMENT_TRIGGER, { achievementId: Achievements.Sampler });
+    os.events.emit(BusEvents.ACHIEVEMENT_TRIGGER, {
+      achievementId: Achievements.Sampler,
+    });
   }
 
   updatePreview(hex) {
@@ -181,13 +185,15 @@ export class ColorPickerApp extends BaseApp {
 
     const btn = $("#cp-activate");
     if (btn) {
-      btn.innerHTML = '<i class="fas fa-spinner fa-pulse"></i><span>Capturing screen…</span>';
+      btn.innerHTML =
+        '<i class="fas fa-spinner fa-pulse"></i><span>Capturing screen…</span>';
     }
 
     this.createOverlay();
 
     if (btn) {
-      btn.innerHTML = '<i class="fas fa-eye-dropper"></i><span>Click on the screen to pick a color</span>';
+      btn.innerHTML =
+        '<i class="fas fa-eye-dropper"></i><span>Click on the screen to pick a color</span>';
     }
 
     this.picking = false;
@@ -208,9 +214,13 @@ export class ColorPickerApp extends BaseApp {
       })
       .catch((err) => {
         console.error("[ColorPicker] fallback failed:", err);
-        os.notify.send("Color Picker", "Color picking not available in this browser. Try Chrome or Edge.", {
-          type: "error"
-        });
+        os.notify.send(
+          "Color Picker",
+          "Color picking not available in this browser. Try Chrome or Edge.",
+          {
+            type: "error",
+          },
+        );
         this.removeOverlay();
       });
   }
@@ -238,7 +248,7 @@ export class ColorPickerApp extends BaseApp {
         width: window.innerWidth,
         height: window.innerHeight,
         x: window.scrollX,
-        y: window.scrollY
+        y: window.scrollY,
       });
 
       if (!document.body.contains(overlay)) return;
@@ -273,8 +283,17 @@ export class ColorPickerApp extends BaseApp {
         magCtx.lineWidth = 1;
         magCtx.strokeRect(72, 72, 16, 16);
 
-        const pd = srcCtx.getImageData(Math.round(cx), Math.round(cy), 1, 1).data;
-        const hex = "#" + [pd[0], pd[1], pd[2]].map((x) => Math.round(x).toString(16).padStart(2, "0")).join("");
+        const pd = srcCtx.getImageData(
+          Math.round(cx),
+          Math.round(cy),
+          1,
+          1,
+        ).data;
+        const hex =
+          "#" +
+          [pd[0], pd[1], pd[2]]
+            .map((x) => Math.round(x).toString(16).padStart(2, "0"))
+            .join("");
 
         const ml = clientX - 80;
         magnifier.style.left = `${ml}px`;
@@ -309,7 +328,11 @@ export class ColorPickerApp extends BaseApp {
       };
     } catch (err) {
       console.error("[ColorPicker] capture failed:", err);
-      os.notify.send("Color Picker", "Screen capture not supported in this browser", { type: "error" });
+      os.notify.send(
+        "Color Picker",
+        "Screen capture not supported in this browser",
+        { type: "error" },
+      );
       this.removeOverlay();
     }
   }
@@ -333,7 +356,8 @@ export class ColorPickerApp extends BaseApp {
 
     const btn = $("#cp-activate");
     if (btn) {
-      btn.innerHTML = '<i class="fas fa-eye-dropper"></i><span>Pick Color from Screen</span>';
+      btn.innerHTML =
+        '<i class="fas fa-eye-dropper"></i><span>Pick Color from Screen</span>';
     }
   }
 

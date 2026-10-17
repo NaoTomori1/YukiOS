@@ -26,12 +26,16 @@ export function initLiveIconRefresh() {
             newEl.dataset.rawIcon = raw;
           }
           iconEl.replaceWith(newEl);
-          if (window.FontAwesome?.dom?.i2svg) window.FontAwesome.dom.i2svg({ node: newEl.parentNode });
+          if (window.FontAwesome?.dom?.i2svg)
+            window.FontAwesome.dom.i2svg({ node: newEl.parentNode });
         }
       }
     });
     document.querySelectorAll("img.papirus-icon").forEach((img) => {
-      if (img.closest(".icon-pack-option, .icon-pack-preview, .icon-pack-chooser")) return;
+      if (
+        img.closest(".icon-pack-option, .icon-pack-preview, .icon-pack-chooser")
+      )
+        return;
       const raw = img.dataset.rawIcon;
       const src = img.getAttribute("src") || img.src;
       let papirusKey = raw;
@@ -50,22 +54,31 @@ export function initLiveIconRefresh() {
         newEl.className = eff;
         newEl.dataset.rawIcon = papirusKey;
         img.replaceWith(newEl);
-        if (window.FontAwesome?.dom?.i2svg) window.FontAwesome.dom.i2svg({ node: newEl.parentNode });
+        if (window.FontAwesome?.dom?.i2svg)
+          window.FontAwesome.dom.i2svg({ node: newEl.parentNode });
       }
     });
-    document.querySelectorAll("svg.svg-inline--fa, i[class*='fa-']").forEach((el) => {
-      if (el.closest(".icon-pack-option, .icon-pack-preview, .icon-pack-chooser")) return;
-      const raw = el.dataset.rawIcon || el.closest("[data-raw-icon]")?.dataset.rawIcon;
-      if (!raw) return;
-      const eff = getEffectiveIcon(raw);
-      if (eff.startsWith("papirus:")) {
-        const newEl = document.createElement("img");
-        newEl.src = resolveIconUrl(eff);
-        newEl.className = "papirus-icon papirus-icon--22";
-        newEl.dataset.rawIcon = raw;
-        el.replaceWith(newEl);
-      }
-    });
+    document
+      .querySelectorAll("svg.svg-inline--fa, i[class*='fa-']")
+      .forEach((el) => {
+        if (
+          el.closest(
+            ".icon-pack-option, .icon-pack-preview, .icon-pack-chooser",
+          )
+        )
+          return;
+        const raw =
+          el.dataset.rawIcon || el.closest("[data-raw-icon]")?.dataset.rawIcon;
+        if (!raw) return;
+        const eff = getEffectiveIcon(raw);
+        if (eff.startsWith("papirus:")) {
+          const newEl = document.createElement("img");
+          newEl.src = resolveIconUrl(eff);
+          newEl.className = "papirus-icon papirus-icon--22";
+          newEl.dataset.rawIcon = raw;
+          el.replaceWith(newEl);
+        }
+      });
     if (window.FontAwesome?.dom?.i2svg) window.FontAwesome.dom.i2svg();
   });
 }

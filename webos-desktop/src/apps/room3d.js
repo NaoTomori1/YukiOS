@@ -28,7 +28,7 @@ const ACHIEVEMENT_GATED = {
   "wall-clock": Achievements.TerminalUser,
   rug: Achievements.NightPerson,
   "gold-trophy": Achievements.GameHopperMega,
-  "neon-sign": Achievements.Completionist
+  "neon-sign": Achievements.Completionist,
 };
 
 const rmStore = {
@@ -45,7 +45,7 @@ const rmStore = {
     try {
       os.storage.set(this.storagePrefix + k, v);
     } catch {}
-  }
+  },
 };
 
 export class Room3DApp extends BaseApp {
@@ -74,7 +74,9 @@ export class Room3DApp extends BaseApp {
   getLockedItems() {
     const achApp = this.services ? this.services.achievementsApp : null;
     if (!achApp) return Object.keys(ACHIEVEMENT_GATED);
-    return Object.keys(ACHIEVEMENT_GATED).filter((id) => !achApp.isUnlocked(ACHIEVEMENT_GATED[id]));
+    return Object.keys(ACHIEVEMENT_GATED).filter(
+      (id) => !achApp.isUnlocked(ACHIEVEMENT_GATED[id]),
+    );
   }
 
   async open(opts = {}) {
@@ -101,7 +103,7 @@ export class Room3DApp extends BaseApp {
       renderer: this.renderer,
       controls: this.controls,
       bridge: gameBridge,
-      close: () => this.closeRoom()
+      close: () => this.closeRoom(),
     };
   }
 
@@ -134,7 +136,7 @@ export class Room3DApp extends BaseApp {
       bridge: gameBridge,
       close: () => {
         if (this.systemOnExit) this.systemOnExit();
-      }
+      },
     };
   }
 
@@ -173,14 +175,19 @@ export class Room3DApp extends BaseApp {
       this.renderer.camera,
       this.renderer.renderer.domElement,
       this.renderer.bounds,
-      this.renderer.getColliders()
+      this.renderer.getColliders(),
     );
     this.controls.onLockStateChange = (locked) => {
       if (locked) {
         this.crosshairEl.classList.add("room3d-crosshair--visible");
       } else {
         this.crosshairEl.classList.remove("room3d-crosshair--visible");
-        if (!this.suppressPauseOnUnlock && this.overlay && !this.overlay.isVisible() && this.running) {
+        if (
+          !this.suppressPauseOnUnlock &&
+          this.overlay &&
+          !this.overlay.isVisible() &&
+          this.running
+        ) {
           this.overlay.show("pause");
         }
         this.suppressPauseOnUnlock = false;
@@ -199,21 +206,41 @@ export class Room3DApp extends BaseApp {
       audio: { masterVolume: 0.4, ui: true, footstep: true, ambient: true },
       gameplay: { genreHints: true, timer: true },
       editor: { snap: false, snapSize: 0.25 },
-      graphics: { quality: "medium", bloom: true, shadows: true, dust: true, curtainSway: true }
+      graphics: {
+        quality: "medium",
+        bloom: true,
+        shadows: true,
+        dust: true,
+        curtainSway: true,
+      },
     };
-    this.roomSettings = { ...DEFAULT_ROOM_SETTINGS, ...rmStore.get("settings", {}) };
-    if (!rmStore.get("settings", null)?.graphics?.quality && performanceManager.isChromebookDevice()) {
-      this.roomSettings.graphics = { ...this.roomSettings.graphics, quality: "performance" };
+    this.roomSettings = {
+      ...DEFAULT_ROOM_SETTINGS,
+      ...rmStore.get("settings", {}),
+    };
+    if (
+      !rmStore.get("settings", null)?.graphics?.quality &&
+      performanceManager.isChromebookDevice()
+    ) {
+      this.roomSettings.graphics = {
+        ...this.roomSettings.graphics,
+        quality: "performance",
+      };
     }
     for (const k of Object.keys(DEFAULT_ROOM_SETTINGS)) {
-      this.roomSettings[k] = { ...DEFAULT_ROOM_SETTINGS[k], ...this.roomSettings[k] };
+      this.roomSettings[k] = {
+        ...DEFAULT_ROOM_SETTINGS[k],
+        ...this.roomSettings[k],
+      };
     }
     this.audio.setUIEnabled(this.roomSettings.audio.ui);
     this.audio.setFootstepEnabled(this.roomSettings.audio.footstep);
     this.audio.setAmbientEnabled(this.roomSettings.audio.ambient);
     this.audio.setMasterVolume(this.roomSettings.audio.masterVolume);
-    if (this.roomSettings.visuals.dayNight && this.renderer) this.renderer.toggleDayNight();
-    if (this.renderer) this.renderer.toggleCeiling(this.roomSettings.visuals.lamp);
+    if (this.roomSettings.visuals.dayNight && this.renderer)
+      this.renderer.toggleDayNight();
+    if (this.renderer)
+      this.renderer.toggleCeiling(this.roomSettings.visuals.lamp);
     if (this.renderer) {
       this.renderer.setBloomEnabled(this.roomSettings.graphics.bloom);
       this.renderer.setShadowsEnabled(this.roomSettings.graphics.shadows);
@@ -231,7 +258,7 @@ export class Room3DApp extends BaseApp {
 
     const overlayCanvas = root.querySelector("#room3d-overlay");
     this.overlay = new CanvasOverlay(overlayCanvas, {
-      onAction: (btn) => this.handleHUDAction(btn)
+      onAction: (btn) => this.handleHUDAction(btn),
     });
     this.overlay.setSettings(this.roomSettings);
     const origShow = this.overlay.show.bind(this.overlay);
@@ -244,7 +271,7 @@ export class Room3DApp extends BaseApp {
       this.renderer.scene,
       this.renderer.bounds,
       this.interaction,
-      this.renderer.getColliders()
+      this.renderer.getColliders(),
     );
     const savedState = rmStore.get("bookPositions") || {};
     const savedPositions = savedState.positions || {};
@@ -262,11 +289,22 @@ export class Room3DApp extends BaseApp {
     this.gameCaseManager.ballBody = this.rainbowBall.body;
     this.interaction.setBallMesh(this.rainbowBall.mesh, this.rainbowBall.body);
 
-    if (this.renderer.player && this.renderer.player.leftHand && this.renderer.player.rightHand) {
-      this.interaction.setHandMeshes(this.renderer.player.leftHand, this.renderer.player.rightHand);
+    if (
+      this.renderer.player &&
+      this.renderer.player.leftHand &&
+      this.renderer.player.rightHand
+    ) {
+      this.interaction.setHandMeshes(
+        this.renderer.player.leftHand,
+        this.renderer.player.rightHand,
+      );
     }
 
-    this.shelfManager = new ShelfManager(THREE, this.renderer.scene, this.gameCaseManager.physics.world);
+    this.shelfManager = new ShelfManager(
+      THREE,
+      this.renderer.scene,
+      this.gameCaseManager.physics.world,
+    );
     this.shelfManager.build(savedShelves);
     this.gameCaseManager.placeShelvedCases(this.shelfManager);
     this.interaction.setShelfManager(this.shelfManager);
@@ -277,10 +315,16 @@ export class Room3DApp extends BaseApp {
     this.interaction.setGameState(this.gameState);
     this.overlay.setGameState(this.gameState);
 
-    this.furnitureManager = new FurnitureManager(THREE, this.renderer.scene, this.renderer, this.interaction, () => {
-      const fp = this.furnitureManager.getPositions();
-      rmStore.set("furniturePositions", fp);
-    });
+    this.furnitureManager = new FurnitureManager(
+      THREE,
+      this.renderer.scene,
+      this.renderer,
+      this.interaction,
+      () => {
+        const fp = this.furnitureManager.getPositions();
+        rmStore.set("furniturePositions", fp);
+      },
+    );
     this.interaction.setFurnitureManager(this.furnitureManager);
 
     const savedFurniturePos = rmStore.get("furniturePositions");
@@ -293,11 +337,15 @@ export class Room3DApp extends BaseApp {
         "wooden-chair-1",
         this.renderer.chairGroup,
         this.renderer.chairGroup.position.clone(),
-        { yOffset: 0.65 }
+        { yOffset: 0.65 },
       );
     }
 
-    this.decorManager = new DecorManager(THREE, this.renderer.scene, this.renderer);
+    this.decorManager = new DecorManager(
+      THREE,
+      this.renderer.scene,
+      this.renderer,
+    );
     this.decorManager.defineDefaultItems();
     this.decorManager.buildAll();
     for (const item of this.decorManager.getAllItems()) {
@@ -308,10 +356,16 @@ export class Room3DApp extends BaseApp {
       this.decorManager.restoreStates(savedDecorStates);
     }
 
-    const floorLampItem = this.decorManager.getAllItems().find((i) => i.id === "floor-lamp");
+    const floorLampItem = this.decorManager
+      .getAllItems()
+      .find((i) => i.id === "floor-lamp");
     if (floorLampItem) {
       floorLampItem.mesh.traverse((child) => {
-        if (child.isMesh && child.userData.interactive && child.userData.objectId) {
+        if (
+          child.isMesh &&
+          child.userData.interactive &&
+          child.userData.objectId
+        ) {
           this.renderer.interactiveObjects.push(child);
         }
       });
@@ -320,13 +374,13 @@ export class Room3DApp extends BaseApp {
     this.sceneSerializer = new SceneSerializer();
     const editorCanvas = root.querySelector("#room3d-editor-canvas");
     this.editorUI = new EditorUI(editorCanvas, {
-      onAction: (btn) => this.handleEditorAction(btn)
+      onAction: (btn) => this.handleEditorAction(btn),
     });
     this.editorManager = new EditorManager(
       THREE,
       this.renderer.scene,
       this.renderer.camera,
-      this.renderer.renderer.domElement
+      this.renderer.renderer.domElement,
     );
     this.editorManager.setControls(this.controls);
     this.editorManager.furnitureManager = this.furnitureManager;
@@ -342,7 +396,11 @@ export class Room3DApp extends BaseApp {
 
     const savedLayout = this.sceneSerializer.deserialize();
     if (savedLayout) {
-      this.sceneSerializer.apply(savedLayout, this.furnitureManager, this.decorManager);
+      this.sceneSerializer.apply(
+        savedLayout,
+        this.furnitureManager,
+        this.decorManager,
+      );
     }
 
     this.editorManager.onModeChange = (active) => {
@@ -365,8 +423,10 @@ export class Room3DApp extends BaseApp {
         this.editorManager.setCollisionObjects(this.getEditorColliders());
         this.editorUI.setLockedItems(this.getLockedItems());
         this.editorUI.show(
-          this.editorManager.equippedItem ? this.editorManager.equippedItem.id : null,
-          this.editorManager.snapEnabled
+          this.editorManager.equippedItem
+            ? this.editorManager.equippedItem.id
+            : null,
+          this.editorManager.snapEnabled,
         );
         this.editorUI.render();
         const editHint = root.querySelector("#room3d-editor-hint");
@@ -377,26 +437,36 @@ export class Room3DApp extends BaseApp {
         const editHint = root.querySelector("#room3d-editor-hint");
         if (editHint) editHint.classList.remove("room3d-editor-hint--visible");
         const overlayEl = root.querySelector("#room3d-editor-overlay");
-        if (overlayEl) overlayEl.classList.remove("room3d-editor-overlay--active");
+        if (overlayEl)
+          overlayEl.classList.remove("room3d-editor-overlay--active");
         this.editorUI.hide();
         if (this.savedCameraPos) {
           const fwd = new THREE.Vector3(0, 0, -1);
-          fwd.x = -Math.sin(this.savedCameraYaw) * Math.cos(this.savedCameraPitch);
+          fwd.x =
+            -Math.sin(this.savedCameraYaw) * Math.cos(this.savedCameraPitch);
           fwd.y = Math.sin(this.savedCameraPitch);
-          fwd.z = -Math.cos(this.savedCameraYaw) * Math.cos(this.savedCameraPitch);
-          const lookAtTarget = this.savedCameraPos.clone().add(fwd.multiplyScalar(10));
-          this.controls.animateCamera(this.savedCameraPos, lookAtTarget, 0.5, () => {
-            this.controls.yaw = this.savedCameraYaw;
-            this.controls.pitch = this.savedCameraPitch;
-            const V = THREE.Vector3;
-            const Q = THREE.Quaternion;
-            const qx = new Q();
-            const qy = new Q();
-            qx.setFromAxisAngle(new V(1, 0, 0), this.controls.pitch);
-            qy.setFromAxisAngle(new V(0, 1, 0), this.controls.yaw);
-            this.controls.camera.quaternion.copy(qy.multiply(qx));
-            this.controls.lock();
-          });
+          fwd.z =
+            -Math.cos(this.savedCameraYaw) * Math.cos(this.savedCameraPitch);
+          const lookAtTarget = this.savedCameraPos
+            .clone()
+            .add(fwd.multiplyScalar(10));
+          this.controls.animateCamera(
+            this.savedCameraPos,
+            lookAtTarget,
+            0.5,
+            () => {
+              this.controls.yaw = this.savedCameraYaw;
+              this.controls.pitch = this.savedCameraPitch;
+              const V = THREE.Vector3;
+              const Q = THREE.Quaternion;
+              const qx = new Q();
+              const qy = new Q();
+              qx.setFromAxisAngle(new V(1, 0, 0), this.controls.pitch);
+              qy.setFromAxisAngle(new V(0, 1, 0), this.controls.yaw);
+              this.controls.camera.quaternion.copy(qy.multiply(qx));
+              this.controls.lock();
+            },
+          );
         }
         this.showHint();
       }
@@ -410,7 +480,7 @@ export class Room3DApp extends BaseApp {
           info.id,
           info.manager,
           { x: pos.x, y: pos.y, z: pos.z },
-          THREE.MathUtils.radToDeg(rot.y)
+          THREE.MathUtils.radToDeg(rot.y),
         );
       } else {
         this.editorUI.clearSelection();
@@ -431,7 +501,11 @@ export class Room3DApp extends BaseApp {
 
     rendererDom.addEventListener("click", (e) => {
       if (!this.editorManager || !this.editorManager.isEditActive()) return;
-      if (this.editorManager.transformControls && this.editorManager.transformControls.dragging) return;
+      if (
+        this.editorManager.transformControls &&
+        this.editorManager.transformControls.dragging
+      )
+        return;
 
       const hit = this.editorUI.hitTest(e.clientX, e.clientY);
       if (hit) {
@@ -444,7 +518,7 @@ export class Room3DApp extends BaseApp {
       const THREE = this.editorManager.THREE;
       const mouse = new THREE.Vector2(
         (e.clientX / window.innerWidth) * 2 - 1,
-        -(e.clientY / window.innerHeight) * 2 + 1
+        -(e.clientY / window.innerHeight) * 2 + 1,
       );
       const raycaster = new THREE.Raycaster();
       raycaster.setFromCamera(mouse, this.renderer.camera);
@@ -456,8 +530,10 @@ export class Room3DApp extends BaseApp {
         if (planeHit) {
           this.editorManager.placeAt(target);
           this.editorUI.show(
-            this.editorManager.equippedItem ? this.editorManager.equippedItem.id : null,
-            this.editorManager.snapEnabled
+            this.editorManager.equippedItem
+              ? this.editorManager.equippedItem.id
+              : null,
+            this.editorManager.snapEnabled,
           );
           this.editorUI.render();
           if (this.saveRoomState) this.saveRoomState();
@@ -511,7 +587,7 @@ export class Room3DApp extends BaseApp {
       (gameId) => this.gameCaseManager.recoverFromTrash(gameId),
       THREE,
       this.renderer.scene,
-      this.renderer.interactiveObjects
+      this.renderer.interactiveObjects,
     );
     this.wallDisplay.open();
 
@@ -552,10 +628,20 @@ export class Room3DApp extends BaseApp {
     this.renderer.onUpdate((delta) => {
       if (this.editorManager && this.editorManager.isEditActive()) {
         if (this.editorManager.equippedItem) {
-          this.editorManager.updateGhostPosition(this.renderer.camera, this.editorMouseNDC);
+          this.editorManager.updateGhostPosition(
+            this.renderer.camera,
+            this.editorMouseNDC,
+          );
         }
         const keys = this.controls.keys;
-        if (keys.forward || keys.backward || keys.left || keys.right || keys.jump || keys.crouch) {
+        if (
+          keys.forward ||
+          keys.backward ||
+          keys.left ||
+          keys.right ||
+          keys.jump ||
+          keys.crouch
+        ) {
           const speed = 3 * delta;
           const cam = this.renderer.camera;
           if (keys.forward) cam.position.z -= speed;
@@ -573,11 +659,19 @@ export class Room3DApp extends BaseApp {
       this.interaction.updateEGrabbed(this.renderer.camera, delta);
       this.interaction.updateWastebinProximity(this.renderer.camera);
       if (this.wastebinHintEl) {
-        this.wastebinHintEl.classList.toggle("room3d-wastebin-hint--visible", this.interaction.nearWastebin);
+        this.wastebinHintEl.classList.toggle(
+          "room3d-wastebin-hint--visible",
+          this.interaction.nearWastebin,
+        );
       }
       if (this.launchHintEl) {
-        const showLaunch = !(this.gameState && this.gameState.active) && this.interaction.povGrabbedCase;
-        this.launchHintEl.classList.toggle("room3d-launch-hint--visible", showLaunch);
+        const showLaunch =
+          !(this.gameState && this.gameState.active) &&
+          this.interaction.povGrabbedCase;
+        this.launchHintEl.classList.toggle(
+          "room3d-launch-hint--visible",
+          showLaunch,
+        );
       }
       if (this.audio && this.controls && this.controls.isLocked) {
         const moving =
@@ -614,7 +708,7 @@ export class Room3DApp extends BaseApp {
         this.rainbowBall.mesh.position.set(
           this.rainbowBall.body.position.x,
           this.rainbowBall.body.position.y,
-          this.rainbowBall.body.position.z
+          this.rainbowBall.body.position.z,
         );
       }
       if (this.rainbowBall) {
@@ -632,7 +726,11 @@ export class Room3DApp extends BaseApp {
       this.renderer.time += delta;
       const t = this.renderer.time;
 
-      if (this.roomSettings.graphics.dust && this.renderer.dustMesh && this.renderer.dustPositions) {
+      if (
+        this.roomSettings.graphics.dust &&
+        this.renderer.dustMesh &&
+        this.renderer.dustPositions
+      ) {
         const pos = this.renderer.dustPositions;
         const vel = this.renderer.dustVelocities;
         const dummyMatrix = new THREE.Matrix4();
@@ -642,7 +740,11 @@ export class Room3DApp extends BaseApp {
           pos[i * 3 + 2] += Math.cos(t * vel[i * 3 + 2] + i * 0.9) * 0.0003;
           if (pos[i * 3 + 1] > 2.9) pos[i * 3 + 1] = 0.1;
           if (pos[i * 3 + 1] < 0.05) pos[i * 3 + 1] = 2.8;
-          dummyMatrix.makeTranslation(pos[i * 3], pos[i * 3 + 1], pos[i * 3 + 2]);
+          dummyMatrix.makeTranslation(
+            pos[i * 3],
+            pos[i * 3 + 1],
+            pos[i * 3 + 2],
+          );
           this.renderer.dustMesh.setMatrixAt(i, dummyMatrix);
         }
         this.renderer.dustMesh.instanceMatrix.needsUpdate = true;
@@ -650,7 +752,10 @@ export class Room3DApp extends BaseApp {
 
       if (this.renderer.ceilingLight) {
         this.renderer.ceilingLight.intensity =
-          0.35 + Math.sin(t * 3.7) * 0.02 + Math.sin(t * 7.1) * 0.01 + Math.sin(t * 13) * 0.005;
+          0.35 +
+          Math.sin(t * 3.7) * 0.02 +
+          Math.sin(t * 7.1) * 0.01 +
+          Math.sin(t * 13) * 0.005;
       }
 
       if (this.roomSettings.graphics.curtainSway)
@@ -682,8 +787,10 @@ export class Room3DApp extends BaseApp {
       this.gameState.onUpdate = null;
       this.gameState.onCompletion = (results) => {
         this.triggerRoomAchievement("game_master");
-        if (results.accuracy >= 100) this.triggerRoomAchievement("perfect_sort");
-        if (this.gameState.elapsed < 120) this.triggerRoomAchievement("speed_shelver");
+        if (results.accuracy >= 100)
+          this.triggerRoomAchievement("perfect_sort");
+        if (this.gameState.elapsed < 120)
+          this.triggerRoomAchievement("speed_shelver");
         if (this.controls && this.controls.isLocked) this.controls.unlock();
         this.overlay.show("completion");
         if (this.audio) this.audio.playGameComplete();
@@ -698,8 +805,13 @@ export class Room3DApp extends BaseApp {
         this.overlay.showPlacementFeedback(correct);
       };
       const tickHud = () => {
-        if (!this.gameState || (!this.gameState.active && !this.gameState.completed)) return;
-        if (this.overlay && this.overlay.mode === "gameHud") this.overlay.render();
+        if (
+          !this.gameState ||
+          (!this.gameState.active && !this.gameState.completed)
+        )
+          return;
+        if (this.overlay && this.overlay.mode === "gameHud")
+          this.overlay.render();
         this.gameHudRaf = requestAnimationFrame(tickHud);
       };
       this.gameHudRaf = requestAnimationFrame(tickHud);
@@ -738,7 +850,9 @@ export class Room3DApp extends BaseApp {
       try {
         if (!this.gameCaseManager) return;
         const positions = this.gameCaseManager.getPositions();
-        const shelves = this.shelfManager ? this.shelfManager.getShelfAssignments() : {};
+        const shelves = this.shelfManager
+          ? this.shelfManager.getShelfAssignments()
+          : {};
         rmStore.set("bookPositions", { positions, shelves });
 
         if (this.rainbowBall && this.rainbowBall.body) {
@@ -746,13 +860,23 @@ export class Room3DApp extends BaseApp {
           rmStore.set("ballPosition", { x: bp.x, y: bp.y, z: bp.z });
         }
         if (this.furnitureManager) {
-          rmStore.set("furniturePositions", this.furnitureManager.getPositions());
+          rmStore.set(
+            "furniturePositions",
+            this.furnitureManager.getPositions(),
+          );
         }
         if (this.decorManager) {
           rmStore.set("activeDecorations", this.decorManager.getActiveStates());
         }
-        if (this.sceneSerializer && this.furnitureManager && this.decorManager) {
-          this.sceneSerializer.serialize(this.furnitureManager, this.decorManager);
+        if (
+          this.sceneSerializer &&
+          this.furnitureManager &&
+          this.decorManager
+        ) {
+          this.sceneSerializer.serialize(
+            this.furnitureManager,
+            this.decorManager,
+          );
         }
       } catch (e) {
         /* ignore */
@@ -781,7 +905,10 @@ export class Room3DApp extends BaseApp {
         case "exit":
           this.overlay.hide();
           if (this.audio) this.audio.playToggleOff();
-          if (this.gameState && (this.gameState.active || this.gameState.completed)) {
+          if (
+            this.gameState &&
+            (this.gameState.active || this.gameState.completed)
+          ) {
             this.endGameMode();
           } else if (this.systemOnExit) {
             this.systemOnExit();
@@ -802,7 +929,9 @@ export class Room3DApp extends BaseApp {
         case "achievements":
           this.overlay.show("achievements");
           if (this.overlay && this.roomAchievements) {
-            this.overlay.setAchievementsData(this.roomAchievements.getAllWithStatus());
+            this.overlay.setAchievementsData(
+              this.roomAchievements.getAllWithStatus(),
+            );
           }
           if (this.audio) this.audio.playToggleOn();
           break;
@@ -829,7 +958,8 @@ export class Room3DApp extends BaseApp {
           if (this.audio) this.audio.playToggleOn();
           break;
         case "settings_visuals_dayNight": {
-          this.roomSettings.visuals.dayNight = !this.roomSettings.visuals.dayNight;
+          this.roomSettings.visuals.dayNight =
+            !this.roomSettings.visuals.dayNight;
           rmStore.set("settings", this.roomSettings);
           if (this.renderer) this.renderer.toggleDayNight();
           this.overlay.render();
@@ -838,7 +968,8 @@ export class Room3DApp extends BaseApp {
         case "settings_visuals_lamp": {
           this.roomSettings.visuals.lamp = !this.roomSettings.visuals.lamp;
           rmStore.set("settings", this.roomSettings);
-          if (this.renderer) this.renderer.toggleCeiling(this.roomSettings.visuals.lamp);
+          if (this.renderer)
+            this.renderer.toggleCeiling(this.roomSettings.visuals.lamp);
           this.overlay.render();
           break;
         }
@@ -848,10 +979,11 @@ export class Room3DApp extends BaseApp {
           const dir = btn.id === "settings_audio_masterDown" ? -1 : 1;
           this.roomSettings.audio.masterVolume = Math.max(
             0,
-            Math.min(1, this.roomSettings.audio.masterVolume + dir * step)
+            Math.min(1, this.roomSettings.audio.masterVolume + dir * step),
           );
           rmStore.set("settings", this.roomSettings);
-          if (this.audio) this.audio.setMasterVolume(this.roomSettings.audio.masterVolume);
+          if (this.audio)
+            this.audio.setMasterVolume(this.roomSettings.audio.masterVolume);
           this.overlay.render();
           break;
         }
@@ -865,19 +997,22 @@ export class Room3DApp extends BaseApp {
         case "settings_audio_footstep": {
           this.roomSettings.audio.footstep = !this.roomSettings.audio.footstep;
           rmStore.set("settings", this.roomSettings);
-          if (this.audio) this.audio.setFootstepEnabled(this.roomSettings.audio.footstep);
+          if (this.audio)
+            this.audio.setFootstepEnabled(this.roomSettings.audio.footstep);
           this.overlay.render();
           break;
         }
         case "settings_audio_ambient": {
           this.roomSettings.audio.ambient = !this.roomSettings.audio.ambient;
           rmStore.set("settings", this.roomSettings);
-          if (this.audio) this.audio.setAmbientEnabled(this.roomSettings.audio.ambient);
+          if (this.audio)
+            this.audio.setAmbientEnabled(this.roomSettings.audio.ambient);
           this.overlay.render();
           break;
         }
         case "settings_gameplay_genreHints": {
-          this.roomSettings.gameplay.genreHints = !this.roomSettings.gameplay.genreHints;
+          this.roomSettings.gameplay.genreHints =
+            !this.roomSettings.gameplay.genreHints;
           rmStore.set("settings", this.roomSettings);
           this.overlay.render();
           break;
@@ -891,7 +1026,8 @@ export class Room3DApp extends BaseApp {
         case "settings_editor_snap": {
           this.roomSettings.editor.snap = !this.roomSettings.editor.snap;
           rmStore.set("settings", this.roomSettings);
-          if (this.editorManager) this.editorManager.snapEnabled = this.roomSettings.editor.snap;
+          if (this.editorManager)
+            this.editorManager.snapEnabled = this.roomSettings.editor.snap;
           this.overlay.render();
           break;
         }
@@ -901,10 +1037,11 @@ export class Room3DApp extends BaseApp {
           const snapDir = btn.id === "settings_editor_snapSizeDown" ? -1 : 1;
           this.roomSettings.editor.snapSize = Math.max(
             0.05,
-            Math.min(1, this.roomSettings.editor.snapSize + snapDir * snapStep)
+            Math.min(1, this.roomSettings.editor.snapSize + snapDir * snapStep),
           );
           rmStore.set("settings", this.roomSettings);
-          if (this.editorManager) this.editorManager.snapSize = this.roomSettings.editor.snapSize;
+          if (this.editorManager)
+            this.editorManager.snapSize = this.roomSettings.editor.snapSize;
           this.overlay.render();
           break;
         }
@@ -914,10 +1051,14 @@ export class Room3DApp extends BaseApp {
         case "settings_graphics_curtainSway": {
           const gfx = this.roomSettings.graphics;
           const key =
-            btn.id === "settings_graphics_curtainSway" ? "curtainSway" : btn.id.replace("settings_graphics_", "");
+            btn.id === "settings_graphics_curtainSway"
+              ? "curtainSway"
+              : btn.id.replace("settings_graphics_", "");
           gfx[key] = !gfx[key];
-          if (key === "bloom" && this.renderer) this.renderer.setBloomEnabled(gfx.bloom);
-          if (key === "shadows" && this.renderer) this.renderer.setShadowsEnabled(gfx.shadows);
+          if (key === "bloom" && this.renderer)
+            this.renderer.setBloomEnabled(gfx.bloom);
+          if (key === "shadows" && this.renderer)
+            this.renderer.setShadowsEnabled(gfx.shadows);
           rmStore.set("settings", this.roomSettings);
           this.overlay.render();
           break;
@@ -979,11 +1120,17 @@ export class Room3DApp extends BaseApp {
         if (current && current.id === btn.data.id) {
           this.editorManager.unequip();
         } else {
-          this.editorManager.equip({ id: btn.data.id, name: btn.data.name, manager: btn.data.manager });
+          this.editorManager.equip({
+            id: btn.data.id,
+            name: btn.data.name,
+            manager: btn.data.manager,
+          });
         }
         this.editorUI.show(
-          this.editorManager.equippedItem ? this.editorManager.equippedItem.id : null,
-          this.editorManager.snapEnabled
+          this.editorManager.equippedItem
+            ? this.editorManager.equippedItem.id
+            : null,
+          this.editorManager.snapEnabled,
         );
         this.editorUI.render();
         return;
@@ -991,7 +1138,11 @@ export class Room3DApp extends BaseApp {
     };
 
     this.onEscapeCallback = () => {
-      if (this.editorManager && this.editorManager.isEditActive() && this.editorManager.equippedItem) {
+      if (
+        this.editorManager &&
+        this.editorManager.isEditActive() &&
+        this.editorManager.equippedItem
+      ) {
         this.editorManager.unequip();
         this.editorUI.show(null, this.editorManager.snapEnabled);
         this.editorUI.render();
@@ -1005,7 +1156,10 @@ export class Room3DApp extends BaseApp {
         this.controls.cancelAnimation();
         return;
       }
-      if (this.interaction && (this.interaction.grabbedCase || this.interaction.grabbedBallMesh)) {
+      if (
+        this.interaction &&
+        (this.interaction.grabbedCase || this.interaction.grabbedBallMesh)
+      ) {
         if (this.interaction.grabbedBallMesh) this.interaction.releaseBall();
         else this.interaction.releaseBook();
         return;
@@ -1034,7 +1188,9 @@ export class Room3DApp extends BaseApp {
     this.captureScreenshot = () => {
       if (!this.renderer || !this.renderer.renderer) return;
       const crosshair = this.crosshairEl;
-      const wasVisible = crosshair.classList.contains("room3d-crosshair--visible");
+      const wasVisible = crosshair.classList.contains(
+        "room3d-crosshair--visible",
+      );
       crosshair.classList.remove("room3d-crosshair--visible");
 
       requestAnimationFrame(() => {
@@ -1065,7 +1221,14 @@ export class Room3DApp extends BaseApp {
         this.updateEditorSnap();
         return;
       }
-      if ((e.code === "KeyR" || e.key === "r" || e.code === "KeyE" || e.key === "e") && !e.ctrlKey && !e.metaKey) {
+      if (
+        (e.code === "KeyR" ||
+          e.key === "r" ||
+          e.code === "KeyE" ||
+          e.key === "e") &&
+        !e.ctrlKey &&
+        !e.metaKey
+      ) {
         if (this.editorManager && this.editorManager.isEditActive()) {
           e.preventDefault();
           const mode = this.editorManager.cycleTransformMode();
@@ -1100,17 +1263,36 @@ export class Room3DApp extends BaseApp {
           }
         }
 
-        if (this.renderer && this.renderer.monitorScreen && this.renderer.hologramRenderer) {
-          this.interaction.raycaster.setFromCamera(this.interaction.mouse, this.renderer.camera);
-          const hits = this.interaction.raycaster.intersectObject(this.renderer.monitorScreen);
-          if (hits.length > 0 && hits[0].uv && hits[0].distance < RoomInteraction.INTERACT_DIST) {
-            const result = this.renderer.hologramRenderer.getItemAtUV(hits[0].uv.x, hits[0].uv.y);
+        if (
+          this.renderer &&
+          this.renderer.monitorScreen &&
+          this.renderer.hologramRenderer
+        ) {
+          this.interaction.raycaster.setFromCamera(
+            this.interaction.mouse,
+            this.renderer.camera,
+          );
+          const hits = this.interaction.raycaster.intersectObject(
+            this.renderer.monitorScreen,
+          );
+          if (
+            hits.length > 0 &&
+            hits[0].uv &&
+            hits[0].distance < RoomInteraction.INTERACT_DIST
+          ) {
+            const result = this.renderer.hologramRenderer.getItemAtUV(
+              hits[0].uv.x,
+              hits[0].uv.y,
+            );
             if (result && result.type === "app") {
               this.launchGameAndExit(result.appId);
               return;
             }
             if (result && result.type === "nav") {
-              this.renderer.hologramRenderer.handleClick(hits[0].uv.x, hits[0].uv.y);
+              this.renderer.hologramRenderer.handleClick(
+                hits[0].uv.x,
+                hits[0].uv.y,
+              );
               if (this.audio) this.audio.playHoloDot();
               return;
             }
@@ -1186,7 +1368,11 @@ export class Room3DApp extends BaseApp {
       if (this.gameState && this.gameState.active) {
         if ((e.code === "KeyT" || e.key === "t") && !e.ctrlKey && !e.metaKey) {
           e.preventDefault();
-          if (this.shelfManager && this.interaction && this.interaction.povGrabbedCase) {
+          if (
+            this.shelfManager &&
+            this.interaction &&
+            this.interaction.povGrabbedCase
+          ) {
             const genre = this.interaction.povGrabbedCase.genre || "casual";
             this.shelfManager.highlightCategory(genre, 3000);
           }
@@ -1200,7 +1386,11 @@ export class Room3DApp extends BaseApp {
         this.ctrlHeld = false;
         this.updateEditorSnap();
       }
-      if ((e.code === "KeyE" || e.key === "e") && this.controls && this.interaction) {
+      if (
+        (e.code === "KeyE" || e.key === "e") &&
+        this.controls &&
+        this.interaction
+      ) {
         this.interaction.releaseCharge(this.renderer.camera);
       }
     };
@@ -1212,7 +1402,8 @@ export class Room3DApp extends BaseApp {
   updateEditorSnap() {
     if (!this.editorManager || !this.editorManager.transformControls) return;
     if (this.ctrlHeld) {
-      this.editorManager.transformControls.translationSnap = this.editorManager.snapSize;
+      this.editorManager.transformControls.translationSnap =
+        this.editorManager.snapSize;
     } else {
       this.editorManager.transformControls.translationSnap = null;
     }
@@ -1225,8 +1416,14 @@ export class Room3DApp extends BaseApp {
     this.editorManager.paletteBuilders = {
       wastebin: (T) => {
         const group = new T.Group();
-        const mat = new T.MeshStandardMaterial({ color: 0x444444, roughness: 0.7 });
-        const body = new T.Mesh(new T.CylinderGeometry(0.12, 0.15, 0.28, 12), mat);
+        const mat = new T.MeshStandardMaterial({
+          color: 0x444444,
+          roughness: 0.7,
+        });
+        const body = new T.Mesh(
+          new T.CylinderGeometry(0.12, 0.15, 0.28, 12),
+          mat,
+        );
         body.position.y = 0.14;
         group.add(body);
         const rim = new T.Mesh(new T.TorusGeometry(0.13, 0.01, 6, 12), mat);
@@ -1237,7 +1434,10 @@ export class Room3DApp extends BaseApp {
       },
       "wooden-chair": (T) => {
         const group = new T.Group();
-        const mat = new T.MeshStandardMaterial({ color: 0x6b4226, roughness: 0.8 });
+        const mat = new T.MeshStandardMaterial({
+          color: 0x6b4226,
+          roughness: 0.8,
+        });
         const seat = new T.Mesh(new T.BoxGeometry(0.4, 0.03, 0.4), mat);
         seat.position.y = 0.42;
         group.add(seat);
@@ -1245,9 +1445,12 @@ export class Room3DApp extends BaseApp {
           [-0.16, -0.16],
           [0.16, -0.16],
           [-0.16, 0.16],
-          [0.16, 0.16]
+          [0.16, 0.16],
         ]) {
-          const leg = new T.Mesh(new T.CylinderGeometry(0.015, 0.015, 0.42, 6), mat);
+          const leg = new T.Mesh(
+            new T.CylinderGeometry(0.015, 0.015, 0.42, 6),
+            mat,
+          );
           leg.position.set(lx, 0.21, lz);
           group.add(leg);
         }
@@ -1258,7 +1461,10 @@ export class Room3DApp extends BaseApp {
       },
       "small-table": (T) => {
         const group = new T.Group();
-        const mat = new T.MeshStandardMaterial({ color: 0x5c3a1e, roughness: 0.8 });
+        const mat = new T.MeshStandardMaterial({
+          color: 0x5c3a1e,
+          roughness: 0.8,
+        });
         const top = new T.Mesh(new T.BoxGeometry(0.6, 0.03, 0.4), mat);
         top.position.y = 0.5;
         group.add(top);
@@ -1266,7 +1472,7 @@ export class Room3DApp extends BaseApp {
           [-0.25, -0.15],
           [0.25, -0.15],
           [-0.25, 0.15],
-          [0.25, 0.15]
+          [0.25, 0.15],
         ]) {
           const leg = new T.Mesh(new T.BoxGeometry(0.03, 0.5, 0.03), mat);
           leg.position.set(lx, 0.25, lz);
@@ -1276,13 +1482,22 @@ export class Room3DApp extends BaseApp {
       },
       crate: (T) => {
         const group = new T.Group();
-        const mat = new T.MeshStandardMaterial({ color: 0x8b6914, roughness: 0.9 });
+        const mat = new T.MeshStandardMaterial({
+          color: 0x8b6914,
+          roughness: 0.9,
+        });
         const box = new T.Mesh(new T.BoxGeometry(0.35, 0.35, 0.35), mat);
         box.position.y = 0.175;
         group.add(box);
-        const edgeMat = new T.MeshStandardMaterial({ color: 0x6b4e0a, roughness: 0.9 });
+        const edgeMat = new T.MeshStandardMaterial({
+          color: 0x6b4e0a,
+          roughness: 0.9,
+        });
         for (let i = 0; i < 3; i++) {
-          const strip = new T.Mesh(new T.BoxGeometry(0.36, 0.015, 0.36), edgeMat);
+          const strip = new T.Mesh(
+            new T.BoxGeometry(0.36, 0.015, 0.36),
+            edgeMat,
+          );
           strip.position.y = 0.06 + i * 0.12;
           group.add(strip);
         }
@@ -1290,13 +1505,26 @@ export class Room3DApp extends BaseApp {
       },
       barrel: (T) => {
         const group = new T.Group();
-        const mat = new T.MeshStandardMaterial({ color: 0x5c3a1e, roughness: 0.8 });
-        const body = new T.Mesh(new T.CylinderGeometry(0.15, 0.17, 0.4, 12), mat);
+        const mat = new T.MeshStandardMaterial({
+          color: 0x5c3a1e,
+          roughness: 0.8,
+        });
+        const body = new T.Mesh(
+          new T.CylinderGeometry(0.15, 0.17, 0.4, 12),
+          mat,
+        );
         body.position.y = 0.2;
         group.add(body);
-        const bandMat = new T.MeshStandardMaterial({ color: 0x333333, metalness: 0.6, roughness: 0.3 });
+        const bandMat = new T.MeshStandardMaterial({
+          color: 0x333333,
+          metalness: 0.6,
+          roughness: 0.3,
+        });
         for (const y of [0.08, 0.32]) {
-          const band = new T.Mesh(new T.TorusGeometry(0.16, 0.008, 6, 16), bandMat);
+          const band = new T.Mesh(
+            new T.TorusGeometry(0.16, 0.008, 6, 16),
+            bandMat,
+          );
           band.position.y = y;
           band.rotation.x = Math.PI / 2;
           group.add(band);
@@ -1304,15 +1532,33 @@ export class Room3DApp extends BaseApp {
         return group;
       },
       "wall-poster": (T) =>
-        this.decorManager ? this.decorManager.definitions.find((d) => d.id === "wall-poster")?.builderFn(T) : null,
+        this.decorManager
+          ? this.decorManager.definitions
+              .find((d) => d.id === "wall-poster")
+              ?.builderFn(T)
+          : null,
       "desk-books": (T) =>
-        this.decorManager ? this.decorManager.definitions.find((d) => d.id === "desk-books")?.builderFn(T) : null,
+        this.decorManager
+          ? this.decorManager.definitions
+              .find((d) => d.id === "desk-books")
+              ?.builderFn(T)
+          : null,
       "floor-lamp": (T) =>
-        this.decorManager ? this.decorManager.definitions.find((d) => d.id === "floor-lamp")?.builderFn(T) : null,
+        this.decorManager
+          ? this.decorManager.definitions
+              .find((d) => d.id === "floor-lamp")
+              ?.builderFn(T)
+          : null,
       "wall-clock": (T) => {
         const group = new T.Group();
-        const faceMat = new T.MeshStandardMaterial({ color: 0xf5f5f0, roughness: 0.4 });
-        const face = new T.Mesh(new T.CylinderGeometry(0.18, 0.18, 0.02, 24), faceMat);
+        const faceMat = new T.MeshStandardMaterial({
+          color: 0xf5f5f0,
+          roughness: 0.4,
+        });
+        const face = new T.Mesh(
+          new T.CylinderGeometry(0.18, 0.18, 0.02, 24),
+          faceMat,
+        );
         face.rotation.x = Math.PI / 2;
         face.position.y = 1.6;
         group.add(face);
@@ -1320,13 +1566,16 @@ export class Room3DApp extends BaseApp {
         const hour = new T.Mesh(new T.BoxGeometry(0.012, 0.1, 0.005), handMat);
         hour.position.set(0, 1.65, 0.015);
         group.add(hour);
-        const minute = new T.Mesh(new T.BoxGeometry(0.008, 0.13, 0.005), handMat);
+        const minute = new T.Mesh(
+          new T.BoxGeometry(0.008, 0.13, 0.005),
+          handMat,
+        );
         minute.position.set(0.03, 1.66, 0.015);
         minute.rotation.z = -0.8;
         group.add(minute);
         const rim = new T.Mesh(
           new T.TorusGeometry(0.18, 0.01, 8, 24),
-          new T.MeshStandardMaterial({ color: 0x222222, metalness: 0.6 })
+          new T.MeshStandardMaterial({ color: 0x222222, metalness: 0.6 }),
         );
         rim.position.y = 1.6;
         rim.rotation.x = Math.PI / 2;
@@ -1335,12 +1584,21 @@ export class Room3DApp extends BaseApp {
       },
       rug: (T) => {
         const group = new T.Group();
-        const mat = new T.MeshStandardMaterial({ color: 0x6b2a5c, roughness: 0.9 });
+        const mat = new T.MeshStandardMaterial({
+          color: 0x6b2a5c,
+          roughness: 0.9,
+        });
         const rug = new T.Mesh(new T.BoxGeometry(1.2, 0.01, 0.8), mat);
         rug.position.y = 0.005;
         group.add(rug);
-        const borderMat = new T.MeshStandardMaterial({ color: 0x8b3a7c, roughness: 0.9 });
-        const border = new T.Mesh(new T.BoxGeometry(1.24, 0.012, 0.84), borderMat);
+        const borderMat = new T.MeshStandardMaterial({
+          color: 0x8b3a7c,
+          roughness: 0.9,
+        });
+        const border = new T.Mesh(
+          new T.BoxGeometry(1.24, 0.012, 0.84),
+          borderMat,
+        );
         border.position.y = 0.004;
         group.add(border);
         return group;
@@ -1363,15 +1621,18 @@ export class Room3DApp extends BaseApp {
         const tex = new T.CanvasTexture(canvas);
         const poster = new T.Mesh(
           new T.PlaneGeometry(0.5, 0.35),
-          new T.MeshStandardMaterial({ map: tex, roughness: 0.4 })
+          new T.MeshStandardMaterial({ map: tex, roughness: 0.4 }),
         );
         group.add(poster);
-        const frameMat = new T.MeshStandardMaterial({ color: 0x222222, roughness: 0.5 });
+        const frameMat = new T.MeshStandardMaterial({
+          color: 0x222222,
+          roughness: 0.5,
+        });
         for (const [w, h, x, y] of [
           [0.54, 0.025, 0, 0.175 - 0.012],
           [0.54, 0.025, 0, -0.175 + 0.012],
           [0.025, 0.35, -0.27 + 0.012, 0],
-          [0.025, 0.35, 0.27 - 0.012, 0]
+          [0.025, 0.35, 0.27 - 0.012, 0],
         ]) {
           const bar = new T.Mesh(new T.BoxGeometry(w, h, 0.02), frameMat);
           bar.position.set(x, y, -0.01);
@@ -1381,22 +1642,45 @@ export class Room3DApp extends BaseApp {
       },
       "gold-trophy": (T) => {
         const group = new T.Group();
-        const goldMat = new T.MeshStandardMaterial({ color: 0xffd700, metalness: 0.8, roughness: 0.2 });
-        const darkMat = new T.MeshStandardMaterial({ color: 0x8b6914, metalness: 0.4, roughness: 0.6 });
-        const base = new T.Mesh(new T.CylinderGeometry(0.08, 0.1, 0.02, 12), darkMat);
+        const goldMat = new T.MeshStandardMaterial({
+          color: 0xffd700,
+          metalness: 0.8,
+          roughness: 0.2,
+        });
+        const darkMat = new T.MeshStandardMaterial({
+          color: 0x8b6914,
+          metalness: 0.4,
+          roughness: 0.6,
+        });
+        const base = new T.Mesh(
+          new T.CylinderGeometry(0.08, 0.1, 0.02, 12),
+          darkMat,
+        );
         base.position.y = 0.01;
         group.add(base);
-        const stem = new T.Mesh(new T.CylinderGeometry(0.03, 0.04, 0.06, 8), goldMat);
+        const stem = new T.Mesh(
+          new T.CylinderGeometry(0.03, 0.04, 0.06, 8),
+          goldMat,
+        );
         stem.position.y = 0.05;
         group.add(stem);
-        const cup = new T.Mesh(new T.CylinderGeometry(0.07, 0.04, 0.07, 12), goldMat);
+        const cup = new T.Mesh(
+          new T.CylinderGeometry(0.07, 0.04, 0.07, 12),
+          goldMat,
+        );
         cup.position.y = 0.12;
         group.add(cup);
-        const handleLeft = new T.Mesh(new T.TorusGeometry(0.025, 0.006, 6, 8, Math.PI), goldMat);
+        const handleLeft = new T.Mesh(
+          new T.TorusGeometry(0.025, 0.006, 6, 8, Math.PI),
+          goldMat,
+        );
         handleLeft.position.set(-0.065, 0.12, 0);
         handleLeft.rotation.z = Math.PI / 2;
         group.add(handleLeft);
-        const handleRight = new T.Mesh(new T.TorusGeometry(0.025, 0.006, 6, 8, Math.PI), goldMat);
+        const handleRight = new T.Mesh(
+          new T.TorusGeometry(0.025, 0.006, 6, 8, Math.PI),
+          goldMat,
+        );
         handleRight.position.set(0.065, 0.12, 0);
         handleRight.rotation.z = Math.PI / 2;
         group.add(handleRight);
@@ -1411,30 +1695,43 @@ export class Room3DApp extends BaseApp {
           roughness: 0.1,
           metalness: 0.1,
           transparent: true,
-          opacity: 0.9
+          opacity: 0.9,
         });
-        const frameMat = new T.MeshStandardMaterial({ color: 0x222222, roughness: 0.5 });
+        const frameMat = new T.MeshStandardMaterial({
+          color: 0x222222,
+          roughness: 0.5,
+        });
         const sign = new T.Mesh(new T.BoxGeometry(0.4, 0.15, 0.02), neonMat);
         sign.position.y = 0.075;
         group.add(sign);
         const glow = new T.Mesh(
           new T.BoxGeometry(0.44, 0.19, 0.01),
-          new T.MeshBasicMaterial({ color: 0xff44ff, transparent: true, opacity: 0.08 })
+          new T.MeshBasicMaterial({
+            color: 0xff44ff,
+            transparent: true,
+            opacity: 0.08,
+          }),
         );
         glow.position.y = 0.075;
         glow.position.z = -0.01;
         group.add(glow);
-        const bracket = new T.Mesh(new T.BoxGeometry(0.02, 0.08, 0.02), frameMat);
+        const bracket = new T.Mesh(
+          new T.BoxGeometry(0.02, 0.08, 0.02),
+          frameMat,
+        );
         bracket.position.set(0.18, -0.04, 0);
         group.add(bracket);
-        const bracket2 = new T.Mesh(new T.BoxGeometry(0.02, 0.08, 0.02), frameMat);
+        const bracket2 = new T.Mesh(
+          new T.BoxGeometry(0.02, 0.08, 0.02),
+          frameMat,
+        );
         bracket2.position.set(-0.18, -0.04, 0);
         group.add(bracket2);
         const bar = new T.Mesh(new T.BoxGeometry(0.4, 0.015, 0.015), frameMat);
         bar.position.y = -0.08;
         group.add(bar);
         return group;
-      }
+      },
     };
   }
 
@@ -1446,12 +1743,16 @@ export class Room3DApp extends BaseApp {
     if (!os.storage.get(StorageKeys.room3dReturnHintShown)) {
       os.storage.set(StorageKeys.room3dReturnHintShown, true);
       setTimeout(() => {
-        os.notify.send("3D Room", "You can launch the 3D Room app from desktop shortcut to return back.");
+        os.notify.send(
+          "3D Room",
+          "You can launch the 3D Room app from desktop shortcut to return back.",
+        );
       }, 1500);
     }
 
     setTimeout(() => {
-      const win = $(`[data-appId="${appId}"]`) || $(`#${appId}-win`) || $(`#${appId}`);
+      const win =
+        $(`[data-appId="${appId}"]`) || $(`#${appId}-win`) || $(`#${appId}`);
       if (win) {
         win.classList.add("snapping");
         win.offsetHeight;
@@ -1485,7 +1786,9 @@ export class Room3DApp extends BaseApp {
     });
 
     this.interaction.register("floorlamp", () => {
-      const item = this.decorManager.getAllItems().find((i) => i.id === "floor-lamp");
+      const item = this.decorManager
+        .getAllItems()
+        .find((i) => i.id === "floor-lamp");
       if (!item) return;
       const mesh = item.mesh;
       const light = mesh.userData.floorLampLight;
@@ -1506,7 +1809,10 @@ export class Room3DApp extends BaseApp {
       const screen = this.renderer.monitorScreen;
       const holo = this.renderer.hologramRenderer;
       if (screen && holo && this.interaction) {
-        this.interaction.raycaster.setFromCamera(this.interaction.mouse, this.renderer.camera);
+        this.interaction.raycaster.setFromCamera(
+          this.interaction.mouse,
+          this.renderer.camera,
+        );
         const hits = this.interaction.raycaster.intersectObject(screen);
         if (hits.length > 0 && hits[0].uv) {
           const uv = hits[0].uv;
@@ -1541,7 +1847,8 @@ export class Room3DApp extends BaseApp {
       this.interaction.register("holoArrowPrev", () => {
         if (this.renderer && this.renderer.hologramRenderer) {
           const h = this.renderer.hologramRenderer;
-          const target = h.currentPage > 0 ? h.currentPage - 1 : h.totalPages - 1;
+          const target =
+            h.currentPage > 0 ? h.currentPage - 1 : h.totalPages - 1;
           h.goToPage(target);
           if (this.audio) this.audio.playHoloPage();
         }
@@ -1560,7 +1867,8 @@ export class Room3DApp extends BaseApp {
     const colliders = [];
     if (this.renderer && this.renderer.roomObjects) {
       for (const obj of this.renderer.roomObjects) {
-        if (!obj.geometry && !(obj.children && obj.children.length > 0)) continue;
+        if (!obj.geometry && !(obj.children && obj.children.length > 0))
+          continue;
         if (obj.userData && obj.userData.title === "Floor") continue;
         colliders.push(obj);
       }
@@ -1702,7 +2010,7 @@ export class Room3DApp extends BaseApp {
           $("#desktop").style.display = "";
           SystemUtilities.loadWallpaper();
         },
-        { once: true }
+        { once: true },
       );
     } else {
       try {

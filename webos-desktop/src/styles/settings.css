@@ -2365,6 +2365,69 @@ html[data-theme-mode="light"] .settings-license-item:hover {
   color: var(--text-muted);
 }
 
+.settings-license-icon-img {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.settings-services-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 10px;
+}
+
+a.settings-service-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 6px;
+  padding: 14px 10px;
+  border-radius: 10px;
+  background: var(--surface-2);
+  border: 1px solid var(--glass-border);
+  text-decoration: none;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+a.settings-service-card:hover {
+  border-color: var(--brand);
+}
+
+.settings-service-icon {
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
+  border-radius: 12px;
+  flex-shrink: 0;
+}
+
+.settings-service-icon-fallback {
+  font-size: 40px;
+  color: var(--text-muted);
+  line-height: 64px;
+}
+
+.settings-service-name {
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--text-primary);
+}
+
+.settings-service-detail {
+  font-size: 11.5px;
+  color: var(--text-secondary);
+}
+
+.settings-service-credit {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
 .settings-license-version {
   flex-shrink: 0;
   color: var(--text-muted);

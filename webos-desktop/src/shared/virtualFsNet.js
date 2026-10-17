@@ -33,7 +33,7 @@ const EXT_MIME_MAP = {
   hpp: "text/x-c",
   ts: "text/typescript",
   wasm: "application/wasm",
-  svg: "image/svg+xml"
+  svg: "image/svg+xml",
 };
 
 export function splitPath(pathStr) {
@@ -74,7 +74,9 @@ export function isVirtualFsInput(input) {
 
 export function isLocalhostInput(input) {
   const t = String(input || "").trim();
-  return /^(https?:\/\/)?(localhost|127\.0\.0\.1|0\.0\.0\.0)(:\d+)?(\/|$)/i.test(t);
+  return /^(https?:\/\/)?(localhost|127\.0\.0\.1|0\.0\.0\.0)(:\d+)?(\/|$)/i.test(
+    t,
+  );
 }
 
 export function parseLocalhostTarget(input) {
@@ -87,20 +89,26 @@ export function parseLocalhostTarget(input) {
     return null;
   }
   const host = url.hostname.toLowerCase();
-  if (host !== "localhost" && host !== "127.0.0.1" && host !== "0.0.0.0") return null;
+  if (host !== "localhost" && host !== "127.0.0.1" && host !== "0.0.0.0")
+    return null;
   const port = url.port ? parseInt(url.port, 10) : 80;
-  return { port, path: decodeURIComponent(url.pathname || "/") + (url.search || "") };
+  return {
+    port,
+    path: decodeURIComponent(url.pathname || "/") + (url.search || ""),
+  };
 }
 
 export function parseLocalTarget(input) {
   const t = String(input || "").trim();
   if (!t) return null;
   const localhost = parseLocalhostTarget(t);
-  if (localhost) return { kind: "port", port: localhost.port, path: localhost.path };
+  if (localhost)
+    return { kind: "port", port: localhost.port, path: localhost.path };
   let pathStr = t;
   if (pathStr.startsWith("fs://")) pathStr = pathStr.slice(5);
   else if (pathStr.startsWith("file://")) pathStr = pathStr.slice(7);
-  else if (pathStr.startsWith("http://") || pathStr.startsWith("https://")) return null;
+  else if (pathStr.startsWith("http://") || pathStr.startsWith("https://"))
+    return null;
   pathStr = pathStr.split("?")[0].split("#")[0];
   if (!pathStr.startsWith("/")) return null;
   return { kind: "fs", path: pathStr.replace(/^\/+/, "") };
@@ -120,7 +128,7 @@ export function readOsTheme() {
     surface: get("--surface-1", "#1d1d2a"),
     surfaceHover: get("--surface-hover", "#262636"),
     border: get("--glass-border", "rgba(255,255,255,0.1)"),
-    error: get("--error", "#ef4444")
+    error: get("--error", "#ef4444"),
   };
 }
 
@@ -164,10 +172,17 @@ const FOLDER_ICON =
 const FILE_ICON =
   '<svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor"><path d="M3.5 1.5A1.5 1.5 0 0 1 5 0h4.586a1.5 1.5 0 0 1 1.06.44l3.914 3.914a1.5 1.5 0 0 1 .44 1.06V12.5a1.5 1.5 0 0 1-1.5 1.5H5a1.5 1.5 0 0 1-1.5-1.5v-11z"/></svg>';
 
-export function buildDirectoryHtml(pathStr, entries, hrefBuilder, options = {}) {
+export function buildDirectoryHtml(
+  pathStr,
+  entries,
+  hrefBuilder,
+  options = {},
+) {
   const theme = options.theme || readOsTheme();
   const base = options.base || "fs:///" + (pathStr ? pathStr + "/" : "");
-  const builder = hrefBuilder || ((name, isDir) => encodeURIComponent(name) + (isDir ? "/" : ""));
+  const builder =
+    hrefBuilder ||
+    ((name, isDir) => encodeURIComponent(name) + (isDir ? "/" : ""));
   const segments = splitPath(pathStr);
   const rows = [];
   if (segments.length > 0) {
@@ -176,7 +191,7 @@ export function buildDirectoryHtml(pathStr, entries, hrefBuilder, options = {}) 
         escapeHtml(builder("..", true)) +
         '"><span class="entry-icon dir">' +
         FOLDER_ICON +
-        '</span><span class="entry-name">..</span></a><span class="entry-kind">parent directory</span><span class="entry-size"></span><span class="entry-date"></span></div>'
+        '</span><span class="entry-name">..</span></a><span class="entry-kind">parent directory</span><span class="entry-size"></span><span class="entry-date"></span></div>',
     );
   }
   const names = Object.keys(entries).sort((a, b) => {
@@ -206,7 +221,7 @@ export function buildDirectoryHtml(pathStr, entries, hrefBuilder, options = {}) 
         escapeHtml(kind) +
         '</span><span class="entry-size">' +
         escapeHtml(size) +
-        '</span><span class="entry-date">-</span></div>'
+        '</span><span class="entry-date">-</span></div>',
     );
   }
   const crumbs = ['<a class="crumb" href="/">home</a>'];
@@ -216,7 +231,7 @@ export function buildDirectoryHtml(pathStr, entries, hrefBuilder, options = {}) 
         segments.slice(0, index + 1).join("/") +
         '">' +
         escapeHtml(segment) +
-        "</a>"
+        "</a>",
     );
   });
   return (

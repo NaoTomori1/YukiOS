@@ -3,7 +3,9 @@ import "../styles/news.css";
 import { $, $$, bindEvent, setStyle, toggleClass } from "../shared/domUtils.js";
 import { APP_MANIFESTS, BaseApp, StorageKeys, os } from "../framework.js";
 
-const appNewsEntries = APP_MANIFESTS.filter((manifest) => manifest.news).map((manifest) => manifest.news);
+const appNewsEntries = APP_MANIFESTS.filter((manifest) => manifest.news).map(
+  (manifest) => manifest.news,
+);
 
 const EXISTING_NEWS_UPDATES = newsUpdates;
 
@@ -27,8 +29,10 @@ export const getNewsContentSignature = () => {
         .map((s) => ({
           icon: s.icon,
           title: s.title,
-          items: (s.items || []).filter((entry) => Array.isArray(entry)).map(([i, t, d]) => [i, t, d])
-        }))
+          items: (s.items || [])
+            .filter((entry) => Array.isArray(entry))
+            .map(([i, t, d]) => [i, t, d]),
+        })),
     }));
   return hashStringDjb2(JSON.stringify(minimal));
 };
@@ -80,27 +84,27 @@ export class NewsApp extends BaseApp {
                   <div class="news-item-desc">${desc}</div>
                 </div>
               </div>
-            `
+            `,
               )
               .join("")}
           </div>
         </div>
-      `
+      `,
         )
         .join("");
 
     const updatesHtml = (Array.isArray(updates) ? updates : [])
-      .filter((update) => update && update.date)
+      .filter((update) => update && (update.sections || update.label))
       .map(
         (update) => `
       <div class="news-update">
         <div class="news-update-head">
-          <div class="news-date">${update.date}</div>
+          ${update.date ? `<div class="news-date">${update.date}</div>` : ""}
           <div class="news-label">${update.label || "YukiOS Update"}</div>
         </div>
         ${renderSections(update.sections)}
       </div>
-    `
+    `,
       )
       .join("");
 
@@ -130,10 +134,16 @@ export class NewsApp extends BaseApp {
       </div>
     `;
 
-    const win = os.window.create("news-yukios", "What's New", "720px", "520px", {
-      icon: "fa fa-newspaper",
-      appId: "newsApp"
-    });
+    const win = os.window.create(
+      "news-yukios",
+      "What's New",
+      "720px",
+      "520px",
+      {
+        icon: "fa fa-newspaper",
+        appId: "newsApp",
+      },
+    );
     win.innerHTML = content;
     this.initNews();
     return win;

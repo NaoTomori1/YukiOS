@@ -11,10 +11,16 @@ export class TorBrowserApp extends BaseApp {
   }
 
   async open() {
-    const win = os.window.create("tor-browser", "Tor Manager", "520px", "420px", {
-      icon: "fas fa-shield-halved",
-      appId: "torBrowserApp"
-    });
+    const win = os.window.create(
+      "tor-browser",
+      "Tor Manager",
+      "520px",
+      "420px",
+      {
+        icon: "fas fa-shield-halved",
+        appId: "torBrowserApp",
+      },
+    );
     win.innerHTML = `
       <div class="tor-manager">
         <div class="tor-body">
@@ -76,12 +82,12 @@ export class TorBrowserApp extends BaseApp {
     this.unsubs.push(
       os.events.on("TOR_STATUS_CHANGED", (status) => {
         this.renderStatus(status);
-      })
+      }),
     );
     this.unsubs.push(
       os.events.on("TOR_LOG", (msg) => {
         this.logEntry("info", msg);
-      })
+      }),
     );
   }
 
@@ -94,7 +100,9 @@ export class TorBrowserApp extends BaseApp {
   bindEvents() {
     $("#tor-start-btn")?.addEventListener("click", () => this.startTor());
     $("#tor-stop-btn")?.addEventListener("click", () => this.stopTor());
-    $("#tor-reconnect-btn")?.addEventListener("click", () => this.reconnectTor());
+    $("#tor-reconnect-btn")?.addEventListener("click", () =>
+      this.reconnectTor(),
+    );
     $("#tor-log-clear")?.addEventListener("click", () => {
       const log = $("#tor-log");
       if (log) log.innerHTML = "";
@@ -133,7 +141,10 @@ export class TorBrowserApp extends BaseApp {
     try {
       await os.tor.reconnect();
       this.logEntry("success", "Tor reconnected successfully.");
-      os.notify.send("Tor", "Tor reconnected.", { type: "success", duration: 3000 });
+      os.notify.send("Tor", "Tor reconnected.", {
+        type: "success",
+        duration: 3000,
+      });
     } catch (e) {
       this.logEntry("error", "Reconnect failed: " + (e.message || e));
     }
@@ -147,7 +158,8 @@ export class TorBrowserApp extends BaseApp {
     if (phase === "ready") {
       el.innerHTML = '<span class="tor-dot tor-dot-active"></span> Connected';
     } else if (phase === "reconnecting") {
-      el.innerHTML = '<span class="tor-dot tor-dot-connecting"></span> Reconnecting...';
+      el.innerHTML =
+        '<span class="tor-dot tor-dot-connecting"></span> Reconnecting...';
     } else if (
       phase === "connecting" ||
       phase === "loading" ||
@@ -155,7 +167,8 @@ export class TorBrowserApp extends BaseApp {
       phase === "init-wasm" ||
       phase === "building-circuit"
     ) {
-      el.innerHTML = '<span class="tor-dot tor-dot-connecting"></span> Connecting...';
+      el.innerHTML =
+        '<span class="tor-dot tor-dot-connecting"></span> Connecting...';
     } else if (phase === "error") {
       el.innerHTML = '<span class="tor-dot tor-dot-error"></span> Error';
     } else {

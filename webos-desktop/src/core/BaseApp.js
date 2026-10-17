@@ -8,7 +8,7 @@ export const PersistenceTypes = {
   NONE: "none",
   LOCAL_STORAGE: "localStorage",
   SESSION_STORAGE: "sessionStorage",
-  MEMORY: "memory"
+  MEMORY: "memory",
 };
 
 export class BaseApp {
@@ -37,7 +37,7 @@ export class BaseApp {
             }
             if (prop === PROXIED_MARKER) return true;
             return target[prop];
-          }
+          },
         });
       }
       this.wm = param.wm || param.windowManager;
@@ -116,7 +116,14 @@ export class BaseApp {
     return false;
   }
 
-  async notify(title, message = "", type = "info", duration = 5000, icon = null, appSource = null) {
+  async notify(
+    title,
+    message = "",
+    type = "info",
+    duration = 5000,
+    icon = null,
+    appSource = null,
+  ) {
     const source = appSource || this.getAppSource();
     const os = osBridge;
     os.notify.send(title, message, { type, duration, icon, appSource: source });

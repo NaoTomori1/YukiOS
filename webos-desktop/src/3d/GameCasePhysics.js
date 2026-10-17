@@ -6,7 +6,7 @@ export class GameCasePhysics {
     this.colliders = colliders || [];
 
     this.world = new CANNON.World({
-      gravity: new CANNON.Vec3(0, -9.82, 0)
+      gravity: new CANNON.Vec3(0, -9.82, 0),
     });
     this.world.broadphase = new CANNON.SAPBroadphase(this.world);
     this.world.allowSleep = true;
@@ -40,7 +40,7 @@ export class GameCasePhysics {
         x: (col.min.x + col.max.x) / 2,
         half: 0.05,
         z0: col.min.z,
-        z1: col.max.z
+        z1: col.max.z,
       });
     }
   }
@@ -107,7 +107,10 @@ export class GameCasePhysics {
     const wallZ = b.maxZ;
     const wallThick = 0.05;
     const seg = (cx, cy, hx, hy) => {
-      const body = new CANNON.Body({ mass: 0, shape: new CANNON.Box(new CANNON.Vec3(hx, hy, wallThick)) });
+      const body = new CANNON.Body({
+        mass: 0,
+        shape: new CANNON.Box(new CANNON.Vec3(hx, hy, wallThick)),
+      });
       body.position.set(cx, cy, wallZ);
       this.world.addBody(body);
     };
@@ -125,9 +128,13 @@ export class GameCasePhysics {
       if (sx <= 0 || sy <= 0 || sz <= 0) continue;
       const body = new CANNON.Body({
         mass: 0,
-        shape: new CANNON.Box(new CANNON.Vec3(sx, sy, sz))
+        shape: new CANNON.Box(new CANNON.Vec3(sx, sy, sz)),
       });
-      body.position.set((col.min.x + col.max.x) / 2, (col.min.y + col.max.y) / 2, (col.min.z + col.max.z) / 2);
+      body.position.set(
+        (col.min.x + col.max.x) / 2,
+        (col.min.y + col.max.y) / 2,
+        (col.min.z + col.max.z) / 2,
+      );
       this.world.addBody(body);
     }
   }
@@ -135,12 +142,14 @@ export class GameCasePhysics {
   createBody(position, size, mass) {
     const body = new CANNON.Body({
       mass,
-      shape: new CANNON.Box(new CANNON.Vec3(size.x / 2, size.y / 2, size.z / 2)),
+      shape: new CANNON.Box(
+        new CANNON.Vec3(size.x / 2, size.y / 2, size.z / 2),
+      ),
       position: new CANNON.Vec3(position.x, position.y, position.z),
       linearDamping: 0.25,
       angularDamping: 0.4,
       sleepSpeedLimit: 0.05,
-      sleepTimeLimit: 0.5
+      sleepTimeLimit: 0.5,
     });
     this.world.addBody(body);
     return body;
@@ -170,15 +179,22 @@ export class GameCasePhysics {
   }
 
   update(gameCases, delta, ballBody) {
-    this.timeScale += (this.timeScaleTarget - this.timeScale) * Math.min(1, delta * 8);
+    this.timeScale +=
+      (this.timeScaleTarget - this.timeScale) * Math.min(1, delta * 8);
     this.prevPos.clear();
     for (const gameCase of gameCases) {
       if (gameCase.grabbed) continue;
       if (!gameCase.body) continue;
-      this.prevPos.set(gameCase.body, { x: gameCase.body.position.x, z: gameCase.body.position.z });
+      this.prevPos.set(gameCase.body, {
+        x: gameCase.body.position.x,
+        z: gameCase.body.position.z,
+      });
     }
     if (ballBody && ballBody.type !== CANNON.Body.KINEMATIC) {
-      this.prevPos.set(ballBody, { x: ballBody.position.x, z: ballBody.position.z });
+      this.prevPos.set(ballBody, {
+        x: ballBody.position.x,
+        z: ballBody.position.z,
+      });
     }
 
     for (const gameCase of gameCases) {
@@ -190,12 +206,16 @@ export class GameCasePhysics {
         gameCase.body.allowSleep = false;
         gameCase.body.wakeUp();
       }
-      gameCase.body.position.set(gameCase.mesh.position.x, gameCase.mesh.position.y, gameCase.mesh.position.z);
+      gameCase.body.position.set(
+        gameCase.mesh.position.x,
+        gameCase.mesh.position.y,
+        gameCase.mesh.position.z,
+      );
       gameCase.body.quaternion.set(
         gameCase.mesh.quaternion.x,
         gameCase.mesh.quaternion.y,
         gameCase.mesh.quaternion.z,
-        gameCase.mesh.quaternion.w
+        gameCase.mesh.quaternion.w,
       );
     }
 
@@ -204,7 +224,10 @@ export class GameCasePhysics {
     let anyAwake = ballBody && ballBody.sleepState === 0;
     if (!anyAwake) {
       for (const gameCase of gameCases) {
-        if (gameCase.grabbed || (gameCase.body && gameCase.body.sleepState === 0)) {
+        if (
+          gameCase.grabbed ||
+          (gameCase.body && gameCase.body.sleepState === 0)
+        ) {
           anyAwake = true;
           break;
         }
@@ -221,12 +244,16 @@ export class GameCasePhysics {
 
     for (const gameCase of gameCases) {
       if (gameCase.grabbed) continue;
-      gameCase.mesh.position.set(gameCase.body.position.x, gameCase.body.position.y, gameCase.body.position.z);
+      gameCase.mesh.position.set(
+        gameCase.body.position.x,
+        gameCase.body.position.y,
+        gameCase.body.position.z,
+      );
       gameCase.mesh.quaternion.set(
         gameCase.body.quaternion.x,
         gameCase.body.quaternion.y,
         gameCase.body.quaternion.z,
-        gameCase.body.quaternion.w
+        gameCase.body.quaternion.w,
       );
       gameCase.pos.copy(gameCase.mesh.position);
     }
@@ -274,7 +301,9 @@ export class GameCasePhysics {
         const winCenterY = 1.5;
         const isSmall = half.x < 0.18 && half.z < 0.18 && half.y < 0.22;
         const inWindowX = p.x > -winHalfW + half.x && p.x < winHalfW - half.x;
-        const inWindowY = p.y > winCenterY - winHalfH + half.y && p.y < winCenterY + winHalfH - half.y;
+        const inWindowY =
+          p.y > winCenterY - winHalfH + half.y &&
+          p.y < winCenterY + winHalfH - half.y;
         if (isSmall && inWindowX && inWindowY) {
           const maxInside = b.maxZ + 0.3;
           if (p.z > maxInside - half.z) {
@@ -307,7 +336,10 @@ export class GameCasePhysics {
         v.x *= k;
         v.y *= k;
         v.z *= k;
-      } else if (cap > this.MAX_BODY_SPEED && lenSq < this.MAX_BODY_SPEED * this.MAX_BODY_SPEED) {
+      } else if (
+        cap > this.MAX_BODY_SPEED &&
+        lenSq < this.MAX_BODY_SPEED * this.MAX_BODY_SPEED
+      ) {
         body.maxSpeed = this.MAX_BODY_SPEED;
       }
     }
@@ -344,13 +376,15 @@ export class GameCasePhysics {
           }
         }
         if (choose === "x") {
-          p.x = p.x < cx ? cx - halfX - half.x - 0.02 : cx + halfX + half.x + 0.02;
+          p.x =
+            p.x < cx ? cx - halfX - half.x - 0.02 : cx + halfX + half.x + 0.02;
           body.velocity.x = body.velocity.x * 0.2;
         } else if (choose === "y") {
           p.y = cy + halfY + half.y + 0.02;
           body.velocity.y = body.velocity.y * 0.2;
         } else {
-          p.z = p.z < cz ? cz - halfZ - half.z - 0.02 : cz + halfZ + half.z + 0.02;
+          p.z =
+            p.z < cz ? cz - halfZ - half.z - 0.02 : cz + halfZ + half.z + 0.02;
           body.velocity.z = body.velocity.z * 0.2;
         }
         body.wakeUp();

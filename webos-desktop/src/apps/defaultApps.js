@@ -9,7 +9,7 @@ import {
   getRegisteredExtensions,
   resetAllDefaults,
   setDefaultApp,
-  unassociateExtension
+  unassociateExtension,
 } from "../fileAssociations.js";
 import { showChooseAppDialog } from "../shared/chooseAppDialog.js";
 
@@ -25,7 +25,13 @@ export class DefaultAppsApp extends BaseApp {
   }
 
   async open(opts = {}) {
-    const win = os.window.create("default-apps", "Default Apps", "720px", "560px", { icon: "fas fa-th-large" });
+    const win = os.window.create(
+      "default-apps",
+      "Default Apps",
+      "720px",
+      "560px",
+      { icon: "fas fa-th-large" },
+    );
 
     this.mountInto(win);
 
@@ -112,7 +118,7 @@ export class DefaultAppsApp extends BaseApp {
     bindEvent($(".da-reset", host), "click", async () => {
       const confirmed = await os.dialog.confirm(
         "Reset Defaults",
-        "Reset every file type to the system default app? This cannot be undone."
+        "Reset every file type to the system default app? This cannot be undone.",
       );
       if (!confirmed) return;
       resetAllDefaults();
@@ -159,7 +165,9 @@ export class DefaultAppsApp extends BaseApp {
   buildAppList() {
     const apps = getAllPickableApps();
     const query = this.searchQuery.trim().toLowerCase();
-    const filtered = query ? apps.filter((app) => app.title.toLowerCase().includes(query)) : apps;
+    const filtered = query
+      ? apps.filter((app) => app.title.toLowerCase().includes(query))
+      : apps;
 
     if (!filtered.length) {
       return `<div class="da-empty">No apps match your search</div>`;
@@ -200,7 +208,9 @@ export class DefaultAppsApp extends BaseApp {
     if (!app) return `<div class="da-empty">App not found</div>`;
 
     const extensions = getExtensionsForApp(appId);
-    const ownCount = extensions.filter((ext) => getDefaultAppForExt(ext)?.appId === appId).length;
+    const ownCount = extensions.filter(
+      (ext) => getDefaultAppForExt(ext)?.appId === appId,
+    ).length;
 
     return `
       <div class="da-detail">
@@ -247,12 +257,20 @@ export class DefaultAppsApp extends BaseApp {
       for (const ext of getExtensionsForApp(appId)) {
         setDefaultApp(ext, appId);
       }
-      os.notify.send("Default Apps", `${e.currentTarget.dataset.appName} is now the default for all its file types.`);
+      os.notify.send(
+        "Default Apps",
+        `${e.currentTarget.dataset.appName} is now the default for all its file types.`,
+      );
     });
     $$(".da-change-btn", content).forEach((btn) => {
       bindEvent(btn, "click", async () => {
         const ext = btn.dataset.change;
-        await showChooseAppDialog({ ext, name: `file.${ext}`, path: [], setOnly: true });
+        await showChooseAppDialog({
+          ext,
+          name: `file.${ext}`,
+          path: [],
+          setOnly: true,
+        });
       });
     });
     $$(".da-remove-btn", content).forEach((btn) => {
@@ -260,7 +278,7 @@ export class DefaultAppsApp extends BaseApp {
         const ext = btn.dataset.remove;
         const confirmed = await os.dialog.confirm(
           "Remove Association",
-          `Stop opening .${ext} files automatically? You can pick an app next time you open one.`
+          `Stop opening .${ext} files automatically? You can pick an app next time you open one.`,
         );
         if (!confirmed) return;
         unassociateExtension(ext);
@@ -272,7 +290,9 @@ export class DefaultAppsApp extends BaseApp {
   buildFileTypeList() {
     const registered = getRegisteredExtensions();
     const query = this.searchQuery.trim().toLowerCase();
-    const filtered = query ? registered.filter((ext) => ext.toLowerCase().includes(query)) : registered;
+    const filtered = query
+      ? registered.filter((ext) => ext.toLowerCase().includes(query))
+      : registered;
 
     if (!filtered.length) {
       return `<div class="da-empty">No file types match your search</div>`;
@@ -301,7 +321,12 @@ export class DefaultAppsApp extends BaseApp {
     $$(".da-change-btn", content).forEach((btn) => {
       bindEvent(btn, "click", async () => {
         const ext = btn.dataset.change;
-        await showChooseAppDialog({ ext, name: `file.${ext}`, path: [], setOnly: true });
+        await showChooseAppDialog({
+          ext,
+          name: `file.${ext}`,
+          path: [],
+          setOnly: true,
+        });
       });
     });
     $$(".da-remove-btn", content).forEach((btn) => {
@@ -309,7 +334,7 @@ export class DefaultAppsApp extends BaseApp {
         const ext = btn.dataset.remove;
         const confirmed = await os.dialog.confirm(
           "Remove Association",
-          `Stop opening .${ext} files automatically? You can pick an app next time you open one.`
+          `Stop opening .${ext} files automatically? You can pick an app next time you open one.`,
         );
         if (!confirmed) return;
         unassociateExtension(ext);

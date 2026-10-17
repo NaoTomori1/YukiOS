@@ -3,7 +3,17 @@ import { Achievements } from "../achievements.js";
 import { KeybindManager } from "../keybindManager.js";
 import { showContextMenu, hideMenu } from "../shared/contextMenu.js";
 import { GitManager } from "../services/GitManager.js";
-import { BusEvents, $, $$, BaseApp, StorageKeys, os, MODES, createElement, ServiceKeys } from "../framework.js";
+import {
+  BusEvents,
+  $,
+  $$,
+  BaseApp,
+  StorageKeys,
+  os,
+  MODES,
+  createElement,
+  ServiceKeys,
+} from "../framework.js";
 import { formatSize } from "../utils/utils.js";
 import { getExt } from "../shared/fileKindDetector.js";
 import { getPyodide, runPython } from "../services/PyodideManager.js";
@@ -19,7 +29,11 @@ import { ShellParser } from "../terminal/shellParser.js";
 import { ShellInterpreter } from "../terminal/shellInterpreter.js";
 import { CommandRegistry } from "../terminal/commands.js";
 import { AnsiRenderer } from "../terminal/ansiRenderer.js";
-import { TerminalRawMode, AltScreenManager, TerminalUIApp } from "../terminal/terminalUI.js";
+import {
+  TerminalRawMode,
+  AltScreenManager,
+  TerminalUIApp,
+} from "../terminal/terminalUI.js";
 import { renderPrompt } from "../terminal/prompt.js";
 import { Stream, collectStream } from "../terminal/stream.js";
 import { startVirtualHttpServer } from "../terminal/httpServer.js";
@@ -46,7 +60,7 @@ export class TerminalApp extends BaseApp {
       HOME: `/home/${this.displayName}`,
       USER: this.displayName,
       SHELL: "/bin/yush",
-      TERM: "xterm-256color"
+      TERM: "xterm-256color",
     };
     this.aliases = os.storage.get(StorageKeys.terminalAliases) || {};
     this.fs = os.fileSystemManager;
@@ -55,7 +69,7 @@ export class TerminalApp extends BaseApp {
     this.shellEnv = new ShellEnvironment({
       ...this.env,
       PWD: `/home/${this.displayName}`,
-      HOSTNAME: this.hostname
+      HOSTNAME: this.hostname,
     });
     this.shellParser = new ShellParser();
     this.commandRegistry = new CommandRegistry();
@@ -80,7 +94,9 @@ export class TerminalApp extends BaseApp {
       terminalInputLine: null,
       terminalContent: null,
       terminalTabsEl: null,
-      tabs: [{ id: 1, currentPath: [...initialPath], outputHTML: "", commands: [] }],
+      tabs: [
+        { id: 1, currentPath: [...initialPath], outputHTML: "", commands: [] },
+      ],
       activeTabId: 1,
       tabCounter: 1,
       currentPath: [...initialPath],
@@ -111,7 +127,7 @@ export class TerminalApp extends BaseApp {
       btopWinHandler: null,
       cmatrixActive: false,
       cmatrixIframeCleanup: null,
-      cmatrixWinHandler: null
+      cmatrixWinHandler: null,
     };
   }
 
@@ -157,16 +173,23 @@ export class TerminalApp extends BaseApp {
       },
       resolvePath: (target) => self.resolvePath(target),
       pathToAbs: (p) => {
-        const resolved = Array.isArray(p) ? p : self.fs.resolvePath(p, self.currentPath);
+        const resolved = Array.isArray(p)
+          ? p
+          : self.fs.resolvePath(p, self.currentPath);
         return self.pathToString(resolved);
       },
       formatSize: (bytes) => formatSize(bytes),
       rawMode: self.rawModeInstance,
       altScreen: self.altScreenInstance,
-      hasCommand: (name) => self.commandRegistry.has(name) || !!self.commands[name],
+      hasCommand: (name) =>
+        self.commandRegistry.has(name) || !!self.commands[name],
       executeCommand: async (name, args, io) => {
         if (self.commandRegistry.has(name)) {
-          return self.commandRegistry.execute(name, args, self.buildCommandContext());
+          return self.commandRegistry.execute(
+            name,
+            args,
+            self.buildCommandContext(),
+          );
         }
         const handler = self.commands[name];
         if (handler) {
@@ -194,7 +217,7 @@ export class TerminalApp extends BaseApp {
             line.scrollIntoView({ block: "end", behavior: "instant" });
           }
         });
-      }
+      },
     };
   }
 
@@ -362,12 +385,14 @@ export class TerminalApp extends BaseApp {
       "btopWinHandler",
       "cmatrixActive",
       "cmatrixIframeCleanup",
-      "cmatrixWinHandler"
+      "cmatrixWinHandler",
     ];
     for (const prop of perWindowProps) {
       Object.defineProperty(this, prop, {
         get() {
-          return this.activeState && prop in this.activeState ? this.activeState[prop] : this.perWindowDefaults?.[prop];
+          return this.activeState && prop in this.activeState
+            ? this.activeState[prop]
+            : this.perWindowDefaults?.[prop];
         },
         set(val) {
           if (this.activeState) {
@@ -375,7 +400,7 @@ export class TerminalApp extends BaseApp {
           } else if (this.perWindowDefaults) {
             this.perWindowDefaults[prop] = val;
           }
-        }
+        },
       });
     }
   }
@@ -389,23 +414,33 @@ export class TerminalApp extends BaseApp {
         }
       }
     });
-    this.tilingObserver.observe(document.body, { attributes: true, attributeFilter: ["class"] });
+    this.tilingObserver.observe(document.body, {
+      attributes: true,
+      attributeFilter: ["class"],
+    });
   }
 
   updateTabsVisibility() {
     const isTiling = os.modes.isActive(MODES.TILING);
     for (const state of this.windowsMap.values()) {
       if (state.terminalTabsEl) {
-        state.terminalTabsEl.classList.toggle("hidden", isTiling || state.tabs.length <= 1);
+        state.terminalTabsEl.classList.toggle(
+          "hidden",
+          isTiling || state.tabs.length <= 1,
+        );
       }
     }
   }
 
   open(opts) {
-    const winId = "terminal-win-" + Date.now() + "-" + Math.random().toString(36).slice(2, 6);
+    const winId =
+      "terminal-win-" +
+      Date.now() +
+      "-" +
+      Math.random().toString(36).slice(2, 6);
     const win = os.window.create(winId, "Terminal", "700px", "500px", {
       ...opts,
-      icon: "static/icons/terminal.webp"
+      icon: "static/icons/terminal.webp",
     });
     const state = this.createState(win, opts);
     this.windowsMap.set(winId, state);
@@ -449,7 +484,14 @@ export class TerminalApp extends BaseApp {
     this.terminalInputLine = win.querySelector("#terminal-input-line");
     this.terminalContent = win.querySelector(".terminal-content");
     this.terminalTabsEl = win.querySelector("#terminal-tabs");
-    this.tabs = [{ id: 1, currentPath: [...this.currentPath], outputHTML: "", commands: [] }];
+    this.tabs = [
+      {
+        id: 1,
+        currentPath: [...this.currentPath],
+        outputHTML: "",
+        commands: [],
+      },
+    ];
     this.activeTabId = 1;
     this.tabCounter = 1;
     this.renderTabs();
@@ -479,7 +521,8 @@ export class TerminalApp extends BaseApp {
 
   setupSessionListener() {
     os.events.on(BusEvents.SESSION_INITIALIZED, (session) => {
-      this.displayName = session.name || os.storage.get(StorageKeys.username) || "guest";
+      this.displayName =
+        session.name || os.storage.get(StorageKeys.username) || "guest";
       this.username = this.displayName;
       this.currentPath = ["home", this.displayName];
       this.env.HOME = `/home/${this.displayName}`;
@@ -514,7 +557,13 @@ export class TerminalApp extends BaseApp {
     return el.scrollHeight - el.scrollTop - el.clientHeight < 50;
   }
 
-  async print(text, color = null, isCommand = false, promptText = null, delay = 1) {
+  async print(
+    text,
+    color = null,
+    isCommand = false,
+    promptText = null,
+    delay = 1,
+  ) {
     const state = this.activeState;
     if (!state) return;
     if (this.stopRequested) return;
@@ -579,14 +628,23 @@ export class TerminalApp extends BaseApp {
       state.isPrinting = false;
       state.terminalInput.disabled = state.pagerActive || state.commandRunning;
       state.terminalInput.value = state.inputBuffer;
-      if (!state.pagerActive && !state.commandRunning) state.terminalInput.focus();
+      if (!state.pagerActive && !state.commandRunning)
+        state.terminalInput.focus();
     }
   }
 
-  enqueuePrint(text, color = null, isCommand = false, promptText = null, delay = 1) {
+  enqueuePrint(
+    text,
+    color = null,
+    isCommand = false,
+    promptText = null,
+    delay = 1,
+  ) {
     const state = this.activeState;
     if (!state) return;
-    state.printQueue = state.printQueue.then(() => this.print(text, color, isCommand, promptText, delay));
+    state.printQueue = state.printQueue.then(() =>
+      this.print(text, color, isCommand, promptText, delay),
+    );
     return state.printQueue;
   }
 
@@ -608,7 +666,12 @@ export class TerminalApp extends BaseApp {
         }
         state.terminalInput.disabled = false;
         state.terminalInput.focus();
-        requestAnimationFrame(() => state.terminalInputLine.scrollIntoView({ block: "end", behavior: "instant" }));
+        requestAnimationFrame(() =>
+          state.terminalInputLine.scrollIntoView({
+            block: "end",
+            behavior: "instant",
+          }),
+        );
       }
       return;
     }
@@ -631,7 +694,12 @@ export class TerminalApp extends BaseApp {
       }
       state.terminalInput.disabled = false;
       state.terminalInput.focus();
-      requestAnimationFrame(() => state.terminalInputLine.scrollIntoView({ block: "end", behavior: "instant" }));
+      requestAnimationFrame(() =>
+        state.terminalInputLine.scrollIntoView({
+          block: "end",
+          behavior: "instant",
+        }),
+      );
     }
   }
 
@@ -647,13 +715,22 @@ export class TerminalApp extends BaseApp {
       if (KeybindManager.matches(e, "terminal.execute") && !e.shiftKey) {
         e.preventDefault();
         this.runEnteredCommand();
-      } else if (KeybindManager.matches(e, "terminal.historyUp") && this.historyIndex > 0) {
+      } else if (
+        KeybindManager.matches(e, "terminal.historyUp") &&
+        this.historyIndex > 0
+      ) {
         e.preventDefault();
         this.terminalInput.value = this.history[--this.historyIndex];
       } else if (KeybindManager.matches(e, "terminal.historyDown")) {
         e.preventDefault();
-        this.historyIndex = Math.min(this.historyIndex + 1, this.history.length);
-        this.terminalInput.value = this.historyIndex < this.history.length ? this.history[this.historyIndex] : "";
+        this.historyIndex = Math.min(
+          this.historyIndex + 1,
+          this.history.length,
+        );
+        this.terminalInput.value =
+          this.historyIndex < this.history.length
+            ? this.history[this.historyIndex]
+            : "";
       } else if (KeybindManager.matches(e, "terminal.tabComplete")) {
         e.preventDefault();
         this.handleTabCompletion();
@@ -688,7 +765,12 @@ export class TerminalApp extends BaseApp {
           this.pyReplBuffer = "";
           this.pyReplContinuation = false;
           this.updatePrompt();
-          this.enqueuePrint("exit()", null, true, `<span class="prompt-python">>>> </span>`);
+          this.enqueuePrint(
+            "exit()",
+            null,
+            true,
+            `<span class="prompt-python">>>> </span>`,
+          );
           this.exitPythonRepl();
           return;
         }
@@ -696,7 +778,12 @@ export class TerminalApp extends BaseApp {
           this.nodeReplBuffer = "";
           this.nodeReplContinuation = false;
           this.updatePrompt();
-          this.enqueuePrint(".exit", null, true, `<span class="prompt-node">> </span>`);
+          this.enqueuePrint(
+            ".exit",
+            null,
+            true,
+            `<span class="prompt-node">> </span>`,
+          );
           this.exitNodeRepl();
           return;
         }
@@ -792,7 +879,8 @@ export class TerminalApp extends BaseApp {
 
   exitReverseSearch(accept) {
     this.reverseSearchActive = false;
-    this.terminalPrompt.innerHTML = this.reverseSearchOriginalPrompt || this.promptHtml();
+    this.terminalPrompt.innerHTML =
+      this.reverseSearchOriginalPrompt || this.promptHtml();
     if (!accept) this.terminalInput.value = "";
   }
 
@@ -800,7 +888,10 @@ export class TerminalApp extends BaseApp {
     let match = "";
     if (this.reverseSearchQuery) {
       for (let i = this.reverseSearchIndex; i >= 0; i--) {
-        if (this.history[i] && this.history[i].includes(this.reverseSearchQuery)) {
+        if (
+          this.history[i] &&
+          this.history[i].includes(this.reverseSearchQuery)
+        ) {
           match = this.history[i];
           this.reverseSearchIndex = i;
           break;
@@ -814,7 +905,10 @@ export class TerminalApp extends BaseApp {
   reverseSearchStep() {
     if (!this.reverseSearchQuery) return;
     for (let i = this.reverseSearchIndex - 1; i >= 0; i--) {
-      if (this.history[i] && this.history[i].includes(this.reverseSearchQuery)) {
+      if (
+        this.history[i] &&
+        this.history[i].includes(this.reverseSearchQuery)
+      ) {
         this.reverseSearchIndex = i;
         this.terminalInput.value = this.history[i];
         return;
@@ -877,7 +971,12 @@ export class TerminalApp extends BaseApp {
   newTab() {
     this.snapshotActiveTab();
     const id = ++this.tabCounter;
-    const tab = { id, currentPath: ["home", this.displayName], outputHTML: "", commands: [] };
+    const tab = {
+      id,
+      currentPath: ["home", this.displayName],
+      outputHTML: "",
+      commands: [],
+    };
     this.tabs.push(tab);
     this.activeTabId = id;
     this.currentPath = [...tab.currentPath];
@@ -895,7 +994,8 @@ export class TerminalApp extends BaseApp {
     this.activeTabId = id;
     this.currentPath = [...tab.currentPath];
     this.terminalOutput.innerHTML = tab.outputHTML;
-    this.terminalOutput.parentElement.scrollTop = this.terminalOutput.parentElement.scrollHeight;
+    this.terminalOutput.parentElement.scrollTop =
+      this.terminalOutput.parentElement.scrollHeight;
     this.updatePrompt();
     this.renderTabs();
     this.terminalInput.focus();
@@ -934,13 +1034,16 @@ export class TerminalApp extends BaseApp {
 
     state.tabs.forEach((tab, i) => {
       const el = createElement("div");
-      el.className = "terminal-tab" + (tab.id === state.activeTabId ? " active" : "");
+      el.className =
+        "terminal-tab" + (tab.id === state.activeTabId ? " active" : "");
       el.style.flex = "1 1 0";
       el.style.minWidth = "0";
 
       const label = createElement("span");
       label.className = "terminal-tab-label";
-      label.textContent = tab.commands.length ? tab.commands.join(" ") : `Tab ${i + 1}`;
+      label.textContent = tab.commands.length
+        ? tab.commands.join(" ")
+        : `Tab ${i + 1}`;
       el.appendChild(label);
 
       const closeBtn = createElement("span");
@@ -986,12 +1089,38 @@ export class TerminalApp extends BaseApp {
     hideMenu();
     const isCopyDisabled = !hasSelection();
     const items = [
-      { id: "term-ctx-copy", label: "Copy", icon: "fa-copy", action: "copy", disabled: isCopyDisabled },
-      { id: "term-ctx-paste", label: "Paste", icon: "fa-paste", action: "paste" },
-      { id: "term-ctx-selectall", label: "Select All", icon: "fa-object-group", action: "selectAll" },
+      {
+        id: "term-ctx-copy",
+        label: "Copy",
+        icon: "fa-copy",
+        action: "copy",
+        disabled: isCopyDisabled,
+      },
+      {
+        id: "term-ctx-paste",
+        label: "Paste",
+        icon: "fa-paste",
+        action: "paste",
+      },
+      {
+        id: "term-ctx-selectall",
+        label: "Select All",
+        icon: "fa-object-group",
+        action: "selectAll",
+      },
       "hr",
-      { id: "term-ctx-newtab", label: "New Tab", icon: "fa-plus", action: "newTab" },
-      { id: "term-ctx-clear", label: "Clear", icon: "fa-eraser", action: "clear" }
+      {
+        id: "term-ctx-newtab",
+        label: "New Tab",
+        icon: "fa-plus",
+        action: "newTab",
+      },
+      {
+        id: "term-ctx-clear",
+        label: "Clear",
+        icon: "fa-eraser",
+        action: "clear",
+      },
     ];
 
     const copyTextToClipboard = async (text) => {
@@ -1031,9 +1160,13 @@ export class TerminalApp extends BaseApp {
     const stateAtOpen = this.activeState;
     const selAtOpen = window.getSelection();
     const hadWindowSelection =
-      selAtOpen && selAtOpen.rangeCount > 0 && !selAtOpen.isCollapsed && selAtOpen.toString().length > 0;
+      selAtOpen &&
+      selAtOpen.rangeCount > 0 &&
+      !selAtOpen.isCollapsed &&
+      selAtOpen.toString().length > 0;
     const inputAtOpen = stateAtOpen?.terminalInput || this.terminalInput;
-    const hadInputSelection = inputAtOpen && inputAtOpen.selectionStart !== inputAtOpen.selectionEnd;
+    const hadInputSelection =
+      inputAtOpen && inputAtOpen.selectionStart !== inputAtOpen.selectionEnd;
 
     const handlers = {
       copy: async () => {
@@ -1058,7 +1191,8 @@ export class TerminalApp extends BaseApp {
           if (!input) return;
           const pos = input.selectionStart ?? input.value.length;
           const end = input.selectionEnd ?? pos;
-          input.value = input.value.slice(0, pos) + text + input.value.slice(end);
+          input.value =
+            input.value.slice(0, pos) + text + input.value.slice(end);
           input.selectionStart = input.selectionEnd = pos + text.length;
           input.focus();
         }
@@ -1082,7 +1216,7 @@ export class TerminalApp extends BaseApp {
         if (sc) sc.classList.add("preserve-selection");
       },
       newTab: () => this.newTab(),
-      clear: () => this.cmdClear()
+      clear: () => this.cmdClear(),
     };
 
     showContextMenu(e, items, handlers);
@@ -1103,17 +1237,26 @@ export class TerminalApp extends BaseApp {
           if (obs) obs.disconnect();
         }
       };
-      setTimeout(() => document.addEventListener("click", cleanup, { once: true }), 0);
+      setTimeout(
+        () => document.addEventListener("click", cleanup, { once: true }),
+        0,
+      );
       document.addEventListener("selectionchange", cleanup, { once: true });
       const menu = document.getElementById("context-menu");
       if (menu) {
         const obs = new MutationObserver(() => {
-          if (menu.style.display === "none" || menu.classList.contains("closing")) {
+          if (
+            menu.style.display === "none" ||
+            menu.classList.contains("closing")
+          ) {
             cleanup();
             obs.disconnect();
           }
         });
-        obs.observe(menu, { attributes: true, attributeFilter: ["style", "class"] });
+        obs.observe(menu, {
+          attributes: true,
+          attributeFilter: ["style", "class"],
+        });
         menu._preserveCleanupObs = obs;
       }
     }
@@ -1123,30 +1266,40 @@ export class TerminalApp extends BaseApp {
     hideMenu();
     const isActive = tab.id === this.activeTabId;
     const items = [
-      { id: "tabctx-" + tab.id + "-close", label: "Close Tab", icon: "fa-times", action: "close" },
+      {
+        id: "tabctx-" + tab.id + "-close",
+        label: "Close Tab",
+        icon: "fa-times",
+        action: "close",
+      },
       {
         id: "tabctx-" + tab.id + "-close-others",
         label: "Close Other Tabs",
         icon: "fa-times-circle",
         action: "closeOthers",
-        condition: () => this.tabs.length > 1
+        condition: () => this.tabs.length > 1,
       },
       {
         id: "tabctx-" + tab.id + "-close-right",
         label: "Close Tabs to the Right",
         icon: "fa-chevron-right",
         action: "closeRight",
-        condition: () => idx < this.tabs.length - 1
+        condition: () => idx < this.tabs.length - 1,
       },
       "hr",
-      { id: "tabctx-" + tab.id + "-new", label: "New Tab", icon: "fa-plus", action: "newTab" }
+      {
+        id: "tabctx-" + tab.id + "-new",
+        label: "New Tab",
+        icon: "fa-plus",
+        action: "newTab",
+      },
     ];
 
     const handlers = {
       close: () => this.closeTab(tab.id),
       closeOthers: () => this.closeOtherTabs(tab.id),
       closeRight: () => this.closeTabsToTheRight(tab.id, idx),
-      newTab: () => this.newTab()
+      newTab: () => this.newTab(),
     };
 
     showContextMenu(e, items, handlers);
@@ -1187,10 +1340,15 @@ export class TerminalApp extends BaseApp {
   async expandGlob(pattern, path) {
     const parts = pattern.split("/");
     const filePattern = parts.pop();
-    const dirPath = parts.length > 0 ? this.fs.resolvePath(parts.join("/"), path) : path;
+    const dirPath =
+      parts.length > 0 ? this.fs.resolvePath(parts.join("/"), path) : path;
 
-    const items = Object.keys(await this.fs.getFolder(this.pathToString(dirPath)));
-    const regex = new RegExp("^" + filePattern.replace(/\*/g, ".*").replace(/\?/g, ".") + "$");
+    const items = Object.keys(
+      await this.fs.getFolder(this.pathToString(dirPath)),
+    );
+    const regex = new RegExp(
+      "^" + filePattern.replace(/\*/g, ".*").replace(/\?/g, ".") + "$",
+    );
     const matches = items.filter((item) => regex.test(item));
 
     if (parts.length > 0) {
@@ -1224,11 +1382,16 @@ export class TerminalApp extends BaseApp {
   }
 
   getEnvValue(name) {
-    return Object.prototype.hasOwnProperty.call(this.env, name) ? this.env[name] : "";
+    return Object.prototype.hasOwnProperty.call(this.env, name)
+      ? this.env[name]
+      : "";
   }
 
   expandVariables(str) {
-    this.shellEnv.set("PWD", this.currentPath.length ? "/" + this.currentPath.join("/") : "/");
+    this.shellEnv.set(
+      "PWD",
+      this.currentPath.length ? "/" + this.currentPath.join("/") : "/",
+    );
     this.shellEnv.set("?", String(this.activeState?.lastExitCode ?? 0));
     const result = this.shellEnv.expandWord(str, (cmdStr) => {
       this.executeInlineSubstitution(cmdStr);
@@ -1268,7 +1431,11 @@ export class TerminalApp extends BaseApp {
         curHasContent = true;
         i++;
         while (i < str.length && str[i] !== '"') {
-          if (str[i] === "\\" && i + 1 < str.length && '"\\$'.includes(str[i + 1])) {
+          if (
+            str[i] === "\\" &&
+            i + 1 < str.length &&
+            '"\\$'.includes(str[i + 1])
+          ) {
             cur += str[i + 1];
             i += 2;
           } else {
@@ -1392,7 +1559,13 @@ export class TerminalApp extends BaseApp {
 
     const flushPipeline = () => {
       flushCommand();
-      chain.push({ operator, pipeline: currentPipeline, redirOut, redirAppend, redirIn });
+      chain.push({
+        operator,
+        pipeline: currentPipeline,
+        redirOut,
+        redirAppend,
+        redirIn,
+      });
       currentPipeline = [];
       redirOut = null;
       redirAppend = null;
@@ -1451,7 +1624,12 @@ export class TerminalApp extends BaseApp {
     return this.parseChain(tokens);
   }
 
-  async executePipeline(pipeline, redirOut = null, redirAppend = null, redirIn = null) {
+  async executePipeline(
+    pipeline,
+    redirOut = null,
+    redirAppend = null,
+    redirIn = null,
+  ) {
     const state = this.activeState;
     if (!state) return;
     let output = null;
@@ -1459,7 +1637,10 @@ export class TerminalApp extends BaseApp {
 
     if (redirIn) {
       try {
-        output = await this.fs.readTextFile(this.pathToRelative(this.fs.resolvePath(redirIn, state.currentPath)), "");
+        output = await this.fs.readTextFile(
+          this.pathToRelative(this.fs.resolvePath(redirIn, state.currentPath)),
+          "",
+        );
       } catch {
         await this.enqueuePrint(`bash: ${redirIn}: No such file or directory`);
         state.lastExitCode = 1;
@@ -1483,14 +1664,18 @@ export class TerminalApp extends BaseApp {
         pipeline[i] = { command, args, flags };
       }
       if (command === "sudo" || !command) continue;
-      const expandedArgs = await this.expandGlobsInArgs(args, state.currentPath);
+      const expandedArgs = await this.expandGlobsInArgs(
+        args,
+        state.currentPath,
+      );
       const isPiped = output !== null;
 
       if (isPiped) expandedArgs.unshift(output);
 
       const ctx = this.buildCommandContext();
       const handler = this.commandRegistry.has(command)
-        ? (args, flags, isPiped) => this.commandRegistry.execute(command, args, ctx)
+        ? (args, flags, isPiped) =>
+            this.commandRegistry.execute(command, args, ctx)
         : this.commands[command];
       if (!handler) {
         await this.enqueuePrint(`bash: ${command}: command not found`);
@@ -1500,7 +1685,9 @@ export class TerminalApp extends BaseApp {
 
       const isLast = i === pipeline.length - 1;
       if (!isLast || redirOut || redirAppend) {
-        output = await this.captureOutput(() => handler(expandedArgs, flags, isPiped));
+        output = await this.captureOutput(() =>
+          handler(expandedArgs, flags, isPiped),
+        );
       } else {
         await handler(expandedArgs, flags, isPiped);
       }
@@ -1509,16 +1696,24 @@ export class TerminalApp extends BaseApp {
     if (redirOut || redirAppend) {
       const target = redirOut || redirAppend;
       try {
-        const targetPath = this.pathToString(this.fs.resolvePath(target, state.currentPath));
+        const targetPath = this.pathToString(
+          this.fs.resolvePath(target, state.currentPath),
+        );
         const fullPath = this.fs.resolveUserPath(targetPath);
         await this.fs.ensureFolder(this.fs.dirname(fullPath)).catch(() => {});
         if (redirAppend) {
           let existing = "";
           try {
             const raw = await this.fs.pRead("readFile", fullPath);
-            existing = raw instanceof Uint8Array ? new TextDecoder().decode(raw) : String(raw);
+            existing =
+              raw instanceof Uint8Array
+                ? new TextDecoder().decode(raw)
+                : String(raw);
           } catch {}
-          await this.fs.safeWriteFile(fullPath, existing ? existing + "\n" + output : output || "");
+          await this.fs.safeWriteFile(
+            fullPath,
+            existing ? existing + "\n" + output : output || "",
+          );
         } else {
           await this.fs.safeWriteFile(fullPath, output || "");
         }
@@ -1569,7 +1764,7 @@ export class TerminalApp extends BaseApp {
       "--non-interactive",
       "--stdin",
       "--shell",
-      "--version"
+      "--version",
     ]);
     const sudoFlagsWithValue = new Set([
       "-u",
@@ -1583,7 +1778,7 @@ export class TerminalApp extends BaseApp {
       "--group",
       "--prompt",
       "--chdir",
-      "--other-user"
+      "--other-user",
     ]);
     let argsQueue = [...args];
     const innerFlags = [];
@@ -1597,7 +1792,21 @@ export class TerminalApp extends BaseApp {
       if (flag.startsWith("-") && flag.length > 2 && !flag.startsWith("--")) {
         const chars = flag.slice(1).split("");
         const isSudoCombined = chars.every((c) =>
-          ["A", "b", "E", "H", "k", "K", "l", "n", "S", "s", "v", "V", "h"].includes(c)
+          [
+            "A",
+            "b",
+            "E",
+            "H",
+            "k",
+            "K",
+            "l",
+            "n",
+            "S",
+            "s",
+            "v",
+            "V",
+            "h",
+          ].includes(c),
         );
         if (isSudoCombined) continue;
       }
@@ -1699,13 +1908,18 @@ export class TerminalApp extends BaseApp {
     os.events.emit(BusEvents.TERMINAL_CMD_EXECUTED, { command: commandStr });
     await this.enqueuePrint(commandStr, null, true, this.promptHtml());
 
-    if (commandStr.trim() === "sudo rm -rf /" || commandStr.trim() === "sudo rm -rf /*") {
+    if (
+      commandStr.trim() === "sudo rm -rf /" ||
+      commandStr.trim() === "sudo rm -rf /*"
+    ) {
       await this.cmdNukeSystem();
       return;
     }
 
     const preChain = this.parseCommand(commandStr);
-    const needsSudo = preChain.some((seg) => seg.pipeline.some((p) => p.command === "sudo"));
+    const needsSudo = preChain.some((seg) =>
+      seg.pipeline.some((p) => p.command === "sudo"),
+    );
     if (needsSudo) {
       const ok = await this.ensureSudoAuth();
       if (!ok) return;
@@ -1721,7 +1935,10 @@ export class TerminalApp extends BaseApp {
       commandStr.includes("fi") ||
       commandStr.includes("done")
     ) {
-      this.shellEnv.set("PWD", this.currentPath.length ? "/" + this.currentPath.join("/") : "/");
+      this.shellEnv.set(
+        "PWD",
+        this.currentPath.length ? "/" + this.currentPath.join("/") : "/",
+      );
       this.shellEnv.set("?", String(state.lastExitCode ?? 0));
       this.shellEnv.set("HOSTNAME", this.hostname);
       this.shellEnv.set("USER", this.displayName);
@@ -1744,7 +1961,12 @@ export class TerminalApp extends BaseApp {
       }
       if (segment.operator === "&&" && state.lastExitCode !== 0) continue;
       if (segment.operator === "||" && state.lastExitCode === 0) continue;
-      await this.executePipeline(segment.pipeline, segment.redirOut, segment.redirAppend, segment.redirIn);
+      await this.executePipeline(
+        segment.pipeline,
+        segment.redirOut,
+        segment.redirAppend,
+        segment.redirIn,
+      );
     }
 
     this.updatePrompt();
@@ -1812,8 +2034,8 @@ export class TerminalApp extends BaseApp {
                   req.onsuccess = () => resolve();
                   req.onerror = () => resolve();
                   req.onblocked = () => resolve();
-                })
-            )
+                }),
+            ),
         );
       }
     } catch (e) {
@@ -1835,23 +2057,29 @@ export class TerminalApp extends BaseApp {
     const isFirstWord = leftBeforePartial.trim().length === 0;
 
     if (isFirstWord && !partial.includes("/")) {
-      const candidates = [...Object.keys(this.commands), ...Object.keys(this.aliases)];
+      const candidates = [
+        ...Object.keys(this.commands),
+        ...Object.keys(this.aliases),
+      ];
       const matches = candidates.filter((c) => c.startsWith(partial));
       if (!matches.length) return;
 
       if (matches.length === 1) {
         const completion = matches[0] + " ";
-        this.terminalInput.value = leftBeforePartial + completion + input.slice(cursorPos);
+        this.terminalInput.value =
+          leftBeforePartial + completion + input.slice(cursorPos);
         this.terminalInput.selectionStart = this.terminalInput.selectionEnd =
           leftBeforePartial.length + completion.length;
       } else {
         const commonPrefix = matches.reduce((prefix, item) => {
           let i = 0;
-          while (i < prefix.length && i < item.length && prefix[i] === item[i]) i++;
+          while (i < prefix.length && i < item.length && prefix[i] === item[i])
+            i++;
           return prefix.slice(0, i);
         }, matches[0]);
         if (commonPrefix.length > partial.length) {
-          this.terminalInput.value = leftBeforePartial + commonPrefix + input.slice(cursorPos);
+          this.terminalInput.value =
+            leftBeforePartial + commonPrefix + input.slice(cursorPos);
           this.terminalInput.selectionStart = this.terminalInput.selectionEnd =
             leftBeforePartial.length + commonPrefix.length;
         } else {
@@ -1873,7 +2101,9 @@ export class TerminalApp extends BaseApp {
 
     let folderContents;
     try {
-      folderContents = Object.keys(await this.fs.getFolder(this.pathToString(pathParts)));
+      folderContents = Object.keys(
+        await this.fs.getFolder(this.pathToString(pathParts)),
+      );
     } catch {
       return;
     }
@@ -1883,17 +2113,20 @@ export class TerminalApp extends BaseApp {
     if (matches.length === 1) {
       const isFile = await this.fs.isFile(pathParts, matches[0]);
       const completion = matches[0] + (isFile ? "" : "/");
-      this.terminalInput.value = leftBeforePartial + completion + input.slice(cursorPos);
+      this.terminalInput.value =
+        leftBeforePartial + completion + input.slice(cursorPos);
       this.terminalInput.selectionStart = this.terminalInput.selectionEnd =
         leftBeforePartial.length + completion.length;
     } else {
       const commonPrefix = matches.reduce((prefix, item) => {
         let i = 0;
-        while (i < prefix.length && i < item.length && prefix[i] === item[i]) i++;
+        while (i < prefix.length && i < item.length && prefix[i] === item[i])
+          i++;
         return prefix.slice(0, i);
       }, matches[0]);
       if (commonPrefix.length > baseName.length) {
-        this.terminalInput.value = leftBeforePartial + commonPrefix + input.slice(cursorPos);
+        this.terminalInput.value =
+          leftBeforePartial + commonPrefix + input.slice(cursorPos);
         this.terminalInput.selectionStart = this.terminalInput.selectionEnd =
           leftBeforePartial.length + commonPrefix.length;
       } else {
@@ -1903,7 +2136,9 @@ export class TerminalApp extends BaseApp {
   }
 
   promptHtml() {
-    const path = this.currentPath.length ? "/" + this.currentPath.join("/") : "/";
+    const path = this.currentPath.length
+      ? "/" + this.currentPath.join("/")
+      : "/";
     return `<span class="prompt-user">${this.displayName}</span><span class="prompt-at">@</span><span class="prompt-host">${this.hostname}</span><span class="prompt-sep">:</span><span class="prompt-path">${path}</span><span class="prompt-dollar">$</span>`;
   }
 
@@ -1931,7 +2166,11 @@ export class TerminalApp extends BaseApp {
   registerDefaultCommands() {
     this.registerCommand("help", () => this.cmdHelp());
     this.registerCommand("clear", () => this.cmdClear());
-    this.registerCommand("pwd", () => this.print(this.currentPath.length ? "/" + this.currentPath.join("/") : "/"));
+    this.registerCommand("pwd", () =>
+      this.print(
+        this.currentPath.length ? "/" + this.currentPath.join("/") : "/",
+      ),
+    );
     this.registerCommand("ls", (args, flags) => this.cmdLs(args, flags));
     this.registerCommand("cd", (args) => this.cmdCd(args));
     this.registerCommand("mkdir", (args) => this.cmdMkdir(args));
@@ -1942,10 +2181,14 @@ export class TerminalApp extends BaseApp {
     this.registerCommand("whoami", () => this.print(this.displayName));
     this.registerCommand("hostname", () => this.print(this.hostname));
     this.registerCommand("date", () => this.print(new Date().toString()));
-    this.registerCommand("history", () => this.history.forEach((cmd, i) => this.print(`  ${i + 1}  ${cmd}`)));
+    this.registerCommand("history", () =>
+      this.history.forEach((cmd, i) => this.print(`  ${i + 1}  ${cmd}`)),
+    );
     this.registerCommand("tree", () => this.cmdTree());
     this.registerCommand("uname", () =>
-      this.print("Linux reeyuki-desktop 6.1.23-arch1-1 #1 SMP PREEMPT x86_64 GNU/Linux")
+      this.print(
+        "Linux reeyuki-desktop 6.1.23-arch1-1 #1 SMP PREEMPT x86_64 GNU/Linux",
+      ),
     );
     this.registerCommand("ping", (args) => this.cmdPing(args));
     this.registerCommand("curl", (args) => this.cmdCurl(args));
@@ -1960,7 +2203,7 @@ export class TerminalApp extends BaseApp {
       "pfetch",
       "ufetch",
       "afetch",
-      "nerdfetch"
+      "nerdfetch",
     ]) {
       this.registerCommand(fetchAlias, () => this.cmdNeofetch());
     }
@@ -1968,12 +2211,21 @@ export class TerminalApp extends BaseApp {
       const ok = await this.ensureSudoAuth();
       if (!ok) return;
       if (!args.length && !flags.length) return;
-      const unwrapped = this.unwrapSudoSegment({ command: "sudo", args, flags });
+      const unwrapped = this.unwrapSudoSegment({
+        command: "sudo",
+        args,
+        flags,
+      });
       if (!unwrapped || !unwrapped.command) return;
       const handler =
         this.commands[unwrapped.command] ||
         (this.commandRegistry.has(unwrapped.command)
-          ? (a, f) => this.commandRegistry.execute(unwrapped.command, a, this.buildCommandContext())
+          ? (a, f) =>
+              this.commandRegistry.execute(
+                unwrapped.command,
+                a,
+                this.buildCommandContext(),
+              )
           : null);
       if (!handler) {
         await this.print(`bash: ${unwrapped.command}: command not found`);
@@ -1990,11 +2242,21 @@ export class TerminalApp extends BaseApp {
     this.registerCommand("exit", () => this.cmdExit());
     this.registerCommand("mv", (args) => this.cmdMv(args));
     this.registerCommand("cp", (args, flags) => this.cmdCp(args, flags));
-    this.registerCommand("head", (args, flags, isPiped) => this.cmdHead(args, flags, isPiped));
-    this.registerCommand("tail", (args, flags, isPiped) => this.cmdTail(args, flags, isPiped));
-    this.registerCommand("sort", (args, flags, isPiped) => this.cmdSort(args, flags, isPiped));
-    this.registerCommand("uniq", (args, flags, isPiped) => this.cmdUniq(args, flags, isPiped));
-    this.registerCommand("cut", (args, flags, isPiped) => this.cmdCut(args, flags, isPiped));
+    this.registerCommand("head", (args, flags, isPiped) =>
+      this.cmdHead(args, flags, isPiped),
+    );
+    this.registerCommand("tail", (args, flags, isPiped) =>
+      this.cmdTail(args, flags, isPiped),
+    );
+    this.registerCommand("sort", (args, flags, isPiped) =>
+      this.cmdSort(args, flags, isPiped),
+    );
+    this.registerCommand("uniq", (args, flags, isPiped) =>
+      this.cmdUniq(args, flags, isPiped),
+    );
+    this.registerCommand("cut", (args, flags, isPiped) =>
+      this.cmdCut(args, flags, isPiped),
+    );
     this.registerCommand("find", (args, flags) => this.cmdFind(args, flags));
     this.registerCommand("which", (args) => this.cmdWhich(args));
     this.registerCommand("type", (args) => this.cmdType(args));
@@ -2004,8 +2266,12 @@ export class TerminalApp extends BaseApp {
     this.registerCommand("export", (args) => this.cmdExport(args));
     this.registerCommand("env", () => this.cmdEnv());
     this.registerCommand("man", (args) => this.cmdMan(args));
-    this.registerCommand("less", (args, flags, isPiped) => this.cmdLess(args, flags, isPiped));
-    this.registerCommand("more", (args, flags, isPiped) => this.cmdLess(args, flags, isPiped));
+    this.registerCommand("less", (args, flags, isPiped) =>
+      this.cmdLess(args, flags, isPiped),
+    );
+    this.registerCommand("more", (args, flags, isPiped) =>
+      this.cmdLess(args, flags, isPiped),
+    );
     this.registerCommand("git", (args, flags) => this.cmdGit(args, flags));
     this.registerCommand("shutdown", () => this.cmdShutdown());
     this.registerCommand("reboot", () => this.cmdReboot());
@@ -2013,8 +2279,12 @@ export class TerminalApp extends BaseApp {
     this.registerCommand("lock", () => this.cmdLock());
     this.registerCommand("logout", () => this.cmdLogout());
     this.registerCommand("signout", () => this.cmdLogout());
-    this.registerCommand("python", (args, flags) => this.cmdPython(args, flags));
-    this.registerCommand("python3", (args, flags) => this.cmdPython(args, flags));
+    this.registerCommand("python", (args, flags) =>
+      this.cmdPython(args, flags),
+    );
+    this.registerCommand("python3", (args, flags) =>
+      this.cmdPython(args, flags),
+    );
     this.registerCommand("node", (args, flags) => this.cmdNode(args, flags));
     this.registerCommand("bash", (args) => this.cmdBash(args));
     this.registerCommand("yuki", (args) => cmdYuki(this, args));
@@ -2046,7 +2316,9 @@ export class TerminalApp extends BaseApp {
     this.registerCommand("dir", (args, flags) => this.cmdLs(args, flags));
     this.registerCommand("rmdir", async (args) => {
       for (const target of args) {
-        const absPath = this.pathToString(this.fs.resolvePath(target, this.currentPath));
+        const absPath = this.pathToString(
+          this.fs.resolvePath(target, this.currentPath),
+        );
         try {
           await this.fs.delete(absPath, target);
         } catch (err) {
@@ -2062,7 +2334,9 @@ export class TerminalApp extends BaseApp {
         return;
       }
       for (const target of args) {
-        const absPath = this.pathToString(this.fs.resolvePath(target, this.currentPath));
+        const absPath = this.pathToString(
+          this.fs.resolvePath(target, this.currentPath),
+        );
         try {
           const content = await this.fs.readTextFile(absPath, "");
           if (content) {
@@ -2105,14 +2379,30 @@ export class TerminalApp extends BaseApp {
         "Simplicity is the ultimate sophistication.",
         "Be yourself; everyone else is already taken.",
         "The unexamined life is not worth living.",
-        "Two things are infinite: the universe and human stupidity; and I'm not sure about the universe."
+        "Two things are infinite: the universe and human stupidity; and I'm not sure about the universe.",
       ];
       this.print(fortunes[Math.floor(Math.random() * fortunes.length)]);
     });
 
     this.registerCommand("pipes", () => {
       this.print("Starting pipes... (runs for 5s)");
-      const pipes = ["╸", "╻", "╺", "╹", "━", "┃", "┓", "┛", "┏", "┗", "┣", "┫", "┳", "┻", "╋"];
+      const pipes = [
+        "╸",
+        "╻",
+        "╺",
+        "╹",
+        "━",
+        "┃",
+        "┓",
+        "┛",
+        "┏",
+        "┗",
+        "┣",
+        "┫",
+        "┳",
+        "┻",
+        "╋",
+      ];
       let x = 15,
         y = 5,
         dir = 0;
@@ -2120,14 +2410,15 @@ export class TerminalApp extends BaseApp {
         [1, 0],
         [0, 1],
         [-1, 0],
-        [0, -1]
+        [0, -1],
       ];
       const interval = setInterval(() => {
         if (this.stopRequested) {
           clearInterval(interval);
           return;
         }
-        if (Math.random() < 0.3) dir = (dir + (Math.random() < 0.5 ? 1 : -1) + 4) % 4;
+        if (Math.random() < 0.3)
+          dir = (dir + (Math.random() < 0.5 ? 1 : -1) + 4) % 4;
         x += dirs[dir][0];
         y += dirs[dir][1];
         if (x < 0 || x > 30 || y < 0 || y > 10) {
@@ -2151,8 +2442,12 @@ export class TerminalApp extends BaseApp {
       setTimeout(() => clearInterval(interval), 5000);
     });
     this.registerCommand("watch", async (args) => {
-      const interval = args.includes("-n") ? parseInt(args[args.indexOf("-n") + 1], 10) || 2 : 2;
-      const cmdArgs = args.filter((a) => !a.startsWith("-") && isNaN(parseInt(a, 10)));
+      const interval = args.includes("-n")
+        ? parseInt(args[args.indexOf("-n") + 1], 10) || 2
+        : 2;
+      const cmdArgs = args.filter(
+        (a) => !a.startsWith("-") && isNaN(parseInt(a, 10)),
+      );
       await this.print(`Every ${interval}s: ${cmdArgs.join(" ")}`);
     });
     this.registerCommand("whatis", (args) => {
@@ -2229,9 +2524,10 @@ export class TerminalApp extends BaseApp {
         shutdown: "shut down the system",
         reboot: "reboot the system",
         lock: "lock the session",
-        logout: "log out"
+        logout: "log out",
       };
-      if (args[0] && descriptions[args[0]]) this.print(`${args[0]} (1) - ${descriptions[args[0]]}`);
+      if (args[0] && descriptions[args[0]])
+        this.print(`${args[0]} (1) - ${descriptions[args[0]]}`);
       else if (args[0]) this.print(`${args[0]}: nothing appropriate`);
     });
     this.registerCommand("movefocus", (args) => this.cmdMovefocus(args));
@@ -2244,21 +2540,32 @@ export class TerminalApp extends BaseApp {
     this.registerCommand("killactive", () => this.cmdKillactive());
     this.registerCommand("lavat", (args, flags) => this.cmdLavat(args, flags));
     this.registerCommand("btop", (args) => this.cmdBtop(args));
-    this.registerCommand("cmatrix", (args, flags) => this.cmdCmatrix(args, flags));
+    this.registerCommand("cmatrix", (args, flags) =>
+      this.cmdCmatrix(args, flags),
+    );
     processManager.init();
   }
 
   async cmdLavat(args, flags) {
     if (this.lavatActive) {
-      await this.print("lavat is already running. Press q or Esc inside the lava lamp to exit.");
+      await this.print(
+        "lavat is already running. Press q or Esc inside the lava lamp to exit.",
+      );
       return;
     }
 
-    if (args.includes("--help") || args.includes("-h") || flags.includes("--help") || flags.includes("-h")) {
+    if (
+      args.includes("--help") ||
+      args.includes("-h") ||
+      flags.includes("--help") ||
+      flags.includes("-h")
+    ) {
       await this.print("Usage: lavat [options]");
       await this.print("");
       await this.print("Options:");
-      await this.print("  -c <color>   Set color (green, blue, red, purple, pink, cyan, orange, white, yellow)");
+      await this.print(
+        "  -c <color>   Set color (green, blue, red, purple, pink, cyan, orange, white, yellow)",
+      );
       await this.print("  -s <speed>   Animation speed multiplier");
       await this.print("  -r <radius>  Metaball radius");
       await this.print("  -S <size>    Metaball size");
@@ -2283,7 +2590,8 @@ export class TerminalApp extends BaseApp {
 
     const iframe = createElement("iframe");
     iframe.id = "lavat-iframe";
-    iframe.style.cssText = "width:100%;height:100%;border:none;background:#000;";
+    iframe.style.cssText =
+      "width:100%;height:100%;border:none;background:#000;";
     iframe.setAttribute("sandbox", "allow-scripts allow-same-origin");
 
     lavatContainer.appendChild(iframe);
@@ -2295,7 +2603,10 @@ export class TerminalApp extends BaseApp {
       let html = await response.text();
       html = html.replace('src="index.js"', 'src="' + lavatBase + '/index.js"');
       const escapedArgs = lavatArgs.replace(/\\/g, "\\\\").replace(/'/g, "\\'");
-      html = html.replace('var argsStr = params.get("args") || "-c green -G";', "var argsStr = '" + escapedArgs + "';");
+      html = html.replace(
+        'var argsStr = params.get("args") || "-c green -G";',
+        "var argsStr = '" + escapedArgs + "';",
+      );
       iframe.srcdoc = html;
     } catch (e) {
       await this.print("lavat: failed to load: " + e.message);
@@ -2309,10 +2620,16 @@ export class TerminalApp extends BaseApp {
 
     iframe.addEventListener("load", () => {
       iframe.contentWindow?.focus();
-      const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
+      const iframeDoc =
+        iframe.contentDocument || iframe.contentWindow?.document;
       if (!iframeDoc) return;
       const iframeHandler = (e) => {
-        if (e.key === "Escape" || e.key === "q" || e.key === "Q" || (e.ctrlKey && e.key.toLowerCase() === "c")) {
+        if (
+          e.key === "Escape" ||
+          e.key === "q" ||
+          e.key === "Q" ||
+          (e.ctrlKey && e.key.toLowerCase() === "c")
+        ) {
           this.stopLavat();
         }
       };
@@ -2352,11 +2669,18 @@ export class TerminalApp extends BaseApp {
 
   async cmdCmatrix(args, flags) {
     if (this.cmatrixActive) {
-      await this.print("cmatrix is already running. Press q or Ctrl+C to exit.");
+      await this.print(
+        "cmatrix is already running. Press q or Ctrl+C to exit.",
+      );
       return;
     }
 
-    if (args.includes("--help") || args.includes("-h") || flags.includes("--help") || flags.includes("-h")) {
+    if (
+      args.includes("--help") ||
+      args.includes("-h") ||
+      flags.includes("--help") ||
+      flags.includes("-h")
+    ) {
       await this.print("Usage: cmatrix [options]");
       await this.print("");
       await this.print("Options:");
@@ -2369,7 +2693,9 @@ export class TerminalApp extends BaseApp {
       await this.print("  -m           Lambda mode (\\u03bb characters)");
       await this.print("  -k           Character changes (flickering)");
       await this.print("  -u <0-10>    Update speed (default: 4)");
-      await this.print("  -C <color>   Color: green, red, blue, white, yellow, cyan, magenta, black");
+      await this.print(
+        "  -C <color>   Color: green, red, blue, white, yellow, cyan, magenta, black",
+      );
       await this.print("  -s           Screensaver mode (any key to exit)");
       await this.print("  -L           Lock screen with message");
       await this.print("  -M <msg>     Set lock message");
@@ -2391,7 +2717,8 @@ export class TerminalApp extends BaseApp {
 
     const iframe = createElement("iframe");
     iframe.id = "cmatrix-iframe";
-    iframe.style.cssText = "width:100%;height:100%;border:none;background:#000;";
+    iframe.style.cssText =
+      "width:100%;height:100%;border:none;background:#000;";
     iframe.setAttribute("sandbox", "allow-scripts allow-same-origin");
 
     cmatrixContainer.appendChild(iframe);
@@ -2401,8 +2728,13 @@ export class TerminalApp extends BaseApp {
     try {
       const response = await fetch(cmatrixBase + "/cmatrix.html");
       let html = await response.text();
-      const escapedArgs = cmatrixArgs.replace(/\\/g, "\\\\").replace(/'/g, "\\'");
-      html = html.replace('var INIT_ARGS = "";', "var INIT_ARGS = '" + escapedArgs + "';");
+      const escapedArgs = cmatrixArgs
+        .replace(/\\/g, "\\\\")
+        .replace(/'/g, "\\'");
+      html = html.replace(
+        'var INIT_ARGS = "";',
+        "var INIT_ARGS = '" + escapedArgs + "';",
+      );
       iframe.srcdoc = html;
     } catch (e) {
       await this.print("cmatrix: failed to load: " + e.message);
@@ -2416,10 +2748,15 @@ export class TerminalApp extends BaseApp {
 
     iframe.addEventListener("load", () => {
       iframe.contentWindow?.focus();
-      const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
+      const iframeDoc =
+        iframe.contentDocument || iframe.contentWindow?.document;
       if (!iframeDoc) return;
       const iframeHandler = (e) => {
-        if (e.key === "q" || e.key === "Q" || (e.ctrlKey && e.key.toLowerCase() === "c")) {
+        if (
+          e.key === "q" ||
+          e.key === "Q" ||
+          (e.ctrlKey && e.key.toLowerCase() === "c")
+        ) {
           this.stopCmatrix();
         }
       };
@@ -2475,7 +2812,8 @@ export class TerminalApp extends BaseApp {
 
     const iframe = createElement("iframe");
     iframe.id = "btop-iframe";
-    iframe.style.cssText = "width:100%;height:100%;border:none;background:#1a1a2e;";
+    iframe.style.cssText =
+      "width:100%;height:100%;border:none;background:#1a1a2e;";
     iframe.setAttribute("sandbox", "allow-scripts allow-same-origin");
 
     btopContainer.appendChild(iframe);
@@ -2486,7 +2824,10 @@ export class TerminalApp extends BaseApp {
       const response = await fetch(btopBase + "/btop.html");
       let html = await response.text();
       html = html.replace('src="btop.js"', 'src="' + btopBase + '/btop.js"');
-      html = html.replace(/'__BTOP_BASE__\/' \+ path/g, "'" + btopBase + "/' + path");
+      html = html.replace(
+        /'__BTOP_BASE__\/' \+ path/g,
+        "'" + btopBase + "/' + path",
+      );
       const scrollStyle = `<style>
         ::-webkit-scrollbar{width:8px}
         ::-webkit-scrollbar-track{background:transparent}
@@ -2515,7 +2856,7 @@ export class TerminalApp extends BaseApp {
         const runningProcs = processManager.getProcesses();
         const totalCpu = Math.min(
           99,
-          runningProcs.reduce((s, p) => s + p.cpu, 0)
+          runningProcs.reduce((s, p) => s + p.cpu, 0),
         );
         const cpuUser = Math.min(totalCpu, totalCpu * 0.7);
         const cpuSys = Math.min(totalCpu, totalCpu * 0.3);
@@ -2523,14 +2864,22 @@ export class TerminalApp extends BaseApp {
 
         const coreCount = navigator.hardwareConcurrency || 4;
         const cpuCores = Array.from({ length: coreCount }, () =>
-          Math.min(100, Math.max(0, totalCpu * (0.5 + Math.random() * 0.5)))
+          Math.min(100, Math.max(0, totalCpu * (0.5 + Math.random() * 0.5))),
         );
 
         let memPercent;
         if (performance.memory) {
-          memPercent = Math.min(99, (performance.memory.usedJSHeapSize / performance.memory.jsHeapSizeLimit) * 100);
+          memPercent = Math.min(
+            99,
+            (performance.memory.usedJSHeapSize /
+              performance.memory.jsHeapSizeLimit) *
+              100,
+          );
         } else {
-          memPercent = Math.min(99, 35 + runningProcs.length * 3 + (Math.random() - 0.5) * 2);
+          memPercent = Math.min(
+            99,
+            35 + runningProcs.length * 3 + (Math.random() - 0.5) * 2,
+          );
         }
 
         const totalSystemMem = 8 * 1024 * 1024 * 1024;
@@ -2539,7 +2888,8 @@ export class TerminalApp extends BaseApp {
         const cachedMem = Math.round(freeSystemMem * 0.3);
         const availMem = freeSystemMem + cachedMem;
 
-        const displayName = os.storage.get(StorageKeys.settingsDisplayName) || "user";
+        const displayName =
+          os.storage.get(StorageKeys.settingsDisplayName) || "user";
         const uptime = Math.floor(performance.now() / 1000);
         const load1 = Math.min(coreCount, +(totalCpu / 25).toFixed(1));
         const load5 = Math.max(0, +(load1 * 0.8).toFixed(1));
@@ -2587,8 +2937,8 @@ export class TerminalApp extends BaseApp {
             cpuP: +p.cpu.toFixed(1),
             cpuC: +p.cpu.toFixed(1),
             state: p.isTray ? "S" : "R",
-            ppid: 1
-          }))
+            ppid: 1,
+          })),
         };
 
         try {
@@ -2682,17 +3032,23 @@ export class TerminalApp extends BaseApp {
             : item + (isFile ? "" : "/");
           await this.print(prefix + display, isFile ? null : "blue");
           if (recursive && !isFile) {
-            const subPath = Array.isArray(path) ? [...path, item] : this.fs.resolvePath(item, path);
+            const subPath = Array.isArray(path)
+              ? [...path, item]
+              : this.fs.resolvePath(item, path);
             await listFolder(subPath, prefix + "  ");
           }
         }
       } catch (e) {
-        await this.print(`ls: cannot access '${this.pathToString(path)}': No such file or directory`);
+        await this.print(
+          `ls: cannot access '${this.pathToString(path)}': No such file or directory`,
+        );
         console.error(e);
       }
     };
 
-    const targetPath = args.length ? this.fs.resolvePath(args[0], this.currentPath) : [...this.currentPath];
+    const targetPath = args.length
+      ? this.fs.resolvePath(args[0], this.currentPath)
+      : [...this.currentPath];
     await listFolder(targetPath);
   }
 
@@ -2726,7 +3082,9 @@ export class TerminalApp extends BaseApp {
         await this.fs.createFolder(this.pathToRelative(targetPath), dir);
         await this.print(`Created directory: ${dir}`);
       } catch (e) {
-        await this.print(`mkdir: cannot create directory '${dir}': ${e.message}`);
+        await this.print(
+          `mkdir: cannot create directory '${dir}': ${e.message}`,
+        );
       }
     }
   }
@@ -2772,7 +3130,9 @@ export class TerminalApp extends BaseApp {
     if (!args.length) return this.print("touch: missing file operand");
     for (const file of args) {
       try {
-        const parentEntries = await this.fs.getFolder(this.pathToString(this.currentPath));
+        const parentEntries = await this.fs.getFolder(
+          this.pathToString(this.currentPath),
+        );
         const existing = parentEntries[file];
         if (existing) {
           if (existing.type === "dir") {
@@ -2780,7 +3140,11 @@ export class TerminalApp extends BaseApp {
             continue;
           }
         }
-        await this.fs.createFile(this.pathToRelative(this.currentPath), file, "");
+        await this.fs.createFile(
+          this.pathToRelative(this.currentPath),
+          file,
+          "",
+        );
         if (!existing) await this.print(`Created file: ${file}`);
       } catch (e) {
         await this.print(`touch: ${file}: ${e.message}`);
@@ -2799,24 +3163,34 @@ export class TerminalApp extends BaseApp {
         const parentPath = pathArray.slice(0, -1);
         const name = pathArray[pathArray.length - 1];
 
-        const isFile = await this.fs.isFile(this.pathToString(parentPath), name);
+        const isFile = await this.fs.isFile(
+          this.pathToString(parentPath),
+          name,
+        );
         if (isFile) {
           await this.fs.deleteItem(this.pathToRelative(parentPath), name);
         } else {
           if (!isRecursive) throw new Error("is a directory");
-          const folderItems = Object.keys(await this.fs.getFolder(this.pathToString(pathArray)));
+          const folderItems = Object.keys(
+            await this.fs.getFolder(this.pathToString(pathArray)),
+          );
           for (const sub of folderItems) {
             await removeItem([...pathArray, sub]);
           }
           await this.fs.deleteItem(this.pathToRelative(parentPath), name);
         }
       } catch (e) {
-        if (!isForce) await this.print(`rm: cannot remove '${pathArray.join("/")}': ${e.message}`);
+        if (!isForce)
+          await this.print(
+            `rm: cannot remove '${pathArray.join("/")}': ${e.message}`,
+          );
       }
     };
 
     for (const arg of args) {
-      const fullPath = arg.startsWith("/") ? this.fs.resolvePath(arg, []) : this.fs.resolvePath(arg, this.currentPath);
+      const fullPath = arg.startsWith("/")
+        ? this.fs.resolvePath(arg, [])
+        : this.fs.resolvePath(arg, this.currentPath);
       await removeItem(fullPath);
     }
   }
@@ -2832,7 +3206,10 @@ export class TerminalApp extends BaseApp {
           if (!isFile) {
             await this.print(`cat: ${file}: Is a directory`);
           } else {
-            const content = await this.fs.readTextFile(this.pathToRelative(this.currentPath), file);
+            const content = await this.fs.readTextFile(
+              this.pathToRelative(this.currentPath),
+              file,
+            );
             await this.print(content || "(empty file)");
           }
         } catch {
@@ -2861,12 +3238,17 @@ export class TerminalApp extends BaseApp {
   async cmdWc(args) {
     const flagArgs = args.filter((a) => a.startsWith("-"));
     const files = args.filter((a) => !a.startsWith("-"));
-    if (!files.length || flagArgs.some((f) => f.includes("h") || f.includes("help"))) {
+    if (
+      !files.length ||
+      flagArgs.some((f) => f.includes("h") || f.includes("help"))
+    ) {
       return this.print("Usage: wc [-l] [-w] [-c] <file>");
     }
     const hasLineFlag = flagArgs.some((f) => f.includes("l"));
     const hasWordFlag = flagArgs.some((f) => f.includes("w"));
-    const hasCharFlag = flagArgs.some((f) => f.includes("c") || f.includes("m"));
+    const hasCharFlag = flagArgs.some(
+      (f) => f.includes("c") || f.includes("m"),
+    );
     const anyFlag = hasLineFlag || hasWordFlag || hasCharFlag;
     const showLines = !anyFlag || hasLineFlag;
     const showWords = !anyFlag || hasWordFlag;
@@ -2878,8 +3260,14 @@ export class TerminalApp extends BaseApp {
         const name = targetPath[targetPath.length - 1];
 
         if (await this.fs.isFile(parentPath, name)) {
-          const content = await this.fs.readTextFile(this.pathToRelative(targetPath), "");
-          const text = typeof content === "string" ? content : new TextDecoder().decode(content);
+          const content = await this.fs.readTextFile(
+            this.pathToRelative(targetPath),
+            "",
+          );
+          const text =
+            typeof content === "string"
+              ? content
+              : new TextDecoder().decode(content);
           const lines = text.split("\n").length;
           const words = text.split(/\s+/).filter(Boolean).length;
           const chars = text.length;
@@ -2916,11 +3304,16 @@ export class TerminalApp extends BaseApp {
     const parentSrc = srcPath.slice(0, -1);
     const isFile = await this.fs.isFile(parentSrc, name);
     if (isFile) {
-      const content = await this.fs.readTextFile(this.pathToRelative(srcPath), "");
+      const content = await this.fs.readTextFile(
+        this.pathToRelative(srcPath),
+        "",
+      );
       await this.fs.createFile(this.pathToRelative(destPath), name, content);
     } else {
       await this.fs.createFolder(this.pathToRelative(destPath), name);
-      const items = Object.keys(await this.fs.getFolder(this.pathToString(srcPath)));
+      const items = Object.keys(
+        await this.fs.getFolder(this.pathToString(srcPath)),
+      );
       for (const child of items) {
         await this.copyItem([...srcPath, child], [...destPath, child]);
       }
@@ -2932,7 +3325,9 @@ export class TerminalApp extends BaseApp {
     const name = pathArray[pathArray.length - 1];
     const isFile = await this.fs.isFile(parent, name);
     if (!isFile) {
-      const items = Object.keys(await this.fs.getFolder(this.pathToString(pathArray)));
+      const items = Object.keys(
+        await this.fs.getFolder(this.pathToString(pathArray)),
+      );
       for (const child of items) {
         await this.deleteRecursive([...pathArray, child]);
       }
@@ -3001,7 +3396,10 @@ export class TerminalApp extends BaseApp {
       try {
         const isFile = await this.fs.isFile(this.currentPath, args[0]);
         if (isFile) {
-          const content = await this.fs.readTextFile(this.pathToRelative(this.currentPath), args[0]);
+          const content = await this.fs.readTextFile(
+            this.pathToRelative(this.currentPath),
+            args[0],
+          );
           return { lines: content.split("\n") };
         }
       } catch {}
@@ -3048,7 +3446,9 @@ export class TerminalApp extends BaseApp {
     const numeric = flags.some((f) => f.includes("n"));
     const { lines } = await this.linesFromInput(args, isPiped);
     const sorted = [...lines];
-    sorted.sort((a, b) => (numeric ? Number(a) - Number(b) : a.localeCompare(b)));
+    sorted.sort((a, b) =>
+      numeric ? Number(a) - Number(b) : a.localeCompare(b),
+    );
     if (reverse) sorted.reverse();
     for (const line of sorted) {
       await this.print(line);
@@ -3068,7 +3468,9 @@ export class TerminalApp extends BaseApp {
       }
     }
     for (const r of result) {
-      await this.print(countFlag ? `${String(r.count).padStart(4)} ${r.value}` : r.value);
+      await this.print(
+        countFlag ? `${String(r.count).padStart(4)} ${r.value}` : r.value,
+      );
     }
   }
 
@@ -3076,7 +3478,8 @@ export class TerminalApp extends BaseApp {
     const delimFlag = flags.find((f) => f.startsWith("-d"));
     const delimiter = delimFlag ? delimFlag.slice(2) || "\t" : "\t";
     const fieldsFlag = flags.find((f) => f.startsWith("-f"));
-    if (!fieldsFlag) return this.print("cut: you must specify a list of fields with -f");
+    if (!fieldsFlag)
+      return this.print("cut: you must specify a list of fields with -f");
     const fields = fieldsFlag
       .slice(2)
       .split(",")
@@ -3106,7 +3509,14 @@ export class TerminalApp extends BaseApp {
 
     const startPath = this.fs.resolvePath(startArg, this.currentPath);
     const regex = namePattern
-      ? new RegExp("^" + namePattern.replace(/\./g, "\\.").replace(/\*/g, ".*").replace(/\?/g, ".") + "$")
+      ? new RegExp(
+          "^" +
+            namePattern
+              .replace(/\./g, "\\.")
+              .replace(/\*/g, ".*")
+              .replace(/\?/g, ".") +
+            "$",
+        )
       : null;
 
     const walk = async (path) => {
@@ -3161,16 +3571,24 @@ export class TerminalApp extends BaseApp {
       const fullPath = this.fs.paths.resolveUserPath(parentPath);
       const filePath = this.fs.paths.join(fullPath, name);
       if (this.fs.blobs) {
-        const blob = await this.fs.blobs.getBlobByFullPath(filePath).catch(() => null);
+        const blob = await this.fs.blobs
+          .getBlobByFullPath(filePath)
+          .catch(() => null);
         if (blob && blob.size > 0) {
           const slice = blob.size > maxBytes ? blob.slice(0, maxBytes) : blob;
           return new Uint8Array(await slice.arrayBuffer());
         }
       }
       const raw = await this.fs.pRead("readFile", filePath).catch(() => null);
-      if (raw instanceof Uint8Array) return raw.slice(0, Math.min(raw.length, maxBytes));
+      if (raw instanceof Uint8Array)
+        return raw.slice(0, Math.min(raw.length, maxBytes));
       if (typeof raw === "string") {
-        if (raw.startsWith("http") || raw.startsWith("data:") || raw.startsWith("/")) return null;
+        if (
+          raw.startsWith("http") ||
+          raw.startsWith("data:") ||
+          raw.startsWith("/")
+        )
+          return null;
         const encoded = new TextEncoder().encode(raw);
         return encoded.slice(0, Math.min(encoded.length, maxBytes));
       }
@@ -3180,12 +3598,20 @@ export class TerminalApp extends BaseApp {
 
   describePng(bytes) {
     if (bytes.length < 33) return "PNG image data";
-    const width = (bytes[16] << 24) | (bytes[17] << 16) | (bytes[18] << 8) | bytes[19];
-    const height = (bytes[20] << 24) | (bytes[21] << 16) | (bytes[22] << 8) | bytes[23];
+    const width =
+      (bytes[16] << 24) | (bytes[17] << 16) | (bytes[18] << 8) | bytes[19];
+    const height =
+      (bytes[20] << 24) | (bytes[21] << 16) | (bytes[22] << 8) | bytes[23];
     const bitDepth = bytes[24];
     const colorType = bytes[25];
     const interlace = bytes[28];
-    const colorNames = { 0: "Grayscale", 2: "RGB", 3: "Indexed", 4: "Grayscale+Alpha", 6: "RGBA" };
+    const colorNames = {
+      0: "Grayscale",
+      2: "RGB",
+      3: "Indexed",
+      4: "Grayscale+Alpha",
+      6: "RGBA",
+    };
     const color = colorNames[colorType] || `color-type-${colorType}`;
     const inter = interlace ? "Adam7 interlaced" : "non-interlaced";
     return `PNG image data, ${width} x ${height}, ${bitDepth}-bit/color ${color}, ${inter}`;
@@ -3201,7 +3627,12 @@ export class TerminalApp extends BaseApp {
 
   describeJpeg(bytes) {
     for (let i = 0; i < bytes.length - 4; i++) {
-      if (bytes[i] === 0xff && (bytes[i + 1] === 0xc0 || bytes[i + 1] === 0xc1 || bytes[i + 1] === 0xc2)) {
+      if (
+        bytes[i] === 0xff &&
+        (bytes[i + 1] === 0xc0 ||
+          bytes[i + 1] === 0xc1 ||
+          bytes[i + 1] === 0xc2)
+      ) {
         const precision = bytes[i + 4];
         const height = (bytes[i + 5] << 8) | bytes[i + 6];
         const width = (bytes[i + 7] << 8) | bytes[i + 8];
@@ -3213,14 +3644,25 @@ export class TerminalApp extends BaseApp {
 
   describeWebp(bytes) {
     if (bytes.length < 30) return "WebP image data";
-    if (bytes[12] === 0x56 && bytes[13] === 0x50 && bytes[14] === 0x38 && bytes[15] === 0x4c) {
+    if (
+      bytes[12] === 0x56 &&
+      bytes[13] === 0x50 &&
+      bytes[14] === 0x38 &&
+      bytes[15] === 0x4c
+    ) {
       if (bytes.length < 24) return "WebP image data (lossless)";
-      const packed = bytes[20] | (bytes[21] << 8) | (bytes[22] << 16) | (bytes[23] << 24);
+      const packed =
+        bytes[20] | (bytes[21] << 8) | (bytes[22] << 16) | (bytes[23] << 24);
       const w = (packed & 0x3fff) + 1;
       const h = ((packed >> 14) & 0x3fff) + 1;
       return `WebP image data (lossless), ${w} x ${h}`;
     }
-    if (bytes[12] === 0x56 && bytes[13] === 0x50 && bytes[14] === 0x38 && bytes[15] === 0x20) {
+    if (
+      bytes[12] === 0x56 &&
+      bytes[13] === 0x50 &&
+      bytes[14] === 0x38 &&
+      bytes[15] === 0x20
+    ) {
       if (bytes.length < 30) return "WebP image data";
       const w = ((bytes[27] & 0x3f) << 8) | (bytes[26] & 0x3f);
       const h = ((bytes[29] & 0x3f) << 8) | (bytes[28] & 0x3f);
@@ -3234,7 +3676,12 @@ export class TerminalApp extends BaseApp {
     if (bytes.length < 10) return "gzip compressed data";
     const flags = bytes[3];
     const osByte = bytes[9];
-    const osNames = { 0: "FAT filesystem", 3: "Unix", 11: "NTFS", 255: "unknown" };
+    const osNames = {
+      0: "FAT filesystem",
+      3: "Unix",
+      11: "NTFS",
+      255: "unknown",
+    };
     const os = osNames[osByte] || `OS ${osByte}`;
     let details = `gzip compressed data, from ${os}`;
     let pos = 10;
@@ -3256,18 +3703,23 @@ export class TerminalApp extends BaseApp {
 
   describeElf(bytes) {
     if (bytes.length < 20) return "data";
-    const elfClass = bytes[4] === 1 ? "32-bit" : bytes[4] === 2 ? "64-bit" : "unknown";
+    const elfClass =
+      bytes[4] === 1 ? "32-bit" : bytes[4] === 2 ? "64-bit" : "unknown";
     const isLE = bytes[5] === 1;
     const endian = isLE ? "LSB" : bytes[5] === 2 ? "MSB" : "";
-    const type = isLE ? bytes[16] | (bytes[17] << 8) : (bytes[16] << 8) | bytes[17];
+    const type = isLE
+      ? bytes[16] | (bytes[17] << 8)
+      : (bytes[16] << 8) | bytes[17];
     const typeNames = {
       0: "NONE",
       1: "REL (relocatable)",
       2: "EXEC (executable)",
       3: "DYN (shared object)",
-      4: "CORE"
+      4: "CORE",
     };
-    const machine = isLE ? bytes[18] | (bytes[19] << 8) : (bytes[18] << 8) | bytes[19];
+    const machine = isLE
+      ? bytes[18] | (bytes[19] << 8)
+      : (bytes[18] << 8) | bytes[19];
     const machineNames = {
       3: "i386",
       8: "MIPS",
@@ -3275,15 +3727,17 @@ export class TerminalApp extends BaseApp {
       40: "ARM",
       62: "x86-64",
       183: "AArch64",
-      243: "RISC-V"
+      243: "RISC-V",
     };
     return `ELF ${elfClass} ${endian} ${typeNames[type] || `type-${type}`}, ${machineNames[machine] || `machine-${machine}`}`;
   }
 
   describeBmp(bytes) {
     if (bytes.length < 26) return "BMP image data";
-    const width = bytes[18] | (bytes[19] << 8) | (bytes[20] << 16) | (bytes[21] << 24);
-    const height = bytes[22] | (bytes[23] << 8) | (bytes[24] << 16) | (bytes[25] << 24);
+    const width =
+      bytes[18] | (bytes[19] << 8) | (bytes[20] << 16) | (bytes[21] << 24);
+    const height =
+      bytes[22] | (bytes[23] << 8) | (bytes[24] << 16) | (bytes[25] << 24);
     return `BMP image data, ${width} x ${height}`;
   }
 
@@ -3310,21 +3764,38 @@ export class TerminalApp extends BaseApp {
     if (bytes.length < 28) return "WAV Audio";
     const fmt = bytes[20] | (bytes[21] << 8);
     const channels = bytes[22] | (bytes[23] << 8);
-    const sampleRate = bytes[24] | (bytes[25] << 8) | (bytes[26] << 16) | (bytes[27] << 24);
-    const fmtNames = { 1: "PCM", 3: "IEEE float", 6: "ALAW", 7: "\u00b5-law", 0xfffe: "Extensible" };
+    const sampleRate =
+      bytes[24] | (bytes[25] << 8) | (bytes[26] << 16) | (bytes[27] << 24);
+    const fmtNames = {
+      1: "PCM",
+      3: "IEEE float",
+      6: "ALAW",
+      7: "\u00b5-law",
+      0xfffe: "Extensible",
+    };
     const fmtName = fmtNames[fmt] || `format-${fmt}`;
-    const chan = channels === 1 ? "mono" : channels === 2 ? "stereo" : `${channels} channels`;
+    const chan =
+      channels === 1
+        ? "mono"
+        : channels === 2
+          ? "stereo"
+          : `${channels} channels`;
     return `WAV Audio, ${fmtName}, ${sampleRate} Hz, ${chan}`;
   }
 
   describeWasm(bytes) {
     if (bytes.length < 8) return "WebAssembly binary";
-    const ver = (bytes[4] << 24) | (bytes[5] << 16) | (bytes[6] << 8) | bytes[7];
+    const ver =
+      (bytes[4] << 24) | (bytes[5] << 16) | (bytes[6] << 8) | bytes[7];
     return `WebAssembly binary, version ${ver}`;
   }
 
   describeTtf(bytes) {
-    const isOtf = bytes[0] === 0x4f && bytes[1] === 0x54 && bytes[2] === 0x54 && bytes[3] === 0x4f;
+    const isOtf =
+      bytes[0] === 0x4f &&
+      bytes[1] === 0x54 &&
+      bytes[2] === 0x54 &&
+      bytes[3] === 0x4f;
     return isOtf ? "OpenType font data" : "TrueType font data";
   }
 
@@ -3361,7 +3832,7 @@ export class TerminalApp extends BaseApp {
       63: "19",
       64: "20",
       65: "21",
-      66: "22"
+      66: "22",
     };
     const ver = javaVersions[major] || `${major}`;
     return `Java class data (Java ${ver})`;
@@ -3370,29 +3841,62 @@ export class TerminalApp extends BaseApp {
   detectAndDescribe(name, kind, bytes) {
     if (!bytes || bytes.length < 4) return this.getFileDescription(name, kind);
 
-    if (bytes[0] === 0x7f && bytes[1] === 0x45 && bytes[2] === 0x4c && bytes[3] === 0x46) {
+    if (
+      bytes[0] === 0x7f &&
+      bytes[1] === 0x45 &&
+      bytes[2] === 0x4c &&
+      bytes[3] === 0x46
+    ) {
       return this.describeElf(bytes);
     }
     if (bytes[0] === 0x1f && bytes[1] === 0x8b) {
       return this.describeGzip(bytes, name);
     }
-    if (bytes[0] === 0xca && bytes[1] === 0xfe && bytes[2] === 0xba && bytes[3] === 0xbe) {
+    if (
+      bytes[0] === 0xca &&
+      bytes[1] === 0xfe &&
+      bytes[2] === 0xba &&
+      bytes[3] === 0xbe
+    ) {
       return this.describeJavaClass(bytes);
     }
-    if (bytes[0] === 0x25 && bytes[1] === 0x50 && bytes[2] === 0x44 && bytes[3] === 0x46) {
+    if (
+      bytes[0] === 0x25 &&
+      bytes[1] === 0x50 &&
+      bytes[2] === 0x44 &&
+      bytes[3] === 0x46
+    ) {
       return "PDF document";
     }
-    if (bytes[0] === 0x50 && bytes[1] === 0x4b && bytes[2] === 0x03 && bytes[3] === 0x04) {
+    if (
+      bytes[0] === 0x50 &&
+      bytes[1] === 0x4b &&
+      bytes[2] === 0x03 &&
+      bytes[3] === 0x04
+    ) {
       return "Zip archive data";
     }
-    if (bytes[0] === 0x28 && bytes[1] === 0xb5 && bytes[2] === 0x2f && bytes[3] === 0xfd) {
+    if (
+      bytes[0] === 0x28 &&
+      bytes[1] === 0xb5 &&
+      bytes[2] === 0x2f &&
+      bytes[3] === 0xfd
+    ) {
       return this.describeZstd();
     }
     if (bytes[0] === 0x42 && bytes[1] === 0x5a && bytes[2] === 0x68) {
-      const level = bytes[3] >= 0x31 && bytes[3] <= 0x39 ? `, block size ${bytes[3] - 0x30}00k` : "";
+      const level =
+        bytes[3] >= 0x31 && bytes[3] <= 0x39
+          ? `, block size ${bytes[3] - 0x30}00k`
+          : "";
       return `bzip2 compressed data${level}`;
     }
-    if (bytes[0] === 0x37 && bytes[1] === 0x7a && bytes[2] === 0xbc && bytes[3] === 0xaf) {
+    if (
+      bytes[0] === 0x37 &&
+      bytes[1] === 0x7a &&
+      bytes[2] === 0xbc &&
+      bytes[3] === 0xaf
+    ) {
       return "7-zip archive data";
     }
     if (
@@ -3416,10 +3920,20 @@ export class TerminalApp extends BaseApp {
     ) {
       return this.describeSqlite();
     }
-    if (bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4e && bytes[3] === 0x47) {
+    if (
+      bytes[0] === 0x89 &&
+      bytes[1] === 0x50 &&
+      bytes[2] === 0x4e &&
+      bytes[3] === 0x47
+    ) {
       return this.describePng(bytes);
     }
-    if (bytes[0] === 0x47 && bytes[1] === 0x49 && bytes[2] === 0x46 && bytes[3] === 0x38) {
+    if (
+      bytes[0] === 0x47 &&
+      bytes[1] === 0x49 &&
+      bytes[2] === 0x46 &&
+      bytes[3] === 0x38
+    ) {
       return this.describeGif(bytes);
     }
     if (bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) {
@@ -3429,40 +3943,86 @@ export class TerminalApp extends BaseApp {
       return this.describeBmp(bytes);
     }
     if (
-      (bytes[0] === 0x49 && bytes[1] === 0x49 && bytes[2] === 0x2a && bytes[3] === 0x00) ||
-      (bytes[0] === 0x4d && bytes[1] === 0x4d && bytes[2] === 0x00 && bytes[3] === 0x2a)
+      (bytes[0] === 0x49 &&
+        bytes[1] === 0x49 &&
+        bytes[2] === 0x2a &&
+        bytes[3] === 0x00) ||
+      (bytes[0] === 0x4d &&
+        bytes[1] === 0x4d &&
+        bytes[2] === 0x00 &&
+        bytes[3] === 0x2a)
     ) {
       return this.describeTiff(bytes);
     }
-    if (bytes[0] === 0x00 && bytes[1] === 0x61 && bytes[2] === 0x73 && bytes[3] === 0x6d) {
+    if (
+      bytes[0] === 0x00 &&
+      bytes[1] === 0x61 &&
+      bytes[2] === 0x73 &&
+      bytes[3] === 0x6d
+    ) {
       return this.describeWasm(bytes);
     }
-    if (bytes[0] === 0x00 && bytes[1] === 0x01 && bytes[2] === 0x00 && bytes[3] === 0x00) {
+    if (
+      bytes[0] === 0x00 &&
+      bytes[1] === 0x01 &&
+      bytes[2] === 0x00 &&
+      bytes[3] === 0x00
+    ) {
       return this.describeTtf(bytes);
     }
-    if (bytes[0] === 0x4f && bytes[1] === 0x54 && bytes[2] === 0x54 && bytes[3] === 0x4f) {
+    if (
+      bytes[0] === 0x4f &&
+      bytes[1] === 0x54 &&
+      bytes[2] === 0x54 &&
+      bytes[3] === 0x4f
+    ) {
       return this.describeTtf(bytes);
     }
-    if (bytes[0] === 0x66 && bytes[1] === 0x4c && bytes[2] === 0x61 && bytes[3] === 0x43) {
+    if (
+      bytes[0] === 0x66 &&
+      bytes[1] === 0x4c &&
+      bytes[2] === 0x61 &&
+      bytes[3] === 0x43
+    ) {
       return this.describeFlac();
     }
-    if (bytes[0] === 0x4f && bytes[1] === 0x67 && bytes[2] === 0x67 && bytes[3] === 0x53) {
+    if (
+      bytes[0] === 0x4f &&
+      bytes[1] === 0x67 &&
+      bytes[2] === 0x67 &&
+      bytes[3] === 0x53
+    ) {
       return this.describeOgg();
     }
     if (bytes[0] === 0x49 && bytes[1] === 0x44 && bytes[2] === 0x33) {
       return this.describeMp3Id3(bytes);
     }
-    if (bytes[0] === 0x52 && bytes[1] === 0x49 && bytes[2] === 0x46 && bytes[3] === 0x46) {
+    if (
+      bytes[0] === 0x52 &&
+      bytes[1] === 0x49 &&
+      bytes[2] === 0x46 &&
+      bytes[3] === 0x46
+    ) {
       if (bytes.length >= 12) {
-        const formType = String.fromCharCode(bytes[8], bytes[9], bytes[10], bytes[11]);
+        const formType = String.fromCharCode(
+          bytes[8],
+          bytes[9],
+          bytes[10],
+          bytes[11],
+        );
         if (formType === "WAVE") return this.describeWav(bytes);
         if (formType === "WEBP") return this.describeWebp(bytes);
       }
       return "RIFF data";
     }
     if (bytes.length >= 4) {
-      const snippet = new TextDecoder().decode(bytes.slice(0, Math.min(bytes.length, 200)));
-      if (/^\s*<svg[\s>]/i.test(snippet) || /^\s*<\?xml[\s>][\s\S]*<svg[\s>]/i.test(snippet)) {
+      const snippet = new TextDecoder().decode(
+        bytes.slice(0, Math.min(bytes.length, 200)),
+      );
+      if (
+        /^\s*<svg[\s>]/i.test(snippet) ||
+        /^\s*<\?xml[\s>][\s\S]*<svg[\s>]/i.test(snippet)
+      ) {
         return "SVG image";
       }
     }
@@ -3572,14 +4132,17 @@ export class TerminalApp extends BaseApp {
       srt: "SubRip subtitle",
       vtt: "WebVTT subtitle",
       torrent: "BitTorrent file",
-      wasm: "WebAssembly binary"
+      wasm: "WebAssembly binary",
     };
 
     if (extMap[ext]) return extMap[ext];
     if (kind === "text") return "ASCII text";
-    if (kind === "image") return ext ? `${ext.toUpperCase()} image data` : "image data";
-    if (kind === "video") return ext ? `${ext.toUpperCase()} video data` : "video data";
-    if (kind === "audio") return ext ? `${ext.toUpperCase()} Audio` : "Audio data";
+    if (kind === "image")
+      return ext ? `${ext.toUpperCase()} image data` : "image data";
+    if (kind === "video")
+      return ext ? `${ext.toUpperCase()} video data` : "video data";
+    if (kind === "audio")
+      return ext ? `${ext.toUpperCase()} Audio` : "Audio data";
     if (kind === "font") return "font data";
     if (kind === "rom") return "ROM image";
     return ext ? `${ext.toUpperCase()} data` : "data";
@@ -3600,7 +4163,9 @@ export class TerminalApp extends BaseApp {
           continue;
         }
 
-        const kind = (await this.fs.getFileKind(parentPath, name)) || this.fs.inferKind(name);
+        const kind =
+          (await this.fs.getFileKind(parentPath, name)) ||
+          this.fs.inferKind(name);
         const bytes = await this.readFileBytes(parentPath, name);
         const desc = this.detectAndDescribe(name, kind, bytes);
         await this.print(`${arg.padEnd(longest)}: ${desc}`);
@@ -3619,7 +4184,8 @@ export class TerminalApp extends BaseApp {
     for (const arg of args) {
       const eq = arg.indexOf("=");
       if (eq === -1) {
-        if (this.aliases[arg]) this.print(`alias ${arg}='${this.aliases[arg]}'`);
+        if (this.aliases[arg])
+          this.print(`alias ${arg}='${this.aliases[arg]}'`);
         else this.print(`bash: alias: ${arg}: not found`);
         continue;
       }
@@ -3640,7 +4206,9 @@ export class TerminalApp extends BaseApp {
 
   cmdExport(args) {
     if (!args.length) {
-      Object.entries(this.env).forEach(([k, v]) => this.print(`declare -x ${k}="${v}"`));
+      Object.entries(this.env).forEach(([k, v]) =>
+        this.print(`declare -x ${k}="${v}"`),
+      );
       return;
     }
     for (const arg of args) {
@@ -3674,7 +4242,7 @@ export class TerminalApp extends BaseApp {
       uniq: "report or omit repeated lines",
       cut: "remove sections from each line of files",
       alias: "create a word substitution for a command",
-      export: "set an exported shell variable"
+      export: "set an exported shell variable",
     };
     if (this.commands[name]) {
       const desc = descriptions[name] || "a builtin shell command";
@@ -3707,8 +4275,10 @@ export class TerminalApp extends BaseApp {
       offset += pageSize;
       const done = offset >= lines.length;
       await this.print(
-        done ? "(END) press q to continue" : "-- more -- (space: next page, q: quit)",
-        "var(--text-muted)"
+        done
+          ? "(END) press q to continue"
+          : "-- more -- (space: next page, q: quit)",
+        "var(--text-muted)",
       );
       return done;
     };
@@ -3784,7 +4354,9 @@ export class TerminalApp extends BaseApp {
       return await calcDirSize(target);
     };
 
-    const targets = args.length ? args.map((a) => this.fs.resolvePath(a, this.currentPath)) : [this.currentPath];
+    const targets = args.length
+      ? args.map((a) => this.fs.resolvePath(a, this.currentPath))
+      : [this.currentPath];
 
     for (const target of targets) {
       const displayPath = this.pathToString(target);
@@ -3793,10 +4365,15 @@ export class TerminalApp extends BaseApp {
         await this.print(`${fmt(size)} ${displayPath}`);
       } else {
         try {
-          const items = Object.entries(await this.fs.getFolder(this.pathToString(target)));
+          const items = Object.entries(
+            await this.fs.getFolder(this.pathToString(target)),
+          );
           for (const [name, meta] of items) {
             const itemPath = [...target, name];
-            const itemSize = meta.type === "file" ? meta.size || 0 : await getFileSize(itemPath);
+            const itemSize =
+              meta.type === "file"
+                ? meta.size || 0
+                : await getFileSize(itemPath);
             await this.print(`${fmt(itemSize)} ${name}`);
           }
           if (targets.length <= 1) {
@@ -3816,7 +4393,9 @@ export class TerminalApp extends BaseApp {
     try {
       items = Object.keys(await this.fs.getFolder(this.pathToString(path)));
     } catch {
-      await this.print(`tree: cannot access '${this.pathToString(path)}': No such file or directory`);
+      await this.print(
+        `tree: cannot access '${this.pathToString(path)}': No such file or directory`,
+      );
       return;
     }
 
@@ -3824,7 +4403,9 @@ export class TerminalApp extends BaseApp {
       const item = items[i];
       const isFile = await this.fs.isFile(path, item);
       const last = i === items.length - 1;
-      await this.print(prefix + (last ? "└── " : "├── ") + item + (isFile ? "" : "/"));
+      await this.print(
+        prefix + (last ? "└── " : "├── ") + item + (isFile ? "" : "/"),
+      );
       if (!isFile) {
         await this.cmdTree([...path, item], prefix + (last ? "    " : "│   "));
       }
@@ -3840,7 +4421,9 @@ export class TerminalApp extends BaseApp {
     } catch (e) {
       console.error(e);
     }
-    await this.print(`Reply from ${args[0]}: time=${(performance.now() - start).toFixed(2)}ms`);
+    await this.print(
+      `Reply from ${args[0]}: time=${(performance.now() - start).toFixed(2)}ms`,
+    );
   }
 
   async cmdCurl(args) {
@@ -3854,9 +4437,15 @@ export class TerminalApp extends BaseApp {
   }
 
   async cmdNeofetch() {
-    os.events.emit(BusEvents.ACHIEVEMENT_TRIGGER, { achievementId: Achievements.Skid });
+    os.events.emit(BusEvents.ACHIEVEMENT_TRIGGER, {
+      achievementId: Achievements.Skid,
+    });
     const ua = navigator.userAgent;
-    const platformRaw = navigator.userAgentData?.platform || navigator.platform || ua || "Unknown";
+    const platformRaw =
+      navigator.userAgentData?.platform ||
+      navigator.platform ||
+      ua ||
+      "Unknown";
 
     let detectedOS = "Unknown";
     if (/Windows/i.test(platformRaw)) detectedOS = "Windows";
@@ -3873,10 +4462,14 @@ export class TerminalApp extends BaseApp {
     else if (/Chrome\/\d+/i.test(ua)) browser = "Chrome";
     else if (/Safari\/\d+/i.test(ua)) browser = "Safari";
 
-    const browserText = browser === "Chrome" || browser === "Edge" ? "eww a chromium?!" : browser;
+    const browserText =
+      browser === "Chrome" || browser === "Edge" ? "eww a chromium?!" : browser;
 
     const cores = navigator.hardwareConcurrency ?? "Unknown";
-    const coresText = typeof cores === "number" && cores > 10 ? `${cores} (Wow its op!)` : cores;
+    const coresText =
+      typeof cores === "number" && cores > 10
+        ? `${cores} (Wow its op!)`
+        : cores;
 
     let gpu = "Unknown";
     let renderScore = 0;
@@ -3888,7 +4481,10 @@ export class TerminalApp extends BaseApp {
         const texSize = gl.getParameter(gl.MAX_TEXTURE_SIZE);
         const varyings = gl.getParameter(gl.MAX_VARYING_VECTORS);
         const uniforms = gl.getParameter(gl.MAX_VERTEX_UNIFORM_VECTORS);
-        renderScore = Math.min(8, Math.floor((texSize / 2048 + varyings / 16 + uniforms / 128) * 1.2));
+        renderScore = Math.min(
+          8,
+          Math.floor((texSize / 2048 + varyings / 16 + uniforms / 128) * 1.2),
+        );
       }
     } catch (e) {
       console.error(e);
@@ -3899,7 +4495,9 @@ export class TerminalApp extends BaseApp {
     else if (typeof window.chrome !== "undefined") engine = "V8";
     else if (/Apple/.test(navigator.vendor)) engine = "JavaScriptCore";
 
-    const ram = navigator.deviceMemory ? `${navigator.deviceMemory} GB` : "Unknown";
+    const ram = navigator.deviceMemory
+      ? `${navigator.deviceMemory} GB`
+      : "Unknown";
     const elapsed = Date.now() - this.pageLoadTime;
     const uptime = `${Math.floor(elapsed / 3600000)}h, ${Math.floor((elapsed % 3600000) / 60000)}m`;
 
@@ -3928,7 +4526,7 @@ export class TerminalApp extends BaseApp {
       `                     APPS        ${appCount} reg  ${winCount} win`,
       `                     POWER       ${power}`,
       `                     DND         ${dnd}`,
-      `                     VOLUME      ${masterVol}%`
+      `                     VOLUME      ${masterVol}%`,
     ];
 
     for (const line of lines) {
@@ -3938,41 +4536,63 @@ export class TerminalApp extends BaseApp {
 
   async cmdPs(args = []) {
     const isAux =
-      args.includes("aux") || args.includes("-aux") || (args.includes("a") && args.includes("u") && args.includes("x"));
-    const showAll = isAux || args.includes("-a") || args.includes("x") || args.includes("e");
+      args.includes("aux") ||
+      args.includes("-aux") ||
+      (args.includes("a") && args.includes("u") && args.includes("x"));
+    const showAll =
+      isAux || args.includes("-a") || args.includes("x") || args.includes("e");
     const user = this.displayName || "guest";
     const now = new Date();
-    const timeStr = now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    const timeStr = now.toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
 
     const procs = processManager.getProcesses();
 
     if (isAux) {
-      await this.print(`USER       PID  %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND`);
+      await this.print(
+        `USER       PID  %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND`,
+      );
       for (const p of procs) {
-        const vsz = p.isTray ? "0" : `${Math.floor(Math.random() * 200000) + 200000}`;
+        const vsz = p.isTray
+          ? "0"
+          : `${Math.floor(Math.random() * 200000) + 200000}`;
         const rss = p.isTray ? "0" : `${Math.floor(p.mem * 256)}`;
-        const stat = p.status === "Tray" ? "T" : p.status === "Suspended" ? "S" : "R";
+        const stat =
+          p.status === "Tray" ? "T" : p.status === "Suspended" ? "S" : "R";
         await this.print(
-          `${user.padEnd(10)}${String(p.pid).padStart(5)} ${p.cpu.toFixed(1).padStart(5)} ${p.mem.toFixed(1).padStart(5)} ${vsz.padStart(7)} ${rss.padStart(5)} pts/0    ${stat}    ${timeStr} 0:00 ${p.title}`
+          `${user.padEnd(10)}${String(p.pid).padStart(5)} ${p.cpu.toFixed(1).padStart(5)} ${p.mem.toFixed(1).padStart(5)} ${vsz.padStart(7)} ${rss.padStart(5)} pts/0    ${stat}    ${timeStr} 0:00 ${p.title}`,
         );
       }
     } else if (showAll) {
       await this.print(`  PID TTY      TIME CMD`);
       for (const p of procs) {
-        await this.print(`  ${String(p.pid).padStart(5)} pts/0  0:00 ${p.title}`);
+        await this.print(
+          `  ${String(p.pid).padStart(5)} pts/0  0:00 ${p.title}`,
+        );
       }
     } else {
       await this.print(`  PID STATUS   CMD`);
       for (const p of procs) {
-        const status = p.status === "Tray" ? "Tray" : p.status === "Suspended" ? "Susp" : "Run ";
-        await this.print(`  ${String(p.pid).padStart(5)} ${status}    ${p.title}`);
+        const status =
+          p.status === "Tray"
+            ? "Tray"
+            : p.status === "Suspended"
+              ? "Susp"
+              : "Run ";
+        await this.print(
+          `  ${String(p.pid).padStart(5)} ${status}    ${p.title}`,
+        );
       }
     }
   }
 
   async cmdKill(args = []) {
     if (args.length === 0) {
-      await this.print("kill: usage: kill [-s sigspec | -n signum | -sigspec] pid [pid...]");
+      await this.print(
+        "kill: usage: kill [-s sigspec | -n signum | -sigspec] pid [pid...]",
+      );
       return;
     }
 
@@ -3981,7 +4601,9 @@ export class TerminalApp extends BaseApp {
       await this.print(`kill: unknown signal: ${pidArg}; using SIGTERM`);
       pidArg = args.length > 1 ? args[args.length - 1] : null;
       if (!pidArg) {
-        await this.print("kill: usage: kill [-s sigspec | -n signum | -sigspec] pid [pid...]");
+        await this.print(
+          "kill: usage: kill [-s sigspec | -n signum | -sigspec] pid [pid...]",
+        );
         return;
       }
     }
@@ -4006,7 +4628,10 @@ export class TerminalApp extends BaseApp {
 
   async cmdMovefocus(args = []) {
     const dir = args[0];
-    if (!dir || !["l", "r", "u", "d", "left", "right", "up", "down"].includes(dir)) {
+    if (
+      !dir ||
+      !["l", "r", "u", "d", "left", "right", "up", "down"].includes(dir)
+    ) {
       await this.print("usage: movefocus <l|r|u|d>");
       return;
     }
@@ -4021,7 +4646,10 @@ export class TerminalApp extends BaseApp {
 
   async cmdSwapwindow(args = []) {
     const dir = args[0];
-    if (!dir || !["l", "r", "u", "d", "left", "right", "up", "down"].includes(dir)) {
+    if (
+      !dir ||
+      !["l", "r", "u", "d", "left", "right", "up", "down"].includes(dir)
+    ) {
       await this.print("usage: swapwindow <l|r|u|d>");
       return;
     }
@@ -4060,7 +4688,10 @@ export class TerminalApp extends BaseApp {
 
   async cmdResizeactive(args = []) {
     const dir = args[0];
-    if (!dir || !["l", "r", "u", "d", "left", "right", "up", "down"].includes(dir)) {
+    if (
+      !dir ||
+      !["l", "r", "u", "d", "left", "right", "up", "down"].includes(dir)
+    ) {
       await this.print("usage: resizeactive <l|r|u|d>");
       return;
     }
@@ -4133,7 +4764,10 @@ export class TerminalApp extends BaseApp {
       ["history", "Show command history"],
       ["tree", "Display directory tree"],
       ["du", "Estimate file/directory sizes"],
-      ["git", "Git version control (clone, init, add, commit, status, log, ...)"],
+      [
+        "git",
+        "Git version control (clone, init, add, commit, status, log, ...)",
+      ],
       ["shutdown", "Shut down YukiOS"],
       ["reboot", "Restart YukiOS"],
       ["lock", "Lock the current session"],
@@ -4165,7 +4799,7 @@ export class TerminalApp extends BaseApp {
       ["pfetch", "Alias for neofetch"],
       ["ufetch", "Alias for neofetch"],
       ["afetch", "Alias for neofetch"],
-      ["nerdfetch", "Alias for neofetch"]
+      ["nerdfetch", "Alias for neofetch"],
     ];
     await this.print("Available commands:");
     for (const [cmd, desc] of cmds) {
@@ -4173,10 +4807,16 @@ export class TerminalApp extends BaseApp {
     }
     await this.print("");
     await this.print("Glob patterns: * (match any), ? (match one)");
-    await this.print("Pipes: command1 | command2   Chaining: cmd1 && cmd2, cmd1 || cmd2, cmd1 ; cmd2");
+    await this.print(
+      "Pipes: command1 | command2   Chaining: cmd1 && cmd2, cmd1 || cmd2, cmd1 ; cmd2",
+    );
     await this.print("Redirection: cmd > file, cmd >> file, cmd < file");
-    await this.print("Variables: $VAR, ${VAR}, $?   Set with: export VAR=value");
-    await this.print("Shortcuts: Alt+T new tab, Alt+W close tab, Ctrl+R reverse search");
+    await this.print(
+      "Variables: $VAR, ${VAR}, $?   Set with: export VAR=value",
+    );
+    await this.print(
+      "Shortcuts: Alt+T new tab, Alt+W close tab, Ctrl+R reverse search",
+    );
   }
 
   async cmdGit(args = [], flags = []) {
@@ -4238,7 +4878,9 @@ export class TerminalApp extends BaseApp {
           await this.gitHelp();
           break;
         default:
-          await this.print(`git: '${sub}' is not a git command. See 'git help'.`);
+          await this.print(
+            `git: '${sub}' is not a git command. See 'git help'.`,
+          );
       }
     } catch (e) {
       await this.print(`git: error: ${e.message}`);
@@ -4273,7 +4915,9 @@ export class TerminalApp extends BaseApp {
     }
     let dir;
     if (posArgs.length > 1) {
-      dir = this.pathToString(this.fs.resolvePath(posArgs[1], this.currentPath));
+      dir = this.pathToString(
+        this.fs.resolvePath(posArgs[1], this.currentPath),
+      );
     } else {
       const name =
         url
@@ -4293,7 +4937,9 @@ export class TerminalApp extends BaseApp {
     const onProgress = (ev) => {
       if (ev.phase !== lastPhase) {
         lastPhase = ev.phase;
-        const pct = ev.total ? ` ${Math.round((ev.loaded / ev.total) * 100)}%` : "";
+        const pct = ev.total
+          ? ` ${Math.round((ev.loaded / ev.total) * 100)}%`
+          : "";
         statusEl.textContent = `  ${ev.phase}${pct}`;
       }
     };
@@ -4323,11 +4969,21 @@ export class TerminalApp extends BaseApp {
       return this.print(`fatal: ${e.message}`);
     }
 
-    if (!args.length && flags.indexOf("-A") === -1 && flags.indexOf("--all") === -1) {
-      return this.print("Nothing specified, nothing added.\nMaybe you wanted to say 'git add .'?");
+    if (
+      !args.length &&
+      flags.indexOf("-A") === -1 &&
+      flags.indexOf("--all") === -1
+    ) {
+      return this.print(
+        "Nothing specified, nothing added.\nMaybe you wanted to say 'git add .'?",
+      );
     }
 
-    if (flags.indexOf("-A") !== -1 || flags.indexOf("--all") !== -1 || args.indexOf(".") !== -1) {
+    if (
+      flags.indexOf("-A") !== -1 ||
+      flags.indexOf("--all") !== -1 ||
+      args.indexOf(".") !== -1
+    ) {
       const matrix = await this.gitManager.statusMatrix(dir);
       let count = 0;
       for (const [filepath] of matrix) {
@@ -4368,11 +5024,13 @@ export class TerminalApp extends BaseApp {
 
     const author = {
       name: this.displayName,
-      email: `${this.displayName}@${this.hostname}`
+      email: `${this.displayName}@${this.hostname}`,
     };
 
     const oid = await this.gitManager.commit(dir, message, author);
-    await this.print(`[${await this.gitManager.currentBranch(dir)} ${oid.slice(0, 7)}] ${message}`);
+    await this.print(
+      `[${await this.gitManager.currentBranch(dir)} ${oid.slice(0, 7)}] ${message}`,
+    );
   }
 
   async gitStatus() {
@@ -4393,11 +5051,13 @@ export class TerminalApp extends BaseApp {
 
     for (const [filepath, head, workdir, stage] of matrix) {
       if (stage !== head) {
-        const status = head === 0 ? "new file" : stage === 0 ? "deleted" : "modified";
+        const status =
+          head === 0 ? "new file" : stage === 0 ? "deleted" : "modified";
         staged.push(`  ${status}: ${filepath}`);
       }
       if (workdir !== stage) {
-        const status = stage === 0 ? "new file" : workdir === 0 ? "deleted" : "modified";
+        const status =
+          stage === 0 ? "new file" : workdir === 0 ? "deleted" : "modified";
         notStaged.push(`  ${status}: ${filepath}`);
       }
     }
@@ -4444,7 +5104,9 @@ export class TerminalApp extends BaseApp {
           await this.print(`${oid} ${msg}`);
         } else {
           const author = commit.commit?.author || {};
-          const date = author.timestamp ? new Date(author.timestamp * 1000).toLocaleString() : "unknown";
+          const date = author.timestamp
+            ? new Date(author.timestamp * 1000).toLocaleString()
+            : "unknown";
           await this.print("");
           await this.print(`commit ${commit.oid}`);
           await this.print(`Author: ${author.name} <${author.email}>`);
@@ -4466,7 +5128,8 @@ export class TerminalApp extends BaseApp {
       return this.print(`fatal: ${e.message}`);
     }
 
-    const showRemote = flags.indexOf("-a") !== -1 || flags.indexOf("--all") !== -1;
+    const showRemote =
+      flags.indexOf("-a") !== -1 || flags.indexOf("--all") !== -1;
 
     if (!args.length) {
       const branches = await this.gitManager.listBranches(dir);
@@ -4517,7 +5180,7 @@ export class TerminalApp extends BaseApp {
     await this.print("Fetching remote changes...");
     const author = {
       name: this.displayName,
-      email: `${this.displayName}@${this.hostname}`
+      email: `${this.displayName}@${this.hostname}`,
     };
 
     await this.gitManager.pull(dir, author);
@@ -4533,10 +5196,12 @@ export class TerminalApp extends BaseApp {
     }
 
     const remotes = await this.gitManager.listRemotes(dir);
-    if (!remotes.length) return this.print("fatal: No configured remote. Use 'git remote add'.");
+    if (!remotes.length)
+      return this.print("fatal: No configured remote. Use 'git remote add'.");
 
     await this.print("Pushing to remote...");
-    const onAuth = () => os.dialog.prompt("Git Auth", "Enter your GitHub token (or user:token):");
+    const onAuth = () =>
+      os.dialog.prompt("Git Auth", "Enter your GitHub token (or user:token):");
     const onProgress = (ev) => {
       if (ev.total && ev.loaded) {
         const pct = Math.round((ev.loaded / ev.total) * 100);
@@ -4578,7 +5243,9 @@ export class TerminalApp extends BaseApp {
       return;
     }
 
-    await this.print("usage: git remote [-v] | add <name> <url> | remove <name>");
+    await this.print(
+      "usage: git remote [-v] | add <name> <url> | remove <name>",
+    );
   }
 
   async gitRm(args) {
@@ -4665,7 +5332,7 @@ export class TerminalApp extends BaseApp {
       ["rm", "Remove files from working tree and index"],
       ["diff", "Show changes between commits, commit and working tree"],
       ["stash", "Stash away changes in a dirty working directory"],
-      ["fetch", "Download objects and refs from another repository"]
+      ["fetch", "Download objects and refs from another repository"],
     ];
     for (const [cmd, desc] of cmds) {
       this.print(`  ${cmd.padEnd(10)} ${desc}`);
@@ -4677,7 +5344,10 @@ export class TerminalApp extends BaseApp {
       if (args[0] === "http.server") {
         return this.cmdHttpServer(args.slice(1), flags);
       }
-      return this.print(`python: no module named ${args[0] || ""}`, "var(--error)");
+      return this.print(
+        `python: no module named ${args[0] || ""}`,
+        "var(--error)",
+      );
     }
     if (flags.includes("-c") || flags.includes("--command")) {
       const code = args.join(" ");
@@ -4689,13 +5359,18 @@ export class TerminalApp extends BaseApp {
       const filePath = args[0];
       try {
         const resolved = this.fs.resolvePath(filePath, this.currentPath);
-        const content = await this.fs.readTextFile(this.pathToRelative(resolved), "");
+        const content = await this.fs.readTextFile(
+          this.pathToRelative(resolved),
+          "",
+        );
         if (content == null) {
           throw new Error("missing");
         }
         await this.execPythonCode(content);
       } catch {
-        await this.print(`python: can't open file '${filePath}': No such file or directory`);
+        await this.print(
+          `python: can't open file '${filePath}': No such file or directory`,
+        );
       }
       return;
     }
@@ -4708,28 +5383,39 @@ export class TerminalApp extends BaseApp {
       if (/^\d{1,5}$/.test(arg)) port = parseInt(arg, 10);
     }
     if (port < 1 || port > 65535) {
-      return this.print(`python: http.server: invalid port number: '${port}'`, "var(--error)");
+      return this.print(
+        `python: http.server: invalid port number: '${port}'`,
+        "var(--error)",
+      );
     }
     let rootSegments = [...this.currentPath];
     for (const flag of flags) {
       if (flag.startsWith("--directory=")) {
-        rootSegments = this.fs.resolvePath(flag.slice("--directory=".length), this.currentPath);
+        rootSegments = this.fs.resolvePath(
+          flag.slice("--directory=".length),
+          this.currentPath,
+        );
       } else if (flag === "--directory" || flag === "-d") {
         const dirArg = args.find((arg) => !/^\d{1,5}$/.test(arg));
-        if (dirArg) rootSegments = this.fs.resolvePath(dirArg, this.currentPath);
+        if (dirArg)
+          rootSegments = this.fs.resolvePath(dirArg, this.currentPath);
       }
     }
     if (os.ports.isRegistered(port)) {
-      return this.print(`python: http.server: address already in use: port ${port}`, "var(--error)");
+      return this.print(
+        `python: http.server: address already in use: port ${port}`,
+        "var(--error)",
+      );
     }
     await startVirtualHttpServer(
       {
         fs: os.fs,
         print: (text) => this.print(text),
         printError: (text) => this.print(text, "var(--error)"),
-        getStopRequested: () => this.stopRequested || !this.activeState?.win?.isConnected
+        getStopRequested: () =>
+          this.stopRequested || !this.activeState?.win?.isConnected,
       },
-      { port, rootSegments }
+      { port, rootSegments },
     );
   }
 
@@ -4766,15 +5452,27 @@ export class TerminalApp extends BaseApp {
   }
 
   async runPythonRepl(line) {
-    if (line === "exit()" || line === "quit()" || line === "exit" || line === "quit") {
+    if (
+      line === "exit()" ||
+      line === "quit()" ||
+      line === "exit" ||
+      line === "quit"
+    ) {
       await this.exitPythonRepl();
       return;
     }
     const promptStr = this.pyReplContinuation ? "..." : ">>>";
-    await this.print(line, null, true, `<span class="prompt-python">${promptStr} </span>`);
+    await this.print(
+      line,
+      null,
+      true,
+      `<span class="prompt-python">${promptStr} </span>`,
+    );
     this.pyReplBuffer += line + "\n";
     try {
-      const { result, stdout, stderr, error } = await runPython(this.pyReplBuffer);
+      const { result, stdout, stderr, error } = await runPython(
+        this.pyReplBuffer,
+      );
       if (stdout) await this.print(stdout.trimEnd());
       if (stderr) await this.print(stderr.trimEnd(), "var(--error)");
       if (error) {
@@ -4814,10 +5512,15 @@ export class TerminalApp extends BaseApp {
       const filePath = args[0];
       try {
         const resolved = this.fs.resolvePath(filePath, this.currentPath);
-        const content = await this.fs.readTextFile(this.pathToRelative(resolved), "");
+        const content = await this.fs.readTextFile(
+          this.pathToRelative(resolved),
+          "",
+        );
         await this.execNodeCode(content, filePath);
       } catch {
-        await this.print(`node: can't open file '${filePath}': No such file or directory`);
+        await this.print(
+          `node: can't open file '${filePath}': No such file or directory`,
+        );
       }
       return;
     }
@@ -4830,14 +5533,17 @@ export class TerminalApp extends BaseApp {
         if (!this.nodeFallbackWarned) {
           this.nodeFallbackWarned = true;
           await this.enqueuePrint(
-            "Current webserver lacks cross-origin isolation, falling back to basic JavaScript eval."
+            "Current webserver lacks cross-origin isolation, falling back to basic JavaScript eval.",
           );
         }
         await this.print("Falling back to basic JavaScript eval...");
       } else {
         await this.print("Loading Node.js runtime...");
       }
-      const { stdout, stderr, error } = await runNode(code, filename || "/eval.js");
+      const { stdout, stderr, error } = await runNode(
+        code,
+        filename || "/eval.js",
+      );
       if (error) {
         await this.print(error, "var(--error)");
         return;
@@ -4867,7 +5573,10 @@ export class TerminalApp extends BaseApp {
     const scriptPath = args[0];
     try {
       const resolved = this.fs.resolvePath(scriptPath, this.currentPath);
-      const content = await this.fs.readTextFile(this.pathToRelative(resolved), "");
+      const content = await this.fs.readTextFile(
+        this.pathToRelative(resolved),
+        "",
+      );
 
       if (!content || content.trim() === "") {
         await this.print(`bash: ${scriptPath}: empty script`);
@@ -4880,7 +5589,10 @@ export class TerminalApp extends BaseApp {
         scriptContent = content.split("\n").slice(1).join("\n");
       }
 
-      this.shellEnv.set("PWD", this.currentPath.length ? "/" + this.currentPath.join("/") : "/");
+      this.shellEnv.set(
+        "PWD",
+        this.currentPath.length ? "/" + this.currentPath.join("/") : "/",
+      );
       this.shellEnv.set("HOSTNAME", this.hostname);
       this.shellEnv.set("USER", this.displayName);
 
@@ -4895,7 +5607,9 @@ export class TerminalApp extends BaseApp {
         this.activeState.lastExitCode = result.exitCode;
       }
     } catch (e) {
-      await this.print(`bash: ${scriptPath}: ${e.message || "No such file or directory"}`);
+      await this.print(
+        `bash: ${scriptPath}: ${e.message || "No such file or directory"}`,
+      );
       if (this.activeState) this.activeState.lastExitCode = 127;
     }
   }
@@ -4913,7 +5627,12 @@ export class TerminalApp extends BaseApp {
       return;
     }
     const promptStr = this.nodeReplContinuation ? "..." : ">";
-    await this.print(line, null, true, `<span class="prompt-node">${promptStr} </span>`);
+    await this.print(
+      line,
+      null,
+      true,
+      `<span class="prompt-node">${promptStr} </span>`,
+    );
     this.nodeReplBuffer += line + "\n";
     try {
       const { stdout, stderr, error } = await runNode(line, "/repl.js");
@@ -4960,7 +5679,8 @@ export class TerminalApp extends BaseApp {
       if (state.btopActive) this.stopBtop();
       if (state.cmatrixActive) this.stopCmatrix();
     }
-    const win = state?.win || this.win || state?.terminalOutput?.closest(".window");
+    const win =
+      state?.win || this.win || state?.terminalOutput?.closest(".window");
     if (!win) return;
     if (state) this.windowsMap.delete(win.id);
     os.window.removeFromTaskbar(win.id);

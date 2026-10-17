@@ -10,12 +10,18 @@ export class AnsiRenderer {
     const fragments = this.parseAnsi(text);
     for (const frag of fragments) {
       if (!frag.text) continue;
-      if (frag.styles.length === 0 && !frag.isBold && !frag.isItalic && !frag.isUnderline) {
+      if (
+        frag.styles.length === 0 &&
+        !frag.isBold &&
+        !frag.isItalic &&
+        !frag.isUnderline
+      ) {
         line.appendChild(document.createTextNode(frag.text));
       } else {
         const span = createElement("span");
         if (frag.fg) span.style.color = this.ansiColorToCSS(frag.fg, false);
-        if (frag.bg) span.style.backgroundColor = this.ansiColorToCSS(frag.bg, true);
+        if (frag.bg)
+          span.style.backgroundColor = this.ansiColorToCSS(frag.bg, true);
         if (frag.isBold) span.style.fontWeight = "bold";
         if (frag.isItalic) span.style.fontStyle = "italic";
         if (frag.isUnderline) span.style.textDecoration = "underline";
@@ -51,7 +57,7 @@ export class AnsiRenderer {
       isUnderline: false,
       isInverse: false,
       isStrikethrough: false,
-      styles: []
+      styles: [],
     };
 
     const flush = () => {
@@ -67,7 +73,7 @@ export class AnsiRenderer {
           isUnderline: false,
           isInverse: false,
           isStrikethrough: false,
-          styles: []
+          styles: [],
         };
       }
     };
@@ -99,7 +105,7 @@ export class AnsiRenderer {
                 isUnderline: false,
                 isInverse: false,
                 isStrikethrough: false,
-                styles: []
+                styles: [],
               };
             } else if (code === 1) current.isBold = true;
             else if (code === 2) current.isDim = true;
@@ -154,7 +160,8 @@ export class AnsiRenderer {
         i = j;
       } else if (text[i] === "\x1b" && text[i + 1] === "]") {
         let j = i + 2;
-        while (j < text.length && !(text[j] === "\x1b" && text[j + 1] === "\\")) j++;
+        while (j < text.length && !(text[j] === "\x1b" && text[j + 1] === "\\"))
+          j++;
         j += 2;
         i = j;
       } else if (text[i] === "\r") {
@@ -411,7 +418,7 @@ export class AnsiRenderer {
       "#ffff87",
       "#ffffaf",
       "#ffffd7",
-      "#ffffff"
+      "#ffffff",
     ];
     const idx = typeof color === "number" ? color : 0;
     if (idx >= 0 && idx < 16) return colorMap[idx];

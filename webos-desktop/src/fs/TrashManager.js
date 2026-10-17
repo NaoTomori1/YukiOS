@@ -15,7 +15,11 @@ export class TrashManager {
 
   trashDir() {
     if (!this.trashDirResolved) {
-      this.trashDirResolved = this.paths.join("/", this.config.ROOT, this.TRASH_DIR_NAME);
+      this.trashDirResolved = this.paths.join(
+        "/",
+        this.config.ROOT,
+        this.TRASH_DIR_NAME,
+      );
     }
     return this.trashDirResolved;
   }
@@ -46,7 +50,10 @@ export class TrashManager {
   }
 
   async saveManifest(items) {
-    await this.storage.writeFile(this.manifestPath(), JSON.stringify(items, null, 2));
+    await this.storage.writeFile(
+      this.manifestPath(),
+      JSON.stringify(items, null, 2),
+    );
   }
 
   async moveToTrash(path, name) {
@@ -56,7 +63,9 @@ export class TrashManager {
     const isDirectory = stat.isDirectory();
 
     const ext = name.includes(".") ? name.slice(name.lastIndexOf(".")) : "";
-    const baseName = name.includes(".") ? name.slice(0, name.lastIndexOf(".")) : name;
+    const baseName = name.includes(".")
+      ? name.slice(0, name.lastIndexOf("."))
+      : name;
     const timestamp = Date.now();
     const trashedName = `${baseName}_${timestamp}${ext}`;
     const trashPath = this.paths.join(this.trashDir(), trashedName);
@@ -68,7 +77,8 @@ export class TrashManager {
       const walk = async (d) => {
         const entries = await this.storage.readdir(d);
         for (const entry of entries) {
-          if (entry === this.config.META_FILE || entry === this.MANIFEST_NAME) continue;
+          if (entry === this.config.META_FILE || entry === this.MANIFEST_NAME)
+            continue;
           const full = this.paths.join(d, entry);
           const s = await this.storage.pStat(full);
           if (s.isDirectory()) {
@@ -112,7 +122,7 @@ export class TrashManager {
       type: isDirectory ? "folder" : "file",
       kind: kind || null,
       deletedAt: Date.now(),
-      size
+      size,
     };
 
     const items = await this.loadManifest();
@@ -142,7 +152,9 @@ export class TrashManager {
     const targetExists = await this.storage.exists(targetPath);
     let finalName = entry.originalName;
     if (targetExists) {
-      const ext = entry.originalName.includes(".") ? entry.originalName.slice(entry.originalName.lastIndexOf(".")) : "";
+      const ext = entry.originalName.includes(".")
+        ? entry.originalName.slice(entry.originalName.lastIndexOf("."))
+        : "";
       const base = entry.originalName.includes(".")
         ? entry.originalName.slice(0, entry.originalName.lastIndexOf("."))
         : entry.originalName;
@@ -160,7 +172,8 @@ export class TrashManager {
       const walk = async (d) => {
         const entries = await this.storage.readdir(d);
         for (const eName of entries) {
-          if (eName === this.config.META_FILE || eName === this.MANIFEST_NAME) continue;
+          if (eName === this.config.META_FILE || eName === this.MANIFEST_NAME)
+            continue;
           const full = this.paths.join(d, eName);
           const s = await this.storage.pStat(full);
           if (s.isDirectory()) {
@@ -185,7 +198,7 @@ export class TrashManager {
       const stat = await this.storage.pStat(trashPath);
       await this.metadata.writeMeta(metaDir, metaName, {
         kind: entry.kind,
-        size: stat.size || 0
+        size: stat.size || 0,
       });
 
       await this.storage.rename(trashPath, finalTargetPath);
@@ -210,7 +223,11 @@ export class TrashManager {
         const result = await this.restoreItem(entry.id);
         results.push({ name: entry.originalName, success: true, ...result });
       } catch (err) {
-        results.push({ name: entry.originalName, success: false, error: err.message });
+        results.push({
+          name: entry.originalName,
+          success: false,
+          error: err.message,
+        });
       }
     }
     return results;
@@ -279,7 +296,8 @@ export class TrashManager {
     try {
       const entries = await this.storage.readdir(dirPath);
       for (const entry of entries) {
-        if (entry === this.config.META_FILE || entry === this.MANIFEST_NAME) continue;
+        if (entry === this.config.META_FILE || entry === this.MANIFEST_NAME)
+          continue;
         const full = this.paths.join(dirPath, entry);
         const s = await this.storage.pStat(full);
         if (s.isDirectory()) {
@@ -295,7 +313,8 @@ export class TrashManager {
   async deleteDirectoryRecursive(dirPath) {
     const entries = await this.storage.readdir(dirPath);
     for (const entry of entries) {
-      if (entry === this.config.META_FILE || entry === this.MANIFEST_NAME) continue;
+      if (entry === this.config.META_FILE || entry === this.MANIFEST_NAME)
+        continue;
       const fullPath = this.paths.join(dirPath, entry);
       const stat = await this.storage.pStat(fullPath);
       if (stat.isDirectory()) {

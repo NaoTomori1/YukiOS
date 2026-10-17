@@ -1,16 +1,34 @@
-import { StorageKeys, os,$ } from "../framework.js";
+import { StorageKeys, os, $ } from "../framework.js";
 import { steamAudio } from "./steamAudio.js";
 import { steamDeckAudio } from "../modes/steamdeck/SteamDeckAudio.js";
 import { resolveIconUrl } from "../shared/assetResolver.js";
 import { initSteamPopupWindow } from "./steamPopupWindow.js";
 import { windowMakeDraggable } from "../windowManager/makeDraggable.js";
 import { windowMakeResizable } from "../windowManager/makeResizable.js";
-import { renderSelectMenu, setSelectMenuValue, bindSelectMenu } from "../shared/selectMenu.js";
-import { SETTINGS, SETTINGS_SELECT_OPTIONS, SETTINGS_PANELS, SETTINGS_NAV, DEFAULT_SETTINGS } from "./steamSettingsCatalog.js";
+import {
+  renderSelectMenu,
+  setSelectMenuValue,
+  bindSelectMenu,
+} from "../shared/selectMenu.js";
+import {
+  SETTINGS,
+  SETTINGS_SELECT_OPTIONS,
+  SETTINGS_PANELS,
+  SETTINGS_NAV,
+  DEFAULT_SETTINGS,
+} from "./steamSettingsCatalog.js";
 
 export function renderSettingsSelectMenu(id, setting) {
-  const html = renderSelectMenu(id, SETTINGS_SELECT_OPTIONS[setting] || [], SteamSettings.get(setting), "steam-settings-select");
-  return html.replace('<div class="select-menu steam-settings-select" id="', `<div class="select-menu steam-settings-select" data-setting="${setting}" id="`);
+  const html = renderSelectMenu(
+    id,
+    SETTINGS_SELECT_OPTIONS[setting] || [],
+    SteamSettings.get(setting),
+    "steam-settings-select",
+  );
+  return html.replace(
+    '<div class="select-menu steam-settings-select" id="',
+    `<div class="select-menu steam-settings-select" data-setting="${setting}" id="`,
+  );
 }
 
 export class SteamSettings {
@@ -63,9 +81,10 @@ export function initSettingsToggles(root) {
     if (toggle.inited) return;
     toggle.inited = true;
     const setting = toggle.dataset.setting;
-    const value = setting === "steamAudioEnabled"
-      ? os.storage.get(StorageKeys.steamDeckAudioEnabled) !== "false"
-      : settings[setting];
+    const value =
+      setting === "steamAudioEnabled"
+        ? os.storage.get(StorageKeys.steamDeckAudioEnabled) !== "false"
+        : settings[setting];
 
     if (value) {
       toggle.classList.add("active");
@@ -93,13 +112,13 @@ export function initSettingsToggles(root) {
           "recentlyPlayedRow",
           "shareLiveActivity",
           "dnd",
-          "socialDisabled"
+          "socialDisabled",
         ].includes(setting)
       ) {
         window.dispatchEvent(
           new CustomEvent("steam-settings-changed", {
-            detail: { setting, value: !isActive }
-          })
+            detail: { setting, value: !isActive },
+          }),
         );
       }
     });
@@ -113,54 +132,68 @@ export function initSettingsPage(container) {
   initSettingsToggles(settingsPage);
 
   const settings = SteamSettings.load();
-  settingsPage.querySelectorAll(".select-menu[data-setting]").forEach((selectMenu) => {
-    if (selectMenu.inited) return;
-    selectMenu.inited = true;
-    const setting = selectMenu.dataset.setting;
-    const value = settings[setting];
+  settingsPage
+    .querySelectorAll(".select-menu[data-setting]")
+    .forEach((selectMenu) => {
+      if (selectMenu.inited) return;
+      selectMenu.inited = true;
+      const setting = selectMenu.dataset.setting;
+      const value = settings[setting];
 
-    setSelectMenuValue(selectMenu.id, value, settingsPage);
+      setSelectMenuValue(selectMenu.id, value, settingsPage);
 
-    selectMenu.addEventListener("change", () => {
-      steamAudio.playSelect();
-      const newValue = selectMenu.dataset.value;
-      SteamSettings.set(setting, newValue);
+      selectMenu.addEventListener("change", () => {
+        steamAudio.playSelect();
+        const newValue = selectMenu.dataset.value;
+        SteamSettings.set(setting, newValue);
 
-      if (setting === "gridSize") {
-        window.dispatchEvent(
-          new CustomEvent("steam-settings-changed", {
-            detail: { setting, value: newValue }
-          })
-        );
-      }
+        if (setting === "gridSize") {
+          window.dispatchEvent(
+            new CustomEvent("steam-settings-changed", {
+              detail: { setting, value: newValue },
+            }),
+          );
+        }
+      });
     });
-  });
 
   if (!settingsPage.selectMenusBound) {
     bindSelectMenu(settingsPage);
     settingsPage.selectMenusBound = true;
   }
 
-  settingsPage.querySelectorAll(".steam-settings-nav-item").forEach((navItem) => {
-    if (navItem.inited) return;
-    navItem.inited = true;
+  settingsPage
+    .querySelectorAll(".steam-settings-nav-item")
+    .forEach((navItem) => {
+      if (navItem.inited) return;
+      navItem.inited = true;
 
-    navItem.addEventListener("mouseenter", () => steamDeckAudio.playNavigation());
+      navItem.addEventListener("mouseenter", () =>
+        steamDeckAudio.playNavigation(),
+      );
 
-    navItem.addEventListener("click", () => {
-      steamDeckAudio.playNavigation();
-      const category = navItem.dataset.category;
-      const navItems = settingsPage.querySelectorAll(".steam-settings-nav-item");
-      const prevIndex = Array.from(navItems).findIndex((item) => item.classList.contains("active"));
-      const newIndex = Array.from(navItems).indexOf(navItem);
-      if (prevIndex === newIndex) return;
+      navItem.addEventListener("click", () => {
+        steamDeckAudio.playNavigation();
+        const category = navItem.dataset.category;
+        const navItems = settingsPage.querySelectorAll(
+          ".steam-settings-nav-item",
+        );
+        const prevIndex = Array.from(navItems).findIndex((item) =>
+          item.classList.contains("active"),
+        );
+        const newIndex = Array.from(navItems).indexOf(navItem);
+        if (prevIndex === newIndex) return;
 
-      navItems.forEach((item) => item.classList.remove("active"));
-      navItem.classList.add("active");
+        navItems.forEach((item) => item.classList.remove("active"));
+        navItem.classList.add("active");
 
-      animateSettingsPanelChange(settingsPage, category, newIndex > prevIndex ? "down" : "up");
+        animateSettingsPanelChange(
+          settingsPage,
+          category,
+          newIndex > prevIndex ? "down" : "up",
+        );
+      });
     });
-  });
 
   initAccountSyncPanel(settingsPage);
 }
@@ -170,23 +203,41 @@ let settingsPanelAnimating = false;
 function animateSettingsPanelChange(settingsPage, category, direction) {
   if (settingsPanelAnimating) return;
   const content = settingsPage.querySelector(".steam-settings-content");
-  const currentPanel = content.querySelector(".steam-settings-panel:not(.hidden)");
-  const targetPanel = content.querySelector(`.steam-settings-panel[data-panel="${category}"]`);
+  const currentPanel = content.querySelector(
+    ".steam-settings-panel:not(.hidden)",
+  );
+  const targetPanel = content.querySelector(
+    `.steam-settings-panel[data-panel="${category}"]`,
+  );
   if (!targetPanel || !currentPanel || currentPanel === targetPanel) return;
   settingsPanelAnimating = true;
 
-  currentPanel.classList.add("steam-settings-panel--out", `steam-settings-panel--${direction}`);
+  currentPanel.classList.add(
+    "steam-settings-panel--out",
+    `steam-settings-panel--${direction}`,
+  );
 
   const startIn = () => {
-    currentPanel.classList.remove("steam-settings-panel--out", "steam-settings-panel--up", "steam-settings-panel--down");
+    currentPanel.classList.remove(
+      "steam-settings-panel--out",
+      "steam-settings-panel--up",
+      "steam-settings-panel--down",
+    );
     currentPanel.classList.add("hidden");
     targetPanel.classList.remove("hidden");
-    targetPanel.classList.add("steam-settings-panel--in", `steam-settings-panel--${direction}`);
+    targetPanel.classList.add(
+      "steam-settings-panel--in",
+      `steam-settings-panel--${direction}`,
+    );
     targetPanel.addEventListener("animationend", finishIn, { once: true });
   };
 
   const finishIn = () => {
-    targetPanel.classList.remove("steam-settings-panel--in", "steam-settings-panel--up", "steam-settings-panel--down");
+    targetPanel.classList.remove(
+      "steam-settings-panel--in",
+      "steam-settings-panel--up",
+      "steam-settings-panel--down",
+    );
     settingsPanelAnimating = false;
   };
 
@@ -202,8 +253,12 @@ function initAccountSyncPanel(settingsPage) {
 
   const refreshSyncUI = async () => {
     try {
-      const { isSyncEnabledPref, getToggles, SYNC_COMPONENTS, getCloudSummary } =
-        await import("../account/syncEngine.js");
+      const {
+        isSyncEnabledPref,
+        getToggles,
+        SYNC_COMPONENTS,
+        getCloudSummary,
+      } = await import("../account/syncEngine.js");
       const enabled = isSyncEnabledPref();
       const toggles = getToggles();
       const summary = await getCloudSummary();
@@ -237,7 +292,9 @@ function initAccountSyncPanel(settingsPage) {
 
       if (summary && summary.updatedAt) {
         const lastSync = new Date(summary.updatedAt).toLocaleString();
-        const quota = summary.quota ? `${(summary.quota / 1024).toFixed(1)} KB` : "Unknown";
+        const quota = summary.quota
+          ? `${(summary.quota / 1024).toFixed(1)} KB`
+          : "Unknown";
         syncStatus.innerHTML = `
           <div style="font-size:12px;opacity:0.7;">Last sync: ${lastSync}</div>
           <div style="font-size:12px;opacity:0.7;">Quota used: ${quota}</div>
@@ -304,7 +361,10 @@ function buildSettingsItemHtml(key, prefix) {
     `;
 }
 
-export function buildSettingsItemsHtml(keys, { prefix = "steam-settings" } = {}) {
+export function buildSettingsItemsHtml(
+  keys,
+  { prefix = "steam-settings" } = {},
+) {
   return keys.map((key) => buildSettingsItemHtml(key, prefix)).join("\n");
 }
 
@@ -314,7 +374,9 @@ function buildSettingsNavHtml() {
     const items = sectionIds.map((id) => {
       const panel = SETTINGS_PANELS.find((entry) => entry.id === id);
       if (!panel) return "";
-      const cls = isFirstItem ? "steam-settings-nav-item active" : "steam-settings-nav-item";
+      const cls = isFirstItem
+        ? "steam-settings-nav-item active"
+        : "steam-settings-nav-item";
       isFirstItem = false;
       return `
           <div class="${cls}" data-category="${panel.id}">
@@ -362,7 +424,10 @@ function buildSettingsPanelHtml(panel, prefix) {
     `;
 }
 
-export function buildSettingsPageHTML({ prefix = "steam-settings", hidden = false } = {}) {
+export function buildSettingsPageHTML({
+  prefix = "steam-settings",
+  hidden = false,
+} = {}) {
   return `
     <div class="steam-settings-page${hidden ? " hidden" : ""}" style="display:flex;flex-direction:row;height:100%;color:#c6d4df;overflow:hidden;">
       ${buildSettingsNavHtml()}
@@ -384,7 +449,7 @@ export async function openSteamSettingsWindow(wm) {
   const win = os.window.create(winId, "Yuki Steam Settings", 900, 600, {
     skipHeader: true,
     icon: "fas fa-snowflake",
-    resizable: true
+    resizable: true,
   });
   win.style.background =
     "linear-gradient(90deg, #2a2d34 0, #2a2d34 260px, #171d25 260px, #171d25 100%)";

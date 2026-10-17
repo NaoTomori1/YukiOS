@@ -23,7 +23,8 @@ export function camelize(str) {
 export function formatSize(bytes) {
   if (bytes < 1024) return bytes + " B";
   if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(2) + " KB";
-  if (bytes < 1024 * 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(2) + " MB";
+  if (bytes < 1024 * 1024 * 1024)
+    return (bytes / (1024 * 1024)).toFixed(2) + " MB";
   return (bytes / (1024 * 1024 * 1024)).toFixed(2) + " GB";
 }
 
@@ -66,16 +67,39 @@ export function isBlobLike(obj) {
 
 export function isArchiveFile(name) {
   const lower = name.toLowerCase();
-  return [".zip", ".gz", ".tgz", ".tar", ".tar.gz", ".tar.bz2", ".tar.xz", ".rar", ".7z", ".bz2", ".xz"].some((ext) =>
-    lower.endsWith(ext)
-  );
+  return [
+    ".zip",
+    ".gz",
+    ".tgz",
+    ".tar",
+    ".tar.gz",
+    ".tar.bz2",
+    ".tar.xz",
+    ".rar",
+    ".7z",
+    ".bz2",
+    ".xz",
+  ].some((ext) => lower.endsWith(ext));
 }
 
 export function archiveBaseName(name) {
   const lower = name.toLowerCase();
-  const suffixes = [".tar.gz", ".tar.bz2", ".tar.xz", ".tgz", ".zip", ".gz", ".bz2", ".xz", ".tar", ".rar", ".7z"];
+  const suffixes = [
+    ".tar.gz",
+    ".tar.bz2",
+    ".tar.xz",
+    ".tgz",
+    ".zip",
+    ".gz",
+    ".bz2",
+    ".xz",
+    ".tar",
+    ".rar",
+    ".7z",
+  ];
   for (const suffix of suffixes) {
-    if (lower.endsWith(suffix)) return name.slice(0, name.length - suffix.length);
+    if (lower.endsWith(suffix))
+      return name.slice(0, name.length - suffix.length);
   }
   return name;
 }
@@ -120,8 +144,17 @@ export function splitWebkitPath(file) {
   return { parts, fileName };
 }
 
-export function buildClipboardIcons(selectedItems, itemName, isFile, view, currentPath) {
-  const allSelected = selectedItems.size > 1 && selectedItems.has(itemName) ? [...selectedItems] : [itemName];
+export function buildClipboardIcons(
+  selectedItems,
+  itemName,
+  isFile,
+  view,
+  currentPath,
+) {
+  const allSelected =
+    selectedItems.size > 1 && selectedItems.has(itemName)
+      ? [...selectedItems]
+      : [itemName];
 
   const nameToIsFile = {};
   if (view) {
@@ -133,7 +166,7 @@ export function buildClipboardIcons(selectedItems, itemName, isFile, view, curre
 
   return allSelected.map((n) => ({
     element: null,
-    data: { name: n, path: currentPath, isFile: nameToIsFile[n] ?? isFile }
+    data: { name: n, path: currentPath, isFile: nameToIsFile[n] ?? isFile },
   }));
 }
 
@@ -144,7 +177,12 @@ export function isWindowFocused(winId) {
 }
 
 export function rectsIntersect(a, b) {
-  return !(a.right < b.left || a.left > b.right || a.bottom < b.top || a.top > b.bottom);
+  return !(
+    a.right < b.left ||
+    a.left > b.right ||
+    a.bottom < b.top ||
+    a.top > b.bottom
+  );
 }
 
 export function sanitizeTitle(title) {
@@ -194,9 +232,14 @@ export function resolveAppName(appId) {
   if (info?.title) return info.title;
   const allApps = os.app.getAllApps();
   const lower = String(appId).toLowerCase();
-  const matchedId = Object.keys(allApps).find((id) => id.toLowerCase() === lower);
+  const matchedId = Object.keys(allApps).find(
+    (id) => id.toLowerCase() === lower,
+  );
   if (matchedId && allApps[matchedId]?.title) return allApps[matchedId].title;
-  return appId.charAt(0).toUpperCase() + appId.slice(1).replace(/([a-z])([A-Z])/g, "$1 $2");
+  return (
+    appId.charAt(0).toUpperCase() +
+    appId.slice(1).replace(/([a-z])([A-Z])/g, "$1 $2")
+  );
 }
 
 export function resolveAppId(appId) {
@@ -204,7 +247,9 @@ export function resolveAppId(appId) {
   const allApps = os.app.getAllApps();
   if (allApps[appId]) return appId;
   const lower = String(appId).toLowerCase();
-  const matchedId = Object.keys(allApps).find((id) => id.toLowerCase() === lower);
+  const matchedId = Object.keys(allApps).find(
+    (id) => id.toLowerCase() === lower,
+  );
   return matchedId || null;
 }
 
@@ -214,7 +259,9 @@ export function resolveAppIcon(appId) {
   if (info?.icon) return info.icon;
   const allApps = os.app.getAllApps();
   const lower = String(appId).toLowerCase();
-  const matchedId = Object.keys(allApps).find((id) => id.toLowerCase() === lower);
+  const matchedId = Object.keys(allApps).find(
+    (id) => id.toLowerCase() === lower,
+  );
   return allApps[matchedId]?.icon || null;
 }
 
@@ -270,7 +317,7 @@ export async function downloadPage(showStatus) {
     `https://gcore.jsdelivr.net/gh/${u}/${r}@${b}/${p}${f}`,
     `https://esm.sh/gh/${u}/${r}@${b}/${p}${f}`,
     `https://cdn.statically.io/gh/${u}/${r}@${b}/${p}${f}`,
-    `https://cdn.staticdelivr.com/gh/${u}/${r}/${b}/${p}${f}`
+    `https://cdn.staticdelivr.com/gh/${u}/${r}/${b}/${p}${f}`,
   ];
 
   let htmlContent = null;
@@ -299,8 +346,8 @@ export async function downloadPage(showStatus) {
     const link = createElement("a", {
       attributes: {
         href: downloadUrl,
-        download: "yukios.html"
-      }
+        download: "yukios.html",
+      },
     });
 
     document.body.appendChild(link);
@@ -326,7 +373,10 @@ export function base64ToBlob(dataUrl) {
 }
 
 export function generateUUID() {
-  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+  if (
+    typeof crypto !== "undefined" &&
+    typeof crypto.randomUUID === "function"
+  ) {
     return crypto.randomUUID();
   }
   return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {

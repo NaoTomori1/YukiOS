@@ -2,7 +2,14 @@ import "../styles/emulator.css";
 import { CDN_CONFIG } from "../shared/cdnConfig.js";
 
 import { audioMixer } from "../audioMixer.js";
-import { BaseApp, os, $, createElement, setStyle, ServiceKeys } from "../framework.js";
+import {
+  BaseApp,
+  os,
+  $,
+  createElement,
+  setStyle,
+  ServiceKeys,
+} from "../framework.js";
 import { resolveIconUrl } from "../shared/assetResolver.js";
 import {
   normalizePath,
@@ -20,7 +27,7 @@ import {
   captureIframeScreenshot,
   exportEmulatorSave,
   buildEmulatorBridgeScript,
-  pollEmulatorContentSize
+  pollEmulatorContentSize,
 } from "../shared/emulatorBase.js";
 const EMULATOR_ICON = "static/icons/emulator.webp";
 const ROMS_DIR = ["ROMs"];
@@ -63,7 +70,7 @@ export const cores = {
   pet: ["vice_xpet"],
   plus4: ["vice_xplus4"],
   vic20: ["vice_xvic"],
-  intv: ["freeintv"]
+  intv: ["freeintv"],
 };
 
 const supportedExtensions = {
@@ -100,7 +107,7 @@ const supportedExtensions = {
   c128: [".d64", ".t64", ".prg"],
   pet: [".prg", ".tap"],
   plus4: [".prg", ".tap"],
-  vic20: [".prg", ".tap"]
+  vic20: [".prg", ".tap"],
 };
 
 export class EmulatorApp extends BaseApp {
@@ -112,7 +119,8 @@ export class EmulatorApp extends BaseApp {
   }
 
   get explorerApp() {
-    if (!this.explorerAppService) this.explorerAppService = this.getService(ServiceKeys.EXPLORER);
+    if (!this.explorerAppService)
+      this.explorerAppService = this.getService(ServiceKeys.EXPLORER);
     return this.explorerAppService;
   }
 
@@ -123,9 +131,15 @@ export class EmulatorApp extends BaseApp {
     });
     const extList = Array.from(allExtensions).sort().join(", ");
 
-    const win = os.window.create("emulator-win", "Yuki Emulator", "800px", "600px", {
-      icon: EMULATOR_ICON
-    });
+    const win = os.window.create(
+      "emulator-win",
+      "Yuki Emulator",
+      "800px",
+      "600px",
+      {
+        icon: EMULATOR_ICON,
+      },
+    );
     win.innerHTML = `
       <div class="emu-shell ruf-container">
         <div class="emu-header ruf-header">
@@ -176,7 +190,11 @@ export class EmulatorApp extends BaseApp {
     });
 
     this.loadUserRoms();
-    if (window.FontAwesome && window.FontAwesome.dom && window.FontAwesome.dom.i2svg) {
+    if (
+      window.FontAwesome &&
+      window.FontAwesome.dom &&
+      window.FontAwesome.dom.i2svg
+    ) {
       const container = win.querySelector(".emu-shell");
       if (container) {
         window.FontAwesome.dom.i2svg({ node: container });
@@ -194,7 +212,8 @@ export class EmulatorApp extends BaseApp {
     renderEmulatorFileList({
       container: $("#emulator-user-roms"),
       dir: ROMS_DIR,
-      filter: (f) => Array.from(allExts).some((ext) => f.toLowerCase().endsWith(ext)),
+      filter: (f) =>
+        Array.from(allExts).some((ext) => f.toLowerCase().endsWith(ext)),
       emptyHTML: `<div class="emu-empty ruf-empty">No ROMs uploaded yet.</div>`,
       cardHTML: (f) => {
         const ext = f.toLowerCase().split(".").pop();
@@ -218,7 +237,7 @@ export class EmulatorApp extends BaseApp {
       deleteBtnSelector: ".ruf-delete-btn",
       deleteAction: (name) => os.fs.delete(ROMS_DIR, name),
       onCardClick: (fileName) => this.launchROM(fileName, ROMS_DIR),
-      onReload: () => this.loadUserRoms()
+      onReload: () => this.loadUserRoms(),
     });
   }
 
@@ -235,8 +254,9 @@ export class EmulatorApp extends BaseApp {
       successHTML: `<i class="fa-solid fa-circle-check emu-state-icon ruf-state-icon"></i><div class="emu-state-text ruf-state-text">Saved ${files.length} file(s)!</div>`,
       errorHTML: (msg) =>
         `<i class="fa-solid fa-triangle-exclamation emu-state-icon ruf-state-icon emu-state--error"></i><div class="emu-state-text ruf-state-text emu-state--error">${msg}</div>`,
-      onSaved: () => os.notify.send("", `Saved ${files.length} file(s) to ROMs.`),
-      onReload: () => this.loadUserRoms()
+      onSaved: () =>
+        os.notify.send("", `Saved ${files.length} file(s) to ROMs.`),
+      onReload: () => this.loadUserRoms(),
     });
   }
 
@@ -260,7 +280,7 @@ export class EmulatorApp extends BaseApp {
           pce: "PC Engine",
           atari2600: "Atari 2600",
           atari5200: "Atari 5200",
-          atari7800: "Atari 7800"
+          atari7800: "Atari 7800",
         };
         return systemNames[system] || system.toUpperCase();
       }
@@ -297,24 +317,29 @@ export class EmulatorApp extends BaseApp {
   }
 
   async handleZipFile(arrayBuffer, fileName) {
-    os.notify.send("", "Can't read zips directly. Extract the ROM first, then upload it.");
+    os.notify.send(
+      "",
+      "Can't read zips directly. Extract the ROM first, then upload it.",
+    );
   }
 
   async launchEmulator(displayName, fileName, romData, forcedCore = null) {
     const winId = `emulator-${Date.now()}`;
     const win = os.window.create(winId, displayName, "800px", "600px", {
-      icon: EMULATOR_ICON
+      icon: EMULATOR_ICON,
     });
 
     win.innerHTML = `
     <div class="window-content emu-window ruf-window">
       ${buildLoadingStateHTML({
         winId,
-        iconClass: "fa-solid fa-gamepad fa-spin ruf-state-icon emu-state-icon yuki-loading-indicator",
-        wrapperClass: "yuki-loading-indicator emu-state ruf-loading emu-load-wrap",
+        iconClass:
+          "fa-solid fa-gamepad fa-spin ruf-state-icon emu-state-icon yuki-loading-indicator",
+        wrapperClass:
+          "yuki-loading-indicator emu-state ruf-loading emu-load-wrap",
         textClass: "emu-state-text ruf-state-text",
         logClass: "emu-state-text--muted ruf-log",
-        displayName
+        displayName,
       })}
       <div id="${winId}-screen" class="emu-window-screen"></div>
     </div>`;
@@ -328,8 +353,9 @@ export class EmulatorApp extends BaseApp {
         inner.innerHTML = buildErrorHTML({
           msg,
           wrapperClass: "emu-state emu-state--error ruf-error",
-          iconClass: "fa-solid fa-triangle-exclamation ruf-state-icon emu-state-icon emu-state--error",
-          textClass: "emu-state-text ruf-state-text emu-state--error"
+          iconClass:
+            "fa-solid fa-triangle-exclamation ruf-state-icon emu-state-icon emu-state--error",
+          textClass: "emu-state-text ruf-state-text emu-state--error",
         });
     };
 
@@ -356,7 +382,9 @@ export class EmulatorApp extends BaseApp {
       if (inner) inner.style.display = "none";
       if (screenDiv) screenDiv.style.display = "block";
 
-      const saveLine = saveUrl ? `window.EJS_saveUrl = ${JSON.stringify(saveUrl)};` : "";
+      const saveLine = saveUrl
+        ? `window.EJS_saveUrl = ${JSON.stringify(saveUrl)};`
+        : "";
       const iframeDoc = `<!DOCTYPE html>
 <html><head><style>*{margin:0;padding:0;box-sizing:border-box;}html,body{width:100%;height:100%;background:#000;overflow:hidden;}</style></head>
 <body>
@@ -375,12 +403,26 @@ window.EJS_color = "var(--brand)";
 </body></html>`;
 
       const iframe = createElement("iframe");
-      setStyle(iframe, { width: "100%", height: "100%", border: "none", display: "block" });
+      setStyle(iframe, {
+        width: "100%",
+        height: "100%",
+        border: "none",
+        display: "block",
+      });
       iframe.setAttribute("allow", "autoplay; fullscreen");
       iframe.srcdoc = iframeDoc;
       screenDiv.appendChild(iframe);
 
-      const state = { winId, key, fileName, displayName, iframe, romUrl, saveUrl, saved: false };
+      const state = {
+        winId,
+        key,
+        fileName,
+        displayName,
+        iframe,
+        romUrl,
+        saveUrl,
+        saved: false,
+      };
       this.gameSessions.set(winId, state);
       win.addEventListener("remove", () => {
         this.gameSessions.delete(winId);
@@ -411,7 +453,7 @@ window.EJS_color = "var(--brand)";
       segaGG: "segaGG",
       atari2600: "atari2600",
       atari7800: "atari7800",
-      vb: "vb"
+      vb: "vb",
     };
     const emulatorCoreMap = {
       nes: "fceumm",
@@ -426,7 +468,7 @@ window.EJS_color = "var(--brand)";
       segaGG: "genesis_plus_gx",
       atari2600: "stella2014",
       atari7800: "prosystem",
-      vb: "beetle_vb"
+      vb: "beetle_vb",
     };
     let detectedSystem = null;
     for (const [system, extensions] of Object.entries(supportedExtensions)) {
@@ -438,7 +480,8 @@ window.EJS_color = "var(--brand)";
     if (!detectedSystem) throw new Error(`Unsupported ROM type: ${extension}`);
     const system = emulatorSystemMap[detectedSystem];
     const core = emulatorCoreMap[detectedSystem];
-    if (!system || !core) throw new Error(`No emulator configured for ${detectedSystem}`);
+    if (!system || !core)
+      throw new Error(`No emulator configured for ${detectedSystem}`);
     return { system, core };
   }
 
@@ -449,9 +492,11 @@ window.EJS_color = "var(--brand)";
       await ensureSnapshotDir();
       let stored = false;
       const shot = await captureIframeScreenshot(state.iframe);
-      if (shot && (await writeEmulatorSnapshot(`${state.key}.png`, shot))) stored = true;
+      if (shot && (await writeEmulatorSnapshot(`${state.key}.png`, shot)))
+        stored = true;
       const save = await exportEmulatorSave(state.iframe);
-      if (save && (await writeEmulatorSnapshot(`${state.key}.sav`, save))) stored = true;
+      if (save && (await writeEmulatorSnapshot(`${state.key}.sav`, save)))
+        stored = true;
       if (stored) {
         recordLastPlayedRom(state.fileName);
         os.notify.send("Emulator", `Progress saved for ${state.displayName}.`);
@@ -481,7 +526,12 @@ window.EJS_color = "var(--brand)";
       const arrayBuffer = await res.arrayBuffer();
       this.launchEmulator(displayName, fileName, arrayBuffer, core);
     } catch (e) {
-      os.notify.send("ROM Load Failed", `ROM didn't load: ${e.message}`, "error", 5000);
+      os.notify.send(
+        "ROM Load Failed",
+        `ROM didn't load: ${e.message}`,
+        "error",
+        5000,
+      );
     }
   }
 

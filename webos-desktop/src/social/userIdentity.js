@@ -3,6 +3,7 @@ import { StorageKeys } from "../StorageKeys.js";
 import { PREDEFINED_AVATARS } from "../utils/avatarData.js";
 import { getPresence } from "./presence.js";
 import { SOCIAL_BASE } from "./socialApi.js";
+import { analyticsFetch } from "./endpoints.js";
 import { isSocialDisabled } from "./socialSettings.js";
 import { setSession, getSession } from "../account/session.js";
 
@@ -12,7 +13,9 @@ const LIVE_REGISTER_TS_KEY = "yuki_live_register_ts";
 let lastRegisterTs = 0;
 
 function currentProfile() {
-  const username = String(os.storage.get(StorageKeys.username) || "Anonymous").slice(0, 32);
+  const username = String(
+    os.storage.get(StorageKeys.username) || "Anonymous",
+  ).slice(0, 32);
   const profilePic = os.storage.get(StorageKeys.profilePicture) || "";
   const avatarIndex = PREDEFINED_AVATARS.indexOf(profilePic);
   const bio = String(os.storage.get(StorageKeys.liveBio) || "").slice(0, 300);
@@ -32,10 +35,16 @@ export async function registerLiveIdentity(userId) {
   if (!id) return ensureLiveUserId();
   const { username, avatarIndex, bio } = currentProfile();
   try {
-    await fetch(`${SOCIAL_BASE}/live/register`, {
+    await analyticsFetch(`${SOCIAL_BASE}/live/register`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId: id, username, avatarIndex, bio, presence: getPresence() })
+      body: JSON.stringify({
+        userId: id,
+        username,
+        avatarIndex,
+        bio,
+        presence: getPresence(),
+      }),
     });
   } catch {}
   return id;
@@ -46,7 +55,9 @@ export async function ensureLiveUserId() {
   const existing = getLiveUserId();
   if (existing) {
     const now = Date.now();
-    const storedTs = Number(os.storage.get(LIVE_REGISTER_TS_KEY) || lastRegisterTs || 0);
+    const storedTs = Number(
+      os.storage.get(LIVE_REGISTER_TS_KEY) || lastRegisterTs || 0,
+    );
     if (now - storedTs < REGISTER_THROTTLE_MS) return existing;
     lastRegisterTs = now;
     os.storage.set(LIVE_REGISTER_TS_KEY, now);
@@ -55,10 +66,15 @@ export async function ensureLiveUserId() {
   }
   try {
     const { username, avatarIndex, bio } = currentProfile();
-    const res = await fetch(`${SOCIAL_BASE}/live/register`, {
+    const res = await analyticsFetch(`${SOCIAL_BASE}/live/register`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username, avatarIndex, bio, presence: getPresence() })
+      body: JSON.stringify({
+        username,
+        avatarIndex,
+        bio,
+        presence: getPresence(),
+      }),
     });
     const data = await res.json();
     if (data && data.userId) {
@@ -76,10 +92,10 @@ export async function saveBio(bio) {
   if (!id) return null;
   const cleaned = String(bio || "").slice(0, 300);
   try {
-    const res = await fetch(`${SOCIAL_BASE}/live/register`, {
+    const res = await analyticsFetch(`${SOCIAL_BASE}/live/register`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId: id, bio: cleaned })
+      body: JSON.stringify({ userId: id, bio: cleaned }),
     });
     if (!res.ok) return null;
     os.storage.set(StorageKeys.liveBio, cleaned);
@@ -90,19 +106,27 @@ export async function saveBio(bio) {
 }
 
 export function avatarUrlForIndex(avatarIndex) {
-  if (typeof avatarIndex === "number" && avatarIndex >= 0 && avatarIndex < PREDEFINED_AVATARS.length) {
+  if (
+    typeof avatarIndex === "number" &&
+    avatarIndex >= 0 &&
+    avatarIndex < PREDEFINED_AVATARS.length
+  ) {
     return PREDEFINED_AVATARS[avatarIndex];
   }
   return null;
 }
 
 export async function loginWithAccount(identifier, password) {
-  if (isSocialDisabled()) return { error: "Social features are disabled. Enable them in Yuki Steam Settings." };
+  if (isSocialDisabled())
+    return {
+      error:
+        "Social features are disabled. Enable them in Yuki Steam Settings.",
+    };
   try {
-    const res = await fetch(`${SOCIAL_BASE}/live/account/login`, {
+    const res = await analyticsFetch(`${SOCIAL_BASE}/live/account/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ identifier, password })
+      body: JSON.stringify({ identifier, password }),
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok || !data.userId) {
@@ -112,7 +136,12 @@ export async function loginWithAccount(identifier, password) {
     os.storage.set(StorageKeys.liveUserId, data.userId);
     os.storage.set(StorageKeys.liveAccount, { nickname: data.nickname || "" });
     registerLiveIdentity(data.userId).catch(() => {});
-    setSession({ token: data.token || "", userId: data.userId, nickname: data.nickname || "", updatedAt: Date.now() });
+    setSession({
+      token: data.token || "",
+      userId: data.userId,
+      nickname: data.nickname || "",
+      updatedAt: Date.now(),
+    });
     return { userId: data.userId, nickname: data.nickname };
   } catch {
     return { error: "Could not reach the server." };
@@ -120,14 +149,18 @@ export async function loginWithAccount(identifier, password) {
 }
 
 export async function registerAccount({ nickname, password }) {
-  if (isSocialDisabled()) return { error: "Social features are disabled. Enable them in Yuki Steam Settings." };
+  if (isSocialDisabled())
+    return {
+      error:
+        "Social features are disabled. Enable them in Yuki Steam Settings.",
+    };
   const currentId = getLiveUserId();
   try {
     const body = { nickname, password, userId: currentId };
-    const res = await fetch(`${SOCIAL_BASE}/live/account/register`, {
+    const res = await analyticsFetch(`${SOCIAL_BASE}/live/account/register`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body)
+      body: JSON.stringify(body),
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok || !data.userId) {
@@ -137,7 +170,12 @@ export async function registerAccount({ nickname, password }) {
     os.storage.set(StorageKeys.liveUserId, data.userId);
     os.storage.set(StorageKeys.liveAccount, { nickname: data.nickname || "" });
     registerLiveIdentity(data.userId).catch(() => {});
-    setSession({ token: data.token || "", userId: data.userId, nickname: data.nickname || "", updatedAt: Date.now() });
+    setSession({
+      token: data.token || "",
+      userId: data.userId,
+      nickname: data.nickname || "",
+      updatedAt: Date.now(),
+    });
     return { userId: data.userId, nickname: data.nickname };
   } catch {
     return { error: "Could not reach the server." };

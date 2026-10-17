@@ -1,7 +1,11 @@
 import "../styles/clock.css";
 import { BaseApp, os, StorageKeys, createElement } from "../framework.js";
 
-import { renderSelectMenu, getSelectMenuValue, bindSelectMenu } from "../shared/selectMenu.js";
+import {
+  renderSelectMenu,
+  getSelectMenuValue,
+  bindSelectMenu,
+} from "../shared/selectMenu.js";
 import { generateId } from "../utils/utils.js";
 
 function formatTime(ms, showMs = false) {
@@ -229,7 +233,7 @@ export class ClockApp extends BaseApp {
       use24h: true,
       snoozeDuration: 5,
       alarmSound: "classic",
-      calendarClockStyle: "analog"
+      calendarClockStyle: "analog",
     };
     const saved = os.storage.get(StorageKeys.clockSettings);
     return saved ? { ...defaults, ...saved } : defaults;
@@ -264,7 +268,15 @@ export class ClockApp extends BaseApp {
   scheduleAlarm(alarm) {
     const now = new Date(Date.now() + this.timeOffset);
     const [h, m] = alarm.time.split(":").map(Number);
-    const target = new Date(now.getFullYear(), now.getMonth(), now.getDate(), h, m, 0, 0);
+    const target = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate(),
+      h,
+      m,
+      0,
+      0,
+    );
     if (target <= now) target.setDate(target.getDate() + 1);
     const diff = target - now;
     const timeoutId = setTimeout(() => this.fireAlarm(alarm), diff);
@@ -308,14 +320,25 @@ export class ClockApp extends BaseApp {
         this.scheduleAlarm(alarm);
       }
     };
-    this.notify("Alarm", `${alarm.label || "Alarm"}: ${alarm.time}`, "info", 10000);
+    this.notify(
+      "Alarm",
+      `${alarm.label || "Alarm"}: ${alarm.time}`,
+      "info",
+      10000,
+    );
   }
 
   async open() {
-    const win = os.window.create("clock-app-window", "Clock", "720px", "560px", {
-      icon: "fas fa-clock",
-      appId: "clock"
-    });
+    const win = os.window.create(
+      "clock-app-window",
+      "Clock",
+      "720px",
+      "560px",
+      {
+        icon: "fas fa-clock",
+        appId: "clock",
+      },
+    );
     win.innerHTML = this.render();
     this.win = win;
     this.bindEvents();
@@ -331,7 +354,7 @@ export class ClockApp extends BaseApp {
       use24h: this.settings.use24h,
       dpr,
       width: 300,
-      height: 300
+      height: 300,
     });
     this.timeOffset = 0;
 
@@ -453,7 +476,7 @@ export class ClockApp extends BaseApp {
             <button class="clock-alarm-delete-btn" data-action="deleteAlarm" data-index="${i}"><i class="fas fa-trash"></i></button>
           </div>
         </div>
-      `
+      `,
         )
         .join("");
     }
@@ -503,12 +526,12 @@ export class ClockApp extends BaseApp {
       { value: "5", label: "5 minutes" },
       { value: "10", label: "10 minutes" },
       { value: "15", label: "15 minutes" },
-      { value: "30", label: "30 minutes" }
+      { value: "30", label: "30 minutes" },
     ];
     const soundOpts = [
       { value: "classic", label: "Classic" },
       { value: "digital", label: "Digital" },
-      { value: "gentle", label: "Gentle" }
+      { value: "gentle", label: "Gentle" },
     ];
     return `
       <div class="clock-settings">
@@ -603,7 +626,9 @@ export class ClockApp extends BaseApp {
     });
 
     win.addEventListener("click", (e) => {
-      const settingBtn = e.target.closest(".clock-settings-toggle-btn[data-setting]");
+      const settingBtn = e.target.closest(
+        ".clock-settings-toggle-btn[data-setting]",
+      );
       if (settingBtn) {
         const key = settingBtn.dataset.setting;
         const value = settingBtn.dataset.value === "true";
@@ -611,7 +636,9 @@ export class ClockApp extends BaseApp {
         this.saveSettings();
         const parent = settingBtn.closest(".clock-settings-toggle");
         if (parent) {
-          parent.querySelectorAll(".clock-settings-toggle-btn").forEach((b) => b.classList.remove("active"));
+          parent
+            .querySelectorAll(".clock-settings-toggle-btn")
+            .forEach((b) => b.classList.remove("active"));
           settingBtn.classList.add("active");
         }
         if (key === "use24h" && this.worker) {
@@ -630,7 +657,10 @@ export class ClockApp extends BaseApp {
 
       const selectEl = e.target.closest(".select-menu");
       if (selectEl) {
-        const key = selectEl.id === "clock-snooze-select" ? "snoozeDuration" : "alarmSound";
+        const key =
+          selectEl.id === "clock-snooze-select"
+            ? "snoozeDuration"
+            : "alarmSound";
         const raw = getSelectMenuValue(selectEl.id, this.win);
         const value = key === "snoozeDuration" ? parseInt(raw) : raw;
         this.settings[key] = value;
@@ -662,11 +692,14 @@ export class ClockApp extends BaseApp {
       if (this.activeTab === "timer") this.updateTimerDisplay();
     }
     const tabs = this.win.querySelectorAll(".clock-tab");
-    tabs.forEach((t) => t.classList.toggle("active", t.dataset.tab === this.activeTab));
+    tabs.forEach((t) =>
+      t.classList.toggle("active", t.dataset.tab === this.activeTab),
+    );
   }
 
   showAlarmModal(index) {
-    const existing = index !== undefined && index !== null ? this.alarms[index] : null;
+    const existing =
+      index !== undefined && index !== null ? this.alarms[index] : null;
     const time = existing ? existing.time : "07:00";
     const label = existing ? existing.label || "" : "";
     const recurring = existing ? existing.recurring || [] : [];
@@ -709,10 +742,17 @@ export class ClockApp extends BaseApp {
     overlay.querySelector("#alarm-save").onclick = () => {
       const newTime = overlay.querySelector("#alarm-time").value;
       const newLabel = overlay.querySelector("#alarm-label").value.trim();
-      const newRecurring = [...overlay.querySelectorAll(".clock-day-btn.active")].map((b) => b.dataset.day);
+      const newRecurring = [
+        ...overlay.querySelectorAll(".clock-day-btn.active"),
+      ].map((b) => b.dataset.day);
       if (!newTime) return;
       if (existing) {
-        this.alarms[index] = { ...this.alarms[index], time: newTime, label: newLabel, recurring: newRecurring };
+        this.alarms[index] = {
+          ...this.alarms[index],
+          time: newTime,
+          label: newLabel,
+          recurring: newRecurring,
+        };
       } else {
         this.alarms.push({
           id: generateId(),
@@ -720,7 +760,7 @@ export class ClockApp extends BaseApp {
           label: newLabel,
           enabled: true,
           recurring: newRecurring,
-          sound: this.settings.alarmSound
+          sound: this.settings.alarmSound,
         });
       }
       this.saveAlarms();

@@ -46,12 +46,19 @@ export class EditorManager {
     if (this.active) return;
     if (this.audio) this.audio.playEditorEnter();
     if (!this.transformControls) {
-      const { TransformControls } = await import("three/examples/jsm/controls/TransformControls.js");
-      this.transformControls = new TransformControls(this.camera, this.rendererDomElement);
+      const { TransformControls } =
+        await import("three/examples/jsm/controls/TransformControls.js");
+      this.transformControls = new TransformControls(
+        this.camera,
+        this.rendererDomElement,
+      );
       this.transformControls.setMode("translate");
       this.transformControls.setSpace("world");
       this.transformControls.rotationSnap = Math.PI / 12;
-      this.transformControls.addEventListener("dragging-changed", this.onDraggingChangedBound);
+      this.transformControls.addEventListener(
+        "dragging-changed",
+        this.onDraggingChangedBound,
+      );
       this.scene.add(this.transformControls);
     }
 
@@ -95,7 +102,10 @@ export class EditorManager {
     }
     if (targetGeo) {
       const edges = new this.THREE.EdgesGeometry(targetGeo);
-      const edgeMat = new this.THREE.LineBasicMaterial({ color: 0x00ddff, linewidth: 2 });
+      const edgeMat = new this.THREE.LineBasicMaterial({
+        color: 0x00ddff,
+        linewidth: 2,
+      });
       this.highlight = new this.THREE.LineSegments(edges, edgeMat);
       mesh.add(this.highlight);
     }
@@ -134,7 +144,9 @@ export class EditorManager {
     mesh.position.copy(position);
     mesh.traverse((child) => {
       if (child.isMesh) {
-        child.userData.title = id.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+        child.userData.title = id
+          .replace(/-/g, " ")
+          .replace(/\b\w/g, (c) => c.toUpperCase());
       }
     });
     this.scene.add(mesh);
@@ -178,9 +190,13 @@ export class EditorManager {
 
   takeSnapshot() {
     const snapshot = {
-      furniturePositions: this.furnitureManager ? this.furnitureManager.getPositions() : {},
-      decorActiveStates: this.decorManager ? this.decorManager.getActiveStates() : {},
-      decorPositions: this.decorManager ? this.decorManager.getPositions() : {}
+      furniturePositions: this.furnitureManager
+        ? this.furnitureManager.getPositions()
+        : {},
+      decorActiveStates: this.decorManager
+        ? this.decorManager.getActiveStates()
+        : {},
+      decorPositions: this.decorManager ? this.decorManager.getPositions() : {},
     };
     this.history.push(snapshot);
     this.redoStack = [];
@@ -228,7 +244,9 @@ export class EditorManager {
     if (this.audio) this.audio.playEquip();
     this.unequip();
     this.equippedItem = itemDef;
-    const builder = this.paletteBuilders ? this.paletteBuilders[itemDef.id] : null;
+    const builder = this.paletteBuilders
+      ? this.paletteBuilders[itemDef.id]
+      : null;
     if (!builder) return;
     const mesh = builder(this.THREE);
     if (!mesh) return;
@@ -334,17 +352,26 @@ export class EditorManager {
         this.select(item.mesh, { manager: "decor", id: def.id });
       }
     } else {
-      const builder = this.paletteBuilders ? this.paletteBuilders[def.id] : null;
+      const builder = this.paletteBuilders
+        ? this.paletteBuilders[def.id]
+        : null;
       if (!builder) return;
       const mesh = builder(this.THREE);
       if (!mesh) return;
       mesh.traverse((child) => {
         if (child.isMesh) {
-          child.userData.title = def.name || def.id.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+          child.userData.title =
+            def.name ||
+            def.id.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
         }
       });
       const itemId = def.id + "_" + Date.now();
-      const item = this.furnitureManager.spawnFurniture(itemId, mesh, position, { label: def.name });
+      const item = this.furnitureManager.spawnFurniture(
+        itemId,
+        mesh,
+        position,
+        { label: def.name },
+      );
       if (item) {
         this.select(item.mesh, { manager: "furniture", id: itemId });
       }
@@ -355,7 +382,8 @@ export class EditorManager {
   getObjectInfo(mesh) {
     if (this.furnitureManager) {
       const item = this.furnitureManager.findByMesh(mesh);
-      if (item) return { manager: "furniture", id: item.id, name: item.options.label };
+      if (item)
+        return { manager: "furniture", id: item.id, name: item.options.label };
     }
     if (this.decorManager) {
       const item = this.decorManager.items.find((i) => i.mesh === mesh);
@@ -385,7 +413,9 @@ export class EditorManager {
   }
 
   cycleTransformMode() {
-    const current = this.transformControls ? this.transformControls.getMode() : "translate";
+    const current = this.transformControls
+      ? this.transformControls.getMode()
+      : "translate";
     const next = current === "translate" ? "rotate" : "translate";
     if (this.transformControls) {
       this.transformControls.setMode(next);

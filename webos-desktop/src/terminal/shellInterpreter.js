@@ -75,7 +75,7 @@ export class ShellInterpreter {
     const streams = commands.map(() => ({
       stdin: new Stream(),
       stdout: new Stream(),
-      stderr: new Stream()
+      stderr: new Stream(),
     }));
 
     for (let i = 0; i < commands.length; i++) {
@@ -95,9 +95,9 @@ export class ShellInterpreter {
         return this.executeNode(cmd, {
           stdin: streams[i].stdin,
           stdout: streams[i].stdout,
-          stderr: streams[i].stderr
+          stderr: streams[i].stderr,
         });
-      })
+      }),
     );
 
     for (const s of streams) {
@@ -142,7 +142,7 @@ export class ShellInterpreter {
         "--non-interactive",
         "--stdin",
         "--shell",
-        "--version"
+        "--version",
       ]);
       const sudoFlagsWithValue = new Set([
         "-u",
@@ -156,7 +156,7 @@ export class ShellInterpreter {
         "--group",
         "--prompt",
         "--chdir",
-        "--other-user"
+        "--other-user",
       ]);
       let queue = [...n.args];
       const passthrough = [];
@@ -178,7 +178,25 @@ export class ShellInterpreter {
           }
           if (tok.length > 2 && !tok.startsWith("--")) {
             const chars = tok.slice(1).split("");
-            if (chars.every((c) => ["A", "b", "E", "H", "k", "K", "l", "n", "S", "s", "v", "V", "h"].includes(c))) {
+            if (
+              chars.every((c) =>
+                [
+                  "A",
+                  "b",
+                  "E",
+                  "H",
+                  "k",
+                  "K",
+                  "l",
+                  "n",
+                  "S",
+                  "s",
+                  "v",
+                  "V",
+                  "h",
+                ].includes(c),
+              )
+            ) {
               queue.splice(i, 1);
               continue;
             }
@@ -200,7 +218,10 @@ export class ShellInterpreter {
           if (this.ctx.requestSudoPassword) {
             pwd = await this.ctx.requestSudoPassword();
           } else {
-            if (this.ctx.print) this.ctx.print(`[sudo] password for ${this.ctx.env?.get?.("USER") || "user"}: `);
+            if (this.ctx.print)
+              this.ctx.print(
+                `[sudo] password for ${this.ctx.env?.get?.("USER") || "user"}: `,
+              );
             pwd = "";
           }
           if (pwd === null) {
@@ -220,19 +241,34 @@ export class ShellInterpreter {
     for (const arg of args) {
       // expand variables in args
     }
-    const expandedArgs = args.map((a) => (this.ctx.expandString ? this.ctx.expandString(a) : a));
+    const expandedArgs = args.map((a) =>
+      this.ctx.expandString ? this.ctx.expandString(a) : a,
+    );
 
     if (this.ctx.hasCommand && this.ctx.hasCommand(node.name)) {
       const capturedOutput = [];
 
       const cmdIo = {
         stdin: io.stdin,
-        stdout: io.stdout || { write: (data) => capturedOutput.push(data), end: () => {} },
-        stderr: io.stderr || { write: (data) => (this.ctx.print ? this.ctx.print(data) : null), end: () => {} }
+        stdout: io.stdout || {
+          write: (data) => capturedOutput.push(data),
+          end: () => {},
+        },
+        stderr: io.stderr || {
+          write: (data) => (this.ctx.print ? this.ctx.print(data) : null),
+          end: () => {},
+        },
       };
 
-      const result = await this.ctx.executeCommand(node.name, expandedArgs, cmdIo);
-      return { exitCode: result.exitCode || 0, output: capturedOutput.join("") };
+      const result = await this.ctx.executeCommand(
+        node.name,
+        expandedArgs,
+        cmdIo,
+      );
+      return {
+        exitCode: result.exitCode || 0,
+        output: capturedOutput.join(""),
+      };
     }
 
     if (this.ctx.print) {
@@ -290,7 +326,10 @@ export class ShellInterpreter {
         if (eqIdx > 0) {
           const name = node.setup.slice(0, eqIdx);
           const val = node.setup.slice(eqIdx + 1);
-          this.ctx.env.set(name, this.ctx.expandString ? this.ctx.expandString(val) : val);
+          this.ctx.env.set(
+            name,
+            this.ctx.expandString ? this.ctx.expandString(val) : val,
+          );
         }
       }
     }
@@ -306,13 +345,18 @@ export class ShellInterpreter {
       lastExit = result.exitCode;
 
       if (this.ctx.env && node.step) {
-        const stepMatch = node.step.match(/([A-Za-z_][A-Za-z0-9_]*)\s*([-+])\s*(\d+)/);
+        const stepMatch = node.step.match(
+          /([A-Za-z_][A-Za-z0-9_]*)\s*([-+])\s*(\d+)/,
+        );
         if (stepMatch) {
           const varName = stepMatch[1];
           const op = stepMatch[2];
           const amount = parseInt(stepMatch[3], 10);
           const curVal = parseInt(this.ctx.env.get(varName) || "0", 10);
-          this.ctx.env.set(varName, String(op === "+" ? curVal + amount : curVal - amount));
+          this.ctx.env.set(
+            varName,
+            String(op === "+" ? curVal + amount : curVal - amount),
+          );
         }
       }
     }

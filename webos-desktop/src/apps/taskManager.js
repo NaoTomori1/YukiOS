@@ -9,7 +9,7 @@ import {
   BusEvents,
   BaseApp,
   os,
-  createElement
+  createElement,
 } from "../framework.js";
 import { processManager } from "../services/ProcessManager.js";
 import {
@@ -17,7 +17,7 @@ import {
   saveStartupApps,
   toggleStartupApp,
   getSystemApps,
-  renderToggle
+  renderToggle,
 } from "../shared/startupApps.js";
 export class TaskManagerApp extends BaseApp {
   constructor(services) {
@@ -87,10 +87,16 @@ export class TaskManagerApp extends BaseApp {
   }
 
   open(opts = {}) {
-    const win = os.window.create("taskmanager-app", "Task Manager", "760px", "540px", {
-      icon: "fa fa-tasks",
-      appId: "taskmanager-app"
-    });
+    const win = os.window.create(
+      "taskmanager-app",
+      "Task Manager",
+      "760px",
+      "540px",
+      {
+        icon: "fa fa-tasks",
+        appId: "taskmanager-app",
+      },
+    );
 
     win.innerHTML = `<div id="tm-root">
         <div class="tm-sidebar">
@@ -283,8 +289,12 @@ export class TaskManagerApp extends BaseApp {
     const panelStartup = $("#tm-panel-startup", win);
 
     const switchTo = (tab, panel, type) => {
-      [tabProc, tabApps, tabPerf, tabStartup].forEach((t) => t.classList.remove("tm-nav-active"));
-      [panelProc, panelApps, panelPerf, panelStartup].forEach((p) => (p.style.display = "none"));
+      [tabProc, tabApps, tabPerf, tabStartup].forEach((t) =>
+        t.classList.remove("tm-nav-active"),
+      );
+      [panelProc, panelApps, panelPerf, panelStartup].forEach(
+        (p) => (p.style.display = "none"),
+      );
       tab.classList.add("tm-nav-active");
       panel.style.display = "flex";
       if (type === "perf") this.renderSysInfo(win);
@@ -308,10 +318,13 @@ export class TaskManagerApp extends BaseApp {
     };
 
     $("#tm-btn-refresh", win).onclick = () => this.renderProcesses(win, "proc");
-    $("#tm-btn-refresh-apps", win).onclick = () => this.renderProcesses(win, "apps");
+    $("#tm-btn-refresh-apps", win).onclick = () =>
+      this.renderProcesses(win, "apps");
 
     $("#tm-btn-select-all", win).onclick = () => {
-      const procs = this.getProcesses().filter((p) => !this.filter || p.title.toLowerCase().includes(this.filter));
+      const procs = this.getProcesses().filter(
+        (p) => !this.filter || p.title.toLowerCase().includes(this.filter),
+      );
       const allSelected = procs.every((p) => this.selectedIds.has(p.winId));
       if (allSelected) this.selectedIds.clear();
       else procs.forEach((p) => this.selectedIds.add(p.winId));
@@ -321,7 +334,10 @@ export class TaskManagerApp extends BaseApp {
     $("#tm-btn-select-all-apps", win).onclick = () => {
       const procs = this.getProcesses()
         .filter((p) => !p.isTray)
-        .filter((p) => !this.appsFilter || p.title.toLowerCase().includes(this.appsFilter));
+        .filter(
+          (p) =>
+            !this.appsFilter || p.title.toLowerCase().includes(this.appsFilter),
+        );
       const allSelected = procs.every((p) => this.appsSelectedIds.has(p.winId));
       if (allSelected) this.appsSelectedIds.clear();
       else procs.forEach((p) => this.appsSelectedIds.add(p.winId));
@@ -370,7 +386,10 @@ export class TaskManagerApp extends BaseApp {
   }
 
   getProcesses() {
-    return processManager.getProcesses(this.frameDropScore, this.drainLongTaskBudget());
+    return processManager.getProcesses(
+      this.frameDropScore,
+      this.drainLongTaskBudget(),
+    );
   }
 
   renderProcesses(win, tabType = "proc") {
@@ -380,7 +399,8 @@ export class TaskManagerApp extends BaseApp {
     if (isAppsTab) procs = procs.filter((p) => !p.isTray);
 
     const filterValue = isAppsTab ? this.appsFilter : this.filter;
-    if (filterValue) procs = procs.filter((p) => p.title.toLowerCase().includes(filterValue));
+    if (filterValue)
+      procs = procs.filter((p) => p.title.toLowerCase().includes(filterValue));
 
     procs.sort((a, b) => {
       let va = a[this.sortKey],
@@ -396,12 +416,19 @@ export class TaskManagerApp extends BaseApp {
     const countId = isAppsTab ? "#tm-count-apps" : "#tm-count";
     const tbody = $(tbodyId, win);
     const countEl = $(countId, win);
-    setText(countEl, `${procs.length} ${isAppsTab ? "app" : "process"}${procs.length !== 1 ? "es" : ""}`);
+    setText(
+      countEl,
+      `${procs.length} ${isAppsTab ? "app" : "process"}${procs.length !== 1 ? "es" : ""}`,
+    );
 
     $$(".tm-th", win).forEach((th) => {
       if (!th.dataset.key) return;
-      const arrow = th.dataset.key === this.sortKey ? (this.sortAsc ? " ↑" : " ↓") : "";
-      th.textContent = { title: "Name", cpu: "CPU", mem: "Memory", status: "Status" }[th.dataset.key] + arrow;
+      const arrow =
+        th.dataset.key === this.sortKey ? (this.sortAsc ? " ↑" : " ↓") : "";
+      th.textContent =
+        { title: "Name", cpu: "CPU", mem: "Memory", status: "Status" }[
+          th.dataset.key
+        ] + arrow;
     });
 
     if (procs.length === 0) {
@@ -419,7 +446,12 @@ export class TaskManagerApp extends BaseApp {
         const selected = selectedSet.has(p.winId) ? "tm-row-selected" : "";
         const cpuPct = (p.cpu / maxCpu) * 100;
         const memPct = (p.mem / maxMem) * 100;
-        const cpuColor = p.cpu > 50 ? "var(--error)" : p.cpu > 20 ? "var(--brand)" : "var(--brand)";
+        const cpuColor =
+          p.cpu > 50
+            ? "var(--error)"
+            : p.cpu > 20
+              ? "var(--brand)"
+              : "var(--brand)";
 
         const statusClass =
           p.status === "Running"
@@ -467,10 +499,12 @@ export class TaskManagerApp extends BaseApp {
           const lastSelected = Array.from(selectedSet).pop();
           const fromIdx = ids.indexOf(lastSelected);
           const toIdx = ids.indexOf(id);
-          const [start, end] = fromIdx < toIdx ? [fromIdx, toIdx] : [toIdx, fromIdx];
+          const [start, end] =
+            fromIdx < toIdx ? [fromIdx, toIdx] : [toIdx, fromIdx];
           ids.slice(start, end + 1).forEach((sid) => selectedSet.add(sid));
         } else {
-          if (selectedSet.size === 1 && selectedSet.has(id)) selectedSet.clear();
+          if (selectedSet.size === 1 && selectedSet.has(id))
+            selectedSet.clear();
           else {
             selectedSet.clear();
             selectedSet.add(id);
@@ -502,9 +536,13 @@ export class TaskManagerApp extends BaseApp {
 
   updateSelectionUI(win, tabType = "proc") {
     const isAppsTab = tabType === "apps";
-    const labelId = isAppsTab ? "#tm-selected-label-apps" : "#tm-selected-label";
+    const labelId = isAppsTab
+      ? "#tm-selected-label-apps"
+      : "#tm-selected-label";
     const killBtnId = isAppsTab ? "#tm-btn-kill-apps" : "#tm-btn-kill";
-    const selectAllBtnId = isAppsTab ? "#tm-btn-select-all-apps" : "#tm-btn-select-all";
+    const selectAllBtnId = isAppsTab
+      ? "#tm-btn-select-all-apps"
+      : "#tm-btn-select-all";
     const selectedSet = isAppsTab ? this.appsSelectedIds : this.selectedIds;
     const filterValue = isAppsTab ? this.appsFilter : this.filter;
 
@@ -530,9 +568,17 @@ export class TaskManagerApp extends BaseApp {
 
     const allProcs = this.getProcesses();
     const visibleProcs = isAppsTab
-      ? allProcs.filter((p) => !p.isTray).filter((p) => !filterValue || p.title.toLowerCase().includes(filterValue))
-      : allProcs.filter((p) => !filterValue || p.title.toLowerCase().includes(filterValue));
-    const allSelected = visibleProcs.length > 0 && visibleProcs.every((p) => selectedSet.has(p.winId));
+      ? allProcs
+          .filter((p) => !p.isTray)
+          .filter(
+            (p) => !filterValue || p.title.toLowerCase().includes(filterValue),
+          )
+      : allProcs.filter(
+          (p) => !filterValue || p.title.toLowerCase().includes(filterValue),
+        );
+    const allSelected =
+      visibleProcs.length > 0 &&
+      visibleProcs.every((p) => selectedSet.has(p.winId));
     selectAllBtn.textContent = allSelected ? "Deselect All" : "Select All";
   }
 
@@ -543,7 +589,9 @@ export class TaskManagerApp extends BaseApp {
   renderStartupApps(win) {
     const apps = this.getSystemApps();
     const filter = this.startupFilter;
-    const filtered = filter ? apps.filter((a) => a.title && a.title.toLowerCase().includes(filter)) : [...apps];
+    const filtered = filter
+      ? apps.filter((a) => a.title && a.title.toLowerCase().includes(filter))
+      : [...apps];
 
     filtered.sort((a, b) => {
       const aOn = this.startupApps.includes(a.id);
@@ -558,10 +606,16 @@ export class TaskManagerApp extends BaseApp {
     const infoEl = $("#tm-startup-info", win);
 
     setText(countEl, `${this.startupApps.length} / ${apps.length}`);
-    setText(infoEl, `${this.startupApps.length} of ${apps.length} apps launch on startup`);
+    setText(
+      infoEl,
+      `${this.startupApps.length} of ${apps.length} apps launch on startup`,
+    );
 
     if (filtered.length === 0) {
-      setHTML(tbody, '<tr><td colspan="2" class="tm-empty-row">No apps found</td></tr>');
+      setHTML(
+        tbody,
+        '<tr><td colspan="2" class="tm-empty-row">No apps found</td></tr>',
+      );
       return;
     }
 
@@ -585,7 +639,7 @@ export class TaskManagerApp extends BaseApp {
             </td>
           </tr>`;
         })
-        .join("")
+        .join(""),
     );
 
     tbody.querySelectorAll(".tm-startup-cb").forEach((cb) => {
@@ -597,7 +651,10 @@ export class TaskManagerApp extends BaseApp {
         row.classList.toggle("tm-row-startup-enabled", cb.checked);
         const apps2 = this.getSystemApps();
         setText(countEl, `${this.startupApps.length} / ${apps2.length}`);
-        setText(infoEl, `${this.startupApps.length} of ${apps2.length} apps launch on startup`);
+        setText(
+          infoEl,
+          `${this.startupApps.length} of ${apps2.length} apps launch on startup`,
+        );
       });
     });
   }
@@ -672,12 +729,17 @@ export class TaskManagerApp extends BaseApp {
     const runningProcs = this.getProcesses();
     const totalCpu = Math.min(
       99,
-      runningProcs.reduce((s, p) => s + p.cpu, 0)
+      runningProcs.reduce((s, p) => s + p.cpu, 0),
     );
 
     let totalMem;
     if (performance.memory) {
-      totalMem = Math.min(99, (performance.memory.usedJSHeapSize / performance.memory.jsHeapSizeLimit) * 100);
+      totalMem = Math.min(
+        99,
+        (performance.memory.usedJSHeapSize /
+          performance.memory.jsHeapSizeLimit) *
+          100,
+      );
     } else {
       const memBase = 35 + runningProcs.length * 3;
       totalMem = Math.min(99, memBase + (Math.random() - 0.5) * 2);
@@ -701,33 +763,56 @@ export class TaskManagerApp extends BaseApp {
     const hasRealMem = !!performance.memory;
     const hasLongTask = !!window.PerformanceObserver;
 
-    const heapUsed = hasRealMem ? `${(performance.memory.usedJSHeapSize / 1048576).toFixed(1)} MB` : "N/A";
-    const heapTotal = hasRealMem ? `${(performance.memory.jsHeapSizeLimit / 1048576).toFixed(0)} MB` : "N/A";
-    const frameMs = this.frameDropScore > 0 ? `${this.frameDropScore.toFixed(1)} ms lag` : "Smooth";
+    const heapUsed = hasRealMem
+      ? `${(performance.memory.usedJSHeapSize / 1048576).toFixed(1)} MB`
+      : "N/A";
+    const heapTotal = hasRealMem
+      ? `${(performance.memory.jsHeapSizeLimit / 1048576).toFixed(0)} MB`
+      : "N/A";
+    const frameMs =
+      this.frameDropScore > 0
+        ? `${this.frameDropScore.toFixed(1)} ms lag`
+        : "Smooth";
 
     const info = [
       ["Processes", os.app.getRunningApps().length],
       ["JS Heap Used", heapUsed],
       ["JS Heap Limit", heapTotal],
       ["Frame Health", frameMs],
-      ["Browser", navigator.userAgent.match(/(Chrome|Firefox|Safari|Edge)\/[\d.]+/)?.[0] || "Unknown"],
+      [
+        "Browser",
+        navigator.userAgent.match(
+          /(Chrome|Firefox|Safari|Edge)\/[\d.]+/,
+        )?.[0] || "Unknown",
+      ],
       ["Platform", navigator.platform || "Unknown"],
       ["Cores", navigator.hardwareConcurrency || "?"],
       ["Language", navigator.language || "?"],
       ["Online", navigator.onLine ? "Yes" : "No"],
-      ["Device RAM", navigator.deviceMemory ? `${navigator.deviceMemory} GB` : "N/A"],
-      ["Screen", `${screen.width}×${screen.height}`]
+      [
+        "Device RAM",
+        navigator.deviceMemory ? `${navigator.deviceMemory} GB` : "N/A",
+      ],
+      ["Screen", `${screen.width}×${screen.height}`],
     ];
 
     const sourceNote =
-      hasRealMem && hasLongTask ? "Heap Data" : hasRealMem ? "No long-task API" : "Estimated (no memory API)";
+      hasRealMem && hasLongTask
+        ? "Heap Data"
+        : hasRealMem
+          ? "No long-task API"
+          : "Estimated (no memory API)";
 
     const el = $("#tm-sysinfo", win);
     if (el) {
       setHTML(
         el,
-        info.map(([k, v]) => `<div class="tm-sysinfo-key">${k}</div><div class="tm-sysinfo-val">${v}</div>`).join("") +
-          `<div class="tm-sysinfo-note">⬡ ${sourceNote}</div>`
+        info
+          .map(
+            ([k, v]) =>
+              `<div class="tm-sysinfo-key">${k}</div><div class="tm-sysinfo-val">${v}</div>`,
+          )
+          .join("") + `<div class="tm-sysinfo-note">⬡ ${sourceNote}</div>`,
       );
     }
   }
@@ -737,7 +822,8 @@ export class TaskManagerApp extends BaseApp {
     this.refreshInterval = setInterval(() => {
       const procPanel = $("#tm-panel-proc", win);
       const perfPanel = $("#tm-panel-perf", win);
-      if (procPanel && procPanel.style.display !== "none") this.renderProcesses(win);
+      if (procPanel && procPanel.style.display !== "none")
+        this.renderProcesses(win);
       if (perfPanel && perfPanel.style.display !== "none") this.renderPerf(win);
     }, 1500);
 

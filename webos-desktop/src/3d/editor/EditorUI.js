@@ -11,7 +11,7 @@ const FA_ICONS = {
   rug: "\uf7a4",
   "desk-cases": "\uf02d",
   "gold-trophy": "\uf091",
-  "neon-sign": "\uf0e7"
+  "neon-sign": "\uf0e7",
 };
 
 function drawIconChair(ctx, x, y, s, color) {
@@ -144,7 +144,13 @@ function drawIconSucculent(ctx, x, y, s, color) {
   for (let i = 0; i < 4; i++) {
     const a = (i / 4) * Math.PI * 2 + Math.PI / 4;
     ctx.beginPath();
-    ctx.arc(cx + Math.cos(a) * r * 1.3, cy - s * 0.1 + Math.sin(a) * r * 1.1, r * 0.6, 0, Math.PI * 2);
+    ctx.arc(
+      cx + Math.cos(a) * r * 1.3,
+      cy - s * 0.1 + Math.sin(a) * r * 1.1,
+      r * 0.6,
+      0,
+      Math.PI * 2,
+    );
     ctx.fill();
   }
 }
@@ -165,7 +171,7 @@ function drawIconPoster(ctx, x, y, s, color) {
     [-s * 0.2, -s * 0.22],
     [s * 0.2, -s * 0.22],
     [-s * 0.2, s * 0.22],
-    [s * 0.2, s * 0.22]
+    [s * 0.2, s * 0.22],
   ].forEach(([dx, dy]) => {
     ctx.beginPath();
     ctx.arc(cx + dx, cy + dy, dotR, 0, Math.PI * 2);
@@ -273,7 +279,7 @@ function drawIconBooks(ctx, x, y, s, color) {
   const books = [
     { w: s * 0.12, h: s * 0.25, ox: -s * 0.1, oy: -s * 0.12 },
     { w: s * 0.14, h: s * 0.2, ox: s * 0.05, oy: -s * 0.05 },
-    { w: s * 0.1, h: s * 0.22, ox: -s * 0.02, oy: -s * 0.2 }
+    { w: s * 0.1, h: s * 0.22, ox: -s * 0.02, oy: -s * 0.2 },
   ];
   for (const b of books) {
     ctx.fillRect(cx + b.ox - b.w / 2, cy + b.oy, b.w, b.h);
@@ -349,7 +355,7 @@ const ICON_DRAWERS = {
   rug: drawIconRug,
   "desk-cases": drawIconBooks,
   "gold-trophy": drawIconTrophy,
-  "neon-sign": drawIconNeon
+  "neon-sign": drawIconNeon,
 };
 
 export class EditorUI {
@@ -389,21 +395,50 @@ export class EditorUI {
         subcategories: [
           {
             name: "Seating",
-            items: [{ id: "wooden-chair", name: "Wooden Chair", iconColor: "#8b5e3c", manager: "furniture" }]
+            items: [
+              {
+                id: "wooden-chair",
+                name: "Wooden Chair",
+                iconColor: "#8b5e3c",
+                manager: "furniture",
+              },
+            ],
           },
           {
             name: "Storage",
             items: [
-              { id: "wastebin", name: "Wastebin", iconColor: "#888", manager: "furniture" },
-              { id: "crate", name: "Wooden Crate", iconColor: "#a07830", manager: "furniture" },
-              { id: "barrel", name: "Barrel", iconColor: "#7a5030", manager: "furniture" }
-            ]
+              {
+                id: "wastebin",
+                name: "Wastebin",
+                iconColor: "#888",
+                manager: "furniture",
+              },
+              {
+                id: "crate",
+                name: "Wooden Crate",
+                iconColor: "#a07830",
+                manager: "furniture",
+              },
+              {
+                id: "barrel",
+                name: "Barrel",
+                iconColor: "#7a5030",
+                manager: "furniture",
+              },
+            ],
           },
           {
             name: "Surfaces",
-            items: [{ id: "small-table", name: "Small Table", iconColor: "#7a5530", manager: "furniture" }]
-          }
-        ]
+            items: [
+              {
+                id: "small-table",
+                name: "Small Table",
+                iconColor: "#7a5530",
+                manager: "furniture",
+              },
+            ],
+          },
+        ],
       },
       {
         name: "Decorations",
@@ -412,31 +447,73 @@ export class EditorUI {
           {
             name: "Wall Art",
             items: [
-              { id: "wall-poster", name: "Wall Poster", iconColor: "#ff00ff", manager: "decor" },
-              { id: "wall-clock", name: "Wall Clock", iconColor: "#777", manager: "decor" },
-              { id: "painting", name: "Painting", iconColor: "#00ddff", manager: "decor" }
-            ]
+              {
+                id: "wall-poster",
+                name: "Wall Poster",
+                iconColor: "#ff00ff",
+                manager: "decor",
+              },
+              {
+                id: "wall-clock",
+                name: "Wall Clock",
+                iconColor: "#777",
+                manager: "decor",
+              },
+              {
+                id: "painting",
+                name: "Painting",
+                iconColor: "#00ddff",
+                manager: "decor",
+              },
+            ],
           },
           {
             name: "Floor",
             items: [
-              { id: "floor-lamp", name: "Floor Lamp", iconColor: "#dda050", manager: "decor" },
-              { id: "rug", name: "Floor Rug", iconColor: "#ff3388", manager: "decor" }
-            ]
+              {
+                id: "floor-lamp",
+                name: "Floor Lamp",
+                iconColor: "#dda050",
+                manager: "decor",
+              },
+              {
+                id: "rug",
+                name: "Floor Rug",
+                iconColor: "#ff3388",
+                manager: "decor",
+              },
+            ],
           },
           {
             name: "Desk",
-            items: [{ id: "desk-cases", name: "Game Cases on Desk", iconColor: "#ffcc00", manager: "decor" }]
+            items: [
+              {
+                id: "desk-cases",
+                name: "Game Cases on Desk",
+                iconColor: "#ffcc00",
+                manager: "decor",
+              },
+            ],
           },
           {
             name: "Rewards",
             items: [
-              { id: "gold-trophy", name: "Gold Trophy", iconColor: "#ffd700", manager: "decor" },
-              { id: "neon-sign", name: "Neon Sign", iconColor: "#ff00ff", manager: "decor" }
-            ]
-          }
-        ]
-      }
+              {
+                id: "gold-trophy",
+                name: "Gold Trophy",
+                iconColor: "#ffd700",
+                manager: "decor",
+              },
+              {
+                id: "neon-sign",
+                name: "Neon Sign",
+                iconColor: "#ff00ff",
+                manager: "decor",
+              },
+            ],
+          },
+        ],
+      },
     ];
   }
 
@@ -520,7 +597,13 @@ export class EditorUI {
 
     for (let i = this.buttons.length - 1; i >= 0; i--) {
       const btn = this.buttons[i];
-      if (!(x >= btn.x && x <= btn.x + btn.w && y >= btn.y && y <= btn.y + btn.h)) continue;
+      if (!(
+        x >= btn.x &&
+        x <= btn.x + btn.w &&
+        y >= btn.y &&
+        y <= btn.y + btn.h
+      ))
+        continue;
       if (btn.id === "toggleCat") {
         const catName = btn.data.categoryName;
         for (const cat of this.categories) {
@@ -531,7 +614,11 @@ export class EditorUI {
         this.snapEnabled = !this.snapEnabled;
         this.onAction({ id: "snap", data: { enabled: this.snapEnabled } });
         this.render();
-      } else if (btn.id === "spawn" && btn.data && this.lockedItems.has(btn.data.id)) {
+      } else if (
+        btn.id === "spawn" &&
+        btn.data &&
+        this.lockedItems.has(btn.data.id)
+      ) {
         return;
       } else {
         this.onAction({ id: btn.id, data: btn.data || null });
@@ -541,7 +628,10 @@ export class EditorUI {
   }
 
   computeContentHeight() {
-    const cols = Math.max(1, Math.floor((Math.floor(this.canvas.width * 0.45) - 20) / (56 + 5)));
+    const cols = Math.max(
+      1,
+      Math.floor((Math.floor(this.canvas.width * 0.45) - 20) / (56 + 5)),
+    );
     let h = 0;
     for (const cat of this.categories) {
       h += 20;
@@ -565,7 +655,10 @@ export class EditorUI {
     const contentH = this.computeContentHeight();
     const maxScroll = 0;
     const minScroll = contentH > visibleH ? -(contentH - visibleH) : 0;
-    this.scrollY = Math.max(minScroll, Math.min(maxScroll, this.scrollY - deltaY));
+    this.scrollY = Math.max(
+      minScroll,
+      Math.min(maxScroll, this.scrollY - deltaY),
+    );
     this.render();
   }
 
@@ -623,8 +716,12 @@ export class EditorUI {
     x += 54;
     const snapOn = this.snapEnabled;
     this.addButton(ctx, x, 7, 40, 32, "snap");
-    const snapBg = snapOn ? "rgba(0, 220, 255, 0.18)" : "rgba(255,255,255,0.04)";
-    const snapBorder = snapOn ? "rgba(0, 220, 255, 0.5)" : "rgba(255,255,255,0.06)";
+    const snapBg = snapOn
+      ? "rgba(0, 220, 255, 0.18)"
+      : "rgba(255,255,255,0.04)";
+    const snapBorder = snapOn
+      ? "rgba(0, 220, 255, 0.5)"
+      : "rgba(255,255,255,0.06)";
     this.roundRect(ctx, x, 7, 40, 32, 4);
     ctx.fillStyle = snapBg;
     ctx.fill();
@@ -640,8 +737,12 @@ export class EditorUI {
 
     x += 54;
     const isRotate = this.transformMode === "rotate";
-    const modeBg = isRotate ? "rgba(0, 220, 255, 0.18)" : "rgba(255,255,255,0.04)";
-    const modeBorder = isRotate ? "rgba(0, 220, 255, 0.5)" : "rgba(255,255,255,0.06)";
+    const modeBg = isRotate
+      ? "rgba(0, 220, 255, 0.18)"
+      : "rgba(255,255,255,0.04)";
+    const modeBorder = isRotate
+      ? "rgba(0, 220, 255, 0.5)"
+      : "rgba(255,255,255,0.06)";
     this.roundRect(ctx, x, 7, 56, 32, 4);
     ctx.fillStyle = modeBg;
     ctx.fill();
@@ -720,7 +821,9 @@ export class EditorUI {
 
       ctx.shadowColor = "rgba(0, 220, 255, 0.06)";
       ctx.shadowBlur = 3;
-      ctx.fillStyle = catIsExpanded ? "rgba(0, 220, 255, 0.1)" : "rgba(255,255,255,0.03)";
+      ctx.fillStyle = catIsExpanded
+        ? "rgba(0, 220, 255, 0.1)"
+        : "rgba(255,255,255,0.03)";
       this.roundRect(ctx, 4, catLabelY, panelW - 8, 22, 4);
       ctx.fill();
       ctx.shadowBlur = 0;
@@ -729,9 +832,16 @@ export class EditorUI {
       ctx.font = "bold 11px sans-serif";
       ctx.textBaseline = "middle";
       ctx.fillText(catIsExpanded ? "▼" : "▶", 10, catLabelY + 11);
-      ctx.fillText(cat.name + (catIsExpanded ? "" : " (" + this.countVisibleItems(cat) + ")"), 26, catLabelY + 11);
+      ctx.fillText(
+        cat.name +
+          (catIsExpanded ? "" : " (" + this.countVisibleItems(cat) + ")"),
+        26,
+        catLabelY + 11,
+      );
 
-      this.addButton(ctx, 4, catLabelY, panelW - 8, 22, "toggleCat", { categoryName: cat.name });
+      this.addButton(ctx, 4, catLabelY, panelW - 8, 22, "toggleCat", {
+        categoryName: cat.name,
+      });
 
       y += 24;
 
@@ -750,7 +860,8 @@ export class EditorUI {
             const iy = y + Math.floor(i / cols) * (tileH + gap);
 
             const isLocked = this.lockedItems.has(item.id);
-            const isHovered = this.hoveredButton === `palette:${item.id}` && !isLocked;
+            const isHovered =
+              this.hoveredButton === `palette:${item.id}` && !isLocked;
             const isEquipped = item.id === this.equippedId;
 
             let bg;
@@ -769,7 +880,10 @@ export class EditorUI {
               border = "rgba(255,255,255,0.05)";
             }
 
-            ctx.shadowColor = isHovered || isEquipped ? "rgba(0, 220, 255, 0.08)" : "transparent";
+            ctx.shadowColor =
+              isHovered || isEquipped
+                ? "rgba(0, 220, 255, 0.08)"
+                : "transparent";
             ctx.shadowBlur = isHovered || isEquipped ? 6 : 0;
             this.roundRect(ctx, ix, iy, tileW, tileH, 6);
             ctx.fillStyle = bg;
@@ -790,14 +904,25 @@ export class EditorUI {
             ctx.globalAlpha = isLocked ? 0.1 : 0.12;
             ctx.fill();
             ctx.globalAlpha = 1;
-            ctx.strokeStyle = isLocked ? "rgba(255,255,255,0.04)" : "rgba(255,255,255,0.08)";
+            ctx.strokeStyle = isLocked
+              ? "rgba(255,255,255,0.04)"
+              : "rgba(255,255,255,0.08)";
             ctx.lineWidth = 1;
             ctx.stroke();
             ctx.shadowBlur = 0;
 
-            this.drawItemIcon(ctx, iconX, iconY, iconSize, item.id, item.iconColor || "#fff");
+            this.drawItemIcon(
+              ctx,
+              iconX,
+              iconY,
+              iconSize,
+              item.id,
+              item.iconColor || "#fff",
+            );
 
-            ctx.fillStyle = isLocked ? "rgba(255,255,255,0.2)" : "rgba(255,255,255,0.6)";
+            ctx.fillStyle = isLocked
+              ? "rgba(255,255,255,0.2)"
+              : "rgba(255,255,255,0.6)";
             ctx.font = "10px sans-serif";
             ctx.textBaseline = "top";
             ctx.textAlign = "center";
@@ -815,7 +940,9 @@ export class EditorUI {
               ctx.arc(0, -4, 5, Math.PI, 0, false);
               ctx.stroke();
               ctx.beginPath();
-              ctx.roundRect ? ctx.roundRect(-5, -2, 10, 8, 1.5) : ctx.rect(-5, -2, 10, 8);
+              ctx.roundRect
+                ? ctx.roundRect(-5, -2, 10, 8, 1.5)
+                : ctx.rect(-5, -2, 10, 8);
               ctx.fill();
               ctx.strokeStyle = "rgba(10,10,16,0.8)";
               ctx.lineWidth = 2;
@@ -880,7 +1007,11 @@ export class EditorUI {
       ctx.font = "14px sans-serif";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
-      ctx.fillText("No selection", panelX + panelW / 2, panelY + panelH / 2 + 8);
+      ctx.fillText(
+        "No selection",
+        panelX + panelW / 2,
+        panelY + panelH / 2 + 8,
+      );
       ctx.textAlign = "start";
       return;
     }
@@ -903,7 +1034,11 @@ export class EditorUI {
     const pos = sel.position;
     ctx.fillStyle = "rgba(255,255,255,0.6)";
     ctx.font = "13px sans-serif";
-    ctx.fillText(`X: ${pos.x.toFixed(2)}  Y: ${pos.y.toFixed(2)}  Z: ${pos.z.toFixed(2)}`, left, y);
+    ctx.fillText(
+      `X: ${pos.x.toFixed(2)}  Y: ${pos.y.toFixed(2)}  Z: ${pos.z.toFixed(2)}`,
+      left,
+      y,
+    );
     y += 16;
     ctx.fillText(`R: ${(sel.rotation || 0).toFixed(0)}°`, left, y);
     y += 24;

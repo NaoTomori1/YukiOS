@@ -116,7 +116,10 @@ async function copyAddress() {
       }, 2000);
     }
   } catch {
-    os.dialog.alert("Copy Failed", "Could not copy to clipboard. Select the address manually.");
+    os.dialog.alert(
+      "Copy Failed",
+      "Could not copy to clipboard. Select the address manually.",
+    );
   }
 }
 

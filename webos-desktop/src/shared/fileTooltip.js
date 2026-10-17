@@ -9,7 +9,7 @@ const TYPE_LABELS = {
   [FileKind.VIDEO]: "VIDEO",
   [FileKind.AUDIO]: "AUDIO",
   [FileKind.ROM]: "ROM",
-  [FileKind.OTHER]: "FILE"
+  [FileKind.OTHER]: "FILE",
 };
 
 const SHOW_DELAY = 500;

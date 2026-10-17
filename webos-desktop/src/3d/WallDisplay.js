@@ -22,7 +22,14 @@ function hashId(id) {
 }
 
 export class WallDisplay {
-  constructor(gameCaseManager, onSpawn, onRecover, THREE, scene, interactiveObjects) {
+  constructor(
+    gameCaseManager,
+    onSpawn,
+    onRecover,
+    THREE,
+    scene,
+    interactiveObjects,
+  ) {
     this.gameCaseManager = gameCaseManager;
     this.onSpawn = onSpawn;
     this.onRecover = onRecover;
@@ -80,7 +87,7 @@ export class WallDisplay {
       all: () => true,
       available: (g) => g.status === "available",
       spawned: (g) => g.status === "spawned",
-      trashed: (g) => g.status === "trashed"
+      trashed: (g) => g.status === "trashed",
     };
     this.items = this.items.filter(filterFn[this.tab] || filterFn.all);
   }
@@ -100,7 +107,7 @@ export class WallDisplay {
       metalness: 0.2,
       emissive: 0x14142a,
       emissiveIntensity: 0.25,
-      side: T.DoubleSide
+      side: T.DoubleSide,
     });
     const board = new T.Mesh(new T.PlaneGeometry(boardW, boardH), boardMat);
     board.userData.title = "Game Collection";
@@ -113,7 +120,7 @@ export class WallDisplay {
       color: borderColor,
       transparent: true,
       opacity: borderOpacity,
-      side: T.DoubleSide
+      side: T.DoubleSide,
     });
 
     const top = new T.Mesh(new T.PlaneGeometry(boardW + bt * 2, bt), bMat);
@@ -132,7 +139,11 @@ export class WallDisplay {
     right.position.set(boardW / 2 + bt / 2, 0, 0.001);
     this.group.add(right);
 
-    const titleMat = new T.MeshBasicMaterial({ transparent: true, opacity: 0.9, side: T.DoubleSide });
+    const titleMat = new T.MeshBasicMaterial({
+      transparent: true,
+      opacity: 0.9,
+      side: T.DoubleSide,
+    });
     const titleCanvas = createElement("canvas");
     titleCanvas.width = 256;
     titleCanvas.height = 40;
@@ -162,7 +173,7 @@ export class WallDisplay {
       color: 0x882222,
       transparent: true,
       opacity: 0.7,
-      side: T.DoubleSide
+      side: T.DoubleSide,
     });
     const mesh = new T.Mesh(new T.PlaneGeometry(0.1, 0.1), mat);
     mesh.position.set(0.97, 1.3, 0.005);
@@ -188,20 +199,25 @@ export class WallDisplay {
       ctx.font = "bold 13px sans-serif";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
-      ctx.fillText(TAB_IDS[i].charAt(0).toUpperCase() + TAB_IDS[i].slice(1), 64, 18);
+      ctx.fillText(
+        TAB_IDS[i].charAt(0).toUpperCase() + TAB_IDS[i].slice(1),
+        64,
+        18,
+      );
 
       const tex = new T.CanvasTexture(canvas);
       const mat = new T.MeshBasicMaterial({
         map: tex,
         transparent: true,
         opacity: 0.5,
-        side: T.DoubleSide
+        side: T.DoubleSide,
       });
       const mesh = new T.Mesh(new T.PlaneGeometry(tabW, tabH), mat);
       mesh.position.set(startX + i * (tabW + 0.04), 1.08, 0.005);
       mesh.userData.objectId = "wallTab_" + TAB_IDS[i];
       mesh.userData.tabId = TAB_IDS[i];
-      mesh.userData.title = TAB_IDS[i].charAt(0).toUpperCase() + TAB_IDS[i].slice(1);
+      mesh.userData.title =
+        TAB_IDS[i].charAt(0).toUpperCase() + TAB_IDS[i].slice(1);
       mesh.userData.interactive = true;
       mesh.userData.tabMat = mat;
       mesh.userData.tabCanvas = canvas;
@@ -226,7 +242,12 @@ export class WallDisplay {
       }
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
-      ctx.fillText(mesh.userData.tabId.charAt(0).toUpperCase() + mesh.userData.tabId.slice(1), 64, 18);
+      ctx.fillText(
+        mesh.userData.tabId.charAt(0).toUpperCase() +
+          mesh.userData.tabId.slice(1),
+        64,
+        18,
+      );
       if (isActive) {
         ctx.fillStyle = "#00ddff";
         ctx.fillRect(20, canvas.height - 3, canvas.width - 40, 2);
@@ -243,7 +264,7 @@ export class WallDisplay {
       color: 0x00ddff,
       transparent: true,
       opacity: 0.5,
-      side: T.DoubleSide
+      side: T.DoubleSide,
     });
     const prev = new T.Mesh(new T.PlaneGeometry(0.12, 0.12), prevMat);
     prev.position.set(-0.6, -1.2, 0.005);
@@ -257,7 +278,7 @@ export class WallDisplay {
       color: 0x00ddff,
       transparent: true,
       opacity: 0.5,
-      side: T.DoubleSide
+      side: T.DoubleSide,
     });
     const next = new T.Mesh(new T.PlaneGeometry(0.12, 0.12), nextMat);
     next.position.set(0.6, -1.2, 0.005);
@@ -284,7 +305,7 @@ export class WallDisplay {
       color: 0xffcc00,
       transparent: true,
       opacity: 0.0,
-      side: T.DoubleSide
+      side: T.DoubleSide,
     });
     const mesh = new T.Mesh(new T.PlaneGeometry(0.32, 0.1), mat);
     mesh.position.set(0.0, -1.2, 0.005);
@@ -351,7 +372,7 @@ export class WallDisplay {
         map: tex,
         roughness: 0.6,
         metalness: 0.1,
-        side: T.DoubleSide
+        side: T.DoubleSide,
       });
       const geo = new T.BoxGeometry(CARD_W, CARD_H, CARD_D);
       const mesh = new T.Mesh(geo, mat);
@@ -437,7 +458,8 @@ export class WallDisplay {
     ctx.font = "bold 14px sans-serif";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    const title = game.title.length > 18 ? game.title.slice(0, 17) + "..." : game.title;
+    const title =
+      game.title.length > 18 ? game.title.slice(0, 17) + "..." : game.title;
     ctx.fillText(title, CANVAS_W / 2, CANVAS_H - 32);
 
     const tex = new this.THREE.CanvasTexture(canvas);
@@ -495,7 +517,10 @@ export class WallDisplay {
     ctx.font = "bold 14px sans-serif";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    const title = cardItem.game.title.length > 18 ? cardItem.game.title.slice(0, 17) + "..." : cardItem.game.title;
+    const title =
+      cardItem.game.title.length > 18
+        ? cardItem.game.title.slice(0, 17) + "..."
+        : cardItem.game.title;
     ctx.fillText(title, CANVAS_W / 2, CANVAS_H - 32);
 
     const oldTex = cardItem.mesh.material.map;
@@ -602,7 +627,12 @@ export class WallDisplay {
     if (this.interactiveObjects) {
       for (let i = this.interactiveObjects.length - 1; i >= 0; i--) {
         const obj = this.interactiveObjects[i];
-        if (obj && obj.userData && obj.userData.objectId && obj.userData.objectId.startsWith("wall")) {
+        if (
+          obj &&
+          obj.userData &&
+          obj.userData.objectId &&
+          obj.userData.objectId.startsWith("wall")
+        ) {
           this.interactiveObjects.splice(i, 1);
         }
       }

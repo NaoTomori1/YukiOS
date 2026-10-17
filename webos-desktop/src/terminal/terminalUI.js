@@ -39,7 +39,7 @@ export class TerminalRawMode {
           meta: e.metaKey,
           charCode: e.key.length === 1 ? e.key.charCodeAt(0) : null,
           preventDefault: () => {},
-          stopPropagation: () => {}
+          stopPropagation: () => {},
         };
         this.onKey(keyData);
       }
@@ -119,7 +119,7 @@ export class TerminalRawMode {
       opacity: "0.8",
       pointerEvents: "none",
       zIndex: "10",
-      animation: "terminal-cursor-blink 1s step-end infinite"
+      animation: "terminal-cursor-blink 1s step-end infinite",
     });
     this.terminal.style.position = "relative";
     this.terminal.appendChild(this.cursorEl);
@@ -229,7 +229,7 @@ export class TerminalUIApp {
     this.rawModeInstance = new TerminalRawMode(outputEl, inputEl);
     this.rawModeInstance.enable(
       (keyData) => this.handleKey(keyData),
-      () => this.handleResize()
+      () => this.handleResize(),
     );
 
     await this.onStart();

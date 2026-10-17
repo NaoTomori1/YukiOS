@@ -85,11 +85,19 @@ function doc(path, type, content) {
     type,
     content:
       content instanceof Uint8Array
-        ? content.buffer.slice(content.byteOffset, content.byteOffset + content.byteLength)
+        ? content.buffer.slice(
+            content.byteOffset,
+            content.byteOffset + content.byteLength,
+          )
         : (content ?? null),
-    size: content instanceof Uint8Array ? content.length : typeof content === "string" ? content.length : 0,
+    size:
+      content instanceof Uint8Array
+        ? content.length
+        : typeof content === "string"
+          ? content.length
+          : 0,
     mtime: Date.now(),
-    ctime: Date.now()
+    ctime: Date.now(),
   };
   return d;
 }
@@ -162,7 +170,12 @@ const fs = {
     const np = n(path);
     const d = cache.get(np);
     if (!d)
-      return cb(Object.assign(new Error(`ENOENT: no such file or directory, open '${path}'`), { code: "ENOENT" }));
+      return cb(
+        Object.assign(
+          new Error(`ENOENT: no such file or directory, open '${path}'`),
+          { code: "ENOENT" },
+        ),
+      );
     try {
       let content = d.content;
       if (content instanceof ArrayBuffer) {
@@ -188,7 +201,12 @@ const fs = {
         if (cache.has(np)) {
           const existing = cache.get(np);
           if (existing.type === "file") {
-            return cb(Object.assign(new Error(`EEXIST: file already exists, mkdir '${path}'`), { code: "EEXIST" }));
+            return cb(
+              Object.assign(
+                new Error(`EEXIST: file already exists, mkdir '${path}'`),
+                { code: "EEXIST" },
+              ),
+            );
           }
           return cb(null);
         }
@@ -199,7 +217,12 @@ const fs = {
           if (existing) {
             cache.set(np, existing);
             if (existing.type === "file") {
-              return cb(Object.assign(new Error(`EEXIST: file already exists, mkdir '${path}'`), { code: "EEXIST" }));
+              return cb(
+                Object.assign(
+                  new Error(`EEXIST: file already exists, mkdir '${path}'`),
+                  { code: "EEXIST" },
+                ),
+              );
             }
             return cb(null);
           }
@@ -213,7 +236,12 @@ const fs = {
             const parentExists = await pathExistsInDB(parent);
             if (!parentExists) {
               return cb(
-                Object.assign(new Error(`ENOENT: no such parent directory, mkdir '${path}'`), { code: "ENOENT" })
+                Object.assign(
+                  new Error(
+                    `ENOENT: no such parent directory, mkdir '${path}'`,
+                  ),
+                  { code: "ENOENT" },
+                ),
               );
             }
             const parentDoc = await txGet(parent);
@@ -269,7 +297,12 @@ const fs = {
       const np = n(path);
       const children = getDirectChildren(np);
       if (children.length > 0)
-        return cb(Object.assign(new Error(`ENOTEMPTY: directory not empty, rmdir '${path}'`), { code: "ENOTEMPTY" }));
+        return cb(
+          Object.assign(
+            new Error(`ENOTEMPTY: directory not empty, rmdir '${path}'`),
+            { code: "ENOTEMPTY" },
+          ),
+        );
       cache.delete(np);
       txDel(np)
         .then(() => cb(null))
@@ -291,12 +324,19 @@ const fs = {
       }
       if (toUpdate.length === 0)
         return cb(
-          Object.assign(new Error(`ENOENT: no such file or directory, rename '${oldPath}'`), { code: "ENOENT" })
+          Object.assign(
+            new Error(`ENOENT: no such file or directory, rename '${oldPath}'`),
+            { code: "ENOENT" },
+          ),
         );
       const tx = db.transaction(STORE_NAME, "readwrite");
       const store = tx.objectStore(STORE_NAME);
       for (const { old: op, doc: d } of toUpdate) {
-        const newDoc = { ...d, path: op.replace(oldN, newN), mtime: Date.now() };
+        const newDoc = {
+          ...d,
+          path: op.replace(oldN, newN),
+          mtime: Date.now(),
+        };
         store.delete(op);
         store.put(newDoc);
         cache.delete(op);
@@ -313,11 +353,25 @@ const fs = {
     try {
       const np = n(path);
       if (np === "/") {
-        return cb(null, new Stats({ type: "directory", path: "/", mtime: Date.now(), ctime: Date.now(), size: 0 }));
+        return cb(
+          null,
+          new Stats({
+            type: "directory",
+            path: "/",
+            mtime: Date.now(),
+            ctime: Date.now(),
+            size: 0,
+          }),
+        );
       }
       const d = cache.get(np);
       if (!d)
-        return cb(Object.assign(new Error(`ENOENT: no such file or directory, stat '${path}'`), { code: "ENOENT" }));
+        return cb(
+          Object.assign(
+            new Error(`ENOENT: no such file or directory, stat '${path}'`),
+            { code: "ENOENT" },
+          ),
+        );
       cb(null, new Stats(d));
     } catch (e) {
       cb(e);
@@ -326,15 +380,33 @@ const fs = {
 
   statSync(path) {
     const np = n(path);
-    if (np === "/") return new Stats({ type: "directory", path: "/", mtime: Date.now(), ctime: Date.now(), size: 0 });
+    if (np === "/")
+      return new Stats({
+        type: "directory",
+        path: "/",
+        mtime: Date.now(),
+        ctime: Date.now(),
+        size: 0,
+      });
     const d = cache.get(np);
-    if (!d) throw Object.assign(new Error(`ENOENT: no such file or directory, stat '${path}'`), { code: "ENOENT" });
+    if (!d)
+      throw Object.assign(
+        new Error(`ENOENT: no such file or directory, stat '${path}'`),
+        { code: "ENOENT" },
+      );
     return new Stats(d);
   },
 
   async statAsync(path) {
     const np = n(path);
-    if (np === "/") return new Stats({ type: "directory", path: "/", mtime: Date.now(), ctime: Date.now(), size: 0 });
+    if (np === "/")
+      return new Stats({
+        type: "directory",
+        path: "/",
+        mtime: Date.now(),
+        ctime: Date.now(),
+        size: 0,
+      });
 
     let d = cache.get(np);
     if (!d) {
@@ -346,9 +418,13 @@ const fs = {
       } catch (e) {}
     }
 
-    if (!d) throw Object.assign(new Error(`ENOENT: no such file or directory, stat '${path}'`), { code: "ENOENT" });
+    if (!d)
+      throw Object.assign(
+        new Error(`ENOENT: no such file or directory, stat '${path}'`),
+        { code: "ENOENT" },
+      );
     return new Stats(d);
-  }
+  },
 };
 
 export default {
@@ -370,5 +446,5 @@ export default {
   BFSRequire(module) {
     if (module === "fs") return fs;
     throw new Error(`Module '${module}' not available`);
-  }
+  },
 };

@@ -9,8 +9,10 @@ export function buildWindowIconHtml(iconValue, color = null) {
     return `<img src="${resolved}" class="papirus-icon papirus-icon--16" style="margin-right:6px;vertical-align:middle;object-fit:contain;" alt="" loading="lazy" />`;
   }
   const resolved = resolveIconUrl(iconValue);
-  const isDataUrl = typeof resolved === "string" && resolved.startsWith("data:");
-  const isHttpUrl = typeof resolved === "string" && /^https?:\/\//.test(resolved);
+  const isDataUrl =
+    typeof resolved === "string" && resolved.startsWith("data:");
+  const isHttpUrl =
+    typeof resolved === "string" && /^https?:\/\//.test(resolved);
   const isImage = isImageFile(resolved) || isHttpUrl;
   if (isImage || isDataUrl) {
     return `<img src="${resolved}" style="width:16px;height:16px;margin-right:6px;vertical-align:middle;object-fit:contain;" />`;
@@ -23,7 +25,12 @@ export function buildWindowIconHtml(iconValue, color = null) {
   return "";
 }
 
-export function buildWindowHeader(title, iconValue = null, color = null, externalUrl = null) {
+export function buildWindowHeader(
+  title,
+  iconValue = null,
+  color = null,
+  externalUrl = null,
+) {
   const iconHtml = buildWindowIconHtml(iconValue, color);
   const controlsHtml = os.window.getWindowControls(externalUrl);
   return `<div class="window-header"><span>${iconHtml}${title}</span>${controlsHtml}</div>`;

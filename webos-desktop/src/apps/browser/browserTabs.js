@@ -12,6 +12,7 @@ import {
   getWispUrl,
   WISP_SERVERS,
   DEFAULT_WISP_URL,
+  isEpoxyOnlyWisp,
 } from "../../shared/wispConfig.js";
 import { getLibraryUrl } from "../../shared/cdnConfig.js";
 import {
@@ -79,7 +80,7 @@ const YUKI_HOME_ICON =
   "https://cdn.jsdelivr.net/gh/NaoTomori1/YukiOS@main/static/icons/logo.png";
 const VIEWPORT_SANDBOX =
   "allow-scripts allow-forms allow-same-origin allow-popups allow-top-navigation-by-user-activation allow-modals";
-const FALLBACK_WISP = "wss://probuildingsupplies.com/w/";
+const FALLBACK_WISP = "wss://racialequityleadership.com/ws?reconnect=1";
 const MAX_HISTORY = 500;
 const MAX_CLOSED = 20;
 const MAX_SUGGEST = 8;
@@ -214,7 +215,96 @@ export function createTabsStore(viewportContainer, opts = {}) {
     kind: null,
     prevUrl: null,
     prevTitle: null,
+    settingsSection: "nav",
   };
+  const SETTINGS_SECTION_IDS = [
+    "nav",
+    "appearance",
+    "user-agent",
+    "tabs",
+    "privacy",
+    "search-engines",
+    "data",
+    "proxy",
+    "danger-zone",
+  ];
+  function normalizeSettingsSection(value) {
+    const id = String(value || "");
+    if (SETTINGS_SECTION_IDS.indexOf(id) !== -1) return id;
+    return "nav";
+  }
+  function getSelectedSettingsSection() {
+    try {
+      const selected = rootNode
+        ? $(".yuki-settings-nav-item.selected", rootNode)
+        : null;
+      if (selected && selected.dataset && selected.dataset.section)
+        return normalizeSettingsSection(selected.dataset.section);
+    } catch (selectedErr) {
+      void selectedErr;
+    }
+    return normalizeSettingsSection(yukiState.settingsSection);
+  }
+  function markSettingsSectionSelected(layout, sectionMap, id) {
+    const target = normalizeSettingsSection(id);
+    yukiState.settingsSection = target;
+    const allNav = $$(".yuki-settings-nav-item", layout);
+    allNav.forEach((other) =>
+      other.classList.toggle("selected", other.dataset.section === target),
+    );
+    Object.keys(sectionMap).forEach((key) =>
+      sectionMap[key].classList.toggle("active", key === target),
+    );
+  }
+  function paintPillsInGroup(group, activeEl) {
+    const pills = $$(".settings-option-pill", group);
+    pills.forEach((other) =>
+      other.classList.toggle("active", other === activeEl),
+    );
+  }
+  function paintWispSelection(listRoot, activeUrl) {
+    const options = $$(".wisp-option", listRoot);
+    options.forEach((option) => {
+      const url = option.dataset ? option.dataset.wispUrl : "";
+      const isActive = url === activeUrl;
+      option.classList.toggle("active", isActive);
+      const nameWrap = $(".wisp-option-name", option);
+      if (!nameWrap) return;
+      const check = $(".fa-check", nameWrap);
+      if (isActive && !check)
+        nameWrap.appendChild(
+          createElement("i", { className: "fa-solid fa-check" }),
+        );
+      if (!isActive && check) check.remove();
+    });
+  }
+  let settingsDismissBound = false;
+  function handleSettingsDismissClick() {
+    if (!rootNode) return;
+    const opens = $$(".yuki-select.open", rootNode);
+    opens.forEach((sel) => sel.classList.remove("open"));
+  }
+  let zoomDragState = null;
+  let zoomDocHandlersBound = false;
+  function handleZoomDragMove(ev) {
+    if (!zoomDragState) return;
+    const rect = zoomDragState.track.getBoundingClientRect();
+    let ratio = 0;
+    if (rect.width > 0) ratio = (ev.clientX - rect.left) / rect.width;
+    ratio = Math.max(0, Math.min(1, ratio));
+    const val = Math.round(50 + ratio * (200 - 50));
+    const newPct = ((val - 50) / (200 - 50)) * 100;
+    zoomDragState.rangeEl.dataset.value = String(val);
+    setStyle(zoomDragState.fill, { width: newPct + "%" });
+    setStyle(zoomDragState.thumb, { left: newPct + "%" });
+  }
+  function handleZoomDragEnd() {
+    if (!zoomDragState) return;
+    const val = parseInt(zoomDragState.rangeEl.dataset.value || "100", 10);
+    const apply = zoomDragState.applyZoomVal;
+    zoomDragState = null;
+    apply(val);
+  }
   const rootNode =
     opts.root ||
     (viewportContainer && viewportContainer.parentElement) ||
@@ -641,6 +731,25 @@ export function createTabsStore(viewportContainer, opts = {}) {
         });
         if (result && result.title) tab.title = result.title;
         applyZoomToViewport(tab);
+        const switchedWisp =
+          result && typeof result.usedWispUrl === "string"
+            ? result.usedWispUrl.trim()
+            : "";
+        const targetUrl = String(url || "");
+        const isHttpUrl =
+          targetUrl.startsWith("http://") || targetUrl.startsWith("https://");
+        if (
+          switchedWisp !== "" &&
+          switchedWisp !== currentWispUrl() &&
+          isHttpUrl
+        ) {
+          saveWispUrl(switchedWisp);
+          os.notify.send(
+            "Browser",
+            "Primary proxy failed. Switched to backup server.",
+            { type: "info", duration: 3000 },
+          );
+        }
         return result;
       } catch (renderErr) {
         return null;
@@ -766,6 +875,8 @@ export function createTabsStore(viewportContainer, opts = {}) {
       hideYukiContainer();
       yukiState.active = false;
       yukiState.kind = null;
+      yukiState.settingsSection = "nav";
+      zoomDragState = null;
     }
     state.activeId = id;
     applyVisibility();
@@ -1590,7 +1701,11 @@ export function createTabsStore(viewportContainer, opts = {}) {
       body.appendChild(row);
     });
   }
-  function renderSettingsBody(body) {
+  function renderSettingsBody(body, activeSection) {
+    const initialSection = normalizeSettingsSection(
+      activeSection || getSelectedSettingsSection(),
+    );
+    yukiState.settingsSection = initialSection;
     const layout = createElement("div", { className: "yuki-settings-layout" });
     const nav = createElement("div", { className: "yuki-settings-nav" });
     const content = createElement("div", {
@@ -1621,20 +1736,14 @@ export function createTabsStore(viewportContainer, opts = {}) {
         className: "yuki-settings-nav-item",
         attributes: { "data-section": def.id },
       });
-      if (def.id === "nav") item.classList.add("selected");
+      if (def.id === initialSection) item.classList.add("selected");
       const icon = createElement("i", { className: "fa-solid " + def.icon });
       const label = createElement("span");
       setText(label, def.label);
       item.appendChild(icon);
       item.appendChild(label);
       bindEvent(item, "click", () => {
-        const allNav = $$(".yuki-settings-nav-item", layout);
-        allNav.forEach((other) =>
-          other.classList.toggle("selected", other === item),
-        );
-        Object.keys(sectionMap).forEach((key) =>
-          sectionMap[key].classList.toggle("active", key === def.id),
-        );
+        markSettingsSectionSelected(layout, sectionMap, def.id);
       });
       nav.appendChild(item);
     });
@@ -1676,7 +1785,8 @@ export function createTabsStore(viewportContainer, opts = {}) {
       return sub;
     }
     const navSection = createElement("div", {
-      className: "yuki-settings-section active",
+      className:
+        "yuki-settings-section" + (initialSection === "nav" ? " active" : ""),
       attributes: { "data-section": "nav" },
     });
     navSection.appendChild(makeTitle("fa-compass", "Navigation"));
@@ -1695,7 +1805,7 @@ export function createTabsStore(viewportContainer, opts = {}) {
       setText(pill, eng.name);
       bindEvent(pill, "click", () => {
         safeSet(StorageKeys.browserSearchEngine, key);
-        renderYukiContent("settings");
+        paintPillsInGroup(pillGroup, pill);
       });
       pillGroup.appendChild(pill);
     });
@@ -1884,20 +1994,9 @@ export function createTabsStore(viewportContainer, opts = {}) {
       setStyle(thumb, { left: newPct + "%" });
       return val;
     }
-    let rangeDragging = false;
     bindEvent(track, "mousedown", (ev) => {
-      rangeDragging = true;
+      zoomDragState = { rangeEl, track, fill, thumb, applyZoomVal };
       const val = updateRangeFromClient(ev.clientX);
-      applyZoomVal(val);
-    });
-    bindEvent(document, "mousemove", (ev) => {
-      if (!rangeDragging) return;
-      updateRangeFromClient(ev.clientX);
-    });
-    bindEvent(document, "mouseup", () => {
-      if (!rangeDragging) return;
-      rangeDragging = false;
-      const val = parseInt(rangeEl.dataset.value || "100", 10);
       applyZoomVal(val);
     });
     zoomWrap.appendChild(rangeEl);
@@ -1928,7 +2027,7 @@ export function createTabsStore(viewportContainer, opts = {}) {
       setText(pill, preset.name);
       bindEvent(pill, "click", () => {
         safeSet(StorageKeys.browserUserAgent, preset.ua);
-        renderYukiContent("settings");
+        paintPillsInGroup(uaPills, pill);
       });
       uaPills.appendChild(pill);
     });
@@ -2380,8 +2479,18 @@ export function createTabsStore(viewportContainer, opts = {}) {
       });
       setText(pill, def.label);
       bindEvent(pill, "click", () => {
+        if (def.id !== "epoxy" && isEpoxyOnlyWisp(currentWispUrl())) {
+          safeSet(StorageKeys.browserTransport, "epoxy");
+          const epoxyPill = transportGroup.firstChild;
+          paintPillsInGroup(transportGroup, epoxyPill);
+          os.notify.send(
+            "Epoxy required",
+            "This server only works with Epoxy transport.",
+          );
+          return;
+        }
         safeSet(StorageKeys.browserTransport, def.id);
-        renderYukiContent("settings");
+        paintPillsInGroup(transportGroup, pill);
       });
       transportGroup.appendChild(pill);
     });
@@ -2435,9 +2544,17 @@ export function createTabsStore(viewportContainer, opts = {}) {
       setText(urlEl, server.url);
       option.appendChild(header);
       option.appendChild(urlEl);
-      bindEvent(option, "click", () => {
-        saveWispUrl(server.url);
-        renderYukiContent("settings");
+      bindEvent(option, "click", (ev) => {
+        if (ev && ev.target && ev.target.closest) {
+          const delBtn = ev.target.closest(".delete-wisp-btn");
+          if (delBtn) return;
+        }
+        const clean = saveWispUrl(server.url);
+        if (isEpoxyOnlyWisp(clean)) {
+          safeSet(StorageKeys.browserTransport, "epoxy");
+          paintPillsInGroup(transportGroup, transportGroup.firstChild);
+        }
+        paintWispSelection(serverList, clean);
       });
       serverList.appendChild(option);
       const statusBox = $(".server-status", option);
@@ -2546,15 +2663,42 @@ export function createTabsStore(viewportContainer, opts = {}) {
     dangerSection.appendChild(resetBtn);
     sectionMap["danger-zone"] = dangerSection;
     content.appendChild(dangerSection);
-    bindEvent(document, "click", () => {
-      const opens = $$(".yuki-select.open", body);
-      opens.forEach((sel) => sel.classList.remove("open"));
-    });
+    Object.keys(sectionMap).forEach((key) =>
+      sectionMap[key].classList.toggle("active", key === initialSection),
+    );
+    if (!settingsDismissBound) {
+      settingsDismissBound = true;
+      bindEvent(document, "click", handleSettingsDismissClick);
+    }
+    if (!zoomDocHandlersBound) {
+      zoomDocHandlersBound = true;
+      bindEvent(document, "mousemove", handleZoomDragMove);
+      bindEvent(document, "mouseup", handleZoomDragEnd);
+    }
     layout.appendChild(nav);
     layout.appendChild(content);
     body.appendChild(layout);
   }
-  function renderYukiContent(kind) {
+  function renderYukiContent(kind, activeSection) {
+    if (kind === "settings") {
+      const preserved = normalizeSettingsSection(
+        activeSection ||
+          getSelectedSettingsSection() ||
+          yukiState.settingsSection,
+      );
+      yukiState.settingsSection = preserved;
+      const container = ensureYukiContainer();
+      container.replaceChildren();
+      setStyle(container, { display: "block" });
+      container.classList.toggle("settings-zoom", true);
+      buildYukiHeader(container, "Settings");
+      const settingsBody = createElement("div", {
+        className: "yuki-page-body",
+      });
+      container.appendChild(settingsBody);
+      renderSettingsBody(settingsBody, preserved);
+      return;
+    }
     const container = ensureYukiContainer();
     container.replaceChildren();
     setStyle(container, { display: "block" });
@@ -2568,7 +2712,8 @@ export function createTabsStore(viewportContainer, opts = {}) {
     else if (kind === "downloads") renderDownloadsBody(body);
     else if (kind === "blocking-log") renderBlockingBody(body);
     else if (kind === "dino") renderDinoBody(body);
-    else if (kind === "settings") renderSettingsBody(body);
+    else if (kind === "settings")
+      renderSettingsBody(body, getSelectedSettingsSection());
     else {
       const empty = createElement("div", { className: "yuki-page-empty" });
       setText(empty, label);
@@ -2582,6 +2727,10 @@ export function createTabsStore(viewportContainer, opts = {}) {
       yukiState.prevUrl = active.url;
       yukiState.prevTitle = active.title;
     }
+    const freshSettings =
+      target === "settings" &&
+      (!yukiState.active || yukiState.kind !== "settings");
+    if (freshSettings) yukiState.settingsSection = "nav";
     yukiState.active = true;
     yukiState.kind = target;
     tabs.forEach((tab) => {
@@ -2594,6 +2743,8 @@ export function createTabsStore(viewportContainer, opts = {}) {
   function closeYukiPage() {
     yukiState.active = false;
     yukiState.kind = null;
+    yukiState.settingsSection = "nav";
+    zoomDragState = null;
     hideYukiContainer();
     const active = getActiveTab();
     if (active) {
@@ -3221,6 +3372,9 @@ export function createTabsStore(viewportContainer, opts = {}) {
       clean = FALLBACK_WISP;
     }
     safeSet(StorageKeys.wispServer, clean);
+    if (isEpoxyOnlyWisp(clean)) {
+      safeSet(StorageKeys.browserTransport, "epoxy");
+    }
     return clean;
   }
   function clearBrowsingData() {

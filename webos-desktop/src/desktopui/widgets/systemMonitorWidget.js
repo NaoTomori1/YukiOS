@@ -70,7 +70,8 @@ export class SystemMonitorWidget extends WidgetBase {
     }
 
     if (uptimeEl) {
-      const launchTime = os.storage.get(StorageKeys.lastLaunchTime) || Date.now();
+      const launchTime =
+        os.storage.get(StorageKeys.lastLaunchTime) || Date.now();
       const uptime = Date.now() - launchTime;
       const hours = Math.floor(uptime / 3600000);
       const minutes = Math.floor((uptime % 3600000) / 60000);

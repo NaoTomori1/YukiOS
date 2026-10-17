@@ -9,9 +9,15 @@ export class YukiConvertApp extends BaseApp {
   }
 
   async open() {
-    const win = os.window.create("yuki-convert", "Yuki Convert", "540px", "420px", {
-      icon: "fas fa-exchange-alt"
-    });
+    const win = os.window.create(
+      "yuki-convert",
+      "Yuki Convert",
+      "540px",
+      "420px",
+      {
+        icon: "fas fa-exchange-alt",
+      },
+    );
     win.innerHTML = `<div class="window-content yuki-convert-landing">
 
         <div id="yuki-convert-main-view" class="yuki-convert-landing-view">

@@ -11,7 +11,7 @@ export class ErudaApp extends BaseApp {
     if (this.hasOpenWindow(winId)) return;
 
     const win = os.window.create(winId, "Dev Tools (Eruda)", "450px", "400px", {
-      icon: "fas fa-code"
+      icon: "fas fa-code",
     });
 
     win.innerHTML = this.buildUI();
@@ -43,7 +43,7 @@ export class ErudaApp extends BaseApp {
         }
         const erudaLib = window.eruda.default || window.eruda;
         erudaLib.init({
-          container: container
+          container: container,
         });
         erudaLib.show();
         os.notify.send("Dev Tools", "Eruda debugging tool launched");
@@ -51,7 +51,7 @@ export class ErudaApp extends BaseApp {
       }
       const eruda = await import("eruda");
       eruda.default.init({
-        container: container
+        container: container,
       });
       eruda.default.show();
       os.notify.send("Dev Tools", "Eruda debugging tool launched");

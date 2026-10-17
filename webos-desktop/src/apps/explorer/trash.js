@@ -1,5 +1,12 @@
 import { os } from "../../framework.js";
-import { $, $$, setHTML, addClass, removeClass, createElement } from "../../shared/domUtils.js";
+import {
+  $,
+  $$,
+  setHTML,
+  addClass,
+  removeClass,
+  createElement,
+} from "../../shared/domUtils.js";
 import { showDynamicContextMenu } from "../../shared/contextMenu.js";
 import { buildFileIconHTML } from "../../fileDisplay.js";
 import { formatSize } from "../../utils/utils.js";
@@ -47,7 +54,7 @@ export async function renderTrashView(explorer, inst, view, win) {
         <i class="fas fa-trash-alt"></i> Empty Trash
       </button>
     </div>
-  `
+  `,
   );
   view.appendChild(banner);
 
@@ -58,7 +65,7 @@ export async function renderTrashView(explorer, inst, view, win) {
     restoreAllBtn.onclick = async () => {
       const confirmed = await os.dialog.confirm(
         "Restore All",
-        "Restore all items in trash to their original locations?"
+        "Restore all items in trash to their original locations?",
       );
       if (!confirmed) return;
       restoreAllBtn.disabled = true;
@@ -70,7 +77,10 @@ export async function renderTrashView(explorer, inst, view, win) {
 
   if (emptyAllBtn) {
     emptyAllBtn.onclick = async () => {
-      const confirmed = await os.dialog.confirm("Empty Trash", "Empty the trash for good? You can't undo this.");
+      const confirmed = await os.dialog.confirm(
+        "Empty Trash",
+        "Empty the trash for good? You can't undo this.",
+      );
       if (!confirmed) return;
       emptyAllBtn.disabled = true;
       await os.fs.emptyTrash();
@@ -86,7 +96,7 @@ export async function renderTrashView(explorer, inst, view, win) {
       `
       <i class="fas fa-trash" style="font-size:48px;opacity:0.15;margin-bottom:12px"></i>
       <div style="opacity:0.4;font-size:13px">Trash is empty</div>
-    `
+    `,
     );
     view.appendChild(empty);
     return;
@@ -99,7 +109,9 @@ export async function renderTrashView(explorer, inst, view, win) {
     item.dataset.isFile = entry.type === "file" ? "true" : "false";
 
     const iconName = entry.originalName;
-    const iconHtml = buildFileIconHTML(iconName, { isFolder: entry.type !== "file" });
+    const iconHtml = buildFileIconHTML(iconName, {
+      isFolder: entry.type !== "file",
+    });
     setHTML(item, `${iconHtml}<span>${entry.originalName}</span>`);
     bindTrashItemInteractions(explorer, item, entry, inst, win);
     view.appendChild(item);
@@ -109,7 +121,8 @@ export async function renderTrashView(explorer, inst, view, win) {
   await explorer.updateStorageIndicator(win);
   const itemsEl = win.querySelector(`#${inst.winId}-status-items`);
   const selectedEl = win.querySelector(`#${inst.winId}-status-selected`);
-  if (itemsEl) itemsEl.textContent = `${count} ${count === 1 ? "item" : "items"}`;
+  if (itemsEl)
+    itemsEl.textContent = `${count} ${count === 1 ? "item" : "items"}`;
   if (selectedEl) selectedEl.textContent = "";
 }
 
@@ -120,7 +133,9 @@ function bindTrashItemInteractions(explorer, item, entry, inst, win) {
     if (e.detail === 1) {
       const wasSelected = item.classList.contains("explorer-selected");
       if (!e.ctrlKey) {
-        $$(".file-item.explorer-selected", win).forEach((el) => removeClass(el, "explorer-selected"));
+        $$(".file-item.explorer-selected", win).forEach((el) =>
+          removeClass(el, "explorer-selected"),
+        );
         inst.selectedItems = new Set();
       }
       if (wasSelected && e.ctrlKey) {
@@ -150,8 +165,8 @@ function showTrashContextMenu(explorer, e, entry, inst) {
           if (view) await renderTrashView(explorer, inst, view, win);
           os.notify.send(`"${entry.originalName}" restored`);
         },
-        "fa-undo"
-      )
+        "fa-undo",
+      ),
     );
 
     menu.appendChild(hr());
@@ -162,7 +177,7 @@ function showTrashContextMenu(explorer, e, entry, inst) {
         async () => {
           const confirmed = await os.dialog.confirm(
             "Delete Permanently",
-            `Permanently delete "${entry.originalName}"? This cannot be undone.`
+            `Permanently delete "${entry.originalName}"? This cannot be undone.`,
           );
           if (!confirmed) return;
           await os.fs.deleteTrashItem(entry.id);
@@ -171,8 +186,8 @@ function showTrashContextMenu(explorer, e, entry, inst) {
           if (view) await renderTrashView(explorer, inst, view, win);
           os.notify.send(`"${entry.originalName}" permanently deleted`);
         },
-        "fa-trash-alt"
-      )
+        "fa-trash-alt",
+      ),
     );
 
     menu.appendChild(
@@ -181,22 +196,27 @@ function showTrashContextMenu(explorer, e, entry, inst) {
         async () => {
           await showTrashItemProperties(entry, inst);
         },
-        "fa-info-circle"
-      )
+        "fa-info-circle",
+      ),
     );
   });
 }
 
 async function showTrashItemProperties(entry) {
   try {
-    const iconSrc = entry.icon || "static/icons/file.webp";
+    const iconSrc = entry.icon || "static/icons/explorerwin11.png";
     const size = entry.size ? formatSize(entry.size) : "Unknown";
     const type = entry.type || "Unknown";
     const location = entry.originalPath || "Unknown";
     const date = new Date(entry.deletedAt).toLocaleString();
 
     const title = `Properties: ${entry.originalName}`;
-    const propsWin = os.window.create(`${Date.now()}-props`, title, "400px", "auto");
+    const propsWin = os.window.create(
+      `${Date.now()}-props`,
+      title,
+      "400px",
+      "auto",
+    );
 
     propsWin.innerHTML = `
       ${buildWindowHeader(title)}

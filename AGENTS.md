@@ -5,11 +5,10 @@ You are working under webos-desktop directory. when src is mentioned it means we
 ## Hard Rules
 
 - Never commit or push (git commit, git push, git add) unless explicitly asked
-- Never run `npm/pnpm format` or `npm/pnpm bf`
+- Never run `npm/pnpm format` or `npm/pnpm bf` unless user explicitly asks for it
 - Never add comments — anywhere. Not in JS, not in HTML, not in CSS. Not even section dividers like
   `/* ---- Nav ---- */`. The existing codebase may have them, but you must not add new ones. Zero exceptions.
   JSDoc-style doc comments are only allowed for complex functions with non-obvious signatures.
-- Never spawn a browser for testing
 - Before finalizing any code changes, run `pnpm build:dev` in `webos-desktop/`. A change that breaks the build is
   incomplete.
 - Always use CSS variables from `src/styles/style.css`. Never hardcode colors.

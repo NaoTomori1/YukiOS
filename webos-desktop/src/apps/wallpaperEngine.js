@@ -5,16 +5,31 @@ import {
   WALLPAPER_NAME_URL_PAIRS,
   MAC_WALLPAPER_NAME_URL_PAIRS,
   CHROME_OS_WALLPAPER_NAME_URL_PAIRS,
-  DEFAULT_WALLPAPER_FILES
+  DEFAULT_WALLPAPER_FILES,
 } from "../wallpaperConfig.js";
 import { videos, videos2 } from "../wallpaperList.js";
 import { vantaPresets } from "../vantaPresets.js";
 import { resolveWallpaperUrl } from "../shared/assetResolver.js";
 import { FileKind, isVideoFile } from "../shared/fileKindDetector.js";
 
-import { $, $$, bindEvent, setText, setHTML, createElement } from "../shared/domUtils.js";
-import { renderRangeSlider, bindRangeSlider, getRangeSliderValue } from "../shared/rangeSlider.js";
-import { renderSelectMenu, bindSelectMenu, getSelectMenuValue } from "../shared/selectMenu.js";
+import {
+  $,
+  $$,
+  bindEvent,
+  setText,
+  setHTML,
+  createElement,
+} from "../shared/domUtils.js";
+import {
+  renderRangeSlider,
+  bindRangeSlider,
+  getRangeSliderValue,
+} from "../shared/rangeSlider.js";
+import {
+  renderSelectMenu,
+  bindSelectMenu,
+  getSelectMenuValue,
+} from "../shared/selectMenu.js";
 import { showContextMenu } from "../shared/contextMenu.js";
 import { isBlobLike } from "../utils/utils.js";
 
@@ -24,18 +39,28 @@ const WE_KEYS = {
   uploads: StorageKeys.wallpaperEngineUploads,
   shuffleInterval: StorageKeys.wallpaperEngineShuffleInterval,
   viewMode: StorageKeys.wallpaperEngineViewMode,
-  colorFilter: StorageKeys.wallpaperEngineColorFilter
+  colorFilter: StorageKeys.wallpaperEngineColorFilter,
 };
 
 const SEEDED_WALLPAPER_NAMES = new Set(DEFAULT_WALLPAPER_FILES);
 
-const DEFAULT_FILTER = { brightness: 100, contrast: 100, saturate: 100, blur: 0 };
+const DEFAULT_FILTER = {
+  brightness: 100,
+  contrast: 100,
+  saturate: 100,
+  blur: 0,
+};
 
 function toBlobUrl(content) {
   if (!content) return null;
   if (isBlobLike(content)) return URL.createObjectURL(content);
   if (typeof content !== "string") return null;
-  if (content.startsWith("http") || content.startsWith("/") || content.startsWith("blob:")) return content;
+  if (
+    content.startsWith("http") ||
+    content.startsWith("/") ||
+    content.startsWith("blob:")
+  )
+    return content;
   if (content.startsWith("data:")) {
     const [header, b64] = content.split(",");
     const mime = header.match(/data:(.*?);/)?.[1] ?? "application/octet-stream";
@@ -50,15 +75,18 @@ function toBlobUrl(content) {
 function getVideoThumbnailUrl(src) {
   if (typeof src !== "string") return null;
   const match = src.match(/\/media\/(\d+)\/(.*?)(?:\.\d+x\d+)?\.mp4$/);
-  if (match) return `https://motionbgs.com/i/c/364x205/media/${match[1]}/${match[2]}.jpg`;
+  if (match)
+    return `https://motionbgs.com/i/c/364x205/media/${match[1]}/${match[2]}.jpg`;
   return null;
 }
 
 function extractVideoName(src) {
   const match = src.match(/\/([^/]+?)\.\d+x\d+\.mp4$/);
-  if (match) return match[1].replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+  if (match)
+    return match[1].replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
   const m2 = src.match(/\/([^/]+?)\.mp4$/);
-  if (m2) return m2[1].replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+  if (m2)
+    return m2[1].replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
   return "Video Wallpaper";
 }
 
@@ -125,9 +153,15 @@ export class WallpaperEngineApp extends BaseApp {
   async open(opts) {
     if (!this.fs) return;
 
-    const win = os.window.create("wallpaper-engine", "Wallpaper Engine", "960px", "640px", {
-      icon: "fas fa-paint-roller"
-    });
+    const win = os.window.create(
+      "wallpaper-engine",
+      "Wallpaper Engine",
+      "960px",
+      "640px",
+      {
+        icon: "fas fa-paint-roller",
+      },
+    );
 
     this.winId = "wallpaper-engine";
     this.win = win;
@@ -160,35 +194,55 @@ export class WallpaperEngineApp extends BaseApp {
 
   initTray() {
     if (os.modes.isActive(MODES.MAC)) return;
-    os.tray.register("wallpaper-engine", "fas fa-paint-roller", "Wallpaper Engine", {
-      showInTray: true,
-      priority: 5,
-      onClick: () => {
-        os.app.launch("wallpaperEngineApp");
+    os.tray.register(
+      "wallpaper-engine",
+      "fas fa-paint-roller",
+      "Wallpaper Engine",
+      {
+        showInTray: true,
+        priority: 5,
+        onClick: () => {
+          os.app.launch("wallpaperEngineApp");
+        },
+        contextMenuItems: this.getTrayItems(),
       },
-      contextMenuItems: this.getTrayItems()
-    });
+    );
   }
 
   getTrayItems() {
     return [
-      { label: "Random Wallpaper", action: () => this.shuffleRandom(), icon: "fa-dice" },
+      {
+        label: "Random Wallpaper",
+        action: () => this.shuffleRandom(),
+        icon: "fa-dice",
+      },
       {
         label: "Open Wallpaper Engine",
         action: () => os.app.launch("wallpaperEngineApp"),
-        icon: "fa-external-link-alt"
+        icon: "fa-external-link-alt",
       },
       { type: "divider" },
       {
-        label: "Cycle: " + (os.storage.get(StorageKeys.cycleWallpaper) !== "false" ? "On" : "Off"),
+        label:
+          "Cycle: " +
+          (os.storage.get(StorageKeys.cycleWallpaper) !== "false"
+            ? "On"
+            : "Off"),
         action: () => {
-          const current = os.storage.get(StorageKeys.cycleWallpaper) !== "false";
-          os.storage.set(StorageKeys.cycleWallpaper, current ? "false" : "true");
+          const current =
+            os.storage.get(StorageKeys.cycleWallpaper) !== "false";
+          os.storage.set(
+            StorageKeys.cycleWallpaper,
+            current ? "false" : "true",
+          );
           this.initAutoCycle();
-          os.tray.updateContextMenuItems("wallpaper-engine", this.getTrayItems());
+          os.tray.updateContextMenuItems(
+            "wallpaper-engine",
+            this.getTrayItems(),
+          );
         },
-        icon: "fa-sync"
-      }
+        icon: "fa-sync",
+      },
     ];
   }
 
@@ -221,7 +275,7 @@ export class WallpaperEngineApp extends BaseApp {
         </div>
         <div class="we-preview-panel" id="we-preview-panel"></div>
       </div>
-    `
+    `,
     );
     this.renderSidebar();
     this.renderToolbar();
@@ -240,14 +294,18 @@ export class WallpaperEngineApp extends BaseApp {
       { id: "chromeos", icon: "fab fa-chrome", label: "ChromeOS" },
       { id: "video", icon: "fas fa-film", label: "Live Video" },
       { id: "vanta", icon: "fas fa-magic", label: "Animated" },
-      { id: "uploaded", icon: "fas fa-cloud-upload-alt", label: "Your Uploads" },
+      {
+        id: "uploaded",
+        icon: "fas fa-cloud-upload-alt",
+        label: "Your Uploads",
+      },
       { id: "favorites", icon: "fas fa-star", label: "Favorites" },
-      { id: "recent", icon: "fas fa-clock", label: "Recent" }
+      { id: "recent", icon: "fas fa-clock", label: "Recent" },
     ];
 
     const tools = [
       { id: "__import", icon: "fas fa-link", label: "Import URL" },
-      { id: "__filters", icon: "fas fa-tint", label: "Color Filters" }
+      { id: "__filters", icon: "fas fa-tint", label: "Color Filters" },
     ];
 
     const itemHtml = (c, compact) => `
@@ -263,13 +321,17 @@ export class WallpaperEngineApp extends BaseApp {
         ${categories.map((c) => itemHtml(c, false)).join("")}
         <div class="we-sidebar-title" style="margin-top:12px;">Tools</div>
         ${tools.map((t) => itemHtml(t, false)).join("")}
-      `
+      `,
       );
       this.bindCategoryClicks(sidebar);
     }
 
     if (catBar) {
-      setHTML(catBar, categories.map((c) => itemHtml(c, true)).join("") + tools.map((t) => itemHtml(t, true)).join(""));
+      setHTML(
+        catBar,
+        categories.map((c) => itemHtml(c, true)).join("") +
+          tools.map((t) => itemHtml(t, true)).join(""),
+      );
       this.bindCategoryClicks(catBar);
     }
   }
@@ -287,19 +349,40 @@ export class WallpaperEngineApp extends BaseApp {
         e.stopPropagation();
         const cat = item.dataset.cat;
         if (cat === "__import" || cat === "__filters") {
-          showContextMenu(e, [{ id: "s-open-" + cat, label: "Open", action: "open", icon: "fa-arrow-right" }], {
-            open: () => {
-              item.click();
-            }
-          });
+          showContextMenu(
+            e,
+            [
+              {
+                id: "s-open-" + cat,
+                label: "Open",
+                action: "open",
+                icon: "fa-arrow-right",
+              },
+            ],
+            {
+              open: () => {
+                item.click();
+              },
+            },
+          );
           return;
         }
         const label = item.querySelector("span")?.textContent || cat;
         showContextMenu(
           e,
           [
-            { id: "s-show-" + cat, label: "Show " + label, action: "open", icon: "fa-arrow-right" },
-            { id: "s-random-" + cat, label: "Random from " + label, action: "random", icon: "fa-dice" }
+            {
+              id: "s-show-" + cat,
+              label: "Show " + label,
+              action: "open",
+              icon: "fa-arrow-right",
+            },
+            {
+              id: "s-random-" + cat,
+              label: "Random from " + label,
+              action: "random",
+              icon: "fa-dice",
+            },
           ],
           {
             open: () => {
@@ -309,16 +392,20 @@ export class WallpaperEngineApp extends BaseApp {
               this.currentCategory = cat;
               this.renderGrid();
               this.shuffleRandom();
-            }
-          }
+            },
+          },
         );
       });
     });
   }
 
   selectCategory(cat) {
-    $$(`.we-sidebar-item[data-cat="${cat}"]`, this.host).forEach((el) => el.classList.add("active"));
-    $$(`.we-sidebar-item:not([data-cat="${cat}"])`, this.host).forEach((el) => el.classList.remove("active"));
+    $$(`.we-sidebar-item[data-cat="${cat}"]`, this.host).forEach((el) =>
+      el.classList.add("active"),
+    );
+    $$(`.we-sidebar-item:not([data-cat="${cat}"])`, this.host).forEach((el) =>
+      el.classList.remove("active"),
+    );
     this.currentCategory = cat;
     if (cat === "__import") this.showImportView();
     else if (cat === "__filters") this.showFiltersView();
@@ -333,7 +420,7 @@ export class WallpaperEngineApp extends BaseApp {
       { label: "Default", value: "default" },
       { label: "Name A-Z", value: "name-asc" },
       { label: "Name Z-A", value: "name-desc" },
-      { label: "Type", value: "type" }
+      { label: "Type", value: "type" },
     ];
 
     setHTML(
@@ -349,7 +436,7 @@ export class WallpaperEngineApp extends BaseApp {
       <button class="we-toolbar-btn" id="we-upload-btn"><i class="fas fa-upload"></i> Upload</button>
       <button class="we-toolbar-btn we-toolbar-btn-random" id="we-random-btn"><i class="fas fa-dice"></i> Random</button>
       <input type="file" id="we-file-input" accept="image/*,video/*,.gif" style="display:none" multiple />
-    `
+    `,
     );
 
     bindSelectMenu(toolbar);
@@ -377,7 +464,9 @@ export class WallpaperEngineApp extends BaseApp {
       e.target.value = "";
     });
 
-    bindEvent($("#we-random-btn", this.host), "click", () => this.shuffleRandom());
+    bindEvent($("#we-random-btn", this.host), "click", () =>
+      this.shuffleRandom(),
+    );
   }
 
   renderBottomBar() {
@@ -404,7 +493,7 @@ export class WallpaperEngineApp extends BaseApp {
       <span class="we-bar-label">min</span>
       <span class="we-bar-spacer"></span>
       <span id="we-stats" class="we-bar-label"></span>
-    `
+    `,
     );
 
     bindEvent($("#we-cycle-toggle", this.host), "change", () => {
@@ -427,7 +516,8 @@ export class WallpaperEngineApp extends BaseApp {
     }
     const enabled = os.storage.get(StorageKeys.cycleWallpaper) !== "false";
     if (!enabled) return;
-    const interval = (parseInt(os.storage.get(WE_KEYS.shuffleInterval)) || 30) * 60 * 1000;
+    const interval =
+      (parseInt(os.storage.get(WE_KEYS.shuffleInterval)) || 30) * 60 * 1000;
     this.shuffleTimer = setInterval(() => {
       SystemUtilities.setSequentialWallpaper?.();
     }, interval);
@@ -460,7 +550,7 @@ export class WallpaperEngineApp extends BaseApp {
       src: wp.url,
       thumbnail: resolveWallpaperUrl(wp.url),
       isVideo: false,
-      meta: { source: "Built-in" }
+      meta: { source: "Built-in" },
     }));
   }
 
@@ -472,7 +562,7 @@ export class WallpaperEngineApp extends BaseApp {
       src: wp.url,
       thumbnail: resolveWallpaperUrl(wp.url),
       isVideo: false,
-      meta: { source: "macOS" }
+      meta: { source: "macOS" },
     }));
   }
 
@@ -484,7 +574,7 @@ export class WallpaperEngineApp extends BaseApp {
       src: wp.url,
       thumbnail: resolveWallpaperUrl(wp.url),
       isVideo: false,
-      meta: { source: "ChromeOS" }
+      meta: { source: "ChromeOS" },
     }));
   }
 
@@ -496,7 +586,7 @@ export class WallpaperEngineApp extends BaseApp {
       src: url,
       thumbnail: getVideoThumbnailUrl(url),
       isVideo: true,
-      meta: { source: "motionbgs.com" }
+      meta: { source: "motionbgs.com" },
     }));
   }
 
@@ -509,7 +599,7 @@ export class WallpaperEngineApp extends BaseApp {
       thumbnail: null,
       vantaPreset: p,
       isVideo: false,
-      meta: { source: "Vanta.js", effect: p.effect }
+      meta: { source: "Vanta.js", effect: p.effect },
     }));
   }
 
@@ -519,14 +609,25 @@ export class WallpaperEngineApp extends BaseApp {
       const folder = await this.fs.getFolder(["Pictures", "Wallpapers"]);
       for (const [name, data] of Object.entries(folder)) {
         if (data?.type !== "file") continue;
-        if (!this.uploadedNames.includes(name) && SEEDED_WALLPAPER_NAMES.has(name)) continue;
+        if (
+          !this.uploadedNames.includes(name) &&
+          SEEDED_WALLPAPER_NAMES.has(name)
+        )
+          continue;
         const isVideo = data.kind === FileKind.VIDEO || isVideoFile(name);
         let thumbnail = null;
         if (isVideo) {
-          const content = await this.fs.getFileContent(["Pictures", "Wallpapers"], name);
-          thumbnail = content instanceof Blob ? null : getVideoThumbnailUrl(content);
+          const content = await this.fs.getFileContent(
+            ["Pictures", "Wallpapers"],
+            name,
+          );
+          thumbnail =
+            content instanceof Blob ? null : getVideoThumbnailUrl(content);
         } else if (data.icon === "@content") {
-          const content = await this.fs.getFileContent(["Pictures", "Wallpapers"], name);
+          const content = await this.fs.getFileContent(
+            ["Pictures", "Wallpapers"],
+            name,
+          );
           thumbnail = toBlobUrl(content);
         } else if (data.icon) thumbnail = resolveWallpaperUrl(data.icon);
         items.push({
@@ -538,7 +639,7 @@ export class WallpaperEngineApp extends BaseApp {
           isVideo,
           isUserUpload: true,
           userFileName: name,
-          meta: { source: "Your Uploads" }
+          meta: { source: "Your Uploads" },
         });
       }
     } catch {}
@@ -548,8 +649,10 @@ export class WallpaperEngineApp extends BaseApp {
   getFilteredItems() {
     let items = this.wallpaperItems;
     const cat = this.currentCategory;
-    if (cat !== "all" && cat !== "favorites" && cat !== "recent") items = items.filter((i) => i.type === cat);
-    else if (cat === "favorites") items = items.filter((i) => this.favorites.includes(i.id));
+    if (cat !== "all" && cat !== "favorites" && cat !== "recent")
+      items = items.filter((i) => i.type === cat);
+    else if (cat === "favorites")
+      items = items.filter((i) => this.favorites.includes(i.id));
     else if (cat === "recent") {
       const ids = this.history;
       items = items.filter((i) => ids.includes(i.id));
@@ -559,9 +662,12 @@ export class WallpaperEngineApp extends BaseApp {
       const q = this.searchQuery;
       items = items.filter((i) => i.name.toLowerCase().includes(q));
     }
-    if (this.sortMode === "name-asc") items.sort((a, b) => a.name.localeCompare(b.name));
-    else if (this.sortMode === "name-desc") items.sort((a, b) => b.name.localeCompare(a.name));
-    else if (this.sortMode === "type") items.sort((a, b) => a.type.localeCompare(b.type));
+    if (this.sortMode === "name-asc")
+      items.sort((a, b) => a.name.localeCompare(b.name));
+    else if (this.sortMode === "name-desc")
+      items.sort((a, b) => b.name.localeCompare(a.name));
+    else if (this.sortMode === "type")
+      items.sort((a, b) => a.type.localeCompare(b.type));
     return items;
   }
 
@@ -588,7 +694,10 @@ export class WallpaperEngineApp extends BaseApp {
         msg = "No recent wallpapers";
         icon = "fa-clock";
       }
-      setHTML(content, `<div class="we-category-empty"><i class="fas ${icon}"></i><span>${msg}</span></div>`);
+      setHTML(
+        content,
+        `<div class="we-category-empty"><i class="fas ${icon}"></i><span>${msg}</span></div>`,
+      );
       this.hidePreview();
       return;
     }
@@ -619,7 +728,7 @@ export class WallpaperEngineApp extends BaseApp {
           }
         }
       },
-      { rootMargin: "300px 0px" }
+      { rootMargin: "300px 0px" },
     );
 
     const placeholders = content.querySelectorAll(".we-card-placeholder");
@@ -632,11 +741,18 @@ export class WallpaperEngineApp extends BaseApp {
   }
 
   populateCard(card, item) {
-    if (!card || !item || !card.classList.contains("we-card-placeholder")) return;
+    if (!card || !item || !card.classList.contains("we-card-placeholder"))
+      return;
     card.classList.remove("we-card-placeholder");
 
     const isFav = this.favorites.includes(item.id);
-    const badge = item.isVideo ? "Video" : item.type === "vanta" ? "Vanta" : item.type === "static" ? "Static" : "";
+    const badge = item.isVideo
+      ? "Video"
+      : item.type === "vanta"
+        ? "Vanta"
+        : item.type === "static"
+          ? "Static"
+          : "";
     const thumb = item.thumbnail || (item.type === "vanta" ? "" : "");
 
     card.innerHTML = `
@@ -655,7 +771,12 @@ export class WallpaperEngineApp extends BaseApp {
       </div>`;
 
     const img = card.querySelector(".we-card-thumb img");
-    if (img && thumb && !thumb.startsWith("blob:") && !thumb.startsWith("data:")) {
+    if (
+      img &&
+      thumb &&
+      !thumb.startsWith("blob:") &&
+      !thumb.startsWith("data:")
+    ) {
       let retries = 0;
       const maxRetries = 1;
       const reloadDelay = 2500;
@@ -669,7 +790,10 @@ export class WallpaperEngineApp extends BaseApp {
           target.style.display = "none";
           const existing = card.querySelector(".we-card-img-placeholder");
           if (!existing) {
-            const ph = createElement("div", { className: "we-card-img-placeholder we-card-img-placeholder--error" });
+            const ph = createElement("div", {
+              className:
+                "we-card-img-placeholder we-card-img-placeholder--error",
+            });
             ph.innerHTML = '<i class="fas fa-image"></i>';
             const thumbWrap = card.querySelector(".we-card-thumb");
             if (thumbWrap) thumbWrap.appendChild(ph);
@@ -720,7 +844,9 @@ export class WallpaperEngineApp extends BaseApp {
       }
       if (actionBtn) {
         e.stopPropagation();
-        const item = this.wallpaperItems.find((i) => i.id === actionBtn.dataset.id);
+        const item = this.wallpaperItems.find(
+          (i) => i.id === actionBtn.dataset.id,
+        );
         if (!item) return;
         if (actionBtn.dataset.action === "set") this.setDesktop(item);
         else this.setLogin(item);
@@ -745,7 +871,10 @@ export class WallpaperEngineApp extends BaseApp {
       if (item.type === "vanta") {
         await SystemUtilities.setWallpaper(item.src);
       } else if (item.isUserUpload) {
-        const content = await this.fs.getFileContent(["Pictures", "Wallpapers"], item.userFileName);
+        const content = await this.fs.getFileContent(
+          ["Pictures", "Wallpapers"],
+          item.userFileName,
+        );
         if (content) await SystemUtilities.setWallpaper(content);
         else return;
       } else {
@@ -762,7 +891,10 @@ export class WallpaperEngineApp extends BaseApp {
   async setLogin(item) {
     try {
       if (item.isUserUpload) {
-        const content = await this.fs.getFileContent(["Pictures", "Wallpapers"], item.userFileName);
+        const content = await this.fs.getFileContent(
+          ["Pictures", "Wallpapers"],
+          item.userFileName,
+        );
         if (content) {
           await SystemUtilities.setLoginWallpaper(content);
           this.notify(`Login wallpaper set to "${item.name}"`);
@@ -821,17 +953,27 @@ export class WallpaperEngineApp extends BaseApp {
           <button class="we-preview-btn fav" id="we-preview-fav"><i class="fas fa-star"></i> ${isFav ? "Favorited" : "Add to Favorites"}</button>
         </div>
       </div>
-    `
+    `,
     );
 
-    bindEvent($("#we-preview-close", this.host), "click", () => this.hidePreview());
-    bindEvent($("#we-preview-set", this.host), "click", () => this.setDesktop(item));
-    bindEvent($("#we-preview-login", this.host), "click", () => this.setLogin(item));
-    bindEvent($("#we-preview-fav", this.host), "click", () => this.toggleFavorite(item.id));
+    bindEvent($("#we-preview-close", this.host), "click", () =>
+      this.hidePreview(),
+    );
+    bindEvent($("#we-preview-set", this.host), "click", () =>
+      this.setDesktop(item),
+    );
+    bindEvent($("#we-preview-login", this.host), "click", () =>
+      this.setLogin(item),
+    );
+    bindEvent($("#we-preview-fav", this.host), "click", () =>
+      this.toggleFavorite(item.id),
+    );
 
     const customizeBtn = $("#we-preview-customize", this.host);
     if (customizeBtn && item.vantaPreset) {
-      bindEvent(customizeBtn, "click", () => this.showVantaCustomize(item.vantaPreset));
+      bindEvent(customizeBtn, "click", () =>
+        this.showVantaCustomize(item.vantaPreset),
+      );
     }
 
     bindEvent(panel, "contextmenu", (e) => {
@@ -839,24 +981,47 @@ export class WallpaperEngineApp extends BaseApp {
       e.stopPropagation();
       const isFav = this.favorites.includes(item.id);
       const pvItems = [
-        { id: "pv-set", label: "Set Desktop", action: "setDesktop", icon: "fa-desktop" },
-        { id: "pv-login", label: "Set Login", action: "setLogin", icon: "fa-lock" },
+        {
+          id: "pv-set",
+          label: "Set Desktop",
+          action: "setDesktop",
+          icon: "fa-desktop",
+        },
+        {
+          id: "pv-login",
+          label: "Set Login",
+          action: "setLogin",
+          icon: "fa-lock",
+        },
         "hr",
         {
           id: "pv-fav",
           label: isFav ? "Remove from Favorites" : "Add to Favorites",
           action: "toggleFav",
-          icon: "fa-star"
+          icon: "fa-star",
         },
-        { id: "pv-fs", label: "Fullscreen Preview", action: "fullscreen", icon: "fa-expand" }
+        {
+          id: "pv-fs",
+          label: "Fullscreen Preview",
+          action: "fullscreen",
+          icon: "fa-expand",
+        },
       ];
-      pvItems.push("hr", { id: "pv-copy", label: "Copy Name", action: "copyName", icon: "fa-copy" });
+      pvItems.push("hr", {
+        id: "pv-copy",
+        label: "Copy Name",
+        action: "copyName",
+        icon: "fa-copy",
+      });
       showContextMenu(e, pvItems, {
         setDesktop: () => this.setDesktop(item),
         setLogin: () => this.setLogin(item),
         toggleFav: () => this.toggleFavorite(item.id),
         fullscreen: () => this.showFullscreenPreview(item),
-        copyName: () => navigator.clipboard.writeText(item.name).then(() => this.notify("Name copied"))
+        copyName: () =>
+          navigator.clipboard
+            .writeText(item.name)
+            .then(() => this.notify("Name copied")),
       });
     });
   }
@@ -865,7 +1030,10 @@ export class WallpaperEngineApp extends BaseApp {
     const btn = $("#we-preview-fav", this.host);
     if (!btn || !this.previewItem) return;
     const isFav = this.favorites.includes(this.previewItem.id);
-    setHTML(btn, `<i class="fas fa-star"></i> ${isFav ? "Favorited" : "Add to Favorites"}`);
+    setHTML(
+      btn,
+      `<i class="fas fa-star"></i> ${isFav ? "Favorited" : "Add to Favorites"}`,
+    );
   }
 
   hidePreview() {
@@ -895,10 +1063,13 @@ export class WallpaperEngineApp extends BaseApp {
   }
 
   showVantaCustomize(preset) {
-    const overlay = createElement("div", { className: "we-vanta-customize-dialog" });
+    const overlay = createElement("div", {
+      className: "we-vanta-customize-dialog",
+    });
     let currentOptions = { ...preset.options };
 
-    const getControls = () => this.getVantaControls({ effect: preset.effect, options: currentOptions });
+    const getControls = () =>
+      this.getVantaControls({ effect: preset.effect, options: currentOptions });
 
     const readOptions = () => {
       const controls = getControls();
@@ -928,7 +1099,7 @@ export class WallpaperEngineApp extends BaseApp {
           <button class="we-customize-btn we-customize-apply"><i class="fas fa-check"></i> Apply</button>
         </div>
       </div>
-    `
+    `,
     );
 
     document.body.appendChild(overlay);
@@ -949,12 +1120,19 @@ export class WallpaperEngineApp extends BaseApp {
         }
       });
 
-    overlay.querySelector(".we-customize-close").onclick = () => overlay.remove();
-    overlay.querySelector(".we-customize-cancel").onclick = () => overlay.remove();
+    overlay.querySelector(".we-customize-close").onclick = () =>
+      overlay.remove();
+    overlay.querySelector(".we-customize-cancel").onclick = () =>
+      overlay.remove();
     overlay.querySelector(".we-customize-apply").onclick = () => {
       const customOptions = readOptions();
-      const customPreset = { effect: preset.effect, options: { ...currentOptions, ...customOptions } };
-      SystemUtilities.setWallpaper(`vanta:custom:${btoa(JSON.stringify(customPreset))}`);
+      const customPreset = {
+        effect: preset.effect,
+        options: { ...currentOptions, ...customOptions },
+      };
+      SystemUtilities.setWallpaper(
+        `vanta:custom:${btoa(JSON.stringify(customPreset))}`,
+      );
       this.notify(`Custom "${preset.name}" applied`);
       overlay.remove();
     };
@@ -966,7 +1144,8 @@ export class WallpaperEngineApp extends BaseApp {
     const fmt = (v) => "#" + v.toString(16).padStart(6, "0");
     const add = (label, key, type, min, max, step, val) =>
       controls.push({ label, key, type, min, max, step, value: val });
-    const addColor = (label, key, val) => controls.push({ label, key, type: "color", value: val });
+    const addColor = (label, key, val) =>
+      controls.push({ label, key, type: "color", value: val });
 
     if (preset.effect === "WAVES") {
       addColor("Color", "color", fmt(o.color));
@@ -1024,25 +1203,45 @@ export class WallpaperEngineApp extends BaseApp {
       if (!item) return;
       const isFav = this.favorites.includes(item.id);
       const menuItems = [
-        { id: "ctx-" + item.id + "-set", label: "Set Desktop", action: "setDesktop", icon: "fa-desktop" },
-        { id: "ctx-" + item.id + "-login", label: "Set Login", action: "setLogin", icon: "fa-lock" },
+        {
+          id: "ctx-" + item.id + "-set",
+          label: "Set Desktop",
+          action: "setDesktop",
+          icon: "fa-desktop",
+        },
+        {
+          id: "ctx-" + item.id + "-login",
+          label: "Set Login",
+          action: "setLogin",
+          icon: "fa-lock",
+        },
         "hr",
         {
           id: "ctx-" + item.id + "-fav",
           label: isFav ? "Remove from Favorites" : "Add to Favorites",
           action: "toggleFav",
-          icon: "fa-star"
+          icon: "fa-star",
         },
-        { id: "ctx-" + item.id + "-fs", label: "Fullscreen Preview", action: "fullscreen", icon: "fa-expand" },
+        {
+          id: "ctx-" + item.id + "-fs",
+          label: "Fullscreen Preview",
+          action: "fullscreen",
+          icon: "fa-expand",
+        },
         "hr",
-        { id: "ctx-" + item.id + "-copy", label: "Copy Name", action: "copyName", icon: "fa-copy" }
+        {
+          id: "ctx-" + item.id + "-copy",
+          label: "Copy Name",
+          action: "copyName",
+          icon: "fa-copy",
+        },
       ];
       if (item.isUserUpload) {
         menuItems.push("hr", {
           id: "ctx-" + item.id + "-del",
           label: "Delete",
           action: "deletePaper",
-          icon: "fa-trash"
+          icon: "fa-trash",
         });
       }
       showContextMenu(e, menuItems, {
@@ -1050,8 +1249,11 @@ export class WallpaperEngineApp extends BaseApp {
         setLogin: () => this.setLogin(item),
         toggleFav: () => this.toggleFavorite(item.id),
         fullscreen: () => this.showFullscreenPreview(item),
-        copyName: () => navigator.clipboard.writeText(item.name).then(() => this.notify("Name copied")),
-        deletePaper: () => this.deleteUserWallpaper(item)
+        copyName: () =>
+          navigator.clipboard
+            .writeText(item.name)
+            .then(() => this.notify("Name copied")),
+        deletePaper: () => this.deleteUserWallpaper(item),
       });
     });
   }
@@ -1059,7 +1261,9 @@ export class WallpaperEngineApp extends BaseApp {
   async deleteUserWallpaper(item, silent = false) {
     try {
       await this.fs.deleteItem(["Pictures", "Wallpapers"], item.userFileName);
-      this.uploadedNames = this.uploadedNames.filter((n) => n !== item.userFileName);
+      this.uploadedNames = this.uploadedNames.filter(
+        (n) => n !== item.userFileName,
+      );
       this.saveUploads();
       this.wallpaperItems = this.wallpaperItems.filter((i) => i.id !== item.id);
       this.renderGrid();
@@ -1089,14 +1293,20 @@ export class WallpaperEngineApp extends BaseApp {
     } else if (item.isUserUpload && !isVideo) {
       let src = item.thumbnail || "";
       try {
-        const content = await this.fs.getFileContent(["Pictures", "Wallpapers"], item.userFileName);
+        const content = await this.fs.getFileContent(
+          ["Pictures", "Wallpapers"],
+          item.userFileName,
+        );
         if (content) src = toBlobUrl(content);
       } catch {}
       mediaHtml = `<img class="we-fs-media" src="${src}" alt="${item.name}" />`;
     } else if (item.isUserUpload && isVideo) {
       let src = item.thumbnail || "";
       try {
-        const content = await this.fs.getFileContent(["Pictures", "Wallpapers"], item.userFileName);
+        const content = await this.fs.getFileContent(
+          ["Pictures", "Wallpapers"],
+          item.userFileName,
+        );
         if (content) src = toBlobUrl(content);
       } catch {}
       mediaHtml = `<video class="we-fs-media" src="${src}" autoplay loop muted playsinline></video>`;
@@ -1115,12 +1325,13 @@ export class WallpaperEngineApp extends BaseApp {
         <button class="we-fs-action" id="we-fs-set"><i class="fas fa-desktop"></i> Set Desktop</button>
         <button class="we-fs-action" id="we-fs-fav"><i class="fas fa-star"></i></button>
       </div>
-    `
+    `,
     );
 
     document.body.appendChild(overlay);
     overlay.addEventListener("click", (e) => {
-      if (e.target === overlay || e.target.closest(".we-fs-close")) overlay.remove();
+      if (e.target === overlay || e.target.closest(".we-fs-close"))
+        overlay.remove();
     });
 
     const closeBtn = overlay.querySelector(".we-fs-close");
@@ -1133,7 +1344,11 @@ export class WallpaperEngineApp extends BaseApp {
     bindEvent($("#we-fs-fav", overlay), "click", () => {
       this.toggleFavorite(item.id);
       const btn = $("#we-fs-fav", overlay);
-      if (btn) btn.classList.toggle("we-fs-fav--active", this.favorites.includes(item.id));
+      if (btn)
+        btn.classList.toggle(
+          "we-fs-fav--active",
+          this.favorites.includes(item.id),
+        );
     });
 
     const playBtn = overlay.querySelector(".we-fs-play-btn-big");
@@ -1180,13 +1395,17 @@ export class WallpaperEngineApp extends BaseApp {
     for (const file of files) {
       try {
         await this.fs.ensureFolder(["Pictures", "Wallpapers"]);
-        const fileKind = file.type.startsWith("video") ? FileKind.VIDEO : FileKind.IMAGE;
+        const fileKind = file.type.startsWith("video")
+          ? FileKind.VIDEO
+          : FileKind.IMAGE;
         await this.fs.createFile(
           ["Pictures", "Wallpapers"],
           file.name,
           file,
           fileKind,
-          file.type.startsWith("video") ? "static/icons/file.webp" : "@content"
+          file.type.startsWith("video")
+            ? "static/icons/explorerwin11.png"
+            : "@content",
         );
         this.trackUpload(file.name);
         count++;
@@ -1230,13 +1449,17 @@ export class WallpaperEngineApp extends BaseApp {
           <div id="we-import-status"></div>
         </div>
       </div>
-    `
+    `,
     );
     bindEvent($("#we-import-go", this.host), "click", async () => {
       const url = $("#we-import-url", this.host)?.value.trim();
       if (!url) return;
       const status = $("#we-import-status", this.host);
-      if (status) setHTML(status, '<span style="color:var(--text-secondary)">Downloading...</span>');
+      if (status)
+        setHTML(
+          status,
+          '<span style="color:var(--text-secondary)">Downloading...</span>',
+        );
       try {
         const resp = await fetch(url);
         if (!resp.ok) throw new Error("HTTP " + resp.status);
@@ -1250,13 +1473,13 @@ export class WallpaperEngineApp extends BaseApp {
           name,
           blob,
           isVid ? FileKind.VIDEO : FileKind.IMAGE,
-          isVid ? "static/icons/file.webp" : "@content"
+          isVid ? "static/icons/explorerwin11.png" : "@content",
         );
         this.trackUpload(name);
         if (status)
           setHTML(
             status,
-            '<span class="import-status--success"><i class="fas fa-check"></i> Imported successfully!</span>'
+            '<span class="import-status--success"><i class="fas fa-check"></i> Imported successfully!</span>',
           );
         this.notify(`Imported "${name}"`);
         await this.loadAllWallpapers();
@@ -1264,7 +1487,7 @@ export class WallpaperEngineApp extends BaseApp {
         if (status)
           setHTML(
             status,
-            `<span class="import-status--error"><i class="fas fa-exclamation-triangle"></i> Failed: ${err.message}</span>`
+            `<span class="import-status--error"><i class="fas fa-exclamation-triangle"></i> Failed: ${err.message}</span>`,
           );
       }
     });
@@ -1302,7 +1525,7 @@ export class WallpaperEngineApp extends BaseApp {
         </div>
       </div>
       <button class="we-toolbar-btn" id="we-filter-reset" style="margin-top:12px;"><i class="fas fa-undo"></i> Reset to Defaults</button>
-    `
+    `,
     );
 
     bindRangeSlider(content);

@@ -1,7 +1,18 @@
 import "../styles/stylusMenu.css";
 import { os, ServiceKeys } from "../framework.js";
-import { $, $$, bindEvent, createElement, setText, toggleClass } from "../shared/domUtils.js";
-import { renderRangeSlider, bindRangeSlider, getRangeSliderValue } from "../shared/rangeSlider.js";
+import {
+  $,
+  $$,
+  bindEvent,
+  createElement,
+  setText,
+  toggleClass,
+} from "../shared/domUtils.js";
+import {
+  renderRangeSlider,
+  bindRangeSlider,
+  getRangeSliderValue,
+} from "../shared/rangeSlider.js";
 import { createMagnifierEngine } from "../shared/magnifierEngine.js";
 
 let penColor = "red";
@@ -142,7 +153,7 @@ function startDraw() {
 
   canvasEl = createElement("canvas", {
     id: "stylus-draw-layer",
-    className: "stylus-draw-active"
+    className: "stylus-draw-active",
   });
 
   document.body.appendChild(canvasEl);
@@ -157,7 +168,7 @@ function startDraw() {
   bindEvent(canvasEl, "pointerleave", hideEraserCursor);
 
   eraserCursorEl = createElement("div", {
-    id: "stylus-eraser-cursor"
+    id: "stylus-eraser-cursor",
   });
 
   document.body.appendChild(eraserCursorEl);
@@ -222,7 +233,7 @@ function paintNoteBackground(img, url) {
   bgObjectUrl = url;
 
   bgCanvasEl = createElement("canvas", {
-    id: "stylus-draw-bg"
+    id: "stylus-draw-bg",
   });
 
   const ratio = window.devicePixelRatio || 1;
@@ -314,7 +325,7 @@ function saveDrawing() {
     off.toBlob((blob) => {
       if (!blob) {
         os.notify.send("Stylus", "Failed to save drawing", {
-          type: "error"
+          type: "error",
         });
         return;
       }
@@ -330,13 +341,13 @@ function saveDrawing() {
         })
         .catch(() => {
           os.notify.send("Stylus", "Failed to save drawing", {
-            type: "error"
+            type: "error",
           });
         });
     }, "image/png");
   } catch {
     os.notify.send("Stylus", "Failed to save drawing", {
-      type: "error"
+      type: "error",
     });
   }
 }
@@ -381,7 +392,14 @@ function refreshDrawUI(menu) {
   const customBtn = $(".stylus-custom-color", menu);
 
   if (customBtn) {
-    const isCustom = !["red", "blue", "green", "yellow", "purple", "white"].includes(penColor);
+    const isCustom = ![
+      "red",
+      "blue",
+      "green",
+      "yellow",
+      "purple",
+      "white",
+    ].includes(penColor);
 
     toggleClass(customBtn, "is-active", isCustom);
     customBtn.style.setProperty("--stylus-custom-color", penColor);
@@ -418,19 +436,19 @@ function closeMenu() {
 function buildMenu() {
   const menu = createElement("div", {
     id: "stylus-menu",
-    className: "stylus-menu"
+    className: "stylus-menu",
   });
 
   const title = createElement("div", {
     className: "stylus-title",
-    html: `Stylus tools <i class="fas fa-gear stylus-gear"></i>`
+    html: `Stylus tools <i class="fas fa-gear stylus-gear"></i>`,
   });
 
   menu.appendChild(title);
 
   const fullBtn = createElement("button", {
     className: "stylus-btn stylus-pill",
-    html: `<i class="fas fa-camera"></i><span>Screen capture</span>`
+    html: `<i class="fas fa-camera"></i><span>Screen capture</span>`,
   });
 
   bindEvent(fullBtn, "click", doFullScreenshot);
@@ -438,7 +456,7 @@ function buildMenu() {
 
   const noteBtn = createElement("button", {
     className: "stylus-btn stylus-pill stylus-note-btn",
-    html: `<i class="fas fa-sticky-note"></i><span>Create note</span>`
+    html: `<i class="fas fa-sticky-note"></i><span>Create note</span>`,
   });
 
   bindEvent(noteBtn, "click", createNote);
@@ -446,45 +464,45 @@ function buildMenu() {
 
   const drawBtn = createElement("button", {
     className: "stylus-btn stylus-pill stylus-draw-btn",
-    html: `<i class="fas fa-pen"></i><span>Laser pointer</span>`
+    html: `<i class="fas fa-pen"></i><span>Laser pointer</span>`,
   });
 
   menu.appendChild(drawBtn);
 
   const drawRow = createElement("div", {
-    className: "stylus-draw-row"
+    className: "stylus-draw-row",
   });
 
   const colors = [
     {
       name: "red",
-      value: "#ff0000"
+      value: "#ff0000",
     },
     {
       name: "blue",
-      value: "#0066ff"
+      value: "#0066ff",
     },
     {
       name: "green",
-      value: "#00c853"
+      value: "#00c853",
     },
     {
       name: "yellow",
-      value: "#ffd600"
+      value: "#ffd600",
     },
     {
       name: "purple",
-      value: "#aa00ff"
+      value: "#aa00ff",
     },
     {
       name: "white",
-      value: "#ffffff"
-    }
+      value: "#ffffff",
+    },
   ];
 
   colors.forEach(({ name, value }) => {
     const dot = createElement("button", {
-      className: "stylus-color-dot is-" + name
+      className: "stylus-color-dot is-" + name,
     });
 
     dot.setAttribute("data-color", name);
@@ -505,7 +523,7 @@ function buildMenu() {
 
   const customColorInput = createElement("input", {
     type: "color",
-    className: "stylus-custom-color-input"
+    className: "stylus-custom-color-input",
   });
 
   customColorInput.value = "#ff6600";
@@ -513,7 +531,7 @@ function buildMenu() {
 
   const customColorBtn = createElement("button", {
     className: "stylus-color-dot stylus-custom-color",
-    html: `<i class="fas fa-palette"></i>`
+    html: `<i class="fas fa-palette"></i>`,
   });
 
   customColorBtn.setAttribute("aria-label", "Custom pen color");
@@ -536,14 +554,14 @@ function buildMenu() {
 
   const sizeRow = createElement("div", {
     className: "stylus-size-row",
-    html: `<span>Size</span>${renderRangeSlider("stylusStrokeWidth", 1, 40, 1, strokeWidth)}<span class="stylus-size-value">${strokeWidth}</span>`
+    html: `<span>Size</span>${renderRangeSlider("stylusStrokeWidth", 1, 40, 1, strokeWidth)}<span class="stylus-size-value">${strokeWidth}</span>`,
   });
 
   drawRow.appendChild(sizeRow);
 
   const eraserBtn = createElement("button", {
     className: "stylus-btn stylus-pill stylus-eraser-btn",
-    html: `<i class="fas fa-eraser"></i><span>Eraser</span>`
+    html: `<i class="fas fa-eraser"></i><span>Eraser</span>`,
   });
 
   bindEvent(eraserBtn, "click", () => {
@@ -558,7 +576,7 @@ function buildMenu() {
 
   const clearBtn = createElement("button", {
     className: "stylus-btn stylus-pill",
-    html: `<i class="fas fa-trash-alt"></i><span>Clear all</span>`
+    html: `<i class="fas fa-trash-alt"></i><span>Clear all</span>`,
   });
 
   bindEvent(clearBtn, "click", clearDraw);
@@ -566,7 +584,7 @@ function buildMenu() {
 
   const saveBtn = createElement("button", {
     className: "stylus-btn stylus-pill stylus-save-btn",
-    html: `<i class="fas fa-save"></i><span>Save</span>`
+    html: `<i class="fas fa-save"></i><span>Save</span>`,
   });
 
   bindEvent(saveBtn, "click", saveDrawing);
@@ -586,28 +604,28 @@ function buildMenu() {
 
   const magBtn = createElement("button", {
     className: "stylus-btn stylus-pill stylus-magnifier-btn",
-    html: `<i class="fas fa-search-plus"></i><span>Magnifying glass</span>`
+    html: `<i class="fas fa-search-plus"></i><span>Magnifying glass</span>`,
   });
 
   menu.appendChild(magBtn);
 
   const zoomRow = createElement("div", {
-    className: "stylus-zoom-row"
+    className: "stylus-zoom-row",
   });
 
   const zoomOut = createElement("button", {
     className: "stylus-btn stylus-pill",
-    html: `<i class="fas fa-minus"></i><span>Zoom out</span>`
+    html: `<i class="fas fa-minus"></i><span>Zoom out</span>`,
   });
 
   const zoomValue = createElement("span", {
     className: "stylus-zoom-value",
-    text: "200%"
+    text: "200%",
   });
 
   const zoomIn = createElement("button", {
     className: "stylus-btn stylus-pill",
-    html: `<i class="fas fa-plus"></i><span>Zoom in</span>`
+    html: `<i class="fas fa-plus"></i><span>Zoom in</span>`,
   });
 
   bindEvent(zoomOut, "click", () => {

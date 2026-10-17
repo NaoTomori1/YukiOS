@@ -23,8 +23,16 @@ function getMagnetThresholdResizable() {
 function getTilingBarInsetResizable() {
   try {
     const bar = $("#tiling-bar");
-    if (!bar || bar.style.display === "none" || !os.modes.isActive(MODES.TILING)) return { top: 0, bottom: 0 };
-    const h = bar.getBoundingClientRect().height || parseInt(getComputedStyle(bar).height, 10) || 0;
+    if (
+      !bar ||
+      bar.style.display === "none" ||
+      !os.modes.isActive(MODES.TILING)
+    )
+      return { top: 0, bottom: 0 };
+    const h =
+      bar.getBoundingClientRect().height ||
+      parseInt(getComputedStyle(bar).height, 10) ||
+      0;
     if (!h) return { top: 0, bottom: 0 };
     const isBottom = bar.classList.contains("position-bottom");
     return isBottom ? { top: 0, bottom: h } : { top: h, bottom: 0 };
@@ -48,12 +56,19 @@ export function windowMakeResizable(win, wm, setHeightUnsetElement = null) {
     win,
     {
       start(e) {
-        if (e?.target?.closest?.(".window-header, .browser-tabbar, .app-menubar")) return;
+        if (
+          e?.target?.closest?.(".window-header, .browser-tabbar, .app-menubar")
+        )
+          return;
         wm.isDraggingWindow = true;
         document.body.classList.add("is-resizing");
       },
       move(e, rect, activeEdges) {
-        if (isMagnetEnabledResizable() && !win.dataset.tilingDrag && activeEdges) {
+        if (
+          isMagnetEnabledResizable() &&
+          !win.dataset.tilingDrag &&
+          activeEdges
+        ) {
           const threshold = getMagnetThresholdResizable();
           const taskbar = $("#taskbar");
           let taskbarPos = "bottom";
@@ -78,9 +93,13 @@ export function windowMakeResizable(win, wm, setHeightUnsetElement = null) {
 
           if (activeEdges.left) {
             let snapLeft = null;
-            if (taskbarPos === "left" && taskbarRect) snapLeft = taskbarRect.right;
+            if (taskbarPos === "left" && taskbarRect)
+              snapLeft = taskbarRect.right;
             else if (taskbarPos !== "left") snapLeft = screenLeft;
-            if (snapLeft !== null && Math.abs(rect.left - snapLeft) <= threshold) {
+            if (
+              snapLeft !== null &&
+              Math.abs(rect.left - snapLeft) <= threshold
+            ) {
               const newLeft = snapLeft;
               const right = rect.left + rect.width;
               const newWidth = right - newLeft;
@@ -93,7 +112,8 @@ export function windowMakeResizable(win, wm, setHeightUnsetElement = null) {
           }
           if (activeEdges.right) {
             let snapRight = null;
-            if (taskbarPos === "right" && taskbarRect) snapRight = taskbarRect.left;
+            if (taskbarPos === "right" && taskbarRect)
+              snapRight = taskbarRect.left;
             else if (taskbarPos !== "right") snapRight = screenRight;
             if (snapRight !== null) {
               const curRight = rect.left + rect.width;
@@ -108,7 +128,8 @@ export function windowMakeResizable(win, wm, setHeightUnsetElement = null) {
           }
           if (activeEdges.top) {
             let snapTop = null;
-            if (taskbarPos === "top" && taskbarRect) snapTop = taskbarRect.bottom;
+            if (taskbarPos === "top" && taskbarRect)
+              snapTop = taskbarRect.bottom;
             else if (taskbarPos !== "top") snapTop = screenTop;
             if (snapTop !== null && Math.abs(rect.top - snapTop) <= threshold) {
               const newTop = snapTop;
@@ -123,7 +144,8 @@ export function windowMakeResizable(win, wm, setHeightUnsetElement = null) {
           }
           if (activeEdges.bottom) {
             let snapBottom = null;
-            if (taskbarPos === "bottom" && taskbarRect) snapBottom = taskbarRect.top;
+            if (taskbarPos === "bottom" && taskbarRect)
+              snapBottom = taskbarRect.top;
             else if (taskbarPos !== "bottom") snapBottom = screenBottom;
             if (snapBottom !== null) {
               const curBottom = rect.top + rect.height;
@@ -147,7 +169,12 @@ export function windowMakeResizable(win, wm, setHeightUnsetElement = null) {
 
         const entry = wm.openWindows.get(win.id);
         if (entry?.record) {
-          entry.record.setGeometry(rect.left, rect.top, rect.width, rect.height);
+          entry.record.setGeometry(
+            rect.left,
+            rect.top,
+            rect.width,
+            rect.height,
+          );
         }
         if (setHeightUnsetElement?.style) {
           setHeightUnsetElement.style.height = "unset";
@@ -158,8 +185,8 @@ export function windowMakeResizable(win, wm, setHeightUnsetElement = null) {
         document.body.classList.remove("is-resizing");
         win.classList.remove("magnetized");
         if (wm.triggerSessionSave) wm.triggerSessionSave();
-      }
+      },
     },
-    { minWidth: minW, minHeight: minH }
+    { minWidth: minW, minHeight: minH },
   );
 }

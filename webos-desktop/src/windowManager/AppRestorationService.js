@@ -30,7 +30,7 @@ export class AppRestorationService {
       name: launcherPropertyName,
       windowIdPatterns: appMetadata.windowIdPatterns || [],
       appTypeHint: appMetadata.appTypeHint,
-      ...appMetadata
+      ...appMetadata,
     });
   }
 
@@ -40,7 +40,7 @@ export class AppRestorationService {
         this.registerApp(appId, {
           windowIdPatterns: metadata.windowIdPatterns,
           appTypeHint: "system",
-          persistContentState: metadata.persistContentState !== false
+          persistContentState: metadata.persistContentState !== false,
         });
       }
     }
@@ -49,7 +49,10 @@ export class AppRestorationService {
   appExists(appId) {
     if (!this.wm.appLauncher) return false;
     const serviceKey = SYSTEM_APPS[appId]?.serviceKey || appId;
-    return !!(this.wm.appLauncher.services?.[serviceKey] || this.wm.appLauncher.appMap?.[appId]);
+    return !!(
+      this.wm.appLauncher.services?.[serviceKey] ||
+      this.wm.appLauncher.appMap?.[appId]
+    );
   }
 
   guessAppIdFromWinId(winId) {
@@ -68,7 +71,8 @@ export class AppRestorationService {
     if (isMediaWindowId(windowState.id)) return MEDIA_VIEWER_APP_ID;
     if (windowState.appId) {
       if (this.appRegistry.has(windowState.appId)) return windowState.appId;
-      if (this.wm.appLauncher?.appMap?.[windowState.appId]) return windowState.appId;
+      if (this.wm.appLauncher?.appMap?.[windowState.appId])
+        return windowState.appId;
     }
     const winId = (windowState.id || "").toLowerCase();
     for (const [propName, metadata] of this.appRegistry.entries()) {
@@ -94,7 +98,8 @@ export class AppRestorationService {
     record.height = geom.height;
     record.zIndex = parseInt(win.style.zIndex) || 1000;
     record.snapZone = win.dataset.snapZone || null;
-    record.fullscreen = win.dataset.fullscreen === "true" && win.dataset.appId !== "browserApp";
+    record.fullscreen =
+      win.dataset.fullscreen === "true" && win.dataset.appId !== "browserApp";
     record.focused = win.classList.contains("active");
 
     const content = win.querySelector(".window-content");
@@ -108,7 +113,10 @@ export class AppRestorationService {
       win.dataset.appId = appId;
 
       const appMetadata = this.appRegistry.get(appId);
-      if (this.wm.appLauncher && (!appMetadata || appMetadata.persistContentState !== false)) {
+      if (
+        this.wm.appLauncher &&
+        (!appMetadata || appMetadata.persistContentState !== false)
+      ) {
         const appInstance = this.getAppInstance(appId);
         if (appInstance) {
           try {
@@ -135,7 +143,7 @@ export class AppRestorationService {
         name: win.dataset.fileName || record.title,
         path: parsedPath,
         kind: win.dataset.mediaKind || null,
-        storedIcon: win.dataset.storedIcon || null
+        storedIcon: win.dataset.storedIcon || null,
       };
     }
 
@@ -160,11 +168,15 @@ export class AppRestorationService {
       .filter(Boolean)
       .filter((win) => {
         try {
-          if (os.tray.isInTray(win.id) && win.style.display === "none") return false;
+          if (os.tray.isInTray(win.id) && win.style.display === "none")
+            return false;
         } catch {}
         return true;
       })
-      .sort((a, b) => (parseInt(a.style.zIndex) || 0) - (parseInt(b.style.zIndex) || 0));
+      .sort(
+        (a, b) =>
+          (parseInt(a.style.zIndex) || 0) - (parseInt(b.style.zIndex) || 0),
+      );
 
     for (const win of sortedWindows) {
       const entry = this.wm.openWindows.get(win.id);
@@ -175,15 +187,21 @@ export class AppRestorationService {
     if (this.wm.workspaceManager) {
       return {
         windows: windowStates,
-        workspaces: this.wm.workspaceManager.workspaces.map((w) => ({ id: w.id, name: w.name })),
-        activeWorkspaceId: this.wm.workspaceManager.activeId
+        workspaces: this.wm.workspaceManager.workspaces.map((w) => ({
+          id: w.id,
+          name: w.name,
+        })),
+        activeWorkspaceId: this.wm.workspaceManager.activeId,
       };
     }
     return windowStates;
   }
 
   saveSession() {
-    const persistenceEnabled = parseBool(os.storage.get(StorageKeys.windowSessionPersistence), true);
+    const persistenceEnabled = parseBool(
+      os.storage.get(StorageKeys.windowSessionPersistence),
+      true,
+    );
     if (!persistenceEnabled) {
       try {
         os.storage.remove(StorageKeys.windowSession);
@@ -239,7 +257,10 @@ export class AppRestorationService {
     if (this.isRestoring) return;
     if (!this.wm.fs || !this.wm.fs.sessionKey || !this.wm.appLauncher) return;
 
-    const persistenceEnabled = parseBool(os.storage.get(StorageKeys.windowSessionPersistence), true);
+    const persistenceEnabled = parseBool(
+      os.storage.get(StorageKeys.windowSessionPersistence),
+      true,
+    );
     if (!persistenceEnabled) return;
 
     this.isRestoring = true;
@@ -250,11 +271,19 @@ export class AppRestorationService {
       const parsedData = await this.readPersistedSession();
       if (!parsedData) return;
 
-      const windowStates = Array.isArray(parsedData) ? parsedData : parsedData.windows || [];
+      const windowStates = Array.isArray(parsedData)
+        ? parsedData
+        : parsedData.windows || [];
 
-      if (parsedData.windows && this.wm.workspaceManager && parsedData.workspaces) {
+      if (
+        parsedData.windows &&
+        this.wm.workspaceManager &&
+        parsedData.workspaces
+      ) {
         try {
-          this.wm.workspaceManager.workspaces = parsedData.workspaces.map((w) => ({ ...w, windows: new Set() }));
+          this.wm.workspaceManager.workspaces = parsedData.workspaces.map(
+            (w) => ({ ...w, windows: new Set() }),
+          );
           this.wm.workspaceManager.activeId = parsedData.activeWorkspaceId || 0;
           this.wm.workspaceManager.render();
         } catch (e) {
@@ -271,7 +300,9 @@ export class AppRestorationService {
           continue;
         }
         if (appId !== MEDIA_VIEWER_APP_ID && !this.appExists(appId)) {
-          this.logRestore(`Skipped: App '${appId}' not available for window ${state.id}`);
+          this.logRestore(
+            `Skipped: App '${appId}' not available for window ${state.id}`,
+          );
           continue;
         }
         await this.restoreWindow(state, appId);
@@ -339,7 +370,7 @@ export class AppRestorationService {
           position: state.snapZone ? undefined : { x: state.x, y: state.y },
           width: state.snapZone ? undefined : state.width,
           height: state.snapZone ? undefined : state.height,
-          allowManualPosition: true
+          allowManualPosition: true,
         };
 
         try {
@@ -371,7 +402,10 @@ export class AppRestorationService {
         }
 
         win.style.zIndex = state.zIndex;
-        this.wm.zIndexCounter = Math.max(this.wm.zIndexCounter, state.zIndex + 1);
+        this.wm.zIndexCounter = Math.max(
+          this.wm.zIndexCounter,
+          state.zIndex + 1,
+        );
       } catch (e) {
         console.warn(`Failed to apply window state for ${appId}:`, e);
       }
@@ -385,7 +419,8 @@ export class AppRestorationService {
       }
 
       const appMetadata = this.appRegistry.get(appId);
-      const shouldPersistContent = !appMetadata || appMetadata.persistContentState !== false;
+      const shouldPersistContent =
+        !appMetadata || appMetadata.persistContentState !== false;
 
       if (shouldPersistContent && state.appStateSnapshot) {
         try {
@@ -414,7 +449,9 @@ export class AppRestorationService {
   async restoreMediaViewer(state) {
     const snap = state.appStateSnapshot;
     if (!snap || !snap.name || !Array.isArray(snap.path)) {
-      this.logRestore(`Skipped: No file reference for media window ${state.id}`);
+      this.logRestore(
+        `Skipped: No file reference for media window ${state.id}`,
+      );
       return null;
     }
     try {
@@ -424,10 +461,12 @@ export class AppRestorationService {
         width: state.width,
         height: state.height,
         x: state.x,
-        y: state.y
+        y: state.y,
       });
     } catch (e) {
-      this.logRestore(`Failed to restore media window ${state.id}: ${e.message}`);
+      this.logRestore(
+        `Failed to restore media window ${state.id}: ${e.message}`,
+      );
       return null;
     }
     const win = $("#" + state.id);

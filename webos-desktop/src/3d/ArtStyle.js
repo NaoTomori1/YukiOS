@@ -2,7 +2,7 @@ const GRADIENT_STOPS = [
   [0.34, 0.3, 0.42],
   [0.52, 0.48, 0.6],
   [0.78, 0.75, 0.88],
-  [1.0, 0.98, 1.0]
+  [1.0, 0.98, 1.0],
 ];
 
 const toonCache = new WeakMap();
@@ -45,7 +45,7 @@ export function toonifyMaterial(THREE, mat) {
     alphaMap: mat.alphaMap,
     alphaTest: mat.alphaTest,
     depthWrite: mat.depthWrite,
-    depthTest: mat.depthTest
+    depthTest: mat.depthTest,
   });
   toon.gradientMap = getToonGradient(THREE);
   Object.assign(mat, toon);

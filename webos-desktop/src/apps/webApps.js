@@ -14,13 +14,15 @@ APP_MANIFESTS.forEach((manifest) => {
       windowSize: manifest.windowSize || ["90vw", "85vh"],
       trayOptions: manifest.trayOptions || null,
       musicUrl: manifest.musicUrl || null,
-      startMaximized: manifest.startMaximized || false
+      startMaximized: manifest.startMaximized || false,
     });
   }
 });
 
 export function getWebAppClass(serviceKey) {
-  const manifest = APP_MANIFESTS.find((m) => m.serviceKey === serviceKey && m.targetUrl);
+  const manifest = APP_MANIFESTS.find(
+    (m) => m.serviceKey === serviceKey && m.targetUrl,
+  );
   if (!manifest) return null;
   const className = manifest.title.replace(/[^a-zA-Z0-9]/g, "") + "App";
   return webApps[className] || null;

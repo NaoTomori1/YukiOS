@@ -1,4 +1,9 @@
-import { CDN_MIRRORS, setCdnMirror, getCdnMirror, resolveIconUrl } from ".././shared/assetResolver.js";
+import {
+  CDN_MIRRORS,
+  setCdnMirror,
+  getCdnMirror,
+  resolveIconUrl,
+} from ".././shared/assetResolver.js";
 
 import { BaseApp, StorageKeys, os, $, createElement } from "../framework.js";
 import { isTaskbarTop } from "../utils/utils.js";
@@ -25,7 +30,7 @@ class NetworkTrayApp extends BaseApp {
       gcore: 3,
       esmsh: 2,
       statically: 2,
-      staticdelivr: 2
+      staticdelivr: 2,
     };
     return signalMap[cdnId] || 2;
   }
@@ -35,18 +40,27 @@ class NetworkTrayApp extends BaseApp {
   }
 
   initTray() {
-    this.registerTray(this.winId, "papirus:status/network-wireless-connected-100", "Network", {
-      resident: true,
-      showInTray: true,
-      priority: 100,
-      onClick: () => {
-        this.togglePopup();
+    this.registerTray(
+      this.winId,
+      "papirus:status/network-wireless-connected-100",
+      "Network",
+      {
+        resident: true,
+        showInTray: true,
+        priority: 100,
+        onClick: () => {
+          this.togglePopup();
+        },
+        contextMenuItems: [
+          {
+            label: "Network Settings",
+            icon: "papirus:actions/configure",
+            action: () => this.openNetworkSettings(),
+          },
+          { type: "divider" },
+        ],
       },
-      contextMenuItems: [
-        { label: "Network Settings", icon: "papirus:actions/configure", action: () => this.openNetworkSettings() },
-        { type: "divider" }
-      ]
-    });
+    );
     this.updateTrayIcon();
   }
 
@@ -62,9 +76,13 @@ class NetworkTrayApp extends BaseApp {
         this.togglePopup();
       },
       contextMenuItems: [
-        { label: "Network Settings", icon: "papirus:actions/configure", action: () => this.openNetworkSettings() },
-        { type: "divider" }
-      ]
+        {
+          label: "Network Settings",
+          icon: "papirus:actions/configure",
+          action: () => this.openNetworkSettings(),
+        },
+        { type: "divider" },
+      ],
     });
   }
 
@@ -96,7 +114,9 @@ class NetworkTrayApp extends BaseApp {
     document.body.appendChild(popup);
     popup.style.display = "block";
     popup.style.visibility = "hidden";
-    const btn = document.querySelector('[data-win-id="network-tray-window"]') || $("#app-tray");
+    const btn =
+      document.querySelector('[data-win-id="network-tray-window"]') ||
+      $("#app-tray");
     const pos = getTrayPosition(btn, popup);
     popup.style.left = pos.left;
     popup.style.right = pos.right;
@@ -179,7 +199,7 @@ class NetworkTrayApp extends BaseApp {
         () => {
           popup.remove();
         },
-        { once: true }
+        { once: true },
       );
     }
     this.popupVisible = false;
@@ -190,7 +210,11 @@ class NetworkTrayApp extends BaseApp {
     if (this.pinned) return;
     const popup = $("#" + this.popupId);
     const trayEl = $("#app-tray");
-    if (popup && !e.target.closest("#network-tray-popup") && !e.target.closest("#app-tray")) {
+    if (
+      popup &&
+      !e.target.closest("#network-tray-popup") &&
+      !e.target.closest("#app-tray")
+    ) {
       this.closePopup();
     }
   };
@@ -263,7 +287,7 @@ class NetworkTrayApp extends BaseApp {
       `Connected to ${cdn.name}`,
       "success",
       2000,
-      "papirus:status/network-wireless-connected-100"
+      "papirus:status/network-wireless-connected-100",
     );
 
     this.updateTrayIcon();

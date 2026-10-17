@@ -5,7 +5,8 @@ class ClipboardManager {
     this.currentItem = null;
     this.history = [];
     this.maxHistorySize = 20;
-    this.persistenceEnabled = os.storage.get(StorageKeys.clipboardSaveHistory) !== "false";
+    this.persistenceEnabled =
+      os.storage.get(StorageKeys.clipboardSaveHistory) !== "false";
     this.changeCallbacks = new Set();
     this.broadcastChannel = null;
     this.storageKey = StorageKeys.clipboardCurrent;
@@ -64,7 +65,7 @@ class ClipboardManager {
       data,
       type,
       timestamp: Date.now(),
-      id: Date.now() + Math.random()
+      id: Date.now() + Math.random(),
     };
 
     this.currentItem = item;
@@ -123,7 +124,7 @@ class ClipboardManager {
       try {
         this.broadcastChannel.postMessage({
           type: "update",
-          data: { data: item.data, type: item.type }
+          data: { data: item.data, type: item.type },
         });
       } catch (e) {
         console.warn("[ClipboardManager] Failed to broadcast update:", e);

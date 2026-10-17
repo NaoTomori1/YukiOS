@@ -303,7 +303,11 @@
 
 .torrent-progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, var(--brand), rgba(var(--brand-rgb, 99, 102, 241), 0.8));
+  background: linear-gradient(
+    90deg,
+    var(--brand),
+    rgba(var(--brand-rgb, 99, 102, 241), 0.8)
+  );
   border-radius: 2px;
   transition: width 0.2s;
 }

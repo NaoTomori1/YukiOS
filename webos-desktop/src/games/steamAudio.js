@@ -6,7 +6,9 @@ export class LargeModeAudio {
 
   init() {
     if (!this.audioContext) {
-      this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      this.audioContext = new (
+        window.AudioContext || window.webkitAudioContext
+      )();
     }
 
     if (this.audioContext.state === "suspended") {
@@ -20,7 +22,7 @@ export class LargeModeAudio {
     volume = 0.08,
     waveform = "triangle",
     endFrequency = null,
-    harmonic = false
+    harmonic = false,
   }) {
     if (!this.enabled) return;
 
@@ -36,7 +38,10 @@ export class LargeModeAudio {
 
     osc.frequency.setValueAtTime(frequency * 0.96, now);
 
-    osc.frequency.exponentialRampToValueAtTime(endFrequency ?? frequency, now + duration);
+    osc.frequency.exponentialRampToValueAtTime(
+      endFrequency ?? frequency,
+      now + duration,
+    );
 
     gain.gain.setValueAtTime(0, now);
     gain.gain.linearRampToValueAtTime(volume, now + 0.004);
@@ -73,7 +78,7 @@ export class LargeModeAudio {
       endFrequency: 900,
       duration: 0.045,
       volume: 0.055,
-      harmonic: true
+      harmonic: true,
     });
   }
 
@@ -82,7 +87,7 @@ export class LargeModeAudio {
       frequency: 980,
       endFrequency: 1030,
       duration: 0.025,
-      volume: 0.05
+      volume: 0.05,
     });
   }
 
@@ -92,7 +97,7 @@ export class LargeModeAudio {
       endFrequency: 980,
       duration: 0.05,
       volume: 0.08,
-      harmonic: true
+      harmonic: true,
     });
 
     setTimeout(() => {
@@ -101,7 +106,7 @@ export class LargeModeAudio {
         endFrequency: 1420,
         duration: 0.045,
         volume: 0.055,
-        harmonic: true
+        harmonic: true,
       });
     }, 35);
   }
@@ -111,7 +116,7 @@ export class LargeModeAudio {
       frequency: 820,
       endFrequency: 640,
       duration: 0.055,
-      volume: 0.07
+      volume: 0.07,
     });
 
     setTimeout(() => {
@@ -119,7 +124,7 @@ export class LargeModeAudio {
         frequency: 560,
         endFrequency: 420,
         duration: 0.045,
-        volume: 0.045
+        volume: 0.045,
       });
     }, 30);
   }
@@ -130,7 +135,7 @@ export class LargeModeAudio {
       endFrequency: 340,
       duration: 0.08,
       volume: 0.07,
-      waveform: "square"
+      waveform: "square",
     });
   }
 }

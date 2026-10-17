@@ -10,15 +10,32 @@ import {
   setText,
   toggleClass,
   createElement,
-  StorageKeys
+  StorageKeys,
 } from "../framework.js";
 import { toggleStartMenu, closeStartMenu } from "../desktopui/startMenu.js";
 import { Achievements } from "../achievements.js";
-import { applyMacSettings, disableMacSettings } from "../modes/macos/session.js";
-import { applyChromeOsSettings, disableChromeOsSettings } from "../modes/chromeos/session.js";
-import { applyTilingSettings, disableTilingSettings } from "../modes/tiling/session.js";
+import {
+  applyMacSettings,
+  disableMacSettings,
+} from "../modes/macos/session.js";
+import {
+  applyChromeOsSettings,
+  disableChromeOsSettings,
+} from "../modes/chromeos/session.js";
+import {
+  applyTilingSettings,
+  disableTilingSettings,
+} from "../modes/tiling/session.js";
+import {
+  applyWin11Settings,
+  disableWin11Settings,
+} from "../modes/win11/session.js";
 import { SystemUtilities } from "../system.js";
-import { callIfFunction, hasMethod, isFunction } from "../shared/functionUtils.js";
+import {
+  callIfFunction,
+  hasMethod,
+  isFunction,
+} from "../shared/functionUtils.js";
 
 const OVERLAY_SELECTOR = ".intro-tour-overlay";
 const DIM_SELECTOR = ".intro-tour-dim";
@@ -58,7 +75,7 @@ const STEPS = [
     icon: "fas fa-rocket",
     title: "This is YukiOS.",
     body: "A full desktop inside one browser tab. No installs, nothing for a school or work network to block, and everything saved right here in this browser. 60 seconds and you'll have seen what it does.",
-    buttons: { primary: { label: "Start", action: "advance" } }
+    buttons: { primary: { label: "Start", action: "advance" } },
   },
   {
     id: "launch-app",
@@ -69,7 +86,7 @@ const STEPS = [
     openMenu: true,
     cardSide: "top",
     compact: true,
-    waitForWindow: "any"
+    waitForWindow: "any",
   },
   {
     id: "palette",
@@ -78,7 +95,7 @@ const STEPS = [
     body: "That opens the command palette, the fastest way to launch anything. Press Ctrl+K now.",
     target: () => $(PALETTE_ROOT_SELECTOR) || $(PALETTE_WIN_SELECTOR) || null,
     cardSide: "bottom",
-    waitForWindow: GAME_WINDOW_KEY
+    waitForWindow: GAME_WINDOW_KEY,
   },
   {
     id: "games",
@@ -98,20 +115,21 @@ const STEPS = [
       }
       return el || null;
     },
-    buttons: { primary: { label: "Got it", action: "advance" } }
+    buttons: { primary: { label: "Got it", action: "advance" } },
   },
   {
     id: "modes",
     icon: "fas fa-layer-group",
-    title: "One desktop, four faces.",
+    title: "One desktop, five faces.",
     body: "Flip the whole desktop to a Mac, a Chromebook, or a tiling window manager. Try one, then jump back to default mode.",
     modeButtons: [
       { label: "YukiOS", icon: "fas fa-snowflake", mode: "reset" },
       { label: "Mac", icon: "fab fa-apple", mode: "mac" },
       { label: "Chrome OS", icon: "fab fa-chrome", mode: "chromeos" },
-      { label: "Tiling", icon: "fas fa-th-large", mode: "tiling" }
+      { label: "Tiling", icon: "fas fa-th-large", mode: "tiling" },
+      { label: "Windows 11", icon: "fab fa-windows", mode: "win11" },
     ],
-    buttons: { primary: { label: "Got it", action: "advance" } }
+    buttons: { primary: { label: "Got it", action: "advance" } },
   },
   {
     id: "settings",
@@ -119,7 +137,7 @@ const STEPS = [
     title: "Make it yours.",
     body: "Settings opens on Appearance, home to 25+ themes. Restyle the wallpaper, taskbar, dock, and sound from here.",
     target: () => $(SETTINGS_WIN_SELECTOR) || null,
-    buttons: { primary: { label: "Open Settings", action: "settings" } }
+    buttons: { primary: { label: "Open Settings", action: "settings" } },
   },
   {
     id: "browser",
@@ -127,7 +145,7 @@ const STEPS = [
     title: "A web browser, built in.",
     body: "Bookmarks, tabs, a proxy for blocked sites, even Tor, all inside this tab.",
     target: () => lastWindow(BROWSER_WIN_SELECTOR),
-    buttons: { primary: { label: "Open the browser", action: "browser" } }
+    buttons: { primary: { label: "Open the browser", action: "browser" } },
   },
   {
     id: "persistence",
@@ -138,9 +156,9 @@ const STEPS = [
     cardSide: "top",
     buttons: {
       secondary: { label: "Done", action: "finish" },
-      primary: { label: "Open the Guide", action: "guide" }
-    }
-  }
+      primary: { label: "Open the Guide", action: "guide" },
+    },
+  },
 ];
 
 let tour = null;
@@ -158,7 +176,9 @@ function runTour(steps, options = {}) {
   if ($(OVERLAY_SELECTOR)) return;
   const dim = createElement("div", { className: "intro-tour-dim" });
   const overlay = createElement("div", { className: "intro-tour-overlay" });
-  overlay.appendChild(createElement("div", { className: "intro-tour-spotlight" }));
+  overlay.appendChild(
+    createElement("div", { className: "intro-tour-spotlight" }),
+  );
   overlay.appendChild(createElement("div", { className: "intro-tour-card" }));
   document.body.appendChild(dim);
   document.body.appendChild(overlay);
@@ -182,7 +202,7 @@ function runTour(steps, options = {}) {
     palettePhraseShown: false,
     raisedEl: null,
     raisedZ: null,
-    actions: null
+    actions: null,
   };
   os.events.on(BusEvents.WINDOW_CREATED, onWindowCreated);
   window.addEventListener("resize", positionElements);
@@ -209,7 +229,11 @@ function onWindowCreated(payload) {
   if (!step?.waitForWindow) return;
   const winId = payload?.winId || "";
   const matcher = step.waitForWindow;
-  const matched = isFunction(matcher) ? matcher(winId) : matcher === "any" ? true : winId.includes(matcher);
+  const matched = isFunction(matcher)
+    ? matcher(winId)
+    : matcher === "any"
+      ? true
+      : winId.includes(matcher);
   if (matched) advance();
 }
 
@@ -230,7 +254,11 @@ function checkCurrentStep() {
     setText($(BODY_SELECTOR, tour.card), "Now type 'steam' and press Enter.");
     positionElements();
   }
-  if (step?.id === "palette" && tour.palettePhraseShown && $(GAMES_WIN_SELECTOR)) {
+  if (
+    step?.id === "palette" &&
+    tour.palettePhraseShown &&
+    $(GAMES_WIN_SELECTOR)
+  ) {
     const gw = $(GAMES_WIN_SELECTOR);
     if (gw.style.display === "none") {
       try {
@@ -278,7 +306,10 @@ function showStep(index) {
     }, WAIT_PRIME_DELAY);
   }
   const buttons = step.buttons || {};
-  const secondary = buttons.secondary || { label: "Skip tour", action: "finish" };
+  const secondary = buttons.secondary || {
+    label: "Skip tour",
+    action: "finish",
+  };
   const primary = buttons.primary || { label: "Next", action: "advance" };
   const modeButtons = step.modeButtons || [];
   tour.actions = { secondary: secondary.action, primary: primary.action };
@@ -294,21 +325,25 @@ function showStep(index) {
            (mode) =>
              `<button type="button" class="intro-tour-mode-btn" data-mode="${mode.mode}">
                 <i class="${mode.icon}"></i><span></span>
-              </button>`
+              </button>`,
          )
          .join("")}
      </div>
      <div class="intro-tour-actions">
        <button type="button" class="intro-tour-btn intro-tour-btn-secondary"></button>
        <button type="button" class="intro-tour-btn intro-tour-btn-primary"></button>
-     </div>`
+     </div>`,
   );
   setText($(TITLE_SELECTOR, tour.card), step.title);
   setText($(BODY_SELECTOR, tour.card), step.body);
   setText($(BUTTON_SECONDARY_SELECTOR, tour.card), secondary.label);
   setText($(BUTTON_PRIMARY_SELECTOR, tour.card), primary.label);
-  $(BUTTON_SECONDARY_SELECTOR, tour.card).addEventListener("click", () => runAction(tour.actions.secondary));
-  $(BUTTON_PRIMARY_SELECTOR, tour.card).addEventListener("click", () => runAction(tour.actions.primary));
+  $(BUTTON_SECONDARY_SELECTOR, tour.card).addEventListener("click", () =>
+    runAction(tour.actions.secondary),
+  );
+  $(BUTTON_PRIMARY_SELECTOR, tour.card).addEventListener("click", () =>
+    runAction(tour.actions.primary),
+  );
   modeButtons.forEach((mode) => {
     const label = mode.label;
     const button = $(`[data-mode="${mode.mode}"]`, tour.card);
@@ -334,7 +369,9 @@ function runAction(action) {
     os.app.launch("yukiOsGuideApp").catch(() => {});
     finish();
   } else if (action === "settings") {
-    os.app.launch("settingsApp", { section: "pane-appearance" }).catch(() => {});
+    os.app
+      .launch("settingsApp", { section: "pane-appearance" })
+      .catch(() => {});
     swapPrimaryToDone();
   } else if (action === "browser") {
     os.app.launch("browserApp").catch(() => {});
@@ -365,7 +402,7 @@ function applyMode(mode) {
   if (!tour.previewWallpaper) {
     tour.previewWallpaper = {
       key: os.storage.get(StorageKeys.wallpaperKey),
-      type: os.storage.get(StorageKeys.wallpaperType)
+      type: os.storage.get(StorageKeys.wallpaperType),
     };
   }
   enterPreviewMode(mode);
@@ -380,6 +417,8 @@ function enterPreviewMode(mode) {
     applyChromeOsSettings();
   } else if (mode === "tiling") {
     applyTilingSettings();
+  } else if (mode === "win11") {
+    applyWin11Settings();
   }
 }
 
@@ -387,6 +426,7 @@ function disablePreviewModes() {
   disableMacSettings();
   disableTilingSettings();
   disableChromeOsSettings();
+  disableWin11Settings();
 }
 
 function restorePreviewWallpaper() {
@@ -445,7 +485,10 @@ function cleanup() {
 
 function scheduleStartMenuOpen() {
   window.clearTimeout(tour.menuOpenTimer);
-  tour.menuOpenTimer = window.setTimeout(openStartMenuWithSearch, START_MENU_OPEN_DELAY);
+  tour.menuOpenTimer = window.setTimeout(
+    openStartMenuWithSearch,
+    START_MENU_OPEN_DELAY,
+  );
 }
 
 function openStartMenuWithSearch() {
@@ -468,7 +511,13 @@ function positionElements() {
   const vw = window.innerWidth;
   const vh = window.innerHeight;
   const usable =
-    !!rect && rect.width > 0 && rect.height > 0 && rect.right > 0 && rect.left < vw && rect.bottom > 0 && rect.top < vh;
+    !!rect &&
+    rect.width > 0 &&
+    rect.height > 0 &&
+    rect.right > 0 &&
+    rect.left < vw &&
+    rect.bottom > 0 &&
+    rect.top < vh;
   if (!usable) {
     restoreRaised();
     setStyle(spotlight, { display: "none" });
@@ -478,7 +527,9 @@ function positionElements() {
     return;
   }
   const paletteOverlay = $("#command-palette-overlay");
-  const isPaletteTarget = paletteOverlay && (paletteOverlay === targetEl || paletteOverlay.contains(targetEl));
+  const isPaletteTarget =
+    paletteOverlay &&
+    (paletteOverlay === targetEl || paletteOverlay.contains(targetEl));
   if (isPaletteTarget) raiseElement(paletteOverlay);
   else {
     const revealWindow = targetEl.closest(".window");
@@ -494,10 +545,10 @@ function positionElements() {
     left: left + "px",
     top: top + "px",
     width: width + "px",
-    height: height + "px"
+    height: height + "px",
   });
   setStyle(dim, {
-    clipPath: `inset(${top}px ${vw - rect.right - SPOTLIGHT_PAD}px ${vh - rect.bottom - SPOTLIGHT_PAD}px ${left}px)`
+    clipPath: `inset(${top}px ${vw - rect.right - SPOTLIGHT_PAD}px ${vh - rect.bottom - SPOTLIGHT_PAD}px ${left}px)`,
   });
   toggleClass(card, CARD_CENTERED_CLASS, false);
   const gap = CARD_GAP;
@@ -507,7 +558,9 @@ function positionElements() {
   const clampTop = (v) => Math.max(16, Math.min(v, vh - cardHeight - 16));
   if (step?.cardSide === "right") {
     const cardLeft = clampLeft(rect.right + gap);
-    const cardTop = clampTop(Math.round(rect.top + rect.height / 2 - cardHeight / 2));
+    const cardTop = clampTop(
+      Math.round(rect.top + rect.height / 2 - cardHeight / 2),
+    );
     setStyle(card, { left: cardLeft + "px", top: cardTop + "px" });
     return;
   }

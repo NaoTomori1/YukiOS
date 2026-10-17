@@ -16,78 +16,78 @@ const SHOWCASE = [
     icon: "fas fa-folder-open",
     title: "Explorer",
     desc: "A real filesystem lives in this tab. Drag, drop, edit, organize.",
-    action: "explorerApp"
+    action: "explorerApp",
   },
   {
     group: "Get productive",
     icon: "fas fa-file-alt",
     title: "Notepad",
     desc: "A clean text editor that saves straight to your virtual disk.",
-    action: "notepadApp"
+    action: "notepadApp",
   },
   {
     group: "Get productive",
     icon: "fas fa-calculator",
     title: "Calculator",
     desc: "A full scientific calculator with memory and history.",
-    action: "calculatorApp"
+    action: "calculatorApp",
   },
   {
     group: "Get productive",
     icon: "fas fa-cog",
     title: "Settings",
     desc: "Themes, wallpapers, audio, and every system knob in one place.",
-    action: "settingsApp"
+    action: "settingsApp",
   },
   {
     group: "Make something",
     icon: "fas fa-code",
     title: "Code Editor",
     desc: "A full VS Code-powered editor running right inside the tab.",
-    action: "monacoApp"
+    action: "monacoApp",
   },
   {
     group: "Make something",
     icon: "fas fa-terminal",
     title: "Terminal",
     desc: "Real commands, git, Python, and WASM tools like btop and cmatrix.",
-    action: "terminalApp"
+    action: "terminalApp",
   },
   {
     group: "Make something",
     icon: "fas fa-wand-magic-sparkles",
     title: "App Creator",
     desc: "Turn any URL into a desktop app in under a minute.",
-    action: "appCreatorApp"
+    action: "appCreatorApp",
   },
   {
     group: "Make something",
     icon: "fas fa-camera",
     title: "Camera",
     desc: "Snap a photo and save it straight to your files.",
-    action: "cameraApp"
+    action: "cameraApp",
   },
   {
     group: "Play something",
     icon: "fab fa-steam",
     title: "Yuki Steam",
     desc: "Browse and launch 3000+ games from a full library.",
-    action: "steamApp"
+    action: "steamApp",
   },
   {
     group: "Play something",
     icon: "fas fa-gamepad",
     title: "Emulators",
     desc: "Boot DOS, Flash, console, and x86 systems in the browser.",
-    action: "emulatorApp"
+    action: "emulatorApp",
   },
   {
     group: "Play something",
     icon: "fas fa-floppy-disk",
     title: "DOS Games",
     desc: "Play classic DOS titles through the JsDos runtime.",
-    action: "jsDosApp"
-  }
+    action: "jsDosApp",
+  },
 ];
 
 export class YukiOsGuideApp extends BaseApp {
@@ -101,10 +101,16 @@ export class YukiOsGuideApp extends BaseApp {
   }
 
   async open(opts = {}) {
-    const win = os.window.create("yuki-os-guide", "YukiOS Guide", "980px", "720px", {
-      icon: "fas fa-book-open",
-      appId: "yuki-os-guide"
-    });
+    const win = os.window.create(
+      "yuki-os-guide",
+      "YukiOS Guide",
+      "980px",
+      "720px",
+      {
+        icon: "fas fa-book-open",
+        appId: "yuki-os-guide",
+      },
+    );
 
     win.innerHTML = this.buildUI();
     this.bindEvents(win);
@@ -172,11 +178,15 @@ export class YukiOsGuideApp extends BaseApp {
   }
 
   buildOverview(apps) {
-    const showcaseItems = SHOWCASE.filter((item) => this.os.app.hasApp(item.action));
-    const groups = ["Get productive", "Make something", "Play something"].map((label) => ({
-      label,
-      items: showcaseItems.filter((item) => item.group === label)
-    }));
+    const showcaseItems = SHOWCASE.filter((item) =>
+      this.os.app.hasApp(item.action),
+    );
+    const groups = ["Get productive", "Make something", "Play something"].map(
+      (label) => ({
+        label,
+        items: showcaseItems.filter((item) => item.group === label),
+      }),
+    );
 
     return `
       <div class="guide-section guide-overview">
@@ -220,12 +230,12 @@ export class YukiOsGuideApp extends BaseApp {
                     </div>
                     <span class="showcase-open"><i class="fas fa-external-link-alt"></i> Open</span>
                   </div>
-                `
+                `,
                   )
                   .join("")}
               </div>
             </div>
-          `
+          `,
             )
             .join("")}
         </div>
@@ -247,7 +257,9 @@ export class YukiOsGuideApp extends BaseApp {
         ${Object.entries(categories)
           .map(([category, categoryApps]) => {
             const filtered = categoryApps.filter(
-              (a) => a.displayName.toLowerCase().includes(searchLower) || a.id.toLowerCase().includes(searchLower)
+              (a) =>
+                a.displayName.toLowerCase().includes(searchLower) ||
+                a.id.toLowerCase().includes(searchLower),
             );
             if (filtered.length === 0) return "";
             return `
@@ -261,7 +273,9 @@ export class YukiOsGuideApp extends BaseApp {
                     <div class="app-icon">
                       ${
                         app.icon
-                          ? app.icon.startsWith("fa") || app.icon.startsWith("fas") || app.icon.startsWith("fab")
+                          ? app.icon.startsWith("fa") ||
+                            app.icon.startsWith("fas") ||
+                            app.icon.startsWith("fab")
                             ? `<i class="${app.icon}"></i>`
                             : `<img src="${app.icon}" alt="${app.displayName}"><i class="fas fa-cube" style="display:none;"></i>`
                           : `<i class="fas fa-cube"></i>`
@@ -276,7 +290,7 @@ export class YukiOsGuideApp extends BaseApp {
                       </div>
                     </div>
                   </div>
-                `
+                `,
                   )
                   .join("")}
               </div>
@@ -287,7 +301,9 @@ export class YukiOsGuideApp extends BaseApp {
 
         ${
           apps.filter(
-            (a) => a.displayName.toLowerCase().includes(searchLower) || a.id.toLowerCase().includes(searchLower)
+            (a) =>
+              a.displayName.toLowerCase().includes(searchLower) ||
+              a.id.toLowerCase().includes(searchLower),
           ).length === 0
             ? `<div class="guide-empty"><i class="fas fa-search"></i><p>No apps match that</p></div>`
             : ""
@@ -410,7 +426,9 @@ export class YukiOsGuideApp extends BaseApp {
   filterApps(apps) {
     const searchLower = this.searchQuery.toLowerCase();
     return apps.filter(
-      (a) => a.displayName.toLowerCase().includes(searchLower) || a.id.toLowerCase().includes(searchLower)
+      (a) =>
+        a.displayName.toLowerCase().includes(searchLower) ||
+        a.id.toLowerCase().includes(searchLower),
     );
   }
 
@@ -439,7 +457,7 @@ export class YukiOsGuideApp extends BaseApp {
       media: [],
       games: [],
       tools: [],
-      other: []
+      other: [],
     };
 
     apps.forEach((app) => {
@@ -500,7 +518,7 @@ export class YukiOsGuideApp extends BaseApp {
       achievementsApp: "system",
 
       systemAppsApp: "system",
-      yukiOsGuideApp: "system"
+      yukiOsGuideApp: "system",
     };
 
     return categoryMap[appId] || "other";
@@ -513,13 +531,17 @@ export class YukiOsGuideApp extends BaseApp {
       media: "Media & Creative",
       games: "Games & Emulation",
       tools: "Tools",
-      other: "Other"
+      other: "Other",
     };
     return names[category] || category;
   }
 
   inferAppDescription(app) {
-    return gameDescriptions[app.id] || APP_DESCRIPTIONS[app.id] || APP_DESCRIPTIONS.game;
+    return (
+      gameDescriptions[app.id] ||
+      APP_DESCRIPTIONS[app.id] ||
+      APP_DESCRIPTIONS.game
+    );
   }
 
   bindEvents(win) {
@@ -601,7 +623,10 @@ export class YukiOsGuideApp extends BaseApp {
         });
       });
 
-      const navCount = $(".guide-nav-item[data-tab='apps'] .guide-nav-badge", win);
+      const navCount = $(
+        ".guide-nav-item[data-tab='apps'] .guide-nav-badge",
+        win,
+      );
       if (navCount) {
         navCount.textContent = filteredApps.length;
       }

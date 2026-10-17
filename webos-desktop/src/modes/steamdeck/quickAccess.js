@@ -1,4 +1,14 @@
-import { os, StorageKeys, $, $$, setHTML, createElement, setText, bindEvent, toggleClass } from "../../framework.js";
+import {
+  os,
+  StorageKeys,
+  $,
+  $$,
+  setHTML,
+  createElement,
+  setText,
+  bindEvent,
+  toggleClass,
+} from "../../framework.js";
 import { KeybindManager } from "../../keybindManager.js";
 import { steamDeckAudio } from "./SteamDeckAudio.js";
 import { audioMixer } from "../../audioMixer.js";
@@ -8,18 +18,22 @@ import {
   renderRangeSlider,
   getRangeSliderValue,
   setRangeSliderValue,
-  bindRangeSlider
+  bindRangeSlider,
 } from "../../shared/rangeSlider.js";
 import {
   fetchFriends,
   getCachedFriends,
   acceptFriendRequest,
   removeFriend,
-  fetchConversations
+  fetchConversations,
 } from "../../social/friendsApi.js";
 import { avatarUrlForIndex } from "../../social/userIdentity.js";
 import { formatRelativeTime, isUserOnline } from "../../social/socialApi.js";
-import { openFriendDmWindow, openFriendRowContextMenu, openStatusPicker } from "../../games/steamSocial.js";
+import {
+  openFriendDmWindow,
+  openFriendRowContextMenu,
+  openStatusPicker,
+} from "../../games/steamSocial.js";
 import { escapeHtml, resolveAppName } from "../../utils/utils.js";
 import { getPresence } from "../../social/presence.js";
 import { getCurrentUser } from "../../desktopui/startMenu.js";
@@ -33,20 +47,20 @@ const QTA_TABS = [
   { id: "media", icon: "fa-music", label: "Now Playing" },
   { id: "settings", icon: "fa-gear", label: "Quick Settings" },
   { id: "power", icon: "fa-battery-half", label: "Power" },
-  { id: "help", icon: "fa-circle-question", label: "Help" }
+  { id: "help", icon: "fa-circle-question", label: "Help" },
 ];
 
 const FRIEND_TABS = [
   { id: "favorites", icon: "fa-star", label: "Favorites" },
   { id: "all", icon: "fa-user", label: "All Friends" },
   { id: "groups", icon: "fa-users", label: "Group Chats" },
-  { id: "dms", icon: "fa-comment", label: "Direct Messages" }
+  { id: "dms", icon: "fa-comment", label: "Direct Messages" },
 ];
 
 const POWER_MODE_LABELS = {
   performance: "Performance",
   balanced: "Balanced",
-  high: "High"
+  high: "High",
 };
 
 export class QuickAccessPanel {
@@ -74,7 +88,7 @@ export class QuickAccessPanel {
     const el = createElement("div", { id: "steamdeck-qta" });
     const railBtns = QTA_TABS.map(
       (t) =>
-        `<button class="deck-qta-rail-btn" data-qta-tab="${t.id}" title="${t.label}"><i class="fas ${t.icon}"></i></button>`
+        `<button class="deck-qta-rail-btn" data-qta-tab="${t.id}" title="${t.label}"><i class="fas ${t.icon}"></i></button>`,
     ).join("");
     setHTML(
       el,
@@ -90,7 +104,7 @@ export class QuickAccessPanel {
           </div>
           <div class="deck-qta-panel-body"></div>
         </div>
-      </div>`
+      </div>`,
     );
     document.body.appendChild(el);
     this.el = el;
@@ -136,12 +150,19 @@ export class QuickAccessPanel {
     this.refreshQtaFocus();
     this.refreshMediaTab();
     this.closeHandler = (e) => {
-      if (this.isOpen && this.el && !this.el.contains(e.target) && !e.target.closest("#context-menu")) this.close();
+      if (
+        this.isOpen &&
+        this.el &&
+        !this.el.contains(e.target) &&
+        !e.target.closest("#context-menu")
+      )
+        this.close();
     };
     document.addEventListener("mousedown", this.closeHandler);
     this.qtaKeyHandler = (e) => this.handleQtaKeydown(e);
     document.addEventListener("keydown", this.qtaKeyHandler, true);
-    if (!this.mediaTimer) this.mediaTimer = setInterval(() => this.updateMediaPlayState(), 1000);
+    if (!this.mediaTimer)
+      this.mediaTimer = setInterval(() => this.updateMediaPlayState(), 1000);
     this.startFriendsPolling();
     this.setupFriendsPresenceListener();
     if (this.manager) this.manager.quickAccessOpen = true;
@@ -155,7 +176,9 @@ export class QuickAccessPanel {
       document.removeEventListener("keydown", this.qtaKeyHandler, true);
       this.qtaKeyHandler = null;
     }
-    $$(".deck-qta-focused", this.el).forEach((el) => el.classList.remove("deck-qta-focused"));
+    $$(".deck-qta-focused", this.el).forEach((el) =>
+      el.classList.remove("deck-qta-focused"),
+    );
     const activeEl = document.activeElement;
     if (activeEl && this.el && this.el.contains(activeEl)) activeEl.blur();
     if (this.mediaTimer) {
@@ -201,17 +224,31 @@ export class QuickAccessPanel {
     if (!bodyEl || this.panelAnimating) return;
     this.panelAnimating = true;
 
-    bodyEl.classList.add("deck-qta-panel-body--out", `deck-qta-panel-body--${direction}`);
+    bodyEl.classList.add(
+      "deck-qta-panel-body--out",
+      `deck-qta-panel-body--${direction}`,
+    );
 
     const startIn = () => {
-      bodyEl.classList.remove("deck-qta-panel-body--out", "deck-qta-panel-body--up", "deck-qta-panel-body--down");
+      bodyEl.classList.remove(
+        "deck-qta-panel-body--out",
+        "deck-qta-panel-body--up",
+        "deck-qta-panel-body--down",
+      );
       this.renderPanel();
-      bodyEl.classList.add("deck-qta-panel-body--in", `deck-qta-panel-body--${direction}`);
+      bodyEl.classList.add(
+        "deck-qta-panel-body--in",
+        `deck-qta-panel-body--${direction}`,
+      );
       bodyEl.addEventListener("animationend", finishIn, { once: true });
     };
 
     const finishIn = () => {
-      bodyEl.classList.remove("deck-qta-panel-body--in", "deck-qta-panel-body--up", "deck-qta-panel-body--down");
+      bodyEl.classList.remove(
+        "deck-qta-panel-body--in",
+        "deck-qta-panel-body--up",
+        "deck-qta-panel-body--down",
+      );
       this.panelAnimating = false;
     };
 
@@ -220,7 +257,9 @@ export class QuickAccessPanel {
 
   refreshTabState() {
     if (!this.el) return;
-    $$(".deck-qta-rail-btn", this.el).forEach((btn) => toggleClass(btn, "active", btn.dataset.qtaTab === this.tab));
+    $$(".deck-qta-rail-btn", this.el).forEach((btn) =>
+      toggleClass(btn, "active", btn.dataset.qtaTab === this.tab),
+    );
     this.updateBattery();
   }
 
@@ -245,17 +284,19 @@ export class QuickAccessPanel {
     if (this.tab === "notifications") {
       setHTML(
         actionEl,
-        '<button class="deck-qta-btn" data-qta-action="clearNotifications"><i class="fas fa-trash"></i><span>Clear</span></button>'
+        '<button class="deck-qta-btn" data-qta-action="clearNotifications"><i class="fas fa-trash"></i><span>Clear</span></button>',
       );
     } else if (this.tab === "friends") {
       setHTML(
         actionEl,
-        '<button class="deck-qta-btn" data-qta-action="addFriend"><i class="fas fa-plus"></i><span>Add Friend</span></button>'
+        '<button class="deck-qta-btn" data-qta-action="addFriend"><i class="fas fa-plus"></i><span>Add Friend</span></button>',
       );
     }
     const actionBtn = $("[data-qta-action]", actionEl);
     if (actionBtn) {
-      bindEvent(actionBtn, "click", () => this.handleAction(actionBtn.dataset.qtaAction));
+      bindEvent(actionBtn, "click", () =>
+        this.handleAction(actionBtn.dataset.qtaAction),
+      );
     }
     if (this.tab === "notifications") this.renderNotifications(bodyEl);
     else if (this.tab === "friends") this.renderFriends(bodyEl);
@@ -271,7 +312,7 @@ export class QuickAccessPanel {
     if (this.focusMode === "rail") return $$(".deck-qta-rail-btn", this.el);
     return $$(
       "[data-qta-action], [data-qta-friend-tab], [data-qta-friend-row], [data-qta-friend-group], [data-power-mode], [data-qta-media], [data-help-app], [data-qta-powermenu], .deck-qta-toggle, .range-slider, [data-qta-status-picker], [data-qta-friend-requests], [data-friends-search-input], [data-friends-banner-close]",
-      this.el
+      this.el,
     );
   }
 
@@ -282,7 +323,9 @@ export class QuickAccessPanel {
       return;
     }
     this.focusIndex = ((index % list.length) + list.length) % list.length;
-    $$(".deck-qta-focused", this.el).forEach((el) => el.classList.remove("deck-qta-focused"));
+    $$(".deck-qta-focused", this.el).forEach((el) =>
+      el.classList.remove("deck-qta-focused"),
+    );
     const el = list[this.focusIndex];
     if (el) {
       el.classList.add("deck-qta-focused");
@@ -348,7 +391,8 @@ export class QuickAccessPanel {
     const onSlider = focused && focused.classList.contains("range-slider");
     if (
       onSlider &&
-      (KeybindManager.matches(e, "steamdeck.moveLeft") || KeybindManager.matches(e, "steamdeck.moveRight"))
+      (KeybindManager.matches(e, "steamdeck.moveLeft") ||
+        KeybindManager.matches(e, "steamdeck.moveRight"))
     )
       return;
     if (KeybindManager.matches(e, "steamdeck.moveUp")) {
@@ -413,14 +457,14 @@ export class QuickAccessPanel {
     if (!items.length) {
       setHTML(
         bodyEl,
-        '<div class="deck-qta-empty"><i class="fas fa-bell-slash"></i><span>No notifications</span></div>'
+        '<div class="deck-qta-empty"><i class="fas fa-bell-slash"></i><span>No notifications</span></div>',
       );
       return;
     }
     const list = items
       .map(
         (n) =>
-          `<div class="deck-qta-notif-item"><i class="fas ${n.icon || "fa-info-circle"}"></i><div class="deck-qta-notif-meta"><div class="deck-qta-notif-title">${escapeHtml(n.title || "")}</div><div class="deck-qta-notif-msg">${escapeHtml(n.message || "")}</div></div></div>`
+          `<div class="deck-qta-notif-item"><i class="fas ${n.icon || "fa-info-circle"}"></i><div class="deck-qta-notif-meta"><div class="deck-qta-notif-title">${escapeHtml(n.title || "")}</div><div class="deck-qta-notif-msg">${escapeHtml(n.message || "")}</div></div></div>`,
       )
       .join("");
     setHTML(bodyEl, `<div class="deck-qta-notif-list">${list}</div>`);
@@ -439,18 +483,28 @@ export class QuickAccessPanel {
 
   renderFriends(bodyEl) {
     const user = getCurrentUser();
-    const bannerDismissed = !!os.storage.get(StorageKeys.steamFriendsBannerDismissed);
+    const bannerDismissed = !!os.storage.get(
+      StorageKeys.steamFriendsBannerDismissed,
+    );
     const presence = getPresence();
-    const statusText = presence === "invisible" ? "Invisible" : presence === "offline" ? "Offline" : "Online";
-    const statusCls = presence === "invisible" || presence === "offline" ? "offline" : "online";
+    const statusText =
+      presence === "invisible"
+        ? "Invisible"
+        : presence === "offline"
+          ? "Offline"
+          : "Online";
+    const statusCls =
+      presence === "invisible" || presence === "offline" ? "offline" : "online";
     const requestCount = this.friendRequestsData.length;
-    const badgeHtml = requestCount ? `<span class="deck-qta-friends-badge">${requestCount}</span>` : "";
+    const badgeHtml = requestCount
+      ? `<span class="deck-qta-friends-badge">${requestCount}</span>`
+      : "";
     const bannerHtml = bannerDismissed
       ? ""
       : `<div class="deck-qta-friends-banner"><span>Tap a friend for profile, double-tap to chat</span><button class="deck-qta-friends-banner-close" data-friends-banner-close>GOT IT</button></div>`;
     setHTML(
       bodyEl,
-      `<div class="deck-qta-friend-profile"><div class="deck-qta-friend-profile-avatar" data-qta-status-picker></div><div class="deck-qta-friend-profile-info"><span class="deck-qta-friend-profile-name">${escapeHtml(user.name)}</span><button class="deck-qta-friend-profile-status" data-qta-status-picker><span class="deck-qta-status-dot deck-qta-status-dot--${statusCls}"></span>${statusText} <i class="fas fa-chevron-down"></i></button></div></div>${bannerHtml}<div class="deck-qta-friends-toolbar"><div class="deck-qta-friends-search"><i class="fas fa-search"></i><input type="text" data-friends-search-input placeholder="Search friends..." /></div><button class="deck-qta-friends-requests-btn" data-qta-friend-requests><i class="fas fa-user-plus"></i>${badgeHtml}</button></div><div class="deck-qta-friends-requests-panel" data-friends-requests-panel hidden></div><div class="deck-qta-friends-tabs">${FRIEND_TABS.map((t) => `<button class="deck-qta-friend-tab" data-qta-friend-tab="${t.id}" title="${t.label}"><i class="fas ${t.icon}"></i></button>`).join("")}</div><div class="deck-qta-friend-body"></div>`
+      `<div class="deck-qta-friend-profile"><div class="deck-qta-friend-profile-avatar" data-qta-status-picker></div><div class="deck-qta-friend-profile-info"><span class="deck-qta-friend-profile-name">${escapeHtml(user.name)}</span><button class="deck-qta-friend-profile-status" data-qta-status-picker><span class="deck-qta-status-dot deck-qta-status-dot--${statusCls}"></span>${statusText} <i class="fas fa-chevron-down"></i></button></div></div>${bannerHtml}<div class="deck-qta-friends-toolbar"><div class="deck-qta-friends-search"><i class="fas fa-search"></i><input type="text" data-friends-search-input placeholder="Search friends..." /></div><button class="deck-qta-friends-requests-btn" data-qta-friend-requests><i class="fas fa-user-plus"></i>${badgeHtml}</button></div><div class="deck-qta-friends-requests-panel" data-friends-requests-panel hidden></div><div class="deck-qta-friends-tabs">${FRIEND_TABS.map((t) => `<button class="deck-qta-friend-tab" data-qta-friend-tab="${t.id}" title="${t.label}"><i class="fas ${t.icon}"></i></button>`).join("")}</div><div class="deck-qta-friend-body"></div>`,
     );
     const profileAvatar = $(".deck-qta-friend-profile-avatar", bodyEl);
     if (profileAvatar) {
@@ -463,7 +517,7 @@ export class QuickAccessPanel {
       });
     }
     $$(".deck-qta-friend-tab", bodyEl).forEach((btn) =>
-      toggleClass(btn, "active", btn.dataset.qtaFriendTab === this.friendsTab)
+      toggleClass(btn, "active", btn.dataset.qtaFriendTab === this.friendsTab),
     );
     $$(".deck-qta-friend-tab", bodyEl).forEach((btn) =>
       bindEvent(btn, "click", () => {
@@ -471,7 +525,7 @@ export class QuickAccessPanel {
         const rPanel = $("[data-friends-requests-panel]", bodyEl);
         if (rPanel) rPanel.hidden = true;
         this.setFriendsTab(btn.dataset.qtaFriendTab);
-      })
+      }),
     );
     $$("[data-qta-status-picker]", bodyEl).forEach((el) => {
       bindEvent(el, "click", (e) => {
@@ -520,13 +574,13 @@ export class QuickAccessPanel {
       ? friends.filter((f) =>
           String(f.username || "")
             .toLowerCase()
-            .includes(query)
+            .includes(query),
         )
       : friends;
     if (this.friendsTab === "groups") {
       setHTML(
         friendBody,
-        '<div class="deck-qta-empty"><i class="fas fa-users"></i><span>No group chats yet</span></div>'
+        '<div class="deck-qta-empty"><i class="fas fa-users"></i><span>No group chats yet</span></div>',
       );
       return;
     }
@@ -534,12 +588,14 @@ export class QuickAccessPanel {
       let conversations = [];
       try {
         const convData = await fetchConversations({ refresh: false });
-        conversations = Array.isArray(convData?.conversations) ? convData.conversations : [];
+        conversations = Array.isArray(convData?.conversations)
+          ? convData.conversations
+          : [];
       } catch (_) {}
       if (!conversations.length) {
         setHTML(
           friendBody,
-          '<div class="deck-qta-empty"><i class="fas fa-comment"></i><span>No direct messages</span></div>'
+          '<div class="deck-qta-empty"><i class="fas fa-comment"></i><span>No direct messages</span></div>',
         );
         return;
       }
@@ -554,7 +610,10 @@ export class QuickAccessPanel {
           return `<button class="deck-qta-friend-row deck-qta-friend-row--dms" data-dm-user-id="${escapeHtml(String(c.userId || ""))}"><span class="deck-qta-friend-avatar-frame">${avatar}</span><span class="deck-qta-friend-meta"><span class="deck-qta-friend-name">${escapeHtml(name)}</span><span class="deck-qta-friend-sub">${escapeHtml(lastMsg.slice(0, 60))}</span></span></button>`;
         })
         .join("");
-      setHTML(friendBody, `<div class="deck-qta-friend-list">${convHtml}</div>`);
+      setHTML(
+        friendBody,
+        `<div class="deck-qta-friend-list">${convHtml}</div>`,
+      );
       $$("[data-dm-user-id]", friendBody).forEach((row) => {
         bindEvent(row, "click", () => {
           const uid = row.dataset.dmUserId;
@@ -569,12 +628,20 @@ export class QuickAccessPanel {
       return;
     }
     if (this.friendsTab === "favorites") {
-      const active = searchFiltered.filter((f) => f.nowPlaying || isUserOnline(f));
+      const active = searchFiltered.filter(
+        (f) => f.nowPlaying || isUserOnline(f),
+      );
       if (!active.length) {
-        setHTML(friendBody, '<div class="deck-qta-empty">No active friends</div>');
+        setHTML(
+          friendBody,
+          '<div class="deck-qta-empty">No active friends</div>',
+        );
         return;
       }
-      setHTML(friendBody, `<div class="deck-qta-friend-list">${this.buildIngameGroups(active)}</div>`);
+      setHTML(
+        friendBody,
+        `<div class="deck-qta-friend-list">${this.buildIngameGroups(active)}</div>`,
+      );
       this.bindFriendRows(friendBody);
       this.bindFriendGroups(friendBody);
       if (this.isOpen) this.refreshQtaFocus();
@@ -585,15 +652,19 @@ export class QuickAccessPanel {
       return;
     }
     const ingame = searchFiltered.filter((f) => f.nowPlaying);
-    const online = searchFiltered.filter((f) => !f.nowPlaying && isUserOnline(f));
-    const offline = searchFiltered.filter((f) => !f.nowPlaying && !isUserOnline(f));
+    const online = searchFiltered.filter(
+      (f) => !f.nowPlaying && isUserOnline(f),
+    );
+    const offline = searchFiltered.filter(
+      (f) => !f.nowPlaying && !isUserOnline(f),
+    );
     const html =
       this.buildIngameGroups(ingame) +
       this.buildFriendGroupHtml("Online Friends", online, "online") +
       this.buildFriendGroupHtml("Offline", offline, "offline");
     setHTML(
       friendBody,
-      `<div class="deck-qta-friend-list">${html || '<div class="deck-qta-empty">No friends yet</div>'}</div>`
+      `<div class="deck-qta-friend-list">${html || '<div class="deck-qta-empty">No friends yet</div>'}</div>`,
     );
     this.bindFriendRows(friendBody);
     this.bindFriendGroups(friendBody);
@@ -611,17 +682,22 @@ export class QuickAccessPanel {
     let html = "";
     const singles = [];
     byGame.forEach((group, name) => {
-      if (group.length > 1) html += this.buildFriendGroupHtml(name, group, "ingame");
+      if (group.length > 1)
+        html += this.buildFriendGroupHtml(name, group, "ingame");
       else singles.push(group[0]);
     });
-    if (singles.length) html += this.buildFriendGroupHtml("Other Games", singles, "ingame");
+    if (singles.length)
+      html += this.buildFriendGroupHtml("Other Games", singles, "ingame");
     return html;
   }
 
   buildFriendGroupHtml(title, friends, kind) {
     if (!friends.length) return "";
     const key = `${kind}:${title}`;
-    const collapsed = this.collapsedFriendGroups && this.collapsedFriendGroups[key] ? " collapsed" : "";
+    const collapsed =
+      this.collapsedFriendGroups && this.collapsedFriendGroups[key]
+        ? " collapsed"
+        : "";
     return `<div class="deck-qta-friend-group${collapsed}" data-group-key="${escapeHtml(key)}"><button class="deck-qta-friend-group-head" data-qta-friend-group><span class="deck-qta-friend-group-arrow"><i class="fas fa-chevron-down"></i></span><span class="deck-qta-friend-group-title">${escapeHtml(title)}</span><span class="deck-qta-friend-group-count">${friends.length}</span></button><div class="deck-qta-friend-group-children">${friends
       .map((f) => this.friendRowHtml(f, kind))
       .join("")}</div></div>`;
@@ -633,7 +709,9 @@ export class QuickAccessPanel {
       ? `<img class="deck-qta-friend-avatar" src="${avatarUrl}" alt="" loading="lazy"/>`
       : '<span class="deck-qta-friend-avatar deck-qta-friend-avatar--default"><i class="fas fa-user"></i></span>';
     let sub;
-    if (kind === "ingame") sub = friend.nowPlaying.gameTitle || resolveAppName(friend.nowPlaying.appId);
+    if (kind === "ingame")
+      sub =
+        friend.nowPlaying.gameTitle || resolveAppName(friend.nowPlaying.appId);
     else if (kind === "online") sub = "Online";
     else sub = `Last online ${formatRelativeTime(friend.lastSeen)}`;
     return `<button class="deck-qta-friend-row deck-qta-friend-row--${kind}" data-friend-id="${escapeHtml(friend.userId)}"><span class="deck-qta-friend-avatar-frame">${avatar}</span><span class="deck-qta-friend-meta"><span class="deck-qta-friend-name">${escapeHtml(friend.username || "Unknown")}</span><span class="deck-qta-friend-sub">${escapeHtml(sub)}</span></span></button>`;
@@ -645,7 +723,9 @@ export class QuickAccessPanel {
         const id = row.dataset.friendId;
         if (!id) return;
         this.close();
-        os.app.launch("steamApp", { steamPage: "profile", steamUserId: id }).catch(() => {});
+        os.app
+          .launch("steamApp", { steamPage: "profile", steamUserId: id })
+          .catch(() => {});
       });
       bindEvent(row, "dblclick", () => {
         const friend = this.findFriendById(row.dataset.friendId);
@@ -680,17 +760,28 @@ export class QuickAccessPanel {
   }
 
   findFriendById(id) {
-    return (this.qtaFriends || []).find((friend) => String(friend.userId) === String(id)) || null;
+    return (
+      (this.qtaFriends || []).find(
+        (friend) => String(friend.userId) === String(id),
+      ) || null
+    );
   }
 
   refreshPresenceDisplay(bodyEl) {
     if (!bodyEl || !bodyEl.isConnected) return;
     const presence = getPresence();
-    const statusText = presence === "invisible" ? "Invisible" : presence === "offline" ? "Offline" : "Online";
-    const statusCls = presence === "invisible" || presence === "offline" ? "offline" : "online";
+    const statusText =
+      presence === "invisible"
+        ? "Invisible"
+        : presence === "offline"
+          ? "Offline"
+          : "Online";
+    const statusCls =
+      presence === "invisible" || presence === "offline" ? "offline" : "online";
     $$(".deck-qta-friend-profile-status", bodyEl).forEach((btn) => {
       const dot = $(".deck-qta-status-dot", btn);
-      if (dot) dot.className = `deck-qta-status-dot deck-qta-status-dot--${statusCls}`;
+      if (dot)
+        dot.className = `deck-qta-status-dot deck-qta-status-dot--${statusCls}`;
       btn.childNodes.forEach((node) => {
         if (node.nodeType === 3) node.textContent = statusText + " ";
       });
@@ -709,15 +800,20 @@ export class QuickAccessPanel {
 
   async renderFriendRequestsPanel(panel) {
     if (!panel) return;
-    setHTML(panel, '<div class="deck-qta-empty" style="padding:12px"><span>Loading requests...</span></div>');
-    const data = await fetchFriends({ refresh: true }).catch(() => getCachedFriends());
+    setHTML(
+      panel,
+      '<div class="deck-qta-empty" style="padding:12px"><span>Loading requests...</span></div>',
+    );
+    const data = await fetchFriends({ refresh: true }).catch(() =>
+      getCachedFriends(),
+    );
     const requests = Array.isArray(data?.requests) ? data.requests : [];
     this.friendRequestsData = requests;
     this.updateFriendRequestsBadge();
     if (!requests.length) {
       setHTML(
         panel,
-        '<div class="deck-qta-empty" style="padding:16px"><i class="fas fa-user-plus"></i><span>No pending requests</span></div>'
+        '<div class="deck-qta-empty" style="padding:16px"><i class="fas fa-user-plus"></i><span>No pending requests</span></div>',
       );
       return;
     }
@@ -738,8 +834,9 @@ export class QuickAccessPanel {
         await acceptFriendRequest(btn.dataset.reqAccept);
         this.renderFriendRequestsPanel(panel);
         const bodyEl = $(".deck-qta-panel-body", this.el);
-        if (bodyEl && this.isOpen) this.renderFriendList($(".deck-qta-friend-body", bodyEl));
-      })
+        if (bodyEl && this.isOpen)
+          this.renderFriendList($(".deck-qta-friend-body", bodyEl));
+      }),
     );
     $$("[data-req-decline]", panel).forEach((btn) =>
       bindEvent(btn, "click", async (e) => {
@@ -747,7 +844,7 @@ export class QuickAccessPanel {
         btn.disabled = true;
         await removeFriend(btn.dataset.reqDecline);
         this.renderFriendRequestsPanel(panel);
-      })
+      }),
     );
   }
 
@@ -763,7 +860,8 @@ export class QuickAccessPanel {
   startFriendsPolling() {
     this.stopFriendsPolling();
     this.friendsPollTimer = setInterval(() => {
-      if (!this.isOpen || this.tab !== "friends" || this.showingRequests) return;
+      if (!this.isOpen || this.tab !== "friends" || this.showingRequests)
+        return;
       const bodyEl = $(".deck-qta-panel-body", this.el);
       if (!bodyEl) return;
       const friendBody = $(".deck-qta-friend-body", bodyEl);
@@ -793,19 +891,27 @@ export class QuickAccessPanel {
         this.refreshPresenceDisplay(bodyEl);
       }
     };
-    os.events.on(BusEvents.SOCIAL_PRESENCE_CHANGED, this.friendsPresenceHandler);
+    os.events.on(
+      BusEvents.SOCIAL_PRESENCE_CHANGED,
+      this.friendsPresenceHandler,
+    );
   }
 
   teardownFriendsPresenceListener() {
     if (this.friendsPresenceHandler) {
-      os.events.off(BusEvents.SOCIAL_PRESENCE_CHANGED, this.friendsPresenceHandler);
+      os.events.off(
+        BusEvents.SOCIAL_PRESENCE_CHANGED,
+        this.friendsPresenceHandler,
+      );
       this.friendsPresenceHandler = null;
     }
   }
 
   renderSettings(bodyEl) {
-    const brightness = parseInt(os.storage.get(StorageKeys.brightness), 10) || 100;
-    const overlayEnabled = os.app.launcher?.overlayController?.settings?.enabled ?? true;
+    const brightness =
+      parseInt(os.storage.get(StorageKeys.brightness), 10) || 100;
+    const overlayEnabled =
+      os.app.launcher?.overlayController?.settings?.enabled ?? true;
     const mx = audioMixer();
     const volume = mx.muted ? 0 : Math.round(mx.masterVolume * 100);
     const mic = parseInt(os.storage.get(StorageKeys.steamDeckMicLevel), 10);
@@ -838,7 +944,7 @@ export class QuickAccessPanel {
         ${this.toggleRowHtml("fa-bell-slash", "Do Not Disturb", "qtaDnd", os.notify.getDoNotDisturb())}
         ${this.toggleRowHtml("fa-gauge-high", "Performance HUD", "qtaPerfHud", os.storage.get(StorageKeys.deckPerfHud) === "true")}
         ${this.toggleRowHtml("fa-wave-square", "Haptics", "qtaHaptics", os.storage.get(StorageKeys.steamDeckHaptics) === "true")}
-      </div>`
+      </div>`,
     );
     this.bindSettings(bodyEl);
   }
@@ -862,7 +968,10 @@ export class QuickAccessPanel {
         else steamDeckAudio.playSliderTick();
         os.storage.set(StorageKeys.brightness, String(value));
         this.applyDisplayFilter();
-        const val = $(".deck-qta-row-value", brightnessSlider.closest(".deck-qta-row"));
+        const val = $(
+          ".deck-qta-row-value",
+          brightnessSlider.closest(".deck-qta-row"),
+        );
         if (val) setText(val, `${value}%`);
       });
     }
@@ -884,19 +993,25 @@ export class QuickAccessPanel {
     const micSlider = $("#qtaMic", bodyEl);
     if (micSlider) {
       bindEvent(micSlider, "input", () => {
-        if (getRangeSliderValue("qtaMic", bodyEl) >= 100) steamDeckAudio.playSliderMax();
+        if (getRangeSliderValue("qtaMic", bodyEl) >= 100)
+          steamDeckAudio.playSliderMax();
         else steamDeckAudio.playSliderTick();
       });
       bindEvent(micSlider, "change", () => {
         const value = getRangeSliderValue("qtaMic", bodyEl);
         os.storage.set(StorageKeys.steamDeckMicLevel, String(value));
-        const val = $(".deck-qta-row-value", micSlider.closest(".deck-qta-row"));
+        const val = $(
+          ".deck-qta-row-value",
+          micSlider.closest(".deck-qta-row"),
+        );
         if (val) setText(val, `${value}%`);
       });
     }
-    $$(".deck-qta-toggle", bodyEl).forEach((toggle) => bindEvent(toggle, "click", () => this.handleToggle(toggle)));
+    $$(".deck-qta-toggle", bodyEl).forEach((toggle) =>
+      bindEvent(toggle, "click", () => this.handleToggle(toggle)),
+    );
     $$("[data-qta-action]", bodyEl).forEach((btn) =>
-      bindEvent(btn, "click", () => this.handleAction(btn.dataset.qtaAction))
+      bindEvent(btn, "click", () => this.handleAction(btn.dataset.qtaAction)),
     );
   }
 
@@ -923,7 +1038,9 @@ export class QuickAccessPanel {
     } else if (id === "qtaUiSounds") {
       os.storage.set(StorageKeys.steamDeckAudioEnabled, String(on));
     } else if (id === "qtaPerfHud") {
-      import("./deckPerfHud.js").then(({ deckPerfHud }) => deckPerfHud.setEnabled(on)).catch(() => {});
+      import("./deckPerfHud.js")
+        .then(({ deckPerfHud }) => deckPerfHud.setEnabled(on))
+        .catch(() => {});
     } else if (id === "qtaHaptics") {
       os.storage.set(StorageKeys.steamDeckHaptics, String(on));
     }
@@ -932,7 +1049,8 @@ export class QuickAccessPanel {
   applyDisplayFilter() {
     const deckRoot = document.getElementById("steamdeck-root");
     if (!deckRoot) return;
-    const brightness = parseInt(os.storage.get(StorageKeys.brightness), 10) || 100;
+    const brightness =
+      parseInt(os.storage.get(StorageKeys.brightness), 10) || 100;
     const night = os.storage.get(StorageKeys.nightModeEnabled) === "true";
     deckRoot.style.filter = night
       ? `brightness(${brightness / 100}) sepia(0.3) saturate(0.85)`
@@ -940,7 +1058,10 @@ export class QuickAccessPanel {
   }
 
   renderPower(bodyEl) {
-    const battery = this.manager?.batteryData || { level: 100, charging: false };
+    const battery = this.manager?.batteryData || {
+      level: 100,
+      charging: false,
+    };
     const mode = performanceManager.getMode();
     setHTML(
       bodyEl,
@@ -952,13 +1073,16 @@ export class QuickAccessPanel {
         <div class="deck-qta-section-title">Performance</div>
         <div class="deck-qta-power-status"><i class="fas fa-bolt"></i><span>Mode: ${POWER_MODE_LABELS[mode] || mode}</span></div>
         <div class="deck-qta-power-modes">${Object.keys(POWER_MODE_LABELS)
-          .map((m) => `<button class="deck-qta-power-mode" data-power-mode="${m}">${POWER_MODE_LABELS[m]}</button>`)
+          .map(
+            (m) =>
+              `<button class="deck-qta-power-mode" data-power-mode="${m}">${POWER_MODE_LABELS[m]}</button>`,
+          )
           .join("")}</div>
       </div>
       <div class="deck-qta-section">
         <div class="deck-qta-section-title">Power</div>
         <button class="deck-qta-row deck-qta-powermenu-row" data-qta-powermenu="1"><i class="fas fa-power-off"></i><div class="deck-qta-row-main"><span class="deck-qta-row-label">Power Menu</span></div><i class="fas fa-chevron-right"></i></button>
-      </div>`
+      </div>`,
     );
     $$("[data-power-mode]", bodyEl).forEach((btn) => {
       toggleClass(btn, "active", btn.dataset.powerMode === mode);
@@ -977,7 +1101,7 @@ export class QuickAccessPanel {
       bindEvent(btn, "click", () => {
         this.close();
         this.manager?.showPowerMenu?.();
-      })
+      }),
     );
   }
 
@@ -985,7 +1109,10 @@ export class QuickAccessPanel {
     const src = mediaTray().getActiveSource();
     this.mediaSource = src;
     if (!src) {
-      setHTML(bodyEl, '<div class="deck-qta-empty"><i class="fas fa-music"></i><span>Nothing playing</span></div>');
+      setHTML(
+        bodyEl,
+        '<div class="deck-qta-empty"><i class="fas fa-music"></i><span>Nothing playing</span></div>',
+      );
       return;
     }
     const artwork = this.mediaArtwork(src);
@@ -1015,13 +1142,13 @@ export class QuickAccessPanel {
           <button class="deck-qta-media-btn deck-qta-media-btn--play" data-qta-media="playpause" title="${playing ? "Pause" : "Play"}"><i class="fas ${playing ? "fa-pause" : "fa-play"}"></i></button>
           <button class="deck-qta-media-btn" data-qta-media="next" title="Next"><i class="fas fa-forward-step"></i></button>
         </div>
-      </div>`
+      </div>`,
     );
     $$("[data-qta-media]", bodyEl).forEach((btn) =>
       bindEvent(btn, "click", () => {
         mediaTray().sendControl({ stopPropagation() {} }, btn.dataset.qtaMedia);
         this.updateMediaPlayState();
-      })
+      }),
     );
     this.updateMediaPlayState();
   }
@@ -1032,7 +1159,8 @@ export class QuickAccessPanel {
   }
 
   mediaTitle(src) {
-    if (src.type === "metadata") return src.channel.nowPlaying?.track || "Untitled";
+    if (src.type === "metadata")
+      return src.channel.nowPlaying?.track || "Untitled";
     const win = src.element.closest(".window");
     return win ? os.window.getTitle(win.id) : "Now Playing";
   }
@@ -1050,7 +1178,8 @@ export class QuickAccessPanel {
   }
 
   isMediaPlaying(src) {
-    if (src.type === "metadata") return src.channel.nowPlaying?.playbackState === "playing";
+    if (src.type === "metadata")
+      return src.channel.nowPlaying?.playbackState === "playing";
     return !src.element.paused;
   }
 
@@ -1078,7 +1207,10 @@ export class QuickAccessPanel {
       const duration = el.duration || 0;
       const current = el.currentTime || 0;
       const fill = $(".deck-qta-media-progress-fill", this.el);
-      if (fill) fill.style.width = duration ? `${Math.min(100, (current / duration) * 100)}%` : "0%";
+      if (fill)
+        fill.style.width = duration
+          ? `${Math.min(100, (current / duration) * 100)}%`
+          : "0%";
       const times = $$(".deck-qta-media-time", this.el);
       if (times.length === 2) {
         setText(times[0], this.formatTime(current));
@@ -1104,12 +1236,16 @@ export class QuickAccessPanel {
     const items = [
       { icon: "fa-book-open", label: "YukiOS Guide", app: "yukiOsGuideApp" },
       { icon: "fa-keyboard", label: "Shortcuts", app: "shortcutsApp" },
-      { icon: "fa-info-circle", label: "About YukiOS", app: "aboutApp" }
+      { icon: "fa-info-circle", label: "About YukiOS", app: "aboutApp" },
     ];
     const infoRows = [
       { icon: "fa-tag", label: "Version", value: `YukiOS ${YUKIOS_VERSION}` },
       { icon: "fa-display", label: "Platform", value: navigator.platform },
-      { icon: "fa-expand", label: "Display", value: `${window.innerWidth} × ${window.innerHeight}` }
+      {
+        icon: "fa-expand",
+        label: "Display",
+        value: `${window.innerWidth} × ${window.innerHeight}`,
+      },
     ];
     setHTML(
       bodyEl,
@@ -1118,28 +1254,31 @@ export class QuickAccessPanel {
         ${infoRows
           .map(
             (r) =>
-              `<div class="deck-qta-row"><i class="fas ${r.icon}"></i><div class="deck-qta-row-main"><span class="deck-qta-row-label">${r.label}</span></div><span class="deck-qta-row-value">${escapeHtml(r.value)}</span></div>`
+              `<div class="deck-qta-row"><i class="fas ${r.icon}"></i><div class="deck-qta-row-main"><span class="deck-qta-row-label">${r.label}</span></div><span class="deck-qta-row-value">${escapeHtml(r.value)}</span></div>`,
           )
           .join("")}
       </div>
       <div class="deck-qta-help-list">${items
         .map(
           (it) =>
-            `<button class="deck-qta-help-row" data-help-app="${it.app}"><i class="fas ${it.icon}"></i><span>${it.label}</span><i class="fas fa-chevron-right"></i></button>`
+            `<button class="deck-qta-help-row" data-help-app="${it.app}"><i class="fas ${it.icon}"></i><span>${it.label}</span><i class="fas fa-chevron-right"></i></button>`,
         )
-        .join("")}</div>`
+        .join("")}</div>`,
     );
     $$("[data-help-app]", bodyEl).forEach((btn) =>
       bindEvent(btn, "click", () => {
         this.close();
         os.app.launch(btn.dataset.helpApp).catch(() => {});
-      })
+      }),
     );
   }
 
   updateBattery() {
     if (!this.el) return;
-    const battery = this.manager?.batteryData || { level: 100, charging: false };
+    const battery = this.manager?.batteryData || {
+      level: 100,
+      charging: false,
+    };
     const railBtn = $('[data-qta-tab="power"]', this.el);
     if (railBtn) toggleClass(railBtn, "charging", !!battery.charging);
     if (this.isOpen && this.tab === "power") {
@@ -1150,7 +1289,15 @@ export class QuickAccessPanel {
         const labelEl = $(".deck-qta-row-label", statusEl);
         if (labelEl) setText(labelEl, `${battery.level}%`);
         const subEl = $(".deck-qta-row-sub", statusEl);
-        if (subEl) setText(subEl, battery.charging ? "Charging" : battery.level <= 15 ? "Low battery" : "On battery");
+        if (subEl)
+          setText(
+            subEl,
+            battery.charging
+              ? "Charging"
+              : battery.level <= 15
+                ? "Low battery"
+                : "On battery",
+          );
       }
     }
   }

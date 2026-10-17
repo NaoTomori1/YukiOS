@@ -2,7 +2,14 @@ import { makeDraggable } from "./shared/dragUtils.js";
 import { isImageFile } from "./fileDisplay.js";
 import { appMap } from "./games/gamesList.js";
 import { audioMixer, SystemAudio } from "./audioMixer.js";
-import { $, createElement, setHTML, toggleClass, addClass, removeClass } from "./shared/domUtils.js";
+import {
+  $,
+  createElement,
+  setHTML,
+  toggleClass,
+  addClass,
+  removeClass,
+} from "./shared/domUtils.js";
 import { getSetting, parseBool, timeAgo, escapeHtml } from "./utils/utils.js";
 import { resolveIconUrl } from "./shared/assetResolver.js";
 import { createTrayPinButton, setTrayPinState } from "./shared/trayPin.js";
@@ -17,8 +24,8 @@ const APP_SOURCE_TO_APP_MAP_KEY = APP_MANIFESTS.reduce(
     V86App: "v86app",
     JsDosApp: "jsDosApp",
     RuffleApp: "ruffleApp",
-    MonacoApp: "monaco"
-  }
+    MonacoApp: "monaco",
+  },
 );
 
 export class NotificationCenter {
@@ -63,7 +70,7 @@ export class NotificationCenter {
   createNotificationCenterUI() {
     const centerContainer = createElement("div", {
       id: "ntf-panel",
-      className: "ntf-panel ntf-panel--closed"
+      className: "ntf-panel ntf-panel--closed",
     });
 
     setHTML(
@@ -78,7 +85,7 @@ export class NotificationCenter {
       <div class="ntf-panel__foot">
         <button class="ntf-purge-btn">Clear All</button>
       </div>
-    `
+    `,
     );
 
     document.body.appendChild(centerContainer);
@@ -110,7 +117,8 @@ export class NotificationCenter {
   }
 
   updateTrayPresence() {
-    const totalCount = this.notifications.length + this.snoozedNotifications.length;
+    const totalCount =
+      this.notifications.length + this.snoozedNotifications.length;
     const hasItems = totalCount > 0;
 
     if (hasItems) {
@@ -122,8 +130,8 @@ export class NotificationCenter {
           {
             showInTray: true,
             alwaysVisible: true,
-            onClick: () => this.toggleCenter()
-          }
+            onClick: () => this.toggleCenter(),
+          },
         );
         this.updateTrayIcon();
       }
@@ -157,7 +165,14 @@ export class NotificationCenter {
     }
   }
 
-  addNotification(title, message, type = "info", duration = 5000, icon = null, appSource = null) {
+  addNotification(
+    title,
+    message,
+    type = "info",
+    duration = 5000,
+    icon = null,
+    appSource = null,
+  ) {
     const enabled = this.getSetting("notificationsEnabled", true);
     if (!enabled) return null;
     const key = `${title}::${message}`;
@@ -187,7 +202,7 @@ export class NotificationCenter {
       type,
       timestamp: new Date(),
       icon,
-      appSource
+      appSource,
     };
 
     if (this.doNotDisturb) {
@@ -220,7 +235,7 @@ export class NotificationCenter {
     if (!container) {
       container = createElement("div", {
         id: "ntf-toast-container",
-        className: "ntf-toast-container"
+        className: "ntf-toast-container",
       });
       this.applyNotificationPosition(container);
       document.body.appendChild(container);
@@ -239,14 +254,18 @@ export class NotificationCenter {
       info: "ntf-toast--info",
       success: "ntf-toast--ok",
       warning: "ntf-toast--warn",
-      error: "ntf-toast--fail"
+      error: "ntf-toast--fail",
     };
     const showAnim = this.getSetting("notificationsPopAnimation", true);
     const toast = createElement("div", {
-      className: `ntf-toast ${typeMap[notif.type] || "ntf-toast--info"}${showAnim ? "" : " ntf-toast--no-animation"}`
+      className: `ntf-toast ${typeMap[notif.type] || "ntf-toast--info"}${showAnim ? "" : " ntf-toast--no-animation"}`,
     });
 
-    const iconHtml = this.buildNotificationIconHtml(notif, "ntf-toast__glyph ntf-toast__glyph-img", "ntf-toast__glyph");
+    const iconHtml = this.buildNotificationIconHtml(
+      notif,
+      "ntf-toast__glyph ntf-toast__glyph-img",
+      "ntf-toast__glyph",
+    );
 
     setHTML(
       toast,
@@ -259,7 +278,7 @@ export class NotificationCenter {
       </div>
       <button class="ntf-toast__close" title="Dismiss">×</button>
       <div class="ntf-toast__progress"></div>
-    `
+    `,
     );
 
     container.appendChild(toast);
@@ -325,9 +344,13 @@ export class NotificationCenter {
 
           if (Math.abs(totalDx) > threshold || Math.abs(velocity) > 0.3) {
             self.removeNotification(notif.id);
-            const flyDir = Math.abs(totalDx) > threshold ? Math.sign(totalDx) : Math.sign(velocity);
+            const flyDir =
+              Math.abs(totalDx) > threshold
+                ? Math.sign(totalDx)
+                : Math.sign(velocity);
             const extra = Math.max(Math.abs(velocity) * 500, 0);
-            toast.style.transition = "transform 0.4s cubic-bezier(0.15, 0.7, 0.3, 1), opacity 0.4s ease";
+            toast.style.transition =
+              "transform 0.4s cubic-bezier(0.15, 0.7, 0.3, 1), opacity 0.4s ease";
             toast.style.transform = `translateX(${flyDir * (Math.abs(totalDx) + extra + window.innerWidth)}px)`;
             toast.style.opacity = "0";
             setTimeout(() => {
@@ -341,9 +364,9 @@ export class NotificationCenter {
             toast.style.transform = "translateX(0px)";
             toast.style.opacity = "1";
           }
-        }
+        },
       },
-      { axis: "x", ignoreFrom: ".ntf-toast__close" }
+      { axis: "x", ignoreFrom: ".ntf-toast__close" },
     );
   }
 
@@ -354,17 +377,26 @@ export class NotificationCenter {
         return `<img src="${escapeHtml(url)}" class="${imgClass}" alt="" />`;
       }
       const isImagePath = isImageFile(notif.icon);
-      const isDataUrl = typeof notif.icon === "string" && notif.icon.startsWith("data:");
+      const isDataUrl =
+        typeof notif.icon === "string" && notif.icon.startsWith("data:");
 
       if (isImagePath || isDataUrl) {
         return `<img src="${escapeHtml(notif.icon)}" class="${imgClass}" />`;
-      } else if (typeof notif.icon === "string" && notif.icon.trim().length > 0) {
+      } else if (
+        typeof notif.icon === "string" &&
+        notif.icon.trim().length > 0
+      ) {
         if (notif.icon.startsWith("papirus:")) {
           const url = resolveIconUrl(notif.icon);
           return `<img src="${escapeHtml(url)}" class="${imgClass}" alt="" />`;
         }
         let cls = notif.icon;
-        if (cls.startsWith("fa-") && !cls.startsWith("fas ") && !cls.startsWith("far ") && !cls.startsWith("fab ")) {
+        if (
+          cls.startsWith("fa-") &&
+          !cls.startsWith("fas ") &&
+          !cls.startsWith("far ") &&
+          !cls.startsWith("fab ")
+        ) {
           cls = `fas ${cls}`;
         } else if (!cls.startsWith("fa")) {
           cls = `fa ${cls}`;
@@ -376,7 +408,7 @@ export class NotificationCenter {
         info: "papirus:actions/help-about",
         success: "papirus:actions/object-select",
         warning: "papirus:actions/dialog-warning",
-        error: "papirus:actions/dialog-error"
+        error: "papirus:actions/dialog-error",
       };
       const papirusIcon = iconMap[notif.type] ?? "papirus:actions/help-about";
       const url = resolveIconUrl(papirusIcon);
@@ -387,7 +419,9 @@ export class NotificationCenter {
 
   removeNotification(id) {
     this.notifications = this.notifications.filter((n) => n.id !== id);
-    this.snoozedNotifications = this.snoozedNotifications.filter((n) => n.id !== id);
+    this.snoozedNotifications = this.snoozedNotifications.filter(
+      (n) => n.id !== id,
+    );
     this.updateNotificationCenter();
     this.updateTrayPresence();
     this.persistNotifications();
@@ -414,7 +448,7 @@ export class NotificationCenter {
     if (visibleNotifications.length === 0) {
       const empty = createElement("div", {
         className: "ntf-panel__blank",
-        text: "No notifications"
+        text: "No notifications",
       });
       list.appendChild(empty);
       return;
@@ -425,16 +459,20 @@ export class NotificationCenter {
         info: "ntf-card--info",
         success: "ntf-card--ok",
         warning: "ntf-card--warn",
-        error: "ntf-card--fail"
+        error: "ntf-card--fail",
       };
       const item = createElement("div", {
-        className: `ntf-card ${typeMap[notif.type] || "ntf-card--info"}`
+        className: `ntf-card ${typeMap[notif.type] || "ntf-card--info"}`,
       });
       item.dataset.id = notif.id;
 
       const timestamp = this.formatTime(notif.timestamp);
 
-      const iconHtml = this.buildNotificationIconHtml(notif, "ntf-card__glyph", "ntf-card__glyph");
+      const iconHtml = this.buildNotificationIconHtml(
+        notif,
+        "ntf-card__glyph",
+        "ntf-card__glyph",
+      );
 
       setHTML(
         item,
@@ -449,7 +487,7 @@ export class NotificationCenter {
           <div class="ntf-card__stamp">${timestamp}</div>
         </div>
         <button class="ntf-card__remove" title="Remove">×</button>
-      `
+      `,
       );
 
       $(".ntf-card__remove", item).addEventListener("click", () => {
@@ -468,7 +506,11 @@ export class NotificationCenter {
     }
     const panel = $("#ntf-panel");
     const trayEl = $("#app-tray");
-    if (panel && !e.target.closest("#ntf-panel") && !e.target.closest("#app-tray")) {
+    if (
+      panel &&
+      !e.target.closest("#ntf-panel") &&
+      !e.target.closest("#app-tray")
+    ) {
       this.closeCenter();
     }
   };
@@ -543,7 +585,7 @@ export class NotificationCenter {
       os.storage.set(StorageKeys.notificationHistory, {
         notifications: this.notifications,
         snoozedNotifications: this.snoozedNotifications,
-        nextId: this.notificationId
+        nextId: this.notificationId,
       });
     } catch {}
   }
@@ -558,15 +600,24 @@ export class NotificationCenter {
       if (Array.isArray(data)) {
         rawNotifications = data;
       } else if (data.notifications) {
-        rawNotifications = Array.isArray(data.notifications) ? data.notifications : [];
-        rawSnoozed = Array.isArray(data.snoozedNotifications) ? data.snoozedNotifications : [];
+        rawNotifications = Array.isArray(data.notifications)
+          ? data.notifications
+          : [];
+        rawSnoozed = Array.isArray(data.snoozedNotifications)
+          ? data.snoozedNotifications
+          : [];
         rawNextId = data.nextId;
       } else {
         return;
       }
       const normalize = (list) =>
         list
-          .filter((n) => n && typeof n.title === "string" && typeof n.message !== "undefined")
+          .filter(
+            (n) =>
+              n &&
+              typeof n.title === "string" &&
+              typeof n.message !== "undefined",
+          )
           .map((n) => ({
             id: typeof n.id === "number" ? n.id : 0,
             title: n.title,
@@ -574,12 +625,15 @@ export class NotificationCenter {
             type: n.type || "info",
             timestamp: n.timestamp ? new Date(n.timestamp) : new Date(),
             icon: n.icon ?? null,
-            appSource: n.appSource ?? null
+            appSource: n.appSource ?? null,
           }))
           .filter((n) => !isNaN(n.timestamp.getTime()));
       this.notifications = normalize(rawNotifications);
       this.snoozedNotifications = normalize(rawSnoozed);
-      const maxId = [...this.notifications, ...this.snoozedNotifications].reduce((m, n) => Math.max(m, n.id), -1);
+      const maxId = [
+        ...this.notifications,
+        ...this.snoozedNotifications,
+      ].reduce((m, n) => Math.max(m, n.id), -1);
       if (typeof rawNextId === "number" && rawNextId > maxId) {
         this.notificationId = rawNextId;
       } else {
@@ -608,7 +662,10 @@ export class NotificationCenter {
   }
 
   enforceMaxNotifications() {
-    while (this.notifications.length + this.snoozedNotifications.length > this.maxNotifications) {
+    while (
+      this.notifications.length + this.snoozedNotifications.length >
+      this.maxNotifications
+    ) {
       if (this.notifications.length > 0) {
         this.notifications.pop();
       } else {

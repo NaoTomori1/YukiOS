@@ -26,7 +26,10 @@ export function restoreStorage(storage, data) {
 
 export async function exportData(fs, showStatus = () => {}) {
   if (!fs) {
-    os.dialog.alert("Alert", "Can't export. Filesystem manager isn't available.");
+    os.dialog.alert(
+      "Alert",
+      "Can't export. Filesystem manager isn't available.",
+    );
     return;
   }
   try {
@@ -37,9 +40,11 @@ export async function exportData(fs, showStatus = () => {}) {
       createdAt: Date.now(),
       localStorage: dumpStorage(localStorage),
       sessionStorage: dumpStorage(sessionStorage),
-      fs: fsSnapshot
+      fs: fsSnapshot,
     };
-    const blob = new Blob([JSON.stringify(payload)], { type: "application/json" });
+    const blob = new Blob([JSON.stringify(payload)], {
+      type: "application/json",
+    });
     const stamp = new Date().toISOString().replace(/[:.]/g, "-");
     downloadBlob(blob, `yukiOS-backup-${stamp}.json`);
     showStatus("Exported");
@@ -52,13 +57,16 @@ export async function exportData(fs, showStatus = () => {}) {
 
 export async function importData(fs, showStatus = () => {}) {
   if (!fs) {
-    os.dialog.alert("Alert", "Can't import. Filesystem manager isn't available.");
+    os.dialog.alert(
+      "Alert",
+      "Can't import. Filesystem manager isn't available.",
+    );
     return;
   }
 
   const confirmed = await os.dialog.confirm(
     "Confirm",
-    "This will replace settings, files, and everything else. There's no going back."
+    "This will replace settings, files, and everything else. There's no going back.",
   );
   if (!confirmed) return;
 
@@ -78,7 +86,8 @@ export async function importData(fs, showStatus = () => {}) {
       showStatus("Importing…");
       const text = await file.text();
       const payload = JSON.parse(text);
-      if (!payload || payload.version !== 1 || !payload.fs) throw new Error("Invalid backup file.");
+      if (!payload || payload.version !== 1 || !payload.fs)
+        throw new Error("Invalid backup file.");
 
       try {
         os.storage.clear();
@@ -94,7 +103,10 @@ export async function importData(fs, showStatus = () => {}) {
     } catch (e) {
       console.error("Import failed:", e);
       audioMixer().playCriticalWarning();
-      os.dialog.alert("Alert", "Import failed. The file might be damaged or invalid.");
+      os.dialog.alert(
+        "Alert",
+        "Import failed. The file might be damaged or invalid.",
+      );
       showStatus("Import failed");
     }
   });
@@ -109,7 +121,7 @@ export async function deleteAllData() {
       "This will permanently delete:\n" +
       "• All game progresses, saved files, settings, and preferences\n\n" +
       "No take-backs.\n\n" +
-      "Still want to go through with this?"
+      "Still want to go through with this?",
   );
   if (!confirmed) return;
 
@@ -143,7 +155,10 @@ export async function deleteAllData() {
     location.reload();
   } catch (error) {
     console.error("Error deleting all data:", error);
-    os.dialog.alert("Alert", "Something went wrong while deleting. Some data might still be there. Reloading now.");
+    os.dialog.alert(
+      "Alert",
+      "Something went wrong while deleting. Some data might still be there. Reloading now.",
+    );
     location.reload();
   }
 }
@@ -173,12 +188,15 @@ async function deleteAllIndexedDBDatabases() {
                 console.warn(`IndexedDB deletion blocked: ${dbInfo.name}`);
                 resolve();
               };
-            })
-        )
+            }),
+        ),
       );
       return;
     } catch (e) {
-      console.warn("indexedDB.databases() failed, falling back to known names:", e);
+      console.warn(
+        "indexedDB.databases() failed, falling back to known names:",
+        e,
+      );
     }
   }
 
@@ -198,14 +216,25 @@ async function deleteAllIndexedDBDatabases() {
           } catch {
             resolve();
           }
-        })
-    )
+        }),
+    ),
   );
 }
 
 function generateDatabaseNameVariations() {
   const prefixes = ["yuki", "yukiOS", "app", "data", "cache", "store"];
-  const suffixes = ["db", "DB", "database", "Database", "store", "Store", "cache", "Cache", "data", "Data"];
+  const suffixes = [
+    "db",
+    "DB",
+    "database",
+    "Database",
+    "store",
+    "Store",
+    "cache",
+    "Cache",
+    "data",
+    "Data",
+  ];
   const variations = [];
   prefixes.forEach((prefix) => {
     suffixes.forEach((suffix) => {

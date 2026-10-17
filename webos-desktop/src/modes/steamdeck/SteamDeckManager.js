@@ -1,22 +1,44 @@
 import "./style.css";
-import { os, StorageKeys, $, $$, setHTML, createElement } from "../../framework.js";
+import {
+  os,
+  StorageKeys,
+  $,
+  $$,
+  setHTML,
+  createElement,
+} from "../../framework.js";
 import { BusEvents } from "../../core/EventBus.js";
 import { trayManager } from "../../tray/tray.js";
 import { KeybindManager } from "../../keybindManager.js";
 import { SteamDeckLayout, getNavSlideDirection } from "./SteamDeckLayout.js";
-import { setCurrentCalendarMonth, createCalendarPopup } from "../../apps/calendar.js";
+import {
+  setCurrentCalendarMonth,
+  createCalendarPopup,
+} from "../../apps/calendar.js";
 import { QuickAccessPanel } from "./quickAccess.js";
 import { performanceManager } from "../../shared/performanceManager.js";
 import { showDynamicContextMenu } from "../../shared/contextMenu.js";
-import { SteamDataManager, HIGHLIGHTED_GAMES, SteamAppRenderer, launcher } from "../../games/games.js";
-import { descriptionMap, APP_DESCRIPTIONS } from "../../games/gameDescriptions.js";
+import {
+  SteamDataManager,
+  HIGHLIGHTED_GAMES,
+  SteamAppRenderer,
+  launcher,
+} from "../../games/games.js";
+import {
+  descriptionMap,
+  APP_DESCRIPTIONS,
+} from "../../games/gameDescriptions.js";
 import { getAppRegistry } from "../../appRegistry.js";
 import { STORE_GAMES } from "../../games/steam.js";
 import { launchSplash } from "./launchSplash.js";
 import { isDeckBootVideoVisible } from "./deckBootVideo.js";
 import { steamDeckAudio } from "./SteamDeckAudio.js";
 import { destroyActiveCarousel } from "./deckMediaCarousel.js";
-import { escapeHtml, formatGameActivityTime, formatLastPlayed } from "../../utils/utils.js";
+import {
+  escapeHtml,
+  formatGameActivityTime,
+  formatLastPlayed,
+} from "../../utils/utils.js";
 import { moveSpatialFocus } from "./focusGrid.js";
 
 const HOLD_CONFIRM_DURATION = 800;
@@ -100,10 +122,15 @@ export class SteamDeckManager {
     this.setupTray();
     this.requestFullscreen();
     window.addEventListener("gamepadconnected", this.gamepadConnectedHandler);
-    window.addEventListener("gamepaddisconnected", this.gamepadDisconnectedHandler);
+    window.addEventListener(
+      "gamepaddisconnected",
+      this.gamepadDisconnectedHandler,
+    );
     this.updateGamepadGlyphMode();
     if (os.storage.get(StorageKeys.deckPerfHud) === "true") {
-      import("./deckPerfHud.js").then(({ deckPerfHud }) => deckPerfHud.init(this.root)).catch(() => {});
+      import("./deckPerfHud.js")
+        .then(({ deckPerfHud }) => deckPerfHud.init(this.root))
+        .catch(() => {});
     }
     this.collectFocus();
     this.updateFocus();
@@ -113,8 +140,14 @@ export class SteamDeckManager {
     if (!this.active) return;
     this.active = false;
     destroyActiveCarousel();
-    window.removeEventListener("gamepadconnected", this.gamepadConnectedHandler);
-    window.removeEventListener("gamepaddisconnected", this.gamepadDisconnectedHandler);
+    window.removeEventListener(
+      "gamepadconnected",
+      this.gamepadConnectedHandler,
+    );
+    window.removeEventListener(
+      "gamepaddisconnected",
+      this.gamepadDisconnectedHandler,
+    );
     this.cancelHoldConfirm();
     if (this.pollTick) clearInterval(this.pollTick);
     if (this.splashTimeout) clearTimeout(this.splashTimeout);
@@ -170,7 +203,7 @@ export class SteamDeckManager {
         appId,
         title: meta.title,
         icon: meta.icon || "fas fa-gamepad",
-        type: meta.type === "system" ? "app" : "game"
+        type: meta.type === "system" ? "app" : "game",
       };
       (entry.type === "app" ? apps : games).push(entry);
     });
@@ -178,11 +211,17 @@ export class SteamDeckManager {
   }
 
   getDescription(appId) {
-    return descriptionMap[appId] || APP_DESCRIPTIONS[appId] || "Play this title right from the Deck.";
+    return (
+      descriptionMap[appId] ||
+      APP_DESCRIPTIONS[appId] ||
+      "Play this title right from the Deck."
+    );
   }
 
   getFeatured() {
-    return this.games.filter((g) => HIGHLIGHTED_GAMES.has(g.appId)).slice(0, 12);
+    return this.games
+      .filter((g) => HIGHLIGHTED_GAMES.has(g.appId))
+      .slice(0, 12);
   }
 
   getContinuePlaying() {
@@ -190,10 +229,14 @@ export class SteamDeckManager {
     const recent = SteamDataManager.getRecentGames();
     const recentGames =
       recent && recent.length > 0
-        ? recent.map((g) => this.games.find((x) => x.appId === g.id)).filter((g) => g && !hidden.has(g.appId))
+        ? recent
+            .map((g) => this.games.find((x) => x.appId === g.id))
+            .filter((g) => g && !hidden.has(g.appId))
         : [];
     const seen = new Set(recentGames.map((g) => g.appId));
-    const filler = this.getFeatured().filter((g) => !seen.has(g.appId) && !hidden.has(g.appId));
+    const filler = this.getFeatured().filter(
+      (g) => !seen.has(g.appId) && !hidden.has(g.appId),
+    );
     const result = recentGames.concat(filler).slice(0, 30);
     const heroIndex = result.findIndex((g) => g.appId === "helltaker");
     if (heroIndex > 0) {
@@ -241,7 +284,10 @@ export class SteamDeckManager {
     const registry = getAppRegistry();
     const aggAll = this.games.concat(this.apps);
     if (!registry) return aggAll;
-    const result = aggAll.filter((g) => !registry.isAppUninstalled(g.appId) && !registry.isAppDisabled(g.appId));
+    const result = aggAll.filter(
+      (g) =>
+        !registry.isAppUninstalled(g.appId) && !registry.isAppDisabled(g.appId),
+    );
     return result;
   }
 
@@ -267,7 +313,9 @@ export class SteamDeckManager {
 
       this.archiveGamesCache = allGames.map((game) => {
         const name = game.name;
-        const fullUrl = game.url.startsWith("http") ? game.url : base + game.url;
+        const fullUrl = game.url.startsWith("http")
+          ? game.url
+          : base + game.url;
         const appId = this.archiveGameId(fullUrl);
         let thumb = game.thumbnail
           ? game.thumbnail.startsWith("http")
@@ -314,12 +362,21 @@ export class SteamDeckManager {
     this.launchSplashTarget = appId;
     this.splashHandled = false;
     this.splashFrameBound = null;
-    const gameStats = SteamDataManager.getStats()[appId] || { totalMin: 0, lastPlayed: 0 };
+    const gameStats = SteamDataManager.getStats()[appId] || {
+      totalMin: 0,
+      lastPlayed: 0,
+    };
     const description = descriptionMap[appId] || info.description || "";
     const stats = isGame
       ? [
-          { icon: "fa-clock", value: formatGameActivityTime(gameStats.totalMin) },
-          { icon: "fa-calendar-check", value: formatLastPlayed(gameStats.lastPlayed) }
+          {
+            icon: "fa-clock",
+            value: formatGameActivityTime(gameStats.totalMin),
+          },
+          {
+            icon: "fa-calendar-check",
+            value: formatLastPlayed(gameStats.lastPlayed),
+          },
         ]
       : [];
     launchSplash.show({
@@ -327,7 +384,7 @@ export class SteamDeckManager {
       icon: info.icon || "fas fa-gamepad",
       mode: isGame ? "game" : "app",
       description,
-      stats
+      stats,
     });
     os.app.launch(appId, { deckMode: true }).catch(() => {});
     if (isGame) {
@@ -342,9 +399,15 @@ export class SteamDeckManager {
     if (this.detailAppId) this.closeDetail();
     if (isGame) {
       this.pollTick = setInterval(() => this.pollLaunchSplash(appId), 140);
-      this.splashTimeout = setTimeout(() => this.revealLaunchSplash(appId), 3500);
+      this.splashTimeout = setTimeout(
+        () => this.revealLaunchSplash(appId),
+        3500,
+      );
     } else {
-      this.splashTimeout = setTimeout(() => this.revealLaunchSplash(appId), 450);
+      this.splashTimeout = setTimeout(
+        () => this.revealLaunchSplash(appId),
+        450,
+      );
     }
   }
 
@@ -353,17 +416,23 @@ export class SteamDeckManager {
       console.error("No launcher available to open archive game.");
       return;
     }
-    const gameStats = SteamDataManager.getStats()[archiveGame.appId] || { totalMin: 0, lastPlayed: 0 };
+    const gameStats = SteamDataManager.getStats()[archiveGame.appId] || {
+      totalMin: 0,
+      lastPlayed: 0,
+    };
     const stats = [
       { icon: "fa-clock", value: formatGameActivityTime(gameStats.totalMin) },
-      { icon: "fa-calendar-check", value: formatLastPlayed(gameStats.lastPlayed) }
+      {
+        icon: "fa-calendar-check",
+        value: formatLastPlayed(gameStats.lastPlayed),
+      },
     ];
     launchSplash.show({
       title: archiveGame.title,
       icon: archiveGame.thumb || "fas fa-gamepad",
       mode: "game",
       description: "Experience this game from the archive collection.",
-      stats
+      stats,
     });
     steamDeckAudio.playLaunchGame();
     SteamDataManager.addRecentGame(archiveGame.appId, archiveGame.title);
@@ -381,7 +450,7 @@ export class SteamDeckManager {
       type: "game",
       source: archiveGame.url,
       originalName: archiveGame.title,
-      isArchive: true
+      isArchive: true,
     });
     if (this.detailAppId) this.closeDetail();
     setTimeout(() => launchSplash.reveal(), 2000);
@@ -394,7 +463,10 @@ export class SteamDeckManager {
     const frame = win.querySelector("iframe");
     if (!frame) return;
     if (frame.dataset.loaded !== "1") {
-      if (frame.contentDocument && frame.contentDocument.readyState === "complete") {
+      if (
+        frame.contentDocument &&
+        frame.contentDocument.readyState === "complete"
+      ) {
         frame.dataset.loaded = "1";
       } else if (!this.splashFrameBound) {
         this.splashFrameBound = frame;
@@ -445,14 +517,19 @@ export class SteamDeckManager {
   }
 
   getTabKey() {
-    return this.activeCollectionId ? `collection:${this.activeCollectionId}` : this.libraryTab;
+    return this.activeCollectionId
+      ? `collection:${this.activeCollectionId}`
+      : this.libraryTab;
   }
 
   restoreLibraryFocus() {
     const key = this.getTabKey();
     const saved = this.storedFocus[key];
     if (saved != null && this.focusables.length > 0) {
-      this.focusIndex = Math.max(0, Math.min(saved, this.focusables.length - 1));
+      this.focusIndex = Math.max(
+        0,
+        Math.min(saved, this.focusables.length - 1),
+      );
       this.updateFocus();
     }
   }
@@ -496,7 +573,7 @@ export class SteamDeckManager {
           this.updateFocus();
           this.layout.revealHomePanel();
         },
-        direction
+        direction,
       );
     } else {
       this.homeTab = tab;
@@ -510,7 +587,8 @@ export class SteamDeckManager {
 
   animateViewTransition(callback) {
     if (this.deckTransitionTimer) clearTimeout(this.deckTransitionTimer);
-    if (this.deckTransitionEl) this.deckTransitionEl.classList.remove("deck-panel-transition-out");
+    if (this.deckTransitionEl)
+      this.deckTransitionEl.classList.remove("deck-panel-transition-out");
     const oldMain = this.layout?.mainEl;
     if (!oldMain) {
       callback();
@@ -590,11 +668,15 @@ export class SteamDeckManager {
     const panel = this.layout.ensureSteamPanel();
     if (!this.steamPanelRenderer) {
       this.steamPanelRenderer = new SteamAppRenderer();
-      this.steamPanelRenderer.render(panel, (appId) => os.app.launch(appId).catch(() => {}));
+      this.steamPanelRenderer.render(panel, (appId) =>
+        os.app.launch(appId).catch(() => {}),
+      );
     }
     this.layout.showSteamPanel();
     this.layout.setPanelPage(page);
-    panel.dispatchEvent(new CustomEvent("steam-navigate", { detail: { page } }));
+    panel.dispatchEvent(
+      new CustomEvent("steam-navigate", { detail: { page } }),
+    );
     this.collectFocus();
     this.updateFocus();
   }
@@ -615,7 +697,11 @@ export class SteamDeckManager {
       if (!entry || entry.record?.minimized) return;
       const el = $("#" + winId);
       if (!el || el.style.display === "none") return;
-      list.push({ winId, title: entry.title || winId, icon: entry.iconValue || "fas fa-window-restore" });
+      list.push({
+        winId,
+        title: entry.title || winId,
+        icon: entry.iconValue || "fas fa-window-restore",
+      });
     });
     return list;
   }
@@ -624,18 +710,23 @@ export class SteamDeckManager {
     const all = this.getInstalledGames();
     if (!this.nameSort) return all;
     const copy = [...all];
-    copy.sort((a, b) => String(a.title || "").localeCompare(String(b.title || "")));
+    copy.sort((a, b) =>
+      String(a.title || "").localeCompare(String(b.title || "")),
+    );
     const result = this.nameSort === 2 ? copy.reverse() : copy;
     return result;
   }
 
   getGreatGames() {
-    if (this.greatGamesCache && this.greatGamesNameSort === this.nameSort) return this.greatGamesCache;
+    if (this.greatGamesCache && this.greatGamesNameSort === this.nameSort)
+      return this.greatGamesCache;
     const filtered = this.games.filter((g) => STORE_GAME_IDS.has(g.appId));
     let result = filtered;
     if (this.nameSort) {
       const copy = [...filtered];
-      copy.sort((a, b) => String(a.title || "").localeCompare(String(b.title || "")));
+      copy.sort((a, b) =>
+        String(a.title || "").localeCompare(String(b.title || "")),
+      );
       result = this.nameSort === 2 ? copy.reverse() : copy;
     }
     this.greatGamesCache = result;
@@ -645,7 +736,9 @@ export class SteamDeckManager {
 
   getRecommendedGames() {
     const MAX = 12;
-    const recentIds = new Set(SteamDataManager.getRecentGames().map((r) => r.id));
+    const recentIds = new Set(
+      SteamDataManager.getRecentGames().map((r) => r.id),
+    );
     const pool = this.games.filter((g) => !recentIds.has(g.appId));
     const featured = this.getFeatured();
     const favIds = new Set(this.favorites.map((f) => f.appId));
@@ -685,7 +778,9 @@ export class SteamDeckManager {
     const col = this.getCollection(collectionId);
     if (!col) return [];
     const all = this.games.concat(this.apps);
-    return col.gameIds.map((id) => all.find((g) => g.appId === id)).filter(Boolean);
+    return col.gameIds
+      .map((id) => all.find((g) => g.appId === id))
+      .filter(Boolean);
   }
 
   isInCollection(collectionId, appId) {
@@ -694,14 +789,28 @@ export class SteamDeckManager {
   }
 
   async createNewCollection(appId = null) {
-    const name = await os.dialog.prompt("New Collection", "Name this collection", "");
+    const name = await os.dialog.prompt(
+      "New Collection",
+      "Name this collection",
+      "",
+    );
     if (!name || !name.trim()) return;
     const clean = name.trim();
-    if (this.collections.some((c) => c.name.toLowerCase() === clean.toLowerCase())) {
-      os.notify.send("Collections", "A collection with that name already exists.", { type: "info", icon: "fa-folder" });
+    if (
+      this.collections.some((c) => c.name.toLowerCase() === clean.toLowerCase())
+    ) {
+      os.notify.send(
+        "Collections",
+        "A collection with that name already exists.",
+        { type: "info", icon: "fa-folder" },
+      );
       return;
     }
-    const col = { id: "col-" + Date.now(), name: clean, gameIds: appId ? [appId] : [] };
+    const col = {
+      id: "col-" + Date.now(),
+      name: clean,
+      gameIds: appId ? [appId] : [],
+    };
     this.collections.unshift(col);
     steamDeckAudio.playToggleChange();
     this.saveCollections();
@@ -709,7 +818,11 @@ export class SteamDeckManager {
     this.layout.render();
     this.collectFocus();
     this.updateFocus();
-    if (appId) os.notify.send("Collections", `Added to "${clean}".`, { type: "success", icon: "fa-folder" });
+    if (appId)
+      os.notify.send("Collections", `Added to "${clean}".`, {
+        type: "success",
+        icon: "fa-folder",
+      });
   }
 
   openCollection(collectionId) {
@@ -740,7 +853,10 @@ export class SteamDeckManager {
     const col = this.getCollection(collectionId);
     if (!col) return;
     if (col.gameIds.includes(appId)) {
-      os.notify.send("Collections", `Already in "${col.name}".`, { type: "info", icon: "fa-folder" });
+      os.notify.send("Collections", `Already in "${col.name}".`, {
+        type: "info",
+        icon: "fa-folder",
+      });
       return;
     }
     col.gameIds.push(appId);
@@ -751,7 +867,10 @@ export class SteamDeckManager {
     this.layout.render();
     this.collectFocus();
     this.updateFocus();
-    os.notify.send("Collections", `Added to "${col.name}".`, { type: "success", icon: "fa-folder" });
+    os.notify.send("Collections", `Added to "${col.name}".`, {
+      type: "success",
+      icon: "fa-folder",
+    });
   }
 
   removeFromCollection(collectionId, appId) {
@@ -765,7 +884,10 @@ export class SteamDeckManager {
     this.layout.render();
     this.collectFocus();
     this.updateFocus();
-    os.notify.send("Collections", `Removed from "${col.name}".`, { type: "info", icon: "fa-folder" });
+    os.notify.send("Collections", `Removed from "${col.name}".`, {
+      type: "info",
+      icon: "fa-folder",
+    });
   }
 
   removeFromRecentGames(appId) {
@@ -777,9 +899,15 @@ export class SteamDeckManager {
       this.layout.render();
       this.collectFocus();
       this.updateFocus();
-      os.notify.send("Recent Games", "Removed from recent games.", { type: "info", icon: "fa-clock-rotate-left" });
+      os.notify.send("Recent Games", "Removed from recent games.", {
+        type: "info",
+        icon: "fa-clock-rotate-left",
+      });
     };
-    const tile = $('.deck-tile[data-app-id="' + appId + '"]', this.layout?.mainEl);
+    const tile = $(
+      '.deck-tile[data-app-id="' + appId + '"]',
+      this.layout?.mainEl,
+    );
     if (tile) {
       tile.classList.add("deck-tile-removing");
       setTimeout(applyRemoval, 180);
@@ -793,10 +921,16 @@ export class SteamDeckManager {
       await this.createNewCollection();
       return this.collections[0] || null;
     }
-    const name = await os.dialog.prompt("Save to Collection", "Collection name", this.collections[0].name);
+    const name = await os.dialog.prompt(
+      "Save to Collection",
+      "Collection name",
+      this.collections[0].name,
+    );
     if (!name || !name.trim()) return null;
     const clean = name.trim();
-    let match = this.collections.find((c) => c.name.toLowerCase() === clean.toLowerCase());
+    let match = this.collections.find(
+      (c) => c.name.toLowerCase() === clean.toLowerCase(),
+    );
     if (!match) {
       match = { id: "col-" + Date.now(), name: clean, gameIds: [] };
       this.collections.unshift(match);
@@ -808,31 +942,45 @@ export class SteamDeckManager {
 
   showGameContextMenu(e, appId) {
     const isFav = this.isFavorite(appId);
-    const inContinuePlaying = this.getContinuePlaying().some((g) => g.appId === appId);
+    const inContinuePlaying = this.getContinuePlaying().some(
+      (g) => g.appId === appId,
+    );
     const collections = this.getCollections();
     showDynamicContextMenu(e, (menu, item, hr, submenu) => {
       const launchItem = item("Launch", () => this.launchApp(appId), "fa-play");
       launchItem.classList.add("deck-ctx-play");
       menu.appendChild(launchItem);
-      menu.appendChild(item("View Details", () => this.openDetail(appId), "fa-circle-info"));
+      menu.appendChild(
+        item("View Details", () => this.openDetail(appId), "fa-circle-info"),
+      );
       menu.appendChild(hr());
       menu.appendChild(
         item(
           isFav ? "Remove from Favorites" : "Add to Favorites",
           () => this.toggleFavorite(appId),
-          isFav ? "fa-star" : "far fa-star"
-        )
+          isFav ? "fa-star" : "far fa-star",
+        ),
       );
       if (inContinuePlaying) {
         menu.appendChild(
-          item("Remove from Recent Games", () => this.removeFromRecentGames(appId), "fa-clock-rotate-left")
+          item(
+            "Remove from Recent Games",
+            () => this.removeFromRecentGames(appId),
+            "fa-clock-rotate-left",
+          ),
         );
       }
       menu.appendChild(
         submenu(
           "Add to Collection",
           (subMenuEl, subItem, subHr) => {
-            subMenuEl.appendChild(subItem("New Collection...", () => this.createNewCollection(appId), "fa-plus"));
+            subMenuEl.appendChild(
+              subItem(
+                "New Collection...",
+                () => this.createNewCollection(appId),
+                "fa-plus",
+              ),
+            );
             if (collections.length > 0) subMenuEl.appendChild(subHr());
             collections.forEach((col) => {
               const hasGame = col.gameIds.includes(appId);
@@ -843,13 +991,13 @@ export class SteamDeckManager {
                     if (hasGame) this.removeFromCollection(col.id, appId);
                     else this.addToCollection(col.id, appId);
                   },
-                  hasGame ? "fa-check" : "fa-folder"
-                )
+                  hasGame ? "fa-check" : "fa-folder",
+                ),
               );
             });
           },
-          "fa-folder-plus"
-        )
+          "fa-folder-plus",
+        ),
       );
     });
   }
@@ -858,7 +1006,8 @@ export class SteamDeckManager {
     this.nameSort = (this.nameSort + 1) % 3;
     steamDeckAudio.playNavigation();
     const label = $("#deck-sort-label");
-    if (label) label.textContent = ["Original", "Name A-Z", "Name Z-A"][this.nameSort];
+    if (label)
+      label.textContent = ["Original", "Name A-Z", "Name Z-A"][this.nameSort];
     this.bumpViewStamp();
     this.layout.render();
     this.collectFocus();
@@ -959,17 +1108,24 @@ export class SteamDeckManager {
   }
 
   bindBus() {
-    this.unsubscribers.push(os.events.on(BusEvents.WINDOW_CREATED, () => this.layout?.renderRecents()));
-    this.unsubscribers.push(os.events.on(BusEvents.WINDOW_CLOSED, () => this.layout?.renderRecents()));
+    this.unsubscribers.push(
+      os.events.on(BusEvents.WINDOW_CREATED, () =>
+        this.layout?.renderRecents(),
+      ),
+    );
+    this.unsubscribers.push(
+      os.events.on(BusEvents.WINDOW_CLOSED, () => this.layout?.renderRecents()),
+    );
     this.unsubscribers.push(
       os.events.on(BusEvents.SCREENSHOT_CAPTURED, () => {
-        if (this.displayMode === "media" && this.layout) this.layout.renderMediaView();
-      })
+        if (this.displayMode === "media" && this.layout)
+          this.layout.renderMediaView();
+      }),
     );
     this.unsubscribers.push(
       os.events.on(BusEvents.MODE_EXITED, ({ id }) => {
         if (id === "steamdeck") this.teardown();
-      })
+      }),
     );
   }
 
@@ -994,14 +1150,19 @@ export class SteamDeckManager {
       return;
     }
     if (this.quickAccessOpen) return;
-    if (this.layout && this.layout.powerEl && this.layout.powerEl.classList.contains("open")) {
+    if (
+      this.layout &&
+      this.layout.powerEl &&
+      this.layout.powerEl.classList.contains("open")
+    ) {
       e.preventDefault();
       this.handlePowerMenuKey(e);
       return;
     }
     if (this.hasActiveWindow()) return;
     const target = e.target instanceof Element ? e.target : null;
-    if (target && target.closest("input, textarea, .window, .deck-search")) return;
+    if (target && target.closest("input, textarea, .window, .deck-search"))
+      return;
     if (KeybindManager.matches(e, "steamdeck.moveUp")) {
       e.preventDefault();
       this.moveFocus(0, -1);
@@ -1026,7 +1187,9 @@ export class SteamDeckManager {
   handlePowerMenuKey(e) {
     if (e.repeat) return;
     const buttons = $$(".deck-power-btn", this.layout.root);
-    const selected = buttons.find((b) => b.classList.contains("deck-power-selected"));
+    const selected = buttons.find((b) =>
+      b.classList.contains("deck-power-selected"),
+    );
     const selectedIndex = selected ? buttons.indexOf(selected) : -1;
     if (KeybindManager.matches(e, "steamdeck.confirm")) {
       e.preventDefault();
@@ -1050,7 +1213,10 @@ export class SteamDeckManager {
       e.preventDefault();
       this.cancelHoldConfirm();
       const direction = e.key === "ArrowDown" ? 1 : -1;
-      const nextIndex = selectedIndex === -1 ? 0 : (selectedIndex + direction + buttons.length) % buttons.length;
+      const nextIndex =
+        selectedIndex === -1
+          ? 0
+          : (selectedIndex + direction + buttons.length) % buttons.length;
       buttons.forEach((b) => b.classList.remove("deck-power-selected"));
       buttons[nextIndex].classList.add("deck-power-selected");
       steamDeckAudio.playRailChange();
@@ -1064,7 +1230,8 @@ export class SteamDeckManager {
     wins.forEach((entry, winId) => {
       if (active) return;
       const el = $("#" + winId);
-      if (el && el.style.display !== "none" && !entry?.record?.minimized) active = true;
+      if (el && el.style.display !== "none" && !entry?.record?.minimized)
+        active = true;
     });
     return active;
   }
@@ -1093,7 +1260,10 @@ export class SteamDeckManager {
     if (this.activeCollectionId) this.closeCollection();
     this.setLibraryTab("all");
     requestAnimationFrame(() => {
-      const input = $(".deck-search input", this.layout ? this.layout.view : null);
+      const input = $(
+        ".deck-search input",
+        this.layout ? this.layout.view : null,
+      );
       if (input) input.focus();
     });
   }
@@ -1129,7 +1299,9 @@ export class SteamDeckManager {
     const resultsEl = $(".deck-search-results", overlay);
 
     input.focus();
-    input.addEventListener("input", () => this.handleSearchInput(input.value, resultsEl));
+    input.addEventListener("input", () =>
+      this.handleSearchInput(input.value, resultsEl),
+    );
     closeBtn.addEventListener("click", () => this.hideSearchOverlay());
     overlay.addEventListener("click", (e) => {
       if (e.target === overlay) this.hideSearchOverlay();
@@ -1182,11 +1354,15 @@ export class SteamDeckManager {
           <div class="deck-search-result-subtitle">Game</div>
         </div>
       </div>
-    `
+    `,
       )
       .join("");
 
-    setHTML(resultsEl, gameResults || `<div class="deck-search-no-results">No results found</div>`);
+    setHTML(
+      resultsEl,
+      gameResults ||
+        `<div class="deck-search-no-results">No results found</div>`,
+    );
 
     $$(".deck-search-result-item", resultsEl).forEach((item) => {
       item.addEventListener("click", () => {
@@ -1235,11 +1411,15 @@ export class SteamDeckManager {
   restoreFocusIndex(lastKey) {
     if (lastKey != null) {
       const idx = this.focusables.findIndex(
-        (f) => f.el === lastKey || f.el.dataset.appId === lastKey || f.el.dataset.action === lastKey
+        (f) =>
+          f.el === lastKey ||
+          f.el.dataset.appId === lastKey ||
+          f.el.dataset.action === lastKey,
       );
       if (idx >= 0) return idx;
     }
-    if (this.focusIndex >= this.focusables.length) return Math.max(0, this.focusables.length - 1);
+    if (this.focusIndex >= this.focusables.length)
+      return Math.max(0, this.focusables.length - 1);
     if (this.focusIndex < 0) return 0;
     return this.focusIndex;
   }
@@ -1285,7 +1465,12 @@ export class SteamDeckManager {
     if (!action) return;
     if (action === "quick") this.toggleQuickAccess();
     else if (action === "search") this.toggleSearchOverlay();
-    else if (action === "news" || action === "friends" || action === "recommended") this.setHomeTab(action);
+    else if (
+      action === "news" ||
+      action === "friends" ||
+      action === "recommended"
+    )
+      this.setHomeTab(action);
     else if (action === "all") this.setLibraryTab("all");
     else if (action === "great") this.setLibraryTab("great");
     else if (action === "archive") this.setLibraryTab("archive");
@@ -1294,15 +1479,19 @@ export class SteamDeckManager {
     else if (action === "collections") this.setLibraryTab("collections");
     else if (action === "newCollection") this.createNewCollection();
     else if (action === "closeCollection") this.closeCollection();
-    else if (action === "saveToCollection" && this.detailAppId) this.addCurrentToCollection(this.detailAppId);
+    else if (action === "saveToCollection" && this.detailAppId)
+      this.addCurrentToCollection(this.detailAppId);
     else if (action === "back") this.goBack();
     else if (action === "deckHome") {
       this.closeDetail();
       this.setLibraryTab("all");
     } else if (action === "menu") this.toggleRail();
-    else if (action === "play" && this.detailAppId) this.launchApp(this.detailAppId);
-    else if (action.startsWith("tab-") && this.detailAppId) this.layout.switchDetailTab(action.slice(4));
-    else if (action === "favorite" && this.detailAppId) this.toggleFavorite(this.detailAppId);
+    else if (action === "play" && this.detailAppId)
+      this.launchApp(this.detailAppId);
+    else if (action.startsWith("tab-") && this.detailAppId)
+      this.layout.switchDetailTab(action.slice(4));
+    else if (action === "favorite" && this.detailAppId)
+      this.toggleFavorite(this.detailAppId);
     else if (action === "showPower") this.showPowerMenu();
     else if (action === "cancel") this.hidePowerMenu();
     else if (action === "sleep") this.handleSleep();
@@ -1325,13 +1514,21 @@ export class SteamDeckManager {
   showPowerMenu() {
     this.layout.powerEl.classList.add("open");
     steamDeckAudio.playSlide();
-    if (document.activeElement && typeof document.activeElement.blur === "function") document.activeElement.blur();
-    $$(".deck-power-btn", this.layout.root).forEach((b) => b.classList.remove("deck-power-selected"));
+    if (
+      document.activeElement &&
+      typeof document.activeElement.blur === "function"
+    )
+      document.activeElement.blur();
+    $$(".deck-power-btn", this.layout.root).forEach((b) =>
+      b.classList.remove("deck-power-selected"),
+    );
   }
 
   hidePowerMenu() {
     this.layout.powerEl.classList.remove("open");
-    $$(".deck-power-btn", this.layout.root).forEach((b) => b.classList.remove("deck-power-selected"));
+    $$(".deck-power-btn", this.layout.root).forEach((b) =>
+      b.classList.remove("deck-power-selected"),
+    );
   }
 
   async handleSleep() {
@@ -1340,7 +1537,8 @@ export class SteamDeckManager {
   }
 
   enterSleepMode() {
-    if (!this.layout.root || this.layout.root.classList.contains("deck-sleep")) return;
+    if (!this.layout.root || this.layout.root.classList.contains("deck-sleep"))
+      return;
 
     const sleepOverlay = createElement("div");
     sleepOverlay.className = "deck-sleep-overlay";
@@ -1393,9 +1591,14 @@ export class SteamDeckManager {
       return;
     }
     const { showDeckConfirm } = await import("./deckDialog.js");
-    showDeckConfirm(this.layout.root, "Shutdown", "Are you sure you want to shutdown?", () => {
-      window.location.reload();
-    });
+    showDeckConfirm(
+      this.layout.root,
+      "Shutdown",
+      "Are you sure you want to shutdown?",
+      () => {
+        window.location.reload();
+      },
+    );
   }
 
   async handleRestart(skipConfirm = false) {
@@ -1405,9 +1608,14 @@ export class SteamDeckManager {
       return;
     }
     const { showDeckConfirm } = await import("./deckDialog.js");
-    showDeckConfirm(this.layout.root, "Restart", "Are you sure you want to restart?", () => {
-      window.location.reload();
-    });
+    showDeckConfirm(
+      this.layout.root,
+      "Restart",
+      "Are you sure you want to restart?",
+      () => {
+        window.location.reload();
+      },
+    );
   }
 
   isHoldableAction(action) {
@@ -1423,7 +1631,11 @@ export class SteamDeckManager {
     el.style.setProperty("--hold-progress", "0%");
     this.holdTimer = setInterval(() => {
       this.holdProgress += 100 / HOLD_TICKS;
-      if (this.holdEl) this.holdEl.style.setProperty("--hold-progress", `${this.holdProgress}%`);
+      if (this.holdEl)
+        this.holdEl.style.setProperty(
+          "--hold-progress",
+          `${this.holdProgress}%`,
+        );
       if (this.holdProgress >= 100) {
         if (this.holdTimer) clearInterval(this.holdTimer);
         this.holdTimer = null;
@@ -1457,9 +1669,12 @@ export class SteamDeckManager {
     if (!powerEl) return false;
     const buttons = $$(".deck-power-btn", this.layout.root);
     if (buttons.length === 0) return true;
-    const selected = buttons.find((b) => b.classList.contains("deck-power-selected"));
+    const selected = buttons.find((b) =>
+      b.classList.contains("deck-power-selected"),
+    );
     const selectedIndex = selected ? buttons.indexOf(selected) : -1;
-    const getSelected = () => buttons.find((b) => b.classList.contains("deck-power-selected"));
+    const getSelected = () =>
+      buttons.find((b) => b.classList.contains("deck-power-selected"));
     for (let i = 0; i < pressed.length; i++) {
       const rise = pressed[i] && !prevPressed[i];
       const fall = !pressed[i] && prevPressed[i];
@@ -1468,7 +1683,10 @@ export class SteamDeckManager {
           this.cancelHoldConfirm();
           const direction = i === 12 ? -1 : i === 13 ? 1 : 0;
           if (direction !== 0) {
-            const nextIndex = selectedIndex === -1 ? 0 : (selectedIndex + direction + buttons.length) % buttons.length;
+            const nextIndex =
+              selectedIndex === -1
+                ? 0
+                : (selectedIndex + direction + buttons.length) % buttons.length;
             buttons.forEach((b) => b.classList.remove("deck-power-selected"));
             buttons[nextIndex].classList.add("deck-power-selected");
             steamDeckAudio.playRailChange();
@@ -1503,7 +1721,8 @@ export class SteamDeckManager {
 
   async handleChangeAccount() {
     this.hidePowerMenu();
-    const { getOtherUsers, showAccountSwitchDialog, switchToUser } = await import("../../shared/accountSwitcher.js");
+    const { getOtherUsers, showAccountSwitchDialog, switchToUser } =
+      await import("../../shared/accountSwitcher.js");
     const { showDeckDialog } = await import("./deckDialog.js");
 
     const otherUsers = getOtherUsers();
@@ -1515,7 +1734,7 @@ export class SteamDeckManager {
         type: "default",
         confirmText: "OK",
         cancelText: null,
-        onConfirm: () => {}
+        onConfirm: () => {},
       });
       return;
     }
@@ -1531,10 +1750,15 @@ export class SteamDeckManager {
   async handleSignOut() {
     this.hidePowerMenu();
     const { showDeckConfirm } = await import("./deckDialog.js");
-    showDeckConfirm(this.layout.root, "Sign Out", "Are you sure you want to sign out?", () => {
-      os.account.signOut?.();
-      os.app.lockToLoginScreen();
-    });
+    showDeckConfirm(
+      this.layout.root,
+      "Sign Out",
+      "Are you sure you want to sign out?",
+      () => {
+        os.account.signOut?.();
+        os.app.lockToLoginScreen();
+      },
+    );
   }
 
   async handleSwitchToDesktop() {
@@ -1576,7 +1800,10 @@ export class SteamDeckManager {
     if (!("getBattery" in navigator)) return;
     try {
       const battery = await navigator.getBattery();
-      this.batteryData = { level: Math.round(battery.level * 100), charging: battery.charging };
+      this.batteryData = {
+        level: Math.round(battery.level * 100),
+        charging: battery.charging,
+      };
       this.updateBattery();
       battery.addEventListener("levelchange", () => {
         this.batteryData.level = Math.round(battery.level * 100);
@@ -1614,7 +1841,10 @@ export class SteamDeckManager {
         this.gamepadRaf = requestAnimationFrame(poll);
         return;
       }
-      const pressed = Array.from({ length: 16 }, (_, i) => !!(pad.buttons[i] && pad.buttons[i].pressed));
+      const pressed = Array.from(
+        { length: 16 },
+        (_, i) => !!(pad.buttons[i] && pad.buttons[i].pressed),
+      );
       const prevPressed = this.gamepadPrev;
       const changed = pressed.some((value, i) => value !== prevPressed[i]);
       this.gamepadPrev = pressed;
@@ -1693,7 +1923,8 @@ export class SteamDeckManager {
   requestFullscreen() {
     if (location.host.includes("localhost")) return;
     try {
-      if (document.fullscreenElement || document.webkitFullscreenElement) return;
+      if (document.fullscreenElement || document.webkitFullscreenElement)
+        return;
       const el = document.documentElement;
       if (el.requestFullscreen) el.requestFullscreen();
       else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
@@ -1702,8 +1933,13 @@ export class SteamDeckManager {
 
   exitFullscreen() {
     try {
-      if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen();
-      else if (document.webkitFullscreenElement && document.webkitExitFullscreen) document.webkitExitFullscreen();
+      if (document.fullscreenElement && document.exitFullscreen)
+        document.exitFullscreen();
+      else if (
+        document.webkitFullscreenElement &&
+        document.webkitExitFullscreen
+      )
+        document.webkitExitFullscreen();
     } catch {}
   }
 }

@@ -9,11 +9,13 @@ const componentDefs = [
   {
     id: "osSettings",
     label: "OS Settings & Preferences",
-    description: "Theme, appearance, wallpaper choice, taskbar/dock, display, power, sound, keybinds, tiling.",
+    description:
+      "Theme, appearance, wallpaper choice, taskbar/dock, display, power, sound, keybinds, tiling.",
     icon: "fa-sliders",
     defaultOn: true,
     keys: [
       StorageKeys.theme,
+      StorageKeys.contextMenuStyle,
       StorageKeys.customColors,
       StorageKeys.customThemes,
       StorageKeys.transparentUI,
@@ -58,10 +60,12 @@ const componentDefs = [
       StorageKeys.loginClock24h,
       StorageKeys.weather,
       StorageKeys.macOsControls,
+      StorageKeys.win11Mode,
+      StorageKeys.win11TaskbarAlign,
       StorageKeys.windowHeaderStyle,
       StorageKeys.notificationsPosition,
-      StorageKeys.notificationsEnabled
-    ]
+      StorageKeys.notificationsEnabled,
+    ],
   },
   {
     id: "browser",
@@ -77,13 +81,14 @@ const componentDefs = [
       StorageKeys.browserShowBookmarks,
       StorageKeys.browserZoom,
       StorageKeys.browserTransport,
-      StorageKeys.wispServer
-    ]
+      StorageKeys.wispServer,
+    ],
   },
   {
     id: "desktop",
     label: "Desktop icons & layout",
-    description: "Desktop icon positions, deleted icons, sort mode, start menu size.",
+    description:
+      "Desktop icon positions, deleted icons, sort mode, start menu size.",
     icon: "fa-desktop",
     defaultOn: true,
     keys: [
@@ -101,13 +106,14 @@ const componentDefs = [
       StorageKeys.startMenuGridItems,
       StorageKeys.startButtonIcon,
       StorageKeys.appCustomIcons,
-      StorageKeys.appCustomTitles
-    ]
+      StorageKeys.appCustomTitles,
+    ],
   },
   {
     id: "apps",
     label: "Apps & defaults",
-    description: "Installed/renamed/uninstalled apps, default file handlers, quick access, startup apps.",
+    description:
+      "Installed/renamed/uninstalled apps, default file handlers, quick access, startup apps.",
     icon: "fa-rocket",
     defaultOn: false,
     keys: [
@@ -117,9 +123,9 @@ const componentDefs = [
       StorageKeys.defaultAppAssociations,
       StorageKeys.explorerQuickAccess,
       StorageKeys.explorerViewMode,
-      StorageKeys.startupApps
-    ]
-  }
+      StorageKeys.startupApps,
+    ],
+  },
 ];
 
 function normalize(defs) {
@@ -155,7 +161,8 @@ function toBytes(value) {
   if (value == null) return 0;
   if (typeof Blob !== "undefined" && value instanceof Blob) return value.size;
   if (typeof value === "string") return new TextEncoder().encode(value).length;
-  if (typeof ArrayBuffer !== "undefined" && value instanceof ArrayBuffer) return value.byteLength;
+  if (typeof ArrayBuffer !== "undefined" && value instanceof ArrayBuffer)
+    return value.byteLength;
   if (ArrayBuffer.isView(value)) return value.byteLength;
   return new TextEncoder().encode(JSON.stringify(value)).length;
 }
@@ -186,7 +193,8 @@ export function buildBundle() {
 
 export function componentSizes(bundle) {
   const sizes = {};
-  if (!bundle || !bundle.components || typeof bundle.components !== "object") return sizes;
+  if (!bundle || !bundle.components || typeof bundle.components !== "object")
+    return sizes;
   Object.keys(bundle.components).forEach((id) => {
     const comp = bundle.components[id];
     sizes[id] = comp && typeof comp.bytes === "number" ? comp.bytes : 0;
@@ -201,9 +209,13 @@ export async function syncPush() {
   const res = await request("/live/sync/set", "POST", { data: bundle });
   if (!res.ok) {
     if (res.status === 413) {
-      return { error: res.data.error || "Sync data exceeds your storage quota.", quota: res.data.quota };
+      return {
+        error: res.data.error || "Sync data exceeds your storage quota.",
+        quota: res.data.quota,
+      };
     }
-    if (res.status === 401) return { needsReauth: true, error: res.data.error || "Session expired." };
+    if (res.status === 401)
+      return { needsReauth: true, error: res.data.error || "Session expired." };
     return { error: res.data.error || "Sync failed." };
   }
   os.storage.set(StorageKeys.accountQuota, res.data.quota);
@@ -226,7 +238,8 @@ export async function getCloudSummary() {
   if (!isLoggedIn()) return null;
   const res = await request("/live/sync/get");
   if (!res.ok) {
-    if (res.status === 401) return { needsReauth: true, error: res.data.error || "Session expired." };
+    if (res.status === 401)
+      return { needsReauth: true, error: res.data.error || "Session expired." };
     return { error: res.data.error || "Could not fetch the cloud." };
   }
   let payload = res.data && res.data.payload;
@@ -243,8 +256,12 @@ export async function getCloudSummary() {
     for (const c of SYNC_COMPONENTS) {
       const comp = payload.components[c.id];
       if (!comp || typeof comp !== "object") continue;
-      const data = comp && typeof comp.data === "object" && comp.data ? comp.data : comp;
-      const bytes = comp && typeof comp.bytes === "number" ? comp.bytes : JSON.stringify(data).length;
+      const data =
+        comp && typeof comp.data === "object" && comp.data ? comp.data : comp;
+      const bytes =
+        comp && typeof comp.bytes === "number"
+          ? comp.bytes
+          : JSON.stringify(data).length;
       totalBytes += bytes;
       components.push({ id: c.id, label: c.label, icon: c.icon, bytes });
     }
@@ -253,7 +270,7 @@ export async function getCloudSummary() {
     updatedAt: res.data && res.data.updatedAt ? res.data.updatedAt : null,
     quota: res.data && res.data.quota ? res.data.quota : null,
     totalBytes,
-    components
+    components,
   };
 }
 
@@ -263,7 +280,11 @@ export async function syncPull(remoteData) {
   if (bundle === undefined) {
     const res = await request("/live/sync/get");
     if (!res.ok) {
-      if (res.status === 401) return { needsReauth: true, error: res.data.error || "Session expired." };
+      if (res.status === 401)
+        return {
+          needsReauth: true,
+          error: res.data.error || "Session expired.",
+        };
       return { error: res.data.error || "Could not pull the sync." };
     }
     bundle = parseBundle(res.data && res.data.payload);

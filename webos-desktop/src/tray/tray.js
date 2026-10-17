@@ -28,7 +28,10 @@ class TrayManager {
     sysTray.insertBefore(this.el, sysTray.firstChild);
 
     document.addEventListener("click", (e) => {
-      if (!e.target.closest("#app-tray") && !e.target.closest("#tray-overflow-popup")) {
+      if (
+        !e.target.closest("#app-tray") &&
+        !e.target.closest("#tray-overflow-popup")
+      ) {
         this.hidePopup();
       }
     });
@@ -56,7 +59,7 @@ class TrayManager {
       onQuit: options.onQuit || null,
       contextMenuItems: options.contextMenuItems || null,
       priority: options.priority || 0,
-      alwaysVisible: options.alwaysVisible || false
+      alwaysVisible: options.alwaysVisible || false,
     });
     this.render();
   }
@@ -173,12 +176,16 @@ class TrayManager {
   }
 
   getAllItems() {
-    return Array.from(this.items.entries()).map(([winId, item]) => ({ winId, ...item }));
+    return Array.from(this.items.entries()).map(([winId, item]) => ({
+      winId,
+      ...item,
+    }));
   }
 
   buildIconContentHtml(icon, label) {
     const effective = getEffectiveIcon(icon);
-    const isPapirus = typeof effective === "string" && effective.startsWith("papirus:");
+    const isPapirus =
+      typeof effective === "string" && effective.startsWith("papirus:");
     if (isPapirus) {
       return `<img src="${resolveIconUrl(effective)}" alt="${label}" class="papirus-icon papirus-icon--16" />`;
     }
@@ -248,7 +255,10 @@ class TrayManager {
     if (!this.el) return;
     this.el.innerHTML = "";
 
-    const trayEnabled = parseBool(os.storage.get(StorageKeys.trayEnabled), true);
+    const trayEnabled = parseBool(
+      os.storage.get(StorageKeys.trayEnabled),
+      true,
+    );
     if (!trayEnabled) {
       this.el.style.display = "none";
       this.hidePopup();
@@ -263,7 +273,9 @@ class TrayManager {
       }
     })();
 
-    const trayItems = this.getTrayItems().filter((item) => trayAppVisibility[item.winId] !== false);
+    const trayItems = this.getTrayItems().filter(
+      (item) => trayAppVisibility[item.winId] !== false,
+    );
 
     if (trayItems.length === 0) {
       this.el.style.display = "none";
@@ -271,10 +283,15 @@ class TrayManager {
       return;
     }
     this.el.style.display = "flex";
-    const sortedItems = [...trayItems].sort((a, b) => (b.priority || 0) - (a.priority || 0));
+    const sortedItems = [...trayItems].sort(
+      (a, b) => (b.priority || 0) - (a.priority || 0),
+    );
     const pinned = sortedItems.filter((item) => item.alwaysVisible);
     const rest = sortedItems.filter((item) => !item.alwaysVisible);
-    const visible = [...pinned, ...rest.slice(0, Math.max(0, this.MAX_VISIBLE - pinned.length))];
+    const visible = [
+      ...pinned,
+      ...rest.slice(0, Math.max(0, this.MAX_VISIBLE - pinned.length)),
+    ];
     const overflow = rest.slice(Math.max(0, this.MAX_VISIBLE - pinned.length));
     visible.forEach(({ winId, icon, label }) => {
       this.el.appendChild(this.buildIcon(winId, icon, label));
@@ -319,7 +336,9 @@ class TrayManager {
       const row = createElement("div");
       row.className = "tray-popup-item";
       row.title = label;
-      row.innerHTML = this.buildIconContentHtml(icon, label) || `<span style="font-size:12px;">${icon}</span>`;
+      row.innerHTML =
+        this.buildIconContentHtml(icon, label) ||
+        `<span style="font-size:12px;">${icon}</span>`;
       row.addEventListener("click", (e) => {
         e.stopPropagation();
         this.restoreFromTray(winId);
@@ -345,7 +364,11 @@ class TrayManager {
     const tilingActive = os.modes.isActive(MODES.TILING);
     let refEl;
     if (steamdeckActive) {
-      refEl = sourceEl || $("#steamdeck-topbar-tray") || $("#steamdeck-quick-access-tray") || this.el;
+      refEl =
+        sourceEl ||
+        $("#steamdeck-topbar-tray") ||
+        $("#steamdeck-quick-access-tray") ||
+        this.el;
     } else if (tilingActive) {
       refEl = sourceEl || $("#tiling-tray-items");
     } else {
@@ -406,14 +429,20 @@ class TrayManager {
           if (menuItem.type === "divider") {
             menu.appendChild(hr());
           } else {
-            menu.appendChild(item(menuItem.label, menuItem.action, menuItem.icon));
+            menu.appendChild(
+              item(menuItem.label, menuItem.action, menuItem.icon),
+            );
           }
         });
         menu.appendChild(hr());
       }
 
-      const openEffective = getEffectiveIcon("papirus:apps/application-default-icon");
-      const openIcon = openEffective.startsWith("papirus:") ? resolveIconUrl(openEffective) : openEffective;
+      const openEffective = getEffectiveIcon(
+        "papirus:apps/application-default-icon",
+      );
+      const openIcon = openEffective.startsWith("papirus:")
+        ? resolveIconUrl(openEffective)
+        : openEffective;
       menu.appendChild(
         item(
           "Open",
@@ -421,12 +450,14 @@ class TrayManager {
             this.restoreFromTray(winId);
             this.hidePopup();
           },
-          openIcon
-        )
+          openIcon,
+        ),
       );
       menu.appendChild(hr());
       const quitEffective = getEffectiveIcon("papirus:actions/window-close");
-      const quitIcon = quitEffective.startsWith("papirus:") ? resolveIconUrl(quitEffective) : quitEffective;
+      const quitIcon = quitEffective.startsWith("papirus:")
+        ? resolveIconUrl(quitEffective)
+        : quitEffective;
       menu.appendChild(
         item(
           "Quit",
@@ -434,8 +465,8 @@ class TrayManager {
             this.quitApp(winId);
             this.hidePopup();
           },
-          quitIcon
-        )
+          quitIcon,
+        ),
       );
     });
   }
@@ -448,7 +479,10 @@ class TrayManager {
   renderInContainer(containerEl, includeDedicated) {
     if (!containerEl) return;
     containerEl.innerHTML = "";
-    const trayEnabled = parseBool(os.storage.get(StorageKeys.trayEnabled), true);
+    const trayEnabled = parseBool(
+      os.storage.get(StorageKeys.trayEnabled),
+      true,
+    );
     if (!trayEnabled) {
       containerEl.style.display = "none";
       return;
@@ -462,16 +496,23 @@ class TrayManager {
     })();
     const allItems = this.getAllItems()
       .filter((item) => trayAppVisibility[item.winId] !== false)
-      .filter((item) => includeDedicated || !this.dedicatedContainers.has(item.winId));
+      .filter(
+        (item) => includeDedicated || !this.dedicatedContainers.has(item.winId),
+      );
     if (allItems.length === 0) {
       containerEl.style.display = "none";
       return;
     }
     containerEl.style.display = "flex";
-    const sortedItems = [...allItems].sort((a, b) => (b.priority || 0) - (a.priority || 0));
+    const sortedItems = [...allItems].sort(
+      (a, b) => (b.priority || 0) - (a.priority || 0),
+    );
     const pinned = sortedItems.filter((item) => item.alwaysVisible);
     const rest = sortedItems.filter((item) => !item.alwaysVisible);
-    const visible = [...pinned, ...rest.slice(0, Math.max(0, this.MAX_VISIBLE - pinned.length))];
+    const visible = [
+      ...pinned,
+      ...rest.slice(0, Math.max(0, this.MAX_VISIBLE - pinned.length)),
+    ];
     const overflow = rest.slice(Math.max(0, this.MAX_VISIBLE - pinned.length));
     visible.forEach(({ winId, icon, label }) => {
       containerEl.appendChild(this.buildIcon(winId, icon, label));
@@ -482,7 +523,8 @@ class TrayManager {
       btn.title = `${overflow.length} more`;
       const overflowIcon2 = getEffectiveIcon("papirus:actions/go-up");
       const overflowIconHtml2 =
-        typeof overflowIcon2 === "string" && overflowIcon2.startsWith("papirus:")
+        typeof overflowIcon2 === "string" &&
+        overflowIcon2.startsWith("papirus:")
           ? `<img src="${resolveIconUrl(overflowIcon2)}" class="papirus-icon papirus-icon--16" alt="" />`
           : `<i class="${overflowIcon2}"></i>`;
       btn.innerHTML = `${overflowIconHtml2}<span class="tray-overflow-count">${overflow.length}</span>`;
@@ -534,12 +576,18 @@ export function getTrayPosition(refEl, popupEl) {
   const tilingActive = os.modes.isActive(MODES.TILING);
   let el, atTop;
   if (steamdeckActive) {
-    el = refEl || $("#steamdeck-topbar-tray") || $("#steamdeck-quick-access-tray") || $("#app-tray");
+    el =
+      refEl ||
+      $("#steamdeck-topbar-tray") ||
+      $("#steamdeck-quick-access-tray") ||
+      $("#app-tray");
     atTop = true;
   } else if (tilingActive) {
     el = refEl || $("#tiling-tray-items");
     const tilingBar = $("#tiling-bar");
-    atTop = tilingBar ? !tilingBar.classList.contains("position-bottom") : false;
+    atTop = tilingBar
+      ? !tilingBar.classList.contains("position-bottom")
+      : false;
   } else {
     el = refEl || $("#app-tray");
     if (el) {
@@ -552,7 +600,12 @@ export function getTrayPosition(refEl, popupEl) {
   }
   const trayRect = el
     ? el.getBoundingClientRect()
-    : { left: window.innerWidth - 16, right: 16, top: window.innerHeight - 48, bottom: window.innerHeight - 48 };
+    : {
+        left: window.innerWidth - 16,
+        right: 16,
+        top: window.innerHeight - 48,
+        bottom: window.innerHeight - 48,
+      };
   const taskbarPos = getTaskbarPosition();
   if (!steamdeckActive && !tilingActive) {
     if (taskbarPos === "left" || taskbarPos === "right") {
@@ -569,14 +622,14 @@ export function getTrayPosition(refEl, popupEl) {
           left: `${trayRect.right + 8}px`,
           right: "auto",
           top: `${top}px`,
-          bottom: "auto"
+          bottom: "auto",
         };
       }
       return {
         left: "auto",
         right: `${window.innerWidth - trayRect.left + 8}px`,
         top: `${top}px`,
-        bottom: "auto"
+        bottom: "auto",
       };
     }
   }
@@ -584,7 +637,7 @@ export function getTrayPosition(refEl, popupEl) {
     left: "auto",
     right: `${window.innerWidth - trayRect.right}px`,
     top: atTop ? `${trayRect.bottom + 8}px` : "auto",
-    bottom: atTop ? "auto" : `${window.innerHeight - trayRect.top + 8}px`
+    bottom: atTop ? "auto" : `${window.innerHeight - trayRect.top + 8}px`,
   };
 }
 

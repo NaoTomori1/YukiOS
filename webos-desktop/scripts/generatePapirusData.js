@@ -1,4 +1,13 @@
-import { existsSync, mkdirSync, rmSync, readFileSync, writeFileSync, readdirSync, lstatSync, readlinkSync } from "fs";
+import {
+  existsSync,
+  mkdirSync,
+  rmSync,
+  readFileSync,
+  writeFileSync,
+  readdirSync,
+  lstatSync,
+  readlinkSync,
+} from "fs";
 import { join, resolve, dirname, sep } from "path";
 import { spawnSync } from "child_process";
 import { tmpdir } from "os";
@@ -10,7 +19,9 @@ const generatedDirCandidates = [
   resolve(process.cwd(), "src/generated"),
   resolve(process.cwd(), "webos-desktop/src/generated"),
 ];
-let generatedDir = generatedDirCandidates.find((p) => existsSync(p) || existsSync(dirname(p)));
+let generatedDir = generatedDirCandidates.find(
+  (p) => existsSync(p) || existsSync(dirname(p)),
+);
 if (!generatedDir) generatedDir = generatedDirCandidates[0];
 for (const c of generatedDirCandidates) {
   if (c.includes("webos-desktop/src/generated") && existsSync(join(c, ".."))) {
@@ -20,11 +31,13 @@ for (const c of generatedDirCandidates) {
 }
 if (!generatedDir.includes("webos-desktop")) {
   const fallback = resolve(scriptDir, "../src/generated");
-  if (existsSync(fallback) || existsSync(join(fallback, ".."))) generatedDir = fallback;
+  if (existsSync(fallback) || existsSync(join(fallback, "..")))
+    generatedDir = fallback;
 }
 const availPath = join(generatedDir, "papirus-available.json");
 const symPath = join(generatedDir, "papirus-symlinks.json");
-const repoUrl = "https://github.com/PapirusDevelopmentTeam/papirus-icon-theme.git";
+const repoUrl =
+  "https://github.com/PapirusDevelopmentTeam/papirus-icon-theme.git";
 
 function scanPapirus(root) {
   const available = {};
@@ -72,7 +85,9 @@ function scanPapirus(root) {
             continue;
           }
           const targetCtx = dirname(target);
-          const targetBase = target.endsWith(".svg") ? target.slice(0, -4) : target;
+          const targetBase = target.endsWith(".svg")
+            ? target.slice(0, -4)
+            : target;
           let resolvedKey;
           if (targetCtx === "." || targetCtx === "") {
             resolvedKey = `${ctx}/${targetBase}`;
@@ -127,8 +142,12 @@ function main() {
   mkdirSync(generatedDir, { recursive: true });
   writeFileSync(availPath, JSON.stringify(available), "utf-8");
   writeFileSync(symPath, JSON.stringify(symlinks), "utf-8");
-  console.log(`[papirus] wrote ${availPath} (${Object.keys(available).length} icons)`);
-  console.log(`[papirus] wrote ${symPath} (${Object.keys(symlinks).length} symlinks)`);
+  console.log(
+    `[papirus] wrote ${availPath} (${Object.keys(available).length} icons)`,
+  );
+  console.log(
+    `[papirus] wrote ${symPath} (${Object.keys(symlinks).length} symlinks)`,
+  );
 
   try {
     rmSync(tmpRoot, { recursive: true, force: true });

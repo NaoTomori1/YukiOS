@@ -6,7 +6,7 @@ import {
   isLibraryFile,
   getManifestSize,
   mimeForPath,
-  mergeListings
+  mergeListings,
 } from "../fs/SystemLibrary.js";
 
 describe("SystemLibrary", () => {
@@ -22,7 +22,9 @@ describe("SystemLibrary", () => {
     });
 
     it("matches nested paths inside System", () => {
-      expect(isSystemPath("/home/guest/System/apps/x.js", "/home/guest")).toBe(true);
+      expect(isSystemPath("/home/guest/System/apps/x.js", "/home/guest")).toBe(
+        true,
+      );
     });
 
     it("rejects siblings sharing a name prefix", () => {
@@ -35,8 +37,12 @@ describe("SystemLibrary", () => {
 
     it("tolerates trailing slashes on path and root", () => {
       expect(isSystemPath("/home/guest/System/", "/home/guest/")).toBe(true);
-      expect(isSystemPath("/home/guest/System/apps/x.js/", "/home/guest")).toBe(true);
-      expect(isSystemPath("/home/guest/Systematic/", "/home/guest")).toBe(false);
+      expect(isSystemPath("/home/guest/System/apps/x.js/", "/home/guest")).toBe(
+        true,
+      );
+      expect(isSystemPath("/home/guest/Systematic/", "/home/guest")).toBe(
+        false,
+      );
     });
   });
 
@@ -46,16 +52,22 @@ describe("SystemLibrary", () => {
     });
 
     it("returns the relative path for nested entries", () => {
-      expect(toSystemRelPath("/home/guest/System/apps/explorer.js", "/home/guest")).toBe("apps/explorer.js");
+      expect(
+        toSystemRelPath("/home/guest/System/apps/explorer.js", "/home/guest"),
+      ).toBe("apps/explorer.js");
     });
 
     it("ignores trailing slashes while resolving", () => {
-      expect(toSystemRelPath("/home/guest/System/apps/x.js/", "/home/guest")).toBe("apps/x.js");
+      expect(
+        toSystemRelPath("/home/guest/System/apps/x.js/", "/home/guest"),
+      ).toBe("apps/x.js");
     });
 
     it("returns null for paths outside System", () => {
       expect(toSystemRelPath("/home/guest/Desktop", "/home/guest")).toBeNull();
-      expect(toSystemRelPath("/home/guest/Systematic/apps/x.js", "/home/guest")).toBeNull();
+      expect(
+        toSystemRelPath("/home/guest/Systematic/apps/x.js", "/home/guest"),
+      ).toBeNull();
     });
   });
 
@@ -86,7 +98,9 @@ describe("SystemLibrary", () => {
     });
 
     it("marks real file entries as overridden", () => {
-      const virtualMap = { "main.js": { type: "file", size: 100, overridden: false } };
+      const virtualMap = {
+        "main.js": { type: "file", size: 100, overridden: false },
+      };
       const realMap = { "main.js": { type: "file", size: 999 } };
       const merged = mergeListings(virtualMap, realMap);
       expect(merged["main.js"].overridden).toBe(true);
@@ -95,7 +109,7 @@ describe("SystemLibrary", () => {
     it("leaves untouched virtual names intact", () => {
       const virtualMap = {
         "main.js": { type: "file", size: 100, overridden: false },
-        "framework.js": { type: "file", size: 505, overridden: false }
+        "framework.js": { type: "file", size: 505, overridden: false },
       };
       const realMap = { "main.js": { type: "file", size: 999 } };
       const merged = mergeListings(virtualMap, realMap);

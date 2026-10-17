@@ -19,11 +19,12 @@ export const WEATHER_CODES = {
   82: { label: "Violent Showers", icon: "fas fa-cloud-showers-heavy" },
   95: { label: "Thunderstorm", icon: "fas fa-bolt" },
   96: { label: "Thunderstorm w/ Hail", icon: "fas fa-cloud-bolt" },
-  99: { label: "Thunderstorm w/ Hail", icon: "fas fa-cloud-bolt" }
+  99: { label: "Thunderstorm w/ Hail", icon: "fas fa-cloud-bolt" },
 };
 
 export function getWeatherIcon(code) {
-  return (WEATHER_CODES[code] || { label: "Unknown", icon: "fas fa-cloud" }).icon;
+  return (WEATHER_CODES[code] || { label: "Unknown", icon: "fas fa-cloud" })
+    .icon;
 }
 
 export function getWeatherInfo(code) {

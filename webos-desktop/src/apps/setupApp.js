@@ -1,206 +1,247 @@
 import "../styles/setup.css";
-import { resolveWallpaperUrl, resolveIconUrl, resolvePapirusUrl } from "../shared/assetResolver.js";
-import { ICON_PACKS, SAMPLE_ICONS, getIconPack, setIconPack } from "../shared/iconPack.js";
+import {
+  resolveWallpaperUrl,
+  resolveIconUrl,
+  resolvePapirusUrl,
+} from "../shared/assetResolver.js";
+import {
+  ICON_PACKS,
+  SAMPLE_ICONS,
+  getIconPack,
+  setIconPack,
+} from "../shared/iconPack.js";
 import { isImageFile } from "../shared/fileKindDetector.js";
 import { SystemUtilities } from "../system.js";
 import { Achievements } from "../achievements.js";
 import { AppSource } from "../AppSource.js";
 import { PREDEFINED_AVATARS } from "../utils/avatarData.js";
-import { applyFontFamily, applyTheme, applyGuiScale, applyDesktopIconSize } from "../settings/settingsApply.js";
-import { $, $$, bindEvent, setText, setHTML, toggleClass, createElement } from "../shared/domUtils.js";
+import {
+  applyFontFamily,
+  applyTheme,
+  applyGuiScale,
+  applyDesktopIconSize,
+} from "../settings/settingsApply.js";
+import {
+  $,
+  $$,
+  bindEvent,
+  setText,
+  setHTML,
+  toggleClass,
+  createElement,
+} from "../shared/domUtils.js";
 import { getAllThemes } from "../shared/themeEngine.js";
 import { KeybindManager, KEYBIND_DEFINITIONS } from "../keybindManager.js";
 import { BaseApp, StorageKeys, os, ServiceKeys } from "../framework.js";
 import { startIntroTour } from "./introTour.js";
-import { buildHeaderForStyle, resolveHeaderStyleId } from "../windowManager/headerStyles.js";
+import {
+  buildHeaderForStyle,
+  resolveHeaderStyleId,
+} from "../windowManager/headerStyles.js";
 export const FEATURE_DATA = {
   step2: [
     {
       icon: "fas fa-desktop",
       title: "True Desktop Experience",
       desc: "Drag, snap, and tile windows like a native desktop",
-      animation: "tilt-card"
+      animation: "tilt-card",
     },
     {
       icon: "fas fa-gamepad",
       title: "3000+ Games & Emulators",
       desc: "Play DOS, Flash, and console classics instantly",
-      animation: "spin-card"
+      animation: "spin-card",
     },
     {
       icon: "fas fa-folder-tree",
       title: "Persistent Filesystem",
       desc: "Files and settings persist locally, always ready",
-      animation: "bounce-card"
+      animation: "bounce-card",
     },
     {
       icon: "fas fa-box-archive",
       title: "80 Built-in Apps",
       desc: "Notepad to Terminal to Browser, ready instantly",
-      animation: "glow-card"
+      animation: "glow-card",
     },
     {
       icon: "fas fa-keyboard",
       title: "Keyboard Shortcuts",
       desc: "Launch with Ctrl+K, switch windows with Alt+Q",
-      animation: "slide-card"
-    }
+      animation: "slide-card",
+    },
   ],
   step3: [
     {
       icon: "fas fa-keyboard",
       title: "Command Palette",
-      desc: "Launch apps, files, and commands with Ctrl+K"
+      desc: "Launch apps, files, and commands with Ctrl+K",
     },
     {
       icon: "fas fa-save",
       title: "Session Persistence",
-      desc: "Reopens your windows exactly as you left them"
+      desc: "Reopens your windows exactly as you left them",
     },
     {
       icon: "fas fa-paint-brush",
       title: "Full Customization",
-      desc: "Themes, wallpapers and fonts to make it yours"
+      desc: "Themes, wallpapers and fonts to make it yours",
     },
     {
       icon: "fas fa-bell",
       title: "Notifications",
-      desc: "Tidy toasts with Do Not Disturb for focus"
+      desc: "Tidy toasts with Do Not Disturb for focus",
     },
     {
       icon: "fas fa-sliders-h",
       title: "Audio Mixer",
-      desc: "Control master and per-app volume in one place"
+      desc: "Control master and per-app volume in one place",
     },
     {
       icon: "fas fa-download",
       title: "Import / Export",
-      desc: "Back up your system and restore it anywhere"
-    }
+      desc: "Back up your system and restore it anywhere",
+    },
   ],
   step3b: [
     {
       icon: "fas fa-layer-group",
       title: "Taskbar & Start Menu",
-      desc: "Launch apps and flip workspaces instantly"
+      desc: "Launch apps and flip workspaces instantly",
     },
     {
       icon: "fas fa-eye",
       title: "Window Preview",
-      desc: "Hover taskbar icons for live window previews"
+      desc: "Hover taskbar icons for live window previews",
     },
     {
       icon: "fas fa-window-restore",
       title: "Window Management",
-      desc: "Smart z-ordering keeps your workflow smooth"
+      desc: "Smart z-ordering keeps your workflow smooth",
     },
     {
       icon: "fas fa-arrows-alt",
       title: "Window Snapping",
-      desc: "Drag to edges or press Ctrl+arrows to snap"
+      desc: "Drag to edges or press Ctrl+arrows to snap",
     },
     {
       icon: "fas fa-upload",
       title: "File Drag-and-Drop",
-      desc: "Drop files from your computer onto the desktop"
+      desc: "Drop files from your computer onto the desktop",
     },
     {
       icon: "fas fa-network-wired",
       title: "Unified Ecosystem",
-      desc: "Apps share files and state through one core"
+      desc: "Apps share files and state through one core",
     },
     {
       icon: "fas fa-cloud",
       title: "PWA & Offline",
-      desc: "Install it and run fully offline"
+      desc: "Install it and run fully offline",
     },
     {
       icon: "fas fa-arrows-up-down-left-right",
       title: "Workspace System",
-      desc: "Juggle tasks across multiple virtual desktops"
+      desc: "Juggle tasks across multiple virtual desktops",
     },
     {
       icon: "fas fa-code-branch",
       title: "App Creator",
-      desc: "Turn any website into a desktop app"
+      desc: "Turn any website into a desktop app",
     },
     {
       icon: "fas fa-gamepad",
       title: "Yuki Steam Game Hub",
-      desc: "Browse and launch thousands of games instantly"
+      desc: "Browse and launch thousands of games instantly",
     },
     {
       icon: "fas fa-microchip",
       title: "Multi-Runtime Engine",
-      desc: "Run DOS, x86, Flash, and 3DS side by side"
+      desc: "Run DOS, x86, Flash, and 3DS side by side",
     },
     {
       icon: "fas fa-trophy",
       title: "Stats & Achievements",
-      desc: "Earn achievements as you explore and play"
+      desc: "Earn achievements as you explore and play",
     },
     {
       icon: "fas fa-calendar-alt",
       title: "Calendar System",
-      desc: "Manage events from the taskbar calendar"
+      desc: "Manage events from the taskbar calendar",
     },
     {
       icon: "fas fa-robot",
       title: "Clippy Assistant",
-      desc: "Get playful tips from your desktop helper"
+      desc: "Get playful tips from your desktop helper",
     },
     {
       icon: "fas fa-user-lock",
       title: "Session Management",
-      desc: "Secure login with quick auto-start"
+      desc: "Secure login with quick auto-start",
     },
     {
       icon: "fas fa-adjust",
       title: "Window Transparency",
-      desc: "Adjust glass effects for focus or flair"
+      desc: "Adjust glass effects for focus or flair",
     },
     {
       icon: "fas fa-camera",
       title: "Screen Capture",
-      desc: "Capture screenshots and recordings to Pictures"
+      desc: "Capture screenshots and recordings to Pictures",
     },
     {
       icon: "fas fa-eye-dropper",
       title: "Color Picker",
-      desc: "Sample any pixel with Alt+H and magnifier"
+      desc: "Sample any pixel with Alt+H and magnifier",
     },
     {
       icon: "fas fa-mouse-pointer",
       title: "Context Menus",
-      desc: "Right-click anywhere for powerful actions"
+      desc: "Right-click anywhere for powerful actions",
     },
     {
       icon: "fas fa-file-export",
       title: "File Actions Menu",
-      desc: "Convert, compress, or set wallpapers in one click"
+      desc: "Convert, compress, or set wallpapers in one click",
     },
     {
       icon: "fas fa-window-maximize",
       title: "Window Control Menu",
-      desc: "Snap, move, or pin windows with one menu"
+      desc: "Snap, move, or pin windows with one menu",
     },
     {
       icon: "fas fa-gamepad",
       title: "Yuki Steam Context Actions",
-      desc: "Favorite, hide, and organize your game library"
+      desc: "Favorite, hide, and organize your game library",
     },
     {
       icon: "fas fa-arrows-alt",
       title: "Taskbar Positioning",
-      desc: "Place the taskbar on any screen edge"
-    }
+      desc: "Place the taskbar on any screen edge",
+    },
   ],
   step6: {
-    keyboardShortcuts: KEYBIND_DEFINITIONS.map((s) => ({ keys: s.defaultKeys.join("+"), desc: s.desc, cat: s.cat })),
+    keyboardShortcuts: KEYBIND_DEFINITIONS.map((s) => ({
+      keys: s.defaultKeys.join("+"),
+      desc: s.desc,
+      cat: s.cat,
+    })),
     performanceModes: [
-      { value: "balanced", title: "Balanced", desc: "Recommended for most users" },
-      { value: "performance", title: "Performance", desc: "Maximize speed, reduce effects" },
-      { value: "quality", title: "Quality", desc: "Best visuals, may be slower" }
+      {
+        value: "balanced",
+        title: "Balanced",
+        desc: "Recommended for most users",
+      },
+      {
+        value: "performance",
+        title: "Performance",
+        desc: "Maximize speed, reduce effects",
+      },
+      {
+        value: "quality",
+        title: "Quality",
+        desc: "Best visuals, may be slower",
+      },
     ],
     suggestedApps: [
       { id: "notepad", title: "Notepad", icon: "fas fa-file-alt" },
@@ -208,14 +249,14 @@ export const FEATURE_DATA = {
       { id: "browser", title: "Browser", icon: "static/icons/chrome.webp" },
       { id: "explorer", title: "Explorer", icon: "fas fa-folder" },
       { id: "settings", title: "Settings", icon: "fas fa-cog" },
-      { id: "yukiOsGuide", title: "YukiOS Guide", icon: "fas fa-book-open" }
+      { id: "yukiOsGuide", title: "YukiOS Guide", icon: "fas fa-book-open" },
     ],
     transparencyLevels: [
       { value: "high", title: "High Transparency", desc: "More glass effect" },
       { value: "medium", title: "Medium Transparency", desc: "Balanced look" },
-      { value: "low", title: "Low Transparency", desc: "More solid windows" }
-    ]
-  }
+      { value: "low", title: "Low Transparency", desc: "More solid windows" },
+    ],
+  },
 };
 
 const FONT_LABELS = {
@@ -224,7 +265,7 @@ const FONT_LABELS = {
   rubik: "Rubik",
   sora: "Sora",
   jetbrainsmono: "JetBrains Mono",
-  monocraft: "Monocraft"
+  monocraft: "Monocraft",
 };
 
 export class SetupApp extends BaseApp {
@@ -244,13 +285,16 @@ export class SetupApp extends BaseApp {
       transparency: "medium",
       taskbarPosition: os.storage.get(StorageKeys.taskbarPosition) || "bottom",
       taskbarAlignment: os.storage.get(StorageKeys.taskbarAlignment) || "left",
-      desktopIconSize: Number(os.storage.get(StorageKeys.desktopIconSize)) || 48,
+      desktopIconSize:
+        Number(os.storage.get(StorageKeys.desktopIconSize)) || 48,
       guiScale: Number(os.storage.get(StorageKeys.guiScale)) || 100,
-      windowAnimationSpeed: os.storage.get(StorageKeys.windowAnimationSpeed) || "1.0",
+      windowAnimationSpeed:
+        os.storage.get(StorageKeys.windowAnimationSpeed) || "1.0",
       username: os.storage.get(StorageKeys.username) || "Guest",
-      profilePicture: os.storage.get(StorageKeys.profilePicture) || PREDEFINED_AVATARS[0],
+      profilePicture:
+        os.storage.get(StorageKeys.profilePicture) || PREDEFINED_AVATARS[0],
       fontFamily: "opensans",
-      iconPack: getIconPack()
+      iconPack: getIconPack(),
     };
     this.wallpapers = [];
     this.customWallpapers = [];
@@ -272,7 +316,7 @@ export class SetupApp extends BaseApp {
     const win = os.window.create(winId, "Set Up YukiOS", "85vw", "75vh", {
       icon: "fas fa-rocket",
       position: "center",
-      skipHeader: true
+      skipHeader: true,
     });
     win.innerHTML = this.buildUI();
     os.window.applySnap(win, "maximize");
@@ -286,12 +330,20 @@ export class SetupApp extends BaseApp {
   }
 
   buildUI() {
-    const headerHtml = buildHeaderForStyle("Set Up YukiOS", "", os.window.getWindowControls(), resolveHeaderStyleId());
+    const headerHtml = buildHeaderForStyle(
+      "Set Up YukiOS",
+      "",
+      os.window.getWindowControls(),
+      resolveHeaderStyleId(),
+    );
     return `
       ${headerHtml}
       <div class="window-content setup-wizard">
         <div class="setup-progress">
-          ${Array.from({ length: this.totalSetupSteps - 1 }, (_, idx) => idx + 1)
+          ${Array.from(
+            { length: this.totalSetupSteps - 1 },
+            (_, idx) => idx + 1,
+          )
             .map(
               (i) => `
             <div class="progress-step ${i === 1 ? "active" : ""}" data-step="${i}">
@@ -301,7 +353,7 @@ export class SetupApp extends BaseApp {
               </div>
               ${i < this.totalSetupSteps - 1 ? '<div class="progress-line"></div>' : ""}
             </div>
-          `
+          `,
             )
             .join("")}
         </div>
@@ -366,7 +418,7 @@ export class SetupApp extends BaseApp {
               <h3>${f.title}</h3>
               <p>${f.desc}</p>
             </div>
-          `
+          `,
             )
             .join("")}
         </div>
@@ -398,9 +450,12 @@ export class SetupApp extends BaseApp {
   buildIconPackSection() {
     const isPapirus = this.userChoices.iconPack !== ICON_PACKS.FA;
     const papirusIcons = SAMPLE_ICONS.map(
-      (s) => `<img src="${resolvePapirusUrl(s.papirus, 22)}" class="papirus-icon papirus-icon--22" alt="" />`
+      (s) =>
+        `<img src="${resolvePapirusUrl(s.papirus, 22)}" class="papirus-icon papirus-icon--22" alt="" />`,
     ).join("");
-    const faIcons = SAMPLE_ICONS.map((s) => `<i class="${s.fa}" style="font-size:18px;"></i>`).join("");
+    const faIcons = SAMPLE_ICONS.map(
+      (s) => `<i class="${s.fa}" style="font-size:18px;"></i>`,
+    ).join("");
     return `
       <div class="personalize-section">
         <label class="section-label">Icon Style</label>
@@ -430,7 +485,7 @@ export class SetupApp extends BaseApp {
         <button class="theme-btn ${this.userChoices.theme === theme.value ? "active" : ""}" data-theme="${theme.value}" style="height: 56px; background: ${theme.preview || "var(--brand)"}; color: ${theme.textColor || "var(--text-on-brand)"};">
           <span>${theme.label}</span>
         </button>
-      `
+      `,
       )
       .join("");
 
@@ -485,7 +540,7 @@ export class SetupApp extends BaseApp {
                   <i class="fas fa-check"></i>
                 </div>
               </div>
-            `
+            `,
               )
               .join("")}
             ${this.customWallpapers
@@ -497,7 +552,7 @@ export class SetupApp extends BaseApp {
                   <i class="fas fa-check"></i>
                 </div>
               </div>
-            `
+            `,
               )
               .join("")}
           </div>
@@ -537,7 +592,7 @@ export class SetupApp extends BaseApp {
             <button class="performance-btn ${this.userChoices.performanceMode === m.value ? "active" : ""}" data-mode="${m.value}">
               <div class="performance-title">${m.title}</div>
             </button>
-          `
+          `,
             )
             .join("")}
         </div>
@@ -556,7 +611,7 @@ export class SetupApp extends BaseApp {
             <button class="transparency-btn ${this.userChoices.transparency === t.value ? "active" : ""}" data-transparency="${t.value}">
               <div class="transparency-title">${t.title}</div>
             </button>
-          `
+          `,
             )
             .join("")}
         </div>
@@ -569,7 +624,7 @@ export class SetupApp extends BaseApp {
       { value: "bottom", label: "Bottom", icon: "fas fa-arrow-down" },
       { value: "top", label: "Top", icon: "fas fa-arrow-up" },
       { value: "left", label: "Left", icon: "fas fa-arrow-left" },
-      { value: "right", label: "Right", icon: "fas fa-arrow-right" }
+      { value: "right", label: "Right", icon: "fas fa-arrow-right" },
     ];
     return `
       <div class="settings-half">
@@ -581,7 +636,7 @@ export class SetupApp extends BaseApp {
             <button class="taskbar-pos-btn ${this.userChoices.taskbarPosition === o.value ? "active" : ""}" data-pos="${o.value}" style="flex:1;min-width:60px;padding:8px 6px;border-radius:6px;border:1px solid var(--glass-border);background:${this.userChoices.taskbarPosition === o.value ? "var(--brand)" : "var(--glass)"};color:${this.userChoices.taskbarPosition === o.value ? "var(--text-on-brand)" : "var(--text-primary)"};font-size:12px;font-weight:600;cursor:pointer;">
               <i class="${o.icon}"></i> ${o.label}
             </button>
-          `
+          `,
             )
             .join("")}
         </div>
@@ -593,7 +648,7 @@ export class SetupApp extends BaseApp {
     const opts = [
       { value: "left", label: "Left" },
       { value: "center", label: "Center" },
-      { value: "right", label: "Right" }
+      { value: "right", label: "Right" },
     ];
     return `
       <div class="settings-half">
@@ -605,7 +660,7 @@ export class SetupApp extends BaseApp {
             <button class="taskbar-align-btn ${this.userChoices.taskbarAlignment === o.value ? "active" : ""}" data-align="${o.value}" style="flex:1;padding:8px;border-radius:6px;border:1px solid var(--glass-border);background:${this.userChoices.taskbarAlignment === o.value ? "var(--brand)" : "var(--glass)"};color:${this.userChoices.taskbarAlignment === o.value ? "var(--text-on-brand)" : "var(--text-primary)"};font-size:12px;font-weight:600;cursor:pointer;">
               ${o.label}
             </button>
-          `
+          `,
             )
             .join("")}
         </div>
@@ -617,7 +672,7 @@ export class SetupApp extends BaseApp {
     const opts = [
       { value: 32, label: "Small" },
       { value: 48, label: "Medium" },
-      { value: 64, label: "Large" }
+      { value: 64, label: "Large" },
     ];
     return `
       <div class="settings-half">
@@ -629,7 +684,7 @@ export class SetupApp extends BaseApp {
             <button class="icon-size-btn ${this.userChoices.desktopIconSize === o.value ? "active" : ""}" data-size="${o.value}" style="flex:1;padding:8px;border-radius:6px;border:1px solid var(--glass-border);background:${this.userChoices.desktopIconSize === o.value ? "var(--brand)" : "var(--glass)"};color:${this.userChoices.desktopIconSize === o.value ? "var(--text-on-brand)" : "var(--text-primary)"};font-size:12px;font-weight:600;cursor:pointer;">
               ${o.label}
             </button>
-          `
+          `,
             )
             .join("")}
         </div>
@@ -641,7 +696,7 @@ export class SetupApp extends BaseApp {
     const opts = [
       { value: 90, label: "90%" },
       { value: 100, label: "100%" },
-      { value: 125, label: "125%" }
+      { value: 125, label: "125%" },
     ];
     return `
       <div class="settings-half">
@@ -653,7 +708,7 @@ export class SetupApp extends BaseApp {
             <button class="gui-scale-btn ${this.userChoices.guiScale === o.value ? "active" : ""}" data-scale="${o.value}" style="flex:1;padding:8px;border-radius:6px;border:1px solid var(--glass-border);background:${this.userChoices.guiScale === o.value ? "var(--brand)" : "var(--glass)"};color:${this.userChoices.guiScale === o.value ? "var(--text-on-brand)" : "var(--text-primary)"};font-size:12px;font-weight:600;cursor:pointer;">
               ${o.label}
             </button>
-          `
+          `,
             )
             .join("")}
         </div>
@@ -665,7 +720,7 @@ export class SetupApp extends BaseApp {
     const opts = [
       { value: "3.0", label: "Slow" },
       { value: "1.0", label: "Normal" },
-      { value: "0.4", label: "Fast" }
+      { value: "0.4", label: "Fast" },
     ];
     return `
       <div class="settings-half">
@@ -677,7 +732,7 @@ export class SetupApp extends BaseApp {
             <button class="anim-speed-btn ${this.userChoices.windowAnimationSpeed === o.value ? "active" : ""}" data-speed="${o.value}" style="flex:1;padding:8px;border-radius:6px;border:1px solid var(--glass-border);background:${this.userChoices.windowAnimationSpeed === o.value ? "var(--brand)" : "var(--glass)"};color:${this.userChoices.windowAnimationSpeed === o.value ? "var(--text-on-brand)" : "var(--text-primary)"};font-size:12px;font-weight:600;cursor:pointer;">
               ${o.label}
             </button>
-          `
+          `,
             )
             .join("")}
         </div>
@@ -721,7 +776,7 @@ export class SetupApp extends BaseApp {
       { keys: "Ctrl+K / F1", desc: "Open command palette" },
       { keys: "Alt+Q", desc: "Switch windows" },
       { keys: "Alt + Right Drag", desc: "Resize window" },
-      { keys: "Ctrl+Arrows", desc: "Snap window" }
+      { keys: "Ctrl+Arrows", desc: "Snap window" },
     ];
     return `
       <div class="setup-step" data-step="7">
@@ -739,7 +794,7 @@ export class SetupApp extends BaseApp {
                 <span style="font-size:12px;color:var(--text-secondary);">${s.desc}</span>
                 <span style="font-size:11px;font-weight:700;padding:4px 6px;border-radius:4px;background:var(--brand);color:var(--text-on-brand);white-space:nowrap;">${s.keys}</span>
               </div>
-            `
+            `,
               )
               .join("")}
           </div>
@@ -761,7 +816,7 @@ export class SetupApp extends BaseApp {
           <img data-src="${avatar}" style="width: 100%; height: 100%; object-fit: cover;" />
           <div style="position: absolute; inset: 0; display: ${avatar === profilePic ? "flex" : "none"}; align-items: center; justify-content: center; background: color-mix(in srgb, var(--brand) 55%, transparent); color: var(--text-on-brand); font-size: 12px;"><i class="fas fa-check"></i></div>
         </div>
-      `
+      `,
     ).join("");
 
     return `
@@ -916,13 +971,20 @@ export class SetupApp extends BaseApp {
     const iconPackOptions = $$(".icon-pack-option", win);
     iconPackOptions.forEach((btn) => {
       btn.addEventListener("click", () => {
-        const pack = btn.dataset.iconPack === "fontawesome" ? ICON_PACKS.FA : ICON_PACKS.PAPIRUS;
+        const pack =
+          btn.dataset.iconPack === "fontawesome"
+            ? ICON_PACKS.FA
+            : ICON_PACKS.PAPIRUS;
         this.userChoices.iconPack = pack;
         iconPackOptions.forEach((b) => {
           const isActive = b.dataset.iconPack === pack;
           b.classList.toggle("active", isActive);
-          b.style.borderColor = isActive ? "var(--brand)" : "var(--glass-border)";
-          b.style.background = isActive ? "color-mix(in srgb, var(--brand) 12%, transparent)" : "var(--glass)";
+          b.style.borderColor = isActive
+            ? "var(--brand)"
+            : "var(--glass-border)";
+          b.style.background = isActive
+            ? "color-mix(in srgb, var(--brand) 12%, transparent)"
+            : "var(--glass)";
         });
       });
     });
@@ -947,7 +1009,9 @@ export class SetupApp extends BaseApp {
 
     const uploadBtn = $("#upload-wallpaper-btn", win);
     if (uploadBtn) {
-      uploadBtn.addEventListener("click", () => this.handleWallpaperUpload(win));
+      uploadBtn.addEventListener("click", () =>
+        this.handleWallpaperUpload(win),
+      );
     }
 
     const perfBtns = $$(".performance-btn", win);
@@ -979,7 +1043,9 @@ export class SetupApp extends BaseApp {
           const active = b.dataset.pos === pos;
           b.classList.toggle("active", active);
           b.style.background = active ? "var(--brand)" : "var(--glass)";
-          b.style.color = active ? "var(--text-on-brand)" : "var(--text-primary)";
+          b.style.color = active
+            ? "var(--text-on-brand)"
+            : "var(--text-primary)";
         });
       });
     });
@@ -993,7 +1059,9 @@ export class SetupApp extends BaseApp {
           const active = b.dataset.align === align;
           b.classList.toggle("active", active);
           b.style.background = active ? "var(--brand)" : "var(--glass)";
-          b.style.color = active ? "var(--text-on-brand)" : "var(--text-primary)";
+          b.style.color = active
+            ? "var(--text-on-brand)"
+            : "var(--text-primary)";
         });
       });
     });
@@ -1007,7 +1075,9 @@ export class SetupApp extends BaseApp {
           const active = Number(b.dataset.size) === size;
           b.classList.toggle("active", active);
           b.style.background = active ? "var(--brand)" : "var(--glass)";
-          b.style.color = active ? "var(--text-on-brand)" : "var(--text-primary)";
+          b.style.color = active
+            ? "var(--text-on-brand)"
+            : "var(--text-primary)";
         });
         applyDesktopIconSize(size);
       });
@@ -1022,7 +1092,9 @@ export class SetupApp extends BaseApp {
           const active = Number(b.dataset.scale) === scale;
           b.classList.toggle("active", active);
           b.style.background = active ? "var(--brand)" : "var(--glass)";
-          b.style.color = active ? "var(--text-on-brand)" : "var(--text-primary)";
+          b.style.color = active
+            ? "var(--text-on-brand)"
+            : "var(--text-primary)";
         });
         applyGuiScale(scale);
       });
@@ -1037,7 +1109,9 @@ export class SetupApp extends BaseApp {
           const active = b.dataset.speed === speed;
           b.classList.toggle("active", active);
           b.style.background = active ? "var(--brand)" : "var(--glass)";
-          b.style.color = active ? "var(--text-on-brand)" : "var(--text-primary)";
+          b.style.color = active
+            ? "var(--text-on-brand)"
+            : "var(--text-primary)";
         });
         os.storage.set(StorageKeys.windowAnimationSpeed, speed);
       });
@@ -1066,7 +1140,10 @@ export class SetupApp extends BaseApp {
     if (this.currentStep < this.totalSetupSteps - 1) {
       this.isTransitioning = true;
 
-      const currentStepEl = $(`.setup-step[data-step="${this.currentStep + 1}"]`, win);
+      const currentStepEl = $(
+        `.setup-step[data-step="${this.currentStep + 1}"]`,
+        win,
+      );
       if (!currentStepEl) {
         this.isTransitioning = false;
         return;
@@ -1096,14 +1173,20 @@ export class SetupApp extends BaseApp {
 
     this.isTransitioning = true;
 
-    const currentStepEl = $(`.setup-step[data-step="${this.currentStep + 1}"]`, win);
+    const currentStepEl = $(
+      `.setup-step[data-step="${this.currentStep + 1}"]`,
+      win,
+    );
     if (currentStepEl) currentStepEl.classList.remove("active");
 
     this.currentStep--;
 
     this.updateStepUI(win);
 
-    const prevStepEl = $(`.setup-step[data-step="${this.currentStep + 1}"]`, win);
+    const prevStepEl = $(
+      `.setup-step[data-step="${this.currentStep + 1}"]`,
+      win,
+    );
 
     if (prevStepEl) {
       prevStepEl.classList.add("active");
@@ -1159,13 +1242,18 @@ export class SetupApp extends BaseApp {
         img.src = img.dataset.src;
       }
     });
-    stepEl.querySelectorAll(".feature-card").forEach((card, i) => card.style.setProperty("--i", i));
-    stepEl.querySelectorAll(".summary-item").forEach((item, i) => item.style.setProperty("--i", i));
+    stepEl
+      .querySelectorAll(".feature-card")
+      .forEach((card, i) => card.style.setProperty("--i", i));
+    stepEl
+      .querySelectorAll(".summary-item")
+      .forEach((item, i) => item.style.setProperty("--i", i));
   }
 
   async completeSetup(win) {
     const finalizedName = (this.userChoices.username || "").trim() || "Guest";
-    const finalizedAvatar = this.userChoices.profilePicture || PREDEFINED_AVATARS[0];
+    const finalizedAvatar =
+      this.userChoices.profilePicture || PREDEFINED_AVATARS[0];
     this.userChoices.username = finalizedName;
     this.userChoices.profilePicture = finalizedAvatar;
     os.storage.set(StorageKeys.username, finalizedName);
@@ -1174,34 +1262,58 @@ export class SetupApp extends BaseApp {
     const sm = this.os.app.getInstance(ServiceKeys.SESSION_MANAGER);
     if (sm?.currentSession) {
       sm.currentSession.name = finalizedName;
-      sm.currentSession.key = finalizedName.toLowerCase().replace(/[^a-z0-9]/g, "") || "guest";
+      sm.currentSession.key =
+        finalizedName.toLowerCase().replace(/[^a-z0-9]/g, "") || "guest";
       sm.currentSession.avatar = finalizedAvatar;
     }
 
     os.storage.set(StorageKeys.theme, this.userChoices.theme);
-    os.storage.set(StorageKeys.notificationsEnabled, this.userChoices.notifications.toString());
+    os.storage.set(
+      StorageKeys.notificationsEnabled,
+      this.userChoices.notifications.toString(),
+    );
     os.storage.set(StorageKeys.soundEnabled, this.userChoices.sound.toString());
     os.storage.set(StorageKeys.setupCompleted, "true");
 
-    os.storage.set(StorageKeys.performanceMode, this.userChoices.performanceMode);
+    os.storage.set(
+      StorageKeys.performanceMode,
+      this.userChoices.performanceMode,
+    );
     os.storage.set(StorageKeys.transparency, this.userChoices.transparency);
 
     os.storage.set(StorageKeys.fontFamily, this.userChoices.fontFamily);
     setIconPack(this.userChoices.iconPack || ICON_PACKS.PAPIRUS);
-    os.storage.set(StorageKeys.taskbarPosition, this.userChoices.taskbarPosition);
-    os.storage.set(StorageKeys.taskbarAlignment, this.userChoices.taskbarAlignment);
-    os.storage.set(StorageKeys.desktopIconSize, String(this.userChoices.desktopIconSize));
+    os.storage.set(
+      StorageKeys.taskbarPosition,
+      this.userChoices.taskbarPosition,
+    );
+    os.storage.set(
+      StorageKeys.taskbarAlignment,
+      this.userChoices.taskbarAlignment,
+    );
+    os.storage.set(
+      StorageKeys.desktopIconSize,
+      String(this.userChoices.desktopIconSize),
+    );
     os.storage.set(StorageKeys.guiScale, String(this.userChoices.guiScale));
-    os.storage.set(StorageKeys.windowAnimationSpeed, String(this.userChoices.windowAnimationSpeed));
+    os.storage.set(
+      StorageKeys.windowAnimationSpeed,
+      String(this.userChoices.windowAnimationSpeed),
+    );
     applyGuiScale(this.userChoices.guiScale);
     applyDesktopIconSize(this.userChoices.desktopIconSize);
-    os.storage.set(StorageKeys.clipboardManagerEnabled, this.userChoices.clipboardManager.toString());
+    os.storage.set(
+      StorageKeys.clipboardManagerEnabled,
+      this.userChoices.clipboardManager.toString(),
+    );
 
     this.os.app.triggerAchievement(Achievements.SetupComplete);
 
     if (this.userChoices.wallpaper) {
       try {
-        const wallpaperUrl = resolveWallpaperUrl("static/wallpapers/" + this.userChoices.wallpaper);
+        const wallpaperUrl = resolveWallpaperUrl(
+          "static/wallpapers/" + this.userChoices.wallpaper,
+        );
         await SystemUtilities.setWallpaper(wallpaperUrl);
       } catch (e) {
         console.error("Failed to set wallpaper:", e);
@@ -1209,11 +1321,13 @@ export class SetupApp extends BaseApp {
     }
 
     os.events.emit("SETUP_COMPLETED", this.userChoices);
-    os.events.emit("AUDIO_SETTINGS_CHANGED", { soundEnabled: this.userChoices.sound });
+    os.events.emit("AUDIO_SETTINGS_CHANGED", {
+      soundEnabled: this.userChoices.sound,
+    });
     document.dispatchEvent(
       new CustomEvent("AUDIO_SETTINGS_CHANGED", {
-        detail: { soundEnabled: this.userChoices.sound }
-      })
+        detail: { soundEnabled: this.userChoices.sound },
+      }),
     );
     const welcomeContent = `Setup complete, ${sm?.currentSession?.name || "Guest"}!
 
@@ -1241,7 +1355,7 @@ Have fun!`;
 
     os.notify.send("Welcome to YukiOS", "", {
       type: "success",
-      duration: 3000
+      duration: 3000,
     });
 
     os.window.close(win);
@@ -1273,7 +1387,7 @@ Have fun!`;
         "wallpaper3.webp",
         "wallpaper4.webp",
         "wallpaper5.webp",
-        "wallpaper6.webp"
+        "wallpaper6.webp",
       ];
     }
   }
@@ -1289,7 +1403,8 @@ Have fun!`;
       const reader = new FileReader();
       reader.onload = async (event) => {
         const dataUrl = event.target.result;
-        const fileName = "custom_" + Date.now() + "." + file.name.split(".").pop();
+        const fileName =
+          "custom_" + Date.now() + "." + file.name.split(".").pop();
 
         try {
           await os.fs.mkdir(["Pictures", "Wallpapers"]);
@@ -1311,11 +1426,15 @@ Have fun!`;
                 <i class="fas fa-check"></i>
               </div>
             `;
-            grid.querySelectorAll(".wallpaper-thumb").forEach((t) => t.classList.remove("active"));
+            grid
+              .querySelectorAll(".wallpaper-thumb")
+              .forEach((t) => t.classList.remove("active"));
             grid.appendChild(newThumb);
             newThumb.addEventListener("click", () => {
               this.userChoices.wallpaper = fileName;
-              grid.querySelectorAll(".wallpaper-thumb").forEach((t) => t.classList.remove("active"));
+              grid
+                .querySelectorAll(".wallpaper-thumb")
+                .forEach((t) => t.classList.remove("active"));
               newThumb.classList.add("active");
             });
           }
@@ -1375,7 +1494,7 @@ Have fun!`;
         if (file.size > maxBytes) {
           os.dialog.alert(
             "Image Too Large",
-            `The selected image is ${(file.size / 1024).toFixed(1)} KB. Please choose an image under 2 MB.`
+            `The selected image is ${(file.size / 1024).toFixed(1)} KB. Please choose an image under 2 MB.`,
           );
           return;
         }
@@ -1418,9 +1537,11 @@ Have fun!`;
     const summaryImg = $("#setup-summary-profile-img", win);
     const summaryName = $("#setup-summary-profile-name", win);
     if (summaryImg) {
-      summaryImg.dataset.src = this.userChoices.profilePicture || PREDEFINED_AVATARS[0];
+      summaryImg.dataset.src =
+        this.userChoices.profilePicture || PREDEFINED_AVATARS[0];
       summaryImg.src = summaryImg.dataset.src;
     }
-    if (summaryName) setText(summaryName, `Profile: ${this.userChoices.username || "Guest"}`);
+    if (summaryName)
+      setText(summaryName, `Profile: ${this.userChoices.username || "Guest"}`);
   }
 }

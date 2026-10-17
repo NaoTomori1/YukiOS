@@ -3,7 +3,13 @@ import { resolveIconUrl } from "./assetResolver.js";
 import { createElement } from "./domUtils.js";
 
 export function showAboutDialog(options) {
-  const { title, version = "1.0.0", description, icon = null, iconType = "image" } = options;
+  const {
+    title,
+    version = "1.0.0",
+    description,
+    icon = null,
+    iconType = "image",
+  } = options;
 
   const dialog = createElement("div");
   dialog.className = "about-dialog-overlay";
@@ -61,11 +67,11 @@ export function showAboutDialog(options) {
         delete dialogEl.dataset.offsetY;
         delete dialogEl.dataset.startX;
         delete dialogEl.dataset.startY;
-      }
+      },
     },
     {
-      ignoreFrom: "button"
-    }
+      ignoreFrom: "button",
+    },
   );
 
   const close = () => {

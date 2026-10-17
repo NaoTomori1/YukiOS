@@ -19,7 +19,9 @@ export class PathResolver {
   normalizePath(path) {
     if (typeof path === "string") return path.split("/").filter(Boolean);
     if (Array.isArray(path))
-      return path.flatMap((p) => (typeof p === "string" ? p.split("/").filter(Boolean) : p ? [p] : []));
+      return path.flatMap((p) =>
+        typeof p === "string" ? p.split("/").filter(Boolean) : p ? [p] : [],
+      );
     return [];
   }
 
@@ -41,7 +43,10 @@ export class PathResolver {
     }
     const norm = this.normalizePath(path);
     const fullPath = this.join("/", ...norm);
-    if (fullPath === this.CONFIG.ROOT || fullPath.startsWith(this.CONFIG.ROOT + "/")) {
+    if (
+      fullPath === this.CONFIG.ROOT ||
+      fullPath.startsWith(this.CONFIG.ROOT + "/")
+    ) {
       return fullPath;
     }
     return this.join(this.CONFIG.ROOT, ...norm);

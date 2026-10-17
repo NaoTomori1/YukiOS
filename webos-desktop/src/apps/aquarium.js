@@ -55,7 +55,7 @@ export class AquariumApp extends BaseApp {
     }
     const win = os.window.create("aquarium", "Aquarium", "960px", "640px", {
       icon: "fas fa-fish",
-      appId: "aquarium"
+      appId: "aquarium",
     });
     win.classList.add("transparent", "aquarium-window");
     this.win = win;
@@ -65,7 +65,8 @@ export class AquariumApp extends BaseApp {
     this.canvas = win.querySelector("#aquarium-canvas");
     this.ctx = this.canvas.getContext("2d");
     this.dpr = Math.min(window.devicePixelRatio || 1, 2);
-    this.soundEnabled = os.storage.get(StorageKeys.aquariumSoundEnabled) !== "false";
+    this.soundEnabled =
+      os.storage.get(StorageKeys.aquariumSoundEnabled) !== "false";
     this.loadState();
     this.setupCanvas();
     this.buildGravel();
@@ -102,11 +103,15 @@ export class AquariumApp extends BaseApp {
     window.removeEventListener("resize", this.boundResize);
     this.stopBgm();
     if (this.audioCtx) {
-      try { this.audioCtx.close(); } catch {}
+      try {
+        this.audioCtx.close();
+      } catch {}
       this.audioCtx = null;
       this.masterGain = null;
     }
-    try { os.tray.unregister("aquarium"); } catch {}
+    try {
+      os.tray.unregister("aquarium");
+    } catch {}
     this.win = null;
     this.canvas = null;
     this.ctx = null;
@@ -169,7 +174,8 @@ export class AquariumApp extends BaseApp {
               trayOpts.onClick();
             } else {
               const w = document.getElementById("aquarium");
-              if (w && w.style.display === "none") os.tray.restoreFromTray("aquarium");
+              if (w && w.style.display === "none")
+                os.tray.restoreFromTray("aquarium");
               else if (w) os.window.focus(w);
               else this.open();
             }
@@ -178,10 +184,12 @@ export class AquariumApp extends BaseApp {
             if (trayOpts.onQuit) {
               trayOpts.onQuit();
             } else {
-              try { os.tray.unregister("aquarium"); } catch {}
+              try {
+                os.tray.unregister("aquarium");
+              } catch {}
               if (this.win) os.window.close(this.win);
             }
-          }
+          },
         });
       }
     } catch {}
@@ -189,7 +197,8 @@ export class AquariumApp extends BaseApp {
 
   ensureAudio() {
     if (this.audioCtx) {
-      if (this.audioCtx.state === "suspended") this.audioCtx.resume().catch(() => {});
+      if (this.audioCtx.state === "suspended")
+        this.audioCtx.resume().catch(() => {});
       return;
     }
     try {
@@ -223,7 +232,11 @@ export class AquariumApp extends BaseApp {
       filt.frequency.value = 4200;
       osc.type = type || "sine";
       osc.frequency.value = freq;
-      if (slideTo) osc.frequency.exponentialRampToValueAtTime(slideTo, now + duration * 0.9);
+      if (slideTo)
+        osc.frequency.exponentialRampToValueAtTime(
+          slideTo,
+          now + duration * 0.9,
+        );
       g.gain.value = 0;
       g.gain.setValueAtTime(0, now);
       g.gain.linearRampToValueAtTime(gain, now + 0.012);
@@ -235,8 +248,24 @@ export class AquariumApp extends BaseApp {
   }
 
   playBubble() {
-    this.playTone(randomBetween(780, 1100), 0.14, "sine", 0.18, randomBetween(380, 520));
-    setTimeout(() => this.playTone(randomBetween(900, 1200), 0.08, "sine", 0.08, randomBetween(600, 800)), 60);
+    this.playTone(
+      randomBetween(780, 1100),
+      0.14,
+      "sine",
+      0.18,
+      randomBetween(380, 520),
+    );
+    setTimeout(
+      () =>
+        this.playTone(
+          randomBetween(900, 1200),
+          0.08,
+          "sine",
+          0.08,
+          randomBetween(600, 800),
+        ),
+      60,
+    );
   }
 
   playSplash() {
@@ -245,9 +274,15 @@ export class AquariumApp extends BaseApp {
       if (this.audioCtx.state === "suspended") this.audioCtx.resume();
       const now = this.audioCtx.currentTime;
       const bufferSize = Math.floor(this.audioCtx.sampleRate * 0.09);
-      const buffer = this.audioCtx.createBuffer(1, bufferSize, this.audioCtx.sampleRate);
+      const buffer = this.audioCtx.createBuffer(
+        1,
+        bufferSize,
+        this.audioCtx.sampleRate,
+      );
       const data = buffer.getChannelData(0);
-      for (let i = 0; i < bufferSize; i++) data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / bufferSize, 2) * 0.6;
+      for (let i = 0; i < bufferSize; i++)
+        data[i] =
+          (Math.random() * 2 - 1) * Math.pow(1 - i / bufferSize, 2) * 0.6;
       const src = this.audioCtx.createBufferSource();
       src.buffer = buffer;
       const filt = this.audioCtx.createBiquadFilter();
@@ -299,14 +334,22 @@ export class AquariumApp extends BaseApp {
   toggleSound() {
     this.soundEnabled = !this.soundEnabled;
     os.storage.set(StorageKeys.aquariumSoundEnabled, String(this.soundEnabled));
-    if (this.masterGain) this.masterGain.gain.linearRampToValueAtTime(this.soundEnabled ? 0.28 : 0, this.audioCtx.currentTime + 0.12);
+    if (this.masterGain)
+      this.masterGain.gain.linearRampToValueAtTime(
+        this.soundEnabled ? 0.28 : 0,
+        this.audioCtx.currentTime + 0.12,
+      );
     const btn = this.win?.querySelector('[data-action="sound"]');
     if (btn) {
       btn.classList.toggle("active", !this.soundEnabled);
       btn.innerHTML = `<i class="fas ${this.soundEnabled ? "fa-volume-high" : "fa-volume-xmark"}"></i> ${this.soundEnabled ? "Sound" : "Muted"}`;
     }
     this.setStatus(this.soundEnabled ? "Sound on" : "Muted");
-    if (this.soundEnabled) { this.ensureAudio(); this.startBgm(); this.playFeed(); } else this.stopBgm();
+    if (this.soundEnabled) {
+      this.ensureAudio();
+      this.startBgm();
+      this.playFeed();
+    } else this.stopBgm();
     this.scheduleSave();
   }
 
@@ -348,7 +391,17 @@ export class AquariumApp extends BaseApp {
       const seqGain = this.audioCtx.createGain();
       seqGain.gain.value = 0.09;
       seqGain.connect(this.masterGain);
-      this.bgmNodes = { padGain, filt, o1, o2, o1Gain, o2Gain, lfo, lfoGain, seqGain };
+      this.bgmNodes = {
+        padGain,
+        filt,
+        o1,
+        o2,
+        o1Gain,
+        o2Gain,
+        lfo,
+        lfoGain,
+        seqGain,
+      };
       const notes = [196, 246, 293, 329, 293, 246, 196, 220];
       let idx = 0;
       const tick = () => {
@@ -377,7 +430,10 @@ export class AquariumApp extends BaseApp {
   }
 
   stopBgm() {
-    if (this.bgmTimer) { clearInterval(this.bgmTimer); this.bgmTimer = null; }
+    if (this.bgmTimer) {
+      clearInterval(this.bgmTimer);
+      this.bgmTimer = null;
+    }
     if (!this.bgmNodes) return;
     try {
       const now = this.audioCtx ? this.audioCtx.currentTime : 0;
@@ -390,7 +446,9 @@ export class AquariumApp extends BaseApp {
         } catch {}
         this.bgmNodes = null;
       }, 700);
-    } catch { this.bgmNodes = null; }
+    } catch {
+      this.bgmNodes = null;
+    }
   }
 
   loadState() {
@@ -401,7 +459,9 @@ export class AquariumApp extends BaseApp {
       if (!data || !Array.isArray(data.fishes)) return;
       this.fishes = data.fishes.slice(0, 100).map((f) => {
         const fd = getFishById(f.id) || getFishById(f.t) || pick(FISH_DATA);
-        const sizePx = f.s ? f.s : Math.round(36 * fd.size + randomBetween(-6, 8));
+        const sizePx = f.s
+          ? f.s
+          : Math.round(36 * fd.size + randomBetween(-6, 8));
         return {
           fd,
           id: fd.id,
@@ -415,7 +475,7 @@ export class AquariumApp extends BaseApp {
           wobble: randomBetween(0.6, 1.1),
           hungry: true,
           chase: null,
-          flip: f.vx >= 0 ? 1 : -1
+          flip: f.vx >= 0 ? 1 : -1,
         };
       });
     } catch {}
@@ -425,7 +485,15 @@ export class AquariumApp extends BaseApp {
     try {
       const data = {
         v: 2,
-        fishes: this.fishes.map((f) => ({ id: f.fd.id, x: Math.round(f.x), y: Math.round(f.y), vx: Number(f.vx.toFixed(2)), vy: Number(f.vy.toFixed(2)), s: Math.round(f.size), p: Number(f.phase.toFixed(2)) }))
+        fishes: this.fishes.map((f) => ({
+          id: f.fd.id,
+          x: Math.round(f.x),
+          y: Math.round(f.y),
+          vx: Number(f.vx.toFixed(2)),
+          vy: Number(f.vy.toFixed(2)),
+          s: Math.round(f.size),
+          p: Number(f.phase.toFixed(2)),
+        })),
       };
       os.storage.set(StorageKeys.aquariumState, JSON.stringify(data));
     } catch {}
@@ -443,7 +511,12 @@ export class AquariumApp extends BaseApp {
     const rect = stage.getBoundingClientRect();
     const newW = Math.max(300, Math.round(rect.width));
     const newH = Math.max(200, Math.round(rect.height));
-    if (newW === this.width && newH === this.height && this.canvas.width === newW * this.dpr) return;
+    if (
+      newW === this.width &&
+      newH === this.height &&
+      this.canvas.width === newW * this.dpr
+    )
+      return;
     const oldW = this.width;
     this.width = newW;
     this.height = newH;
@@ -461,7 +534,10 @@ export class AquariumApp extends BaseApp {
       b.x = Math.max(10, Math.min(this.width - 10, b.x * scaleX));
     }
     for (const f of this.fishes) {
-      f.x = Math.max(f.size * 0.6, Math.min(this.width - f.size * 0.6, f.x * scaleX));
+      f.x = Math.max(
+        f.size * 0.6,
+        Math.min(this.width - f.size * 0.6, f.x * scaleX),
+      );
       f.y = Math.max(40, Math.min(this.height - 30, f.y));
     }
     this.buildGravel();
@@ -498,7 +574,7 @@ export class AquariumApp extends BaseApp {
         xRatio: ((i * 137.5) % 1000) / 1000,
         yOff: Math.random() * gh * 0.9 + 2,
         r: randomBetween(1, 2.2),
-        c: `rgba(${180 + Math.floor(Math.random() * 40)},${160 + Math.floor(Math.random() * 40)},${120 + Math.floor(Math.random() * 30)},0.7)`
+        c: `rgba(${180 + Math.floor(Math.random() * 40)},${160 + Math.floor(Math.random() * 40)},${120 + Math.floor(Math.random() * 30)},0.7)`,
       });
     }
   }
@@ -531,7 +607,7 @@ export class AquariumApp extends BaseApp {
       wobble: randomBetween(0.6, 1.1),
       hungry: Math.random() > 0.3,
       chase: null,
-      flip: dir > 0 ? 1 : -1
+      flip: dir > 0 ? 1 : -1,
     };
   }
 
@@ -547,7 +623,7 @@ export class AquariumApp extends BaseApp {
         phase: Math.random() * Math.PI * 2,
         segments: 4 + Math.floor(Math.random() * 3),
         width: randomBetween(10, 18),
-        color: i % 2 === 0 ? "rgba(52,211,153,0.85)" : "rgba(16,185,129,0.9)"
+        color: i % 2 === 0 ? "rgba(52,211,153,0.85)" : "rgba(16,185,129,0.9)",
       });
     }
   }
@@ -562,12 +638,14 @@ export class AquariumApp extends BaseApp {
   makeBubble(randomY = false) {
     return {
       x: randomBetween(20, this.width - 20),
-      y: randomY ? randomBetween(0, this.height) : this.height + randomBetween(10, 40),
+      y: randomY
+        ? randomBetween(0, this.height)
+        : this.height + randomBetween(10, 40),
       r: randomBetween(2, 6),
       speed: randomBetween(0.4, 1.3),
       sway: randomBetween(0.6, 1.6),
       phase: Math.random() * Math.PI * 2,
-      opacity: randomBetween(0.25, 0.55)
+      opacity: randomBetween(0.25, 0.55),
     };
   }
 
@@ -634,14 +712,20 @@ export class AquariumApp extends BaseApp {
     if (!grid) return;
     const list = getAllFish();
     if (countEl) countEl.textContent = `(${list.length})`;
-    grid.innerHTML = list.map((fd) => `
+    grid.innerHTML = list
+      .map(
+        (fd) => `
       <button class="aquarium-catalog-item" data-fish-id="${fd.id}" title="${fd.name}">
         <canvas width="120" height="80" data-preview="${fd.id}"></canvas>
         <span class="aquarium-catalog-name">${fd.name}</span>
       </button>
-    `).join("");
+    `,
+      )
+      .join("");
     grid.querySelectorAll("[data-fish-id]").forEach((btn) => {
-      btn.addEventListener("click", () => this.spawnFishById(btn.dataset.fishId));
+      btn.addEventListener("click", () =>
+        this.spawnFishById(btn.dataset.fishId),
+      );
     });
     requestAnimationFrame(() => this.renderCatalogPreviews());
   }
@@ -682,8 +766,14 @@ export class AquariumApp extends BaseApp {
         if (fd.body === "squid") return 50;
         return previewSize;
       })();
-      const previewFish = { fd, size: autoScale, phase: Math.random() * Math.PI * 2 };
-      try { drawSeaFish(ctx, previewFish, 0, false, 0); } catch {}
+      const previewFish = {
+        fd,
+        size: autoScale,
+        phase: Math.random() * Math.PI * 2,
+      };
+      try {
+        drawSeaFish(ctx, previewFish, 0, false, 0);
+      } catch {}
       ctx.restore();
     });
   }
@@ -696,7 +786,11 @@ export class AquariumApp extends BaseApp {
     this.ensureAudio();
     const fd = getFishById(fishId);
     if (!fd) return;
-    const fish = this.makeFish({ fishId: fd.id, x: this.width + 40, y: randomBetween(80, this.height - 80) });
+    const fish = this.makeFish({
+      fishId: fd.id,
+      x: this.width + 40,
+      y: randomBetween(80, this.height - 80),
+    });
     fish.vx = -Math.abs(fish.vx);
     fish.flip = -1;
     this.fishes.push(fish);
@@ -713,7 +807,14 @@ export class AquariumApp extends BaseApp {
     this.ensureAudio();
     this.feedCooldown = true;
     for (let i = 0; i < 5; i++) {
-      setTimeout(() => this.dropPellet(randomBetween(60, this.width - 60), randomBetween(30, 80)), i * 80);
+      setTimeout(
+        () =>
+          this.dropPellet(
+            randomBetween(60, this.width - 60),
+            randomBetween(30, 80),
+          ),
+        i * 80,
+      );
     }
     this.playFeed();
     this.setStatus("Feeding time!");
@@ -727,7 +828,7 @@ export class AquariumApp extends BaseApp {
       vy: 0,
       r: randomBetween(2.5, 4),
       eaten: false,
-      life: 1
+      life: 1,
     });
     if (this.pellets.length > 24) this.pellets.shift();
   }
@@ -741,7 +842,7 @@ export class AquariumApp extends BaseApp {
         vy: randomBetween(-1.2, -0.2),
         life: 1,
         decay: randomBetween(0.04, 0.08),
-        r: randomBetween(1, 2.5)
+        r: randomBetween(1, 2.5),
       });
     }
   }
@@ -752,7 +853,10 @@ export class AquariumApp extends BaseApp {
       return;
     }
     this.ensureAudio();
-    const fish = this.makeFish({ x: this.width + 40, y: randomBetween(80, this.height - 80) });
+    const fish = this.makeFish({
+      x: this.width + 40,
+      y: randomBetween(80, this.height - 80),
+    });
     fish.vx = -Math.abs(fish.vx);
     fish.flip = -1;
     this.fishes.push(fish);
@@ -768,11 +872,23 @@ export class AquariumApp extends BaseApp {
       this.setStatus("No fishes to destroy");
       return;
     }
-    const ok = await os.dialog.confirm("Destroy All Fishes", `Remove all ${this.fishes.length} fishes? This cannot be undone.`);
+    const ok = await os.dialog.confirm(
+      "Destroy All Fishes",
+      `Remove all ${this.fishes.length} fishes? This cannot be undone.`,
+    );
     if (!ok) return;
     this.ensureAudio();
     for (const f of this.fishes) {
-      for (let i = 0; i < 8; i++) this.particles.push({ x: f.x, y: f.y, vx: randomBetween(-2.8, 2.8), vy: randomBetween(-2.8, 1.2), life: 1, decay: randomBetween(0.03, 0.06), r: randomBetween(1.5, 3) });
+      for (let i = 0; i < 8; i++)
+        this.particles.push({
+          x: f.x,
+          y: f.y,
+          vx: randomBetween(-2.8, 2.8),
+          vy: randomBetween(-2.8, 1.2),
+          life: 1,
+          decay: randomBetween(0.03, 0.06),
+          r: randomBetween(1.5, 3),
+        });
     }
     this.fishes = [];
     this.pellets = [];
@@ -941,7 +1057,9 @@ export class AquariumApp extends BaseApp {
         if (Math.abs(p.vy) < 0.1) p.vy = 0;
       }
     }
-    this.pellets = this.pellets.filter((p) => p.life > 0 && p.y < this.height + 10);
+    this.pellets = this.pellets.filter(
+      (p) => p.life > 0 && p.y < this.height + 10,
+    );
     if (this.pellets.length > 0 && this.pellets.every((p) => p.eaten)) {
       setTimeout(() => {
         this.pellets = this.pellets.filter((p) => !p.eaten);
@@ -999,11 +1117,15 @@ export class AquariumApp extends BaseApp {
     ctx.save();
     ctx.globalAlpha = 0.07;
     for (let i = 0; i < 3; i++) {
-      const y = (h * 0.18) + i * 22 + Math.sin(performance.now() * 0.0003 + i) * 6;
+      const y =
+        h * 0.18 + i * 22 + Math.sin(performance.now() * 0.0003 + i) * 6;
       ctx.beginPath();
       ctx.moveTo(0, y);
       for (let x = 0; x < w; x += 18) {
-        ctx.lineTo(x, y + Math.sin(x * 0.015 + i * 1.2 + performance.now() * 0.001) * 4);
+        ctx.lineTo(
+          x,
+          y + Math.sin(x * 0.015 + i * 1.2 + performance.now() * 0.001) * 4,
+        );
       }
       ctx.lineTo(w, y + 8);
       ctx.lineTo(0, y + 8);
@@ -1146,7 +1268,8 @@ export class AquariumApp extends BaseApp {
     ctx.globalAlpha = 0.045;
     ctx.fillStyle = "#ffffff";
     for (let i = 0; i < 5; i++) {
-      const x = (w / 6) * (i + 0.7) + Math.sin(performance.now() * 0.0002 + i) * 10;
+      const x =
+        (w / 6) * (i + 0.7) + Math.sin(performance.now() * 0.0002 + i) * 10;
       ctx.beginPath();
       ctx.moveTo(x - 28, 0);
       ctx.lineTo(x + 28, 0);

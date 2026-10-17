@@ -1,5 +1,9 @@
 import { ICON_REGISTRY } from "../generated/iconRegistry.js";
-import { resolveIconUrl, resolveYukiAsset, resolvePapirusUrl } from "./assetResolver.js";
+import {
+  resolveIconUrl,
+  resolveYukiAsset,
+  resolvePapirusUrl,
+} from "./assetResolver.js";
 import { createElement, $ } from "./domUtils.js";
 
 function resolveImageUrl(value) {
@@ -12,13 +16,15 @@ function resolveImageUrl(value) {
     value.startsWith("https://")
   )
     return value;
-  if (value.startsWith("static/") || value.startsWith("/static/")) return resolveIconUrl(value);
+  if (value.startsWith("static/") || value.startsWith("/static/"))
+    return resolveIconUrl(value);
   if (!value.includes("/")) return resolveYukiAsset(`static/icons/${value}`);
   return value;
 }
 
 function buildPickerPreview(pending) {
-  if (!pending) return `<span style="color:var(--text-muted);font-size:12px;">No icon</span>`;
+  if (!pending)
+    return `<span style="color:var(--text-muted);font-size:12px;">No icon</span>`;
   const url = resolveImageUrl(pending);
   return `<img src="${url}" alt="" />`;
 }
@@ -105,7 +111,9 @@ export function showIconPicker(options = {}) {
     ev.preventDefault();
     dropZone.classList.add("dragover");
   });
-  dropZone.addEventListener("dragleave", () => dropZone.classList.remove("dragover"));
+  dropZone.addEventListener("dragleave", () =>
+    dropZone.classList.remove("dragover"),
+  );
   dropZone.addEventListener("drop", (ev) => {
     ev.preventDefault();
     dropZone.classList.remove("dragover");
@@ -141,7 +149,9 @@ export function showIconPicker(options = {}) {
   function renderGrid(filter) {
     grid.innerHTML = "";
     const q = (filter || "").toLowerCase();
-    const filtered = q ? ICON_REGISTRY.filter((n) => n.toLowerCase().includes(q)) : ICON_REGISTRY;
+    const filtered = q
+      ? ICON_REGISTRY.filter((n) => n.toLowerCase().includes(q))
+      : ICON_REGISTRY;
     filtered.forEach((name) => {
       const url = resolveYukiAsset(`static/icons/${name}`);
       const item = createElement("div");
@@ -174,7 +184,9 @@ export function showIconPicker(options = {}) {
     if (!btn) return;
     const tab = btn.dataset.tab;
     allTabs.forEach((b) => b.classList.toggle("active", b === btn));
-    allPanels.forEach((p) => p.classList.toggle("active", p.dataset.panel === tab));
+    allPanels.forEach((p) =>
+      p.classList.toggle("active", p.dataset.panel === tab),
+    );
   });
 
   const footer = createElement("div");

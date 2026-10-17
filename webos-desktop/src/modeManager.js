@@ -8,7 +8,8 @@ export const MODES = Object.freeze({
   TILING: "tiling",
   "3D": "3d",
   CHROME_OS: "chromeos",
-  STEAMDECK: "steamdeck"
+  STEAMDECK: "steamdeck",
+  WIN11: "win11",
 });
 
 export const MODE_DEFS = {
@@ -16,32 +17,38 @@ export const MODE_DEFS = {
     cssClass: "mac-mode",
     cssTarget: "html",
     storageKey: StorageKeys.macOsControls,
-    label: "Yuki Mac Desktop"
+    label: "Yuki Mac Desktop",
   },
   [MODES.TILING]: {
     cssClass: "tiling-active",
     cssTarget: "body",
     storageKey: StorageKeys.tilingEnabled,
-    label: "Yuki Tiling VM"
+    label: "Yuki Tiling VM",
   },
   [MODES["3D"]]: {
     cssClass: "3d-mode",
     cssTarget: "html",
     storageKey: null,
-    label: "Yuki 3D Desktop"
+    label: "Yuki 3D Desktop",
   },
   [MODES.CHROME_OS]: {
     cssClass: "chromeos-mode",
     cssTarget: "html",
     storageKey: StorageKeys.chromeOsMode,
-    label: "Yuki Chrome OS"
+    label: "Yuki Chrome OS",
   },
   [MODES.STEAMDECK]: {
     cssClass: "steamdeck-mode",
     cssTarget: "html",
     storageKey: StorageKeys.steamDeckMode,
-    label: "Yuki Steam Client"
-  }
+    label: "Yuki Steam Client",
+  },
+  [MODES.WIN11]: {
+    cssClass: "win11-mode",
+    cssTarget: "html",
+    storageKey: StorageKeys.win11Mode,
+    label: "Yuki Windows 11",
+  },
 };
 
 class ModeManager {
@@ -64,7 +71,8 @@ class ModeManager {
     this.activeModes.add(id);
 
     if (def.cssClass) {
-      const target = def.cssTarget === "body" ? document.body : document.documentElement;
+      const target =
+        def.cssTarget === "body" ? document.body : document.documentElement;
       target.classList.add(def.cssClass);
     }
 
@@ -80,7 +88,8 @@ class ModeManager {
     this.activeModes.delete(id);
 
     if (def.cssClass) {
-      const target = def.cssTarget === "body" ? document.body : document.documentElement;
+      const target =
+        def.cssTarget === "body" ? document.body : document.documentElement;
       target.classList.remove(def.cssClass);
     }
 

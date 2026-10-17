@@ -34,5 +34,5 @@ export const AppSource = {
   TORRENT_CLIENT: "Torrent Client",
   CLOCK: "Clock",
   CALENDAR_APP: "Calendar",
-  WALLPAPER_ENGINE: "Wallpaper Engine"
+  WALLPAPER_ENGINE: "Wallpaper Engine",
 };

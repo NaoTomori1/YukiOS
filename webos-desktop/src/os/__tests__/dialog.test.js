@@ -3,14 +3,14 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 vi.mock("../../shared/dialogs.js", () => ({
   showAlert: vi.fn(() => Promise.resolve()),
   showConfirm: vi.fn(() => Promise.resolve(true)),
-  showPrompt: vi.fn(() => Promise.resolve("test"))
+  showPrompt: vi.fn(() => Promise.resolve("test")),
 }));
 
 vi.mock("../../audioMixer.js", () => ({
   audioMixer: vi.fn(() => ({
-    playSystemSound: vi.fn()
+    playSystemSound: vi.fn(),
   })),
-  SystemAudio: {}
+  SystemAudio: {},
 }));
 
 import { DialogAPI } from "../dialog.js";

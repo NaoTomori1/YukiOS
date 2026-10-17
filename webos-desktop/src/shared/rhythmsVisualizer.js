@@ -107,9 +107,11 @@ export class RhythmsVisualizer {
   }
 
   updateOptions(options = {}) {
-    if (options.displayMode !== undefined) this.displayMode = options.displayMode;
+    if (options.displayMode !== undefined)
+      this.displayMode = options.displayMode;
     if (options.tileCount !== undefined) this.setTileCount(options.tileCount);
-    if (options.sensitivity !== undefined) this.sensitivity = options.sensitivity;
+    if (options.sensitivity !== undefined)
+      this.sensitivity = options.sensitivity;
     if (options.roundness !== undefined) this.roundness = options.roundness;
     if (options.filled !== undefined) this.filled = options.filled;
     if (options.effectMode !== undefined) this.effectMode = options.effectMode;
@@ -121,7 +123,9 @@ export class RhythmsVisualizer {
     const nyquist = FREQ_BIN_COUNT;
     const minHz = 20;
     const maxHz = 20000;
-    const sampleRate = audioMixer().audioCtx ? audioMixer().audioCtx.sampleRate : 44100;
+    const sampleRate = audioMixer().audioCtx
+      ? audioMixer().audioCtx.sampleRate
+      : 44100;
     const hzPerBin = sampleRate / 2 / nyquist;
     const map = [];
     for (let i = 0; i < this.tileCount; i++) {
@@ -152,7 +156,8 @@ export class RhythmsVisualizer {
     }
     for (let i = 0; i < this.tileCount; i++) {
       const bin = this.binMap[i];
-      const nextBin = this.binMap[i + 1] !== undefined ? this.binMap[i + 1] : bin + 1;
+      const nextBin =
+        this.binMap[i + 1] !== undefined ? this.binMap[i + 1] : bin + 1;
       let max = 0;
       for (let b = bin; b < Math.min(nextBin, FREQ_BIN_COUNT); b++) {
         if (this.freqDataArray[b] > max) max = this.freqDataArray[b];
@@ -186,8 +191,14 @@ export class RhythmsVisualizer {
 
   barLayout(width) {
     const minGap = this.tileCount > 80 ? 1 : this.tileCount > 40 ? 2 : 3;
-    const barWidth = Math.max(1, (width - minGap * (this.tileCount - 1)) / this.tileCount);
-    const gap = this.tileCount > 1 ? (width - barWidth * this.tileCount) / (this.tileCount - 1) : 0;
+    const barWidth = Math.max(
+      1,
+      (width - minGap * (this.tileCount - 1)) / this.tileCount,
+    );
+    const gap =
+      this.tileCount > 1
+        ? (width - barWidth * this.tileCount) / (this.tileCount - 1)
+        : 0;
     return { barWidth, gap };
   }
 
@@ -238,18 +249,34 @@ export class RhythmsVisualizer {
       const bw = Math.max(1, Math.floor(barWidth));
       const hue = this.hue + (i / this.tileCount) * 30;
       if (this.filled) {
-        const gradTop = this.ctx.createLinearGradient(0, centerY - barHeight, 0, centerY);
+        const gradTop = this.ctx.createLinearGradient(
+          0,
+          centerY - barHeight,
+          0,
+          centerY,
+        );
         gradTop.addColorStop(0, `hsla(${hue}, 80%, 70%, 1)`);
         gradTop.addColorStop(1, `hsla(${hue}, 70%, 50%, 0.5)`);
         this.ctx.fillStyle = gradTop;
         if (radius > 0) {
           this.ctx.beginPath();
-          this.ctx.roundRect(Math.round(x), centerY - barHeight, bw, barHeight, radius);
+          this.ctx.roundRect(
+            Math.round(x),
+            centerY - barHeight,
+            bw,
+            barHeight,
+            radius,
+          );
           this.ctx.fill();
         } else {
           this.ctx.fillRect(Math.round(x), centerY - barHeight, bw, barHeight);
         }
-        const gradBot = this.ctx.createLinearGradient(0, centerY, 0, centerY + barHeight);
+        const gradBot = this.ctx.createLinearGradient(
+          0,
+          centerY,
+          0,
+          centerY + barHeight,
+        );
         gradBot.addColorStop(0, `hsla(${hue}, 70%, 50%, 0.5)`);
         gradBot.addColorStop(1, `hsla(${hue}, 80%, 70%, 1)`);
         this.ctx.fillStyle = gradBot;
@@ -265,13 +292,24 @@ export class RhythmsVisualizer {
         this.ctx.lineWidth = 2;
         if (radius > 0) {
           this.ctx.beginPath();
-          this.ctx.roundRect(Math.round(x), centerY - barHeight, bw, barHeight, radius);
+          this.ctx.roundRect(
+            Math.round(x),
+            centerY - barHeight,
+            bw,
+            barHeight,
+            radius,
+          );
           this.ctx.stroke();
           this.ctx.beginPath();
           this.ctx.roundRect(Math.round(x), centerY, bw, barHeight, radius);
           this.ctx.stroke();
         } else {
-          this.ctx.strokeRect(Math.round(x), centerY - barHeight, bw, barHeight);
+          this.ctx.strokeRect(
+            Math.round(x),
+            centerY - barHeight,
+            bw,
+            barHeight,
+          );
           this.ctx.strokeRect(Math.round(x), centerY, bw, barHeight);
         }
       }
@@ -445,7 +483,12 @@ export class RhythmsVisualizer {
       const y = height - barHeight;
       const hue = this.hue + (i / this.tileCount) * 30;
       this.ctx.fillStyle = `hsla(${hue}, 80%, 60%, 0.5)`;
-      this.ctx.fillRect(Math.round(x), y, Math.max(1, Math.floor(barWidth)), barHeight);
+      this.ctx.fillRect(
+        Math.round(x),
+        y,
+        Math.max(1, Math.floor(barWidth)),
+        barHeight,
+      );
     }
     this.ctx.restore();
   }
@@ -462,7 +505,12 @@ export class RhythmsVisualizer {
       const y = height - barHeight;
       const hue = this.hue + t * 30;
       this.ctx.fillStyle = `hsla(${hue}, 50%, 50%, 0.3)`;
-      this.ctx.fillRect(Math.round(x), y, Math.max(1, Math.floor(barWidth)), barHeight);
+      this.ctx.fillRect(
+        Math.round(x),
+        y,
+        Math.max(1, Math.floor(barWidth)),
+        barHeight,
+      );
     }
     this.ctx.fillStyle = "rgba(255,255,255,0.35)";
     this.ctx.font = "13px system-ui";

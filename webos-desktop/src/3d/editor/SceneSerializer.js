@@ -12,9 +12,9 @@ export class SceneSerializer {
       furniture: furniturePositions,
       decorations: {
         active: decorActiveStates,
-        positions: decorPositions
+        positions: decorPositions,
       },
-      version: 1
+      version: 1,
     };
 
     os.storage.set(STORAGE_KEY, json);

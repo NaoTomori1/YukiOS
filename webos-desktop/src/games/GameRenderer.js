@@ -8,7 +8,12 @@ import { resolveIconUrl } from "../shared/assetResolver.js";
 import { getEffectiveIcon } from "../shared/iconPack.js";
 import { fetchGamePlayCounts, getCachedPlayCounts } from "../analytics.js";
 import { $, $$, createElement } from "../shared/domUtils.js";
-import { injectAdsterraAd, injectNativeAd, suppressAdBlocks, ADSTERRA_KEYS } from "../ads.js";
+import {
+  injectAdsterraAd,
+  injectNativeAd,
+  suppressAdBlocks,
+  ADSTERRA_KEYS,
+} from "../ads.js";
 import { formatGameActivityTime, escapeHtml as esc } from "../utils/utils.js";
 import {
   achievementsPercent,
@@ -16,12 +21,13 @@ import {
   fetchActivityOverview,
   buildPlayerRows,
   buildFriendCards,
-  buildAvatarStrip
+  buildAvatarStrip,
 } from "./steamOverviewData.js";
 
 function getPapirusHtml(papirus, style) {
   const eff = getEffectiveIcon(papirus);
-  if (eff.startsWith("papirus:")) return `<img src="${resolveIconUrl(eff)}" style="${style}" alt="" />`;
+  if (eff.startsWith("papirus:"))
+    return `<img src="${resolveIconUrl(eff)}" style="${style}" alt="" />`;
   const m = style.match(/width\s*:\s*([^;]+)/);
   const size = m ? m[1] : "16px";
   return `<i class="${eff}" style="font-size:${size}"></i>`;
@@ -38,7 +44,10 @@ export class GameRenderer {
       const previousCounts = this.playCounts;
       this.playCounts = counts;
       this.updateAllBadges();
-      if (this.renderer.sortBy === "popularity" && Object.keys(previousCounts).length === 0) {
+      if (
+        this.renderer.sortBy === "popularity" &&
+        Object.keys(previousCounts).length === 0
+      ) {
         const container = $(".steam-library-page");
         if (container) {
           const onLaunch = (appId) => this.renderer.launch(appId);
@@ -243,7 +252,13 @@ export class GameRenderer {
 
     this.injectReeyukiStyle(target);
 
-    injectAdsterraAd("overview-ad-slot", ADSTERRA_KEYS.rectangle, 300, 250, 200);
+    injectAdsterraAd(
+      "overview-ad-slot",
+      ADSTERRA_KEYS.rectangle,
+      300,
+      250,
+      200,
+    );
     injectNativeAd("container-5f797791a9771b6940fb9385a69ce168");
     suppressAdBlocks(target);
 
@@ -258,12 +273,15 @@ export class GameRenderer {
         SteamDataManager.toggleFavorite(appId);
         const span = favoriteBtn.querySelector("span");
         const isFavorite = SteamDataManager.isFavorite(appId);
-        const papirusIcon = isFavorite ? "papirus:actions/bookmarks" : "papirus:actions/bookmark-new";
+        const papirusIcon = isFavorite
+          ? "papirus:actions/bookmarks"
+          : "papirus:actions/bookmark-new";
         const eff = getEffectiveIcon(papirusIcon);
         const iconEl = favoriteBtn.querySelector("img, i");
         if (iconEl) {
           if (eff.startsWith("papirus:")) {
-            if (iconEl.tagName.toLowerCase() === "img") iconEl.src = resolveIconUrl(eff);
+            if (iconEl.tagName.toLowerCase() === "img")
+              iconEl.src = resolveIconUrl(eff);
             else {
               const newImg = document.createElement("img");
               newImg.src = resolveIconUrl(eff);
@@ -285,7 +303,9 @@ export class GameRenderer {
       };
     }
 
-    const saveToCollectionBtn = target.querySelector('[data-action="saveToCollection"]');
+    const saveToCollectionBtn = target.querySelector(
+      '[data-action="saveToCollection"]',
+    );
     if (saveToCollectionBtn) {
       saveToCollectionBtn.onclick = () => {
         SteamDataManager.addCurrentToCollection(appId);
@@ -297,22 +317,32 @@ export class GameRenderer {
   }
 
   async hydrateOverview(target, appId) {
-    const [community, activity] = await Promise.all([fetchCommunityOverview(appId), fetchActivityOverview()]);
+    const [community, activity] = await Promise.all([
+      fetchCommunityOverview(appId),
+      fetchActivityOverview(),
+    ]);
     if (!target.isConnected) return;
     const sub = target.querySelector("[data-overview-plays]");
-    if (sub) sub.textContent = `${community.playCount.toLocaleString()} PLAYS ALL TIME`;
+    if (sub)
+      sub.textContent = `${community.playCount.toLocaleString()} PLAYS ALL TIME`;
     const total = target.querySelector("[data-overview-total-plays]");
     if (total) total.textContent = community.playCount.toLocaleString();
     const playing = target.querySelector("[data-overview-playing-now]");
     if (playing) playing.textContent = String(community.playingNow.length);
     const recent = target.querySelector("[data-overview-recent]");
     if (recent) {
-      const rows = buildPlayerRows(community.recentPlayers, community.playingNow, {
-        row: "steam-overview-friend",
-        avatar: "steam-overview-friend-avatar",
-        info: "steam-overview-friend-info"
-      });
-      recent.innerHTML = rows || '<span class="steam-overview-note">No one has played this recently.</span>';
+      const rows = buildPlayerRows(
+        community.recentPlayers,
+        community.playingNow,
+        {
+          row: "steam-overview-friend",
+          avatar: "steam-overview-friend-avatar",
+          info: "steam-overview-friend-info",
+        },
+      );
+      recent.innerHTML =
+        rows ||
+        '<span class="steam-overview-note">No one has played this recently.</span>';
     }
     const friendsCount = target.querySelector("[data-overview-friends-count]");
     if (friendsCount)
@@ -322,9 +352,11 @@ export class GameRenderer {
       const cards = buildFriendCards(activity.friends, activity.count, {
         row: "steam-overview-friend",
         avatar: "steam-overview-friend-avatar",
-        info: "steam-overview-friend-info"
+        info: "steam-overview-friend-info",
       });
-      friendsEl.innerHTML = cards || '<span class="steam-overview-note">Add friends to see their activity here.</span>';
+      friendsEl.innerHTML =
+        cards ||
+        '<span class="steam-overview-note">Add friends to see their activity here.</span>';
     }
     const playedEl = target.querySelector("[data-overview-played]");
     if (playedEl)
@@ -343,7 +375,10 @@ export class GameRenderer {
     this.renderer.currentArchiveGame = archiveGame;
 
     const stats = SteamDataManager.getStats();
-    const gameStats = stats[archiveGame.appId] || { totalMin: 0, lastPlayed: 0 };
+    const gameStats = stats[archiveGame.appId] || {
+      totalMin: 0,
+      lastPlayed: 0,
+    };
     const achPct = achievementsPercent(gameStats.totalMin);
     const target = container.querySelector(".steam-library-page");
     const thumb = archiveGame.thumb || "";
@@ -431,7 +466,13 @@ export class GameRenderer {
       </div>
     `;
 
-    injectAdsterraAd("archive-overview-ad-slot", ADSTERRA_KEYS.rectangle, 300, 250, 200);
+    injectAdsterraAd(
+      "archive-overview-ad-slot",
+      ADSTERRA_KEYS.rectangle,
+      300,
+      250,
+      200,
+    );
     injectNativeAd("container-5f797791a9771b6940fb9385a69ce168");
     suppressAdBlocks(target);
 
@@ -447,12 +488,15 @@ export class GameRenderer {
         SteamDataManager.toggleFavorite(archiveGame.appId);
         const span = favoriteBtn.querySelector("span");
         const isFavorite = SteamDataManager.isFavorite(archiveGame.appId);
-        const papirusIcon = isFavorite ? "papirus:actions/bookmarks" : "papirus:actions/bookmark-new";
+        const papirusIcon = isFavorite
+          ? "papirus:actions/bookmarks"
+          : "papirus:actions/bookmark-new";
         const eff = getEffectiveIcon(papirusIcon);
         const iconEl = favoriteBtn.querySelector("img, i");
         if (iconEl) {
           if (eff.startsWith("papirus:")) {
-            if (iconEl.tagName.toLowerCase() === "img") iconEl.src = resolveIconUrl(eff);
+            if (iconEl.tagName.toLowerCase() === "img")
+              iconEl.src = resolveIconUrl(eff);
             else {
               const newImg = document.createElement("img");
               newImg.src = resolveIconUrl(eff);
@@ -474,7 +518,9 @@ export class GameRenderer {
       };
     }
 
-    const saveToCollectionBtn = target.querySelector('[data-action="saveToCollection"]');
+    const saveToCollectionBtn = target.querySelector(
+      '[data-action="saveToCollection"]',
+    );
     if (saveToCollectionBtn) {
       saveToCollectionBtn.onclick = () => {
         SteamDataManager.addCurrentToCollection(archiveGame.appId);
@@ -489,7 +535,11 @@ export class GameRenderer {
     this.loadPlayCounts();
 
     if (this.renderer.currentArchiveGame) {
-      this.renderArchiveGameOverview(container, this.renderer.currentArchiveGame, onLaunch);
+      this.renderArchiveGameOverview(
+        container,
+        this.renderer.currentArchiveGame,
+        onLaunch,
+      );
       return;
     }
     if (this.renderer.currentGame) {
@@ -504,7 +554,11 @@ export class GameRenderer {
     const collapsed = SteamDataManager.getCollapsed();
 
     const filteredGames = allGames.filter((g) => !hidden.includes(g.app));
-    const sortedGames = this.getSortedGames(filteredGames, this.renderer.sortBy, this.renderer.sortReverse);
+    const sortedGames = this.getSortedGames(
+      filteredGames,
+      this.renderer.sortBy,
+      this.renderer.sortReverse,
+    );
 
     const settings = SteamSettings.load();
     const showRecent = settings.recentlyPlayedRow !== false;
@@ -555,7 +609,7 @@ export class GameRenderer {
                   <div class="news-title">${item.title}</div>
                   <div class="news-date">${item.date}</div>
                 </div>
-              </div>`
+              </div>`,
               )
               .join("")}
           </div>
@@ -574,13 +628,27 @@ export class GameRenderer {
 
     const sections = [
       { title: "Recent", games: recentGames },
-      { title: "Favorites", games: sortedGames.filter((g) => favorites.includes(g.app)) },
-      { title: "Webports/Html games", games: sortedGames.filter((g) => webIds.includes(g.app)) },
-      { title: "Flash Games", games: sortedGames.filter((g) => flashIds.includes(g.app)) },
+      {
+        title: "Favorites",
+        games: sortedGames.filter((g) => favorites.includes(g.app)),
+      },
+      {
+        title: "Webports/Html games",
+        games: sortedGames.filter((g) => webIds.includes(g.app)),
+      },
+      {
+        title: "Flash Games",
+        games: sortedGames.filter((g) => flashIds.includes(g.app)),
+      },
       ...Object.entries(collections)
-        .filter(([name]) => name !== "Webports/Html games" && name !== "Flash Games")
-        .map(([name, ids]) => ({ title: name, games: sortedGames.filter((g) => ids.includes(g.app)) })),
-      { title: "All Games", games: sortedGames }
+        .filter(
+          ([name]) => name !== "Webports/Html games" && name !== "Flash Games",
+        )
+        .map(([name, ids]) => ({
+          title: name,
+          games: sortedGames.filter((g) => ids.includes(g.app)),
+        })),
+      { title: "All Games", games: sortedGames },
     ].filter((s) => s.games.length > 0);
 
     sections.forEach(({ title, games }) => {
@@ -608,13 +676,23 @@ export class GameRenderer {
     this.renderer.loadLuminSDKSection(container, collapsed);
 
     injectAdsterraAd("ad-library-top", ADSTERRA_KEYS.leaderboard, 728, 90, 0);
-    injectAdsterraAd("ad-library-bottom", ADSTERRA_KEYS.rectangle, 300, 250, 500);
+    injectAdsterraAd(
+      "ad-library-bottom",
+      ADSTERRA_KEYS.rectangle,
+      300,
+      250,
+      500,
+    );
     suppressAdBlocks(target);
 
     const sidebar = container.querySelector(".steam-library-sidebar");
     const mainContent = container.querySelector(".steam-main-content");
 
-    if (container.querySelector(".steam-tab[data-page='library']").classList.contains("active")) {
+    if (
+      container
+        .querySelector(".steam-tab[data-page='library']")
+        .classList.contains("active")
+    ) {
       sidebar.classList.remove("hidden");
     }
     if (target) target.style.height = "auto";
@@ -640,9 +718,13 @@ export class GameRenderer {
       });
     }
 
-    if (this.renderer.currentGame) this.renderer.setActiveSidebarItem(container, this.renderer.currentGame);
+    if (this.renderer.currentGame)
+      this.renderer.setActiveSidebarItem(container, this.renderer.currentGame);
     else if (this.renderer.currentArchiveGame)
-      this.renderer.setActiveSidebarItem(container, this.renderer.currentArchiveGame.appId);
+      this.renderer.setActiveSidebarItem(
+        container,
+        this.renderer.currentArchiveGame.appId,
+      );
 
     target.querySelectorAll(".steam-section-header").forEach((header) => {
       header.onclick = () => {

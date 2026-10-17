@@ -31,16 +31,20 @@ export class ShellEnvironment {
     str = this.expandBraces(str);
     str = this.expandParameters(str);
     str = this.expandArithmetic(str);
-    if (commandExecutor) str = this.expandCommandSubstitution(str, commandExecutor);
+    if (commandExecutor)
+      str = this.expandCommandSubstitution(str, commandExecutor);
     return str;
   }
 
   expandTilde(str) {
-    return str.replace(/(^|(?<=\s))~(\/[^\s]*|(?=\s|$))?/g, (match, prefix, rest) => {
-      const home = this.vars.HOME || "/home/user";
-      if (!rest) return home;
-      return home + rest;
-    });
+    return str.replace(
+      /(^|(?<=\s))~(\/[^\s]*|(?=\s|$))?/g,
+      (match, prefix, rest) => {
+        const home = this.vars.HOME || "/home/user";
+        if (!rest) return home;
+        return home + rest;
+      },
+    );
   }
 
   expandBraces(str) {
@@ -67,7 +71,12 @@ export class ShellEnvironment {
           if (parts.length > 1) {
             for (const part of parts) {
               const expanded = this.expandBracesSync(str.slice(end + 1));
-              this.expandBracesRecursive(expanded, 0, prefix + cur + part, result);
+              this.expandBracesRecursive(
+                expanded,
+                0,
+                prefix + cur + part,
+                result,
+              );
             }
             return;
           }
@@ -178,7 +187,10 @@ export class ShellEnvironment {
 
   expandParameter(expr) {
     const colonOps = [
-      { op: ":-", handler: (val, word) => (val !== null && val.length > 0 ? val : word) },
+      {
+        op: ":-",
+        handler: (val, word) => (val !== null && val.length > 0 ? val : word),
+      },
       {
         op: ":=",
         handler: (val, word) => {
@@ -186,16 +198,21 @@ export class ShellEnvironment {
           const name = expr.split(":=")[0];
           this.set(name, word);
           return word;
-        }
+        },
       },
-      { op: ":+", handler: (val, word) => (val !== null && val.length > 0 ? word : "") },
+      {
+        op: ":+",
+        handler: (val, word) => (val !== null && val.length > 0 ? word : ""),
+      },
       {
         op: ":?",
         handler: (val, word) => {
           if (val !== null && val.length > 0) return val;
-          throw new Error(`$${expr.split(":?")[0]}: ${word || "parameter null or not set"}`);
-        }
-      }
+          throw new Error(
+            `$${expr.split(":?")[0]}: ${word || "parameter null or not set"}`,
+          );
+        },
+      },
     ];
 
     for (const { op, handler } of colonOps) {
@@ -217,16 +234,18 @@ export class ShellEnvironment {
           const name = expr.split("=")[0];
           this.set(name, word);
           return word;
-        }
+        },
       },
       { op: "+", handler: (val, word) => (val !== null ? word : "") },
       {
         op: "?",
         handler: (val, word) => {
           if (val !== null) return val;
-          throw new Error(`$${expr.split("?")[0]}: ${word || "parameter not set"}`);
-        }
-      }
+          throw new Error(
+            `$${expr.split("?")[0]}: ${word || "parameter not set"}`,
+          );
+        },
+      },
     ];
 
     for (const { op, handler } of noColonOps) {
@@ -467,7 +486,10 @@ export class ShellEnvironment {
           i++;
         }
         const val = this.get(name);
-        tokens.push({ type: "NUMBER", value: val !== null ? parseInt(val, 10) || 0 : 0 });
+        tokens.push({
+          type: "NUMBER",
+          value: val !== null ? parseInt(val, 10) || 0 : 0,
+        });
         continue;
       }
 
@@ -484,9 +506,18 @@ export class ShellEnvironment {
     let result = this.parseArithmeticLogicalOr(tokens, pos);
     if (result.pos < tokens.length && tokens[result.pos].type === "TERNARY") {
       const trueBranch = this.parseArithmeticExpression(tokens, result.pos + 1);
-      if (trueBranch.pos < tokens.length && tokens[trueBranch.pos].type === "COLON") {
-        const falseBranch = this.parseArithmeticExpression(tokens, trueBranch.pos + 1);
-        return { value: result.value ? trueBranch.value : falseBranch.value, pos: falseBranch.pos };
+      if (
+        trueBranch.pos < tokens.length &&
+        tokens[trueBranch.pos].type === "COLON"
+      ) {
+        const falseBranch = this.parseArithmeticExpression(
+          tokens,
+          trueBranch.pos + 1,
+        );
+        return {
+          value: result.value ? trueBranch.value : falseBranch.value,
+          pos: falseBranch.pos,
+        };
       }
       return { value: result.value, pos: trueBranch.pos };
     }
@@ -540,12 +571,22 @@ export class ShellEnvironment {
 
   parseArithmeticEquality(tokens, pos) {
     let left = this.parseArithmeticRelational(tokens, pos);
-    while (left.pos < tokens.length && (tokens[left.pos].type === "EQ" || tokens[left.pos].type === "NE")) {
+    while (
+      left.pos < tokens.length &&
+      (tokens[left.pos].type === "EQ" || tokens[left.pos].type === "NE")
+    ) {
       const op = tokens[left.pos].type;
       const right = this.parseArithmeticRelational(tokens, left.pos + 1);
       left = {
-        value: op === "EQ" ? (left.value === right.value ? 1 : 0) : left.value !== right.value ? 1 : 0,
-        pos: right.pos
+        value:
+          op === "EQ"
+            ? left.value === right.value
+              ? 1
+              : 0
+            : left.value !== right.value
+              ? 1
+              : 0,
+        pos: right.pos,
       };
     }
     return left;
@@ -553,7 +594,10 @@ export class ShellEnvironment {
 
   parseArithmeticRelational(tokens, pos) {
     let left = this.parseArithmeticShift(tokens, pos);
-    while (left.pos < tokens.length && ["LT", "GT", "LE", "GE"].includes(tokens[left.pos].type)) {
+    while (
+      left.pos < tokens.length &&
+      ["LT", "GT", "LE", "GE"].includes(tokens[left.pos].type)
+    ) {
       const op = tokens[left.pos].type;
       const right = this.parseArithmeticShift(tokens, left.pos + 1);
       let val;
@@ -568,20 +612,34 @@ export class ShellEnvironment {
 
   parseArithmeticShift(tokens, pos) {
     let left = this.parseArithmeticAddSub(tokens, pos);
-    while (left.pos < tokens.length && (tokens[left.pos].type === "SHL" || tokens[left.pos].type === "SHR")) {
+    while (
+      left.pos < tokens.length &&
+      (tokens[left.pos].type === "SHL" || tokens[left.pos].type === "SHR")
+    ) {
       const op = tokens[left.pos].type;
       const right = this.parseArithmeticAddSub(tokens, left.pos + 1);
-      left = { value: op === "SHL" ? left.value << right.value : left.value >> right.value, pos: right.pos };
+      left = {
+        value:
+          op === "SHL" ? left.value << right.value : left.value >> right.value,
+        pos: right.pos,
+      };
     }
     return left;
   }
 
   parseArithmeticAddSub(tokens, pos) {
     let left = this.parseArithmeticMulDiv(tokens, pos);
-    while (left.pos < tokens.length && (tokens[left.pos].type === "PLUS" || tokens[left.pos].type === "MINUS")) {
+    while (
+      left.pos < tokens.length &&
+      (tokens[left.pos].type === "PLUS" || tokens[left.pos].type === "MINUS")
+    ) {
       const op = tokens[left.pos].type;
       const right = this.parseArithmeticMulDiv(tokens, left.pos + 1);
-      left = { value: op === "PLUS" ? left.value + right.value : left.value - right.value, pos: right.pos };
+      left = {
+        value:
+          op === "PLUS" ? left.value + right.value : left.value - right.value,
+        pos: right.pos,
+      };
     }
     return left;
   }
@@ -590,11 +648,14 @@ export class ShellEnvironment {
     let left = this.parseArithmeticUnary(tokens, pos);
     while (
       left.pos < tokens.length &&
-      (tokens[left.pos].type === "MUL" || tokens[left.pos].type === "DIV" || tokens[left.pos].type === "MOD")
+      (tokens[left.pos].type === "MUL" ||
+        tokens[left.pos].type === "DIV" ||
+        tokens[left.pos].type === "MOD")
     ) {
       const op = tokens[left.pos].type;
       const right = this.parseArithmeticUnary(tokens, left.pos + 1);
-      if (op === "DIV" && right.value === 0) throw new Error("Division by zero");
+      if (op === "DIV" && right.value === 0)
+        throw new Error("Division by zero");
       left = {
         value:
           op === "MUL"
@@ -602,7 +663,7 @@ export class ShellEnvironment {
             : op === "DIV"
               ? Math.trunc(left.value / right.value)
               : left.value % right.value,
-        pos: right.pos
+        pos: right.pos,
       };
     }
     return left;
@@ -629,14 +690,20 @@ export class ShellEnvironment {
     }
     if (tok.type === "INC") {
       if (pos + 1 < tokens.length && tokens[pos + 1].type === "NUMBER") {
-        tokens[pos + 1] = { ...tokens[pos + 1], value: tokens[pos + 1].value + 1 };
+        tokens[pos + 1] = {
+          ...tokens[pos + 1],
+          value: tokens[pos + 1].value + 1,
+        };
         return { value: tokens[pos + 1].value, pos: pos + 2 };
       }
       return { value: 0, pos: pos + 1 };
     }
     if (tok.type === "DEC") {
       if (pos + 1 < tokens.length && tokens[pos + 1].type === "NUMBER") {
-        tokens[pos + 1] = { ...tokens[pos + 1], value: tokens[pos + 1].value - 1 };
+        tokens[pos + 1] = {
+          ...tokens[pos + 1],
+          value: tokens[pos + 1].value - 1,
+        };
         return { value: tokens[pos + 1].value, pos: pos + 2 };
       }
       return { value: 0, pos: pos + 1 };
@@ -696,7 +763,8 @@ export class ShellEnvironment {
           if (str[j] === "\\" && !escaped) {
             escaped = true;
           } else {
-            if (escaped && str[j] !== "`" && str[j] !== "\\" && str[j] !== "$") cmdStr += "\\";
+            if (escaped && str[j] !== "`" && str[j] !== "\\" && str[j] !== "$")
+              cmdStr += "\\";
             cmdStr += str[j];
             escaped = false;
           }
@@ -724,7 +792,8 @@ export class ShellEnvironment {
     expanded = this.expandTilde(expanded);
     expanded = this.expandParameters(expanded);
     expanded = this.expandArithmetic(expanded);
-    if (commandExecutor) expanded = this.expandCommandSubstitution(expanded, commandExecutor);
+    if (commandExecutor)
+      expanded = this.expandCommandSubstitution(expanded, commandExecutor);
     return expanded;
   }
 }

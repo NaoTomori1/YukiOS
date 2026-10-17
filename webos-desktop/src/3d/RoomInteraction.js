@@ -151,8 +151,12 @@ export class RoomInteraction {
 
   caseRoot(obj) {
     let o = obj;
-    while (o && o !== this.ballMesh && !o.userData.isCase && !o.userData.isBook) o = o.parent;
-    return o === this.ballMesh || (o && (o.userData.isCase || o.userData.isBook)) ? o : null;
+    while (o && o !== this.ballMesh && !o.userData.isCase && !o.userData.isBook)
+      o = o.parent;
+    return o === this.ballMesh ||
+      (o && (o.userData.isCase || o.userData.isBook))
+      ? o
+      : null;
   }
 
   gameCaseFromRoot(obj) {
@@ -166,7 +170,11 @@ export class RoomInteraction {
     if (root) return root;
     let o = hit;
     while (o) {
-      if (o.userData && (o.userData.interactive || o.userData.isBook || o.userData.isCase)) return o;
+      if (
+        o.userData &&
+        (o.userData.interactive || o.userData.isBook || o.userData.isCase)
+      )
+        return o;
       o = o.parent;
     }
     return null;
@@ -195,21 +203,29 @@ export class RoomInteraction {
 
   setTargetGlow(gameCase) {
     if (!gameCase || !this.shelfManager) return;
-    const type = gameCase.type && gameCase.type !== "book" ? gameCase.type : null;
+    const type =
+      gameCase.type && gameCase.type !== "book" ? gameCase.type : null;
     const key = type || gameCase.genre || "casual";
     this.targetGlowKey = key;
-    if (this.shelfManager.setTargetHome) this.shelfManager.setTargetHome(key, true);
+    if (this.shelfManager.setTargetHome)
+      this.shelfManager.setTargetHome(key, true);
   }
 
   clearTargetGlow() {
-    if (this.targetGlowKey !== null && this.shelfManager && this.shelfManager.setTargetHome) {
+    if (
+      this.targetGlowKey !== null &&
+      this.shelfManager &&
+      this.shelfManager.setTargetHome
+    ) {
       this.shelfManager.setTargetHome(this.targetGlowKey, false);
     }
     this.targetGlowKey = null;
   }
 
   tagKey(gameCase) {
-    return gameCase.type && gameCase.type !== "book" ? gameCase.type : gameCase.genre || "casual";
+    return gameCase.type && gameCase.type !== "book"
+      ? gameCase.type
+      : gameCase.genre || "casual";
   }
 
   isTaggedCase(gameCase) {
@@ -225,9 +241,16 @@ export class RoomInteraction {
       this.tagCanvas.height = 128;
       this.tagCtx = this.tagCanvas.getContext("2d");
       this.tagTexture = new T.CanvasTexture(this.tagCanvas);
-      this.tagSprite = new T.Sprite(new T.SpriteMaterial({ map: this.tagTexture, transparent: true, depthTest: true }));
+      this.tagSprite = new T.Sprite(
+        new T.SpriteMaterial({
+          map: this.tagTexture,
+          transparent: true,
+          depthTest: true,
+        }),
+      );
       this.tagSprite.scale.set(0.7, 0.35, 1);
-      if (this.renderer && this.renderer.scene) this.renderer.scene.add(this.tagSprite);
+      if (this.renderer && this.renderer.scene)
+        this.renderer.scene.add(this.tagSprite);
     }
     const homes =
       this.shelfManager && this.shelfManager.getMatchingShelves
@@ -273,12 +296,14 @@ export class RoomInteraction {
   }
 
   updateCaseTag() {
-    const active = (this.gameState && this.gameState.active) || this.contractActive;
+    const active =
+      (this.gameState && this.gameState.active) || this.contractActive;
     const held = this.povGrabbedCase || this.grabbedCase;
     let target = null;
     if (active) {
       if (held && this.isTaggedCase(held)) target = held;
-      else if (this.wailaCase && this.isTaggedCase(this.wailaCase)) target = this.wailaCase;
+      else if (this.wailaCase && this.isTaggedCase(this.wailaCase))
+        target = this.wailaCase;
     }
     if (target !== this.tagCase) {
       this.tagCase = target;
@@ -295,7 +320,9 @@ export class RoomInteraction {
 
   resolveGrabbedColliders(pos, size) {
     const cols =
-      (this.renderer && (this.renderer.colliders || (this.renderer.getColliders && this.renderer.getColliders()))) ||
+      (this.renderer &&
+        (this.renderer.colliders ||
+          (this.renderer.getColliders && this.renderer.getColliders()))) ||
       [];
     if (cols.length === 0) return;
     const hx = size.x / 2;
@@ -332,13 +359,24 @@ export class RoomInteraction {
   }
 
   beginLob(camera) {
-    if (this.lob || !this.povGrabbedCase || this.povGrabbedCase.isBall || !this.shelfManager) return false;
+    if (
+      this.lob ||
+      !this.povGrabbedCase ||
+      this.povGrabbedCase.isBall ||
+      !this.shelfManager
+    )
+      return false;
     const gameCase = this.povGrabbedCase;
     if (!this.shelfManager.getBestSnapSlot) return false;
-    const slot = this.shelfManager.getBestSnapSlot(gameCase, gameCase.mesh.position, this.getCameraForward(camera), {
-      maxDist: RoomInteraction.TOSS_SNAP_MAX_DIST,
-      maxAngle: RoomInteraction.TOSS_SNAP_MAX_ANGLE
-    });
+    const slot = this.shelfManager.getBestSnapSlot(
+      gameCase,
+      gameCase.mesh.position,
+      this.getCameraForward(camera),
+      {
+        maxDist: RoomInteraction.TOSS_SNAP_MAX_DIST,
+        maxAngle: RoomInteraction.TOSS_SNAP_MAX_ANGLE,
+      },
+    );
     if (!slot) return false;
     this.clearTargetGlow();
     const dist = gameCase.mesh.position.distanceTo(slot.position);
@@ -348,7 +386,9 @@ export class RoomInteraction {
       startPos: gameCase.mesh.position.clone(),
       startQuat: gameCase.mesh.quaternion.clone(),
       t: 0,
-      duration: RoomInteraction.LOB_DURATION_MIN + dist * RoomInteraction.LOB_DURATION_PER_UNIT
+      duration:
+        RoomInteraction.LOB_DURATION_MIN +
+        dist * RoomInteraction.LOB_DURATION_PER_UNIT,
     };
     if (this.audio && this.audio.playLobThrow) this.audio.playLobThrow();
     return true;
@@ -366,7 +406,11 @@ export class RoomInteraction {
     }
     gameCase.mesh.position.copy(slot.position);
     gameCase.pos.copy(slot.position);
-    gameCase.body.position.set(slot.position.x, slot.position.y, slot.position.z);
+    gameCase.body.position.set(
+      slot.position.x,
+      slot.position.y,
+      slot.position.z,
+    );
     if (this.audio && this.audio.playLobSnap) this.audio.playLobSnap();
     this.shelveAndReport(gameCase, slot, true);
     this.povGrabbedCase = null;
@@ -399,8 +443,13 @@ export class RoomInteraction {
       return;
     this.chargeTrailT = now;
     const progress = this.chargeT / RoomInteraction.CHARGE_MAX_TIME;
-    const color = progress > 0.75 ? 0xff6bd6 : progress > 0.45 ? 0xffcc44 : 0x44ff88;
-    if (this.gameCaseManager.spawnSparkle) this.gameCaseManager.spawnSparkle(this.povGrabbedCase.mesh.position, color);
+    const color =
+      progress > 0.75 ? 0xff6bd6 : progress > 0.45 ? 0xffcc44 : 0x44ff88;
+    if (this.gameCaseManager.spawnSparkle)
+      this.gameCaseManager.spawnSparkle(
+        this.povGrabbedCase.mesh.position,
+        color,
+      );
   }
 
   releaseCharge(camera) {
@@ -417,9 +466,12 @@ export class RoomInteraction {
     const progress = this.chargeT / RoomInteraction.CHARGE_MAX_TIME;
     this.cancelCharge();
     this.chargeHeldAfterCancel = false;
-    if (!gameCase.isBall && this.shelfManager && this.beginLob(camera)) return true;
+    if (!gameCase.isBall && this.shelfManager && this.beginLob(camera))
+      return true;
     if (isTap && !gameCase.isBall && this.shelfManager && this.nearShelf) {
-      const slot = this.shelfManager.getNearestEmptySlot(gameCase.mesh.position);
+      const slot = this.shelfManager.getNearestEmptySlot(
+        gameCase.mesh.position,
+      );
       if (slot) {
         const isCorrect = this.shelfManager.isCorrectShelf(gameCase, slot);
         if (this.audio) this.audio.playBookShelve();
@@ -443,7 +495,8 @@ export class RoomInteraction {
   throwCharged(camera, progress) {
     const gameCase = this.povGrabbedCase;
     if (!gameCase) return;
-    const power = 1 + (RoomInteraction.THROW_POWER_MAX - 1) * Math.min(1, progress);
+    const power =
+      1 + (RoomInteraction.THROW_POWER_MAX - 1) * Math.min(1, progress);
     if (this.audio) this.audio.playReleasePOV();
     this.makeDynamic(gameCase.body, gameCase.dynamicMass);
     if (camera && this.THREE) {
@@ -458,7 +511,7 @@ export class RoomInteraction {
       gameCase.body.angularVelocity.set(
         (Math.random() - 0.5) * 3,
         (Math.random() - 0.5) * 3,
-        (Math.random() - 0.5) * 3
+        (Math.random() - 0.5) * 3,
       );
     }
     gameCase.grabbed = false;
@@ -489,7 +542,7 @@ export class RoomInteraction {
       gameCase.body.angularVelocity.set(
         (Math.random() - 0.5) * 3,
         (Math.random() - 0.5) * 3,
-        (Math.random() - 0.5) * 3
+        (Math.random() - 0.5) * 3,
       );
     }
     gameCase.grabbed = false;
@@ -518,7 +571,11 @@ export class RoomInteraction {
     if (bookMeshes.length === 0) return;
     const intersects = this.raycaster.intersectObjects(bookMeshes, true);
     if (intersects.length === 0) return;
-    if (intersects[0].distance >= RoomInteraction.INTERACT_DIST + this.reachBonus) return;
+    if (
+      intersects[0].distance >=
+      RoomInteraction.INTERACT_DIST + this.reachBonus
+    )
+      return;
     const root = this.caseRoot(intersects[0].object);
     if (root === this.ballMesh) this.grabBall();
     else if (root) {
@@ -534,7 +591,8 @@ export class RoomInteraction {
 
   handleTap(clientX, clientY) {
     if (this.editorManager && this.editorManager.isEditActive()) return false;
-    if (!this.raycaster || !this.renderer || !this.renderer.camera) return false;
+    if (!this.raycaster || !this.renderer || !this.renderer.camera)
+      return false;
     const camera = this.renderer.camera;
     this.setMouseFromClient(clientX, clientY);
     this.raycaster.setFromCamera(this.mouse, camera);
@@ -573,7 +631,10 @@ export class RoomInteraction {
     const bookMeshes = this.getBookMeshes();
     if (bookMeshes.length > 0) {
       const intersects = this.raycaster.intersectObjects(bookMeshes, true);
-      if (intersects.length > 0 && intersects[0].distance < RoomInteraction.INTERACT_DIST + this.reachBonus) {
+      if (
+        intersects.length > 0 &&
+        intersects[0].distance < RoomInteraction.INTERACT_DIST + this.reachBonus
+      ) {
         const root = this.caseRoot(intersects[0].object);
         if (root === this.ballMesh) {
           this.grabBall();
@@ -605,10 +666,15 @@ export class RoomInteraction {
     const holoRenderer = this.renderer.hologramRenderer;
     if (holoScreen && holoRenderer && holoRenderer.getItemAtUV) {
       const hh = this.raycaster.intersectObject(holoScreen);
-      if (hh.length > 0 && hh[0].uv && hh[0].distance < RoomInteraction.HOLO_DIST) {
+      if (
+        hh.length > 0 &&
+        hh[0].uv &&
+        hh[0].distance < RoomInteraction.HOLO_DIST
+      ) {
         const item = holoRenderer.getItemAtUV(hh[0].uv.x, hh[0].uv.y);
         if (item) {
-          if (holoRenderer.clickAtUV) holoRenderer.clickAtUV(hh[0].uv.x, hh[0].uv.y);
+          if (holoRenderer.clickAtUV)
+            holoRenderer.clickAtUV(hh[0].uv.x, hh[0].uv.y);
           else if (this.onMonitorAction) this.onMonitorAction(item);
           if (this.audio) this.audio.playClick();
           return true;
@@ -629,22 +695,38 @@ export class RoomInteraction {
           ? RoomInteraction.HOLO_DIST
           : RoomInteraction.INTERACT_DIST;
       const holoHits = this.raycaster.intersectObject(holoScreen);
-      if (holoHits.length > 0 && holoHits[0].uv && holoHits[0].distance < holoMaxDist) {
+      if (
+        holoHits.length > 0 &&
+        holoHits[0].uv &&
+        holoHits[0].distance < holoMaxDist
+      ) {
         const holoDist = holoHits[0].distance;
         const bookMeshes = this.getBookMeshes();
         const objects = this.renderer.getInteractiveObjects();
         const allMeshes = this.renderer.roomObjects || [];
-        const shelfMeshes = this.shelfManager ? this.shelfManager.shelfMeshes || [] : [];
-        const everything = [...bookMeshes, ...objects, ...allMeshes, ...shelfMeshes];
+        const shelfMeshes = this.shelfManager
+          ? this.shelfManager.shelfMeshes || []
+          : [];
+        const everything = [
+          ...bookMeshes,
+          ...objects,
+          ...allMeshes,
+          ...shelfMeshes,
+        ];
         let occluded = false;
         if (everything.length > 0) {
           const blockerHits = this.raycaster.intersectObjects(everything);
-          if (blockerHits.length > 0 && blockerHits[0].distance < holoDist) occluded = true;
+          if (blockerHits.length > 0 && blockerHits[0].distance < holoDist)
+            occluded = true;
         }
         if (!occluded) {
-          const item = holoRenderer.getItemAtUV(holoHits[0].uv.x, holoHits[0].uv.y);
+          const item = holoRenderer.getItemAtUV(
+            holoHits[0].uv.x,
+            holoHits[0].uv.y,
+          );
           if (item) {
-            if (holoRenderer.clickAtUV) holoRenderer.clickAtUV(holoHits[0].uv.x, holoHits[0].uv.y);
+            if (holoRenderer.clickAtUV)
+              holoRenderer.clickAtUV(holoHits[0].uv.x, holoHits[0].uv.y);
             else if (this.onMonitorAction) this.onMonitorAction(item);
             if (this.audio) this.audio.playClick();
             return true;
@@ -655,7 +737,10 @@ export class RoomInteraction {
     const objects = this.renderer.getInteractiveObjects();
     if (objects.length > 0) {
       const intersects = this.raycaster.intersectObjects(objects);
-      if (intersects.length > 0 && intersects[0].distance < RoomInteraction.INTERACT_DIST) {
+      if (
+        intersects.length > 0 &&
+        intersects[0].distance < RoomInteraction.INTERACT_DIST
+      ) {
         const obj = intersects[0].object;
         const id = obj.userData.objectId;
         if (id === "spawnBox") {
@@ -675,7 +760,8 @@ export class RoomInteraction {
     const held = this.povGrabbedCase || this.grabbedCase;
     if (held) {
       this.wailaCase = held;
-      const key = held.type && held.type !== "book" ? held.type : held.genre || "casual";
+      const key =
+        held.type && held.type !== "book" ? held.type : held.genre || "casual";
       this.wailaTitle = key ? key.toUpperCase() : null;
       return;
     }
@@ -693,7 +779,9 @@ export class RoomInteraction {
         return;
       }
       const hits = this.raycaster.intersectObjects(wailaMeshes, true);
-      const closeHit = hits.find((h) => h.distance < RoomInteraction.INTERACT_DIST);
+      const closeHit = hits.find(
+        (h) => h.distance < RoomInteraction.INTERACT_DIST,
+      );
       if (closeHit) {
         this.wailaCase = this.gameCaseFromRoot(closeHit.object);
         if (this.wailaCase) {
@@ -712,8 +800,11 @@ export class RoomInteraction {
   }
 
   getBookMeshes() {
-    const meshes = this.gameCases.filter((b) => !b.grabbed && b !== this.povGrabbedCase).map((b) => b.mesh);
-    if (this.ballMesh && !this.ballGrabbed && !this.grabbedBallMesh) meshes.push(this.ballMesh);
+    const meshes = this.gameCases
+      .filter((b) => !b.grabbed && b !== this.povGrabbedCase)
+      .map((b) => b.mesh);
+    if (this.ballMesh && !this.ballGrabbed && !this.grabbedBallMesh)
+      meshes.push(this.ballMesh);
     return meshes;
   }
 
@@ -787,10 +878,19 @@ export class RoomInteraction {
     this.grabbedCase = gameCase;
     this.applyHoverOutline(gameCase.mesh);
     if (this.onGrab) this.onGrab(gameCase);
-    this.grabPlane.set(new this.THREE.Vector3(0, 1, 0), -gameCase.mesh.position.y);
+    this.grabPlane.set(
+      new this.THREE.Vector3(0, 1, 0),
+      -gameCase.mesh.position.y,
+    );
     const intersectPoint = new this.THREE.Vector3();
-    const hit = this.raycaster.ray.intersectPlane(this.grabPlane, intersectPoint);
-    if (hit) this.grabOffset = new this.THREE.Vector3().copy(gameCase.mesh.position).sub(intersectPoint);
+    const hit = this.raycaster.ray.intersectPlane(
+      this.grabPlane,
+      intersectPoint,
+    );
+    if (hit)
+      this.grabOffset = new this.THREE.Vector3()
+        .copy(gameCase.mesh.position)
+        .sub(intersectPoint);
     else this.grabOffset = new this.THREE.Vector3(0, 0, 0);
     this.lastGrabPos = gameCase.mesh.position.clone();
     this.setTargetGlow(gameCase);
@@ -800,7 +900,9 @@ export class RoomInteraction {
     if (this.grabbedCase) {
       const gameCase = this.grabbedCase;
       if (this.shelfManager && !gameCase.isBall) {
-        const slot = this.shelfManager.getNearestEmptySlot(gameCase.mesh.position);
+        const slot = this.shelfManager.getNearestEmptySlot(
+          gameCase.mesh.position,
+        );
         if (slot) {
           const isCorrect = this.shelfManager.isCorrectShelf(gameCase, slot);
           if (this.audio) this.audio.playBookShelve();
@@ -819,13 +921,19 @@ export class RoomInteraction {
       }
       this.makeDynamic(gameCase.body, gameCase.dynamicMass);
       if (this.lastGrabPos) {
-        const throwVel = new this.THREE.Vector3().copy(gameCase.pos).sub(this.lastGrabPos);
+        const throwVel = new this.THREE.Vector3()
+          .copy(gameCase.pos)
+          .sub(this.lastGrabPos);
         this.capThrowLift(throwVel, gameCase.body.position.y);
-        gameCase.body.velocity.set(throwVel.x, Math.max(throwVel.y, 0), throwVel.z);
+        gameCase.body.velocity.set(
+          throwVel.x,
+          Math.max(throwVel.y, 0),
+          throwVel.z,
+        );
         const spin = new this.THREE.Vector3(
           (Math.random() - 0.5) * 1.5,
           (Math.random() - 0.5) * 1.5,
-          (Math.random() - 0.5) * 1.5
+          (Math.random() - 0.5) * 1.5,
         );
         gameCase.body.angularVelocity.set(spin.x, spin.y, spin.z);
       }
@@ -839,13 +947,16 @@ export class RoomInteraction {
 
   shelveAndReport(gameCase, slot, isCorrect) {
     if (this.shelfManager) this.shelfManager.shelveCase(gameCase, slot);
-    const inTidy = (this.gameState && this.gameState.active) || this.contractActive;
+    const inTidy =
+      (this.gameState && this.gameState.active) || this.contractActive;
     if (this.gameState && this.gameState.active) {
-      if (this.shelfManager.flashSlot) this.shelfManager.flashSlot(slot, isCorrect);
+      if (this.shelfManager.flashSlot)
+        this.shelfManager.flashSlot(slot, isCorrect);
       if (isCorrect) this.gameState.placeGameCaseCorrectly(gameCase.gameId);
       else this.gameState.placeGameCaseWrongly(gameCase.gameId);
     } else if (this.contractActive) {
-      if (this.shelfManager.flashSlot) this.shelfManager.flashSlot(slot, isCorrect);
+      if (this.shelfManager.flashSlot)
+        this.shelfManager.flashSlot(slot, isCorrect);
     }
     if (this.onCasePlaced && inTidy) this.onCasePlaced(gameCase, isCorrect);
   }
@@ -859,7 +970,10 @@ export class RoomInteraction {
     this.raycaster.setFromCamera(this.mouse, this.renderer.camera);
     this.grabPlane.set(this.planeNormal, -this.grabbedCase.pos.y);
     const intersectPoint = this.intersectPoint;
-    const hit = this.raycaster.ray.intersectPlane(this.grabPlane, intersectPoint);
+    const hit = this.raycaster.ray.intersectPlane(
+      this.grabPlane,
+      intersectPoint,
+    );
     if (!hit) return;
     this.lastGrabPos.copy(this.grabbedCase.pos);
     this.grabbedCase.mesh.position.copy(intersectPoint).add(this.grabOffset);
@@ -867,10 +981,22 @@ export class RoomInteraction {
     const sx = this.grabbedCase.size.x / 2;
     const sy = this.grabbedCase.size.y / 2;
     const sz = this.grabbedCase.size.z / 2;
-    this.grabbedCase.mesh.position.x = Math.max(b.minX + sx, Math.min(b.maxX - sx, this.grabbedCase.mesh.position.x));
-    this.grabbedCase.mesh.position.z = Math.max(b.minZ + sz, Math.min(b.maxZ - sz, this.grabbedCase.mesh.position.z));
-    this.grabbedCase.mesh.position.y = Math.max(sy, Math.min(3 - sy, this.grabbedCase.mesh.position.y));
-    this.resolveGrabbedColliders(this.grabbedCase.mesh.position, this.grabbedCase.size);
+    this.grabbedCase.mesh.position.x = Math.max(
+      b.minX + sx,
+      Math.min(b.maxX - sx, this.grabbedCase.mesh.position.x),
+    );
+    this.grabbedCase.mesh.position.z = Math.max(
+      b.minZ + sz,
+      Math.min(b.maxZ - sz, this.grabbedCase.mesh.position.z),
+    );
+    this.grabbedCase.mesh.position.y = Math.max(
+      sy,
+      Math.min(3 - sy, this.grabbedCase.mesh.position.y),
+    );
+    this.resolveGrabbedColliders(
+      this.grabbedCase.mesh.position,
+      this.grabbedCase.size,
+    );
     this.grabbedCase.pos.copy(this.grabbedCase.mesh.position);
   }
 
@@ -880,20 +1006,36 @@ export class RoomInteraction {
     const y = this.grabbedBallMesh.position.y;
     this.grabPlane.set(this.planeNormal, -y);
     const intersectPoint = this.intersectPoint;
-    const hit = this.raycaster.ray.intersectPlane(this.grabPlane, intersectPoint);
+    const hit = this.raycaster.ray.intersectPlane(
+      this.grabPlane,
+      intersectPoint,
+    );
     if (!hit) return;
     this.lastGrabPos.copy(this.grabbedBallMesh.position);
     this.grabbedBallMesh.position.copy(intersectPoint).add(this.grabOffset);
     const b = this.renderer.bounds;
-    this.grabbedBallMesh.position.x = Math.max(b.minX + 0.12, Math.min(b.maxX - 0.12, this.grabbedBallMesh.position.x));
-    this.grabbedBallMesh.position.z = Math.max(b.minZ + 0.12, Math.min(b.maxZ - 0.12, this.grabbedBallMesh.position.z));
-    this.grabbedBallMesh.position.y = Math.max(0.12, Math.min(3 - 0.12, this.grabbedBallMesh.position.y));
-    this.resolveGrabbedColliders(this.grabbedBallMesh.position, { x: 0.28, y: 0.28, z: 0.28 });
+    this.grabbedBallMesh.position.x = Math.max(
+      b.minX + 0.12,
+      Math.min(b.maxX - 0.12, this.grabbedBallMesh.position.x),
+    );
+    this.grabbedBallMesh.position.z = Math.max(
+      b.minZ + 0.12,
+      Math.min(b.maxZ - 0.12, this.grabbedBallMesh.position.z),
+    );
+    this.grabbedBallMesh.position.y = Math.max(
+      0.12,
+      Math.min(3 - 0.12, this.grabbedBallMesh.position.y),
+    );
+    this.resolveGrabbedColliders(this.grabbedBallMesh.position, {
+      x: 0.28,
+      y: 0.28,
+      z: 0.28,
+    });
     if (this.ballBody)
       this.ballBody.position.set(
         this.grabbedBallMesh.position.x,
         this.grabbedBallMesh.position.y,
-        this.grabbedBallMesh.position.z
+        this.grabbedBallMesh.position.z,
       );
   }
 
@@ -920,7 +1062,10 @@ export class RoomInteraction {
       if (!this.raycaster) return null;
       this.raycaster.setFromCamera(this.mouse, camera);
       const intersects = this.raycaster.intersectObject(seat, false);
-      if (intersects.length > 0 && intersects[0].distance < RoomInteraction.INTERACT_DIST) {
+      if (
+        intersects.length > 0 &&
+        intersects[0].distance < RoomInteraction.INTERACT_DIST
+      ) {
         const world = new this.THREE.Vector3();
         seat.getWorldPosition(world);
         return { mesh: seat, position: world };
@@ -965,7 +1110,7 @@ export class RoomInteraction {
     const sitPos = new this.THREE.Vector3(
       chairPos.x + forward.x * 0.05,
       chairPos.y + 1.65,
-      chairPos.z + forward.z * 0.05
+      chairPos.z + forward.z * 0.05,
     );
     const lookTarget = sitPos.clone().add(forward.clone().multiplyScalar(3));
     controls.animateCamera(sitPos, lookTarget, 0.5);
@@ -980,7 +1125,9 @@ export class RoomInteraction {
     fwd.x = -Math.sin(this.seatedSavedYaw) * Math.cos(this.seatedSavedPitch);
     fwd.y = Math.sin(this.seatedSavedPitch);
     fwd.z = -Math.cos(this.seatedSavedYaw) * Math.cos(this.seatedSavedPitch);
-    const lookAtTarget = this.seatedSavedPos.clone().add(fwd.multiplyScalar(10));
+    const lookAtTarget = this.seatedSavedPos
+      .clone()
+      .add(fwd.multiplyScalar(10));
     this.seatedChair = null;
     controls.animateCamera(this.seatedSavedPos, lookAtTarget, 0.4, () => {
       controls.yaw = this.seatedSavedYaw;
@@ -1009,10 +1156,16 @@ export class RoomInteraction {
     this.seatedSavedPitch = controls.pitch;
     const forward = new this.THREE.Vector3(0, 0, 1);
     if (sofa.mesh.getWorldQuaternion)
-      forward.applyQuaternion(sofa.mesh.getWorldQuaternion(new this.THREE.Quaternion()));
+      forward.applyQuaternion(
+        sofa.mesh.getWorldQuaternion(new this.THREE.Quaternion()),
+      );
     else forward.applyQuaternion(sofa.mesh.quaternion);
     const seat = sofa.position;
-    const sitPos = new this.THREE.Vector3(seat.x + forward.x * 0.05, seat.y + 0.95, seat.z + forward.z * 0.05);
+    const sitPos = new this.THREE.Vector3(
+      seat.x + forward.x * 0.05,
+      seat.y + 0.95,
+      seat.z + forward.z * 0.05,
+    );
     if (controls.setLockPosition) {
       controls.camera.position.copy(sitPos);
       controls.yaw = Math.atan2(-forward.x, -forward.z);
@@ -1095,7 +1248,10 @@ export class RoomInteraction {
     const objects = this.renderer.getInteractiveObjects();
     if (objects.length > 0) {
       const intersects = this.raycaster.intersectObjects(objects);
-      if (intersects.length > 0 && intersects[0].distance < RoomInteraction.INTERACT_DIST) {
+      if (
+        intersects.length > 0 &&
+        intersects[0].distance < RoomInteraction.INTERACT_DIST
+      ) {
         const obj = intersects[0].object;
         if (obj.userData.isFurniture && this.furnitureManager) {
           const item = this.furnitureManager.findByMesh(obj);
@@ -1116,13 +1272,20 @@ export class RoomInteraction {
       }
     }
     if (this.interactWithView(camera)) return true;
-    if (this.findNearestSofa(camera) && (!this.canSitOnSofa || this.canSitOnSofa()))
+    if (
+      this.findNearestSofa(camera) &&
+      (!this.canSitOnSofa || this.canSitOnSofa())
+    )
       return this.sitOnSofa(camera, this.controls);
-    if (this.findNearestChair(camera)) return this.sitOnChair(camera, this.controls);
+    if (this.findNearestChair(camera))
+      return this.sitOnChair(camera, this.controls);
     const bookMeshes = this.getBookMeshes();
     if (bookMeshes.length === 0) return false;
     const intersects = this.raycaster.intersectObjects(bookMeshes, true);
-    if (intersects.length === 0 || intersects[0].distance >= RoomInteraction.INTERACT_DIST + this.reachBonus)
+    if (
+      intersects.length === 0 ||
+      intersects[0].distance >= RoomInteraction.INTERACT_DIST + this.reachBonus
+    )
       return false;
     const root = this.caseRoot(intersects[0].object);
     if (root === this.ballMesh) {
@@ -1136,7 +1299,8 @@ export class RoomInteraction {
   }
 
   povGrabCase(gameCase) {
-    if (this.shelfManager && this.shelfManager.isCaseShelved(gameCase)) this.shelfManager.popCaseFromSlot(gameCase);
+    if (this.shelfManager && this.shelfManager.isCaseShelved(gameCase))
+      this.shelfManager.popCaseFromSlot(gameCase);
     gameCase.grabbed = true;
     this.makeKinematic(gameCase.body);
     if (this.audio) this.audio.playBookGrabPOV();
@@ -1151,9 +1315,14 @@ export class RoomInteraction {
     if (!this.raycaster || !this.renderer || !this.renderer.camera) return null;
     const camera = this.renderer.camera;
     this.raycaster.setFromCamera(new this.THREE.Vector2(0, 0), camera);
-    const meshes = this.gameCases.filter((b) => !b.grabbed && b !== this.povGrabbedCase).map((b) => b.mesh);
+    const meshes = this.gameCases
+      .filter((b) => !b.grabbed && b !== this.povGrabbedCase)
+      .map((b) => b.mesh);
     const intersects = this.raycaster.intersectObjects(meshes, true);
-    if (intersects.length > 0 && intersects[0].distance < RoomInteraction.INTERACT_DIST) {
+    if (
+      intersects.length > 0 &&
+      intersects[0].distance < RoomInteraction.INTERACT_DIST
+    ) {
       const gameCase = this.gameCaseFromRoot(intersects[0].object);
       if (gameCase) return gameCase.gameId;
     }
@@ -1167,10 +1336,19 @@ export class RoomInteraction {
     this.makeKinematic(this.ballBody);
     this.grabbedBallMesh = this.ballMesh;
     this.applyHoverOutline(this.ballMesh);
-    this.grabPlane.set(new this.THREE.Vector3(0, 1, 0), -this.ballMesh.position.y);
+    this.grabPlane.set(
+      new this.THREE.Vector3(0, 1, 0),
+      -this.ballMesh.position.y,
+    );
     const intersectPoint = new this.THREE.Vector3();
-    const hit = this.raycaster.ray.intersectPlane(this.grabPlane, intersectPoint);
-    if (hit) this.grabOffset = new this.THREE.Vector3().copy(this.ballMesh.position).sub(intersectPoint);
+    const hit = this.raycaster.ray.intersectPlane(
+      this.grabPlane,
+      intersectPoint,
+    );
+    if (hit)
+      this.grabOffset = new this.THREE.Vector3()
+        .copy(this.ballMesh.position)
+        .sub(intersectPoint);
     else this.grabOffset = new this.THREE.Vector3(0, 0, 0);
     this.lastGrabPos = this.ballMesh.position.clone();
   }
@@ -1180,7 +1358,10 @@ export class RoomInteraction {
     if (this.audio) this.audio.playBallThrow();
     this.makeDynamic(this.ballBody);
     if (this.lastGrabPos) {
-      const throwVel = new this.THREE.Vector3().copy(this.ballMesh.position).sub(this.lastGrabPos).multiplyScalar(3);
+      const throwVel = new this.THREE.Vector3()
+        .copy(this.ballMesh.position)
+        .sub(this.lastGrabPos)
+        .multiplyScalar(3);
       throwVel.y = Math.max(throwVel.y, 2);
       this.capThrowLift(throwVel, this.ballBody.position.y);
       this.ballBody.velocity.set(throwVel.x, throwVel.y, throwVel.z);
@@ -1228,7 +1409,9 @@ export class RoomInteraction {
 
   updateEGrabbed(camera, delta) {
     if (this.renderer && this.renderer.player)
-      this.renderer.player.holdRight = !!(this.povGrabbedCase || this.grabbedBallMesh);
+      this.renderer.player.holdRight = !!(
+        this.povGrabbedCase || this.grabbedBallMesh
+      );
     const dt = delta || 0.016;
     if (this.furnitureManager && this.furnitureManager.povGrabbedItem) {
       this.furnitureManager.updatePovGrabbed(camera);
@@ -1267,7 +1450,11 @@ export class RoomInteraction {
         const handPos = this.scratchVec3c.copy(pos);
         this.renderer.player.worldToLocal(handPos);
         this.rightHandMesh.position.copy(handPos);
-        this.poseArm(this.renderer.player.rightArm, this.renderer.player.baseShoulderR, handPos);
+        this.poseArm(
+          this.renderer.player.rightArm,
+          this.renderer.player.baseShoulderR,
+          handPos,
+        );
       }
       if (t >= 1) this.finishLob();
       return;
@@ -1284,9 +1471,14 @@ export class RoomInteraction {
       this.scratchVec3b.set(0, 0, -1);
       this.scratchVec3b.applyQuaternion(camera.quaternion);
       let distance = 0.9;
-      if (this.charging) distance -= (this.chargeT / RoomInteraction.CHARGE_MAX_TIME) * RoomInteraction.CHARGE_PULLBACK;
+      if (this.charging)
+        distance -=
+          (this.chargeT / RoomInteraction.CHARGE_MAX_TIME) *
+          RoomInteraction.CHARGE_PULLBACK;
       this.scratchVec3b.multiplyScalar(distance);
-      const targetPos = this.scratchVec3a.copy(camera.position).add(this.scratchVec3b);
+      const targetPos = this.scratchVec3a
+        .copy(camera.position)
+        .add(this.scratchVec3b);
       targetPos.y += 0.15;
       const caseBottom = 0.42;
       const heldPos = this.scratchVec3c.copy(targetPos);
@@ -1295,12 +1487,21 @@ export class RoomInteraction {
       this.resolveGrabbedColliders(heldPos, this.povGrabbedCase.size);
       this.povGrabbedCase.mesh.position.lerp(heldPos, lag);
       this.povGrabbedCase.pos.copy(this.povGrabbedCase.mesh.position);
-      this.povGrabbedCase.mesh.quaternion.slerp(camera.quaternion, Math.min(1, dt * 9));
+      this.povGrabbedCase.mesh.quaternion.slerp(
+        camera.quaternion,
+        Math.min(1, dt * 9),
+      );
       if (this.rightHandMesh) {
-        const handPos = this.scratchVec3b.copy(this.povGrabbedCase.mesh.position);
+        const handPos = this.scratchVec3b.copy(
+          this.povGrabbedCase.mesh.position,
+        );
         this.renderer.player.worldToLocal(handPos);
         this.rightHandMesh.position.copy(handPos);
-        this.poseArm(this.renderer.player.rightArm, this.renderer.player.baseShoulderR, handPos);
+        this.poseArm(
+          this.renderer.player.rightArm,
+          this.renderer.player.baseShoulderR,
+          handPos,
+        );
       }
     } else if (this.grabbedBallMesh) {
       if (!this.scratchVec3a) {
@@ -1314,20 +1515,26 @@ export class RoomInteraction {
       this.scratchVec3b.applyQuaternion(camera.quaternion);
       const distance = 0.9;
       this.scratchVec3b.multiplyScalar(distance);
-      const targetPos = this.scratchVec3a.copy(camera.position).add(this.scratchVec3b);
+      const targetPos = this.scratchVec3a
+        .copy(camera.position)
+        .add(this.scratchVec3b);
       targetPos.y += 0.15;
       this.grabbedBallMesh.position.lerp(targetPos, 1 - Math.exp(-dt * 13));
       if (this.ballBody)
         this.ballBody.position.set(
           this.grabbedBallMesh.position.x,
           this.grabbedBallMesh.position.y,
-          this.grabbedBallMesh.position.z
+          this.grabbedBallMesh.position.z,
         );
       if (this.rightHandMesh) {
         const handPos = this.scratchVec3c.copy(this.grabbedBallMesh.position);
         this.renderer.player.worldToLocal(handPos);
         this.rightHandMesh.position.copy(handPos);
-        this.poseArm(this.renderer.player.rightArm, this.renderer.player.baseShoulderR, handPos);
+        this.poseArm(
+          this.renderer.player.rightArm,
+          this.renderer.player.baseShoulderR,
+          handPos,
+        );
       }
     }
   }
@@ -1344,7 +1551,10 @@ export class RoomInteraction {
     const distance = dir.length();
     if (distance < 0.01) return;
     dir.normalize();
-    const mid = this.poseMid.copy(shoulderBase).add(handLocalPos).multiplyScalar(0.5);
+    const mid = this.poseMid
+      .copy(shoulderBase)
+      .add(handLocalPos)
+      .multiplyScalar(0.5);
     armMesh.position.copy(mid);
     this.poseUp.set(0, 1, 0);
     this.poseQuat.setFromUnitVectors(this.poseUp, dir);
@@ -1358,10 +1568,18 @@ export class RoomInteraction {
     armMesh.scale.set(1, 1, 1);
     if (this.renderer && this.renderer.player && this.renderer.player.baseArmR)
       armMesh.position.copy(this.renderer.player.baseArmR);
-    if (armMesh === this.renderer.player.rightArm && this.rightHandMesh && this.renderer.player.baseHandR) {
+    if (
+      armMesh === this.renderer.player.rightArm &&
+      this.rightHandMesh &&
+      this.renderer.player.baseHandR
+    ) {
       this.rightHandMesh.position.copy(this.renderer.player.baseHandR);
     }
-    if (armMesh === this.renderer.player.leftArm && this.leftHandMesh && this.renderer.player.baseHandL) {
+    if (
+      armMesh === this.renderer.player.leftArm &&
+      this.leftHandMesh &&
+      this.renderer.player.baseHandL
+    ) {
       this.leftHandMesh.position.copy(this.renderer.player.baseHandL);
     }
   }
@@ -1379,7 +1597,9 @@ export class RoomInteraction {
     this.nearShelf = false;
     if (!this.povGrabbedCase || this.povGrabbedCase.isBall) return;
     if (this.shelfManager) {
-      const slot = this.shelfManager.getNearestEmptySlot(this.povGrabbedCase.mesh.position);
+      const slot = this.shelfManager.getNearestEmptySlot(
+        this.povGrabbedCase.mesh.position,
+      );
       this.nearShelf = slot !== null;
     }
   }
@@ -1417,8 +1637,15 @@ export class RoomInteraction {
     const bookMeshes = this.getBookMeshes();
     const objects = this.renderer.getInteractiveObjects();
     const allMeshes = this.renderer.roomObjects || [];
-    const shelfMeshes = this.shelfManager ? this.shelfManager.shelfMeshes || [] : [];
-    const everything = [...bookMeshes, ...objects, ...allMeshes, ...shelfMeshes];
+    const shelfMeshes = this.shelfManager
+      ? this.shelfManager.shelfMeshes || []
+      : [];
+    const everything = [
+      ...bookMeshes,
+      ...objects,
+      ...allMeshes,
+      ...shelfMeshes,
+    ];
     const holoScreen = this.renderer.monitorScreen;
     const holoRenderer = this.renderer.hologramRenderer;
     if (holoScreen && holoRenderer) {
@@ -1427,15 +1654,23 @@ export class RoomInteraction {
           ? RoomInteraction.HOLO_DIST
           : RoomInteraction.INTERACT_DIST;
       const holoHits = this.raycaster.intersectObject(holoScreen);
-      if (holoHits.length > 0 && holoHits[0].uv && holoHits[0].distance < holoMaxDist) {
+      if (
+        holoHits.length > 0 &&
+        holoHits[0].uv &&
+        holoHits[0].distance < holoMaxDist
+      ) {
         const holoDist = holoHits[0].distance;
         let occluded = false;
         if (everything.length > 0) {
           const blockerHits = this.raycaster.intersectObjects(everything);
-          if (blockerHits.length > 0 && blockerHits[0].distance < holoDist) occluded = true;
+          if (blockerHits.length > 0 && blockerHits[0].distance < holoDist)
+            occluded = true;
         }
         if (!occluded) {
-          const item = holoRenderer.getItemAtUV(holoHits[0].uv.x, holoHits[0].uv.y);
+          const item = holoRenderer.getItemAtUV(
+            holoHits[0].uv.x,
+            holoHits[0].uv.y,
+          );
           if (this.onMonitorHover) this.onMonitorHover(item);
           if (item) {
             if (this.renderer) this.renderer.hologramFrozen = true;
@@ -1452,16 +1687,29 @@ export class RoomInteraction {
       if (intersects.length > 0) {
         const hit = intersects[0].object;
         const root = this.caseRoot(hit);
-        const caseRoot = root && root !== this.ballMesh && (root.userData.isCase || root.userData.isBook) ? root : null;
-        const hitCase = caseRoot ? this.gameCases.find((b) => b.mesh === caseRoot) : null;
+        const caseRoot =
+          root &&
+          root !== this.ballMesh &&
+          (root.userData.isCase || root.userData.isBook)
+            ? root
+            : null;
+        const hitCase = caseRoot
+          ? this.gameCases.find((b) => b.mesh === caseRoot)
+          : null;
         const isCase = !!hitCase;
         if (root === this.ballMesh || isCase) {
           if (!this.controls.isLocked) this.canvas.style.cursor = "grab";
         } else {
-          if (!this.controls.isLocked) this.canvas.style.cursor = hit.userData.interactive ? "pointer" : "default";
+          if (!this.controls.isLocked)
+            this.canvas.style.cursor = hit.userData.interactive
+              ? "pointer"
+              : "default";
         }
         found = true;
-        const outlineHit = root === this.ballMesh || isCase || this.collectInteractiveRoot(hit) ? hit : null;
+        const outlineHit =
+          root === this.ballMesh || isCase || this.collectInteractiveRoot(hit)
+            ? hit
+            : null;
         this.applyHoverOutline(outlineHit);
         if (this.onHoverChange) {
           const target =
@@ -1519,7 +1767,8 @@ export class RoomInteraction {
     this.chargeT = 0;
     this.chargeTrailT = 0;
     this.chargeHeldAfterCancel = false;
-    if (this.tagSprite && this.renderer && this.renderer.scene) this.renderer.scene.remove(this.tagSprite);
+    if (this.tagSprite && this.renderer && this.renderer.scene)
+      this.renderer.scene.remove(this.tagSprite);
     if (this.tagTexture) this.tagTexture.dispose();
     this.tagCase = null;
     this.tagSprite = null;

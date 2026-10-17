@@ -15,7 +15,12 @@ let popupLastWinId = "";
 export function claimPopupSlot(url) {
   const now = Date.now();
   const target = typeof url === "string" ? url : "";
-  if (target && target === popupLastUrl && now - popupLastUrlAt < popupSameUrlMs && popupLastWinId) {
+  if (
+    target &&
+    target === popupLastUrl &&
+    now - popupLastUrlAt < popupSameUrlMs &&
+    popupLastWinId
+  ) {
     try {
       if (document.getElementById(popupLastWinId)) {
         os.window.focus(popupLastWinId);
@@ -36,7 +41,7 @@ export function getPopupCooldownState() {
     lastAt: popupLastAt,
     recentCount: popupOpenTimes.length,
     lastUrl: popupLastUrl,
-    lastWinId: popupLastWinId
+    lastWinId: popupLastWinId,
   };
 }
 
@@ -62,8 +67,14 @@ export function sanitizePopupUrl(raw, baseHint) {
   const text = String(raw).trim();
   if (!text) return null;
   const lower = text.toLowerCase();
-  if (lower.startsWith("javascript:") || lower.startsWith("mailto:")) return null;
-  if (lower.startsWith("about:") || lower.startsWith("data:") || lower.startsWith("blob:")) return text;
+  if (lower.startsWith("javascript:") || lower.startsWith("mailto:"))
+    return null;
+  if (
+    lower.startsWith("about:") ||
+    lower.startsWith("data:") ||
+    lower.startsWith("blob:")
+  )
+    return text;
   try {
     return new URL(text, location.href).href;
   } catch (err) {
@@ -76,8 +87,14 @@ export function toPlainUrl(raw, baseHint) {
   let text = String(raw).trim();
   if (!text) return null;
   const lower = text.toLowerCase();
-  if (lower.startsWith("javascript:") || lower.startsWith("mailto:")) return null;
-  if (lower.startsWith("about:") || lower.startsWith("data:") || lower.startsWith("blob:")) return text;
+  if (lower.startsWith("javascript:") || lower.startsWith("mailto:"))
+    return null;
+  if (
+    lower.startsWith("about:") ||
+    lower.startsWith("data:") ||
+    lower.startsWith("blob:")
+  )
+    return text;
   const marker = "/s/scramjet/";
   if (text.indexOf(marker) !== -1) {
     const lastIdx = text.lastIndexOf(marker);
@@ -97,7 +114,12 @@ export function toPlainUrl(raw, baseHint) {
     let decoded = tail;
     for (let i = 0; i < 3; i++) {
       const dLower = decoded.toLowerCase();
-      if (decoded.indexOf(marker) === -1 && dLower.indexOf("%3a") === -1 && dLower.indexOf("%2f") === -1) break;
+      if (
+        decoded.indexOf(marker) === -1 &&
+        dLower.indexOf("%3a") === -1 &&
+        dLower.indexOf("%2f") === -1
+      )
+        break;
       try {
         decoded = decodeURIComponent(decoded);
       } catch (err) {
@@ -111,7 +133,8 @@ export function toPlainUrl(raw, baseHint) {
     const trimmedBase = baseHint.trim();
     const trimmedLower = trimmedBase.toLowerCase();
     if (
-      (trimmedLower.startsWith("http://") || trimmedLower.startsWith("https://")) &&
+      (trimmedLower.startsWith("http://") ||
+        trimmedLower.startsWith("https://")) &&
       trimmedBase.indexOf(marker) === -1
     ) {
       baseChoice = trimmedBase;
@@ -130,11 +153,17 @@ export function parsePopupFeatures(specs) {
   const widthMatch = specs.match(/width\s*=\s*(\d+)/i);
   const heightMatch = specs.match(/height\s*=\s*(\d+)/i);
   if (widthMatch) {
-    const parsedWidth = Math.min(1600, Math.max(400, parseInt(widthMatch[1], 10)));
+    const parsedWidth = Math.min(
+      1600,
+      Math.max(400, parseInt(widthMatch[1], 10)),
+    );
     if (Number.isFinite(parsedWidth)) result.width = parsedWidth + "px";
   }
   if (heightMatch) {
-    const parsedHeight = Math.min(1000, Math.max(300, parseInt(heightMatch[1], 10)));
+    const parsedHeight = Math.min(
+      1000,
+      Math.max(300, parseInt(heightMatch[1], 10)),
+    );
     if (Number.isFinite(parsedHeight)) result.height = parsedHeight + "px";
   }
   return result;
@@ -147,7 +176,11 @@ export function buildPopupTitle(parentName, pageTitleOrUrl) {
   if (!value) return base + " - New Window";
   let extra = value.slice(0, 40);
   const lower = value.toLowerCase();
-  if (lower.startsWith("http://") || lower.startsWith("https://") || value.indexOf("://") !== -1) {
+  if (
+    lower.startsWith("http://") ||
+    lower.startsWith("https://") ||
+    value.indexOf("://") !== -1
+  ) {
     try {
       const host = new URL(value).hostname;
       if (host) extra = host;
@@ -183,7 +216,10 @@ export function createPopupWindow(options) {
     const parsed = parsePopupFeatures(opts.features);
     const w = parsed.width || "90vw";
     const h = parsed.height || "85vh";
-    const win = os.window.create(winId, title, w, h, { icon: parentIcon, appId: parentAppId });
+    const win = os.window.create(winId, title, w, h, {
+      icon: parentIcon,
+      appId: parentAppId,
+    });
     const src =
       location.origin +
       "/sapps/set-template.html?wisp=" +
@@ -217,9 +253,13 @@ export function handlePopupMessage(event, sourceIframe, meta) {
   const raw = data.url;
   if (typeof raw === "string") {
     const lower = raw.trim().toLowerCase();
-    if (lower.startsWith("javascript:") || lower.startsWith("mailto:")) return true;
+    if (lower.startsWith("javascript:") || lower.startsWith("mailto:"))
+      return true;
   }
-  const baseHint = (event.data && (event.data.baseUrl || event.data.pageUrl)) || (meta && meta.baseUrl) || undefined;
+  const baseHint =
+    (event.data && (event.data.baseUrl || event.data.pageUrl)) ||
+    (meta && meta.baseUrl) ||
+    undefined;
   const sanitized = sanitizePopupUrl(raw, baseHint);
   if (sanitized === null) return true;
   const info = meta || {};
@@ -229,7 +269,7 @@ export function handlePopupMessage(event, sourceIframe, meta) {
     parentIcon: info.parentIcon,
     url: sanitized,
     pageTitle: data.pageTitle,
-    features: data.features || data.specs || data.windowFeatures
+    features: data.features || data.specs || data.windowFeatures,
   });
   return Boolean(winId);
 }
@@ -238,9 +278,17 @@ export function handlePopupTitleMessage(event) {
   const data = event ? event.data : null;
   if (!data || data.type !== "scramjet:popup-title") return false;
   const popupId = data.popupId;
-  if (!popupId || typeof popupId !== "string" || popupId.indexOf("-popup-") === -1) return false;
+  if (
+    !popupId ||
+    typeof popupId !== "string" ||
+    popupId.indexOf("-popup-") === -1
+  )
+    return false;
   try {
-    os.window.setTitle(popupId, buildPopupTitle(data.parentName || "App", data.title));
+    os.window.setTitle(
+      popupId,
+      buildPopupTitle(data.parentName || "App", data.title),
+    );
     return true;
   } catch (err) {
     return false;

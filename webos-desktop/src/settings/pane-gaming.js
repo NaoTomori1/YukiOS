@@ -1,5 +1,8 @@
 import { os, StorageKeys } from "../framework.js";
-import { SteamSettings, openSteamSettingsWindow } from "../games/steamSettings.js";
+import {
+  SteamSettings,
+  openSteamSettingsWindow,
+} from "../games/steamSettings.js";
 import { KeybindManager } from "../keybindManager.js";
 
 function loadOverlayEnabled() {
@@ -99,7 +102,11 @@ export function bindGamingCategory(win, wm) {
     const on = !!overlayToggle.checked;
     SteamSettings.set("overlayEnabled", on);
     saveOverlayEnabled(on);
-    window.dispatchEvent(new CustomEvent("steam-settings-changed", { detail: { setting: "overlayEnabled", value: on } }));
+    window.dispatchEvent(
+      new CustomEvent("steam-settings-changed", {
+        detail: { setting: "overlayEnabled", value: on },
+      }),
+    );
   });
 
   const hotkeyBtn = win.querySelector("#settingsGamingOverlayHotkey");
@@ -121,6 +128,10 @@ export function bindGamingCategory(win, wm) {
   shotsToggle?.addEventListener("change", () => {
     const on = !!shotsToggle.checked;
     SteamSettings.set("screenshotsEnabled", on);
-    window.dispatchEvent(new CustomEvent("steam-settings-changed", { detail: { setting: "screenshotsEnabled", value: on } }));
+    window.dispatchEvent(
+      new CustomEvent("steam-settings-changed", {
+        detail: { setting: "screenshotsEnabled", value: on },
+      }),
+    );
   });
 }

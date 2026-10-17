@@ -23,22 +23,51 @@ import {
   applyDockIconSize,
   applyDockScale,
   applyDockAnimationSpeed,
-  applyThemeConfig
+  applyThemeConfig,
 } from "./settingsApply.js";
 import { exportData, importData, deleteAllData } from "./settingsData.js";
-import { $, $$, bindEvent, toggleClass, setText, createElement, setHTML } from "../shared/domUtils.js";
+import {
+  $,
+  $$,
+  bindEvent,
+  toggleClass,
+  setText,
+  createElement,
+  setHTML,
+} from "../shared/domUtils.js";
 import { ICON_PACKS, setIconPack, getIconPack } from "../shared/iconPack.js";
-import { bindSelectMenu, getSelectMenuValue, setSelectMenuValue } from "../shared/selectMenu.js";
-import { bindRangeSlider, getRangeSliderValue, setRangeSliderValue } from "../shared/rangeSlider.js";
-import { addCustomTheme, getSpecialThemes, getCustomThemes, getThemeByValue } from "../shared/themeEngine.js";
-import { buildThemeContract, sanitizeThemeContract } from "../shared/themeContract.js";
+import { CM_STYLES, setContextMenuStyle } from "../shared/contextMenuStyle.js";
+import {
+  bindSelectMenu,
+  getSelectMenuValue,
+  setSelectMenuValue,
+} from "../shared/selectMenu.js";
+import {
+  bindRangeSlider,
+  getRangeSliderValue,
+  setRangeSliderValue,
+} from "../shared/rangeSlider.js";
+import {
+  addCustomTheme,
+  getSpecialThemes,
+  getCustomThemes,
+  getThemeByValue,
+} from "../shared/themeEngine.js";
+import {
+  buildThemeContract,
+  sanitizeThemeContract,
+} from "../shared/themeContract.js";
 import { applyThemeEffects } from "../shared/themeEffects.js";
 import { openThemeCreator, refreshCustomThemesUI } from "./themeCreator.js";
 import { bindAccountsCategory } from "./accountsPanel.js";
 import { tabCloak, DEFAULT_DECOY, PANIC_PRESETS } from "../stealth/tabCloak.js";
 import { bindDisks } from "./pane-disks.js";
-import { loadStartupApps, renderStartupAppList } from "../shared/startupApps.js";
+import {
+  loadStartupApps,
+  renderStartupAppList,
+} from "../shared/startupApps.js";
 import { taskbarPositionManager } from "../desktopui/taskbarPositionManager.js";
+import { getWispUrl, isEpoxyOnlyWisp } from "../shared/wispConfig.js";
 import { getStoredCustomColors } from "../shared/customColorsDialog.js";
 import { applyAnimationSettings } from "../windowManager/AnimationSystem.js";
 import { getResolutionLabel } from "../resolution/resolutionManager.js";
@@ -63,8 +92,12 @@ export function bindNavigation(win) {
       item.classList.add("active");
       const gk = item.dataset.group;
       if (gk) {
-        const header = win.querySelector(`.yuki-settings-nav-group[data-group="${gk}"]`);
-        const sublist = win.querySelector(`.yuki-settings-sublist[data-group="${gk}"]`);
+        const header = win.querySelector(
+          `.yuki-settings-nav-group[data-group="${gk}"]`,
+        );
+        const sublist = win.querySelector(
+          `.yuki-settings-sublist[data-group="${gk}"]`,
+        );
         if (header) {
           header.classList.add("active");
           if (compact) header.classList.add("expanded");
@@ -111,14 +144,20 @@ export function bindNavigation(win) {
   groupHeaders.forEach((header) => {
     bindEvent(header, "click", () => {
       const gk = header.dataset.group;
-      const sublist = win.querySelector(`.yuki-settings-sublist[data-group="${gk}"]`);
-      const firstNav = sublist ? sublist.querySelector(".yuki-settings-nav-item:not([data-launch])") : null;
+      const sublist = win.querySelector(
+        `.yuki-settings-sublist[data-group="${gk}"]`,
+      );
+      const firstNav = sublist
+        ? sublist.querySelector(".yuki-settings-nav-item:not([data-launch])")
+        : null;
       if (compact) {
         if (header.classList.contains("expanded")) {
           header.classList.remove("expanded", "active");
           if (sublist) sublist.classList.remove("expanded");
           if (sublist)
-            sublist.querySelectorAll(".yuki-settings-nav-item.active").forEach((el) => el.classList.remove("active"));
+            sublist
+              .querySelectorAll(".yuki-settings-nav-item.active")
+              .forEach((el) => el.classList.remove("active"));
           return;
         }
         sublists.forEach((s) => s.classList.remove("expanded"));
@@ -140,7 +179,9 @@ export function bindNavigation(win) {
       } else {
         sublists.forEach((s) => s.classList.add("expanded"));
       }
-      $$(".settings-row", win).forEach((row) => row.classList.remove("hidden-by-search"));
+      $$(".settings-row", win).forEach((row) =>
+        row.classList.remove("hidden-by-search"),
+      );
       panes.forEach((p) => {
         p.classList.remove("active");
         p.style.display = "";
@@ -152,8 +193,12 @@ export function bindNavigation(win) {
       if (activeNav) {
         const gk = activeNav.dataset.group;
         if (gk) {
-          const header = win.querySelector(`.yuki-settings-nav-group[data-group="${gk}"]`);
-          const sublist = win.querySelector(`.yuki-settings-sublist[data-group="${gk}"]`);
+          const header = win.querySelector(
+            `.yuki-settings-nav-group[data-group="${gk}"]`,
+          );
+          const sublist = win.querySelector(
+            `.yuki-settings-sublist[data-group="${gk}"]`,
+          );
           if (header) header.classList.add("expanded");
           if (sublist && compact) sublist.classList.add("expanded");
         }
@@ -163,9 +208,14 @@ export function bindNavigation(win) {
       layout.classList.add("is-searching");
       sublists.forEach((s) => s.classList.add("expanded"));
       $$(".settings-row", win).forEach((row) => {
-        const title = $(".settings-label-title", row)?.textContent.toLowerCase() || "";
-        const desc = $(".settings-label-desc", row)?.textContent.toLowerCase() || "";
-        row.classList.toggle("hidden-by-search", !(title.includes(query) || desc.includes(query)));
+        const title =
+          $(".settings-label-title", row)?.textContent.toLowerCase() || "";
+        const desc =
+          $(".settings-label-desc", row)?.textContent.toLowerCase() || "";
+        row.classList.toggle(
+          "hidden-by-search",
+          !(title.includes(query) || desc.includes(query)),
+        );
       });
 
       panes.forEach((pane) => {
@@ -176,7 +226,10 @@ export function bindNavigation(win) {
           if (visible.length > 0) paneHasVisibleRows = true;
         });
 
-        const standaloneRows = $$(".settings-category-pane > .settings-row:not(.hidden-by-search)", pane);
+        const standaloneRows = $$(
+          ".settings-category-pane > .settings-row:not(.hidden-by-search)",
+          pane,
+        );
         if (standaloneRows.length > 0) paneHasVisibleRows = true;
 
         if (paneHasVisibleRows) {
@@ -199,10 +252,13 @@ export function animateSettingsPane(paneEl, onDone) {
     onDone?.();
     return;
   }
-  const animation = paneEl.animate([{ transform: "translateY(12px)" }, { transform: "translateY(0)" }], {
-    duration: 200,
-    easing: "ease"
-  });
+  const animation = paneEl.animate(
+    [{ transform: "translateY(12px)" }, { transform: "translateY(0)" }],
+    {
+      duration: 200,
+      easing: "ease",
+    },
+  );
   if (onDone) animation.onfinish = () => onDone();
 }
 
@@ -248,7 +304,13 @@ function mountWallpaperEngine(win) {
   app.mountInto(host);
 }
 
-export function bindSystemCategory(win, save, settings, notificationCenter, showSaved) {
+export function bindSystemCategory(
+  win,
+  save,
+  settings,
+  notificationCenter,
+  showSaved,
+) {
   const systemSettings = [
     "#settingsWeather",
     "#settingsClippy",
@@ -258,13 +320,15 @@ export function bindSystemCategory(win, save, settings, notificationCenter, show
     "#settingsAds",
     "#settingsDisableBootScreen",
     "#settingsWindowSessionPersistence",
-    "#settingsCursorEffect"
+    "#settingsCursorEffect",
   ];
   systemSettings.forEach((id) => bindEvent($(id, win), "change", save));
 
   $$(".settings-btn[data-performance-val]", win).forEach((btn) => {
     bindEvent(btn, "click", () => {
-      $$(".settings-btn[data-performance-val]", win).forEach((b) => toggleClass(b, "active", b === btn));
+      $$(".settings-btn[data-performance-val]", win).forEach((b) =>
+        toggleClass(b, "active", b === btn),
+      );
       save();
     });
   });
@@ -289,7 +353,9 @@ export function bindSystemCategory(win, save, settings, notificationCenter, show
   const cloakPreset = $("#settingsCloakPreset", win);
   if (cloakPreset) {
     bindEvent(cloakPreset, "change", () => {
-      tabCloak().applyCloak(getSelectMenuValue("settingsCloakPreset", win) || "none");
+      tabCloak().applyCloak(
+        getSelectMenuValue("settingsCloakPreset", win) || "none",
+      );
       showSaved();
     });
   }
@@ -378,7 +444,7 @@ export function bindSystemCategory(win, save, settings, notificationCenter, show
     "#settingsNotificationsRemoveTimeout",
     "#settingsNotificationsPopAnimation",
     "#settingsNotificationsOverFullscreen",
-    "#settingsNotificationsPosition"
+    "#settingsNotificationsPosition",
   ];
   notificationSettings.forEach((id) => bindEvent($(id, win), "change", save));
 
@@ -386,7 +452,11 @@ export function bindSystemCategory(win, save, settings, notificationCenter, show
   const durationVal = $("#settingsNotificationsDurationVal", win);
   if (durationSlider) {
     bindEvent(durationSlider, "input", () => {
-      if (durationVal) setText(durationVal, `${getRangeSliderValue("settingsNotificationsDuration", win)}s`);
+      if (durationVal)
+        setText(
+          durationVal,
+          `${getRangeSliderValue("settingsNotificationsDuration", win)}s`,
+        );
     });
     bindEvent(durationSlider, "change", save);
   }
@@ -413,7 +483,9 @@ export function bindDesktopCategory(win, save, settings, showSaved) {
       settings.hideDesktopIcons = hideIcons;
       os.storage.set(StorageKeys.hideDesktopIcons, String(hideIcons));
 
-      const desktopIcons = $$(".icon.selectable, .folder-icon, .desktop-file-icon");
+      const desktopIcons = $$(
+        ".icon.selectable, .folder-icon, .desktop-file-icon",
+      );
       if (hideIcons) {
         desktopIcons.forEach((icon) => (icon.style.display = "none"));
       } else {
@@ -429,14 +501,22 @@ export function bindDesktopCategory(win, save, settings, showSaved) {
     });
     save();
   };
-  bindEvent($('[data-alignment="left"]', win), "click", () => handleAlignmentClick("left"));
-  bindEvent($('[data-alignment="center"]', win), "click", () => handleAlignmentClick("center"));
-  bindEvent($('[data-alignment="right"]', win), "click", () => handleAlignmentClick("right"));
+  bindEvent($('[data-alignment="left"]', win), "click", () =>
+    handleAlignmentClick("left"),
+  );
+  bindEvent($('[data-alignment="center"]', win), "click", () =>
+    handleAlignmentClick("center"),
+  );
+  bindEvent($('[data-alignment="right"]', win), "click", () =>
+    handleAlignmentClick("right"),
+  );
 
   $$(".settings-btn[data-taskbar-pos]", win).forEach((btn) => {
     bindEvent(btn, "click", async () => {
       const pos = btn.dataset.taskbarPos;
-      $$(".settings-btn[data-taskbar-pos]", win).forEach((b) => toggleClass(b, "active", b === btn));
+      $$(".settings-btn[data-taskbar-pos]", win).forEach((b) =>
+        toggleClass(b, "active", b === btn),
+      );
       settings.taskbarPosition = pos;
       os.storage.set(StorageKeys.taskbarPosition, pos);
       taskbarPositionManager.setPosition(pos);
@@ -447,7 +527,11 @@ export function bindDesktopCategory(win, save, settings, showSaved) {
   const widthValue = $("#settingsStartMenuWidthValue", win);
   if (widthSlider) {
     bindEvent(widthSlider, "input", () => {
-      if (widthValue) setText(widthValue, `${getRangeSliderValue("settingsStartMenuWidth", win)}px`);
+      if (widthValue)
+        setText(
+          widthValue,
+          `${getRangeSliderValue("settingsStartMenuWidth", win)}px`,
+        );
     });
     bindEvent(widthSlider, "change", save);
   }
@@ -456,7 +540,11 @@ export function bindDesktopCategory(win, save, settings, showSaved) {
   const heightValue = $("#settingsStartMenuHeightValue", win);
   if (heightSlider) {
     bindEvent(heightSlider, "input", () => {
-      if (heightValue) setText(heightValue, `${getRangeSliderValue("settingsStartMenuHeight", win)}px`);
+      if (heightValue)
+        setText(
+          heightValue,
+          `${getRangeSliderValue("settingsStartMenuHeight", win)}px`,
+        );
     });
     bindEvent(heightSlider, "change", save);
   }
@@ -465,7 +553,11 @@ export function bindDesktopCategory(win, save, settings, showSaved) {
   const iconSizeValue = $("#settingsDesktopIconSizeValue", win);
   if (iconSizeSlider) {
     bindEvent(iconSizeSlider, "input", () => {
-      if (iconSizeValue) setText(iconSizeValue, `${getRangeSliderValue("settingsDesktopIconSize", win)}px`);
+      if (iconSizeValue)
+        setText(
+          iconSizeValue,
+          `${getRangeSliderValue("settingsDesktopIconSize", win)}px`,
+        );
     });
     bindEvent(iconSizeSlider, "change", () => {
       const val = parseInt(getRangeSliderValue("settingsDesktopIconSize", win));
@@ -481,7 +573,11 @@ export function bindDesktopCategory(win, save, settings, showSaved) {
   const taskbarScaleValue = $("#settingsTaskbarScaleValue", win);
   if (taskbarScaleSlider) {
     bindEvent(taskbarScaleSlider, "input", () => {
-      if (taskbarScaleValue) setText(taskbarScaleValue, `${getRangeSliderValue("settingsTaskbarScale", win)}%`);
+      if (taskbarScaleValue)
+        setText(
+          taskbarScaleValue,
+          `${getRangeSliderValue("settingsTaskbarScale", win)}%`,
+        );
     });
     bindEvent(taskbarScaleSlider, "change", () => {
       const val = parseInt(getRangeSliderValue("settingsTaskbarScale", win));
@@ -524,8 +620,14 @@ export function bindDesktopCategory(win, save, settings, showSaved) {
   const windowSwitcherModeSelect = $("#settingsWindowSwitcherMode", win);
   if (windowSwitcherModeSelect) {
     bindEvent(windowSwitcherModeSelect, "change", () => {
-      settings.windowSwitcherMode = getSelectMenuValue("settingsWindowSwitcherMode", win);
-      os.storage.set(StorageKeys.windowSwitcherMode, getSelectMenuValue("settingsWindowSwitcherMode", win));
+      settings.windowSwitcherMode = getSelectMenuValue(
+        "settingsWindowSwitcherMode",
+        win,
+      );
+      os.storage.set(
+        StorageKeys.windowSwitcherMode,
+        getSelectMenuValue("settingsWindowSwitcherMode", win),
+      );
       showSaved();
     });
   }
@@ -533,17 +635,30 @@ export function bindDesktopCategory(win, save, settings, showSaved) {
   const windowSwitcherUISelect = $("#settingsWindowSwitcherUI", win);
   if (windowSwitcherUISelect) {
     bindEvent(windowSwitcherUISelect, "change", () => {
-      settings.windowSwitcherUI = getSelectMenuValue("settingsWindowSwitcherUI", win);
-      os.storage.set(StorageKeys.windowSwitcherUI, getSelectMenuValue("settingsWindowSwitcherUI", win));
+      settings.windowSwitcherUI = getSelectMenuValue(
+        "settingsWindowSwitcherUI",
+        win,
+      );
+      os.storage.set(
+        StorageKeys.windowSwitcherUI,
+        getSelectMenuValue("settingsWindowSwitcherUI", win),
+      );
       showSaved();
     });
   }
 
-  const windowSwitcherIncludeMinimizedToggle = $("#settingsWindowSwitcherIncludeMinimized", win);
+  const windowSwitcherIncludeMinimizedToggle = $(
+    "#settingsWindowSwitcherIncludeMinimized",
+    win,
+  );
   if (windowSwitcherIncludeMinimizedToggle) {
     bindEvent(windowSwitcherIncludeMinimizedToggle, "change", () => {
-      settings.windowSwitcherIncludeMinimized = windowSwitcherIncludeMinimizedToggle.checked;
-      os.storage.set(StorageKeys.windowSwitcherIncludeMinimized, String(windowSwitcherIncludeMinimizedToggle.checked));
+      settings.windowSwitcherIncludeMinimized =
+        windowSwitcherIncludeMinimizedToggle.checked;
+      os.storage.set(
+        StorageKeys.windowSwitcherIncludeMinimized,
+        String(windowSwitcherIncludeMinimizedToggle.checked),
+      );
       showSaved();
     });
   }
@@ -567,7 +682,9 @@ export function bindDesktopCategory(win, save, settings, showSaved) {
   $$(".settings-btn[data-dock-pos]", win).forEach((btn) => {
     bindEvent(btn, "click", () => {
       const pos = btn.dataset.dockPos;
-      $$(".settings-btn[data-dock-pos]", win).forEach((b) => toggleClass(b, "active", b === btn));
+      $$(".settings-btn[data-dock-pos]", win).forEach((b) =>
+        toggleClass(b, "active", b === btn),
+      );
       settings.dockPosition = pos;
       os.storage.set(StorageKeys.dockPosition, pos);
       showSaved();
@@ -579,7 +696,10 @@ export function bindDesktopCategory(win, save, settings, showSaved) {
   if (dockAutoHideToggle) {
     bindEvent(dockAutoHideToggle, "change", () => {
       settings.dockAutoHide = dockAutoHideToggle.checked;
-      os.storage.set(StorageKeys.dockAutoHide, String(dockAutoHideToggle.checked));
+      os.storage.set(
+        StorageKeys.dockAutoHide,
+        String(dockAutoHideToggle.checked),
+      );
       showSaved();
       os.events.emit(BusEvents.SETTINGS_CHANGED, settings);
     });
@@ -589,7 +709,10 @@ export function bindDesktopCategory(win, save, settings, showSaved) {
   if (dockMagnificationToggle) {
     bindEvent(dockMagnificationToggle, "change", () => {
       settings.dockMagnification = dockMagnificationToggle.checked;
-      os.storage.set(StorageKeys.dockMagnification, String(dockMagnificationToggle.checked));
+      os.storage.set(
+        StorageKeys.dockMagnification,
+        String(dockMagnificationToggle.checked),
+      );
       showSaved();
       os.events.emit(BusEvents.SETTINGS_CHANGED, settings);
     });
@@ -600,10 +723,15 @@ export function bindDesktopCategory(win, save, settings, showSaved) {
   if (magAmountSlider) {
     bindEvent(magAmountSlider, "input", () => {
       if (magAmountValue)
-        setText(magAmountValue, `${parseFloat(getRangeSliderValue("settingsDockMagnifyAmount", win)).toFixed(1)}x`);
+        setText(
+          magAmountValue,
+          `${parseFloat(getRangeSliderValue("settingsDockMagnifyAmount", win)).toFixed(1)}x`,
+        );
     });
     bindEvent(magAmountSlider, "change", () => {
-      const val = parseFloat(getRangeSliderValue("settingsDockMagnifyAmount", win));
+      const val = parseFloat(
+        getRangeSliderValue("settingsDockMagnifyAmount", win),
+      );
       settings.dockMagnifyAmount = val;
       os.storage.set(StorageKeys.dockMagnifyAmount, String(val));
       showSaved();
@@ -615,10 +743,16 @@ export function bindDesktopCategory(win, save, settings, showSaved) {
   const magRangeValue = $("#settingsDockMagnifyRangeValue", win);
   if (magRangeSlider) {
     bindEvent(magRangeSlider, "input", () => {
-      if (magRangeValue) setText(magRangeValue, `${parseInt(getRangeSliderValue("settingsDockMagnifyRange", win))}`);
+      if (magRangeValue)
+        setText(
+          magRangeValue,
+          `${parseInt(getRangeSliderValue("settingsDockMagnifyRange", win))}`,
+        );
     });
     bindEvent(magRangeSlider, "change", () => {
-      const val = parseInt(getRangeSliderValue("settingsDockMagnifyRange", win));
+      const val = parseInt(
+        getRangeSliderValue("settingsDockMagnifyRange", win),
+      );
       settings.dockMagnifyRange = val;
       os.storage.set(StorageKeys.dockMagnifyRange, String(val));
       showSaved();
@@ -630,7 +764,11 @@ export function bindDesktopCategory(win, save, settings, showSaved) {
   const dockIconSizeValue = $("#settingsDockIconSizeValue", win);
   if (dockIconSizeSlider) {
     bindEvent(dockIconSizeSlider, "input", () => {
-      if (dockIconSizeValue) setText(dockIconSizeValue, `${getRangeSliderValue("settingsDockIconSize", win)}px`);
+      if (dockIconSizeValue)
+        setText(
+          dockIconSizeValue,
+          `${getRangeSliderValue("settingsDockIconSize", win)}px`,
+        );
     });
     bindEvent(dockIconSizeSlider, "change", () => {
       const val = parseInt(getRangeSliderValue("settingsDockIconSize", win));
@@ -646,7 +784,11 @@ export function bindDesktopCategory(win, save, settings, showSaved) {
   const dockScaleValue = $("#settingsDockScaleValue", win);
   if (dockScaleSlider) {
     bindEvent(dockScaleSlider, "input", () => {
-      if (dockScaleValue) setText(dockScaleValue, `${getRangeSliderValue("settingsDockScale", win)}%`);
+      if (dockScaleValue)
+        setText(
+          dockScaleValue,
+          `${getRangeSliderValue("settingsDockScale", win)}%`,
+        );
     });
     bindEvent(dockScaleSlider, "change", () => {
       const val = parseInt(getRangeSliderValue("settingsDockScale", win));
@@ -665,11 +807,13 @@ export function bindDesktopCategory(win, save, settings, showSaved) {
       if (dockAnimSpeedValue)
         setText(
           dockAnimSpeedValue,
-          `${parseFloat(getRangeSliderValue("settingsDockAnimationSpeed", win)).toFixed(2)}s`
+          `${parseFloat(getRangeSliderValue("settingsDockAnimationSpeed", win)).toFixed(2)}s`,
         );
     });
     bindEvent(dockAnimSpeedSlider, "change", () => {
-      const val = parseFloat(getRangeSliderValue("settingsDockAnimationSpeed", win));
+      const val = parseFloat(
+        getRangeSliderValue("settingsDockAnimationSpeed", win),
+      );
       settings.dockAnimationSpeed = val;
       os.storage.set(StorageKeys.dockAnimationSpeed, String(val));
       applyDockAnimationSpeed(val);
@@ -702,7 +846,10 @@ export function bindIconPackChooser(win, settings, showSaved) {
   if (!options.length) return;
   options.forEach((btn) => {
     bindEvent(btn, "click", () => {
-      const pack = btn.dataset.iconPack === ICON_PACKS.FA ? ICON_PACKS.FA : ICON_PACKS.PAPIRUS;
+      const pack =
+        btn.dataset.iconPack === ICON_PACKS.FA
+          ? ICON_PACKS.FA
+          : ICON_PACKS.PAPIRUS;
       setIconPack(pack);
       settings.iconPack = pack;
       const all = $$(".icon-pack-option", win);
@@ -710,10 +857,36 @@ export function bindIconPackChooser(win, settings, showSaved) {
         const isActive = b.dataset.iconPack === pack;
         b.classList.toggle("active", isActive);
         b.style.borderColor = isActive ? "var(--brand)" : "var(--glass-border)";
-        b.style.background = isActive ? "color-mix(in srgb, var(--brand) 12%, transparent)" : "var(--glass)";
+        b.style.background = isActive
+          ? "color-mix(in srgb, var(--brand) 12%, transparent)"
+          : "var(--glass)";
       });
       showSaved?.();
       os.events.emit(BusEvents.SETTINGS_CHANGED, settings);
+    });
+  });
+}
+
+export function bindContextMenuStyleChooser(win, showSaved) {
+  const options = $$(".cm-style-option", win);
+  if (!options.length) return;
+  options.forEach((btn) => {
+    bindEvent(btn, "click", () => {
+      const style =
+        btn.dataset.cmStyle === CM_STYLES.WIN11
+          ? CM_STYLES.WIN11
+          : CM_STYLES.YUKIOS;
+      setContextMenuStyle(style);
+      const all = $$(".cm-style-option", win);
+      all.forEach((b) => {
+        const isActive = b.dataset.cmStyle === style;
+        b.classList.toggle("active", isActive);
+        b.style.borderColor = isActive ? "var(--brand)" : "var(--glass-border)";
+        b.style.background = isActive
+          ? "color-mix(in srgb, var(--brand) 12%, transparent)"
+          : "var(--glass)";
+      });
+      showSaved?.();
     });
   });
 }
@@ -729,7 +902,7 @@ export function bindAppearanceCategory(
   getCustomColors,
   setCustomColors,
   normalizeCursorDataUrl,
-  showCustomColorsDialog
+  showCustomColorsDialog,
 ) {
   bindEvent($("#settingsCycleWallpaper", win), "change", save);
   bindEvent($("#settingsSidebarCompact", win), "change", save);
@@ -762,15 +935,22 @@ export function bindAppearanceCategory(
   $$(".settings-btn[data-theme-val]", win).forEach((btn) => {
     bindEvent(btn, "click", () => {
       const theme = btn.dataset.themeVal;
-      $$(".theme-preview-btn", win).forEach((b) => b.classList.remove("active"));
+      $$(".theme-preview-btn", win).forEach((b) =>
+        b.classList.remove("active"),
+      );
       btn.classList.add("active");
       const featuredGridSel = $("#settingsFeaturedGrid", win);
-      if (featuredGridSel) $$("[data-featured-theme]", featuredGridSel).forEach((b) => b.classList.remove("active"));
+      if (featuredGridSel)
+        $$("[data-featured-theme]", featuredGridSel).forEach((b) =>
+          b.classList.remove("active"),
+        );
       settings.theme = theme;
       os.storage.set(StorageKeys.theme, theme);
       applyTheme(theme, getCustomColors);
       audioMixer().playSystemSound(SystemAudio.DESKTOP_CHANGE);
-      const label = theme.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+      const label = theme
+        .replace(/-/g, " ")
+        .replace(/\b\w/g, (c) => c.toUpperCase());
       showStatus(`Theme: ${label}`);
     });
   });
@@ -783,20 +963,24 @@ export function bindAppearanceCategory(
       featuredGrid.innerHTML = specials
         .map(
           (theme) =>
-            `<button class="settings-btn theme-preview-btn ${cur === theme.value ? "active" : ""}" data-featured-theme="${theme.value}" style="height:56px;background:${theme.preview};color:${theme.textColor || "#fff"};"><span>${theme.label}</span></button>`
+            `<button class="settings-btn theme-preview-btn ${cur === theme.value ? "active" : ""}" data-featured-theme="${theme.value}" style="height:56px;background:${theme.preview};color:${theme.textColor || "#fff"};"><span>${theme.label}</span></button>`,
         )
         .join("");
     }
     $$("[data-featured-theme]", featuredGrid).forEach((btn) => {
       bindEvent(btn, "click", () => {
         const theme = btn.dataset.featuredTheme;
-        $$(".theme-preview-btn", win).forEach((b) => b.classList.remove("active"));
+        $$(".theme-preview-btn", win).forEach((b) =>
+          b.classList.remove("active"),
+        );
         btn.classList.add("active");
         settings.theme = theme;
         os.storage.set(StorageKeys.theme, theme);
         applyTheme(theme, getCustomColors);
         audioMixer().playSystemSound(SystemAudio.DESKTOP_CHANGE);
-        const label = theme.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+        const label = theme
+          .replace(/-/g, " ")
+          .replace(/\b\w/g, (c) => c.toUpperCase());
         showStatus(`Theme: ${label}`);
       });
     });
@@ -821,19 +1005,25 @@ export function bindAppearanceCategory(
         const parsed = JSON.parse(text);
         const result = sanitizeThemeContract(parsed);
         if (!result.ok) {
-          os.dialog.alert("Import Theme", result.errors.join("\n") || "Invalid theme file");
+          os.dialog.alert(
+            "Import Theme",
+            result.errors.join("\n") || "Invalid theme file",
+          );
           return;
         }
         const contract = result.contract;
         const data = {
-          value: contract.name.toLowerCase().replace(/[^a-z0-9-]/g, "-") + "-" + Math.random().toString(36).slice(2, 6),
+          value:
+            contract.name.toLowerCase().replace(/[^a-z0-9-]/g, "-") +
+            "-" +
+            Math.random().toString(36).slice(2, 6),
           label: contract.name,
           icon: contract.icon,
           colors: contract.colors,
           description: contract.description,
           author: contract.author,
           effects: contract.effects,
-          config: contract.config
+          config: contract.config,
         };
         try {
           addCustomTheme({
@@ -844,7 +1034,7 @@ export function bindAppearanceCategory(
             description: data.description,
             author: data.author,
             effects: data.effects,
-            config: data.config
+            config: data.config,
           });
         } catch (e) {
           os.dialog.alert("Import Theme", e.message || "Couldn't import theme");
@@ -852,14 +1042,22 @@ export function bindAppearanceCategory(
         }
         os.storage.set(StorageKeys.theme, data.value);
         applyTheme(data.value, () => os.storage.get(StorageKeys.customColors));
-        if (contract.effects && Object.keys(contract.effects).length > 0) applyThemeEffects(contract.effects);
-        if (contract.config && Object.keys(contract.config).length > 0) applyThemeConfig(contract.config);
+        if (contract.effects && Object.keys(contract.effects).length > 0)
+          applyThemeEffects(contract.effects);
+        if (contract.config && Object.keys(contract.config).length > 0)
+          applyThemeConfig(contract.config);
         os.notify.send("Themes", `Imported "${contract.name}"`);
-        os.events.emit(BusEvents.SETTINGS_CHANGED, { key: "theme", value: data.value });
+        os.events.emit(BusEvents.SETTINGS_CHANGED, {
+          key: "theme",
+          value: data.value,
+        });
         refreshCustomThemesUI(win);
         showSaved();
       } catch (e) {
-        os.dialog.alert("Import Theme", "Couldn't read that file: " + (e.message || e));
+        os.dialog.alert(
+          "Import Theme",
+          "Couldn't read that file: " + (e.message || e),
+        );
       } finally {
         importInput.value = "";
       }
@@ -879,7 +1077,11 @@ export function bindAppearanceCategory(
         os.dialog.alert("Alert", "No custom colors yet. Create one first.");
         return;
       }
-      const themeName = await os.dialog.prompt("Prompt", "Name your theme:", "My Theme");
+      const themeName = await os.dialog.prompt(
+        "Prompt",
+        "Name your theme:",
+        "My Theme",
+      );
       if (!themeName) return;
       const themeValue = themeName.toLowerCase().replace(/[^a-z0-9-]/g, "-");
       try {
@@ -887,9 +1089,11 @@ export function bindAppearanceCategory(
           value: themeValue,
           label: themeName,
           icon: "fas fa-palette",
-          colors: customColors
+          colors: customColors,
         });
-        os.events.emit(BusEvents.ACHIEVEMENT_TRIGGER, { achievementId: Achievements.ThemeSmith });
+        os.events.emit(BusEvents.ACHIEVEMENT_TRIGGER, {
+          achievementId: Achievements.ThemeSmith,
+        });
         os.dialog.alert("Alert", `Saved "${themeName}"`);
         os.notify.send("Themes", `Theme saved to My Themes`);
         showSaved();
@@ -904,7 +1108,11 @@ export function bindAppearanceCategory(
   const transparencyValue = $("#settingsWindowTransparencyValue", win);
   if (transparencySlider) {
     bindEvent(transparencySlider, "input", () => {
-      if (transparencyValue) setText(transparencyValue, `${getRangeSliderValue("settingsWindowTransparency", win)}%`);
+      if (transparencyValue)
+        setText(
+          transparencyValue,
+          `${getRangeSliderValue("settingsWindowTransparency", win)}%`,
+        );
     });
     bindEvent(transparencySlider, "change", () => {
       const val = getRangeSliderValue("settingsWindowTransparency", win) / 100;
@@ -932,7 +1140,7 @@ export function bindAppearanceCategory(
     ["#settingsTpWindowBody", "windowBody"],
     ["#settingsTpStartMenu", "startMenu"],
     ["#settingsTpContextMenus", "contextMenus"],
-    ["#settingsTpTray", "tray"]
+    ["#settingsTpTray", "tray"],
   ];
   transparencyPartToggles.forEach(([selector, key]) => {
     const toggle = $(selector, win);
@@ -940,7 +1148,10 @@ export function bindAppearanceCategory(
     bindEvent(toggle, "change", () => {
       settings.transparencyParts = settings.transparencyParts || {};
       settings.transparencyParts[key] = toggle.checked;
-      os.storage.set(StorageKeys.transparencyParts, JSON.stringify(settings.transparencyParts));
+      os.storage.set(
+        StorageKeys.transparencyParts,
+        JSON.stringify(settings.transparencyParts),
+      );
       applyTransparencyParts(settings.transparencyParts);
       showSaved();
     });
@@ -951,7 +1162,7 @@ export function bindAppearanceCategory(
     ["settingsBlurTaskbar", "taskbar"],
     ["settingsBlurStartMenu", "startMenu"],
     ["settingsBlurContext", "context"],
-    ["settingsBlurTray", "tray"]
+    ["settingsBlurTray", "tray"],
   ];
   transparencyBlurSliders.forEach(([id, key]) => {
     const slider = $(`#${id}`, win);
@@ -963,7 +1174,10 @@ export function bindAppearanceCategory(
     bindEvent(slider, "change", () => {
       settings.transparencyBlur = settings.transparencyBlur || {};
       settings.transparencyBlur[key] = Number(getRangeSliderValue(id, win));
-      os.storage.set(StorageKeys.transparencyBlur, JSON.stringify(settings.transparencyBlur));
+      os.storage.set(
+        StorageKeys.transparencyBlur,
+        JSON.stringify(settings.transparencyBlur),
+      );
       applyTransparencyBlur(settings.transparencyBlur);
       showSaved();
     });
@@ -975,7 +1189,7 @@ export function bindAppearanceCategory(
       settings.headerStyle = headerStyleValue;
       os.storage.set(StorageKeys.windowHeaderStyle, headerStyleValue);
       $$(".header-style-preview", win).forEach((preview) =>
-        preview.classList.toggle("active", preview === stylePreview)
+        preview.classList.toggle("active", preview === stylePreview),
       );
       bus.emit(BusEvents.SETTINGS_CHANGED, {});
       showSaved();
@@ -986,7 +1200,11 @@ export function bindAppearanceCategory(
   const guiScaleValue = $("#settingsGuiScaleValue", win);
   if (guiScaleSlider) {
     bindEvent(guiScaleSlider, "input", () => {
-      if (guiScaleValue) setText(guiScaleValue, `${getRangeSliderValue("settingsGuiScale", win)}%`);
+      if (guiScaleValue)
+        setText(
+          guiScaleValue,
+          `${getRangeSliderValue("settingsGuiScale", win)}%`,
+        );
     });
     bindEvent(guiScaleSlider, "change", () => {
       const val = getRangeSliderValue("settingsGuiScale", win);
@@ -1002,7 +1220,11 @@ export function bindAppearanceCategory(
   const fontSizeValue = $("#settingsFontSizeValue", win);
   if (fontSizeSlider) {
     bindEvent(fontSizeSlider, "input", () => {
-      if (fontSizeValue) setText(fontSizeValue, `${getRangeSliderValue("settingsFontSize", win)}%`);
+      if (fontSizeValue)
+        setText(
+          fontSizeValue,
+          `${getRangeSliderValue("settingsFontSize", win)}%`,
+        );
     });
     bindEvent(fontSizeSlider, "change", () => {
       const val = getRangeSliderValue("settingsFontSize", win);
@@ -1029,7 +1251,10 @@ export function bindAppearanceCategory(
   const openAnimSelect = $("#settingsOpenAnimation", win);
   if (openAnimSelect) {
     bindEvent(openAnimSelect, "change", () => {
-      os.storage.set(StorageKeys.windowOpenAnimation, getSelectMenuValue("settingsOpenAnimation", win));
+      os.storage.set(
+        StorageKeys.windowOpenAnimation,
+        getSelectMenuValue("settingsOpenAnimation", win),
+      );
       showSaved();
     });
   }
@@ -1037,7 +1262,10 @@ export function bindAppearanceCategory(
   const closeAnimSelect = $("#settingsCloseAnimation", win);
   if (closeAnimSelect) {
     bindEvent(closeAnimSelect, "change", () => {
-      os.storage.set(StorageKeys.windowCloseAnimation, getSelectMenuValue("settingsCloseAnimation", win));
+      os.storage.set(
+        StorageKeys.windowCloseAnimation,
+        getSelectMenuValue("settingsCloseAnimation", win),
+      );
       showSaved();
     });
   }
@@ -1045,7 +1273,10 @@ export function bindAppearanceCategory(
   const minimizeAnimSelect = $("#settingsMinimizeAnimation", win);
   if (minimizeAnimSelect) {
     bindEvent(minimizeAnimSelect, "change", () => {
-      os.storage.set(StorageKeys.windowMinimizeAnimation, getSelectMenuValue("settingsMinimizeAnimation", win));
+      os.storage.set(
+        StorageKeys.windowMinimizeAnimation,
+        getSelectMenuValue("settingsMinimizeAnimation", win),
+      );
       showSaved();
     });
   }
@@ -1053,7 +1284,10 @@ export function bindAppearanceCategory(
   const restoreAnimSelect = $("#settingsRestoreAnimation", win);
   if (restoreAnimSelect) {
     bindEvent(restoreAnimSelect, "change", () => {
-      os.storage.set(StorageKeys.windowRestoreAnimation, getSelectMenuValue("settingsRestoreAnimation", win));
+      os.storage.set(
+        StorageKeys.windowRestoreAnimation,
+        getSelectMenuValue("settingsRestoreAnimation", win),
+      );
       showSaved();
     });
   }
@@ -1061,7 +1295,10 @@ export function bindAppearanceCategory(
   const animationSpeedSelect = $("#settingsAnimationSpeed", win);
   if (animationSpeedSelect) {
     bindEvent(animationSpeedSelect, "change", () => {
-      os.storage.set(StorageKeys.windowAnimationSpeed, getSelectMenuValue("settingsAnimationSpeed", win));
+      os.storage.set(
+        StorageKeys.windowAnimationSpeed,
+        getSelectMenuValue("settingsAnimationSpeed", win),
+      );
       showSaved();
     });
   }
@@ -1077,10 +1314,15 @@ export function bindAppearanceCategory(
   const wobblyWindowsToggle = $("#settingsWobblyWindows", win);
   if (wobblyWindowsToggle) {
     bindEvent(wobblyWindowsToggle, "change", () => {
-      os.storage.set(StorageKeys.wobblyWindows, String(wobblyWindowsToggle.checked));
+      os.storage.set(
+        StorageKeys.wobblyWindows,
+        String(wobblyWindowsToggle.checked),
+      );
       const subsection = win.querySelector(".settings-wobble-subsection");
       if (subsection) {
-        subsection.style.display = wobblyWindowsToggle.checked ? "block" : "none";
+        subsection.style.display = wobblyWindowsToggle.checked
+          ? "block"
+          : "none";
       }
       showSaved();
     });
@@ -1094,7 +1336,10 @@ export function bindAppearanceCategory(
       if (valueDisplay) valueDisplay.textContent = value;
     });
     bindEvent(wobbleSpringKSlider, "change", () => {
-      os.storage.set(StorageKeys.wobbleSpringK, getRangeSliderValue("settingsWobbleSpringK", win));
+      os.storage.set(
+        StorageKeys.wobbleSpringK,
+        getRangeSliderValue("settingsWobbleSpringK", win),
+      );
       showSaved();
     });
   }
@@ -1107,7 +1352,10 @@ export function bindAppearanceCategory(
       if (valueDisplay) valueDisplay.textContent = value;
     });
     bindEvent(wobbleDampingSlider, "change", () => {
-      os.storage.set(StorageKeys.wobbleDamping, getRangeSliderValue("settingsWobbleDamping", win));
+      os.storage.set(
+        StorageKeys.wobbleDamping,
+        getRangeSliderValue("settingsWobbleDamping", win),
+      );
       showSaved();
     });
   }
@@ -1120,7 +1368,10 @@ export function bindAppearanceCategory(
       if (valueDisplay) valueDisplay.textContent = value;
     });
     bindEvent(wobbleMassSlider, "change", () => {
-      os.storage.set(StorageKeys.wobbleMass, getRangeSliderValue("settingsWobbleMass", win));
+      os.storage.set(
+        StorageKeys.wobbleMass,
+        getRangeSliderValue("settingsWobbleMass", win),
+      );
       showSaved();
     });
   }
@@ -1133,7 +1384,10 @@ export function bindAppearanceCategory(
       if (valueDisplay) valueDisplay.textContent = value;
     });
     bindEvent(wobbleDragLagSlider, "change", () => {
-      os.storage.set(StorageKeys.wobbleDragLag, getRangeSliderValue("settingsWobbleDragLag", win));
+      os.storage.set(
+        StorageKeys.wobbleDragLag,
+        getRangeSliderValue("settingsWobbleDragLag", win),
+      );
       showSaved();
     });
   }
@@ -1146,7 +1400,10 @@ export function bindAppearanceCategory(
       if (valueDisplay) valueDisplay.textContent = value;
     });
     bindEvent(wobbleCoupleKSlider, "change", () => {
-      os.storage.set(StorageKeys.wobbleCoupleK, getRangeSliderValue("settingsWobbleCoupleK", win));
+      os.storage.set(
+        StorageKeys.wobbleCoupleK,
+        getRangeSliderValue("settingsWobbleCoupleK", win),
+      );
       showSaved();
     });
   }
@@ -1180,6 +1437,7 @@ export function bindAppearanceCategory(
 
   bindCursorControls(win, settings, showSaved, normalizeCursorDataUrl);
   bindIconPackChooser(win, settings, showSaved);
+  bindContextMenuStyleChooser(win, showSaved);
 }
 
 function bindCursorControls(win, settings, showSaved, normalizeCursorDataUrl) {
@@ -1207,7 +1465,8 @@ function bindCursorControls(win, settings, showSaved, normalizeCursorDataUrl) {
     if (cursorDataUrl) os.storage.set(StorageKeys.cursorKey, cursorDataUrl);
     else os.storage.remove(StorageKeys.cursorKey);
 
-    if (cursorOriginalDataUrl) os.storage.set(StorageKeys.cursorOriginalKey, cursorOriginalDataUrl);
+    if (cursorOriginalDataUrl)
+      os.storage.set(StorageKeys.cursorOriginalKey, cursorOriginalDataUrl);
     else os.storage.remove(StorageKeys.cursorOriginalKey);
 
     settings.cursorDataUrl = cursorDataUrl;
@@ -1216,14 +1475,19 @@ function bindCursorControls(win, settings, showSaved, normalizeCursorDataUrl) {
     applyCursor(cursorDataUrl);
 
     if (cursorClearBtn) cursorClearBtn.disabled = !cursorDataUrl;
-    if (cursorStatus) setText(cursorStatus, cursorDataUrl ? "Custom cursor enabled" : "Default cursor");
+    if (cursorStatus)
+      setText(
+        cursorStatus,
+        cursorDataUrl ? "Custom cursor enabled" : "Default cursor",
+      );
     setCursorDisabled(!cursorDataUrl);
     showSaved();
   };
 
   const setCursorSize = async (size) => {
     const cursorSize = Number(size);
-    if (!Number.isFinite(cursorSize) || cursorSize < 16 || cursorSize > 128) return;
+    if (!Number.isFinite(cursorSize) || cursorSize < 16 || cursorSize > 128)
+      return;
     settings.cursorSize = cursorSize;
     try {
       os.storage.set(StorageKeys.cursorSizeKey, String(cursorSize));
@@ -1233,7 +1497,9 @@ function bindCursorControls(win, settings, showSaved, normalizeCursorDataUrl) {
     const original = settings.cursorOriginalDataUrl;
     if (!original) return;
     try {
-      const normalized = await normalizeCursorDataUrl(original, { maxSize: cursorSize });
+      const normalized = await normalizeCursorDataUrl(original, {
+        maxSize: cursorSize,
+      });
       setCursor(normalized, original);
     } catch (e) {
       console.error("Failed to resize cursor:", e);
@@ -1245,9 +1511,10 @@ function bindCursorControls(win, settings, showSaved, normalizeCursorDataUrl) {
       const input = createElement("input", {
         attributes: {
           type: "file",
-          accept: "image/png,image/jpeg,image/gif,image/webp,image/svg+xml,.png,.jpg,.jpeg,.gif,.webp,.svg"
+          accept:
+            "image/png,image/jpeg,image/gif,image/webp,image/svg+xml,.png,.jpg,.jpeg,.gif,.webp,.svg",
         },
-        styles: { display: "none" }
+        styles: { display: "none" },
       });
       document.body.appendChild(input);
 
@@ -1258,7 +1525,10 @@ function bindCursorControls(win, settings, showSaved, normalizeCursorDataUrl) {
 
         try {
           if (file.size > 2 * 1024 * 1024) {
-            os.dialog.alert("Alert", "That cursor image is too big. Keep it under 2MB.");
+            os.dialog.alert(
+              "Alert",
+              "That cursor image is too big. Keep it under 2MB.",
+            );
             return;
           }
           const dataUrl = await new Promise((resolve, reject) => {
@@ -1268,8 +1538,11 @@ function bindCursorControls(win, settings, showSaved, normalizeCursorDataUrl) {
             r.readAsDataURL(file);
           });
 
-          if (!dataUrl.startsWith("data:")) throw new Error("Invalid cursor file.");
-          const normalized = await normalizeCursorDataUrl(dataUrl, { maxSize: settings.cursorSize || 32 });
+          if (!dataUrl.startsWith("data:"))
+            throw new Error("Invalid cursor file.");
+          const normalized = await normalizeCursorDataUrl(dataUrl, {
+            maxSize: settings.cursorSize || 32,
+          });
           setCursor(normalized, dataUrl);
         } catch (e) {
           console.error("Cursor upload failed:", e);
@@ -1295,9 +1568,15 @@ function bindCursorControls(win, settings, showSaved, normalizeCursorDataUrl) {
 
   if (cursorSizeSlider) {
     bindEvent(cursorSizeSlider, "input", () => {
-      if (cursorSizeValue) setText(cursorSizeValue, `${getRangeSliderValue("settingsCursorSize", win)}px`);
+      if (cursorSizeValue)
+        setText(
+          cursorSizeValue,
+          `${getRangeSliderValue("settingsCursorSize", win)}px`,
+        );
     });
-    bindEvent(cursorSizeSlider, "change", () => setCursorSize(getRangeSliderValue("settingsCursorSize", win)));
+    bindEvent(cursorSizeSlider, "change", () =>
+      setCursorSize(getRangeSliderValue("settingsCursorSize", win)),
+    );
   }
 
   const mikuCursorToggle = $("#settingsMikuCursor", win);
@@ -1312,10 +1591,21 @@ function bindCursorControls(win, settings, showSaved, normalizeCursorDataUrl) {
   }
 }
 
-export function bindDataCategory(win, save, settings, fs, showStatus, showSaved) {
-  bindEvent($("#btnExportData", win), "click", () => exportData(fs, showStatus));
+export function bindDataCategory(
+  win,
+  save,
+  settings,
+  fs,
+  showStatus,
+  showSaved,
+) {
+  bindEvent($("#btnExportData", win), "click", () =>
+    exportData(fs, showStatus),
+  );
 
-  bindEvent($("#btnImportData", win), "click", () => importData(fs, showStatus));
+  bindEvent($("#btnImportData", win), "click", () =>
+    importData(fs, showStatus),
+  );
 
   bindEvent($("#btnDeleteAllData", win), "click", () => deleteAllData());
 
@@ -1334,13 +1624,18 @@ export function bindDataCategory(win, save, settings, fs, showStatus, showSaved)
     $("#settingsAnalytics", win).checked = !settings.analyticsDisabled;
     $("#settingsAds", win).checked = !settings.adsDisabled;
     const stretchToggle = $("#settingsDisableDesktopStretchScroll", win);
-    if (stretchToggle) stretchToggle.checked = !!settings.disableDesktopStretchScroll;
+    if (stretchToggle)
+      stretchToggle.checked = !!settings.disableDesktopStretchScroll;
     const workspaceToggle = $("#settingsShowWorkspace", win);
     if (workspaceToggle) workspaceToggle.checked = !!settings.showWorkspace;
     const bootToggle = $("#settingsDisableBootScreen", win);
     if (bootToggle) bootToggle.checked = !!settings.disableBootScreen;
     $$(".settings-btn[data-performance-val]", win).forEach((btn) => {
-      toggleClass(btn, "active", btn.dataset.perfVal === settings.performanceMode);
+      toggleClass(
+        btn,
+        "active",
+        btn.dataset.perfVal === settings.performanceMode,
+      );
     });
     showStatus("Reset to saved values");
   });
@@ -1387,6 +1682,18 @@ export function bindNetworkCategory(win, save, settings, showSaved) {
         customWispRow.classList.add("hidden");
         settings.wispServer = value;
         os.storage.set(StorageKeys.wispServer, value);
+        if (isEpoxyOnlyWisp(value)) {
+          settings.browserTransport = "epoxy";
+          os.storage.set(StorageKeys.browserTransport, "epoxy");
+          const transportContainer = $("#settingsBrowserTransport", win);
+          if (transportContainer) {
+            transportContainer
+              .querySelectorAll("[data-transport]")
+              .forEach(function (p) {
+                p.classList.toggle("active", p.dataset.transport === "epoxy");
+              });
+          }
+        }
         showSaved();
       }
     });
@@ -1396,6 +1703,18 @@ export function bindNetworkCategory(win, save, settings, showSaved) {
       if (url) {
         settings.wispServer = url;
         os.storage.set(StorageKeys.wispServer, url);
+        if (isEpoxyOnlyWisp(url)) {
+          settings.browserTransport = "epoxy";
+          os.storage.set(StorageKeys.browserTransport, "epoxy");
+          const transportContainer = $("#settingsBrowserTransport", win);
+          if (transportContainer) {
+            transportContainer
+              .querySelectorAll("[data-transport]")
+              .forEach(function (p) {
+                p.classList.toggle("active", p.dataset.transport === "epoxy");
+              });
+          }
+        }
         showSaved();
       }
     });
@@ -1403,18 +1722,32 @@ export function bindNetworkCategory(win, save, settings, showSaved) {
 
   const transportContainer = $("#settingsBrowserTransport", win);
   if (transportContainer) {
-    transportContainer.querySelectorAll("[data-transport]").forEach(function (el) {
-      bindEvent(el, "click", function () {
-        const key = el.dataset.transport;
-        transportContainer.querySelectorAll("[data-transport]").forEach(function (p) {
-          p.classList.remove("active");
+    transportContainer
+      .querySelectorAll("[data-transport]")
+      .forEach(function (el) {
+        bindEvent(el, "click", function () {
+          const key = el.dataset.transport;
+          if (key !== "epoxy" && isEpoxyOnlyWisp(getWispUrl())) {
+            settings.browserTransport = "epoxy";
+            os.storage.set(StorageKeys.browserTransport, "epoxy");
+            transportContainer
+              .querySelectorAll("[data-transport]")
+              .forEach(function (p) {
+                p.classList.toggle("active", p.dataset.transport === "epoxy");
+              });
+            return;
+          }
+          transportContainer
+            .querySelectorAll("[data-transport]")
+            .forEach(function (p) {
+              p.classList.remove("active");
+            });
+          el.classList.add("active");
+          settings.browserTransport = key;
+          os.storage.set(StorageKeys.browserTransport, key);
+          showSaved();
         });
-        el.classList.add("active");
-        settings.browserTransport = key;
-        os.storage.set(StorageKeys.browserTransport, key);
-        showSaved();
       });
-    });
   }
 }
 
@@ -1431,7 +1764,8 @@ export function bindAudioCategory(win, settings, showSaved) {
       const enabled = soundToggle.checked;
       settings.soundEnabled = enabled;
       os.storage.set(StorageKeys.soundEnabled, String(enabled));
-      if (volumeSlider) toggleClass(volumeSlider, "range-slider--disabled", !enabled);
+      if (volumeSlider)
+        toggleClass(volumeSlider, "range-slider--disabled", !enabled);
       audioMixer().setMaster(enabled ? settings.masterVolume : 0);
       showSaved();
     });
@@ -1439,7 +1773,11 @@ export function bindAudioCategory(win, settings, showSaved) {
 
   if (volumeSlider) {
     bindEvent(volumeSlider, "input", () => {
-      if (volumeValue) setText(volumeValue, `${getRangeSliderValue("settingsMasterVolume", win)}%`);
+      if (volumeValue)
+        setText(
+          volumeValue,
+          `${getRangeSliderValue("settingsMasterVolume", win)}%`,
+        );
     });
     bindEvent(volumeSlider, "change", () => {
       const val = getRangeSliderValue("settingsMasterVolume", win) / 100;
@@ -1456,14 +1794,19 @@ export function bindAudioCategory(win, settings, showSaved) {
       settings.systemAudioEnabled = enabled;
       audioMixer().systemAudioEnabled = enabled;
       os.storage.set(StorageKeys.systemAudioEnabled, String(enabled));
-      if (systemVolumeSlider) toggleClass(systemVolumeSlider, "range-slider--disabled", !enabled);
+      if (systemVolumeSlider)
+        toggleClass(systemVolumeSlider, "range-slider--disabled", !enabled);
       showSaved();
     });
   }
 
   if (systemVolumeSlider) {
     bindEvent(systemVolumeSlider, "input", () => {
-      if (systemVolumeValue) setText(systemVolumeValue, `${getRangeSliderValue("settingsSystemVolume", win)}%`);
+      if (systemVolumeValue)
+        setText(
+          systemVolumeValue,
+          `${getRangeSliderValue("settingsSystemVolume", win)}%`,
+        );
     });
     bindEvent(systemVolumeSlider, "change", () => {
       const val = getRangeSliderValue("settingsSystemVolume", win) / 100;
@@ -1483,7 +1826,7 @@ export function renderTrayAppsList(win, settings) {
   if (trayItems.length === 0) {
     setHTML(
       trayAppsList,
-      `<div style="padding: 12px; color: rgba(255,255,255,0.5); font-size: 13px; text-align: center;">No tray apps yet</div>`
+      `<div style="padding: 12px; color: rgba(255,255,255,0.5); font-size: 13px; text-align: center;">No tray apps yet</div>`,
     );
     return;
   }
@@ -1499,17 +1842,23 @@ export function renderTrayAppsList(win, settings) {
         display: "flex",
         alignItems: "center",
         justifyContent: "space-between",
-        marginBottom: "6px"
-      }
+        marginBottom: "6px",
+      },
     });
 
-    const isUrl = typeof icon === "string" && /^(https?|data:|\/|.*\.(webp|png|jpg|jpeg|gif|svg))/.test(icon);
-    const isFontAwesome = typeof icon === "string" && /^(fa-|fas|fab|far|fa )/.test(icon);
+    const isUrl =
+      typeof icon === "string" &&
+      /^(https?|data:|\/|.*\.(webp|png|jpg|jpeg|gif|svg))/.test(icon);
+    const isFontAwesome =
+      typeof icon === "string" && /^(fa-|fas|fab|far|fa )/.test(icon);
 
     let iconHtml = "";
-    if (isUrl) iconHtml = `<img src="${icon}" alt="${label}" style="width:16px;height:16px;margin-right:8px;"/>`;
-    else if (isFontAwesome) iconHtml = `<i class="${icon}" style="margin-right:8px;"></i>`;
-    else iconHtml = `<span style="font-size:12px;margin-right:8px;">${icon}</span>`;
+    if (isUrl)
+      iconHtml = `<img src="${icon}" alt="${label}" style="width:16px;height:16px;margin-right:8px;"/>`;
+    else if (isFontAwesome)
+      iconHtml = `<i class="${icon}" style="margin-right:8px;"></i>`;
+    else
+      iconHtml = `<span style="font-size:12px;margin-right:8px;">${icon}</span>`;
 
     const isVisible = settings.trayAppVisibility[winId] !== false;
     setHTML(
@@ -1520,7 +1869,7 @@ export function renderTrayAppsList(win, settings) {
         <input type="checkbox" class="tray-app-toggle" data-win-id="${winId}" ${isVisible ? "checked" : ""}/>
         <span class="settings-track"><span class="settings-thumb"></span></span>
       </label>
-    `
+    `,
     );
     trayAppsList.appendChild(row);
   });
@@ -1546,8 +1895,8 @@ function showResolutionCountdown(win, resolutionLabel) {
         alignItems: "center",
         justifyContent: "center",
         background: "rgba(0,0,0,0.7)",
-        backdropFilter: "blur(8px)"
-      }
+        backdropFilter: "blur(8px)",
+      },
     });
 
     let seconds = 4;
@@ -1566,7 +1915,7 @@ function showResolutionCountdown(win, resolutionLabel) {
 
     const dialog = createElement("div", {
       className: "overlay-dialog",
-      styles: { textAlign: "center", minWidth: "340px" }
+      styles: { textAlign: "center", minWidth: "340px" },
     });
 
     setHTML(
@@ -1588,7 +1937,7 @@ function showResolutionCountdown(win, resolutionLabel) {
           <i class="fas fa-check conflict-btn-icon"></i> Keep
         </button>
       </div>
-    `
+    `,
     );
 
     overlay.appendChild(dialog);
@@ -1619,15 +1968,25 @@ function showResolutionCountdown(win, resolutionLabel) {
   });
 }
 
-export function bindQuickSettings(win, settings, notificationCenter, showSaved) {
+export function bindQuickSettings(
+  win,
+  settings,
+  notificationCenter,
+  showSaved,
+) {
   const ANIM_STEPS = 11;
   const ANIM_DEFAULT_IDX = 5;
   const ANIM_SLOW = 3.0;
   const ANIM_DEFAULT = 1.0;
   const ANIM_FAST = 0.05;
   const speedFromIdx = (idx) => {
-    if (idx <= ANIM_DEFAULT_IDX) return ANIM_SLOW - (idx / ANIM_DEFAULT_IDX) * (ANIM_SLOW - ANIM_DEFAULT);
-    return ANIM_DEFAULT - ((idx - ANIM_DEFAULT_IDX) / (ANIM_STEPS - 1 - ANIM_DEFAULT_IDX)) * (ANIM_DEFAULT - ANIM_FAST);
+    if (idx <= ANIM_DEFAULT_IDX)
+      return ANIM_SLOW - (idx / ANIM_DEFAULT_IDX) * (ANIM_SLOW - ANIM_DEFAULT);
+    return (
+      ANIM_DEFAULT -
+      ((idx - ANIM_DEFAULT_IDX) / (ANIM_STEPS - 1 - ANIM_DEFAULT_IDX)) *
+        (ANIM_DEFAULT - ANIM_FAST)
+    );
   };
   const animSlider = $("#quickAnimationSpeed", win);
   if (animSlider) {
@@ -1688,7 +2047,9 @@ export function bindQuickSettings(win, settings, notificationCenter, showSaved) 
       const launch = btn.dataset.launch;
       if (launch) {
         if (launch === "defaultApps") {
-          const navItem = win.querySelector('.yuki-settings-nav li[data-target="default-applications"]');
+          const navItem = win.querySelector(
+            '.yuki-settings-nav li[data-target="default-applications"]',
+          );
           if (navItem) {
             navItem.click();
             return;
@@ -1698,14 +2059,16 @@ export function bindQuickSettings(win, settings, notificationCenter, showSaved) 
         return;
       }
       const navItem = win.querySelector(
-        `.yuki-settings-nav li[data-target="${btn.dataset.target}"]${btn.dataset.scroll ? `[data-scroll="${btn.dataset.scroll}"]` : ":not([data-scroll])"}`
+        `.yuki-settings-nav li[data-target="${btn.dataset.target}"]${btn.dataset.scroll ? `[data-scroll="${btn.dataset.scroll}"]` : ":not([data-scroll])"}`,
       );
       if (navItem) {
         navItem.click();
       } else {
         const target = win.querySelector(`#${btn.dataset.target}`);
         if (target) {
-          win.querySelectorAll(".settings-category-pane").forEach((p) => p.classList.remove("active"));
+          win
+            .querySelectorAll(".settings-category-pane")
+            .forEach((p) => p.classList.remove("active"));
           target.classList.add("active");
         }
       }
@@ -1727,7 +2090,7 @@ export function bindQuickSettings(win, settings, notificationCenter, showSaved) 
       applySound(true, settings.masterVolume);
 
       $$(".settings-btn[data-theme-val]", win).forEach((b) =>
-        toggleClass(b, "active", b.dataset.themeVal === defaultTheme)
+        toggleClass(b, "active", b.dataset.themeVal === defaultTheme),
       );
       if (animSlider) {
         const normalIdx = ANIM_DEFAULT_IDX;
@@ -1735,7 +2098,8 @@ export function bindQuickSettings(win, settings, notificationCenter, showSaved) 
         const fill = $(".range-slider__fill", animSlider);
         if (fill) fill.style.width = `${(normalIdx / (ANIM_STEPS - 1)) * 100}%`;
         const thumb = $(".range-slider__thumb", animSlider);
-        if (thumb) thumb.style.left = `${(normalIdx / (ANIM_STEPS - 1)) * 100}%`;
+        if (thumb)
+          thumb.style.left = `${(normalIdx / (ANIM_STEPS - 1)) * 100}%`;
       }
       const dndEl = $("#settingsQuickDND", win);
       if (dndEl) dndEl.checked = false;
@@ -1750,6 +2114,7 @@ export function bindQuickSettings(win, settings, notificationCenter, showSaved) 
   }
 
   bindIconPackChooser(win, settings, showSaved);
+  bindContextMenuStyleChooser(win, showSaved);
 }
 
 export function bindAutostartCategory(win) {

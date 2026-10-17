@@ -15,7 +15,7 @@ const ACCENT_COLORS = [
   { label: "Pink", value: "#ec4899" },
   { label: "Orange", value: "#f97316" },
   { label: "Green", value: "#22c55e" },
-  { label: "Red", value: "#ef4444" }
+  { label: "Red", value: "#ef4444" },
 ];
 
 class MacControlCenter {
@@ -26,7 +26,8 @@ class MacControlCenter {
     this.pinned = false;
     this.registered = false;
 
-    this.brightness = parseInt(os.storage.get(StorageKeys.brightness), 10) || 100;
+    this.brightness =
+      parseInt(os.storage.get(StorageKeys.brightness), 10) || 100;
     this.batteryLevel = 0.85;
     this.batteryCharging = true;
 
@@ -55,7 +56,10 @@ class MacControlCenter {
     const initialized = os.storage.get(StorageKeys.macWallpaperInitialized);
     if (parseBool(initialized)) return;
     if (!MAC_WALLPAPER_NAME_URL_PAIRS.length) return;
-    const pick = MAC_WALLPAPER_NAME_URL_PAIRS[Math.floor(Math.random() * MAC_WALLPAPER_NAME_URL_PAIRS.length)];
+    const pick =
+      MAC_WALLPAPER_NAME_URL_PAIRS[
+        Math.floor(Math.random() * MAC_WALLPAPER_NAME_URL_PAIRS.length)
+      ];
     SystemUtilities.setWallpaper(pick.url);
     os.storage.set(StorageKeys.macWallpaperInitialized, "true");
   }
@@ -83,7 +87,7 @@ class MacControlCenter {
       resident: true,
       showInTray: true,
       priority: -1,
-      onClick: () => this.togglePopup()
+      onClick: () => this.togglePopup(),
     });
   }
 
@@ -130,7 +134,8 @@ class MacControlCenter {
     const batteryLevel = this.batteryPercent;
     const batteryColor = this.getBatteryFillColor(batteryLevel);
     const powerMode = performanceManager.getMode();
-    const isDark = document.documentElement.getAttribute("data-theme") !== "light";
+    const isDark =
+      document.documentElement.getAttribute("data-theme") !== "light";
     const dnd = os.notify.getDoNotDisturb();
     const dockEnabled = true;
 
@@ -248,7 +253,9 @@ class MacControlCenter {
     const popup = $("#" + this.popupId);
     if (popup) {
       popup.classList.add("closing");
-      popup.addEventListener("animationend", () => popup.remove(), { once: true });
+      popup.addEventListener("animationend", () => popup.remove(), {
+        once: true,
+      });
     }
     this.popupVisible = false;
     document.removeEventListener("click", this.handleOutsideClick);
@@ -257,7 +264,11 @@ class MacControlCenter {
   handleOutsideClick = (e) => {
     if (this.pinned) return;
     const popup = $("#" + this.popupId);
-    if (popup && !e.target.closest(`#${this.popupId}`) && !e.target.closest("#app-tray")) {
+    if (
+      popup &&
+      !e.target.closest(`#${this.popupId}`) &&
+      !e.target.closest("#app-tray")
+    ) {
       this.closePopup();
     }
   };
@@ -275,7 +286,9 @@ class MacControlCenter {
     if (brightnessSlider) {
       brightnessSlider.addEventListener("input", (e) => {
         this.brightness = parseFloat(e.target.value);
-        const val = popup.querySelector(".mcc-slider-row:nth-child(1) .mcc-slider-value");
+        const val = popup.querySelector(
+          ".mcc-slider-row:nth-child(1) .mcc-slider-value",
+        );
         if (val) val.textContent = `${this.brightness}%`;
         this.applyDisplaySettings();
         this.saveDisplaySettings();
@@ -286,7 +299,9 @@ class MacControlCenter {
       volumeSlider.addEventListener("input", (e) => {
         const vol = parseFloat(e.target.value) / 100;
         audioMixer().setMaster(vol);
-        const val = popup.querySelector(".mcc-slider-row:nth-child(3) .mcc-slider-value");
+        const val = popup.querySelector(
+          ".mcc-slider-row:nth-child(3) .mcc-slider-value",
+        );
         if (val) val.textContent = `${Math.round(vol * 100)}%`;
       });
     }
@@ -327,9 +342,15 @@ class MacControlCenter {
       swatch.addEventListener("click", () => {
         const color = swatch.dataset.color;
         document.documentElement.style.setProperty("--brand", color);
-        document.documentElement.style.setProperty("--brand-hover", color + "dd");
+        document.documentElement.style.setProperty(
+          "--brand-hover",
+          color + "dd",
+        );
         document.documentElement.style.setProperty("--brand-dim", color + "20");
-        document.documentElement.style.setProperty("--brand-glow", color + "40");
+        document.documentElement.style.setProperty(
+          "--brand-glow",
+          color + "40",
+        );
         const existing = os.storage.get(StorageKeys.customColors) || {};
         os.storage.set(StorageKeys.customColors, { ...existing, brand: color });
         colorSwatches.forEach((s) => s.classList.remove("active"));

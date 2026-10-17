@@ -15,7 +15,7 @@ export function renderSelectMenu(id, options, currentValue, extraClass = "") {
   const opts = options
     .map(
       (o) =>
-        `<div class="select-menu__option${o.value === currentValue ? " selected" : ""}" data-value="${o.value}">${o.label}</div>`
+        `<div class="select-menu__option${o.value === currentValue ? " selected" : ""}" data-value="${o.value}">${o.label}</div>`,
     )
     .join("");
   return `<div class="select-menu ${extraClass}" id="${id}" tabindex="0">
@@ -37,17 +37,24 @@ export function setSelectMenuValue(id, value, root = document) {
   if (!el) return;
   el.dataset.value = value;
   const label = $(".select-menu__label", el);
-  const option = el.querySelector(`.select-menu__option[data-value="${value}"]`);
+  const option = el.querySelector(
+    `.select-menu__option[data-value="${value}"]`,
+  );
   if (label && option) {
     label.textContent = option.textContent;
   }
-  el.querySelectorAll(".select-menu__option").forEach((o) => o.classList.toggle("selected", o.dataset.value === value));
+  el.querySelectorAll(".select-menu__option").forEach((o) =>
+    o.classList.toggle("selected", o.dataset.value === value),
+  );
 }
 
 export function bindSelectMenu(root = document, idOrCallback, maybeCallback) {
   if (typeof idOrCallback === "string" && typeof maybeCallback === "function") {
     const el = $(`#${idOrCallback}`, root);
-    if (el) el.addEventListener("change", () => maybeCallback(getSelectMenuValue(idOrCallback, root)));
+    if (el)
+      el.addEventListener("change", () =>
+        maybeCallback(getSelectMenuValue(idOrCallback, root)),
+      );
     if (!root.__selectMenuBound) {
       bindSelectMenu(root);
       root.__selectMenuBound = true;
@@ -86,7 +93,9 @@ export function bindSelectMenu(root = document, idOrCallback, maybeCallback) {
     if (label) label.textContent = option.textContent;
     select
       .querySelectorAll(".select-menu__option")
-      .forEach((o) => o.classList.toggle("selected", o.dataset.value === value));
+      .forEach((o) =>
+        o.classList.toggle("selected", o.dataset.value === value),
+      );
     select.classList.remove("select-menu--open");
     openSelect = null;
     select.dispatchEvent(new CustomEvent("change", { bubbles: true }));
@@ -104,7 +113,9 @@ bindEvent(document, "keydown", (e) => {
     e.preventDefault();
     return;
   }
-  const options = Array.from(openSelect.querySelectorAll(".select-menu__option"));
+  const options = Array.from(
+    openSelect.querySelectorAll(".select-menu__option"),
+  );
   const currentIdx = options.findIndex((o) => o.classList.contains("selected"));
   let nextIdx = currentIdx;
   if (KeybindManager.matches(e, "selectMenu.navigateDown")) {
@@ -113,7 +124,10 @@ bindEvent(document, "keydown", (e) => {
   } else if (KeybindManager.matches(e, "selectMenu.navigateUp")) {
     nextIdx = Math.max(currentIdx - 1, 0);
     e.preventDefault();
-  } else if (KeybindManager.matches(e, "selectMenu.select") && currentIdx >= 0) {
+  } else if (
+    KeybindManager.matches(e, "selectMenu.select") &&
+    currentIdx >= 0
+  ) {
     options[currentIdx].click();
     e.preventDefault();
     return;

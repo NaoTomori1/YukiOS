@@ -4,7 +4,7 @@ export function createTrayPinButton() {
   return createElement("button", {
     className: "tray-pin-btn",
     attributes: { title: "Pin" },
-    html: '<i class="fas fa-thumbtack"></i>'
+    html: '<i class="fas fa-thumbtack"></i>',
   });
 }
 

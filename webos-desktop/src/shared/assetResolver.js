@@ -1,7 +1,10 @@
 import { os } from "../os/index.js";
 import { $, $$ } from "./domUtils.js";
 import { StorageKeys } from "../StorageKeys.js";
-import { PAPIRUS_AVAILABLE, PAPIRUS_SYMLINKS as PAPIRUS_SYMLINKS_FALLBACK } from "./papirusDataLoader.js";
+import {
+  PAPIRUS_AVAILABLE,
+  PAPIRUS_SYMLINKS as PAPIRUS_SYMLINKS_FALLBACK,
+} from "./papirusDataLoader.js";
 
 const PAPIRUS_TO_FA = {
   "papirus:apps/accessories-camera": "fas fa-camera",
@@ -97,10 +100,11 @@ const PAPIRUS_TO_FA = {
   "papirus:actions/zoom-out": "fas fa-search-minus",
   "papirus:actions/edit-find": "fas fa-search",
   "papirus:actions/media-playback-stop": "fas fa-stop",
-  "papirus:places/user-home": "fas fa-house"
+  "papirus:places/user-home": "fas fa-house",
 };
 
-const PAPIRUS_CDN_BASE = "https://cdn.jsdelivr.net/gh/PapirusDevelopmentTeam/papirus-icon-theme@master";
+const PAPIRUS_CDN_BASE =
+  "https://cdn.jsdelivr.net/gh/PapirusDevelopmentTeam/papirus-icon-theme@master";
 
 export function resolvePapirusUrl(papirusIcon, size = 48) {
   if (typeof papirusIcon !== "string") return papirusIcon;
@@ -127,16 +131,23 @@ export function resolvePapirusUrl(papirusIcon, size = 48) {
   }
   let bucket = [16, 22, 24, 32, 48, 64].reduce(
     (best, s) => (Math.abs(s - size) < Math.abs(best - size) ? s : best),
-    48
+    48,
   );
   if (context === "actions") {
     if (![16, 22, 24].includes(bucket)) bucket = 22;
   } else if (context === "status") {
     if (/^(battery|audio-volume|network-wireless)/.test(name)) bucket = 32;
-    else if (/^(notification-|weather-)/.test(name) && bucket !== 48) bucket = 48;
-    else if ([16, 22, 24].includes(bucket) && !/^(dialog-|avatar-)/.test(name)) {
+    else if (/^(notification-|weather-)/.test(name) && bucket !== 48)
+      bucket = 48;
+    else if (
+      [16, 22, 24].includes(bucket) &&
+      !/^(dialog-|avatar-)/.test(name)
+    ) {
       const valid = [22, 24, 32, 48];
-      bucket = valid.reduce((best, s) => (Math.abs(s - size) < Math.abs(best - size) ? s : best), 32);
+      bucket = valid.reduce(
+        (best, s) => (Math.abs(s - size) < Math.abs(best - size) ? s : best),
+        32,
+      );
     }
   } else if (context === "panel") {
     if (![16, 22, 24].includes(bucket)) bucket = 22;
@@ -149,7 +160,10 @@ export function resolvePapirusUrl(papirusIcon, size = 48) {
   ) {
     const valid = [16, 22, 24, 32, 48, 64];
     if (!valid.includes(bucket))
-      bucket = valid.reduce((best, s) => (Math.abs(s - size) < Math.abs(best - size) ? s : best), 48);
+      bucket = valid.reduce(
+        (best, s) => (Math.abs(s - size) < Math.abs(best - size) ? s : best),
+        48,
+      );
   }
   const availableSizes = PAPIRUS_AVAILABLE[key];
   if (availableSizes && availableSizes.length > 0) {
@@ -175,47 +189,62 @@ export const CDN_MIRRORS = [
     id: "jsdelivr",
     name: "jsDelivr (Default)",
     ghTemplate: "https://cdn.jsdelivr.net/gh/${u}/${r}@${b}/${p}",
-    npmTemplate: "https://cdn.jsdelivr.net/npm/${p}"
+    npmTemplate: "https://cdn.jsdelivr.net/npm/${p}",
   },
   {
     id: "quantil",
     name: "Quantil (jsDelivr Mirror)",
     ghTemplate: "https://quantil.jsdelivr.net/gh/${u}/${r}@${b}/${p}",
-    npmTemplate: "https://quantil.jsdelivr.net/npm/${p}"
+    npmTemplate: "https://quantil.jsdelivr.net/npm/${p}",
   },
   {
     id: "originfastly",
     name: "Fastly (jsDelivr Mirror)",
     ghTemplate: "https://originfastly.jsdelivr.net/gh/${u}/${r}@${b}/${p}",
-    npmTemplate: "https://originfastly.jsdelivr.net/npm/${p}"
+    npmTemplate: "https://originfastly.jsdelivr.net/npm/${p}",
   },
   {
     id: "gcore",
     name: "GCore (jsDelivr Mirror)",
     ghTemplate: "https://gcore.jsdelivr.net/gh/${u}/${r}@${b}/${p}",
-    npmTemplate: "https://gcore.jsdelivr.net/npm/${p}"
+    npmTemplate: "https://gcore.jsdelivr.net/npm/${p}",
   },
   {
     id: "esmsh",
     name: "esm.sh",
     ghTemplate: "https://esm.sh/gh/${u}/${r}@${b}/${p}",
-    npmTemplate: "https://esm.sh/${p}"
+    npmTemplate: "https://esm.sh/${p}",
   },
   {
     id: "statically",
     name: "Statically",
     ghTemplate: "https://cdn.statically.io/gh/${u}/${r}@${b}/${p}",
-    npmTemplate: "https://cdn.statically.io/npm/${p}"
+    npmTemplate: "https://cdn.statically.io/npm/${p}",
   },
   {
     id: "staticdelivr",
     name: "StaticDelivr",
     ghTemplate: "https://cdn.staticdelivr.com/gh/${u}/${r}/${b}/${p}",
-    npmTemplate: "https://cdn.staticdelivr.com/npm/${p}"
-  }
+    npmTemplate: "https://cdn.staticdelivr.com/npm/${p}",
+  },
 ];
 
 let currentMirrorId = null;
+
+const LOCAL_DEV_STATIC_BASE = "http://localhost:4001";
+
+function isLocalDevHost() {
+  try {
+    const host = window.location?.hostname || "";
+    return host === "localhost" || host === "127.0.0.1" || host === "::1";
+  } catch {
+    return false;
+  }
+}
+
+function isYukiosRepo(repo) {
+  return typeof repo === "string" && repo.toLowerCase() === "yukios";
+}
 
 export function getCdnMirror() {
   if (currentMirrorId === null) {
@@ -240,7 +269,7 @@ export function setCdnMirror(id) {
 export function resolveGhUrl(url) {
   if (typeof url !== "string") return url;
   const match = url.match(
-    /https?:\/\/(cdn\.jsdelivr\.net|quantil\.jsdelivr\.net|originfastly\.jsdelivr\.net|gcore\.jsdelivr\.net|esm\.sh|cdn\.statically\.io|cdn\.staticdelivr\.com)\/gh\/([^/]+)\/([^/@]+)(?:@([^/]+))?(?:\/(.*))?/i
+    /https?:\/\/(cdn\.jsdelivr\.net|quantil\.jsdelivr\.net|originfastly\.jsdelivr\.net|gcore\.jsdelivr\.net|esm\.sh|cdn\.statically\.io|cdn\.staticdelivr\.com)\/gh\/([^/]+)\/([^/@]+)(?:@([^/]+))?(?:\/(.*))?/i,
   );
   if (!match) return url;
 
@@ -249,9 +278,21 @@ export function resolveGhUrl(url) {
   const b = match[4] || "main";
   const p = match[5];
 
-  const mirror = CDN_MIRRORS.find((m) => m.id === getCdnMirror()) || CDN_MIRRORS[0];
+  if (isLocalDevHost() && isYukiosRepo(r)) {
+    const localPath = (p || "").replace(/^\/+/, "");
+    return localPath
+      ? `${LOCAL_DEV_STATIC_BASE}/${localPath}`
+      : `${LOCAL_DEV_STATIC_BASE}/`;
+  }
+
+  const mirror =
+    CDN_MIRRORS.find((m) => m.id === getCdnMirror()) || CDN_MIRRORS[0];
   const cleanP = (p || "").startsWith("/") ? p.substring(1) : p || "";
-  let resolved = mirror.ghTemplate.replace("${u}", u).replace("${r}", r).replace("${b}", b).replace("${p}", cleanP);
+  let resolved = mirror.ghTemplate
+    .replace("${u}", u)
+    .replace("${r}", r)
+    .replace("${b}", b)
+    .replace("${p}", cleanP);
 
   if (!cleanP && resolved.endsWith("/")) {
     if (!url.endsWith("/")) {
@@ -264,20 +305,23 @@ export function resolveGhUrl(url) {
 export function resolveNpmUrl(url) {
   if (typeof url !== "string") return url;
   const match = url.match(
-    /https?:\/\/(cdn\.jsdelivr\.net|quantil\.jsdelivr\.net|originfastly\.jsdelivr\.net|gcore\.jsdelivr\.net|esm\.sh|cdn\.statically\.io|cdn\.staticdelivr\.com)\/(?:npm(?:\/|$))?(.*)/
+    /https?:\/\/(cdn\.jsdelivr\.net|quantil\.jsdelivr\.net|originfastly\.jsdelivr\.net|gcore\.jsdelivr\.net|esm\.sh|cdn\.statically\.io|cdn\.staticdelivr\.com)\/(?:npm(?:\/|$))?(.*)/,
   );
   if (!match) return url;
 
   const p = match[2];
 
-  const mirror = CDN_MIRRORS.find((m) => m.id === getCdnMirror()) || CDN_MIRRORS[0];
+  const mirror =
+    CDN_MIRRORS.find((m) => m.id === getCdnMirror()) || CDN_MIRRORS[0];
   return mirror.npmTemplate.replace("${p}", p);
 }
 
 const CDN_PROVIDERS = {
   jsdelivr: {
     get GAMES() {
-      return resolveGhUrl("https://cdn.jsdelivr.net/gh/NaoTomori1/yukios-games@main");
+      return resolveGhUrl(
+        "https://cdn.jsdelivr.net/gh/NaoTomori1/yukios-games@main",
+      );
     },
     get MAIN() {
       return resolveGhUrl("https://cdn.jsdelivr.net/gh/NaoTomori1/yukios@main");
@@ -294,10 +338,10 @@ const CDN_PROVIDERS = {
       "gcore.jsdelivr.net",
       "esm.sh",
       "cdn.statically.io",
-      "cdn.staticdelivr.com"
+      "cdn.staticdelivr.com",
     ],
-    GH_PATH: "/gh/"
-  }
+    GH_PATH: "/gh/",
+  },
 };
 
 export function initializeMirrors(appMap) {
@@ -309,7 +353,12 @@ export function initializeMirrors(appMap) {
 
     $$("img[src]").forEach((img) => {
       const src = img.getAttribute("src");
-      if (src && !src.startsWith("http") && !src.startsWith("blob:") && !src.startsWith("data:")) {
+      if (
+        src &&
+        !src.startsWith("http") &&
+        !src.startsWith("blob:") &&
+        !src.startsWith("data:")
+      ) {
         const newSrc = resolveIconUrl(src);
         if (newSrc !== src) {
           img.setAttribute("src", newSrc);
@@ -322,14 +371,20 @@ export function initializeMirrors(appMap) {
         if (app.icon && typeof app.icon === "string") {
           if (app.icon.includes("cdn.jsdelivr.net/gh/")) {
             app.icon = resolveGhUrl(app.icon);
-          } else if (app.icon.startsWith("/static/") || app.icon.startsWith("static/")) {
+          } else if (
+            app.icon.startsWith("/static/") ||
+            app.icon.startsWith("static/")
+          ) {
             app.icon = resolveIconUrl(app.icon);
           }
         }
         if (app.url && typeof app.url === "string") {
           if (app.url.includes("cdn.jsdelivr.net/gh/")) {
             app.url = resolveGhUrl(app.url);
-          } else if (app.url.startsWith("/static/") || app.url.startsWith("static/")) {
+          } else if (
+            app.url.startsWith("/static/") ||
+            app.url.startsWith("static/")
+          ) {
             app.url = resolveIconUrl(app.url);
           }
         }
@@ -345,7 +400,10 @@ export function initializeMirrors(appMap) {
     })();
     if (!customStartIcon) {
       const logoUrl = resolveYukiAsset("static/icons/logo.png");
-      document.documentElement.style.setProperty("--start-logo-url", `url("${logoUrl}")`);
+      document.documentElement.style.setProperty(
+        "--start-logo-url",
+        `url("${logoUrl}")`,
+      );
     }
   } catch (err) {
     console.error("Failed to initialize mirrors:", err);
@@ -359,17 +417,22 @@ export const JSDELIVR_GH_BASE = CDN_BASES.MAIN;
 
 export const isCdnGhUrl = (url) => {
   if (typeof url !== "string") return false;
-  return Object.values(CDN_PROVIDERS).some((provider) => provider.PATTERN.test(url) && url.includes(provider.GH_PATH));
+  return Object.values(CDN_PROVIDERS).some(
+    (provider) => provider.PATTERN.test(url) && url.includes(provider.GH_PATH),
+  );
 };
 
 export const isJsdelivrGhUrl = (url) =>
   typeof url === "string" &&
-  (url.startsWith("https://cdn.jsdelivr.net/gh/") || url.startsWith("http://cdn.jsdelivr.net/gh/"));
+  (url.startsWith("https://cdn.jsdelivr.net/gh/") ||
+    url.startsWith("http://cdn.jsdelivr.net/gh/"));
 
 export function isCdnHostname(hostname) {
   if (typeof hostname !== "string") return false;
   return Object.values(CDN_PROVIDERS).some(
-    (provider) => provider.HOSTNAMES.includes(hostname) || hostname.endsWith(`.${provider.HOSTNAMES[0].split(".")[1]}`)
+    (provider) =>
+      provider.HOSTNAMES.includes(hostname) ||
+      hostname.endsWith(`.${provider.HOSTNAMES[0].split(".")[1]}`),
   );
 }
 
@@ -377,7 +440,9 @@ function getCdnProvider(url) {
   if (typeof url !== "string") return null;
 
   const urlObj = new URL(url);
-  return Object.values(CDN_PROVIDERS).find((provider) => provider.HOSTNAMES.includes(urlObj.hostname));
+  return Object.values(CDN_PROVIDERS).find((provider) =>
+    provider.HOSTNAMES.includes(urlObj.hostname),
+  );
 }
 
 export function resolveYukiAsset(path) {
@@ -385,7 +450,10 @@ export function resolveYukiAsset(path) {
 
   const cleanPath = path.startsWith("/") ? path.substring(1) : path;
 
-  const mirror = CDN_MIRRORS.find((m) => m.id === getCdnMirror()) || CDN_MIRRORS[0];
+  if (isLocalDevHost()) return `${LOCAL_DEV_STATIC_BASE}/${cleanPath}`;
+
+  const mirror =
+    CDN_MIRRORS.find((m) => m.id === getCdnMirror()) || CDN_MIRRORS[0];
 
   const user = "Reeyuki";
   const repo = "yukios";
@@ -400,10 +468,13 @@ export function resolveYukiAsset(path) {
 
 function getCdnProviderByHostname(hostname) {
   if (typeof hostname !== "string") return null;
-  return Object.values(CDN_PROVIDERS).find((provider) => provider.HOSTNAMES.includes(hostname));
+  return Object.values(CDN_PROVIDERS).find((provider) =>
+    provider.HOSTNAMES.includes(hostname),
+  );
 }
 
-export const looksLikeHtml = (url) => typeof url === "string" && /\.html?([?#].*)?$/i.test(url);
+export const looksLikeHtml = (url) =>
+  typeof url === "string" && /\.html?([?#].*)?$/i.test(url);
 
 export function getCurrentCdnRepoBase() {
   try {
@@ -446,7 +517,8 @@ export function resolveIconUrl(url) {
       if (!isFA) {
         try {
           const enabled = os.storage.get(StorageKeys.papirusEnabled);
-          if (enabled === false || enabled === "false" || enabled === "0") isFA = true;
+          if (enabled === false || enabled === "false" || enabled === "0")
+            isFA = true;
         } catch {}
       }
       if (isFA) {
@@ -457,7 +529,8 @@ export function resolveIconUrl(url) {
     } catch {}
     return resolvePapirusUrl(url, 48);
   }
-  if (url.startsWith("data:") || url.startsWith("blob:") || url === "@content") return url;
+  if (url.startsWith("data:") || url.startsWith("blob:") || url === "@content")
+    return url;
 
   const hostname = window.location?.hostname || "";
   const isCdn = isCdnHostname(hostname);
@@ -490,13 +563,19 @@ export function resolveWallpaperUrl(url) {
   if (url.startsWith("http://") || url.startsWith("https://")) {
     try {
       const u = new URL(url);
-      if (isCdnHostname(u.hostname) && u.pathname.startsWith("/static/wallpapers/")) {
+      if (
+        isCdnHostname(u.hostname) &&
+        u.pathname.startsWith("/static/wallpapers/")
+      ) {
         return resolveYukiAsset(u.pathname + u.search + u.hash);
       }
     } catch {}
     return resolveGhUrl(url);
   }
-  if (url.startsWith("/static/wallpapers/") || url.startsWith("static/wallpapers/")) {
+  if (
+    url.startsWith("/static/wallpapers/") ||
+    url.startsWith("static/wallpapers/")
+  ) {
     return resolveYukiAsset(url);
   }
   return url;
@@ -511,7 +590,8 @@ export async function resolveUrl(url, isCdnGh = false) {
 
   const currentRepoBase = getCurrentCdnRepoBase();
   const hostname = window.location?.hostname || "";
-  const currentProvider = getCdnProviderByHostname(hostname) || CDN_PROVIDERS.jsdelivr;
+  const currentProvider =
+    getCdnProviderByHostname(hostname) || CDN_PROVIDERS.jsdelivr;
 
   if (url.startsWith("/")) {
     const repoBase = currentRepoBase;
@@ -550,7 +630,9 @@ export async function fetchHtmlAsBlobUrl(url, options = {}) {
   const baseHref = url.replace(/[^/]*$/, "");
 
   const baseHrefFromDoc = (() => {
-    const m = html.match(/<base\b[^>]*\bhref\s*=\s*(?:"([^"]+)"|'([^']+)'|([^\s"'<>]+))[^>]*>/i);
+    const m = html.match(
+      /<base\b[^>]*\bhref\s*=\s*(?:"([^"]+)"|'([^']+)'|([^\s"'<>]+))[^>]*>/i,
+    );
     const href = m ? m[1] || m[2] || m[3] : null;
     if (!href) return null;
     try {
@@ -579,18 +661,24 @@ export async function fetchHtmlAsBlobUrl(url, options = {}) {
   } else {
     assetDirBase = baseHref;
     const hostname = window.location?.hostname || "";
-    const currentProvider = getCdnProviderByHostname(hostname) || CDN_PROVIDERS.jsdelivr;
+    const currentProvider =
+      getCdnProviderByHostname(hostname) || CDN_PROVIDERS.jsdelivr;
     rootBase = currentProvider.GAMES + "/";
   }
 
   if (baseHrefFromDoc) {
     try {
-      assetDirBase = baseHrefFromDoc.endsWith("/") ? baseHrefFromDoc : new URL(".", baseHrefFromDoc).href;
-      rootBase = getCdnRepoBase(baseHrefFromDoc) || new URL("/", baseHrefFromDoc).href;
+      assetDirBase = baseHrefFromDoc.endsWith("/")
+        ? baseHrefFromDoc
+        : new URL(".", baseHrefFromDoc).href;
+      rootBase =
+        getCdnRepoBase(baseHrefFromDoc) || new URL("/", baseHrefFromDoc).href;
     } catch {}
   }
   const lowerUrl = url.toLowerCase();
-  const isWasmAutoIgnored = lowerUrl.includes("/static/games/wasm/") || lowerUrl.includes("/static/apps/");
+  const isWasmAutoIgnored =
+    lowerUrl.includes("/static/games/wasm/") ||
+    lowerUrl.includes("/static/apps/");
   const legacyIgnored =
     [
       "angrybirds",
@@ -603,43 +691,73 @@ export async function fetchHtmlAsBlobUrl(url, options = {}) {
       "roblox",
       "gamesforaetheris",
       "cat_fish",
-      "undertale"
-    ].some((p) => lowerUrl.includes(p.toLowerCase())) || lowerUrl.includes("catgoesfishing.html");
+      "undertale",
+    ].some((p) => lowerUrl.includes(p.toLowerCase())) ||
+    lowerUrl.includes("catgoesfishing.html");
   const isIgnored = skipRewrite || isWasmAutoIgnored || legacyIgnored;
 
   let rewritten = html;
   if (!isIgnored) {
     rewritten = html
-      .replace(/\b(src|poster|data)=([\"'])\/next\/(?!\/)/gi, `$1=$2${assetDirBase}next/`)
-      .replace(/<(link|a|form)\b([^>]*?)\b(href|action)=([\"'])\/next\/(?!\/)/gi, `<$1$2$3=$4${assetDirBase}next/`)
-      .replace(/\burl\(\s*([\"']?)\/next\/(?!\/)/g, `url($1${assetDirBase}next/`)
-      .replace(/\b(src|poster|data)=([\"'])\/static\/games\/(?!\/)/gi, `$1=$2${rootBase}`)
+      .replace(
+        /\b(src|poster|data)=([\"'])\/next\/(?!\/)/gi,
+        `$1=$2${assetDirBase}next/`,
+      )
+      .replace(
+        /<(link|a|form)\b([^>]*?)\b(href|action)=([\"'])\/next\/(?!\/)/gi,
+        `<$1$2$3=$4${assetDirBase}next/`,
+      )
+      .replace(
+        /\burl\(\s*([\"']?)\/next\/(?!\/)/g,
+        `url($1${assetDirBase}next/`,
+      )
+      .replace(
+        /\b(src|poster|data)=([\"'])\/static\/games\/(?!\/)/gi,
+        `$1=$2${rootBase}`,
+      )
       .replace(/\b(src|poster|data)=([\"'])\/(?!\/)/gi, `$1=$2${rootBase}`)
-      .replace(/<(link|a|form)\b([^>]*?)\b(href|action)=([\"'])\/static\/games\/(?!\/)/gi, `<$1$2$3=$4${rootBase}`)
-      .replace(/<(link|a|form)\b([^>]*?)\b(href|action)=([\"'])\/(?!\/)/gi, `<$1$2$3=$4${rootBase}`)
-      .replace(/\burl\(\s*([\"']?)\/static\/games\/(?!\/)/g, `url($1${rootBase}`)
+      .replace(
+        /<(link|a|form)\b([^>]*?)\b(href|action)=([\"'])\/static\/games\/(?!\/)/gi,
+        `<$1$2$3=$4${rootBase}`,
+      )
+      .replace(
+        /<(link|a|form)\b([^>]*?)\b(href|action)=([\"'])\/(?!\/)/gi,
+        `<$1$2$3=$4${rootBase}`,
+      )
+      .replace(
+        /\burl\(\s*([\"']?)\/static\/games\/(?!\/)/g,
+        `url($1${rootBase}`,
+      )
       .replace(/\burl\(\s*([\"']?)\/(?!\/)/g, `url($1${rootBase}`)
-      .replace(/\b(src|poster|data)=([\"'])(?!https?:|data:|blob:|\/\/|#|\/)/gi, `$1=$2${assetDirBase}`)
+      .replace(
+        /\b(src|poster|data)=([\"'])(?!https?:|data:|blob:|\/\/|#|\/)/gi,
+        `$1=$2${assetDirBase}`,
+      )
       .replace(
         /<(link|a|form)\b([^>]*?)\b(href|action)=([\"'])(?!https?:|data:|blob:|\/\/|#|\/)/gi,
-        `<$1$2$3=$4${assetDirBase}`
+        `<$1$2$3=$4${assetDirBase}`,
       )
-      .replace(/\burl\(\s*([\"']?)(?!https?:|data:|blob:|\/\/|#|\/)/g, `url($1${assetDirBase}`);
+      .replace(
+        /\burl\(\s*([\"']?)(?!https?:|data:|blob:|\/\/|#|\/)/g,
+        `url($1${assetDirBase}`,
+      );
   }
 
   const looksLikeUnityWebgl =
     /\bcreateUnityInstance\s*\(/.test(rewritten) ||
     /\bunityVersion\s*:\s*["']/.test(rewritten) ||
-    (/\bUnity WebGL\b/i.test(rewritten) && /\bBuild\/.*\.loader\.js\b/i.test(rewritten));
+    (/\bUnity WebGL\b/i.test(rewritten) &&
+      /\bBuild\/.*\.loader\.js\b/i.test(rewritten));
   if (looksLikeUnityWebgl) {
-    const isAlreadyAbsolute = (value) => /^(https?:|data:|blob:|\/)/i.test(value);
+    const isAlreadyAbsolute = (value) =>
+      /^(https?:|data:|blob:|\/)/i.test(value);
     rewritten = rewritten.replace(
       /\b(dataUrl|frameworkUrl|codeUrl|streamingAssetsUrl|unityWebglBuildUrl)\s*:\s*(["'])([^"']+)\2/g,
       (m, key, quote, value) => {
         if (isAlreadyAbsolute(value)) return m;
         const abs = new URL(value, assetDirBase).href;
         return `${key}: ${quote}${abs}${quote}`;
-      }
+      },
     );
   }
 
@@ -753,23 +871,35 @@ export async function fetchHtmlAsBlobUrl(url, options = {}) {
   if (lowerUrl.includes("wasmdotrip") || lowerUrl.includes("peak-port")) {
     rewritten = rewritten.replace(
       /history\.replaceState\s*\(\s*null\s*,\s*""\s*,\s*u\.toString\(\)\s*\)\s*;/g,
-      'try{history.replaceState(null,"",u.toString());}catch(e){}'
+      'try{history.replaceState(null,"",u.toString());}catch(e){}',
     );
   }
   const hasBase = /<base\b[^>]*>/i.test(rewritten);
 
   if (isIgnored) {
     if (hasBase) {
-      withBase = rewritten.replace(/<base\b[^>]*>/i, (m) => `${m}\n${historyGuard}`);
+      withBase = rewritten.replace(
+        /<base\b[^>]*>/i,
+        (m) => `${m}\n${historyGuard}`,
+      );
     } else if (/<head\b[^>]*>/i.test(rewritten)) {
-      withBase = rewritten.replace(/<head\b[^>]*>/i, (m) => `${m}\n<base href="${baseHref}">\n${historyGuard}`);
+      withBase = rewritten.replace(
+        /<head\b[^>]*>/i,
+        (m) => `${m}\n<base href="${baseHref}">\n${historyGuard}`,
+      );
     } else {
       withBase = `<base href="${baseHref}">\n${historyGuard}\n${rewritten}`;
     }
   } else if (hasBase) {
-    withBase = rewritten.replace(/<base\b[^>]*>/i, (m) => `${m}\n${injectedScripts}`);
+    withBase = rewritten.replace(
+      /<base\b[^>]*>/i,
+      (m) => `${m}\n${injectedScripts}`,
+    );
   } else if (/<head\b[^>]*>/i.test(rewritten)) {
-    withBase = rewritten.replace(/<head\b[^>]*>/i, (m) => `${m}\n<base href="${baseHref}">\n${injectedScripts}`);
+    withBase = rewritten.replace(
+      /<head\b[^>]*>/i,
+      (m) => `${m}\n<base href="${baseHref}">\n${injectedScripts}`,
+    );
   } else {
     withBase = `<base href="${baseHref}">\n${injectedScripts}\n${rewritten}`;
   }

@@ -23,7 +23,8 @@ export function renderLiveStats(stats, target, options = {}) {
   const renderAppIcon = (appId) => {
     const entry = appLookup.get(appId.toLowerCase());
     const icon = entry?.icon || resolveAppIcon(appId);
-    if (!icon) return `<span class="live-stats-icon"><i class="fas fa-gamepad"></i></span>`;
+    if (!icon)
+      return `<span class="live-stats-icon"><i class="fas fa-gamepad"></i></span>`;
     if (typeof icon === "string" && icon.startsWith("fa")) {
       return `<span class="live-stats-icon"><i class="${icon}"></i></span>`;
     }
@@ -39,7 +40,7 @@ export function renderLiveStats(stats, target, options = {}) {
         ${renderAppIcon(app)}
         <span class="live-stats-name">${escapeHtml(resolveAppName(app))}</span>
         <span class="live-stats-count">${count}</span>
-      </div>`
+      </div>`,
         )
         .join("")
     : `<div class="live-stats-message">No trending data right now</div>`;

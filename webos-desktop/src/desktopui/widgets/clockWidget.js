@@ -25,14 +25,14 @@ export class ClockWidget extends WidgetBase {
       hour12: !this.use24h,
       hour: "2-digit",
       minute: "2-digit",
-      second: this.showSeconds ? "2-digit" : undefined
+      second: this.showSeconds ? "2-digit" : undefined,
     };
     const timeStr = now.toLocaleTimeString("en-US", timeOptions);
     const dateStr = now.toLocaleDateString("en-US", {
       weekday: "long",
       year: "numeric",
       month: "long",
-      day: "numeric"
+      day: "numeric",
     });
     const timeEl = $(`#w-clock-time-${this.id}`);
     if (timeEl) timeEl.textContent = timeStr;
@@ -51,8 +51,8 @@ export class ClockWidget extends WidgetBase {
         default: false,
         options: [
           { value: "true", label: "24-hour" },
-          { value: "false", label: "12-hour" }
-        ]
+          { value: "false", label: "12-hour" },
+        ],
       },
       {
         key: "showSeconds",
@@ -62,9 +62,9 @@ export class ClockWidget extends WidgetBase {
         default: false,
         options: [
           { value: "true", label: "Yes" },
-          { value: "false", label: "No" }
-        ]
-      }
+          { value: "false", label: "No" },
+        ],
+      },
     ];
   }
 

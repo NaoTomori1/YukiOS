@@ -12,7 +12,10 @@ export async function copyItem(explorer, name, isFile, srcPath, destPath) {
     const dialog = showTransferDialog({ title: "Copying", total: 1 });
     try {
       const kind = await explorer.fs.getFileKind(srcPath, name);
-      const isBinary = kind === FileKind.IMAGE || kind === FileKind.VIDEO || kind === FileKind.AUDIO;
+      const isBinary =
+        kind === FileKind.IMAGE ||
+        kind === FileKind.VIDEO ||
+        kind === FileKind.AUDIO;
 
       const destDir = explorer.fs.resolveUserPath(destPath);
       const destFilePath = explorer.fs.join(destDir, name);
@@ -37,9 +40,16 @@ export async function copyItem(explorer, name, isFile, srcPath, destPath) {
       dialog.complete();
     }
   } else {
-    const srcEntries = await os.fs.readdir([...srcPath, name]).catch(() => ({}));
-    const childNames = Object.keys(srcEntries).filter((childName) => srcEntries[childName]?.type === "file");
-    const dialog = showTransferDialog({ title: `Copying "${name}"`, total: childNames.length });
+    const srcEntries = await os.fs
+      .readdir([...srcPath, name])
+      .catch(() => ({}));
+    const childNames = Object.keys(srcEntries).filter(
+      (childName) => srcEntries[childName]?.type === "file",
+    );
+    const dialog = showTransferDialog({
+      title: `Copying "${name}"`,
+      total: childNames.length,
+    });
     let cancelled = false;
     dialog.onCancel(() => {
       cancelled = true;
@@ -55,7 +65,9 @@ export async function copyItem(explorer, name, isFile, srcPath, destPath) {
         const childPath = [...srcPath, name];
         const childKind = await explorer.fs.getFileKind(childPath, childName);
         const isChildBinary =
-          childKind === FileKind.IMAGE || childKind === FileKind.VIDEO || childKind === FileKind.AUDIO;
+          childKind === FileKind.IMAGE ||
+          childKind === FileKind.VIDEO ||
+          childKind === FileKind.AUDIO;
 
         let childContent;
         if (isChildBinary) {
@@ -66,13 +78,29 @@ export async function copyItem(explorer, name, isFile, srcPath, destPath) {
 
         const destFolderPath = [...destPath, uniqueName];
         const destDir = explorer.fs.resolveUserPath(destFolderPath);
-        const childExists = await os.fs.exists(explorer.fs.join(destDir, childName));
-        const childFinalName = childExists ? await explorer.fs.getUniqueFileName(destFolderPath, childName) : childName;
+        const childExists = await os.fs.exists(
+          explorer.fs.join(destDir, childName),
+        );
+        const childFinalName = childExists
+          ? await explorer.fs.getUniqueFileName(destFolderPath, childName)
+          : childName;
 
         if (isChildBinary) {
-          await os.fs.writeBinaryFile(destFolderPath, childFinalName, childContent, childKind, null);
+          await os.fs.writeBinaryFile(
+            destFolderPath,
+            childFinalName,
+            childContent,
+            childKind,
+            null,
+          );
         } else {
-          await explorer.fs.createFile(destFolderPath, childFinalName, childContent, childKind, null);
+          await explorer.fs.createFile(
+            destFolderPath,
+            childFinalName,
+            childContent,
+            childKind,
+            null,
+          );
         }
 
         done += 1;
@@ -95,14 +123,20 @@ export async function pasteToPath(explorer, destPath, inst) {
   const failedNames = [];
   const transferState = { cancelled: false };
   const totalItems = Array.isArray(cb.icons) ? cb.icons.length : 0;
-  const dialog = showTransferDialog({ title: action === "cut" ? "Moving" : "Copying", total: totalItems });
+  const dialog = showTransferDialog({
+    title: action === "cut" ? "Moving" : "Copying",
+    total: totalItems,
+  });
   dialog.onCancel(() => {
     transferState.cancelled = true;
   });
 
   const copyFile = async (name, srcPath) => {
     const kind = await explorer.fs.getFileKind(srcPath, name);
-    const isBinary = kind === FileKind.IMAGE || kind === FileKind.VIDEO || kind === FileKind.AUDIO;
+    const isBinary =
+      kind === FileKind.IMAGE ||
+      kind === FileKind.VIDEO ||
+      kind === FileKind.AUDIO;
 
     const destDir = explorer.fs.resolveUserPath(destPath);
     const destFilePath = explorer.fs.join(destDir, name);
@@ -125,9 +159,14 @@ export async function pasteToPath(explorer, destPath, inst) {
   };
 
   const copyFolder = async (name, srcBasePath) => {
-    const uniqueName = action === "copy" ? await explorer.fs.getUniqueFileName(destPath, name) : name;
+    const uniqueName =
+      action === "copy"
+        ? await explorer.fs.getUniqueFileName(destPath, name)
+        : name;
     await os.fs.mkdir([...destPath, uniqueName]);
-    const srcEntries = await os.fs.readdir([...srcBasePath, name]).catch(() => ({}));
+    const srcEntries = await os.fs
+      .readdir([...srcBasePath, name])
+      .catch(() => ({}));
 
     for (const [childName, childData] of Object.entries(srcEntries)) {
       if (transferState.cancelled) break;
@@ -136,7 +175,9 @@ export async function pasteToPath(explorer, destPath, inst) {
       const childPath = [...srcBasePath, name];
       const childKind = await explorer.fs.getFileKind(childPath, childName);
       const isChildBinary =
-        childKind === FileKind.IMAGE || childKind === FileKind.VIDEO || childKind === FileKind.AUDIO;
+        childKind === FileKind.IMAGE ||
+        childKind === FileKind.VIDEO ||
+        childKind === FileKind.AUDIO;
 
       let childContent;
       if (isChildBinary) {
@@ -147,14 +188,30 @@ export async function pasteToPath(explorer, destPath, inst) {
 
       const destFolderPath = [...destPath, uniqueName];
       const destDir = explorer.fs.resolveUserPath(destFolderPath);
-      const childExists = await os.fs.exists(explorer.fs.join(destDir, childName));
+      const childExists = await os.fs.exists(
+        explorer.fs.join(destDir, childName),
+      );
 
-      const childFinalName = childExists ? await explorer.fs.getUniqueFileName(destFolderPath, childName) : childName;
+      const childFinalName = childExists
+        ? await explorer.fs.getUniqueFileName(destFolderPath, childName)
+        : childName;
 
       if (isChildBinary) {
-        await os.fs.writeBinaryFile(destFolderPath, childFinalName, childContent, childKind, null);
+        await os.fs.writeBinaryFile(
+          destFolderPath,
+          childFinalName,
+          childContent,
+          childKind,
+          null,
+        );
       } else {
-        await explorer.fs.createFile(destFolderPath, childFinalName, childContent, childKind, null);
+        await explorer.fs.createFile(
+          destFolderPath,
+          childFinalName,
+          childContent,
+          childKind,
+          null,
+        );
       }
     }
 
@@ -191,8 +248,13 @@ export async function pasteToPath(explorer, destPath, inst) {
     } else if (cb.source === "desktop") {
       for (const iconData of cb.icons) {
         if (transferState.cancelled) break;
-        const { isDesktopFile, isFolderIcon, fileName, folderName, app, name } = iconData.data;
-        const displayName = isDesktopFile ? fileName : isFolderIcon ? folderName : `${name || app}.desktop`;
+        const { isDesktopFile, isFolderIcon, fileName, folderName, app, name } =
+          iconData.data;
+        const displayName = isDesktopFile
+          ? fileName
+          : isFolderIcon
+            ? folderName
+            : `${name || app}.desktop`;
         try {
           if (isDesktopFile) {
             const result = await copyFile(fileName, ["Desktop"]);
@@ -224,7 +286,8 @@ export async function pasteToPath(explorer, destPath, inst) {
         dialog.update(pastedCount + failedNames.length, displayName);
       }
 
-      if (action === "cut" && !transferState.cancelled) explorer.setClipboard(null);
+      if (action === "cut" && !transferState.cancelled)
+        explorer.setClipboard(null);
     }
   } finally {
     dialog.complete();
@@ -233,7 +296,9 @@ export async function pasteToPath(explorer, destPath, inst) {
   if (transferState.cancelled) {
     os.notify.send("Paste cancelled");
   } else if (failedNames.length > 0) {
-    os.notify.send(`Could not paste ${failedNames.length} ${pluralize(failedNames.length, "item")}`);
+    os.notify.send(
+      `Could not paste ${failedNames.length} ${pluralize(failedNames.length, "item")}`,
+    );
   }
 
   if (pastedCount > 0) {
@@ -244,18 +309,28 @@ export async function pasteToPath(explorer, destPath, inst) {
 
 export async function downloadItems(explorer, itemName, isFile, inst) {
   const effectiveItems =
-    inst.selectedItems.size > 1 && inst.selectedItems.has(itemName) ? [...inst.selectedItems] : [itemName];
+    inst.selectedItems.size > 1 && inst.selectedItems.has(itemName)
+      ? [...inst.selectedItems]
+      : [itemName];
 
   if (effectiveItems.length === 1 && isFile) {
     const content = await os.fs.read([...inst.currentPath, itemName]);
-    const data = content || (await explorer.fs.getFileContent(inst.currentPath, itemName)) || "";
+    const data =
+      content ||
+      (await explorer.fs.getFileContent(inst.currentPath, itemName)) ||
+      "";
     downloadBlob(new Blob([data]), itemName);
     return;
   }
 
   const folder = inst.cachedFolder || (await os.fs.readdir(inst.currentPath));
-  const fileNames = effectiveItems.filter((name) => folder[name]?.type === "file");
-  const dialog = showTransferDialog({ title: "Preparing download", total: fileNames.length });
+  const fileNames = effectiveItems.filter(
+    (name) => folder[name]?.type === "file",
+  );
+  const dialog = showTransferDialog({
+    title: "Preparing download",
+    total: fileNames.length,
+  });
   let cancelled = false;
   dialog.onCancel(() => {
     cancelled = true;
@@ -271,7 +346,9 @@ export async function downloadItems(explorer, itemName, isFile, inst) {
         zipEntries[name] = new Uint8Array(await blob.arrayBuffer());
       } else {
         const text = await explorer.fs.getFileContent(inst.currentPath, name);
-        zipEntries[name] = new TextEncoder().encode(typeof text === "string" ? text : "");
+        zipEntries[name] = new TextEncoder().encode(
+          typeof text === "string" ? text : "",
+        );
       }
       done += 1;
       dialog.update(done, name);
@@ -285,7 +362,10 @@ export async function downloadItems(explorer, itemName, isFile, inst) {
     if (Object.keys(zipEntries).length === 0) return;
 
     const zipped = zipSync(zipEntries);
-    downloadBlob(new Blob([zipped], { type: "application/zip" }), "archive.zip");
+    downloadBlob(
+      new Blob([zipped], { type: "application/zip" }),
+      "archive.zip",
+    );
     os.notify.send("Download ready");
   } catch {
     os.notify.send("Download failed");
@@ -296,7 +376,9 @@ export async function downloadItems(explorer, itemName, isFile, inst) {
 
 export async function createArchiveFromItems(explorer, itemName, isFile, inst) {
   const effectiveItems =
-    inst.selectedItems.size > 1 && inst.selectedItems.has(itemName) ? [...inst.selectedItems] : [itemName];
+    inst.selectedItems.size > 1 && inst.selectedItems.has(itemName)
+      ? [...inst.selectedItems]
+      : [itemName];
 
   let defaultName = "archive";
   if (effectiveItems.length === 1) {
@@ -306,7 +388,7 @@ export async function createArchiveFromItems(explorer, itemName, isFile, inst) {
   }
 
   showArchiveDialog({
-    title: "Create Archive",
+    title: "Compress...",
     defaultValue: defaultName,
     onConfirm: async (archiveName, archiveType, compressionLevel) => {
       const dialog = showTransferDialog({ title: `Creating "${archiveName}"` });
@@ -316,11 +398,12 @@ export async function createArchiveFromItems(explorer, itemName, isFile, inst) {
       });
 
       try {
-        const folder = inst.cachedFolder || (await os.fs.readdir(inst.currentPath));
+        const folder =
+          inst.cachedFolder || (await os.fs.readdir(inst.currentPath));
         const items = effectiveItems.map((item) => ({
           path: inst.currentPath,
           name: item,
-          isFile: folder[item]?.type === "file"
+          isFile: folder[item]?.type === "file",
         }));
 
         dialog.update(0, archiveName);
@@ -329,7 +412,7 @@ export async function createArchiveFromItems(explorer, itemName, isFile, inst) {
           format: archiveType,
           compressionLevel,
           outputPath: inst.currentPath,
-          archiveName
+          archiveName,
         });
 
         if (cancelled) return;
@@ -343,6 +426,6 @@ export async function createArchiveFromItems(explorer, itemName, isFile, inst) {
       } finally {
         dialog.complete();
       }
-    }
+    },
   });
 }

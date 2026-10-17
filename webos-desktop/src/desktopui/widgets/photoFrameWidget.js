@@ -19,11 +19,23 @@ export class PhotoFrameWidget extends WidgetBase {
       </div>
     `;
     this.showImage(contentEl);
-    this.stopPoll = createAdaptiveInterval(() => this.nextImage(), 10000, 60000);
+    this.stopPoll = createAdaptiveInterval(
+      () => this.nextImage(),
+      10000,
+      60000,
+    );
   }
 
   getConfigFields() {
-    return [{ key: "upload", label: "Upload a photo", type: "text", value: this.customPhotoPath || "", default: "" }];
+    return [
+      {
+        key: "upload",
+        label: "Upload a photo",
+        type: "text",
+        value: this.customPhotoPath || "",
+        default: "",
+      },
+    ];
   }
 
   applyConfig(data) {
@@ -35,13 +47,15 @@ export class PhotoFrameWidget extends WidgetBase {
   }
 
   onConfigure() {
-    os.dialog.fileOpen({ defaultFileName: "", initialPath: ["Pictures"] }).then((result) => {
-      if (result) {
-        this.customPhotoPath = result;
-        if (this.contentEl) this.showImage(this.contentEl);
-        this.manager.saveState();
-      }
-    });
+    os.dialog
+      .fileOpen({ defaultFileName: "", initialPath: ["Pictures"] })
+      .then((result) => {
+        if (result) {
+          this.customPhotoPath = result;
+          if (this.contentEl) this.showImage(this.contentEl);
+          this.manager.saveState();
+        }
+      });
   }
 
   async loadImages() {
@@ -55,7 +69,7 @@ export class PhotoFrameWidget extends WidgetBase {
         })
         .map(([name]) => ({
           name,
-          path: ["Pictures", name]
+          path: ["Pictures", name],
         }));
     } catch {
       this.images = [];
@@ -65,7 +79,8 @@ export class PhotoFrameWidget extends WidgetBase {
   async resolveImageBlob(filePath) {
     const raw = await os.fs.read(filePath, { encoding: "binary" });
     if (!raw || raw.length === 0) return null;
-    const asText = typeof raw === "string" ? raw : new TextDecoder("utf-8").decode(raw);
+    const asText =
+      typeof raw === "string" ? raw : new TextDecoder("utf-8").decode(raw);
     if (asText.startsWith("http://") || asText.startsWith("https://")) {
       return await (await fetch(asText)).blob();
     }
@@ -127,7 +142,8 @@ export class PhotoFrameWidget extends WidgetBase {
   }
 
   nextImage() {
-    if (this.customPhotoPath || !this.images || this.images.length === 0) return;
+    if (this.customPhotoPath || !this.images || this.images.length === 0)
+      return;
     this.currentIndex = (this.currentIndex + 1) % this.images.length;
     if (this.contentEl) this.showImage(this.contentEl);
   }

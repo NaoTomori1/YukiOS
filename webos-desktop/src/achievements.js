@@ -38,7 +38,7 @@ export const Achievements = {
   MacroMaker: "macro_maker",
   GhostMode: "ghost_mode",
   PinCushion: "pin_cushion",
-  Sampler: "sampler"
+  Sampler: "sampler",
 };
 
 let sharedCatalog = null;
@@ -54,27 +54,31 @@ export class AchievementsApp extends BaseApp {
     super(services);
     this.achievements = this.createAchievements();
     this.unlocked = new Map();
-    this.s1 = new Audio(resolveGhUrl("https://cdn.jsdelivr.net/gh/NaoTomori1/yukios@main/static/audio/steam.opus"));
+    this.s1 = new Audio(
+      resolveGhUrl(
+        "https://cdn.jsdelivr.net/gh/NaoTomori1/yukios@main/static/audio/steam.opus",
+      ),
+    );
 
     this.initBusListeners();
     this.thresholds = {
       openWindows: [
         { at: 5, key: Achievements.MultiTasker },
-        { at: 10, key: Achievements.ChaosMode }
+        { at: 10, key: Achievements.ChaosMode },
       ],
       appLaunched: [{ at: 15, key: Achievements.AppCollector }],
       terminalCmd: [{ at: 5, key: Achievements.TerminalUser }],
       gameLaunched: [
         { at: 1, key: Achievements.FirstGame },
         { at: 10, key: Achievements.GameHopper },
-        { at: 100, key: Achievements.GameHopperMega }
+        { at: 100, key: Achievements.GameHopperMega },
       ],
       wallpaper: [{ at: 5, key: Achievements.DesktopStylist }],
       session: [{ at: 5, key: Achievements.RegularUser }],
       workspaceSwitched: [{ at: 10, key: Achievements.WorkspaceWanderer }],
       workspaceAdded: [{ at: 3, key: Achievements.WorkspaceArchitect }],
       calculationDone: [{ at: 10, key: Achievements.MathWhiz }],
-      powerProfileChange: [{ at: 5, key: Achievements.PowerUser }]
+      powerProfileChange: [{ at: 5, key: Achievements.PowerUser }],
     };
     this.counters = {};
     this.achievementQueue = [];
@@ -91,10 +95,16 @@ export class AchievementsApp extends BaseApp {
   }
 
   open(opts = {}) {
-    const win = os.window.create("achievements-yukios", "Achievements", "800px", "40em", {
-      icon: "papirus:actions/games-achievements",
-      appId: "achievements-yukios"
-    });
+    const win = os.window.create(
+      "achievements-yukios",
+      "Achievements",
+      "800px",
+      "40em",
+      {
+        icon: "papirus:actions/games-achievements",
+        appId: "achievements-yukios",
+      },
+    );
 
     win.innerHTML = `<div class="window-content achievements-content">
         <div class="achievements-scroll">
@@ -172,12 +182,20 @@ export class AchievementsApp extends BaseApp {
   initBusListeners() {
     os.events.on(BusEvents.WINDOW_CREATED, () => this.incrementWindowOpen());
     os.events.on(BusEvents.APP_LAUNCHED, () => this.incrementAppLaunched());
-    os.events.on(BusEvents.TERMINAL_CMD_EXECUTED, (data) => this.triggerCommandExecution(data?.command));
+    os.events.on(BusEvents.TERMINAL_CMD_EXECUTED, (data) =>
+      this.triggerCommandExecution(data?.command),
+    );
     os.events.on(BusEvents.WALLPAPER_CHANGED, () => this.incrementWallpaper());
-    os.events.on(BusEvents.ACHIEVEMENT_TRIGGER, ({ achievementId }) => this.trigger(achievementId));
+    os.events.on(BusEvents.ACHIEVEMENT_TRIGGER, ({ achievementId }) =>
+      this.trigger(achievementId),
+    );
     os.events.on(BusEvents.SESSION_INITIALIZED, () => this.incrementSession());
-    os.events.on(BusEvents.WORKSPACE_SWITCHED, () => this.increment("workspaceSwitched"));
-    os.events.on(BusEvents.WORKSPACE_ADDED, () => this.increment("workspaceAdded"));
+    os.events.on(BusEvents.WORKSPACE_SWITCHED, () =>
+      this.increment("workspaceSwitched"),
+    );
+    os.events.on(BusEvents.WORKSPACE_ADDED, () =>
+      this.increment("workspaceAdded"),
+    );
   }
 
   createAchievements() {
@@ -188,211 +206,211 @@ export class AchievementsApp extends BaseApp {
           title: "Juggler",
           desc: "Run 5 apps simultaneously",
           icon: "papirus:actions/window-maximize",
-          rarity: "common"
+          rarity: "common",
         },
         {
           id: Achievements.ChaosMode,
           title: "Chaos Mode",
           desc: "Open 10 apps at once",
           icon: "papirus:apps/gufw",
-          rarity: "epic"
+          rarity: "epic",
         },
         {
           id: Achievements.PersonalSpace,
           title: "Personal Space",
           desc: "Upload a custom wallpaper",
           icon: "papirus:mimetypes/image-x-generic",
-          rarity: "common"
+          rarity: "common",
         },
         {
           id: Achievements.DesktopStylist,
           title: "Curator",
           desc: "Change wallpaper 5 times",
           icon: "papirus:apps/gpaint",
-          rarity: "rare"
+          rarity: "rare",
         },
         {
           id: Achievements.AppCollector,
           title: "App Collector",
           desc: "Launch 15 different apps",
           icon: "papirus:actions/view-grid",
-          rarity: "epic"
+          rarity: "epic",
         },
         {
           id: Achievements.Skid,
           title: "SKID",
           desc: "Write neofetch on terminal",
           icon: "papirus:apps/vscode",
-          rarity: "rare"
+          rarity: "rare",
         },
         {
           id: Achievements.TerminalUser,
           title: "First Command",
           desc: "Execute 5 commands in terminal",
           icon: "papirus:apps/utilities-terminal",
-          rarity: "uncommon"
+          rarity: "uncommon",
         },
         {
           id: Achievements.FirstGame,
           title: "Insert Coin",
           desc: "Launch any game",
           icon: "papirus:apps/preferences-desktop-gaming",
-          rarity: "common"
+          rarity: "common",
         },
         {
           id: Achievements.GameHopper,
           title: "Game Hopper",
           desc: "Play 10 games",
           icon: "papirus:apps/codes.nora.gDiceRoller",
-          rarity: "epic"
+          rarity: "epic",
         },
         {
           id: Achievements.GameHopperMega,
           title: "Grand Game Hopper",
           desc: "Play 100 games",
           icon: "papirus:apps/utilities-tweak-tool",
-          rarity: "legendary"
+          rarity: "legendary",
         },
         {
           id: Achievements.RetroPlayer,
           title: "Retro Player",
           desc: "Play a DOS game",
           icon: "papirus:apps/ghostwriter",
-          rarity: "uncommon"
+          rarity: "uncommon",
         },
         {
           id: Achievements.RegularUser,
           title: "Regular User",
           desc: "Use the OS across 5 sessions",
           icon: "papirus:apps/preferences-system-time",
-          rarity: "uncommon"
+          rarity: "uncommon",
         },
         {
           id: Achievements.Completionist,
           title: "Completionist",
           desc: "Unlock all achievements",
           icon: "papirus:actions/games-achievements",
-          rarity: "legendary"
+          rarity: "legendary",
         },
         {
           id: Achievements.SetupComplete,
           title: "Welcome Home",
           desc: "Finish YukiOS setup wizard",
           icon: "papirus:actions/flag",
-          rarity: "uncommon"
+          rarity: "uncommon",
         },
         {
           id: Achievements.IntroTourComplete,
           title: "Tour Guide",
           desc: "Finish the YukiOS intro tour",
           icon: "papirus:apps/maps",
-          rarity: "rare"
+          rarity: "rare",
         },
         {
           id: Achievements.FontCustomizer,
           title: "Font Customizer",
           desc: "Set a custom TTF font as system font",
           icon: "papirus:apps/preferences-desktop-font",
-          rarity: "uncommon"
+          rarity: "uncommon",
         },
         {
           id: Achievements.WorkspaceWanderer,
           title: "Workspace Wanderer",
           desc: "Switch workspaces 10 times",
           icon: "papirus:apps/utilities-tweak-tool",
-          rarity: "rare"
+          rarity: "rare",
         },
         {
           id: Achievements.WorkspaceArchitect,
           title: "Workspace Architect",
           desc: "Create 3 different workspaces",
           icon: "papirus:actions/list-add",
-          rarity: "uncommon"
+          rarity: "uncommon",
         },
         {
           id: Achievements.MathWhiz,
           title: "Crunch Time",
           desc: "Perform 10 calculations in the calculator",
           icon: "papirus:apps/accessories-calculator",
-          rarity: "uncommon"
+          rarity: "uncommon",
         },
         {
           id: Achievements.NightPerson,
           title: "Night Person",
           desc: "Enable night mode",
           icon: "papirus:status/weather-clear-night",
-          rarity: "common"
+          rarity: "common",
         },
         {
           id: Achievements.PowerUser,
           title: "Power Cycle",
           desc: "Switch power profiles 5 times",
           icon: "papirus:status/battery-020",
-          rarity: "rare"
+          rarity: "rare",
         },
         {
           id: Achievements.Customizer,
           title: "Hotkeyed",
           desc: "Customize a keyboard shortcut",
           icon: "papirus:devices/input-keyboard",
-          rarity: "uncommon"
+          rarity: "uncommon",
         },
         {
           id: Achievements.Flashback,
           title: "Flashback",
           desc: "Play a Flash game",
           icon: "papirus:mimetypes/video-x-generic",
-          rarity: "common"
+          rarity: "common",
         },
         {
           id: Achievements.Converter,
           title: "Converted",
           desc: "Convert a file",
           icon: "papirus:actions/swap-panels",
-          rarity: "common"
+          rarity: "common",
         },
         {
           id: Achievements.WidgetAdded,
           title: "Widget Wizard",
           desc: "Place your first desktop widget",
           icon: "papirus:apps/gnome-taquin",
-          rarity: "common"
+          rarity: "common",
         },
         {
           id: Achievements.ThemeSmith,
           title: "Theme Smith",
           desc: "Save a custom theme",
           icon: "papirus:apps/com.github.cassidyjames.palette",
-          rarity: "rare"
+          rarity: "rare",
         },
         {
           id: Achievements.MacroMaker,
           title: "Macro Maker",
           desc: "Create a custom shortcut action",
           icon: "papirus:apps/accessories-dictionary",
-          rarity: "rare"
+          rarity: "rare",
         },
         {
           id: Achievements.GhostMode,
           title: "Ghost Mode",
           desc: "Open an incognito browser window",
           icon: "papirus:apps/maps",
-          rarity: "rare"
+          rarity: "rare",
         },
         {
           id: Achievements.PinCushion,
           title: "Pin Cushion",
           desc: "Pin an app to the taskbar",
           icon: "papirus:actions/window-pin",
-          rarity: "common"
+          rarity: "common",
         },
         {
           id: Achievements.Sampler,
           title: "Sampler",
           desc: "Sample a color with the color picker",
           icon: "papirus:actions/color-select",
-          rarity: "common"
-        }
+          rarity: "common",
+        },
       ];
     return sharedCatalog;
   }
@@ -401,7 +419,9 @@ export class AchievementsApp extends BaseApp {
     try {
       const saved = os.storage.get(StorageKeys.achievements);
       if (saved) {
-        const entries = Array.isArray(saved) ? saved.map((id) => [id, Date.now()]) : Object.entries(saved);
+        const entries = Array.isArray(saved)
+          ? saved.map((id) => [id, Date.now()])
+          : Object.entries(saved);
         const validIds = new Set(this.achievements.map((a) => a.id));
         this.unlocked = new Map(entries.filter(([id]) => validIds.has(id)));
       }
@@ -425,7 +445,9 @@ export class AchievementsApp extends BaseApp {
 
   renderHero() {
     const stats = this.getStats();
-    const disabled = parseBool(os.storage.get(StorageKeys.achievementsDisabled));
+    const disabled = parseBool(
+      os.storage.get(StorageKeys.achievementsDisabled),
+    );
 
     return `
     <div class="achievements-hero">
@@ -466,7 +488,9 @@ export class AchievementsApp extends BaseApp {
   }
 
   renderGrid(filter) {
-    const disabled = parseBool(os.storage.get(StorageKeys.achievementsDisabled));
+    const disabled = parseBool(
+      os.storage.get(StorageKeys.achievementsDisabled),
+    );
 
     return this.achievements
       .filter((a) => {
@@ -503,7 +527,9 @@ export class AchievementsApp extends BaseApp {
     const total = this.achievements.length;
     const done = this.unlocked.size;
     const pct = Math.round((done / total) * 100);
-    const disabled = parseBool(os.storage.get(StorageKeys.achievementsDisabled));
+    const disabled = parseBool(
+      os.storage.get(StorageKeys.achievementsDisabled),
+    );
 
     return `
     <div class="achievements-progress ${disabled ? "achievements-progress--disabled" : ""}">
@@ -524,8 +550,12 @@ export class AchievementsApp extends BaseApp {
   renderToggle(current) {
     const opts = [
       { val: "all", label: "All", icon: "papirus:actions/view-list" },
-      { val: "unlocked", label: "Unlocked", icon: "papirus:actions/object-select" },
-      { val: "locked", label: "Locked", icon: "papirus:actions/object-locked" }
+      {
+        val: "unlocked",
+        label: "Unlocked",
+        icon: "papirus:actions/object-select",
+      },
+      { val: "locked", label: "Locked", icon: "papirus:actions/object-locked" },
     ];
     return `
       <div class="achievements-toggle">
@@ -539,7 +569,7 @@ export class AchievementsApp extends BaseApp {
             ${o.icon.startsWith("papirus:") ? `<img src="https://cdn.jsdelivr.net/gh/PapirusDevelopmentTeam/papirus-icon-theme@master/Papirus/22x22/${o.icon.slice(8)}.svg" class="papirus-icon papirus-icon--22" alt="" />` : `<i class="fas ${o.icon}"></i>`}
             <span>${o.label}</span>
           </button>
-        `
+        `,
           )
           .join("")}
       </div>
@@ -571,7 +601,7 @@ export class AchievementsApp extends BaseApp {
     const entries = Array.from(this.unlocked.entries());
     reportAchievements(
       userId,
-      entries.map(([id, unlockedAt]) => ({ id, unlockedAt }))
+      entries.map(([id, unlockedAt]) => ({ id, unlockedAt })),
     );
   }
 
@@ -587,7 +617,9 @@ export class AchievementsApp extends BaseApp {
     this.queueAchievement(achievementKey, skipSound);
     this.refresh();
 
-    const nonCompletionist = this.achievements.filter((a) => a.id !== Achievements.Completionist);
+    const nonCompletionist = this.achievements.filter(
+      (a) => a.id !== Achievements.Completionist,
+    );
     const allDone = nonCompletionist.every((a) => this.unlocked.has(a.id));
 
     if (allDone && !this.unlocked.has(Achievements.Completionist)) {
@@ -600,7 +632,7 @@ export class AchievementsApp extends BaseApp {
   queueAchievement(achievementKey, skipSound = false) {
     this.achievementQueue.push({
       achievementKey,
-      skipSound
+      skipSound,
     });
 
     this.processQueue();
@@ -783,7 +815,9 @@ export class AchievementsApp extends BaseApp {
     return {
       total: this.achievements.length,
       unlocked: this.unlocked.size,
-      percentage: Math.round((this.unlocked.size / this.achievements.length) * 100)
+      percentage: Math.round(
+        (this.unlocked.size / this.achievements.length) * 100,
+      ),
     };
   }
 
@@ -804,7 +838,7 @@ export class AchievementsApp extends BaseApp {
       burst({
         particleCount: 45,
         spread: 90,
-        origin: { x: 0.2 + Math.random() * 0.6, y: 0.6 }
+        origin: { x: 0.2 + Math.random() * 0.6, y: 0.6 },
       });
       if (Date.now() >= endTime) clearInterval(timer);
     }, interval);

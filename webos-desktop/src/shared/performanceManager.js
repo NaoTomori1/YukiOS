@@ -239,9 +239,6 @@ class PerformanceManager {
         `cros=${result.cros.is} score=${result.score}/6 [${result.votes.join(", ") || "no weak signals"}] ` +
         `(cores=${result.cores}, mem=${result.memory}, gl=${result.glRenderer}, bench=${result.benchMs}ms)`;
       this.chromebookReason = reason;
-      console.log(
-        `[PerformanceManager] Boot capability check (staying Balanced): ${reason}`,
-      );
       if (result.score < 2) return;
       this.watchJankThenDowngrade(reason);
     } catch {}

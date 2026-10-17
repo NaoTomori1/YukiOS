@@ -4,7 +4,8 @@ export class StorageAPI {
   }
 
   subscribe(key, callback) {
-    if (!this.changeListeners.has(key)) this.changeListeners.set(key, new Set());
+    if (!this.changeListeners.has(key))
+      this.changeListeners.set(key, new Set());
     this.changeListeners.get(key).add(callback);
     return () => {
       this.changeListeners.get(key)?.delete(callback);

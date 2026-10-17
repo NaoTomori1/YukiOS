@@ -41,7 +41,7 @@ export class CommandRegistry {
         [0, 255, 0],
         [0, 0, 255],
         [75, 0, 130],
-        [139, 0, 255]
+        [139, 0, 255],
       ];
       let text;
       if (args.length > 0) {
@@ -49,8 +49,10 @@ export class CommandRegistry {
         try {
           if (await ctx.fs.exists(fullPath)) {
             const lastSlash = fullPath.lastIndexOf("/");
-            const dir = lastSlash >= 0 ? fullPath.slice(0, lastSlash) || "/" : ".";
-            const name = lastSlash >= 0 ? fullPath.slice(lastSlash + 1) : fullPath;
+            const dir =
+              lastSlash >= 0 ? fullPath.slice(0, lastSlash) || "/" : ".";
+            const name =
+              lastSlash >= 0 ? fullPath.slice(lastSlash + 1) : fullPath;
             if (await ctx.fs.isFile(dir, name)) {
               text = await ctx.fs.readTextFile(dir, name);
             }
@@ -72,7 +74,7 @@ export class CommandRegistry {
         colors[i] = [
           Math.round(a[0] + (b[0] - a[0]) * frac),
           Math.round(a[1] + (b[1] - a[1]) * frac),
-          Math.round(a[2] + (b[2] - a[2]) * frac)
+          Math.round(a[2] + (b[2] - a[2]) * frac),
         ];
       }
       ctx.printInline(text, colors);
@@ -95,10 +97,12 @@ export class CommandRegistry {
           }
         } catch {}
       }
-      const root = ctx.env.get("HOME") || "/home/" + (ctx.env.get("USER") || "guest");
+      const root =
+        ctx.env.get("HOME") || "/home/" + (ctx.env.get("USER") || "guest");
       await walk(root);
       for (const r of results) ctx.print(r);
-      if (results.length === 0) ctx.print(`locate: no results for '${pattern}'`);
+      if (results.length === 0)
+        ctx.print(`locate: no results for '${pattern}'`);
     });
   }
 }

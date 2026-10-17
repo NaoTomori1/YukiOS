@@ -1,4 +1,11 @@
-import { StorageKeys, os, $, $$, BusEvents, createElement } from "../framework.js";
+import {
+  StorageKeys,
+  os,
+  $,
+  $$,
+  BusEvents,
+  createElement,
+} from "../framework.js";
 import { showStartStyleMenu } from "../shared/contextMenu.js";
 export class TaskbarPositionManager {
   constructor() {
@@ -58,7 +65,9 @@ export class TaskbarPositionManager {
     setTimeout(() => this.restorePersistedPosition(), 350);
     setTimeout(() => this.restorePersistedPosition(), 1200);
     window.addEventListener("load", () => this.restorePersistedPosition());
-    os.storage.subscribe(StorageKeys.taskbarPosition, () => this.restorePersistedPosition());
+    os.storage.subscribe(StorageKeys.taskbarPosition, () =>
+      this.restorePersistedPosition(),
+    );
   }
 
   setupEventListeners() {
@@ -76,7 +85,7 @@ export class TaskbarPositionManager {
       const isEmptyTaskbarBg =
         !onTaskbarWindows &&
         !target.closest(
-          "#system-tray, #start-button, #mac-menu-bar, #workspace-bar, #tray-overflow-popup, #clock, #date"
+          "#system-tray, #start-button, #mac-menu-bar, #workspace-bar, #tray-overflow-popup, #clock, #date",
         );
       if (!isEmptyTaskbarWindows && !isEmptyTaskbarBg) {
         e.preventDefault();
@@ -85,7 +94,11 @@ export class TaskbarPositionManager {
       e.preventDefault();
       e.stopPropagation();
       showStartStyleMenu(e, (addMenuItem, addSeparator) => {
-        const alignIcons = { left: "fa-align-left", center: "fa-align-center", right: "fa-align-right" };
+        const alignIcons = {
+          left: "fa-align-left",
+          center: "fa-align-center",
+          right: "fa-align-right",
+        };
         this.alignments.forEach((alignment) => {
           const label = alignment.charAt(0).toUpperCase() + alignment.slice(1);
           addMenuItem(
@@ -93,24 +106,32 @@ export class TaskbarPositionManager {
             () => {
               this.setAlignment(alignment);
             },
-            alignIcons[alignment]
+            alignIcons[alignment],
           );
         });
         addSeparator();
         this.positions.forEach((position) => {
-          const icons = { bottom: "fa-arrow-down", top: "fa-arrow-up", left: "fa-arrow-left", right: "fa-arrow-right" };
+          const icons = {
+            bottom: "fa-arrow-down",
+            top: "fa-arrow-up",
+            left: "fa-arrow-left",
+            right: "fa-arrow-right",
+          };
           const label = position.charAt(0).toUpperCase() + position.slice(1);
           addMenuItem(
             `Move to ${label}`,
             () => {
               this.setPosition(position);
             },
-            icons[position]
+            icons[position],
           );
         });
         addSeparator();
         const rawShowLabels = os.storage.get(StorageKeys.taskbarShowLabels);
-        const showLabels = rawShowLabels === "true" || rawShowLabels === true || rawShowLabels === "1";
+        const showLabels =
+          rawShowLabels === "true" ||
+          rawShowLabels === true ||
+          rawShowLabels === "1";
         addMenuItem(
           "Show Taskbar Labels",
           () => {
@@ -118,17 +139,22 @@ export class TaskbarPositionManager {
             os.storage.set(StorageKeys.taskbarShowLabels, String(next));
             const taskbarWindows = $("#taskbar-windows");
             if (taskbarWindows) {
-              $$(".taskbar-item:not(.pinned)", taskbarWindows).forEach((item) => {
-                let label = $(".taskbar-item-label", item);
-                if (next) {
-                  if (!label) {
-                    label = createElement("span", { className: "taskbar-item-label", text: item.dataset.title || "" });
-                    item.appendChild(label);
+              $$(".taskbar-item:not(.pinned)", taskbarWindows).forEach(
+                (item) => {
+                  let label = $(".taskbar-item-label", item);
+                  if (next) {
+                    if (!label) {
+                      label = createElement("span", {
+                        className: "taskbar-item-label",
+                        text: item.dataset.title || "",
+                      });
+                      item.appendChild(label);
+                    }
+                  } else if (label) {
+                    label.remove();
                   }
-                } else if (label) {
-                  label.remove();
-                }
-              });
+                },
+              );
             }
             if (os.windowManager?.taskbarSystem?.applyTaskbarLabels) {
               try {
@@ -139,9 +165,12 @@ export class TaskbarPositionManager {
                 os.window.wm.taskbarSystem.applyTaskbarLabels();
               } catch {}
             }
-            os.events.emit(BusEvents.SETTINGS_CHANGED, { key: StorageKeys.taskbarShowLabels, value: String(next) });
+            os.events.emit(BusEvents.SETTINGS_CHANGED, {
+              key: StorageKeys.taskbarShowLabels,
+              value: String(next),
+            });
           },
-          showLabels ? "fa-toggle-on" : "fa-toggle-off"
+          showLabels ? "fa-toggle-on" : "fa-toggle-off",
         );
         addSeparator();
         addMenuItem(
@@ -149,7 +178,7 @@ export class TaskbarPositionManager {
           () => {
             os.app.launch("settingsApp");
           },
-          "fa-cog"
+          "fa-cog",
         );
       });
     };
@@ -160,9 +189,13 @@ export class TaskbarPositionManager {
 
   isValidDragTarget(target) {
     if (!(target instanceof Element)) return false;
-    if (document.documentElement.classList.contains("mac-mode") || document.body.classList.contains("mac-mode"))
+    if (
+      document.documentElement.classList.contains("mac-mode") ||
+      document.body.classList.contains("mac-mode")
+    )
       return false;
-    if (document.documentElement.classList.contains("chromeos-mode")) return false;
+    if (document.documentElement.classList.contains("chromeos-mode"))
+      return false;
     const taskbar = target.closest("#taskbar");
     if (!taskbar) return false;
     if (target.closest(".taskbar-item")) return false;
@@ -212,7 +245,7 @@ export class TaskbarPositionManager {
       this.dragState = {
         startX: e.clientX,
         startY: e.clientY,
-        started: false
+        started: false,
       };
       const onMove = (ev) => {
         if (!this.dragState) return;
@@ -239,7 +272,9 @@ export class TaskbarPositionManager {
         const wasStarted = this.dragState.started;
         const clientX = ev.clientX ?? this.dragState.startX;
         const clientY = ev.clientY ?? this.dragState.startY;
-        const finalPos = wasStarted ? this.detectEdgePosition(clientX, clientY) : null;
+        const finalPos = wasStarted
+          ? this.detectEdgePosition(clientX, clientY)
+          : null;
         this.cleanupDrag();
         if (wasStarted && finalPos && finalPos !== this.currentPosition) {
           this.setPosition(finalPos);
@@ -249,8 +284,10 @@ export class TaskbarPositionManager {
           setTimeout(() => {
             this.dragSuppressClick = false;
           }, 300);
-          if (ev && typeof ev.preventDefault === "function") ev.preventDefault();
-          if (ev && typeof ev.stopPropagation === "function") ev.stopPropagation();
+          if (ev && typeof ev.preventDefault === "function")
+            ev.preventDefault();
+          if (ev && typeof ev.stopPropagation === "function")
+            ev.stopPropagation();
         }
         this.dragState = null;
       };
@@ -268,7 +305,7 @@ export class TaskbarPositionManager {
           e.stopPropagation();
         }
       },
-      true
+      true,
     );
   }
 
@@ -278,16 +315,26 @@ export class TaskbarPositionManager {
     const taskbar = $("#taskbar");
     const taskbarWindows = $("#taskbar-windows");
     if (taskbar && taskbarWindows) {
-      const isHorizontal = taskbar.classList.contains("position-bottom") || taskbar.classList.contains("position-top");
+      const isHorizontal =
+        taskbar.classList.contains("position-bottom") ||
+        taskbar.classList.contains("position-top");
       if (isHorizontal) {
-        const justifyMap = { left: "flex-start", center: "center", right: "flex-end" };
-        taskbarWindows.style.justifyContent = justifyMap[alignment] || "flex-start";
+        const justifyMap = {
+          left: "flex-start",
+          center: "center",
+          right: "flex-end",
+        };
+        taskbarWindows.style.justifyContent =
+          justifyMap[alignment] || "flex-start";
       } else {
         taskbarWindows.style.justifyContent = "";
         taskbarWindows.style.alignItems = "center";
       }
     }
-    os.events.emit(BusEvents.SETTINGS_CHANGED, { key: StorageKeys.taskbarAlignment, value: alignment });
+    os.events.emit(BusEvents.SETTINGS_CHANGED, {
+      key: StorageKeys.taskbarAlignment,
+      value: alignment,
+    });
   }
 
   setPosition(position) {
@@ -298,20 +345,30 @@ export class TaskbarPositionManager {
     this.applyPosition(position);
     try {
       import("../account/session.js").then(({ isLoggedIn }) => {
-        import("../account/syncEngine.js").then(({ isSyncEnabledPref, syncPush }) => {
-          if (isLoggedIn() && isSyncEnabledPref()) syncPush().catch(() => {});
-        });
+        import("../account/syncEngine.js").then(
+          ({ isSyncEnabledPref, syncPush }) => {
+            if (isLoggedIn() && isSyncEnabledPref()) syncPush().catch(() => {});
+          },
+        );
       });
     } catch {}
-    const currentAlignment = os.storage.get(StorageKeys.taskbarAlignment) || "left";
+    const currentAlignment =
+      os.storage.get(StorageKeys.taskbarAlignment) || "left";
     const taskbar = $("#taskbar");
     const taskbarWindows = $("#taskbar-windows");
     if (taskbar && taskbarWindows) {
-      const isHorizontal = taskbar.classList.contains("position-bottom") || taskbar.classList.contains("position-top");
+      const isHorizontal =
+        taskbar.classList.contains("position-bottom") ||
+        taskbar.classList.contains("position-top");
       if (isHorizontal) {
         taskbarWindows.style.alignItems = "";
-        const justifyMap = { left: "flex-start", center: "center", right: "flex-end" };
-        taskbarWindows.style.justifyContent = justifyMap[currentAlignment] || "flex-start";
+        const justifyMap = {
+          left: "flex-start",
+          center: "center",
+          right: "flex-end",
+        };
+        taskbarWindows.style.justifyContent =
+          justifyMap[currentAlignment] || "flex-start";
       } else {
         taskbarWindows.style.justifyContent = "";
         taskbarWindows.style.alignItems = "center";
@@ -324,25 +381,45 @@ export class TaskbarPositionManager {
     const desktop = $("#desktop");
 
     if (!taskbar || !desktop) {
-      console.warn("TaskbarPositionManager: Taskbar or desktop element not found, deferring position application");
+      console.warn(
+        "TaskbarPositionManager: Taskbar or desktop element not found, deferring position application",
+      );
       return false;
     }
 
-    taskbar.classList.remove("position-bottom", "position-top", "position-left", "position-right");
-    desktop.classList.remove("taskbar-bottom", "taskbar-top", "taskbar-left", "taskbar-right");
+    taskbar.classList.remove(
+      "position-bottom",
+      "position-top",
+      "position-left",
+      "position-right",
+    );
+    desktop.classList.remove(
+      "taskbar-bottom",
+      "taskbar-top",
+      "taskbar-left",
+      "taskbar-right",
+    );
 
     taskbar.classList.add(`position-${position}`);
     desktop.classList.add(`taskbar-${position}`);
 
     this.updateCSSProperties(position);
-    const currentAlignment = os.storage.get(StorageKeys.taskbarAlignment) || "left";
+    const currentAlignment =
+      os.storage.get(StorageKeys.taskbarAlignment) || "left";
     const taskbarWindows = $("#taskbar-windows");
     if (taskbarWindows) {
-      const isHorizontal = taskbar.classList.contains("position-bottom") || taskbar.classList.contains("position-top");
+      const isHorizontal =
+        taskbar.classList.contains("position-bottom") ||
+        taskbar.classList.contains("position-top");
       if (isHorizontal) {
         taskbarWindows.style.alignItems = "";
-        const justifyMap = { left: "flex-start", center: "center", right: "flex-end" };
-        taskbarWindows.style.justifyContent = justifyMap[currentAlignment] || "flex-start";
+        const justifyMap = {
+          left: "flex-start",
+          center: "center",
+          right: "flex-end",
+        };
+        taskbarWindows.style.justifyContent =
+          justifyMap[currentAlignment] || "flex-start";
       } else {
         taskbarWindows.style.justifyContent = "";
         taskbarWindows.style.alignItems = "center";
@@ -354,8 +431,12 @@ export class TaskbarPositionManager {
 
   updateCSSProperties(position) {
     const root = document.documentElement;
-    const taskbarHeight = getComputedStyle(root).getPropertyValue("--taskbar-h").trim();
-    const taskbarWidthV = getComputedStyle(root).getPropertyValue("--taskbar-v-w").trim() || "4.8em";
+    const taskbarHeight = getComputedStyle(root)
+      .getPropertyValue("--taskbar-h")
+      .trim();
+    const taskbarWidthV =
+      getComputedStyle(root).getPropertyValue("--taskbar-v-w").trim() ||
+      "4.8em";
 
     root.style.setProperty("--taskbar-padding-top", "0px");
     root.style.setProperty("--taskbar-padding-bottom", "0px");

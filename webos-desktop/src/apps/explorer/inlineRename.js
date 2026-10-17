@@ -143,10 +143,16 @@ export async function spawnInlineItem(explorer, inst, isFile) {
     try {
       if (isFile) {
         await explorer.fs.createFile(inst.currentPath, name);
-        speak("New file created! Don't forget to name it something memorable.", ClippyAnimation.Greeting);
+        speak(
+          "New file created! Don't forget to name it something memorable.",
+          ClippyAnimation.Greeting,
+        );
       } else {
         await explorer.fs.createFolder(inst.currentPath, name);
-        speak("New folder created! Don't forget to name it something memorable.", ClippyAnimation.Greeting);
+        speak(
+          "New folder created! Don't forget to name it something memorable.",
+          ClippyAnimation.Greeting,
+        );
       }
       await explorer.renderInstance(inst);
     } catch (err) {

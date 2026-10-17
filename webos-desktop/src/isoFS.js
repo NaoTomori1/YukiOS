@@ -75,8 +75,10 @@ export class ISOFileSystem {
       hasRootDir: this.rootDir !== null,
       rootExtent: this.rootDir?.extent,
       rootSize: this.rootDir?.size,
-      rootEntries: this.rootDir?.entries ? [...this.rootDir.entries.keys()] : null,
-      bufferSize: this.buffer.byteLength
+      rootEntries: this.rootDir?.entries
+        ? [...this.rootDir.entries.keys()]
+        : null,
+      bufferSize: this.buffer.byteLength,
     };
   }
 
@@ -134,7 +136,7 @@ export class ISOFileSystem {
           extent,
           size: fileSize,
           joliet: dirNode.joliet,
-          entries: null
+          entries: null,
         });
       } else {
         entries.set(name, { type: "file", extent, size: fileSize });
@@ -159,10 +161,10 @@ export class ISOFileSystem {
         result[name] = {
           type: "file",
           kind: inferKind(name),
-          icon: "static/icons/file.webp",
+          icon: "static/icons/explorerwin11.png",
           faIcon: null,
           content: "",
-          size: entry.size
+          size: entry.size,
         };
       }
     }

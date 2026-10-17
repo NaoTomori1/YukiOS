@@ -1,6 +1,14 @@
 import "../styles/notepad.css";
 import { ClippyAnimation, speak } from "../ai/clippy.js";
-import { $, $$, setStyle, BaseApp, os, createElement, ServiceKeys } from "../framework.js";
+import {
+  $,
+  $$,
+  setStyle,
+  BaseApp,
+  os,
+  createElement,
+  ServiceKeys,
+} from "../framework.js";
 import { resolveIconUrl } from "../shared/assetResolver.js";
 import { KeybindManager } from "../keybindManager.js";
 import { showAboutDialog } from "../shared/aboutDialog.js";
@@ -16,7 +24,11 @@ export class NotepadApp extends BaseApp {
   open(titleOrOptions = "Untitled", content = "", filePath = null) {
     let title = "Untitled";
     let options = {};
-    if (titleOrOptions && typeof titleOrOptions === "object" && !Array.isArray(titleOrOptions)) {
+    if (
+      titleOrOptions &&
+      typeof titleOrOptions === "object" &&
+      !Array.isArray(titleOrOptions)
+    ) {
       options = titleOrOptions;
       title = options.title || "Untitled";
       content = options.content || "";
@@ -27,10 +39,16 @@ export class NotepadApp extends BaseApp {
 
     const winId = options.forceId || `notepad-${Date.now()}`;
 
-    const win = os.window.create(winId, `${title} - Notepad`, "800px", "600px", {
-      ...options,
-      icon: "static/icons/notepad.webp"
-    });
+    const win = os.window.create(
+      winId,
+      `${title} - Notepad`,
+      "800px",
+      "600px",
+      {
+        ...options,
+        icon: "static/icons/notepad.webp",
+      },
+    );
 
     const htmlContent = `
       <div class="app-menubar">
@@ -107,7 +125,7 @@ export class NotepadApp extends BaseApp {
       zoom: 100,
       statusBarVisible: true,
       findText: "",
-      matchCase: false
+      matchCase: false,
     });
 
     this.setupMenus(win, winId);
@@ -193,7 +211,9 @@ export class NotepadApp extends BaseApp {
       if (!win.contains(e.target)) closeAllMenus();
     };
     document.addEventListener("click", closeHandler);
-    win.addEventListener("remove", () => document.removeEventListener("click", closeHandler));
+    win.addEventListener("remove", () =>
+      document.removeEventListener("click", closeHandler),
+    );
   }
 
   updateStatusBar(win, winId) {
@@ -216,7 +236,9 @@ export class NotepadApp extends BaseApp {
 
     textarea.addEventListener("input", () => this.markModified(win, winId));
     textarea.addEventListener("keydown", () => setTimeout(refresh, 0));
-    ["click", "keyup", "focus", "select", "mouseup"].forEach((ev) => textarea.addEventListener(ev, refresh));
+    ["click", "keyup", "focus", "select", "mouseup"].forEach((ev) =>
+      textarea.addEventListener(ev, refresh),
+    );
   }
 
   updateTitle(win, winId) {
@@ -285,7 +307,7 @@ export class NotepadApp extends BaseApp {
       zoomOut: () => this.zoom(win, winId, -10),
       zoomReset: () => this.zoomReset(win, winId),
       statusBar: () => this.toggleStatusBar(win, winId),
-      about: () => this.showAboutDialog(win)
+      about: () => this.showAboutDialog(win),
     };
     actions[action]?.();
   }
@@ -293,7 +315,9 @@ export class NotepadApp extends BaseApp {
   newFile(win, winId) {
     const instance = this.instances.get(winId);
     if (instance.modified) {
-      this.showSaveConfirmDialog(win, winId, () => this.resetEditor(win, winId));
+      this.showSaveConfirmDialog(win, winId, () =>
+        this.resetEditor(win, winId),
+      );
       return;
     }
     this.resetEditor(win, winId);
@@ -322,7 +346,7 @@ export class NotepadApp extends BaseApp {
         <button class="cancel-btn">Cancel</button>
       </div>
     `,
-      { top: "50%", left: "50%", transform: "translate(-50%, -50%)" }
+      { top: "50%", left: "50%", transform: "translate(-50%, -50%)" },
     );
 
     this.bindDialogButtons(dialog, {
@@ -338,7 +362,7 @@ export class NotepadApp extends BaseApp {
         dialog.remove();
         onDiscard();
       },
-      ".cancel-btn": () => dialog.remove()
+      ".cancel-btn": () => dialog.remove(),
     });
   }
 
@@ -363,7 +387,12 @@ export class NotepadApp extends BaseApp {
     os.fs
       .write(filePath, content)
       .then(() => {
-        this.onFileSaved(win, winId, instance.currentTitle, instance.currentPath);
+        this.onFileSaved(
+          win,
+          winId,
+          instance.currentTitle,
+          instance.currentPath,
+        );
         if (onSuccess) {
           onSuccess();
         }
@@ -376,16 +405,23 @@ export class NotepadApp extends BaseApp {
 
   saveAsFile(win, winId, onSuccess = null) {
     const instance = this.instances.get(winId);
-    const defaultName = instance.currentTitle.includes(".") ? instance.currentTitle : `${instance.currentTitle}.txt`;
+    const defaultName = instance.currentTitle.includes(".")
+      ? instance.currentTitle
+      : `${instance.currentTitle}.txt`;
 
     this.explorerApp.openSaveDialog(defaultName, (path, fileName) => {
       const content = $(".notepad-textarea", win).value;
       const filePath = [...path, fileName];
       os.fs
-        .write(filePath, content, { kind: "text", icon: "static/icons/notepad.webp" })
+        .write(filePath, content, {
+          kind: "text",
+          icon: "static/icons/notepad.webp",
+        })
         .then(() => {
           this.onFileSaved(win, winId, fileName, path);
-          const pathStr = path.length ? `/${path.join("/")}/${fileName}` : `/${fileName}`;
+          const pathStr = path.length
+            ? `/${path.join("/")}/${fileName}`
+            : `/${fileName}`;
           if (onSuccess) {
             onSuccess();
           }
@@ -470,7 +506,7 @@ export class NotepadApp extends BaseApp {
           this.saveFile(win, winId, () => {
             doClose();
           });
-        }
+        },
       );
       return;
     }
@@ -499,7 +535,7 @@ export class NotepadApp extends BaseApp {
         <button class="cancel-btn">Cancel</button>
       </div>
     `,
-      { top: "60px", right: "30px" }
+      { top: "60px", right: "30px" },
     );
 
     const input = $(".find-input", dialog);
@@ -508,13 +544,15 @@ export class NotepadApp extends BaseApp {
     const syncAndRun = (direction) => {
       instance.findText = input.value;
       instance.matchCase = matchCase.checked;
-      direction === "next" ? this.findNext(win, winId) : this.findPrev(win, winId);
+      direction === "next"
+        ? this.findNext(win, winId)
+        : this.findPrev(win, winId);
     };
 
     this.bindDialogButtons(dialog, {
       ".find-next-btn": () => syncAndRun("next"),
       ".find-prev-btn": () => syncAndRun("prev"),
-      ".cancel-btn": () => dialog.remove()
+      ".cancel-btn": () => dialog.remove(),
     });
 
     input.addEventListener("keydown", (e) => {
@@ -534,16 +572,20 @@ export class NotepadApp extends BaseApp {
     const textarea = $(".notepad-textarea", win);
     const text = textarea.value;
     const searchIn = instance.matchCase ? text : text.toLowerCase();
-    const searchFor = instance.matchCase ? instance.findText : instance.findText.toLowerCase();
+    const searchFor = instance.matchCase
+      ? instance.findText
+      : instance.findText.toLowerCase();
     const len = instance.findText.length;
 
     let index;
     if (direction === "next") {
       index = searchIn.indexOf(searchFor, textarea.selectionEnd);
-      if (index === -1 && textarea.selectionEnd > 0) index = searchIn.indexOf(searchFor, 0);
+      if (index === -1 && textarea.selectionEnd > 0)
+        index = searchIn.indexOf(searchFor, 0);
     } else {
       index = searchIn.lastIndexOf(searchFor, textarea.selectionStart - 1);
-      if (index === -1 && textarea.selectionStart < text.length) index = searchIn.lastIndexOf(searchFor);
+      if (index === -1 && textarea.selectionStart < text.length)
+        index = searchIn.lastIndexOf(searchFor);
     }
 
     if (index !== -1) {
@@ -589,7 +631,7 @@ export class NotepadApp extends BaseApp {
         <button class="cancel-btn">Cancel</button>
       </div>
     `,
-      { top: "60px", right: "30px" }
+      { top: "60px", right: "30px" },
     );
 
     const findInput = $(".find-input", dialog);
@@ -608,7 +650,10 @@ export class NotepadApp extends BaseApp {
         this.findNext(win, winId);
       },
       ".replace-btn": () => {
-        const selected = textarea.value.substring(textarea.selectionStart, textarea.selectionEnd);
+        const selected = textarea.value.substring(
+          textarea.selectionStart,
+          textarea.selectionEnd,
+        );
         const findText = findInput.value;
         const replaceText = replaceInput.value;
         const cmp = (s) => (matchCase.checked ? s : s.toLowerCase());
@@ -616,8 +661,11 @@ export class NotepadApp extends BaseApp {
         if (cmp(selected) === cmp(findText)) {
           const start = textarea.selectionStart;
           textarea.value =
-            textarea.value.substring(0, start) + replaceText + textarea.value.substring(textarea.selectionEnd);
-          textarea.selectionStart = textarea.selectionEnd = start + replaceText.length;
+            textarea.value.substring(0, start) +
+            replaceText +
+            textarea.value.substring(textarea.selectionEnd);
+          textarea.selectionStart = textarea.selectionEnd =
+            start + replaceText.length;
           this.markModified(win, winId);
         }
         syncInstance();
@@ -629,13 +677,21 @@ export class NotepadApp extends BaseApp {
         const replaceText = replaceInput.value;
         const newText = matchCase.checked
           ? textarea.value.split(findText).join(replaceText)
-          : textarea.value.replace(new RegExp(findText.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "gi"), replaceText);
+          : textarea.value.replace(
+              new RegExp(findText.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "gi"),
+              replaceText,
+            );
         const count =
-          Math.abs(Math.round((textarea.value.length - newText.length) / (findText.length - replaceText.length))) || 0;
+          Math.abs(
+            Math.round(
+              (textarea.value.length - newText.length) /
+                (findText.length - replaceText.length),
+            ),
+          ) || 0;
         textarea.value = newText;
         this.markModified(win, winId);
       },
-      ".cancel-btn": () => dialog.remove()
+      ".cancel-btn": () => dialog.remove(),
     });
 
     findInput.focus();
@@ -644,7 +700,9 @@ export class NotepadApp extends BaseApp {
 
   showGoToDialog(win, winId) {
     const textarea = $(".notepad-textarea", win);
-    const currentLine = textarea.value.substring(0, textarea.selectionStart).split("\n").length;
+    const currentLine = textarea.value
+      .substring(0, textarea.selectionStart)
+      .split("\n").length;
 
     const dialog = this.createDialog(
       win,
@@ -659,7 +717,7 @@ export class NotepadApp extends BaseApp {
         <button class="cancel-btn">Cancel</button>
       </div>
     `,
-      { top: "60px", right: "30px" }
+      { top: "60px", right: "30px" },
     );
 
     const input = $(".line-input", dialog);
@@ -668,7 +726,10 @@ export class NotepadApp extends BaseApp {
       const lineNum = parseInt(input.value);
       const allLines = textarea.value.split("\n");
       if (lineNum < 1 || lineNum > allLines.length) {
-        os.notify.send("Go To Line", `Line number must be between 1 and ${allLines.length}`);
+        os.notify.send(
+          "Go To Line",
+          `Line number must be between 1 and ${allLines.length}`,
+        );
         return;
       }
       let pos = 0;
@@ -681,7 +742,7 @@ export class NotepadApp extends BaseApp {
 
     this.bindDialogButtons(dialog, {
       ".goto-btn": goToLine,
-      ".cancel-btn": () => dialog.remove()
+      ".cancel-btn": () => dialog.remove(),
     });
 
     input.addEventListener("keydown", (e) => {
@@ -698,7 +759,7 @@ export class NotepadApp extends BaseApp {
     instance.wordWrap = !instance.wordWrap;
     setStyle(textarea, {
       whiteSpace: instance.wordWrap ? "pre-wrap" : "pre",
-      overflowX: instance.wordWrap ? "hidden" : "auto"
+      overflowX: instance.wordWrap ? "hidden" : "auto",
     });
     checkmark.style.visibility = instance.wordWrap ? "visible" : "hidden";
   }
@@ -706,7 +767,7 @@ export class NotepadApp extends BaseApp {
   parseFontStyle(styleValue) {
     return {
       fontWeight: styleValue.includes("bold") ? "bold" : "normal",
-      fontStyle: styleValue.includes("italic") ? "italic" : "normal"
+      fontStyle: styleValue.includes("italic") ? "italic" : "normal",
     };
   }
 
@@ -715,12 +776,21 @@ export class NotepadApp extends BaseApp {
     const computed = window.getComputedStyle(textarea);
 
     const currentFamily = textarea.style.fontFamily || computed.fontFamily;
-    const currentSize = parseInt(textarea.style.fontSize) || parseInt(computed.fontSize) || 14;
+    const currentSize =
+      parseInt(textarea.style.fontSize) || parseInt(computed.fontSize) || 14;
     const isBold =
       (textarea.style.fontWeight || computed.fontWeight) === "bold" ||
       parseInt(textarea.style.fontWeight || computed.fontWeight) >= 700;
-    const isItalic = (textarea.style.fontStyle || computed.fontStyle) === "italic";
-    const currentStyleValue = isBold && isItalic ? "bold italic" : isBold ? "bold" : isItalic ? "italic" : "normal";
+    const isItalic =
+      (textarea.style.fontStyle || computed.fontStyle) === "italic";
+    const currentStyleValue =
+      isBold && isItalic
+        ? "bold italic"
+        : isBold
+          ? "bold"
+          : isItalic
+            ? "italic"
+            : "normal";
 
     const fontFamilies = [
       { label: "Consolas", value: "Consolas, monospace" },
@@ -731,22 +801,27 @@ export class NotepadApp extends BaseApp {
       { label: "JetBrains Mono", value: "'JetBrains Mono', monospace" },
       { label: "Arial", value: "Arial, sans-serif" },
       { label: "Segoe UI", value: "'Segoe UI', sans-serif" },
-      { label: "Verdana", value: "Verdana, sans-serif" }
+      { label: "Verdana", value: "Verdana, sans-serif" },
     ];
 
     const toOptions = (arr, selectedFn) =>
       arr
-        .map(({ label, value }) => `<option value="${value}" ${selectedFn(value) ? "selected" : ""}>${label}</option>`)
+        .map(
+          ({ label, value }) =>
+            `<option value="${value}" ${selectedFn(value) ? "selected" : ""}>${label}</option>`,
+        )
         .join("");
 
     const fontStyleOptions = [
       { label: "Regular", value: "normal" },
       { label: "Italic", value: "italic" },
       { label: "Bold", value: "bold" },
-      { label: "Bold Italic", value: "bold italic" }
+      { label: "Bold Italic", value: "bold italic" },
     ];
 
-    const sizes = [8, 9, 10, 11, 12, 14, 16, 18, 20, 22, 24, 26, 28, 36, 48, 72];
+    const sizes = [
+      8, 9, 10, 11, 12, 14, 16, 18, 20, 22, 24, 26, 28, 36, 48, 72,
+    ];
 
     const dialog = this.createDialog(
       win,
@@ -773,7 +848,7 @@ export class NotepadApp extends BaseApp {
         <button class="cancel-btn">Cancel</button>
       </div>
     `,
-      { top: "60px", right: "30px" }
+      { top: "60px", right: "30px" },
     );
 
     const fontFamilyEl = $(".font-family", dialog);
@@ -787,28 +862,32 @@ export class NotepadApp extends BaseApp {
         fontFamily: fontFamilyEl.value,
         fontSize: fontSizeEl.value + "px",
         fontWeight,
-        fontStyle
+        fontStyle,
       });
     };
 
-    [fontFamilyEl, fontStyleEl, fontSizeEl].forEach((el) => el.addEventListener("change", updatePreview));
+    [fontFamilyEl, fontStyleEl, fontSizeEl].forEach((el) =>
+      el.addEventListener("change", updatePreview),
+    );
 
     this.bindDialogButtons(dialog, {
       ".ok-btn": () => {
-        const { fontWeight, fontStyle } = this.parseFontStyle(fontStyleEl.value);
+        const { fontWeight, fontStyle } = this.parseFontStyle(
+          fontStyleEl.value,
+        );
         const instance = this.instances.get(winId);
         setStyle(textarea, {
           fontFamily: fontFamilyEl.value,
           fontSize: fontSizeEl.value + "px",
           fontWeight,
-          fontStyle
+          fontStyle,
         });
         instance.baseFontSize = parseInt(fontSizeEl.value);
         instance.zoom = 100;
         this.updateStatusBar(win, winId);
         dialog.remove();
       },
-      ".cancel-btn": () => dialog.remove()
+      ".cancel-btn": () => dialog.remove(),
     });
   }
 
@@ -817,7 +896,9 @@ export class NotepadApp extends BaseApp {
     if (!instance) return;
     const textarea = $(".notepad-textarea", win);
     instance.zoom = Math.max(10, Math.min(500, instance.zoom + delta));
-    setStyle(textarea, { fontSize: (instance.baseFontSize * instance.zoom) / 100 + "px" });
+    setStyle(textarea, {
+      fontSize: (instance.baseFontSize * instance.zoom) / 100 + "px",
+    });
     this.updateStatusBar(win, winId);
   }
 
@@ -835,8 +916,12 @@ export class NotepadApp extends BaseApp {
     const statusBar = $(".notepad-statusbar", win);
     const checkmark = $('[data-action="statusBar"] .checkmark', win);
     instance.statusBarVisible = !instance.statusBarVisible;
-    setStyle(statusBar, { display: instance.statusBarVisible ? "flex" : "none" });
-    checkmark.style.visibility = instance.statusBarVisible ? "visible" : "hidden";
+    setStyle(statusBar, {
+      display: instance.statusBarVisible ? "flex" : "none",
+    });
+    checkmark.style.visibility = instance.statusBarVisible
+      ? "visible"
+      : "hidden";
   }
 
   showAboutDialog(win) {
@@ -845,7 +930,7 @@ export class NotepadApp extends BaseApp {
       version: "1.0.0",
       description: "A simple text editor for YukiOS.",
       icon: "static/icons/notepad.webp",
-      iconType: "image"
+      iconType: "image",
     });
   }
 
@@ -871,8 +956,12 @@ export class NotepadApp extends BaseApp {
       if (this.idleTimer) clearTimeout(this.idleTimer);
       if (textarea.value.trim().length > 0) {
         this.idleTimer = setTimeout(
-          () => speak("Still there? I can check your spelling.", ClippyAnimation.IdleEyeBrowRaise),
-          this.idleDelay
+          () =>
+            speak(
+              "Still there? I can check your spelling.",
+              ClippyAnimation.IdleEyeBrowRaise,
+            ),
+          this.idleDelay,
         );
       }
     };

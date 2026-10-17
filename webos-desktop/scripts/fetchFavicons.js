@@ -1,4 +1,11 @@
-import { readFileSync, writeFileSync, existsSync, mkdirSync, statSync, rmSync } from "fs";
+import {
+  readFileSync,
+  writeFileSync,
+  existsSync,
+  mkdirSync,
+  statSync,
+  rmSync,
+} from "fs";
 import { join, dirname, resolve } from "path";
 import { fileURLToPath } from "url";
 import { createRequire } from "module";
@@ -39,12 +46,17 @@ function ensureDirs() {
 
 function loadWebApps() {
   const text = readFileSync(manifestPath, "utf-8");
-  const serviceEntries = [...text.matchAll(/serviceKey:\s*"([^"]+)"/g)].map((m) => ({ key: m[1], index: m.index }));
-  const targetEntries = [...text.matchAll(/targetUrl:\s*"([^"]+)"/g)].map((m) => ({ url: m[1], index: m.index }));
+  const serviceEntries = [...text.matchAll(/serviceKey:\s*"([^"]+)"/g)].map(
+    (m) => ({ key: m[1], index: m.index }),
+  );
+  const targetEntries = [...text.matchAll(/targetUrl:\s*"([^"]+)"/g)].map(
+    (m) => ({ url: m[1], index: m.index }),
+  );
   const apps = [];
   for (let i = 0; i < serviceEntries.length; i++) {
     const svc = serviceEntries[i];
-    const nextSvcIndex = i + 1 < serviceEntries.length ? serviceEntries[i + 1].index : Infinity;
+    const nextSvcIndex =
+      i + 1 < serviceEntries.length ? serviceEntries[i + 1].index : Infinity;
     let best = null;
     for (const t of targetEntries) {
       if (t.index > svc.index && t.index < nextSvcIndex) {
@@ -135,7 +147,8 @@ function parseFaviconLinks(html, baseUrl) {
       }
     }
     if (rel.includes("apple-touch-icon") && sizeValue === 0) sizeValue = 180;
-    if (rel.includes("apple-touch-icon-precomposed") && sizeValue === 0) sizeValue = 180;
+    if (rel.includes("apple-touch-icon-precomposed") && sizeValue === 0)
+      sizeValue = 180;
     results.push({ href: absolute, sizes, rel, sizeValue });
   }
   results.sort((a, b) => {
@@ -175,7 +188,7 @@ async function fetchManifestIcons(html, baseUrl) {
     const res = await fetchWithTimeout(
       manifestUrl,
       { headers: { "User-Agent": USER_AGENT, Accept: "application/json,*/*" } },
-      TIMEOUT_HTML
+      TIMEOUT_HTML,
     );
     if (!res.ok) return icons;
     const text = await res.text();
@@ -197,7 +210,12 @@ async function fetchManifestIcons(html, baseUrl) {
           if (!Number.isNaN(w) && w > sizeValue) sizeValue = w;
         }
       }
-      icons.push({ href: src, sizes: icon.sizes || "", rel: "manifest-icon", sizeValue });
+      icons.push({
+        href: src,
+        sizes: icon.sizes || "",
+        rel: "manifest-icon",
+        sizeValue,
+      });
     }
     icons.sort((a, b) => b.sizeValue - a.sizeValue);
   } catch {}
@@ -210,11 +228,21 @@ function buildFallbackList(targetUrl) {
   const origin = u.origin;
   const list = [];
   const hostSpecific = {
-    "newgrounds.com": ["https://www.newgrounds.com/_guard/favicon.ico", "https://www.newgrounds.com/favicon.ico"],
+    "newgrounds.com": [
+      "https://www.newgrounds.com/_guard/favicon.ico",
+      "https://www.newgrounds.com/favicon.ico",
+    ],
     "www.newgrounds.com": ["https://www.newgrounds.com/_guard/favicon.ico"],
-    "mail.google.com": ["https://ssl.gstatic.com/images/branding/product/1x/gmail_2020q4_32dp.png"],
-    "docs.google.com": ["https://ssl.gstatic.com/images/branding/product/1x/docs_2020q4_32dp.png"],
-    "chat.deepseek.com": ["https://www.deepseek.com/favicon.ico", "https://chat.deepseek.com/favicon.ico"],
+    "mail.google.com": [
+      "https://ssl.gstatic.com/images/branding/product/1x/gmail_2020q4_32dp.png",
+    ],
+    "docs.google.com": [
+      "https://ssl.gstatic.com/images/branding/product/1x/docs_2020q4_32dp.png",
+    ],
+    "chat.deepseek.com": [
+      "https://www.deepseek.com/favicon.ico",
+      "https://chat.deepseek.com/favicon.ico",
+    ],
     "codepen.io": [],
     "gitlab.com": ["https://about.gitlab.com/favicon.ico"],
     "grok.x.ai": ["https://x.ai/favicon.ico"],
@@ -224,7 +252,7 @@ function buildFallbackList(targetUrl) {
     "tiktok.com": ["https://www.tiktok.com/favicon.ico"],
     "www.tiktok.com": ["https://www.tiktok.com/favicon.ico"],
     "proton.me": [],
-    "play.geforcenow.com": []
+    "play.geforcenow.com": [],
   };
   const overrides = hostSpecific[host] || [];
   for (const o of overrides) if (!list.includes(o)) list.push(o);
@@ -239,7 +267,10 @@ function buildFallbackList(targetUrl) {
     const wwwHost = `www.${host}`;
     const wwwOrigin = `${u.protocol}//${wwwHost}`;
     const wwwFavicon = `${wwwOrigin}/favicon.ico`;
-    if (["notion.so", "tiktok.com", "newgrounds.com"].includes(host) && !list.includes(wwwFavicon)) {
+    if (
+      ["notion.so", "tiktok.com", "newgrounds.com"].includes(host) &&
+      !list.includes(wwwFavicon)
+    ) {
       list.splice(1, 0, wwwFavicon);
     }
   }
@@ -262,19 +293,29 @@ function buildFallbackList(targetUrl) {
 async function tryFetchImage(candidate) {
   if (candidate.startsWith("data:")) {
     const buf = decodeDataUri(candidate);
-    if (!buf || buf.length < 50) return { ok: false, status: 0, buffer: null, contentType: "" };
+    if (!buf || buf.length < 50)
+      return { ok: false, status: 0, buffer: null, contentType: "" };
     let ct = "image/svg+xml";
     if (candidate.includes("image/png")) ct = "image/png";
     else if (candidate.includes("image/jpeg")) ct = "image/jpeg";
     else if (candidate.includes("image/webp")) ct = "image/webp";
-    return { ok: true, status: 200, buffer: buf, contentType: ct, sourceUrl: candidate };
+    return {
+      ok: true,
+      status: 200,
+      buffer: buf,
+      contentType: ct,
+      sourceUrl: candidate,
+    };
   }
   let headStatus = null;
   try {
     const headRes = await fetchWithTimeout(
       candidate,
-      { method: "HEAD", headers: { "User-Agent": USER_AGENT, Accept: "image/*,*/*;q=0.8" } },
-      TIMEOUT_HEAD
+      {
+        method: "HEAD",
+        headers: { "User-Agent": USER_AGENT, Accept: "image/*,*/*;q=0.8" },
+      },
+      TIMEOUT_HEAD,
     );
     headStatus = headRes.status;
   } catch (e) {
@@ -283,24 +324,76 @@ async function tryFetchImage(candidate) {
   try {
     const res = await fetchWithTimeout(
       candidate,
-      { headers: { "User-Agent": USER_AGENT, Accept: "image/avif,image/webp,image/apng,image/*,*/*;q=0.8" } },
-      TIMEOUT_IMAGE
+      {
+        headers: {
+          "User-Agent": USER_AGENT,
+          Accept: "image/avif,image/webp,image/apng,image/*,*/*;q=0.8",
+        },
+      },
+      TIMEOUT_IMAGE,
     );
-    if (!res.ok) return { ok: false, status: res.status, buffer: null, contentType: "", headStatus };
+    if (!res.ok)
+      return {
+        ok: false,
+        status: res.status,
+        buffer: null,
+        contentType: "",
+        headStatus,
+      };
     const ct = res.headers.get("content-type") || "";
     const ab = await res.arrayBuffer();
     const buffer = Buffer.from(ab);
-    if (buffer.length < 80) return { ok: false, status: res.status, buffer: null, contentType: ct, headStatus };
+    if (buffer.length < 80)
+      return {
+        ok: false,
+        status: res.status,
+        buffer: null,
+        contentType: ct,
+        headStatus,
+      };
     const ctLower = ct.toLowerCase();
-    if (ctLower.includes("text/html") || ctLower.includes("application/xhtml+xml"))
-      return { ok: false, status: res.status, buffer: null, contentType: ct, headStatus };
+    if (
+      ctLower.includes("text/html") ||
+      ctLower.includes("application/xhtml+xml")
+    )
+      return {
+        ok: false,
+        status: res.status,
+        buffer: null,
+        contentType: ct,
+        headStatus,
+      };
     const headStr = buffer.toString("utf8", 0, 2000).trim().toLowerCase();
     const headSlice = headStr.slice(0, 500);
-    if (headSlice.startsWith("<!doctype") || headSlice.startsWith("<html") || headSlice.includes("<html"))
-      return { ok: false, status: res.status, buffer: null, contentType: ct, headStatus };
-    return { ok: true, status: res.status, buffer, contentType: ct, headStatus, sourceUrl: candidate };
+    if (
+      headSlice.startsWith("<!doctype") ||
+      headSlice.startsWith("<html") ||
+      headSlice.includes("<html")
+    )
+      return {
+        ok: false,
+        status: res.status,
+        buffer: null,
+        contentType: ct,
+        headStatus,
+      };
+    return {
+      ok: true,
+      status: res.status,
+      buffer,
+      contentType: ct,
+      headStatus,
+      sourceUrl: candidate,
+    };
   } catch (e) {
-    return { ok: false, status: 0, buffer: null, contentType: "", headStatus, error: e.message };
+    return {
+      ok: false,
+      status: 0,
+      buffer: null,
+      contentType: "",
+      headStatus,
+      error: e.message,
+    };
   }
 }
 
@@ -313,14 +406,19 @@ async function collectCandidates(targetUrl) {
       {
         headers: {
           "User-Agent": USER_AGENT,
-          Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,image/*;q=0.8,*/*;q=0.7"
-        }
+          Accept:
+            "text/html,application/xhtml+xml,application/xml;q=0.9,image/*;q=0.8,*/*;q=0.7",
+        },
       },
-      TIMEOUT_HTML
+      TIMEOUT_HTML,
     );
     if (res.ok) {
       const ct = res.headers.get("content-type") || "";
-      if (ct.includes("text/html") || ct.includes("application/xhtml") || ct === "") {
+      if (
+        ct.includes("text/html") ||
+        ct.includes("application/xhtml") ||
+        ct === ""
+      ) {
         html = await res.text();
       } else {
         html = "";
@@ -332,7 +430,8 @@ async function collectCandidates(targetUrl) {
     for (const l of links) parsed.push(l.href);
     try {
       const manifestIcons = await fetchManifestIcons(html, targetUrl);
-      for (const mi of manifestIcons) if (!parsed.includes(mi.href)) parsed.push(mi.href);
+      for (const mi of manifestIcons)
+        if (!parsed.includes(mi.href)) parsed.push(mi.href);
     } catch {}
     const filtered = parsed.filter((href) => {
       if (href.startsWith("data:;")) return false;
@@ -360,11 +459,31 @@ function detectExtension(buffer, contentType) {
   if (ct.includes("icon") || ct.includes("ico")) return "ico";
   if (ct.includes("webp")) return "webp";
   if (buffer.length >= 12) {
-    if (buffer[0] === 0x89 && buffer[1] === 0x50 && buffer[2] === 0x4e && buffer[3] === 0x47) return "png";
-    if (buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff) return "jpg";
-    if (buffer[0] === 0x47 && buffer[1] === 0x49 && buffer[2] === 0x46) return "gif";
-    if (buffer[0] === 0x52 && buffer[1] === 0x49 && buffer[2] === 0x46 && buffer[3] === 0x46) return "webp";
-    if (buffer[0] === 0x00 && buffer[1] === 0x00 && buffer[2] === 0x01 && buffer[3] === 0x00) return "ico";
+    if (
+      buffer[0] === 0x89 &&
+      buffer[1] === 0x50 &&
+      buffer[2] === 0x4e &&
+      buffer[3] === 0x47
+    )
+      return "png";
+    if (buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff)
+      return "jpg";
+    if (buffer[0] === 0x47 && buffer[1] === 0x49 && buffer[2] === 0x46)
+      return "gif";
+    if (
+      buffer[0] === 0x52 &&
+      buffer[1] === 0x49 &&
+      buffer[2] === 0x46 &&
+      buffer[3] === 0x46
+    )
+      return "webp";
+    if (
+      buffer[0] === 0x00 &&
+      buffer[1] === 0x00 &&
+      buffer[2] === 0x01 &&
+      buffer[3] === 0x00
+    )
+      return "ico";
   }
   const head = buffer.toString("utf8", 0, 500).trim();
   if (head.startsWith("<svg") || head.includes("<svg")) return "svg";
@@ -392,21 +511,32 @@ async function convertToWebp(buffer, contentType, outPath) {
     try {
       const head = buffer.toString("utf8", 0, 500).trim();
       const ico = isIcoBuffer(buffer) ? decodeIco(buffer) : null;
-      const isSvgString = !ico && (contentType.includes("svg") || head.startsWith("<svg") || head.includes("<svg"));
+      const isSvgString =
+        !ico &&
+        (contentType.includes("svg") ||
+          head.startsWith("<svg") ||
+          head.includes("<svg"));
 
       let pipeline;
       if (ico && ico.format === "raw") {
-        pipeline = sharp(ico.data, { raw: { width: ico.width, height: ico.height, channels: 4 } });
+        pipeline = sharp(ico.data, {
+          raw: { width: ico.width, height: ico.height, channels: 4 },
+        });
       } else if (ico) {
         pipeline = sharp(ico.data);
       } else if (isSvgString) {
-        pipeline = sharp(Buffer.from(buffer.toString("utf8")), { density: 128 });
+        pipeline = sharp(Buffer.from(buffer.toString("utf8")), {
+          density: 128,
+        });
       } else {
         pipeline = sharp(buffer, { animated: false });
       }
 
       const outBuffer = await pipeline
-        .resize(128, 128, { fit: "contain", background: { r: 0, g: 0, b: 0, alpha: 0 } })
+        .resize(128, 128, {
+          fit: "contain",
+          background: { r: 0, g: 0, b: 0, alpha: 0 },
+        })
         .webp({ quality: 85 })
         .toBuffer();
       writeFileSync(outPath, outBuffer);
@@ -414,7 +544,12 @@ async function convertToWebp(buffer, contentType, outPath) {
     } catch (e) {
       try {
         const target = writeRawWithExtension(buffer, contentType, outPath);
-        return { bytes: buffer.length, converted: false, error: e.message, fileName: target };
+        return {
+          bytes: buffer.length,
+          converted: false,
+          error: e.message,
+          fileName: target,
+        };
       } catch (err) {
         throw err;
       }
@@ -452,7 +587,7 @@ async function processApp(app, cache) {
     try {
       const stat = statSync(existingPrimaryFile(slug) || outPrimary);
       console.log(
-        `[skip] ${slug} (${app.serviceKey} -> ${app.targetUrl}) exists ${stat.size} bytes age ${((Date.now() - stat.mtimeMs) / 1000 / 3600) | 0}h`
+        `[skip] ${slug} (${app.serviceKey} -> ${app.targetUrl}) exists ${stat.size} bytes age ${((Date.now() - stat.mtimeMs) / 1000 / 3600) | 0}h`,
       );
       const existing = cache.find((c) => c.slug === slug);
       if (existing) {
@@ -465,7 +600,7 @@ async function processApp(app, cache) {
           sourceUrl: existing ? existing.sourceUrl : "",
           fetchedAt: new Date().toISOString(),
           bytes: stat.size,
-          status: "cached"
+          status: "cached",
         });
       }
       return { slug, status: "cached" };
@@ -476,30 +611,41 @@ async function processApp(app, cache) {
   let lastHead = null;
   for (const cand of candidates) {
     const result = await tryFetchImage(cand);
-    lastHead = result.headStatus !== undefined ? result.headStatus : result.status;
+    lastHead =
+      result.headStatus !== undefined ? result.headStatus : result.status;
     if (result.ok && result.buffer) {
       success = result;
       break;
     }
   }
   if (!success) {
-    console.log(`[fail] ${slug} (${app.targetUrl}) all ${candidates.length} candidates failed lastHead=${lastHead}`);
+    console.log(
+      `[fail] ${slug} (${app.targetUrl}) all ${candidates.length} candidates failed lastHead=${lastHead}`,
+    );
     cache.push({
       slug,
       url: app.targetUrl,
       sourceUrl: candidates[0] || "",
       fetchedAt: new Date().toISOString(),
       bytes: 0,
-      status: "fail"
+      status: "fail",
     });
     return { slug, status: "fail" };
   }
   try {
-    const conv = await convertToWebp(success.buffer, success.contentType, outPrimary);
+    const conv = await convertToWebp(
+      success.buffer,
+      success.contentType,
+      outPrimary,
+    );
     const bytes = conv.bytes;
-    const convertedLabel = conv.converted ? "webp" : sharp ? "fallback" : "no-sharp";
+    const convertedLabel = conv.converted
+      ? "webp"
+      : sharp
+        ? "fallback"
+        : "no-sharp";
     console.log(
-      `[ok] ${slug} <- ${success.sourceUrl} head=${success.headStatus ?? "-"} get=${success.status} bytes=${success.buffer.length} -> ${bytes} ${convertedLabel}`
+      `[ok] ${slug} <- ${success.sourceUrl} head=${success.headStatus ?? "-"} get=${success.status} bytes=${success.buffer.length} -> ${bytes} ${convertedLabel}`,
     );
     const entry = {
       slug,
@@ -507,7 +653,7 @@ async function processApp(app, cache) {
       sourceUrl: success.sourceUrl,
       fetchedAt: new Date().toISOString(),
       bytes,
-      status: "ok"
+      status: "ok",
     };
     const idx = cache.findIndex((c) => c.slug === slug);
     if (idx >= 0) cache[idx] = entry;
@@ -521,7 +667,7 @@ async function processApp(app, cache) {
       sourceUrl: success.sourceUrl,
       fetchedAt: new Date().toISOString(),
       bytes: 0,
-      status: "fail"
+      status: "fail",
     });
     return { slug, status: "fail" };
   }
@@ -535,8 +681,12 @@ async function main() {
   ensureDirs();
   const apps = loadWebApps();
   console.log(`Found ${apps.length} web apps`);
-  for (const a of apps) console.log(` - ${a.serviceKey} -> ${a.targetUrl} => ${serviceKeyToSlug(a.serviceKey)}.webp`);
-  if (!sharp) console.log("WARN sharp not available, saving original bytes as .webp");
+  for (const a of apps)
+    console.log(
+      ` - ${a.serviceKey} -> ${a.targetUrl} => ${serviceKeyToSlug(a.serviceKey)}.webp`,
+    );
+  if (!sharp)
+    console.log("WARN sharp not available, saving original bytes as .webp");
   let cache = [];
   if (existsSync(cachePath)) {
     try {
@@ -561,7 +711,9 @@ async function main() {
     }
   }
   writeFileSync(cachePath, JSON.stringify(cache, null, 2) + "\n");
-  console.log(`Done ok=${okCount} cached=${cachedCount} fail=${failCount} total=${apps.length}`);
+  console.log(
+    `Done ok=${okCount} cached=${cachedCount} fail=${failCount} total=${apps.length}`,
+  );
   console.log(`Primary: ${primaryOut}`);
   console.log(`Cache: ${cachePath}`);
   if (failCount > 0) {

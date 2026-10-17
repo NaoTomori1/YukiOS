@@ -59,7 +59,10 @@ export class CanvasOverlay {
         const contentEnd = this.settingsContentEnd || 0;
         const maxScroll = Math.max(0, contentEnd - scrollableBottom + 20);
         this.settingsScrollY += e.deltaY * 0.5;
-        this.settingsScrollY = Math.max(0, Math.min(maxScroll, this.settingsScrollY));
+        this.settingsScrollY = Math.max(
+          0,
+          Math.min(maxScroll, this.settingsScrollY),
+        );
         this.render();
       } else if (this.mode === "achievements") {
         e.preventDefault();
@@ -68,9 +71,15 @@ export class CanvasOverlay {
         const scrollTop = 114;
         const scrollHeight = scrollBottom - scrollTop;
         const contentEnd = this.achievementsContentEnd || 0;
-        const maxScroll = Math.max(0, contentEnd - scrollTop - scrollHeight + 20);
+        const maxScroll = Math.max(
+          0,
+          contentEnd - scrollTop - scrollHeight + 20,
+        );
         this.achievementsScrollY += e.deltaY * 0.5;
-        this.achievementsScrollY = Math.max(0, Math.min(maxScroll, this.achievementsScrollY));
+        this.achievementsScrollY = Math.max(
+          0,
+          Math.min(maxScroll, this.achievementsScrollY),
+        );
         this.render();
       }
     };
@@ -84,11 +93,15 @@ export class CanvasOverlay {
     if (mode === "settings") {
       this.settingsScrollY = 0;
       this.settingsCategory = null;
-      this.canvas.addEventListener("wheel", this.onWheelBound, { passive: false });
+      this.canvas.addEventListener("wheel", this.onWheelBound, {
+        passive: false,
+      });
     }
     if (mode === "achievements") {
       this.achievementsScrollY = 0;
-      this.canvas.addEventListener("wheel", this.onWheelBound, { passive: false });
+      this.canvas.addEventListener("wheel", this.onWheelBound, {
+        passive: false,
+      });
     }
     this.resizeBound();
     this.render();
@@ -122,7 +135,12 @@ export class CanvasOverlay {
 
   hitTest(x, y) {
     for (const btn of this.buttons) {
-      if (x >= btn.x && x <= btn.x + btn.w && y >= btn.y && y <= btn.y + btn.h) {
+      if (
+        x >= btn.x &&
+        x <= btn.x + btn.w &&
+        y >= btn.y &&
+        y <= btn.y + btn.h
+      ) {
         return btn;
       }
     }
@@ -152,7 +170,10 @@ export class CanvasOverlay {
     ctx.fillStyle = "rgba(0,0,0,0.3)";
     ctx.fillRect(0, 0, W, H);
 
-    const panelWidth = Math.min(Math.max(Math.round(W * 0.38), 360), Math.round(W * 0.45));
+    const panelWidth = Math.min(
+      Math.max(Math.round(W * 0.38), 360),
+      Math.round(W * 0.45),
+    );
     ctx.fillStyle = "rgba(12, 12, 16, 0.95)";
     ctx.fillRect(0, 0, panelWidth, H);
     ctx.strokeStyle = "rgba(255,255,255,0.06)";
@@ -175,9 +196,12 @@ export class CanvasOverlay {
       { label: "Settings", id: "settings" },
       { label: "Achievements", id: "achievements" },
       { label: "Room Colors", id: "colors" },
-      { label: "Exit Room", id: "exit" }
+      { label: "Exit Room", id: "exit" },
     ];
-    if (!this.gameState || (!this.gameState.active && !this.gameState.completed)) {
+    if (
+      !this.gameState ||
+      (!this.gameState.active && !this.gameState.completed)
+    ) {
       items.splice(3, 0, { label: "Start Sorting", id: "startGame" });
     }
 
@@ -195,13 +219,22 @@ export class CanvasOverlay {
       this.roundRect(ctx, bx, by, bw, bh, 10);
       ctx.stroke();
 
-      ctx.fillStyle = i === items.length - 1 ? "rgba(255, 200, 200, 0.65)" : "rgba(255, 255, 255, 0.75)";
+      ctx.fillStyle =
+        i === items.length - 1
+          ? "rgba(255, 200, 200, 0.65)"
+          : "rgba(255, 255, 255, 0.75)";
       ctx.font = "16px sans-serif";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       ctx.fillText(items[i].label, bx + bw / 2, by + bh / 2);
 
-      this.buttons.push({ x: bx | 0, y: by | 0, w: bw | 0, h: bh | 0, id: items[i].id });
+      this.buttons.push({
+        x: bx | 0,
+        y: by | 0,
+        w: bw | 0,
+        h: bh | 0,
+        id: items[i].id,
+      });
     }
   }
 
@@ -213,7 +246,10 @@ export class CanvasOverlay {
     const minutes = Math.floor(gs.elapsed / 60);
     const seconds = Math.floor(gs.elapsed % 60);
     const timeStr = `${minutes}:${String(seconds).padStart(2, "0")}`;
-    const accuracy = gs.totalGameCases > 0 ? Math.round((gs.shelvedCorrect / gs.totalGameCases) * 100) : 0;
+    const accuracy =
+      gs.totalGameCases > 0
+        ? Math.round((gs.shelvedCorrect / gs.totalGameCases) * 100)
+        : 0;
 
     ctx.fillStyle = "rgba(15, 15, 20, 0.93)";
     this.roundRect(ctx, 12, 12, 260, 80, 10);
@@ -246,7 +282,8 @@ export class CanvasOverlay {
     ctx.fillStyle = "rgba(255, 255, 255, 0.1)";
     this.roundRect(ctx, 24, 68, 236, 4, 2);
     ctx.fill();
-    const progress = gs.totalGameCases > 0 ? gs.shelvedCorrect / gs.totalGameCases : 0;
+    const progress =
+      gs.totalGameCases > 0 ? gs.shelvedCorrect / gs.totalGameCases : 0;
     ctx.fillStyle = "rgba(68, 255, 136, 0.6)";
     this.roundRect(ctx, 24, 68, 236 * progress, 4, 2);
     ctx.fill();
@@ -256,11 +293,17 @@ export class CanvasOverlay {
       const fbAge = (performance.now() - fb.timestamp) / 1000;
       if (fbAge < 1.5) {
         const alpha = Math.max(0, 1 - fbAge / 1.5);
-        ctx.fillStyle = fb.correct ? `rgba(68, 255, 136, ${alpha * 0.9})` : `rgba(255, 68, 68, ${alpha * 0.9})`;
+        ctx.fillStyle = fb.correct
+          ? `rgba(68, 255, 136, ${alpha * 0.9})`
+          : `rgba(255, 68, 68, ${alpha * 0.9})`;
         ctx.font = "bold 28px sans-serif";
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
-        ctx.fillText(fb.correct ? "✓ Correct!" : "✗ Wrong shelf!", W / 2, H / 2 - 40);
+        ctx.fillText(
+          fb.correct ? "✓ Correct!" : "✗ Wrong shelf!",
+          W / 2,
+          H / 2 - 40,
+        );
       } else {
         this.placementFeedback = null;
       }
@@ -276,7 +319,7 @@ export class CanvasOverlay {
         action: "Action",
         adventure: "Adventure",
         simulation: "Simulation",
-        rpg: "RPG"
+        rpg: "RPG",
       };
       const genreColors = {
         horror: "#ff4444",
@@ -286,7 +329,7 @@ export class CanvasOverlay {
         action: "#ff8800",
         adventure: "#ffcc00",
         simulation: "#66cccc",
-        rpg: "#ff44aa"
+        rpg: "#ff44aa",
       };
       const label = genreInfo[this.heldBookGenre] || this.heldBookGenre;
       const color = genreColors[this.heldBookGenre] || "#ffffff";
@@ -310,7 +353,10 @@ export class CanvasOverlay {
     ctx.fillStyle = "rgba(0,0,0,0.3)";
     ctx.fillRect(0, 0, W, H);
 
-    const panelWidth = Math.min(Math.max(Math.round(W * 0.38), 360), Math.round(W * 0.45));
+    const panelWidth = Math.min(
+      Math.max(Math.round(W * 0.38), 360),
+      Math.round(W * 0.45),
+    );
     ctx.fillStyle = "rgba(12, 12, 16, 0.95)";
     ctx.fillRect(0, 0, panelWidth, H);
     ctx.strokeStyle = "rgba(255,255,255,0.06)";
@@ -333,7 +379,7 @@ export class CanvasOverlay {
       `Time: ${results.time}`,
       `Accuracy: ${results.accuracy}%`,
       `Correct: ${results.correct} / ${results.total}`,
-      `Wrong: ${results.wrong}`
+      `Wrong: ${results.wrong}`,
     ];
     const statsY = Math.max(90, (H - lines.length * 34) / 2);
     for (let i = 0; i < lines.length; i++) {
@@ -380,7 +426,13 @@ export class CanvasOverlay {
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.fillText("Exit Room", bx + bw / 2, by + bh / 2);
-    this.buttons.push({ x: bx | 0, y: by | 0, w: bw | 0, h: bh | 0, id: "exit" });
+    this.buttons.push({
+      x: bx | 0,
+      y: by | 0,
+      w: bw | 0,
+      h: bh | 0,
+      id: "exit",
+    });
   }
 
   setGameState(gs) {
@@ -429,7 +481,7 @@ export class CanvasOverlay {
       uncommon: "#44cc88",
       rare: "#4488ff",
       epic: "#ff44aa",
-      legendary: "#ffcc00"
+      legendary: "#ffcc00",
     };
     const color = rarityColors[rarity] || "#aaaaaa";
     el.style.borderLeftColor = color;
@@ -480,7 +532,10 @@ export class CanvasOverlay {
     ctx.fillStyle = "rgba(0,0,0,0.3)";
     ctx.fillRect(0, 0, W, H);
 
-    const panelWidth = Math.min(Math.max(Math.round(W * 0.38), 360), Math.round(W * 0.45));
+    const panelWidth = Math.min(
+      Math.max(Math.round(W * 0.38), 360),
+      Math.round(W * 0.45),
+    );
     ctx.fillStyle = "rgba(12, 12, 16, 0.95)";
     ctx.fillRect(0, 0, panelWidth, H);
     ctx.strokeStyle = "rgba(255,255,255,0.06)";
@@ -510,14 +565,21 @@ export class CanvasOverlay {
       return;
     }
 
-    const stats = { total: items.length, unlocked: items.filter((a) => a.unlocked).length };
+    const stats = {
+      total: items.length,
+      unlocked: items.filter((a) => a.unlocked).length,
+    };
     stats.percentage = Math.round((stats.unlocked / stats.total) * 100);
 
     ctx.fillStyle = "rgba(255,255,255,0.5)";
     ctx.font = "13px sans-serif";
     ctx.textAlign = "left";
     ctx.textBaseline = "middle";
-    ctx.fillText(stats.unlocked + " / " + stats.total + "  (" + stats.percentage + "%)", colLeft, 80);
+    ctx.fillText(
+      stats.unlocked + " / " + stats.total + "  (" + stats.percentage + "%)",
+      colLeft,
+      80,
+    );
 
     const barX = colLeft;
     const barY = 96;
@@ -527,7 +589,14 @@ export class CanvasOverlay {
     this.roundRect(ctx, barX, barY, barW, barH, 2);
     ctx.fill();
     ctx.fillStyle = "rgba(68, 255, 136, 0.6)";
-    this.roundRect(ctx, barX, barY, barW * (stats.unlocked / stats.total), barH, 2);
+    this.roundRect(
+      ctx,
+      barX,
+      barY,
+      barW * (stats.unlocked / stats.total),
+      barH,
+      2,
+    );
     ctx.fill();
 
     const scrollTop = 114;
@@ -544,7 +613,7 @@ export class CanvasOverlay {
       uncommon: "#44cc88",
       rare: "#4488ff",
       epic: "#ff44aa",
-      legendary: "#ffcc00"
+      legendary: "#ffcc00",
     };
     const cardH = 70;
     const cardGap = 8;
@@ -559,7 +628,9 @@ export class CanvasOverlay {
 
       const color = rarityColors[item.rarity] || "#aaaaaa";
 
-      ctx.fillStyle = item.unlocked ? "rgba(255,255,255,0.06)" : "rgba(255,255,255,0.03)";
+      ctx.fillStyle = item.unlocked
+        ? "rgba(255,255,255,0.06)"
+        : "rgba(255,255,255,0.03)";
       this.roundRect(ctx, colLeft, y, panelWidth - padX * 2, cardH, 8);
       ctx.fill();
 
@@ -574,13 +645,17 @@ export class CanvasOverlay {
       ctx.fillText("\u2605", starX, y + cardH / 2);
 
       const textX = colLeft + 40;
-      ctx.fillStyle = item.unlocked ? "rgba(255,255,255,0.85)" : "rgba(255,255,255,0.35)";
+      ctx.fillStyle = item.unlocked
+        ? "rgba(255,255,255,0.85)"
+        : "rgba(255,255,255,0.35)";
       ctx.font = "bold 14px sans-serif";
       ctx.textAlign = "left";
       ctx.textBaseline = "middle";
       ctx.fillText(item.title, textX, y + 24);
 
-      ctx.fillStyle = item.unlocked ? "rgba(255,255,255,0.5)" : "rgba(255,255,255,0.2)";
+      ctx.fillStyle = item.unlocked
+        ? "rgba(255,255,255,0.5)"
+        : "rgba(255,255,255,0.2)";
       ctx.font = "12px sans-serif";
       ctx.fillText(item.desc, textX, y + 48);
 
@@ -625,7 +700,13 @@ export class CanvasOverlay {
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.fillText("\u2190 Back", bx + bw / 2, by + bh / 2);
-    this.buttons.push({ x: bx | 0, y: by | 0, w: bw | 0, h: bh | 0, id: "achievements_back" });
+    this.buttons.push({
+      x: bx | 0,
+      y: by | 0,
+      w: bw | 0,
+      h: bh | 0,
+      id: "achievements_back",
+    });
   }
 
   destroy() {
@@ -641,7 +722,10 @@ export class CanvasOverlay {
     ctx.fillStyle = "rgba(0,0,0,0.3)";
     ctx.fillRect(0, 0, W, H);
 
-    const panelWidth = Math.min(Math.max(Math.round(W * 0.38), 360), Math.round(W * 0.45));
+    const panelWidth = Math.min(
+      Math.max(Math.round(W * 0.38), 360),
+      Math.round(W * 0.45),
+    );
     ctx.fillStyle = "rgba(12, 12, 16, 0.95)";
     ctx.fillRect(0, 0, panelWidth, H);
     ctx.strokeStyle = "rgba(255,255,255,0.06)";
@@ -681,7 +765,7 @@ export class CanvasOverlay {
           h: sh | 0,
           id: prefix + "_" + i,
           type: prefix,
-          hex: parseInt(colors[i].slice(1), 16)
+          hex: parseInt(colors[i].slice(1), 16),
         });
       }
     };
@@ -692,7 +776,11 @@ export class CanvasOverlay {
     ctx.textBaseline = "middle";
     ctx.fillText("Wall", panelWidth / 2, startY - 28);
 
-    addSwatches(["#16162a", "#12122a", "#1a1a30", "#14142a", "#181830", "#1e1e32"], startY, "wall");
+    addSwatches(
+      ["#16162a", "#12122a", "#1a1a30", "#14142a", "#181830", "#1e1e32"],
+      startY,
+      "wall",
+    );
 
     const floorY = startY + 80;
     ctx.fillStyle = "rgba(255,255,255,0.55)";
@@ -701,7 +789,11 @@ export class CanvasOverlay {
     ctx.textBaseline = "middle";
     ctx.fillText("Floor", panelWidth / 2, floorY - 28);
 
-    addSwatches(["#0a0a18", "#0e0e1a", "#080814", "#0c0c1c", "#101020"], floorY, "floor");
+    addSwatches(
+      ["#0a0a18", "#0e0e1a", "#080814", "#0c0c1c", "#101020"],
+      floorY,
+      "floor",
+    );
 
     const bw = 130,
       bh = 42;
@@ -719,7 +811,13 @@ export class CanvasOverlay {
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.fillText("← Back", bx + bw / 2, by + bh / 2);
-    this.buttons.push({ x: bx | 0, y: by | 0, w: bw | 0, h: bh | 0, id: "back" });
+    this.buttons.push({
+      x: bx | 0,
+      y: by | 0,
+      w: bw | 0,
+      h: bh | 0,
+      id: "back",
+    });
   }
 
   drawSettings(ctx, W, H) {
@@ -730,7 +828,10 @@ export class CanvasOverlay {
     ctx.fillStyle = "rgba(0,0,0,0.3)";
     ctx.fillRect(0, 0, W, H);
 
-    const panelWidth = Math.min(Math.max(Math.round(W * 0.38), 360), Math.round(W * 0.45));
+    const panelWidth = Math.min(
+      Math.max(Math.round(W * 0.38), 360),
+      Math.round(W * 0.45),
+    );
     ctx.fillStyle = "rgba(12, 12, 16, 0.95)";
     ctx.fillRect(0, 0, panelWidth, H);
     ctx.strokeStyle = "rgba(255,255,255,0.06)";
@@ -748,9 +849,13 @@ export class CanvasOverlay {
 
     const drawToggle = (x, y, w, h, on) => {
       this.roundRect(ctx, x, y, w, h, 12);
-      ctx.fillStyle = on ? "rgba(68, 255, 136, 0.4)" : "rgba(255, 255, 255, 0.1)";
+      ctx.fillStyle = on
+        ? "rgba(68, 255, 136, 0.4)"
+        : "rgba(255, 255, 255, 0.1)";
       ctx.fill();
-      ctx.strokeStyle = on ? "rgba(68, 255, 136, 0.6)" : "rgba(255, 255, 255, 0.15)";
+      ctx.strokeStyle = on
+        ? "rgba(68, 255, 136, 0.6)"
+        : "rgba(255, 255, 255, 0.15)";
       ctx.lineWidth = 1;
       this.roundRect(ctx, x, y, w, h, 12);
       ctx.stroke();
@@ -803,13 +908,25 @@ export class CanvasOverlay {
       drawRow(y, "Day/Night", () => {
         const tx = colRight - toggleW;
         drawToggle(tx, y + 4, toggleW, toggleH, s.visuals.dayNight);
-        this.buttons.push({ x: tx, y: y + 4, w: toggleW, h: toggleH, id: "settings_visuals_dayNight" });
+        this.buttons.push({
+          x: tx,
+          y: y + 4,
+          w: toggleW,
+          h: toggleH,
+          id: "settings_visuals_dayNight",
+        });
       });
       y += rowH;
       drawRow(y, "Lamp", () => {
         const tx = colRight - toggleW;
         drawToggle(tx, y + 4, toggleW, toggleH, s.visuals.lamp);
-        this.buttons.push({ x: tx, y: y + 4, w: toggleW, h: toggleH, id: "settings_visuals_lamp" });
+        this.buttons.push({
+          x: tx,
+          y: y + 4,
+          w: toggleW,
+          h: toggleH,
+          id: "settings_visuals_lamp",
+        });
       });
       y += rowH;
     } else if (this.settingsCategory === "audio") {
@@ -837,7 +954,13 @@ export class CanvasOverlay {
         ctx.font = "18px sans-serif";
         ctx.textAlign = "center";
         ctx.fillText("-", minusX + btnW / 2, y + 19);
-        this.buttons.push({ x: minusX, y: y + 3, w: btnW, h: btnH, id: "settings_audio_masterDown" });
+        this.buttons.push({
+          x: minusX,
+          y: y + 3,
+          w: btnW,
+          h: btnH,
+          id: "settings_audio_masterDown",
+        });
         ctx.fillStyle = "rgba(255,255,255,0.6)";
         ctx.font = "bold 15px sans-serif";
         ctx.textAlign = "center";
@@ -853,25 +976,49 @@ export class CanvasOverlay {
         ctx.font = "18px sans-serif";
         ctx.textAlign = "center";
         ctx.fillText("+", plusX + btnW / 2, y + 19);
-        this.buttons.push({ x: plusX, y: y + 3, w: btnW, h: btnH, id: "settings_audio_masterUp" });
+        this.buttons.push({
+          x: plusX,
+          y: y + 3,
+          w: btnW,
+          h: btnH,
+          id: "settings_audio_masterUp",
+        });
       });
       y += rowH;
       drawRow(y, "UI Sounds", () => {
         const tx = colRight - toggleW;
         drawToggle(tx, y + 4, toggleW, toggleH, s.audio.ui);
-        this.buttons.push({ x: tx, y: y + 4, w: toggleW, h: toggleH, id: "settings_audio_ui" });
+        this.buttons.push({
+          x: tx,
+          y: y + 4,
+          w: toggleW,
+          h: toggleH,
+          id: "settings_audio_ui",
+        });
       });
       y += rowH;
       drawRow(y, "Footstep Sounds", () => {
         const tx = colRight - toggleW;
         drawToggle(tx, y + 4, toggleW, toggleH, s.audio.footstep);
-        this.buttons.push({ x: tx, y: y + 4, w: toggleW, h: toggleH, id: "settings_audio_footstep" });
+        this.buttons.push({
+          x: tx,
+          y: y + 4,
+          w: toggleW,
+          h: toggleH,
+          id: "settings_audio_footstep",
+        });
       });
       y += rowH;
       drawRow(y, "Ambient Sounds", () => {
         const tx = colRight - toggleW;
         drawToggle(tx, y + 4, toggleW, toggleH, s.audio.ambient);
-        this.buttons.push({ x: tx, y: y + 4, w: toggleW, h: toggleH, id: "settings_audio_ambient" });
+        this.buttons.push({
+          x: tx,
+          y: y + 4,
+          w: toggleW,
+          h: toggleH,
+          id: "settings_audio_ambient",
+        });
       });
       y += rowH;
     } else if (this.settingsCategory === "gameplay") {
@@ -884,13 +1031,25 @@ export class CanvasOverlay {
       drawRow(y, "Genre Hints", () => {
         const tx = colRight - toggleW;
         drawToggle(tx, y + 4, toggleW, toggleH, s.gameplay.genreHints);
-        this.buttons.push({ x: tx, y: y + 4, w: toggleW, h: toggleH, id: "settings_gameplay_genreHints" });
+        this.buttons.push({
+          x: tx,
+          y: y + 4,
+          w: toggleW,
+          h: toggleH,
+          id: "settings_gameplay_genreHints",
+        });
       });
       y += rowH;
       drawRow(y, "Timer", () => {
         const tx = colRight - toggleW;
         drawToggle(tx, y + 4, toggleW, toggleH, s.gameplay.timer);
-        this.buttons.push({ x: tx, y: y + 4, w: toggleW, h: toggleH, id: "settings_gameplay_timer" });
+        this.buttons.push({
+          x: tx,
+          y: y + 4,
+          w: toggleW,
+          h: toggleH,
+          id: "settings_gameplay_timer",
+        });
       });
       y += rowH;
     } else if (this.settingsCategory === "editor") {
@@ -903,7 +1062,13 @@ export class CanvasOverlay {
       drawRow(y, "Snap Toggle", () => {
         const tx = colRight - toggleW;
         drawToggle(tx, y + 4, toggleW, toggleH, s.editor.snap);
-        this.buttons.push({ x: tx, y: y + 4, w: toggleW, h: toggleH, id: "settings_editor_snap" });
+        this.buttons.push({
+          x: tx,
+          y: y + 4,
+          w: toggleW,
+          h: toggleH,
+          id: "settings_editor_snap",
+        });
       });
       y += rowH;
       drawRow(y, "Snap Size", () => {
@@ -924,7 +1089,13 @@ export class CanvasOverlay {
         ctx.font = "18px sans-serif";
         ctx.textAlign = "center";
         ctx.fillText("-", minusX + btnW / 2, y + 19);
-        this.buttons.push({ x: minusX, y: y + 3, w: btnW, h: btnH, id: "settings_editor_snapSizeDown" });
+        this.buttons.push({
+          x: minusX,
+          y: y + 3,
+          w: btnW,
+          h: btnH,
+          id: "settings_editor_snapSizeDown",
+        });
         ctx.fillStyle = "rgba(255,255,255,0.6)";
         ctx.font = "bold 15px sans-serif";
         ctx.textAlign = "center";
@@ -940,7 +1111,13 @@ export class CanvasOverlay {
         ctx.font = "18px sans-serif";
         ctx.textAlign = "center";
         ctx.fillText("+", plusX + btnW / 2, y + 19);
-        this.buttons.push({ x: plusX, y: y + 3, w: btnW, h: btnH, id: "settings_editor_snapSizeUp" });
+        this.buttons.push({
+          x: plusX,
+          y: y + 3,
+          w: btnW,
+          h: btnH,
+          id: "settings_editor_snapSizeUp",
+        });
       });
       y += rowH;
     } else if (this.settingsCategory === "graphics") {
@@ -959,7 +1136,7 @@ export class CanvasOverlay {
           performance: "Performance",
           medium: "Medium",
           high: "High",
-          ultra: "Ultra (Demanding)"
+          ultra: "Ultra (Demanding)",
         };
         const qText = qualityLabels[s.graphics.quality] || "Medium";
         this.roundRect(ctx, qx, y + 4, qBtnW, qBtnH, 8);
@@ -974,31 +1151,61 @@ export class CanvasOverlay {
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
         ctx.fillText(qText, qx + qBtnW / 2, y + 4 + qBtnH / 2);
-        this.buttons.push({ x: qx, y: y + 4, w: qBtnW, h: qBtnH, id: "settings_graphics_quality" });
+        this.buttons.push({
+          x: qx,
+          y: y + 4,
+          w: qBtnW,
+          h: qBtnH,
+          id: "settings_graphics_quality",
+        });
       });
       y += rowH;
       drawRow(y, "Bloom", () => {
         const tx = colRight - toggleW;
         drawToggle(tx, y + 4, toggleW, toggleH, s.graphics.bloom);
-        this.buttons.push({ x: tx, y: y + 4, w: toggleW, h: toggleH, id: "settings_graphics_bloom" });
+        this.buttons.push({
+          x: tx,
+          y: y + 4,
+          w: toggleW,
+          h: toggleH,
+          id: "settings_graphics_bloom",
+        });
       });
       y += rowH;
       drawRow(y, "Shadows", () => {
         const tx = colRight - toggleW;
         drawToggle(tx, y + 4, toggleW, toggleH, s.graphics.shadows);
-        this.buttons.push({ x: tx, y: y + 4, w: toggleW, h: toggleH, id: "settings_graphics_shadows" });
+        this.buttons.push({
+          x: tx,
+          y: y + 4,
+          w: toggleW,
+          h: toggleH,
+          id: "settings_graphics_shadows",
+        });
       });
       y += rowH;
       drawRow(y, "Dust Particles", () => {
         const tx = colRight - toggleW;
         drawToggle(tx, y + 4, toggleW, toggleH, s.graphics.dust);
-        this.buttons.push({ x: tx, y: y + 4, w: toggleW, h: toggleH, id: "settings_graphics_dust" });
+        this.buttons.push({
+          x: tx,
+          y: y + 4,
+          w: toggleW,
+          h: toggleH,
+          id: "settings_graphics_dust",
+        });
       });
       y += rowH;
       drawRow(y, "Curtain Sway", () => {
         const tx = colRight - toggleW;
         drawToggle(tx, y + 4, toggleW, toggleH, s.graphics.curtainSway);
-        this.buttons.push({ x: tx, y: y + 4, w: toggleW, h: toggleH, id: "settings_graphics_curtainSway" });
+        this.buttons.push({
+          x: tx,
+          y: y + 4,
+          w: toggleW,
+          h: toggleH,
+          id: "settings_graphics_curtainSway",
+        });
       });
       y += rowH;
     }
@@ -1023,7 +1230,13 @@ export class CanvasOverlay {
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.fillText("← Back", bx + bw / 2, by + bh / 2);
-    this.buttons.push({ x: bx | 0, y: by | 0, w: bw | 0, h: bh | 0, id: "settings_back" });
+    this.buttons.push({
+      x: bx | 0,
+      y: by | 0,
+      w: bw | 0,
+      h: bh | 0,
+      id: "settings_back",
+    });
   }
 
   drawSettingsCategoryList(ctx, W, H, panelWidth, colLeft, colRight) {
@@ -1032,7 +1245,7 @@ export class CanvasOverlay {
       { id: "visuals", label: "Visuals" },
       { id: "audio", label: "Audio" },
       { id: "gameplay", label: "Gameplay" },
-      { id: "editor", label: "Editor" }
+      { id: "editor", label: "Editor" },
     ];
 
     const btnW = panelWidth - colLeft * 2;
@@ -1057,7 +1270,13 @@ export class CanvasOverlay {
       ctx.fillStyle = "rgba(255,255,255,0.25)";
       ctx.font = "14px sans-serif";
       ctx.fillText("›", colRight - 16, by + btnH / 2);
-      this.buttons.push({ x: colLeft, y: by, w: btnW, h: btnH, id: "settings_cat_" + categories[i].id });
+      this.buttons.push({
+        x: colLeft,
+        y: by,
+        w: btnW,
+        h: btnH,
+        id: "settings_cat_" + categories[i].id,
+      });
     }
 
     const by = H - 50;
@@ -1076,7 +1295,13 @@ export class CanvasOverlay {
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.fillText("← Back", bx + bw / 2, by + bh / 2);
-    this.buttons.push({ x: bx | 0, y: by | 0, w: bw | 0, h: bh | 0, id: "back" });
+    this.buttons.push({
+      x: bx | 0,
+      y: by | 0,
+      w: bw | 0,
+      h: bh | 0,
+      id: "back",
+    });
   }
 
   drawWAILA(ctx, W, H) {

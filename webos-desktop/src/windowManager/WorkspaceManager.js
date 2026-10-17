@@ -20,7 +20,8 @@ export class WorkspaceManager {
       os.events.on(BusEvents.SETTINGS_CHANGED, (settings) => {
         this.updateVisibility(settings.showWorkspace);
       });
-      const showWorkspace = os.storage.get(StorageKeys.showWorkspace) !== "false";
+      const showWorkspace =
+        os.storage.get(StorageKeys.showWorkspace) !== "false";
       this.updateVisibility(showWorkspace);
     });
   }
@@ -58,7 +59,9 @@ export class WorkspaceManager {
     this.barEl.innerHTML = "";
 
     const overviewBtn = createElement("button");
-    overviewBtn.className = "workspace-btn workspace-overview-btn" + (this.overviewOpen ? " active" : "");
+    overviewBtn.className =
+      "workspace-btn workspace-overview-btn" +
+      (this.overviewOpen ? " active" : "");
     overviewBtn.title = "Workspace Overview";
     overviewBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor">
       <rect x="0" y="0" width="6" height="6" rx="1"/><rect x="8" y="0" width="6" height="6" rx="1"/>
@@ -73,7 +76,8 @@ export class WorkspaceManager {
 
     this.workspaces.forEach((ws) => {
       const btn = createElement("button");
-      btn.className = "workspace-btn" + (ws.id === this.activeId ? " active" : "");
+      btn.className =
+        "workspace-btn" + (ws.id === this.activeId ? " active" : "");
       btn.textContent = ws.name;
       btn.title = `Switch to ${ws.name} (dblclick to rename)`;
 
@@ -83,7 +87,11 @@ export class WorkspaceManager {
 
       btn.addEventListener("dblclick", async (e) => {
         if (e.target !== btn) return;
-        const newName = await os.dialog.prompt("Prompt", "Rename workspace:", ws.name);
+        const newName = await os.dialog.prompt(
+          "Prompt",
+          "Rename workspace:",
+          ws.name,
+        );
         if (newName && newName.trim()) {
           ws.name = newName.trim();
           this.render();
@@ -95,7 +103,8 @@ export class WorkspaceManager {
         e.preventDefault();
         const idx = this.workspaces.findIndex((w) => w.id === this.activeId);
         if (e.deltaY > 0) {
-          const next = this.workspaces[Math.min(idx + 1, this.workspaces.length - 1)];
+          const next =
+            this.workspaces[Math.min(idx + 1, this.workspaces.length - 1)];
           if (next) this.switchTo(next.id);
         } else {
           const prev = this.workspaces[Math.max(idx - 1, 0)];
@@ -129,7 +138,11 @@ export class WorkspaceManager {
 
   addWorkspace(name) {
     const id = this.nextId();
-    this.workspaces.push({ id, name: name || `WS ${id + 1}`, windows: new Set() });
+    this.workspaces.push({
+      id,
+      name: name || `WS ${id + 1}`,
+      windows: new Set(),
+    });
     this.render();
     if (this.overviewOpen) {
       this.switchInstant(id, { keepEmptyPrevious: true });
@@ -352,7 +365,8 @@ export class WorkspaceManager {
       document.removeEventListener("keydown", this.escHandler);
     }
     this.escHandler = (e) => {
-      if (KeybindManager.matches(e, "workspace.closeOverview")) this.closeOverview();
+      if (KeybindManager.matches(e, "workspace.closeOverview"))
+        this.closeOverview();
     };
     document.addEventListener("keydown", this.escHandler);
   }
@@ -364,7 +378,14 @@ export class WorkspaceManager {
     this.render();
   }
 
-  cloneWindowForPreview(win, meta, containerW, containerH, realDesktopW, realDesktopH) {
+  cloneWindowForPreview(
+    win,
+    meta,
+    containerW,
+    containerH,
+    realDesktopW,
+    realDesktopH,
+  ) {
     const clone = win.cloneNode(true);
     clone.removeAttribute("id");
     clone.classList.add("ov-win-clone");
@@ -375,15 +396,22 @@ export class WorkspaceManager {
     clone.style.pointerEvents = "none";
     clone.style.visibility = "visible";
     clone.querySelectorAll("[id]").forEach((n) => n.removeAttribute("id"));
-    clone.querySelectorAll(".window-controls").forEach((n) => (n.style.visibility = "hidden"));
-    clone.querySelectorAll("input,textarea,button,select").forEach((n) => n.setAttribute("disabled", "disabled"));
+    clone
+      .querySelectorAll(".window-controls")
+      .forEach((n) => (n.style.visibility = "hidden"));
+    clone
+      .querySelectorAll("input,textarea,button,select")
+      .forEach((n) => n.setAttribute("disabled", "disabled"));
 
     clone.querySelectorAll("iframe, video, audio, canvas").forEach((n) => {
       const placeholder = createElement("div");
       placeholder.style.cssText =
         "width:100%;height:100%;background:var(--surface-1);display:flex;align-items:center;justify-content:center;";
       const tempDiv = createElement("div");
-      tempDiv.innerHTML = this.wm.getWindowIconHtml(meta?.iconValue, meta?.color || "white");
+      tempDiv.innerHTML = this.wm.getWindowIconHtml(
+        meta?.iconValue,
+        meta?.color || "white",
+      );
       const iconEl = tempDiv.firstElementChild;
       if (iconEl) {
         iconEl.style.fontSize = "32px";
@@ -433,7 +461,8 @@ export class WorkspaceManager {
 
     this.workspaces.forEach((ws) => {
       const wsBtn = createElement("button");
-      wsBtn.className = "ov-ws-btn" + (ws.id === this.activeId ? " ov-ws-active" : "");
+      wsBtn.className =
+        "ov-ws-btn" + (ws.id === this.activeId ? " ov-ws-active" : "");
       wsBtn.dataset.wsId = String(ws.id);
 
       const wsLabel = createElement("span");
@@ -458,7 +487,14 @@ export class WorkspaceManager {
         const realWin = $("#" + winId);
         if (!realWin || realWin.style.display === "none") return;
         const entry = this.wm.openWindows.get(winId);
-        const clone = this.cloneWindowForPreview(realWin, entry, previewW, previewH, dw, dh);
+        const clone = this.cloneWindowForPreview(
+          realWin,
+          entry,
+          previewW,
+          previewH,
+          dw,
+          dh,
+        );
         wsPreview.appendChild(clone);
       });
 
@@ -468,7 +504,9 @@ export class WorkspaceManager {
         if (ws.id === this.activeId) {
           this.closeOverview();
         } else {
-          const prevIdx = this.workspaces.findIndex((w) => w.id === this.activeId);
+          const prevIdx = this.workspaces.findIndex(
+            (w) => w.id === this.activeId,
+          );
           const nextIdx = this.workspaces.findIndex((w) => w.id === ws.id);
           this.slideDirection = nextIdx > prevIdx ? 1 : -1;
           this.switchTo(ws.id);
@@ -554,8 +592,10 @@ export class WorkspaceManager {
         const col = idx % cols;
         const row = Math.floor(idx / cols);
 
-        const realW = parseFloat(realWin.style.width) || realWin.offsetWidth || 800;
-        const realH = parseFloat(realWin.style.height) || realWin.offsetHeight || 600;
+        const realW =
+          parseFloat(realWin.style.width) || realWin.offsetWidth || 800;
+        const realH =
+          parseFloat(realWin.style.height) || realWin.offsetHeight || 600;
         const winAspect = realW / realH;
 
         let tileW, tileH;
@@ -605,36 +645,47 @@ export class WorkspaceManager {
           clone.style.pointerEvents = "none";
           clone.style.visibility = "visible";
 
-          clone.querySelectorAll("[id]").forEach((n) => n.removeAttribute("id"));
+          clone
+            .querySelectorAll("[id]")
+            .forEach((n) => n.removeAttribute("id"));
           clone.querySelectorAll(".window-controls").forEach((n) => {
             n.style.visibility = "hidden";
           });
-          clone.querySelectorAll("input,textarea,button,select").forEach((n) => {
-            n.setAttribute("disabled", "disabled");
-          });
+          clone
+            .querySelectorAll("input,textarea,button,select")
+            .forEach((n) => {
+              n.setAttribute("disabled", "disabled");
+            });
 
-          clone.querySelectorAll("iframe, video, audio, canvas").forEach((n) => {
-            const placeholder = createElement("div");
-            placeholder.style.cssText =
-              "width:100%;height:100%;background:var(--surface-1);display:flex;align-items:center;justify-content:center;";
+          clone
+            .querySelectorAll("iframe, video, audio, canvas")
+            .forEach((n) => {
+              const placeholder = createElement("div");
+              placeholder.style.cssText =
+                "width:100%;height:100%;background:var(--surface-1);display:flex;align-items:center;justify-content:center;";
 
-            const tempDiv = createElement("div");
-            tempDiv.innerHTML = this.wm.getWindowIconHtml(entry?.iconValue, entry?.color || "white");
-            const iconEl = tempDiv.firstElementChild;
+              const tempDiv = createElement("div");
+              tempDiv.innerHTML = this.wm.getWindowIconHtml(
+                entry?.iconValue,
+                entry?.color || "white",
+              );
+              const iconEl = tempDiv.firstElementChild;
 
-            if (iconEl) {
-              iconEl.style.fontSize = "48px";
-              iconEl.style.width = "48px";
-              iconEl.style.height = "48px";
-              iconEl.style.opacity = "0.6";
-              placeholder.appendChild(iconEl);
-            }
+              if (iconEl) {
+                iconEl.style.fontSize = "48px";
+                iconEl.style.width = "48px";
+                iconEl.style.height = "48px";
+                iconEl.style.opacity = "0.6";
+                placeholder.appendChild(iconEl);
+              }
 
-            n.replaceWith(placeholder);
-          });
+              n.replaceWith(placeholder);
+            });
 
-          const realW = parseFloat(realWin.style.width) || realWin.offsetWidth || 800;
-          const realH = parseFloat(realWin.style.height) || realWin.offsetHeight || 600;
+          const realW =
+            parseFloat(realWin.style.width) || realWin.offsetWidth || 800;
+          const realH =
+            parseFloat(realWin.style.height) || realWin.offsetHeight || 600;
 
           const scaleX = tileW / realW;
           const scaleY = tileH / realH;
@@ -650,7 +701,10 @@ export class WorkspaceManager {
           const iconWrap = createElement("div");
           iconWrap.style.cssText =
             "width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:var(--surface-1);";
-          iconWrap.innerHTML = this.wm.getWindowIconHtml(entry?.iconValue, entry?.color || "white");
+          iconWrap.innerHTML = this.wm.getWindowIconHtml(
+            entry?.iconValue,
+            entry?.color || "white",
+          );
 
           const ic = iconWrap.querySelector("i, svg, img");
           if (ic) {
@@ -688,8 +742,14 @@ export class WorkspaceManager {
         tileWrapper.style.height = tileH + "px";
         tileWrapper.style.left = x + "px";
         tileWrapper.style.top = y + "px";
-        tileWrapper.style.setProperty("--glide-x", col < cols / 2 ? "-48px" : "48px");
-        tileWrapper.style.animation = "ovTileGlide 0.38s cubic-bezier(0.22, 1, 0.36, 1) " + idx * 50 + "ms both";
+        tileWrapper.style.setProperty(
+          "--glide-x",
+          col < cols / 2 ? "-48px" : "48px",
+        );
+        tileWrapper.style.animation =
+          "ovTileGlide 0.38s cubic-bezier(0.22, 1, 0.36, 1) " +
+          idx * 50 +
+          "ms both";
 
         tile.style.position = "relative";
 
@@ -731,7 +791,9 @@ export class WorkspaceManager {
 
     tile.addEventListener("dragend", () => {
       tile.classList.remove("ov-dragging");
-      $$(".ov-drop-target").forEach((p) => p.classList.remove("ov-drop-target"));
+      $$(".ov-drop-target").forEach((p) =>
+        p.classList.remove("ov-drop-target"),
+      );
     });
   }
 

@@ -34,7 +34,7 @@ export function ensurePapirusData() {
     try {
       const [avail, sym] = await Promise.all([
         fetchJsonCompressed(papirusAvailableGzUrl, papirusAvailableJsonUrl),
-        fetchJsonCompressed(papirusSymlinksGzUrl, papirusSymlinksJsonUrl)
+        fetchJsonCompressed(papirusSymlinksGzUrl, papirusSymlinksJsonUrl),
       ]);
       if (avail && typeof avail === "object") PAPIRUS_AVAILABLE = avail;
       if (sym && typeof sym === "object") PAPIRUS_SYMLINKS = sym;

@@ -21,23 +21,32 @@ export function toggleTaskbarPin(appId, appData) {
       taskbar.renderPinnedItems?.();
       taskbar.syncPinnedStates?.();
       try {
-        const esc = typeof CSS !== "undefined" && CSS.escape ? CSS.escape(appId) : appId;
-        document.querySelectorAll(`.taskbar-item[data-app-id="${esc}"].pinned`).forEach((el) => {
-          const elWinId = el.id.replace("taskbar-", "");
-          if (taskbar.manager?.openWindows?.has(elWinId)) el.classList.remove("pinned");
-          else el.remove();
-        });
+        const esc =
+          typeof CSS !== "undefined" && CSS.escape ? CSS.escape(appId) : appId;
+        document
+          .querySelectorAll(`.taskbar-item[data-app-id="${esc}"].pinned`)
+          .forEach((el) => {
+            const elWinId = el.id.replace("taskbar-", "");
+            if (taskbar.manager?.openWindows?.has(elWinId))
+              el.classList.remove("pinned");
+            else el.remove();
+          });
       } catch {}
       try {
         const order = os.storage.get(StorageKeys.taskbarOrder) || [];
         const cleaned = order.filter((id) => id !== appId);
-        if (cleaned.length !== order.length) os.storage.set(StorageKeys.taskbarOrder, cleaned);
+        if (cleaned.length !== order.length)
+          os.storage.set(StorageKeys.taskbarOrder, cleaned);
       } catch {}
     } else {
       os.windowManager?.taskbarSystem?.unpinFromTaskbar(`${appId}-pinned`);
     }
   } else {
-    os.window.pinAppToTaskbar(appId, displayName, appData.icon || "fas fa-star");
+    os.window.pinAppToTaskbar(
+      appId,
+      displayName,
+      appData.icon || "fas fa-star",
+    );
   }
 }
 

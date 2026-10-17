@@ -11,7 +11,17 @@ const SLOT_Y_OFFSET = 0.22;
 const SLOT_Z_OFFSET = -0.02;
 const SLOT_SPACING = 0.06;
 
-const ALL_GENRES = ["horror", "strategy", "casual", "puzzle", "action", "adventure", "simulation", "rpg", "platformer"];
+const ALL_GENRES = [
+  "horror",
+  "strategy",
+  "casual",
+  "puzzle",
+  "action",
+  "adventure",
+  "simulation",
+  "rpg",
+  "platformer",
+];
 
 const SHELF_POSITIONS = [
   { x: -4.5, z: -2.8, genre: "horror" },
@@ -22,7 +32,7 @@ const SHELF_POSITIONS = [
   { x: 4.5, z: -2.8, genre: "adventure" },
   { x: 4.5, z: -1.4, genre: "simulation" },
   { x: 4.5, z: 0, genre: "rpg" },
-  { x: 4.5, z: 1.4, genre: "platformer" }
+  { x: 4.5, z: 1.4, genre: "platformer" },
 ];
 
 function easeOutCubic(t) {
@@ -115,8 +125,13 @@ export class ShelfManager {
       const shelf = this.shelfData[i];
       const category = shelf.genre;
       const genreInfo = GENRES[category];
-      const labelText = shelf.label ? String(shelf.label) : genreInfo ? genreInfo.label : category || "Home";
-      const colorHex = shelf.labelColor || (genreInfo ? genreInfo.color : 0x44cc88);
+      const labelText = shelf.label
+        ? String(shelf.label)
+        : genreInfo
+          ? genreInfo.label
+          : category || "Home";
+      const colorHex =
+        shelf.labelColor || (genreInfo ? genreInfo.color : 0x44cc88);
       const r = (colorHex >> 16) & 0xff;
       const g = (colorHex >> 8) & 0xff;
       const b2 = colorHex & 0xff;
@@ -138,7 +153,7 @@ export class ShelfManager {
         map: tex,
         transparent: true,
         opacity: 0.85,
-        side: T.DoubleSide
+        side: T.DoubleSide,
       });
       const labelGeo = new T.PlaneGeometry(0.72, 0.18);
       const labelMesh = new T.Mesh(labelGeo, mat);
@@ -148,7 +163,10 @@ export class ShelfManager {
         labelPos = shelf.labelPos.clone();
         labelYaw = shelf.rotY;
       } else {
-        const labelX = shelf.x < 0 ? shelf.x + SHELF_WIDTH / 2 + 0.005 : shelf.x - SHELF_WIDTH / 2 - 0.005;
+        const labelX =
+          shelf.x < 0
+            ? shelf.x + SHELF_WIDTH / 2 + 0.005
+            : shelf.x - SHELF_WIDTH / 2 - 0.005;
         labelPos = new T.Vector3(labelX, SHELF_Y_LEVELS[2] + 0.3, shelf.z);
         labelYaw = shelf.x < 0 ? Math.PI / 2 : -Math.PI / 2;
       }
@@ -165,7 +183,7 @@ export class ShelfManager {
         color: colorHex,
         transparent: true,
         opacity: 0,
-        side: T.DoubleSide
+        side: T.DoubleSide,
       });
       const glowMesh = new T.Mesh(glowGeo, glowMat);
       glowMesh.position.copy(labelPos);
@@ -185,7 +203,8 @@ export class ShelfManager {
       if (this.shelfData[i].genre === genre) {
         this.categoryGlowMeshes[i].material.opacity = 0.6;
         setTimeout(() => {
-          if (this.categoryGlowMeshes[i]) this.categoryGlowMeshes[i].material.opacity = 0;
+          if (this.categoryGlowMeshes[i])
+            this.categoryGlowMeshes[i].material.opacity = 0;
         }, duration);
       }
     }
@@ -198,7 +217,8 @@ export class ShelfManager {
       if (home.homeTypes && home.homeTypes.includes(type)) {
         this.categoryGlowMeshes[i].material.opacity = 0.6;
         setTimeout(() => {
-          if (this.categoryGlowMeshes[i]) this.categoryGlowMeshes[i].material.opacity = 0;
+          if (this.categoryGlowMeshes[i])
+            this.categoryGlowMeshes[i].material.opacity = 0;
         }, duration);
       }
     }
@@ -209,13 +229,19 @@ export class ShelfManager {
     if (enabled) {
       for (let i = 0; i < this.shelfData.length; i++) {
         const shelf = this.shelfData[i];
-        if (shelf.genre !== key && !(shelf.homeTypes && shelf.homeTypes.includes(key))) continue;
+        if (
+          shelf.genre !== key &&
+          !(shelf.homeTypes && shelf.homeTypes.includes(key))
+        )
+          continue;
         this.categoryGlowMeshes[i].material.opacity = 0.4;
-        if (!this.targetHomeGlowIndices.includes(i)) this.targetHomeGlowIndices.push(i);
+        if (!this.targetHomeGlowIndices.includes(i))
+          this.targetHomeGlowIndices.push(i);
       }
     } else {
       for (const idx of this.targetHomeGlowIndices) {
-        if (this.categoryGlowMeshes[idx]) this.categoryGlowMeshes[idx].material.opacity = 0;
+        if (this.categoryGlowMeshes[idx])
+          this.categoryGlowMeshes[idx].material.opacity = 0;
       }
       this.targetHomeGlowIndices = [];
     }
@@ -224,16 +250,22 @@ export class ShelfManager {
   getMatchingShelves(key) {
     const out = [];
     for (const shelf of this.shelfData) {
-      if (shelf.genre !== key && !(shelf.homeTypes && shelf.homeTypes.includes(key))) continue;
+      if (
+        shelf.genre !== key &&
+        !(shelf.homeTypes && shelf.homeTypes.includes(key))
+      )
+        continue;
       const genreInfo = GENRES[shelf.genre];
-      const colorHex = shelf.labelColor || (genreInfo ? genreInfo.color : 0x44cc88);
+      const colorHex =
+        shelf.labelColor || (genreInfo ? genreInfo.color : 0x44cc88);
       const r = (colorHex >> 16) & 0xff;
       const g = (colorHex >> 8) & 0xff;
       const b = colorHex & 0xff;
       out.push({
         labelPos: shelf.labelPos,
-        label: shelf.label || (genreInfo ? genreInfo.label : shelf.genre || "Home"),
-        color: `rgb(${r}, ${g}, ${b})`
+        label:
+          shelf.label || (genreInfo ? genreInfo.label : shelf.genre || "Home"),
+        color: `rgb(${r}, ${g}, ${b})`,
       });
     }
     return out;
@@ -248,12 +280,17 @@ export class ShelfManager {
       color,
       transparent: true,
       opacity: 0.7,
-      side: T.DoubleSide
+      side: T.DoubleSide,
     });
     const flashMesh = new T.Mesh(flashGeo, flashMat);
     flashMesh.position.copy(slot.position);
     flashMesh.position.y += 0.02;
-    flashMesh.rotation.y = slot.rotY != null ? slot.rotY : slot.position.x < 0 ? Math.PI / 2 : -Math.PI / 2;
+    flashMesh.rotation.y =
+      slot.rotY != null
+        ? slot.rotY
+        : slot.position.x < 0
+          ? Math.PI / 2
+          : -Math.PI / 2;
     this.scene.add(flashMesh);
     let elapsed = 0;
     const animate = () => {
@@ -297,7 +334,11 @@ export class ShelfManager {
       savedShelves = {};
     }
     this.savedShelves = savedShelves || {};
-    if (this.shelfMeshes.length > 0 || this.shelfBodies.length > 0 || this.slots.length > 0) {
+    if (
+      this.shelfMeshes.length > 0 ||
+      this.shelfBodies.length > 0 ||
+      this.slots.length > 0
+    ) {
       this.clearLabels();
       for (const mesh of this.shelfMeshes) this.scene.remove(mesh);
       for (const body of this.shelfBodies) {
@@ -319,12 +360,12 @@ export class ShelfManager {
     this.woodMat = new T.MeshStandardMaterial({
       color: 0x5c3a1e,
       roughness: 0.9,
-      metalness: 0
+      metalness: 0,
     });
     this.darkWoodMat = new T.MeshStandardMaterial({
       color: 0x4a2e14,
       roughness: 0.9,
-      metalness: 0
+      metalness: 0,
     });
     const woodMat = this.woodMat;
     const darkWoodMat = this.darkWoodMat;
@@ -334,36 +375,65 @@ export class ShelfManager {
       const sx = sp.x;
       const sz = sp.z;
       const rotY = sx < 0 ? Math.PI / 2 : -Math.PI / 2;
-      const back = new T.Mesh(new T.BoxGeometry(0.05, SHELF_HEIGHT, SHELF_DEPTH), darkWoodMat);
+      const back = new T.Mesh(
+        new T.BoxGeometry(0.05, SHELF_HEIGHT, SHELF_DEPTH),
+        darkWoodMat,
+      );
       back.position.set(sx, SHELF_HEIGHT / 2, sz);
       back.userData.title = genre + " Shelf";
       this.scene.add(back);
       this.shelfMeshes.push(back);
       for (const zSign of [-1, 1]) {
-        const side = new T.Mesh(new T.BoxGeometry(SHELF_WIDTH, SHELF_HEIGHT, 0.05), woodMat);
+        const side = new T.Mesh(
+          new T.BoxGeometry(SHELF_WIDTH, SHELF_HEIGHT, 0.05),
+          woodMat,
+        );
         side.position.set(sx, SHELF_HEIGHT / 2, sz + (zSign * SHELF_DEPTH) / 2);
         side.userData.title = genre + " Shelf";
         this.scene.add(side);
         this.shelfMeshes.push(side);
         const sideBody = new CANNON.Body({ mass: 0 });
-        sideBody.addShape(new CANNON.Box(new CANNON.Vec3(SHELF_WIDTH / 2, SHELF_HEIGHT / 2, 0.025)));
-        sideBody.position.set(sx, SHELF_HEIGHT / 2, sz + (zSign * SHELF_DEPTH) / 2);
+        sideBody.addShape(
+          new CANNON.Box(
+            new CANNON.Vec3(SHELF_WIDTH / 2, SHELF_HEIGHT / 2, 0.025),
+          ),
+        );
+        sideBody.position.set(
+          sx,
+          SHELF_HEIGHT / 2,
+          sz + (zSign * SHELF_DEPTH) / 2,
+        );
         this.physicsWorld.addBody(sideBody);
         this.shelfBodies.push(sideBody);
       }
       const backBody = new CANNON.Body({ mass: 0 });
-      backBody.addShape(new CANNON.Box(new CANNON.Vec3(0.025, SHELF_HEIGHT / 2, SHELF_DEPTH / 2)));
+      backBody.addShape(
+        new CANNON.Box(
+          new CANNON.Vec3(0.025, SHELF_HEIGHT / 2, SHELF_DEPTH / 2),
+        ),
+      );
       backBody.position.set(sx, SHELF_HEIGHT / 2, sz);
       this.physicsWorld.addBody(backBody);
       this.shelfBodies.push(backBody);
       for (const y of SHELF_Y_LEVELS) {
-        const plank = new T.Mesh(new T.BoxGeometry(SHELF_WIDTH, PLANK_THICKNESS, SHELF_DEPTH), woodMat);
+        const plank = new T.Mesh(
+          new T.BoxGeometry(SHELF_WIDTH, PLANK_THICKNESS, SHELF_DEPTH),
+          woodMat,
+        );
         plank.position.set(sx, y, sz);
         plank.userData.title = genre + " Shelf";
         this.scene.add(plank);
         this.shelfMeshes.push(plank);
         const body = new CANNON.Body({ mass: 0 });
-        body.addShape(new CANNON.Box(new CANNON.Vec3(SHELF_WIDTH / 2, PLANK_THICKNESS / 2, SHELF_DEPTH / 2)));
+        body.addShape(
+          new CANNON.Box(
+            new CANNON.Vec3(
+              SHELF_WIDTH / 2,
+              PLANK_THICKNESS / 2,
+              SHELF_DEPTH / 2,
+            ),
+          ),
+        );
         body.position.set(sx, y, sz);
         this.physicsWorld.addBody(body);
         this.shelfBodies.push(body);
@@ -376,7 +446,8 @@ export class ShelfManager {
       const genreInfo = GENRES[genre];
       const labelColor = genreInfo ? genreInfo.color : 0x44cc88;
       const labelY = SHELF_Y_LEVELS[2] + 0.3;
-      const labelX = sx < 0 ? sx + SHELF_WIDTH / 2 + 0.005 : sx - SHELF_WIDTH / 2 - 0.005;
+      const labelX =
+        sx < 0 ? sx + SHELF_WIDTH / 2 + 0.005 : sx - SHELF_WIDTH / 2 - 0.005;
       const labelPos = new T.Vector3(labelX, labelY, sz);
       const shelfIndex = this.shelfData.length;
       this.shelfData.push({
@@ -390,11 +461,15 @@ export class ShelfManager {
         homeType: null,
         homeTypes: null,
         labelPos: labelPos,
-        faceDir: new T.Vector3(Math.cos(rotY), 0, -Math.sin(rotY)).normalize()
+        faceDir: new T.Vector3(Math.cos(rotY), 0, -Math.sin(rotY)).normalize(),
       });
       for (const shelfY of SHELF_Y_LEVELS) {
         for (const slotX of slotXs) {
-          const pos = new T.Vector3(slotX, shelfY + SLOT_Y_OFFSET, sz + SLOT_Z_OFFSET);
+          const pos = new T.Vector3(
+            slotX,
+            shelfY + SLOT_Y_OFFSET,
+            sz + SLOT_Z_OFFSET,
+          );
           this.slots.push({
             position: pos,
             basePosition: pos.clone(),
@@ -407,7 +482,7 @@ export class ShelfManager {
             homeTypes: null,
             shelfIndex: shelfIndex,
             rotY: rotY,
-            bookRotY: rotY
+            bookRotY: rotY,
           });
         }
       }
@@ -462,7 +537,12 @@ export class ShelfManager {
     slot.occupied = true;
     slot.gameCase = gameCase;
     const quat = new this.THREE.Quaternion();
-    const rot = slot.bookRotY != null ? slot.bookRotY : slot.rotY != null ? slot.rotY : Math.PI / 2;
+    const rot =
+      slot.bookRotY != null
+        ? slot.bookRotY
+        : slot.rotY != null
+          ? slot.rotY
+          : Math.PI / 2;
     quat.setFromAxisAngle(new this.THREE.Vector3(0, 1, 0), rot);
     this.animatingCases.push({
       gameCase,
@@ -472,7 +552,7 @@ export class ShelfManager {
       targetPos: slot.position.clone(),
       targetQuat: quat,
       progress: 0,
-      duration: 0.35
+      duration: 0.35,
     });
     gameCase.grabbed = false;
     gameCase.body.type = CANNON.Body.KINEMATIC;
@@ -501,11 +581,20 @@ export class ShelfManager {
     slot.occupied = true;
     slot.gameCase = gameCase;
     const quat = new this.THREE.Quaternion();
-    const rot = slot.bookRotY != null ? slot.bookRotY : slot.rotY != null ? slot.rotY : Math.PI / 2;
+    const rot =
+      slot.bookRotY != null
+        ? slot.bookRotY
+        : slot.rotY != null
+          ? slot.rotY
+          : Math.PI / 2;
     quat.setFromAxisAngle(new this.THREE.Vector3(0, 1, 0), rot);
     gameCase.mesh.position.copy(slot.position);
     gameCase.mesh.quaternion.copy(quat);
-    gameCase.body.position.set(slot.position.x, slot.position.y, slot.position.z);
+    gameCase.body.position.set(
+      slot.position.x,
+      slot.position.y,
+      slot.position.z,
+    );
     gameCase.body.quaternion.set(quat.x, quat.y, quat.z, quat.w);
     gameCase.body.type = CANNON.Body.KINEMATIC;
     gameCase.body.velocity.set(0, 0, 0);
@@ -558,18 +647,35 @@ export class ShelfManager {
         anim.gameCase.mesh.position.copy(anim.targetPos);
         anim.gameCase.mesh.quaternion.copy(anim.targetQuat);
         anim.gameCase.mesh.position.copy(anim.targetPos);
-        anim.gameCase.body.position.set(anim.targetPos.x, anim.targetPos.y, anim.targetPos.z);
-        anim.gameCase.body.quaternion.set(anim.targetQuat.x, anim.targetQuat.y, anim.targetQuat.z, anim.targetQuat.w);
+        anim.gameCase.body.position.set(
+          anim.targetPos.x,
+          anim.targetPos.y,
+          anim.targetPos.z,
+        );
+        anim.gameCase.body.quaternion.set(
+          anim.targetQuat.x,
+          anim.targetQuat.y,
+          anim.targetQuat.z,
+          anim.targetQuat.w,
+        );
         this.animatingCases.splice(i, 1);
       } else {
         const t = easeOutCubic(anim.progress);
-        anim.gameCase.mesh.position.lerpVectors(anim.startPos, anim.targetPos, t);
-        anim.gameCase.mesh.quaternion.slerpQuaternions(anim.startQuat, anim.targetQuat, t);
+        anim.gameCase.mesh.position.lerpVectors(
+          anim.startPos,
+          anim.targetPos,
+          t,
+        );
+        anim.gameCase.mesh.quaternion.slerpQuaternions(
+          anim.startQuat,
+          anim.targetQuat,
+          t,
+        );
         anim.gameCase.pos.copy(anim.gameCase.mesh.position);
         anim.gameCase.body.position.set(
           anim.gameCase.mesh.position.x,
           anim.gameCase.mesh.position.y,
-          anim.gameCase.mesh.position.z
+          anim.gameCase.mesh.position.z,
         );
       }
     }

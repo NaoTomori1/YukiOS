@@ -38,7 +38,12 @@ export function showAlert(title, message, buttonText = "OK") {
   });
 }
 
-export function showPrompt(title, message, defaultValue = "", confirmText = "OK") {
+export function showPrompt(
+  title,
+  message,
+  defaultValue = "",
+  confirmText = "OK",
+) {
   return new Promise((resolve) => {
     const overlay = createElement("div");
     overlay.className = "explorer-confirmation-overlay";
@@ -106,7 +111,12 @@ export function showPrompt(title, message, defaultValue = "", confirmText = "OK"
   });
 }
 
-export function showConfirm(title, message, confirmText = "OK", cancelText = "Cancel") {
+export function showConfirm(
+  title,
+  message,
+  confirmText = "OK",
+  cancelText = "Cancel",
+) {
   return new Promise((resolve) => {
     const overlay = createElement("div");
     overlay.className = "explorer-confirmation-overlay";
@@ -153,7 +163,11 @@ export const customAlert = async (message, title = "Alert") => {
   await showAlert(title, message);
 };
 
-export const customPrompt = async (message, defaultValue = "", title = "Prompt") => {
+export const customPrompt = async (
+  message,
+  defaultValue = "",
+  title = "Prompt",
+) => {
   return await showPrompt(title, message, defaultValue);
 };
 
@@ -167,7 +181,10 @@ export function showCdnPrompt(mirrors, currentMirror) {
     const overlay = createElement("div");
     overlay.className = "explorer-confirmation-overlay";
     const optionsHtml = mirrors
-      .map((m) => `<option value="${m.id}" ${m.id === currentMirror ? "selected" : ""}>${m.name}</option>`)
+      .map(
+        (m) =>
+          `<option value="${m.id}" ${m.id === currentMirror ? "selected" : ""}>${m.name}</option>`,
+      )
       .join("");
 
     overlay.innerHTML = `

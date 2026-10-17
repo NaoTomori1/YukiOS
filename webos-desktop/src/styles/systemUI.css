@@ -669,7 +669,12 @@
 }
 
 .am-master-slider {
-  background: linear-gradient(to right, var(--brand) 0%, var(--brand) var(--val, 100%), var(--glass) var(--val, 100%));
+  background: linear-gradient(
+    to right,
+    var(--brand) 0%,
+    var(--brand) var(--val, 100%),
+    var(--glass) var(--val, 100%)
+  );
 }
 
 .am-vol-label {
@@ -693,7 +698,11 @@
   position: fixed;
   left: 5px;
   width: 145px;
-  background: linear-gradient(145deg, rgba(20, 20, 20, 0.95), rgba(0, 0, 0, 0.95));
+  background: linear-gradient(
+    145deg,
+    rgba(20, 20, 20, 0.95),
+    rgba(0, 0, 0, 0.95)
+  );
   border: 2px solid #5865f2;
   border-radius: 10px;
   box-shadow: 0 0 20px rgba(88, 101, 242, 0.35);

@@ -13,7 +13,7 @@ const FOCUSABLE_SELECTOR = [
   ".deck-recent-item",
   ".deck-news-card",
   ".deck-foot-btn",
-  ".deck-foot-hint[data-action]"
+  ".deck-foot-hint[data-action]",
 ].join(", ");
 
 const EXCLUDED_SELECTOR = [
@@ -22,10 +22,16 @@ const EXCLUDED_SELECTOR = [
   ".deck-carousel-item",
   ".deck-carousel-arrow",
   ".deck-sleep-overlay",
-  ".deck-sleep-wake-layer"
+  ".deck-sleep-wake-layer",
 ].join(", ");
 
-const REDUNDANT_CLASSES = ["deck-tile", "deck-nav-btn", "deck-recent-item", "deck-foot-btn", "deck-rail-btn"];
+const REDUNDANT_CLASSES = [
+  "deck-tile",
+  "deck-nav-btn",
+  "deck-recent-item",
+  "deck-foot-btn",
+  "deck-rail-btn",
+];
 
 const VERTICAL_PERSPECTIVE_WEIGHT = 2.5;
 
@@ -50,7 +56,7 @@ export function collectSpatialFocusables(root, opts = {}) {
       appId: el.dataset.appId,
       rect,
       cx: rect.left + rect.width / 2,
-      cy: rect.top + rect.height / 2
+      cy: rect.top + rect.height / 2,
     });
   };
 
@@ -59,11 +65,19 @@ export function collectSpatialFocusables(root, opts = {}) {
   } else {
     $$(FOCUSABLE_SELECTOR, root).forEach(add);
     $$("[data-action]", root).forEach((el) => {
-      if (REDUNDANT_CLASSES.some((className) => el.classList && el.classList.contains(className))) return;
+      if (
+        REDUNDANT_CLASSES.some(
+          (className) => el.classList && el.classList.contains(className),
+        )
+      )
+        return;
       add(el);
     });
   }
-  $$(".deck-foot-left [data-action], .deck-foot-hint[data-action='back']", root).forEach(add);
+  $$(
+    ".deck-foot-left [data-action], .deck-foot-hint[data-action='back']",
+    root,
+  ).forEach(add);
 
   return buildRows(list);
 }
@@ -72,7 +86,9 @@ function buildRows(list) {
   const rows = [];
   for (const entry of list) {
     const rect = entry.rect;
-    let row = rows.find((candidate) => candidate.top < rect.bottom && rect.top < candidate.bottom);
+    let row = rows.find(
+      (candidate) => candidate.top < rect.bottom && rect.top < candidate.bottom,
+    );
     if (!row) {
       row = { top: rect.top, bottom: rect.bottom, items: [] };
       rows.push(row);
@@ -138,7 +154,11 @@ export function moveSpatialFocus(list, index, dx, dy) {
       let wrapped = null;
       for (const entry of row) {
         if (entry === current) continue;
-        if (!wrapped || (dx > 0 && entry.cx < wrapped.cx) || (dx < 0 && entry.cx > wrapped.cx)) {
+        if (
+          !wrapped ||
+          (dx > 0 && entry.cx < wrapped.cx) ||
+          (dx < 0 && entry.cx > wrapped.cx)
+        ) {
           wrapped = entry;
         }
       }
@@ -150,7 +170,9 @@ export function moveSpatialFocus(list, index, dx, dy) {
       if (entry === current) continue;
       if (dx > 0 && entry.cx <= current.cx) continue;
       if (dx < 0 && entry.cx >= current.cx) continue;
-      const score = Math.abs(entry.cx - current.cx) + Math.abs(entry.cy - current.cy) * VERTICAL_PERSPECTIVE_WEIGHT;
+      const score =
+        Math.abs(entry.cx - current.cx) +
+        Math.abs(entry.cy - current.cy) * VERTICAL_PERSPECTIVE_WEIGHT;
       if (score < nearestScore) {
         nearestScore = score;
         nearest = entry;

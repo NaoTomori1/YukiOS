@@ -10,12 +10,28 @@ import {
   setText,
   toggleClass,
   createElement,
-  StorageKeys
+  StorageKeys,
 } from "../framework.js";
-import { applyMacSettings, disableMacSettings } from "../modes/macos/session.js";
-import { applyChromeOsSettings, disableChromeOsSettings } from "../modes/chromeos/session.js";
-import { applyTilingSettings, disableTilingSettings } from "../modes/tiling/session.js";
-import { applySteamDeckSettings, disableSteamDeckSettings } from "../modes/steamdeck/session.js";
+import {
+  applyMacSettings,
+  disableMacSettings,
+} from "../modes/macos/session.js";
+import {
+  applyChromeOsSettings,
+  disableChromeOsSettings,
+} from "../modes/chromeos/session.js";
+import {
+  applyTilingSettings,
+  disableTilingSettings,
+} from "../modes/tiling/session.js";
+import {
+  applySteamDeckSettings,
+  disableSteamDeckSettings,
+} from "../modes/steamdeck/session.js";
+import {
+  applyWin11Settings,
+  disableWin11Settings,
+} from "../modes/win11/session.js";
 import { SystemUtilities } from "../system.js";
 
 const OVERLAY_SELECTOR = ".intro-tour-overlay";
@@ -25,11 +41,42 @@ const CARD_ENTER_CLASS = "intro-tour-enter";
 let switcher = null;
 
 const MODES = [
-  { label: "YukiOS", icon: "fas fa-snowflake", mode: "reset", description: "Default desktop experience" },
-  { label: "MacOS", icon: "fab fa-apple", mode: "mac", description: "Mac-style desktop with dock" },
-  { label: "SteamDeck", icon: "fas fa-gamepad", mode: "steamdeck", description: "Steam Deck gaming interface" },
-  { label: "ChromeOS", icon: "fab fa-chrome", mode: "chromeos", description: "Chromebook-style desktop" },
-  { label: "Tiling", icon: "fas fa-th-large", mode: "tiling", description: "Tiling window manager" }
+  {
+    label: "YukiOS",
+    icon: "fas fa-snowflake",
+    mode: "reset",
+    description: "Default desktop experience",
+  },
+  {
+    label: "MacOS",
+    icon: "fab fa-apple",
+    mode: "mac",
+    description: "Mac-style desktop with dock",
+  },
+  {
+    label: "SteamDeck",
+    icon: "fas fa-gamepad",
+    mode: "steamdeck",
+    description: "Steam Deck gaming interface",
+  },
+  {
+    label: "ChromeOS",
+    icon: "fab fa-chrome",
+    mode: "chromeos",
+    description: "Chromebook-style desktop",
+  },
+  {
+    label: "Tiling",
+    icon: "fas fa-th-large",
+    mode: "tiling",
+    description: "Tiling window manager",
+  },
+  {
+    label: "Windows 11",
+    icon: "fab fa-windows",
+    mode: "win11",
+    description: "Windows 11 style desktop",
+  },
 ];
 
 function runSwitcher() {
@@ -42,11 +89,16 @@ function runSwitcher() {
       zIndex: "2147483000",
       background: "transparent",
       backdropFilter: "none",
-      pointerEvents: "auto"
-    }
+      pointerEvents: "auto",
+    },
   });
   const overlay = createElement("div", { className: "intro-tour-overlay" });
-  overlay.appendChild(createElement("div", { className: "intro-tour-spotlight", styles: { display: "none" } }));
+  overlay.appendChild(
+    createElement("div", {
+      className: "intro-tour-spotlight",
+      styles: { display: "none" },
+    }),
+  );
   overlay.appendChild(createElement("div", { className: "intro-tour-card" }));
   document.body.appendChild(dim);
   document.body.appendChild(overlay);
@@ -59,7 +111,7 @@ function runSwitcher() {
     dim,
     card: $(CARD_SELECTOR, overlay),
     currentMode: null,
-    previewWallpaper: null
+    previewWallpaper: null,
   };
   window.addEventListener("resize", positionCard);
   renderCard();
@@ -77,12 +129,12 @@ function renderCard() {
          (mode) =>
            `<button type="button" class="intro-tour-mode-btn" data-mode="${mode.mode}">
               <i class="${mode.icon}"></i><span>${mode.label}</span>
-            </button>`
+            </button>`,
        ).join("")}
      </div>
      <div class="intro-tour-actions">
        <button type="button" class="intro-tour-btn intro-tour-btn-secondary">Cancel</button>
-     </div>`
+     </div>`,
   );
   $$(".intro-tour-mode-btn", switcher.card).forEach((button) => {
     button.addEventListener("click", () => {
@@ -113,7 +165,7 @@ function handleModeClick(mode) {
   if (!switcher.previewWallpaper) {
     switcher.previewWallpaper = {
       key: os.storage.get(StorageKeys.wallpaperKey),
-      type: os.storage.get(StorageKeys.wallpaperType)
+      type: os.storage.get(StorageKeys.wallpaperType),
     };
   }
   enterPreviewMode(mode);
@@ -129,6 +181,8 @@ function enterPreviewMode(mode) {
     applyTilingSettings();
   } else if (mode === "steamdeck") {
     applySteamDeckSettings();
+  } else if (mode === "win11") {
+    applyWin11Settings();
   }
 }
 
@@ -137,6 +191,7 @@ function disablePreviewModes() {
   disableTilingSettings();
   disableChromeOsSettings();
   disableSteamDeckSettings();
+  disableWin11Settings();
 }
 
 function restorePreviewWallpaper() {
@@ -167,8 +222,14 @@ function positionCard() {
   const vh = window.innerHeight;
   const cardWidth = card.offsetWidth;
   const cardHeight = card.offsetHeight;
-  const cardLeft = Math.max(16, Math.min((vw - cardWidth) / 2, vw - cardWidth - 16));
-  const cardTop = Math.max(16, Math.min((vh - cardHeight) / 2, vh - cardHeight - 16));
+  const cardLeft = Math.max(
+    16,
+    Math.min((vw - cardWidth) / 2, vw - cardWidth - 16),
+  );
+  const cardTop = Math.max(
+    16,
+    Math.min((vh - cardHeight) / 2, vh - cardHeight - 16),
+  );
   setStyle(card, { left: cardLeft + "px", top: cardTop + "px" });
 }
 

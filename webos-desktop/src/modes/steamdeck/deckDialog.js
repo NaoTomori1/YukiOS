@@ -10,7 +10,7 @@ export function showDeckDialog(options) {
     onConfirm,
     onCancel,
     inputValue,
-    container
+    container,
   } = options;
 
   const dialog = createElement("div", { className: "deck-carousel-dialog" });
@@ -83,7 +83,7 @@ export function showDeckConfirm(container, title, message, onConfirm) {
     type: "danger",
     confirmText: "Confirm",
     cancelText: "Cancel",
-    onConfirm
+    onConfirm,
   });
 }
 
@@ -95,6 +95,6 @@ export function showDeckPrompt(container, title, inputValue, onConfirm) {
     inputValue,
     confirmText: "Confirm",
     cancelText: "Cancel",
-    onConfirm
+    onConfirm,
   });
 }

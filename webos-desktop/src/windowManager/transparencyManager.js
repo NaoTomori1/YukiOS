@@ -9,7 +9,8 @@ export function hideTransparency() {
 }
 
 export function restoreTransparency() {
-  if (styleEl && !styleEl.parentNode && styleParent) styleParent.appendChild(styleEl);
+  if (styleEl && !styleEl.parentNode && styleParent)
+    styleParent.appendChild(styleEl);
 }
 
 export function updateTransparency(wm) {

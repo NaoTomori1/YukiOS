@@ -10,33 +10,33 @@ const capabilities = [
   {
     tag: "WM",
     title: "Windowed Multitasking",
-    desc: "Drag, resize, snap, minimize, maximize, and layer apps like a real desktop with window animations."
+    desc: "Drag, resize, snap, minimize, maximize, and layer apps like a real desktop with window animations.",
   },
   {
     tag: "VFS",
     title: "Virtual Filesystem",
-    desc: "Your files live in the browser. Close the tab and they're still there when you come back."
+    desc: "Your files live in the browser. Close the tab and they're still there when you come back.",
   },
   {
     tag: "PLAY",
     title: "Games Library",
-    desc: "3000+ games via Yuki Steam integration, Flash (Ruffle), DOS (JS-DOS), and console emulation."
+    desc: "3000+ games via Yuki Steam integration, Flash (Ruffle), DOS (JS-DOS), and console emulation.",
   },
   {
     tag: "APPS",
     title: "80 Built-in Apps",
-    desc: "Terminal, browser, editors (Notepad, Markdown, Monaco), paint, calculator, office viewer, and more."
+    desc: "Terminal, browser, editors (Notepad, Markdown, Monaco), paint, calculator, office viewer, and more.",
   },
   {
     tag: "RUN",
     title: "Multi-Runtime Engine",
-    desc: "HTML5, WebAssembly, emulation (JS-DOS, V86, Azahar 3DS), Flash (Ruffle) in one place."
+    desc: "HTML5, WebAssembly, emulation (JS-DOS, V86, Azahar 3DS), Flash (Ruffle) in one place.",
   },
   {
     tag: "WORK",
     title: "Virtual Workspaces",
-    desc: "Multiple virtual desktops for organizing different tasks and contexts with window assignment."
-  }
+    desc: "Multiple virtual desktops for organizing different tasks and contexts with window assignment.",
+  },
 ];
 
 const privacyText = `
@@ -80,9 +80,15 @@ export class AboutApp extends BaseApp {
   }
 
   open(opts = {}) {
-    const win = os.window.create("about-yukios", "About YukiOS", "720px", "85vh", {
-      icon: "fa fa-circle-info"
-    });
+    const win = os.window.create(
+      "about-yukios",
+      "About YukiOS",
+      "720px",
+      "85vh",
+      {
+        icon: "fa fa-circle-info",
+      },
+    );
 
     win.innerHTML = `
       <div class="abx">
@@ -136,7 +142,7 @@ export class AboutApp extends BaseApp {
                       <div class="abx-cap-title">${c.title}</div>
                       <div class="abx-cap-desc">${c.desc}</div>
                     </div>
-                  `
+                  `,
                     )
                     .join("")}
                 </div>

@@ -1,4 +1,11 @@
-import { readdirSync, writeFileSync, mkdirSync, existsSync, statSync, readFileSync } from "fs";
+import {
+  readdirSync,
+  writeFileSync,
+  mkdirSync,
+  existsSync,
+  statSync,
+  readFileSync,
+} from "fs";
 import { resolve, dirname, join } from "path";
 
 function generateIconRegistry() {
@@ -21,7 +28,16 @@ function generateIconRegistry() {
   let files = [];
   try {
     const entries = readdirSync(iconsDir);
-    const allowed = new Set([".webp", ".png", ".jpg", ".jpeg", ".svg", ".avif", ".gif", ".ico"]);
+    const allowed = new Set([
+      ".webp",
+      ".png",
+      ".jpg",
+      ".jpeg",
+      ".svg",
+      ".avif",
+      ".gif",
+      ".ico",
+    ]);
     for (const entry of entries) {
       const fullPath = join(iconsDir, entry);
       try {
@@ -68,6 +84,6 @@ export function iconRegistryPlugin() {
           if (path.includes("static/icons")) generateIconRegistry();
         });
       } catch {}
-    }
+    },
   };
 }

@@ -1,6 +1,17 @@
-import { sendLaunchAnalytics, getAnalyticsBase, fetchGamePlayCounts, getCachedPlayCounts } from "../analytics.js";
+import {
+  sendLaunchAnalytics,
+  getAnalyticsBase,
+  fetchGamePlayCounts,
+  getCachedPlayCounts,
+} from "../analytics.js";
 import { CDN_CONFIG } from "../shared/cdnConfig.js";
-import { lazyImg, observeLazyImages, SteamDataManager, launcher, steamAudio } from "./games.js";
+import {
+  lazyImg,
+  observeLazyImages,
+  SteamDataManager,
+  launcher,
+  steamAudio,
+} from "./games.js";
 import { SteamSettings } from "./steamSettings.js";
 import { os } from "../framework.js";
 import { $, $$, createElement, setText } from "../shared/domUtils.js";
@@ -10,7 +21,10 @@ let luminFsSyncBound = false;
 const toggleLuminFullscreen = (container) => {
   if (!container) return;
   try {
-    if (document.fullscreenElement === container || document.webkitFullscreenElement === container) {
+    if (
+      document.fullscreenElement === container ||
+      document.webkitFullscreenElement === container
+    ) {
       if (document.exitFullscreen) document.exitFullscreen();
       else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
     } else if (container.requestFullscreen) {
@@ -25,7 +39,10 @@ const syncLuminFullscreenState = () => {
   const btn = $(".steam-luminsdk-fullscreen-btn");
   if (!btn) return;
   const content = btn.closest(".steam-luminsdk-container");
-  const active = !!content && (document.fullscreenElement === content || document.webkitFullscreenElement === content);
+  const active =
+    !!content &&
+    (document.fullscreenElement === content ||
+      document.webkitFullscreenElement === content);
   const icon = $(".steam-luminsdk-fullscreen-icon", btn);
   const label = $(".steam-luminsdk-fullscreen-label", btn);
   if (icon)
@@ -92,7 +109,7 @@ export class GameLauncher {
         source: url,
         originalName: title,
         analyticsBase,
-        isArchive: true
+        isArchive: true,
       });
     } else {
       console.error("No launcher available to open game.");
@@ -142,10 +159,17 @@ export class GameLauncher {
     const sidebarList = container.querySelector(".sidebar-game-list");
     if (!sidebarList) return;
 
-    const existing = sidebarList.querySelector(`.sidebar-game-item[data-app="${archiveGame.appId}"]`);
+    const existing = sidebarList.querySelector(
+      `.sidebar-game-item[data-app="${archiveGame.appId}"]`,
+    );
     if (existing) return;
 
-    const item = this.renderer.makeSidebarItem(archiveGame, container, onLaunch, true);
+    const item = this.renderer.makeSidebarItem(
+      archiveGame,
+      container,
+      onLaunch,
+      true,
+    );
     item.classList.add("sidebar-archive-item");
     sidebarList.appendChild(item);
     observeLazyImages(item);
@@ -187,7 +211,9 @@ export class GameLauncher {
 
       this.renderer.archiveGamesCache = allGames.map((game) => {
         const name = this.formatArchiveName(game.name, game.url);
-        const fullUrl = game.url.startsWith("http") ? game.url : base + game.url;
+        const fullUrl = game.url.startsWith("http")
+          ? game.url
+          : base + game.url;
         const appId = this.archiveGameId(fullUrl);
         let thumb = game.thumbnail
           ? game.thumbnail.startsWith("http")
@@ -201,11 +227,22 @@ export class GameLauncher {
       let archiveIndex = 0;
 
       const renderArchiveChunk = (deadline) => {
-        let hasBudget = !deadline || archiveIndex === 0 || deadline.timeRemaining() > 2;
-        while (archiveIndex < this.renderer.archiveGamesCache.length && hasBudget) {
-          const end = Math.min(archiveIndex + CHUNK, this.renderer.archiveGamesCache.length);
+        let hasBudget =
+          !deadline || archiveIndex === 0 || deadline.timeRemaining() > 2;
+        while (
+          archiveIndex < this.renderer.archiveGamesCache.length &&
+          hasBudget
+        ) {
+          const end = Math.min(
+            archiveIndex + CHUNK,
+            this.renderer.archiveGamesCache.length,
+          );
           for (let i = archiveIndex; i < end; i++) {
-            this.appendArchiveGameToSidebar(container, this.renderer.archiveGamesCache[i], onLaunch);
+            this.appendArchiveGameToSidebar(
+              container,
+              this.renderer.archiveGamesCache[i],
+              onLaunch,
+            );
           }
           archiveIndex = end;
           if (!deadline) break;
@@ -229,7 +266,7 @@ export class GameLauncher {
                 thumb
                   ? lazyImg(
                       thumb,
-                      `alt="${title}" style="width:100%;height:100%;object-fit:cover;" onerror="this.parentElement.innerHTML='<div style=\\'width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:var(--bg-secondary);color:var(--text-secondary);\\'><i class=\\'fas fa-gamepad\\' style=\\'font-size:40px;\\'></i></div>'"`
+                      `alt="${title}" style="width:100%;height:100%;object-fit:cover;" onerror="this.parentElement.innerHTML='<div style=\\'width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:var(--bg-secondary);color:var(--text-secondary);\\'><i class=\\'fas fa-gamepad\\' style=\\'font-size:40px;\\'></i></div>'"`,
                     )
                   : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:var(--bg-secondary);color:var(--text-secondary);"><i class="fas fa-gamepad" style="font-size:40px;"></i></div>`
               }
@@ -258,7 +295,8 @@ export class GameLauncher {
         SteamDataManager.toggleCollapsed(sectionTitle);
         const grid = placeholder.querySelector(".steam-archive-grid");
         const icon = placeholder.querySelector(".steam-section-header i");
-        const nowExpanded = SteamDataManager.getCollapsed().includes(sectionTitle);
+        const nowExpanded =
+          SteamDataManager.getCollapsed().includes(sectionTitle);
         grid.style.display = nowExpanded ? "grid" : "none";
         if (icon) {
           icon.className = `fas ${nowExpanded ? "fa-chevron-down" : "fa-chevron-right"}`;
@@ -272,14 +310,27 @@ export class GameLauncher {
       placeholder.querySelectorAll(".steam-archive-card").forEach((card) => {
         const appId = card.dataset.app;
         const cardUrl = card.dataset.url;
-        const cardTitle = card.querySelector(".steam-game-title")?.textContent || appId;
-        const thumbImg = card.querySelector("img")?.dataset.src || card.querySelector("img")?.src || "";
-        const archiveGame = { appId, title: cardTitle, url: cardUrl, thumb: thumbImg };
+        const cardTitle =
+          card.querySelector(".steam-game-title")?.textContent || appId;
+        const thumbImg =
+          card.querySelector("img")?.dataset.src ||
+          card.querySelector("img")?.src ||
+          "";
+        const archiveGame = {
+          appId,
+          title: cardTitle,
+          url: cardUrl,
+          thumb: thumbImg,
+        };
 
         card.addEventListener("click", () => {
           popover.style.display = "none";
           steamAudio.playSelect();
-          this.renderer.gameRenderer.renderArchiveGameOverview(container, archiveGame, onLaunch);
+          this.renderer.gameRenderer.renderArchiveGameOverview(
+            container,
+            archiveGame,
+            onLaunch,
+          );
         });
 
         card.addEventListener("dblclick", async () => {
@@ -294,7 +345,11 @@ export class GameLauncher {
             .replace(/[^a-z0-9]+/g, "");
           const analyticsBase = getAnalyticsBase(gameId);
           sendLaunchAnalytics(gameId);
-          await os.app.launchGame(gameId, false, { source: cardUrl, originalName: cardTitle, analyticsBase });
+          await os.app.launchGame(gameId, false, {
+            source: cardUrl,
+            originalName: cardTitle,
+            analyticsBase,
+          });
         });
 
         card.oncontextmenu = (e) => {
@@ -312,7 +367,11 @@ export class GameLauncher {
           const analyticsBase = getAnalyticsBase(gameId);
           this.renderer.gameUI.showContextMenu(e, appId, container, () => {
             sendLaunchAnalytics(gameId);
-            os.app.launchGame(gameId, false, { source: cardUrl, originalName: cardTitle, analyticsBase });
+            os.app.launchGame(gameId, false, {
+              source: cardUrl,
+              originalName: cardTitle,
+              analyticsBase,
+            });
           });
         };
 
@@ -401,7 +460,8 @@ export class GameLauncher {
     if (iframe) {
       iframe.onload = () => {
         if (!iframe.contentWindow) return;
-        const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+        const iframeDoc =
+          iframe.contentDocument || iframe.contentWindow.document;
         iframeDoc.open();
         iframeDoc.write(`
           <!DOCTYPE html>
@@ -432,7 +492,8 @@ export class GameLauncher {
       SteamDataManager.toggleCollapsed(sectionTitle);
       const content = placeholder.querySelector(".steam-luminsdk-container");
       const icon = placeholder.querySelector(".steam-section-header i");
-      const nowExpanded = SteamDataManager.getCollapsed().includes(sectionTitle);
+      const nowExpanded =
+        SteamDataManager.getCollapsed().includes(sectionTitle);
       content.style.display = nowExpanded ? "block" : "none";
       if (icon) {
         icon.className = `fas ${nowExpanded ? "fa-chevron-down" : "fa-chevron-right"}`;
@@ -442,7 +503,8 @@ export class GameLauncher {
 
     const fullscreenBtn = $(".steam-luminsdk-fullscreen-btn", placeholder);
     if (fullscreenBtn) {
-      fullscreenBtn.onclick = () => toggleLuminFullscreen($(".steam-luminsdk-container", placeholder));
+      fullscreenBtn.onclick = () =>
+        toggleLuminFullscreen($(".steam-luminsdk-container", placeholder));
     }
     bindLuminFullscreenSync();
   }

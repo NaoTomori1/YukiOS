@@ -9,7 +9,10 @@ import { WALLPAPER_NAME_URL_PAIRS } from "./wallpaperConfig.js";
 import { KeybindManager } from "./keybindManager.js";
 
 import { StorageKeys, os, ServiceKeys } from "./framework.js";
-import { SETTINGS_CATEGORIES, launchSettingsPane } from "./settings/settingsNav.js";
+import {
+  SETTINGS_CATEGORIES,
+  launchSettingsPane,
+} from "./settings/settingsNav.js";
 import { animateThemeChange } from "./settings/themeTransition.js";
 import { escapeHtml } from "./utils/utils.js";
 export class CommandPalette {
@@ -55,7 +58,10 @@ export class CommandPalette {
     this.currentSubpalette = null;
     this.activeIndex = 0;
 
-    const overlay = createElement("div", { id: "command-palette-overlay", className: "command-palette-overlay" });
+    const overlay = createElement("div", {
+      id: "command-palette-overlay",
+      className: "command-palette-overlay",
+    });
     const parent = $("#session-overlay") || document.body;
     parent.appendChild(overlay);
 
@@ -99,7 +105,8 @@ export class CommandPalette {
         this.updateActiveSelection();
       } else if (e.key === "ArrowUp") {
         e.preventDefault();
-        this.activeIndex = (this.activeIndex - 1 + this.results.length) % this.results.length;
+        this.activeIndex =
+          (this.activeIndex - 1 + this.results.length) % this.results.length;
         this.updateActiveSelection();
       } else if (e.key === "Enter") {
         e.preventDefault();
@@ -110,7 +117,10 @@ export class CommandPalette {
     overlay.addEventListener("click", (e) => {
       if (e.target === overlay) {
         this.close();
-      } else if (this.inputElement && document.activeElement !== this.inputElement) {
+      } else if (
+        this.inputElement &&
+        document.activeElement !== this.inputElement
+      ) {
         this.inputElement.focus();
       }
     });
@@ -173,7 +183,7 @@ export class CommandPalette {
             this.cachedFiles.push({
               name,
               path: fullPath,
-              kind
+              kind,
             });
           }
         }
@@ -208,84 +218,84 @@ export class CommandPalette {
           this.inputElement.value = "";
           this.activeIndex = 0;
           this.renderResults();
-        }
+        },
       },
       {
         title: "Theme: Dark Mode",
         subtitle: "Switch to sleek dark UI appearance",
         tag: "theme",
         icon: "papirus:status/weather-clear-night",
-        execute: () => this.setSystemTheme("dark")
+        execute: () => this.setSystemTheme("dark"),
       },
       {
         title: "Theme: Light Mode",
         subtitle: "Switch to bright light UI appearance",
         tag: "theme",
         icon: "papirus:status/weather-clear",
-        execute: () => this.setSystemTheme("light")
+        execute: () => this.setSystemTheme("light"),
       },
       {
         title: "Theme: Auto Mode",
         subtitle: "Follow system preference dark/light settings",
         tag: "theme",
         icon: "papirus:actions/contrast",
-        execute: () => this.setSystemTheme("auto")
+        execute: () => this.setSystemTheme("auto"),
       },
       {
         title: "Mute Sounds",
         subtitle: "Disable overall system audio notifications",
         tag: "audio",
         icon: "papirus:status/audio-volume-muted",
-        execute: () => this.toggleSound(false)
+        execute: () => this.toggleSound(false),
       },
       {
         title: "Unmute Sounds",
         subtitle: "Enable standard system audio notifications",
         tag: "audio",
         icon: "papirus:status/audio-volume-high",
-        execute: () => this.toggleSound(true)
+        execute: () => this.toggleSound(true),
       },
       {
         title: "Do Not Disturb: On",
         subtitle: "Silence all toast banner notifications",
         tag: "dnd",
         icon: "papirus:status/audio-volume-muted",
-        execute: () => this.toggleDND(true)
+        execute: () => this.toggleDND(true),
       },
       {
         title: "Do Not Disturb: Off",
         subtitle: "Display all standard desktop notifications",
         tag: "dnd",
         icon: "papirus:apps/preferences-desktop-notification-bell",
-        execute: () => this.toggleDND(false)
+        execute: () => this.toggleDND(false),
       },
       {
         title: "Close All Windows",
         subtitle: "Close all open application windows",
         tag: "action",
         icon: "papirus:actions/window-close",
-        execute: () => this.closeAllWindows()
+        execute: () => this.closeAllWindows(),
       },
       {
         title: "Minimize All Windows",
         subtitle: "Minimize every open window to the taskbar",
         tag: "action",
         icon: "papirus:actions/list-remove",
-        execute: () => this.minimizeAllWindows()
+        execute: () => this.minimizeAllWindows(),
       },
       {
         title: "Toggle Fullscreen",
         subtitle: "Toggle the active window in and out of fullscreen",
         tag: "action",
         icon: "papirus:actions/view-fullscreen",
-        execute: () => this.toggleFullscreen()
+        execute: () => this.toggleFullscreen(),
       },
       {
         title: "Lock Session",
         subtitle: "Lock the current session and show the lock screen",
         tag: "session",
         icon: "papirus:actions/object-locked",
-        execute: () => this.os.app.lockSession()
+        execute: () => this.os.app.lockSession(),
       },
       {
         title: "Logout",
@@ -293,10 +303,15 @@ export class CommandPalette {
         tag: "session",
         icon: "papirus:actions/system-log-out",
         execute: async () => {
-          if (await os.dialog.confirm("Logout", "Sign out and return to the login screen?")) {
+          if (
+            await os.dialog.confirm(
+              "Logout",
+              "Sign out and return to the login screen?",
+            )
+          ) {
             await this.os.app.lockToLoginScreen();
           }
-        }
+        },
       },
       {
         title: "Shutdown",
@@ -304,52 +319,57 @@ export class CommandPalette {
         tag: "session",
         icon: "papirus:actions/system-shutdown",
         execute: async () => {
-          if (await os.dialog.confirm("Shutdown", "Close everything and shut down?")) {
+          if (
+            await os.dialog.confirm(
+              "Shutdown",
+              "Close everything and shut down?",
+            )
+          ) {
             await this.os.app.lockToLoginScreen();
           }
-        }
+        },
       },
       {
         title: "Show Workspace Overview",
         subtitle: "Display the workspace overview switcher",
         tag: "workspace",
         icon: "papirus:actions/view-grid",
-        execute: () => this.toggleWorkspaceOverview()
+        execute: () => this.toggleWorkspaceOverview(),
       },
       {
         title: "Switch to Workspace 1",
         subtitle: "Jump to the first workspace",
         tag: "workspace",
         icon: "papirus:actions/go-first",
-        execute: () => this.switchWorkspace(0)
+        execute: () => this.switchWorkspace(0),
       },
       {
         title: "Switch to Workspace 2",
         subtitle: "Jump to the second workspace",
         tag: "workspace",
         icon: "papirus:actions/go-next",
-        execute: () => this.switchWorkspace(1)
+        execute: () => this.switchWorkspace(1),
       },
       {
         title: "Switch to Workspace 3",
         subtitle: "Jump to the third workspace",
         tag: "workspace",
         icon: "papirus:actions/go-last",
-        execute: () => this.switchWorkspace(2)
+        execute: () => this.switchWorkspace(2),
       },
       {
         title: "Switch to Workspace 4",
         subtitle: "Jump to the fourth workspace",
         tag: "workspace",
         icon: "papirus:actions/go-jump",
-        execute: () => this.switchWorkspace(3)
+        execute: () => this.switchWorkspace(3),
       },
       {
         title: "Switch to Workspace 5",
         subtitle: "Jump to the fifth workspace",
         tag: "workspace",
         icon: "papirus:actions/go-jump",
-        execute: () => this.switchWorkspace(4)
+        execute: () => this.switchWorkspace(4),
       },
       {
         title: "Search Files",
@@ -361,7 +381,7 @@ export class CommandPalette {
           this.inputElement.value = "";
           this.activeIndex = 0;
           this.renderResults();
-        }
+        },
       },
       {
         title: "Take Screenshot",
@@ -374,7 +394,7 @@ export class CommandPalette {
             app.open();
             app.captureFull(true);
           }
-        }
+        },
       },
       {
         title: "Start Screen Recording",
@@ -387,7 +407,7 @@ export class CommandPalette {
             app.open();
             app.toggleRecording();
           }
-        }
+        },
       },
       {
         title: "Stop Screen Recording",
@@ -399,7 +419,7 @@ export class CommandPalette {
           if (app && app.recording) {
             app.toggleRecording();
           }
-        }
+        },
       },
       {
         title: "Area Screenshot",
@@ -412,7 +432,7 @@ export class CommandPalette {
             app.open();
             app.captureArea(true);
           }
-        }
+        },
       },
       {
         title: "Empty Trash",
@@ -421,17 +441,20 @@ export class CommandPalette {
         icon: "papirus:places/user-trash",
         execute: async () => {
           if (
-            await os.dialog.confirm("Empty Trash", "Are you sure you want to permanently delete all trashed files?")
+            await os.dialog.confirm(
+              "Empty Trash",
+              "Are you sure you want to permanently delete all trashed files?",
+            )
           ) {
             await os.fs.emptyTrash();
             os.notify.send("Trash emptied", "", {
               type: "success",
               duration: 2500,
               icon: "papirus:places/user-trash",
-              appSource: AppSource.COMMAND_PALETTE
+              appSource: AppSource.COMMAND_PALETTE,
             });
           }
-        }
+        },
       },
       {
         title: "Toggle Transparent UI",
@@ -446,14 +469,16 @@ export class CommandPalette {
             type: "success",
             duration: 3000,
             icon: "papirus:apps/wine",
-            appSource: AppSource.COMMAND_PALETTE
+            appSource: AppSource.COMMAND_PALETTE,
           });
-        }
-      }
+        },
+      },
     ];
 
     const allActions = [...actions, ...this.getSettingsEntries()];
-    let items = !search ? [...allActions] : allActions.filter((a) => a.title.toLowerCase().includes(search));
+    let items = !search
+      ? [...allActions]
+      : allActions.filter((a) => a.title.toLowerCase().includes(search));
 
     if (search.startsWith(">") || this.isTerminalCommand(search)) {
       const cleanCmd = search.startsWith(">") ? search.slice(1).trim() : search;
@@ -469,7 +494,7 @@ export class CommandPalette {
               termApp.open();
               setTimeout(() => termApp.executeCommand(cleanCmd), 250);
             }
-          }
+          },
         });
       }
     }
@@ -490,20 +515,31 @@ export class CommandPalette {
         if (!app) continue;
         const appTitle = app.title || key;
 
-        if (!search || appTitle.toLowerCase().includes(search) || key.toLowerCase().includes(search)) {
+        if (
+          !search ||
+          appTitle.toLowerCase().includes(search) ||
+          key.toLowerCase().includes(search)
+        ) {
           items.push({
             title: appTitle,
-            subtitle: app.type === "system" ? "Built-in System App" : `Game: ${app.type}`,
+            subtitle:
+              app.type === "system"
+                ? "Built-in System App"
+                : `Game: ${app.type}`,
             tag: app.type === "system" ? "app" : "game",
             icon: app.icon || "papirus:actions/window-maximize",
-            execute: () => os.app.launch(key)
+            execute: () => os.app.launch(key),
           });
         }
       }
     }
 
     for (const file of this.cachedFiles) {
-      if (file.name.toLowerCase().endsWith(".desktop") && file.path.toLowerCase().includes("/desktop/")) continue;
+      if (
+        file.name.toLowerCase().endsWith(".desktop") &&
+        file.path.toLowerCase().includes("/desktop/")
+      )
+        continue;
       if (!search || file.name.toLowerCase().includes(search)) {
         items.push({
           title: file.name,
@@ -513,7 +549,7 @@ export class CommandPalette {
           isFile: true,
           execute: () => {
             openFileWith({ name: file.name, path: os.fs.dirname(file.path) });
-          }
+          },
         });
       }
     }
@@ -528,7 +564,10 @@ export class CommandPalette {
   renderItems(items) {
     if (!this.resultsContainer) return;
     this.results = items;
-    this.activeIndex = Math.min(this.activeIndex, Math.max(0, this.results.length - 1));
+    this.activeIndex = Math.min(
+      this.activeIndex,
+      Math.max(0, this.results.length - 1),
+    );
 
     if (this.results.length === 0) {
       this.resultsContainer.innerHTML = `<div class="command-palette-empty">No matching commands, apps, or files found.</div>`;
@@ -547,7 +586,10 @@ export class CommandPalette {
           iconHtml = `<img src="${resolveIconUrl(eff)}" alt="">`;
         } else if (
           typeof eff === "string" &&
-          (eff.startsWith("fa") || eff.startsWith("fas ") || eff.startsWith("fab ") || eff.startsWith("far "))
+          (eff.startsWith("fa") ||
+            eff.startsWith("fas ") ||
+            eff.startsWith("fab ") ||
+            eff.startsWith("far "))
         ) {
           iconHtml = `<i class="${eff}"></i>`;
         } else if (typeof eff === "string" && eff.startsWith("http")) {
@@ -556,8 +598,11 @@ export class CommandPalette {
           iconHtml = `<img src="${resolveIconUrl(eff)}" alt="">`;
         }
       } else {
-        const fallbackEff = getEffectiveIcon("papirus:mimetypes/text-x-generic");
-        if (fallbackEff.startsWith("papirus:")) iconHtml = `<img src="${resolveIconUrl(fallbackEff)}" alt="">`;
+        const fallbackEff = getEffectiveIcon(
+          "papirus:mimetypes/text-x-generic",
+        );
+        if (fallbackEff.startsWith("papirus:"))
+          iconHtml = `<img src="${resolveIconUrl(fallbackEff)}" alt="">`;
         else iconHtml = `<i class="${fallbackEff}"></i>`;
       }
 
@@ -601,8 +646,8 @@ export class CommandPalette {
           this.inputElement.value = "";
           this.activeIndex = 0;
           this.renderResults();
-        }
-      }
+        },
+      },
     ];
 
     for (const w of matches) {
@@ -613,13 +658,17 @@ export class CommandPalette {
         icon: "papirus:mimetypes/image-x-generic",
         execute: () => {
           SystemUtilities.setWallpaper(w.url);
-          os.notify.send("Wallpaper Changed", `Background updated to ${w.name}`, {
-            type: "success",
-            duration: 5000,
-            icon: "papirus:mimetypes/image-x-generic",
-            appSource: AppSource.COMMAND_PALETTE
-          });
-        }
+          os.notify.send(
+            "Wallpaper Changed",
+            `Background updated to ${w.name}`,
+            {
+              type: "success",
+              duration: 5000,
+              icon: "papirus:mimetypes/image-x-generic",
+              appSource: AppSource.COMMAND_PALETTE,
+            },
+          );
+        },
       });
     }
 
@@ -639,8 +688,8 @@ export class CommandPalette {
           this.inputElement.value = "";
           this.activeIndex = 0;
           this.renderResults();
-        }
-      }
+        },
+      },
     ];
 
     if (!search) {
@@ -650,7 +699,7 @@ export class CommandPalette {
         subtitle: "Type a filename to search across the filesystem",
         tag: "info",
         icon: "papirus:actions/help-about",
-        execute: () => {}
+        execute: () => {},
       });
     } else {
       for (const file of this.cachedFiles) {
@@ -662,7 +711,7 @@ export class CommandPalette {
             icon: os.fs.getFileIcon(file.path),
             execute: () => {
               openFileWith({ name: file.name, path: os.fs.dirname(file.path) });
-            }
+            },
           });
         }
       }
@@ -674,7 +723,7 @@ export class CommandPalette {
         subtitle: "Try a different search term",
         tag: "info",
         icon: "papirus:actions/dialog-warning",
-        execute: () => {}
+        execute: () => {},
       });
     }
 
@@ -685,133 +734,135 @@ export class CommandPalette {
     const go = (section, target) => {
       launchSettingsPane(section, target);
     };
-    const entries = SETTINGS_CATEGORIES.filter((cat) => cat.id !== "steam").map((cat) => ({
-      title: `Settings: ${cat.title}`,
-      subtitle: `Open the ${cat.title} settings panel`,
-      tag: "settings",
-      icon: cat.icon,
-      execute: () => launchSettingsPane(cat.pane)
-    }));
+    const entries = SETTINGS_CATEGORIES.filter((cat) => cat.id !== "steam").map(
+      (cat) => ({
+        title: `Settings: ${cat.title}`,
+        subtitle: `Open the ${cat.title} settings panel`,
+        tag: "settings",
+        icon: cat.icon,
+        execute: () => launchSettingsPane(cat.pane),
+      }),
+    );
     entries.push(
       {
         title: "Settings: Performance Mode",
         subtitle: "Switch between Quality, Balanced, and Performance",
         tag: "settings",
         icon: "papirus:apps/utilities-system-monitor",
-        execute: () => go("pane-general", "sc-general")
+        execute: () => go("pane-general", "sc-general"),
       },
       {
         title: "Settings: Skip Boot Screen",
         subtitle: "Bypass login screen on startup",
         tag: "settings",
         icon: "papirus:actions/go-next",
-        execute: () => go("pane-system", "sc-boot")
+        execute: () => go("pane-system", "sc-boot"),
       },
       {
         title: "Settings: Notifications",
         subtitle: "DND, position, duration, animation",
         tag: "settings",
         icon: "papirus:apps/preferences-desktop-notification-bell",
-        execute: () => go("pane-notifications", "settingsDND")
+        execute: () => go("pane-notifications", "settingsDND"),
       },
       {
         title: "Settings: Taskbar Position",
         subtitle: "Dock taskbar to bottom, top, left, or right",
         tag: "settings",
         icon: "papirus:actions/transform-move",
-        execute: () => go("pane-desktop", "sc-layout")
+        execute: () => go("pane-desktop", "sc-layout"),
       },
       {
         title: "Settings: Desktop Icon Size",
         subtitle: "Adjust desktop icon dimensions",
         tag: "settings",
         icon: "papirus:actions/view-fullscreen",
-        execute: () => go("pane-desktop", "settingsDesktopIconSize")
+        execute: () => go("pane-desktop", "settingsDesktopIconSize"),
       },
       {
         title: "Settings: Start Menu Size",
         subtitle: "Adjust start menu width and height",
         tag: "settings",
         icon: "papirus:actions/view-list",
-        execute: () => go("pane-desktop", "settingsStartMenuWidth")
+        execute: () => go("pane-desktop", "settingsStartMenuWidth"),
       },
       {
         title: "Settings: Show Workspaces",
         subtitle: "Toggle workspace area in taskbar",
         tag: "settings",
         icon: "papirus:actions/view-grid",
-        execute: () => go("pane-desktop", "settingsShowWorkspace")
+        execute: () => go("pane-desktop", "settingsShowWorkspace"),
       },
       {
         title: "Settings: GUI Scale",
         subtitle: "Scale the entire interface",
         tag: "settings",
         icon: "papirus:actions/view-fullscreen",
-        execute: () => go("pane-appearance", "settingsGuiScale")
+        execute: () => go("pane-appearance", "settingsGuiScale"),
       },
       {
         title: "Settings: Font Size",
         subtitle: "Adjust base font size",
         tag: "settings",
         icon: "papirus:mimetypes/application-x-font-ttf",
-        execute: () => go("pane-appearance", "settingsFontSize")
+        execute: () => go("pane-appearance", "settingsFontSize"),
       },
       {
         title: "Settings: Font Family",
         subtitle: "Choose Open Sans, Inter, Rubik, or more",
         tag: "settings",
         icon: "papirus:actions/dialog-xml-editor",
-        execute: () => go("pane-appearance", "sc-style")
+        execute: () => go("pane-appearance", "sc-style"),
       },
       {
         title: "Settings: Window Animations",
         subtitle: "Open, close, minimize effects and speed",
         tag: "settings",
         icon: "papirus:mimetypes/video-x-generic",
-        execute: () => go("pane-appearance", "settingsOpenAnimation")
+        execute: () => go("pane-appearance", "settingsOpenAnimation"),
       },
       {
         title: "Settings: Custom Cursor",
         subtitle: "Upload or clear a custom cursor",
         tag: "settings",
         icon: "papirus:devices/input-mouse",
-        execute: () => go("pane-appearance", "settingsCursorUploadBtn")
+        execute: () => go("pane-appearance", "settingsCursorUploadBtn"),
       },
       {
         title: "Settings: Wallpaper",
         subtitle: "Cycle on start, upload custom wallpaper",
         tag: "settings",
         icon: "papirus:mimetypes/image-x-generic",
-        execute: () => go("pane-appearance", "settings-wallpaper-card")
+        execute: () => go("pane-appearance", "settings-wallpaper-card"),
       },
       {
         title: "Settings: CDN Mirror",
         subtitle: "Choose a mirror for fetching game assets",
         tag: "settings",
         icon: "papirus:devices/network-server",
-        execute: () => go("pane-network", "settingsCdnMirror")
+        execute: () => go("pane-network", "settingsCdnMirror"),
       },
       {
         title: "Settings: WISP Server",
         subtitle: "Configure Scramjet proxy server",
         tag: "settings",
         icon: "papirus:actions/object-locked",
-        execute: () => go("pane-network", "settingsWispServer")
+        execute: () => go("pane-network", "settingsWispServer"),
       },
       {
         title: "Settings: Master Volume",
         subtitle: "Adjust global volume level",
         tag: "settings",
         icon: "papirus:status/audio-volume-high",
-        execute: () => go("pane-audio", "settingsMasterVolume")
+        execute: () => go("pane-audio", "settingsMasterVolume"),
       },
       {
         title: "Settings: Export Data",
         subtitle: "Backup system settings and files",
         tag: "settings",
         icon: "papirus:actions/document-export",
-        execute: () => go("pane-data", "btnExportData")
-      }
+        execute: () => go("pane-data", "btnExportData"),
+      },
     );
     return entries;
   }
@@ -834,7 +885,7 @@ export class CommandPalette {
       "history",
       "date",
       "ping",
-      "curl"
+      "curl",
     ];
     const firstWord = str.split(" ")[0];
     return list.includes(firstWord);
@@ -854,7 +905,8 @@ export class CommandPalette {
       return null;
     try {
       const result = this.safeEval(expr);
-      if (result === null || result === undefined || !isFinite(result)) return null;
+      if (result === null || result === undefined || !isFinite(result))
+        return null;
       return {
         title: `= ${Number.isInteger(result) ? result : parseFloat(result.toFixed(6))}`,
         subtitle: `Result of ${search}`,
@@ -864,7 +916,7 @@ export class CommandPalette {
           var text = result.toString();
           os.app.setClipboardContent(text);
           navigator.clipboard.writeText(text);
-        }
+        },
       };
     } catch {
       return null;
@@ -878,7 +930,7 @@ export class CommandPalette {
       "*": (a, b) => a * b,
       "/": (a, b) => a / b,
       "^": (a, b) => Math.pow(a, b),
-      "%": (a, b) => a % b
+      "%": (a, b) => a % b,
     };
     const funcs = {
       sqrt: Math.sqrt,
@@ -890,7 +942,7 @@ export class CommandPalette {
       abs: Math.abs,
       round: Math.round,
       floor: Math.floor,
-      ceil: Math.ceil
+      ceil: Math.ceil,
     };
     const consts = { pi: Math.PI, e: Math.E };
     let pos = 0;
@@ -898,7 +950,8 @@ export class CommandPalette {
       let left = parsePrimary();
       while (pos < expr.length) {
         const op = expr[pos];
-        const prec = { "+": 1, "-": 1, "*": 2, "/": 2, "^": 3, "%": 2 }[op] || 0;
+        const prec =
+          { "+": 1, "-": 1, "*": 2, "/": 2, "^": 3, "%": 2 }[op] || 0;
         if (prec === 0 || prec <= minPrec) break;
         pos++;
         const right = parse(prec);
@@ -949,7 +1002,8 @@ export class CommandPalette {
       throw new Error("unexpected: " + expr[pos]);
     };
     const result = parse(0);
-    if (pos < expr.length) throw new Error("unexpected trailing: " + expr.slice(pos));
+    if (pos < expr.length)
+      throw new Error("unexpected trailing: " + expr.slice(pos));
     return result;
   }
 
@@ -1038,7 +1092,7 @@ export class CommandPalette {
       "megabytes->gigabyte": (v) => v / 1024,
       "mb->gigabytes": (v) => v / 1024,
       "megabyte->gigabytes": (v) => v / 1024,
-      "megabytes->gigabytes": (v) => v / 1024
+      "megabytes->gigabytes": (v) => v / 1024,
     };
     const key = `${from}->${to}`;
     const fn = conversions[key];
@@ -1054,13 +1108,15 @@ export class CommandPalette {
         var text = result.toString();
         os.app.setClipboardContent(text);
         navigator.clipboard.writeText(text);
-      }
+      },
     };
   }
 
   setSystemTheme(val) {
     os.storage.set(StorageKeys.theme, val);
-    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    const prefersDark = window.matchMedia(
+      "(prefers-color-scheme: dark)",
+    ).matches;
     const effective = val === "auto" ? (prefersDark ? "dark" : "light") : val;
     animateThemeChange(() => {
       document.documentElement.setAttribute("data-theme", effective);
@@ -1070,17 +1126,20 @@ export class CommandPalette {
       type: "success",
       duration: 3000,
       icon: "papirus:apps/com.github.cassidyjames.palette",
-      appSource: AppSource.COMMAND_PALETTE
+      appSource: AppSource.COMMAND_PALETTE,
     });
   }
 
   toggleSound(val) {
     os.storage.set(StorageKeys.soundEnabled, val ? "true" : "false");
-    os.events.emit(BusEvents.SETTINGS_CHANGED, { key: "soundEnabled", value: val ? "true" : "false" });
+    os.events.emit(BusEvents.SETTINGS_CHANGED, {
+      key: "soundEnabled",
+      value: val ? "true" : "false",
+    });
     os.notify.send("Sound", val ? "On" : "Off", {
       type: "info",
       duration: 2500,
-      icon: "papirus:status/audio-volume-high"
+      icon: "papirus:status/audio-volume-high",
     });
   }
 
@@ -1090,7 +1149,7 @@ export class CommandPalette {
       type: "info",
       duration: 2500,
       icon: "papirus:status/audio-volume-muted",
-      appSource: AppSource.COMMAND_PALETTE
+      appSource: AppSource.COMMAND_PALETTE,
     });
   }
 
@@ -1100,7 +1159,7 @@ export class CommandPalette {
       type: "success",
       duration: 3000,
       icon: "papirus:actions/window-close",
-      appSource: AppSource.COMMAND_PALETTE
+      appSource: AppSource.COMMAND_PALETTE,
     });
   }
 
@@ -1158,7 +1217,11 @@ export class CommandPalette {
     const activeItem = this.results[this.activeIndex];
     if (activeItem) {
       activeItem.execute();
-      if (activeItem.tag !== "nav" && this.currentSubpalette !== "wallpaper" && !activeItem.keepOpen) {
+      if (
+        activeItem.tag !== "nav" &&
+        this.currentSubpalette !== "wallpaper" &&
+        !activeItem.keepOpen
+      ) {
         this.close();
       }
     }

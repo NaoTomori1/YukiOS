@@ -3,14 +3,21 @@ import { KeybindManager } from "../keybindManager.js";
 import { resolveIconUrl } from "../shared/assetResolver.js";
 import { getEffectiveIcon } from "../shared/iconPack.js";
 
-const CATEGORY_ORDER = ["navigation", "resize", "swap", "windows", "workspaces", "system"];
+const CATEGORY_ORDER = [
+  "navigation",
+  "resize",
+  "swap",
+  "windows",
+  "workspaces",
+  "system",
+];
 const CATEGORY_LABELS = {
   navigation: "Navigation",
   resize: "Resize",
   swap: "Swap Windows",
   windows: "Windows",
   workspaces: "Workspaces",
-  system: "System"
+  system: "System",
 };
 const CATEGORY_ICONS = {
   navigation: "papirus:actions/transform-move",
@@ -18,7 +25,7 @@ const CATEGORY_ICONS = {
   swap: "papirus:actions/swap-panels",
   windows: "papirus:actions/window-maximize",
   workspaces: "papirus:devices/computer",
-  system: "papirus:actions/configure"
+  system: "papirus:actions/configure",
 };
 
 function esc(str) {
@@ -32,7 +39,12 @@ function getCategory(id) {
   if (id.includes("focus") || id.includes("cycle")) return "navigation";
   if (id.includes("resize")) return "resize";
   if (id.includes("swap")) return "swap";
-  if (id.includes("fullscreen") || id.includes("floating") || id.includes("close")) return "windows";
+  if (
+    id.includes("fullscreen") ||
+    id.includes("floating") ||
+    id.includes("close")
+  )
+    return "windows";
   return "system";
 }
 
@@ -51,7 +63,9 @@ export function buildTilingKeybindHTML(searchLower) {
   CATEGORY_ORDER.forEach((cat) => {
     const items = groups[cat];
     if (!items || items.length === 0) return;
-    const filtered = searchLower ? items.filter((k) => k.desc.toLowerCase().includes(searchLower)) : items;
+    const filtered = searchLower
+      ? items.filter((k) => k.desc.toLowerCase().includes(searchLower))
+      : items;
     if (filtered.length === 0) return;
     const eff = getEffectiveIcon(CATEGORY_ICONS[cat]);
     const iconHtml = eff.startsWith("papirus:")
@@ -96,7 +110,11 @@ export class TilingKeybindOverlay {
     this.isOpen = true;
     setTimeout(() => {
       const close = (e) => {
-        if (this.el && !this.el.contains(e.target) && e.target.id !== "tiling-keybind-hint") {
+        if (
+          this.el &&
+          !this.el.contains(e.target) &&
+          e.target.id !== "tiling-keybind-hint"
+        ) {
           this.close();
           document.removeEventListener("click", close);
         }

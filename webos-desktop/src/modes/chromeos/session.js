@@ -24,10 +24,13 @@ export function applyChromeOsSettings() {
     "Wind-Light.jpg",
     "Yellows-Dark.jpg",
     "Yellows.jpg",
-    "chromeos-default.jpg"
+    "chromeos-default.jpg",
   ];
-  const pick = chromeWallpapers[Math.floor(Math.random() * chromeWallpapers.length)];
-  SystemUtilities.setWallpaper(`/static/wallpapers/chromeos-wallpapers/${pick}`);
+  const pick =
+    chromeWallpapers[Math.floor(Math.random() * chromeWallpapers.length)];
+  SystemUtilities.setWallpaper(
+    `/static/wallpapers/chromeos-wallpapers/${pick}`,
+  );
 }
 
 export function disableChromeOsSettings() {

@@ -16,13 +16,18 @@ export class LaunchSplash {
     this.el = createElement("div", { id: LAUNCH_SPLASH_ID });
     this.el.className = `deck-launch-layer deck-launch-${mode}`;
     const safeTitle = escapeHtml(title);
-    const safeDescription = description ? `<span class="deck-launch-desc">${escapeHtml(description)}</span>` : "";
+    const safeDescription = description
+      ? `<span class="deck-launch-desc">${escapeHtml(description)}</span>`
+      : "";
     const iconHtml = isUrlIcon(icon)
       ? `<img class="deck-launch-icon" src="${icon}" alt="${safeTitle}" loading="lazy">`
       : `<i class="deck-launch-icon ${icon}"></i>`;
     const statsHtml = stats.length
       ? `<div class="deck-launch-stats">${stats
-          .map((s) => `<span class="deck-launch-stat"><i class="fas ${s.icon}"></i>${escapeHtml(s.value)}</span>`)
+          .map(
+            (s) =>
+              `<span class="deck-launch-stat"><i class="fas ${s.icon}"></i>${escapeHtml(s.value)}</span>`,
+          )
           .join("")}</div>`
       : "";
     setHTML(
@@ -37,10 +42,12 @@ export class LaunchSplash {
            <div class="deck-launch-progress"><span class="deck-launch-progress-fill"></span></div>
            ${statsHtml}
          </div>
-       </div>`
+       </div>`,
     );
     document.body.appendChild(this.el);
-    this.el.querySelector(".deck-launch-backdrop").addEventListener("click", () => this.reveal());
+    this.el
+      .querySelector(".deck-launch-backdrop")
+      .addEventListener("click", () => this.reveal());
     requestAnimationFrame(() => {
       if (this.el) this.el.classList.add("open");
     });
@@ -61,4 +68,5 @@ export class LaunchSplash {
   }
 }
 
-export const launchSplash = typeof document !== "undefined" ? new LaunchSplash() : null;
+export const launchSplash =
+  typeof document !== "undefined" ? new LaunchSplash() : null;

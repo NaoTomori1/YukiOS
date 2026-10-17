@@ -28,7 +28,9 @@ describe("StorageKeys", () => {
         value.startsWith("roblox_") ||
         value.startsWith("settings:") ||
         value.startsWith("rm3d_");
-      expect(valid, `Key "${key}" has unexpected prefix: "${value}"`).toBe(true);
+      expect(valid, `Key "${key}" has unexpected prefix: "${value}"`).toBe(
+        true,
+      );
     }
   });
 

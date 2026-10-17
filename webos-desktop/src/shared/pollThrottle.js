@@ -4,7 +4,8 @@ export function isReducedActivity() {
     if (typeof document !== "undefined" && document.hidden) return true;
   } catch {}
   try {
-    if (performanceManager && performanceManager.getMode() === "performance") return true;
+    if (performanceManager && performanceManager.getMode() === "performance")
+      return true;
   } catch {}
   return false;
 }

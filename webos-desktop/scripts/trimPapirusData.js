@@ -1,14 +1,31 @@
-import { existsSync, readFileSync, writeFileSync, readdirSync, lstatSync } from "fs";
+import {
+  existsSync,
+  readFileSync,
+  writeFileSync,
+  readdirSync,
+  lstatSync,
+} from "fs";
 import { join, resolve } from "path";
 
 const MANUAL_EXTRA_ICON_KEYS = [];
 const PAPIRUS_SIZES = [16, 22, 24, 32, 48, 64];
 const SIZE_FALLBACK_ORDER = [48, 32, 22, 24, 16, 64, 128, 96, 42, 84, 18, 8];
 const REF_PATTERN = /papirus:([A-Za-z0-9/_.\-]+)/g;
-const SCAN_EXTENSIONS = new Set([".js", ".jsx", ".ts", ".tsx", ".json", ".css", ".html"]);
+const SCAN_EXTENSIONS = new Set([
+  ".js",
+  ".jsx",
+  ".ts",
+  ".tsx",
+  ".json",
+  ".css",
+  ".html",
+]);
 
 function findSrcDir() {
-  const candidates = [resolve(process.cwd(), "src"), resolve(process.cwd(), "webos-desktop/src")];
+  const candidates = [
+    resolve(process.cwd(), "src"),
+    resolve(process.cwd(), "webos-desktop/src"),
+  ];
   const found = candidates.find((p) => existsSync(p));
   if (!found) {
     console.error("[papirus-trim] src directory not found");
@@ -25,7 +42,8 @@ function collectRefs(dir, into) {
     return;
   }
   for (const name of entries) {
-    if (name === "node_modules" || name === "dist" || name === "generated") continue;
+    if (name === "node_modules" || name === "dist" || name === "generated")
+      continue;
     const full = join(dir, name);
     let st = null;
     try {
@@ -51,7 +69,8 @@ function collectRefs(dir, into) {
 }
 
 function splitKey(raw) {
-  const clean = raw.endsWith(".svg") || raw.endsWith(".SVG") ? raw.slice(0, -4) : raw;
+  const clean =
+    raw.endsWith(".svg") || raw.endsWith(".SVG") ? raw.slice(0, -4) : raw;
   if (clean.includes("/")) {
     const parts = clean.split("/");
     const iconName = parts.pop();
@@ -113,7 +132,9 @@ function main() {
   const availPath = join(generatedDir, "papirus-available.json");
   const symPath = join(generatedDir, "papirus-symlinks.json");
   if (!existsSync(availPath) || !existsSync(symPath)) {
-    console.error("[papirus-trim] generated data missing, run generatePapirusData.js first");
+    console.error(
+      "[papirus-trim] generated data missing, run generatePapirusData.js first",
+    );
     process.exit(1);
   }
   const available = JSON.parse(readFileSync(availPath, "utf-8"));
@@ -147,7 +168,9 @@ function main() {
       const before = resolveBucket(raw, px, available, symlinks);
       const after = resolveBucket(raw, px, trimmedAvailable, trimmedSymlinks);
       if (before !== after) {
-        console.error(`[papirus-trim] MISMATCH for ${raw} at ${px}px: ${before} vs ${after}`);
+        console.error(
+          `[papirus-trim] MISMATCH for ${raw} at ${px}px: ${before} vs ${after}`,
+        );
         process.exit(1);
       }
     }
@@ -164,7 +187,7 @@ function main() {
   if (currentAvail !== availText) writeFileSync(availPath, availText, "utf-8");
   if (currentSym !== symText) writeFileSync(symPath, symText, "utf-8");
   console.log(
-    `[papirus-trim] refs=${checkedRefs.length} kept=${Object.keys(trimmedAvailable).length}/${Object.keys(available).length} available, ${Object.keys(trimmedSymlinks).length}/${Object.keys(symlinks).length} symlinks`
+    `[papirus-trim] refs=${checkedRefs.length} kept=${Object.keys(trimmedAvailable).length}/${Object.keys(available).length} available, ${Object.keys(trimmedSymlinks).length}/${Object.keys(symlinks).length} symlinks`,
   );
 }
 

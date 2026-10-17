@@ -17,7 +17,7 @@ function readDirectoryEntries(buffer) {
       width: buffer[base] === 0 ? 256 : buffer[base],
       height: buffer[base + 1] === 0 ? 256 : buffer[base + 1],
       bytes: buffer.readUInt32LE(base + 8),
-      offset: buffer.readUInt32LE(base + 12)
+      offset: buffer.readUInt32LE(base + 12),
     });
   }
   return entries;
@@ -59,10 +59,12 @@ function decodeDibFrame(frame) {
   if (columns < 1 || rows < 1) return null;
 
   const isTopDown = rawHeight < 0;
-  const palette = bitCount <= 8 ? readPalette(frame, bitCount, headerSize) : null;
+  const palette =
+    bitCount <= 8 ? readPalette(frame, bitCount, headerSize) : null;
   if (bitCount <= 8 && !palette) return null;
 
-  const dataOffset = headerSize + (palette ? palette.length * paletteEntrySize(bitCount) : 0);
+  const dataOffset =
+    headerSize + (palette ? palette.length * paletteEntrySize(bitCount) : 0);
   const rowSize = Math.ceil((columns * bitCount) / 32) * 4;
   if (dataOffset + rowSize * rows > frame.length) return null;
 
@@ -118,8 +120,10 @@ function decodeDibFrame(frame) {
 function selectLargestFrame(entries, buffer) {
   let best = null;
   for (const entry of entries) {
-    if (entry.bytes === 0 || entry.offset + entry.bytes > buffer.length) continue;
-    if (!best || entry.width * entry.height > best.width * best.height) best = entry;
+    if (entry.bytes === 0 || entry.offset + entry.bytes > buffer.length)
+      continue;
+    if (!best || entry.width * entry.height > best.width * best.height)
+      best = entry;
   }
   return best;
 }
@@ -138,14 +142,28 @@ export function decodeIco(buffer) {
 
   const frame = buffer.subarray(best.offset, best.offset + best.bytes);
   if (isPngFrame(frame)) {
-    return { data: frame, format: "png", width: best.width, height: best.height };
+    return {
+      data: frame,
+      format: "png",
+      width: best.width,
+      height: best.height,
+    };
   }
 
   const dib = decodeDibFrame(frame);
   if (!dib) return null;
-  return { data: dib.data, format: "raw", width: dib.width, height: dib.height };
+  return {
+    data: dib.data,
+    format: "raw",
+    width: dib.width,
+    height: dib.height,
+  };
 }
 
 export function isIcoBuffer(buffer) {
-  return buffer.length >= 6 && buffer.readUInt16LE(0) === 0 && buffer.readUInt16LE(2) === ICON_TYPE;
+  return (
+    buffer.length >= 6 &&
+    buffer.readUInt16LE(0) === 0 &&
+    buffer.readUInt16LE(2) === ICON_TYPE
+  );
 }

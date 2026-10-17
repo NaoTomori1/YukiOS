@@ -10,7 +10,7 @@ import {
   fakeFetchConversations,
   fakeRemoveFriend,
   fakeAcceptFriendRequest,
-  fakeFriendRelation
+  fakeFriendRelation,
 } from "./fakeFriends.js";
 
 let cachedFriends = null;
@@ -21,12 +21,15 @@ export async function fetchFriends({ refresh = false } = {}) {
   if (fakeFriendsEnabled()) return fakeFriendsResult();
   const userId = getLiveUserId();
   if (!userId) return { friends: [], requests: [], sentRequests: [] };
-  if (!refresh && cachedFriends && Date.now() - cachedFriendsTime < FRIENDS_TTL) return cachedFriends;
-  const data = await socialGet(`/live/friends?userId=${encodeURIComponent(userId)}`);
+  if (!refresh && cachedFriends && Date.now() - cachedFriendsTime < FRIENDS_TTL)
+    return cachedFriends;
+  const data = await socialGet(
+    `/live/friends?userId=${encodeURIComponent(userId)}`,
+  );
   const result = {
     friends: Array.isArray(data?.friends) ? data.friends : [],
     requests: Array.isArray(data?.requests) ? data.requests : [],
-    sentRequests: Array.isArray(data?.sentRequests) ? data.sentRequests : []
+    sentRequests: Array.isArray(data?.sentRequests) ? data.sentRequests : [],
   };
   cachedFriends = result;
   cachedFriendsTime = Date.now();
@@ -41,7 +44,8 @@ export function getCachedFriends() {
   return {
     friends: stored && Array.isArray(stored.friends) ? stored.friends : [],
     requests: stored && Array.isArray(stored.requests) ? stored.requests : [],
-    sentRequests: stored && Array.isArray(stored.sentRequests) ? stored.sentRequests : []
+    sentRequests:
+      stored && Array.isArray(stored.sentRequests) ? stored.sentRequests : [],
   };
 }
 
@@ -56,7 +60,9 @@ export async function sendFriendRequest(friendId) {
   if (!userId || !friendId) return { error: "You need a profile first." };
   const res = await socialPost("/live/friends/request", { userId, friendId });
   if (res.ok) fetchFriends({ refresh: true }).catch(() => {});
-  return res.ok ? { status: res.data.status } : { error: res.data.error || "Could not send the request." };
+  return res.ok
+    ? { status: res.data.status }
+    : { error: res.data.error || "Could not send the request." };
 }
 
 export async function acceptFriendRequest(friendId) {
@@ -65,7 +71,9 @@ export async function acceptFriendRequest(friendId) {
   if (!userId || !friendId) return { error: "Missing profile." };
   const res = await socialPost("/live/friends/accept", { userId, friendId });
   if (res.ok) fetchFriends({ refresh: true }).catch(() => {});
-  return res.ok ? { status: res.data.status } : { error: res.data.error || "Could not accept." };
+  return res.ok
+    ? { status: res.data.status }
+    : { error: res.data.error || "Could not accept." };
 }
 
 export async function removeFriend(friendId) {
@@ -74,7 +82,9 @@ export async function removeFriend(friendId) {
   if (!userId || !friendId) return { error: "Missing profile." };
   const res = await socialPost("/live/friends/remove", { userId, friendId });
   if (res.ok) fetchFriends({ refresh: true }).catch(() => {});
-  return res.ok ? { success: true } : { error: res.data.error || "Could not remove." };
+  return res.ok
+    ? { success: true }
+    : { error: res.data.error || "Could not remove." };
 }
 
 export async function sendMessage(friendId, body) {
@@ -82,7 +92,9 @@ export async function sendMessage(friendId, body) {
   const userId = getLiveUserId();
   if (!userId || !friendId) return { error: "Missing profile." };
   const res = await socialPost("/live/messages", { userId, friendId, body });
-  return res.ok ? { status: "ok" } : { error: res.data.error || "Could not send the message." };
+  return res.ok
+    ? { status: "ok" }
+    : { error: res.data.error || "Could not send the message." };
 }
 
 export async function fetchMessages(friendId, after) {
@@ -103,10 +115,16 @@ export async function fetchConversations({ refresh = false } = {}) {
   if (fakeFriendsEnabled()) return fakeFetchConversations();
   const userId = getLiveUserId();
   if (!userId) return [];
-  if (!refresh && cachedConversations && Date.now() - cachedConversationsTime < CONVERSATIONS_TTL) {
+  if (
+    !refresh &&
+    cachedConversations &&
+    Date.now() - cachedConversationsTime < CONVERSATIONS_TTL
+  ) {
     return cachedConversations;
   }
-  const data = await socialGet(`/live/messages?userId=${encodeURIComponent(userId)}&conversations=1`);
+  const data = await socialGet(
+    `/live/messages?userId=${encodeURIComponent(userId)}&conversations=1`,
+  );
   const result = Array.isArray(data?.conversations) ? data.conversations : [];
   cachedConversations = result;
   cachedConversationsTime = Date.now();
@@ -124,7 +142,9 @@ export async function getFriendRelation(userId) {
   if (userId === getLiveUserId()) return "self";
   const list = await fetchFriends();
   if (list.friends.some((friend) => friend.userId === userId)) return "friend";
-  if (list.requests.some((request) => request.userId === userId)) return "incoming";
-  if (list.sentRequests.some((request) => request.userId === userId)) return "outgoing";
+  if (list.requests.some((request) => request.userId === userId))
+    return "incoming";
+  if (list.sentRequests.some((request) => request.userId === userId))
+    return "outgoing";
   return "none";
 }

@@ -101,12 +101,16 @@ export class MagnifierApp extends BaseApp {
 
   setupEvents() {
     if (!this.panel) return;
-    this.panel.querySelector("#magnifier-zoom-in").addEventListener("click", () => {
-      if (this.engine.zoom < 400) this.setZoom(this.engine.zoom + 25);
-    });
-    this.panel.querySelector("#magnifier-zoom-out").addEventListener("click", () => {
-      if (this.engine.zoom > 100) this.setZoom(this.engine.zoom - 25);
-    });
+    this.panel
+      .querySelector("#magnifier-zoom-in")
+      .addEventListener("click", () => {
+        if (this.engine.zoom < 400) this.setZoom(this.engine.zoom + 25);
+      });
+    this.panel
+      .querySelector("#magnifier-zoom-out")
+      .addEventListener("click", () => {
+        if (this.engine.zoom > 100) this.setZoom(this.engine.zoom - 25);
+      });
   }
 
   close() {

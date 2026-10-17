@@ -5,7 +5,8 @@ import "../../remote/RemoteHostCore.js";
 const RemoteClientCore = window.RemoteClientCore;
 const RemoteHostCore = window.RemoteHostCore;
 
-const SIGNALING_BASE = "wss://yukios-remote-signaling.liventcord-a60.workers.dev";
+const SIGNALING_BASE =
+  "wss://yukios-remote-signaling.liventcord-a60.workers.dev";
 
 export class RemoteHostApp extends BaseApp {
   singletonWindowIds = ["remote-host"];
@@ -24,12 +25,18 @@ export class RemoteHostApp extends BaseApp {
 
     const isElectron = typeof window.electronAPI !== "undefined";
 
-    const win = os.window.create(winId, "Yuki Remote Desktop", "860px", "620px", {
-      icon: "fas fa-desktop",
-      resizable: true,
-      minWidth: 500,
-      minHeight: 400
-    });
+    const win = os.window.create(
+      winId,
+      "Yuki Remote Desktop",
+      "860px",
+      "620px",
+      {
+        icon: "fas fa-desktop",
+        resizable: true,
+        minWidth: 500,
+        minHeight: 400,
+      },
+    );
 
     win.innerHTML = `
       <div class="remote-host-app">
@@ -180,7 +187,9 @@ export class RemoteHostApp extends BaseApp {
         tabs.forEach((t) => t.classList.remove("active"));
         const target = win.querySelector(`.remote-tab[data-panel="${tab}"]`);
         if (target) target.classList.add("active");
-        win.querySelectorAll(".tab-panel").forEach((p) => p.classList.remove("active"));
+        win
+          .querySelectorAll(".tab-panel")
+          .forEach((p) => p.classList.remove("active"));
         const panel = win.querySelector(`#panel-${tab}`);
         if (panel) panel.classList.add("active");
       }
@@ -224,7 +233,9 @@ export class RemoteHostApp extends BaseApp {
         tabs.forEach((t) => t.classList.remove("active"));
         tab.classList.add("active");
         const target = tab.dataset.panel;
-        win.querySelectorAll(".tab-panel").forEach((p) => p.classList.remove("active"));
+        win
+          .querySelectorAll(".tab-panel")
+          .forEach((p) => p.classList.remove("active"));
         const panel = win.querySelector(`#panel-${target}`);
         if (panel) panel.classList.add("active");
       });
@@ -255,13 +266,16 @@ export class RemoteHostApp extends BaseApp {
 
     const updateMuteIcon = (muted) => {
       if (!muteBtn) return;
-      muteBtn.innerHTML = muted ? '<i class="fas fa-volume-mute"></i>' : '<i class="fas fa-volume-up"></i>';
+      muteBtn.innerHTML = muted
+        ? '<i class="fas fa-volume-mute"></i>'
+        : '<i class="fas fa-volume-up"></i>';
       muteBtn.title = muted ? "Unmute audio" : "Mute audio";
     };
 
     const showRoomCode = (code) => {
       this.hostRoomCode = code;
-      roomCodeDisplay.textContent = code.length === 6 ? code.slice(0, 3) + "-" + code.slice(3) : code;
+      roomCodeDisplay.textContent =
+        code.length === 6 ? code.slice(0, 3) + "-" + code.slice(3) : code;
       roomCodeSection.style.display = "block";
       shareBtn.style.display = "none";
       stopBtn.style.display = "";
@@ -301,7 +315,11 @@ export class RemoteHostApp extends BaseApp {
           try {
             useGst = await electronAPI.gstreamerAvailable();
           } catch {}
-          const result = await electronAPI.startRemoteHost({ quality, fps, useGstreamer: useGst });
+          const result = await electronAPI.startRemoteHost({
+            quality,
+            fps,
+            useGstreamer: useGst,
+          });
           if (!result.success) {
             log(`Failed to start: ${result.error || "Unknown error"}`, "error");
             shareBtn.disabled = false;
@@ -347,7 +365,7 @@ export class RemoteHostApp extends BaseApp {
               log(`Audio ${enabled ? "active" : "muted"}`, "info");
             }
           },
-          onInput: (input) => {}
+          onInput: (input) => {},
         });
 
         const ok = await this.hostCore.start(quality, fps);
@@ -527,7 +545,7 @@ export class RemoteHostApp extends BaseApp {
         if (audioIndicator) {
           audioIndicator.style.display = hasAudio ? "" : "none";
         }
-      }
+      },
     });
 
     roomInput.addEventListener("input", () => {

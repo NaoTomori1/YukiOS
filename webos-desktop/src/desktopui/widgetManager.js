@@ -108,9 +108,9 @@ export class WidgetBase {
           this.x = parseFloat(this.element.style.left) || 0;
           this.y = parseFloat(this.element.style.top) || 0;
           this.manager.saveState();
-        }
+        },
       },
-      { ignoreFrom: ".widget-btn, .widget-resize-handle, textarea, input" }
+      { ignoreFrom: ".widget-btn, .widget-resize-handle, textarea, input" },
     );
   }
 
@@ -173,9 +173,15 @@ export class WidgetBase {
       existing.remove();
       return;
     }
-    const win = os.window.create(winId, `${this.title} Settings`, "320px", "auto", {
-      icon: "fa fa-cog"
-    });
+    const win = os.window.create(
+      winId,
+      `${this.title} Settings`,
+      "320px",
+      "auto",
+      {
+        icon: "fa fa-cog",
+      },
+    );
     let html = `<div style="padding:16px;display:flex;flex-direction:column;gap:12px;">`;
     const values = {};
     fields.forEach((f) => {
@@ -209,7 +215,9 @@ export class WidgetBase {
       this.applyConfig(data);
       win.remove();
     });
-    win.querySelector(".widget-cfg-close").addEventListener("click", () => win.remove());
+    win
+      .querySelector(".widget-cfg-close")
+      .addEventListener("click", () => win.remove());
   }
 
   onClose() {
@@ -225,7 +233,7 @@ export class WidgetBase {
       y: parseFloat(this.element.style.top) || 0,
       w: this.element.offsetWidth,
       h: this.element.offsetHeight,
-      data: this.getData ? this.getData() : {}
+      data: this.getData ? this.getData() : {},
     };
   }
 
@@ -291,7 +299,9 @@ export class WidgetManager {
     const instance = new Klass(this, id);
     const el = instance.buildElement();
     this.container.appendChild(el);
-    os.events.emit(BusEvents.ACHIEVEMENT_TRIGGER, { achievementId: Achievements.WidgetAdded });
+    os.events.emit(BusEvents.ACHIEVEMENT_TRIGGER, {
+      achievementId: Achievements.WidgetAdded,
+    });
     this.widgets.set(id, instance);
     this.saveState();
     return instance;
@@ -325,7 +335,10 @@ export class WidgetManager {
     saved.forEach((state) => {
       const Klass = this.widgetClasses.get(state.type);
       if (!Klass) return;
-      const instance = new Klass(this, state.id || `widget_${state.type}_${Date.now()}`);
+      const instance = new Klass(
+        this,
+        state.id || `widget_${state.type}_${Date.now()}`,
+      );
       instance.loadState(state);
       const el = instance.buildElement();
       this.container.appendChild(el);

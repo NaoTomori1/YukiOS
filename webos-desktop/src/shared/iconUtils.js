@@ -17,9 +17,17 @@ export function getPapirusUrl(icon, size = 48) {
 }
 
 export function resolveIconHtml(icon, options = {}) {
-  const { faClass = "", faStyle = "", imgClass = "", alt = "", imgLoading = "lazy", size = 48 } = options;
+  const {
+    faClass = "",
+    faStyle = "",
+    imgClass = "",
+    alt = "",
+    imgLoading = "lazy",
+    size = 48,
+  } = options;
   icon = getEffectiveIcon(icon);
-  if (typeof icon === "string" && icon.startsWith("fa-") && !icon.includes(" ")) icon = "fas " + icon;
+  if (typeof icon === "string" && icon.startsWith("fa-") && !icon.includes(" "))
+    icon = "fas " + icon;
   if (isPapirusIcon(icon)) {
     const resolved = resolvePapirusUrl(icon, size);
     const bucket = [16, 22, 24, 32, 48, 64].includes(size) ? size : 48;
@@ -41,7 +49,8 @@ export function resolveDesktopIcon(content, fileName = null) {
 
   if (content) {
     try {
-      const parsed = typeof content === "string" ? JSON.parse(content) : content;
+      const parsed =
+        typeof content === "string" ? JSON.parse(content) : content;
       if (parsed) {
         if (parsed.type === "youtube-embed") {
           icon = resolveIconUrl("static/icons/youtube.webp");
@@ -69,7 +78,7 @@ export function resolveDesktopIcon(content, fileName = null) {
   }
 
   if (!icon) {
-    return resolveIconUrl("static/icons/file.webp");
+    return resolveIconUrl("static/icons/explorerwin11.png");
   }
 
   icon = getEffectiveIcon(icon);
@@ -78,7 +87,11 @@ export function resolveDesktopIcon(content, fileName = null) {
     return resolvePapirusUrl(icon, 48);
   }
 
-  if (typeof icon === "string" && icon.startsWith("fa-") && !icon.includes(" ")) {
+  if (
+    typeof icon === "string" &&
+    icon.startsWith("fa-") &&
+    !icon.includes(" ")
+  ) {
     icon = "fas " + icon;
   }
 
@@ -94,7 +107,10 @@ export function resolveDesktopIcon(content, fileName = null) {
     return icon;
   }
 
-  if (typeof icon === "string" && (icon.startsWith("http") || icon.startsWith("/"))) {
+  if (
+    typeof icon === "string" &&
+    (icon.startsWith("http") || icon.startsWith("/"))
+  ) {
     return icon;
   }
 

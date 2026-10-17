@@ -21,7 +21,7 @@ export const RESOLUTION_PRESETS = [
   { value: "2560x1440", label: "2560 × 1440 (16:9)" },
   { value: "2560x1600", label: "2560 × 1600 (16:10)" },
   { value: "3440x1440", label: "3440 × 1440 (21:9)" },
-  { value: "3840x2160", label: "3840 × 2160 (16:9)" }
+  { value: "3840x2160", label: "3840 × 2160 (16:9)" },
 ];
 
 export function getResolutionLabel(value) {

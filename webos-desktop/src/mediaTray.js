@@ -1,4 +1,11 @@
-import { $, $$, createElement, setStyle, setText, setHTML } from "./shared/domUtils.js";
+import {
+  $,
+  $$,
+  createElement,
+  setStyle,
+  setText,
+  setHTML,
+} from "./shared/domUtils.js";
 import { os, MODES } from "./framework.js";
 import { audioMixer } from "./audioMixer.js";
 import { isTaskbarTop } from "./utils/utils.js";
@@ -86,7 +93,11 @@ class MediaPlayerTray {
   init() {
     this.createPanel();
     this.attachListeners();
-    this.stopReconcile = createAdaptiveInterval(() => this.reconcile(), 1000, 5000);
+    this.stopReconcile = createAdaptiveInterval(
+      () => this.reconcile(),
+      1000,
+      5000,
+    );
   }
 
   attachListeners() {
@@ -99,7 +110,8 @@ class MediaPlayerTray {
       if (e.target instanceof HTMLMediaElement) this.updatePlayState();
     };
     this.mediaTimeHandler = (e) => {
-      if (e.target instanceof HTMLMediaElement && this.isOpen) this.updateProgress();
+      if (e.target instanceof HTMLMediaElement && this.isOpen)
+        this.updateProgress();
     };
     this.mediaEndedHandler = () => this.updatePlayState();
     this.mediaDurationHandler = () => {
@@ -112,7 +124,7 @@ class MediaPlayerTray {
       timeupdate: this.mediaTimeHandler,
       loadedmetadata: this.mediaTimeHandler,
       durationchange: this.mediaTimeHandler,
-      ended: this.mediaEndedHandler
+      ended: this.mediaEndedHandler,
     };
     for (const evt of Object.keys(handlers)) {
       document.addEventListener(evt, handlers[evt], true);
@@ -153,13 +165,15 @@ class MediaPlayerTray {
       timeupdate: this.mediaTimeHandler,
       loadedmetadata: this.mediaTimeHandler,
       durationchange: this.mediaTimeHandler,
-      ended: this.mediaEndedHandler
+      ended: this.mediaEndedHandler,
     };
     for (const evt of Object.keys(handlers)) {
       document.removeEventListener(evt, handlers[evt], true);
     }
-    if (this.windowClosedHandler) os.events.off(BusEvents.WINDOW_CLOSED, this.windowClosedHandler);
-    if (this.clickOutsideHandler) document.removeEventListener("click", this.clickOutsideHandler);
+    if (this.windowClosedHandler)
+      os.events.off(BusEvents.WINDOW_CLOSED, this.windowClosedHandler);
+    if (this.clickOutsideHandler)
+      document.removeEventListener("click", this.clickOutsideHandler);
     if (this.interval) clearInterval(this.interval);
     this.stopProgressTimer();
     this.unregisterTray();
@@ -205,7 +219,11 @@ class MediaPlayerTray {
     const live = new Set();
     try {
       audioMixer().channels.forEach((ch, winId) => {
-        if (ch.nowPlaying && ch.nowPlaying.playbackState && ch.nowPlaying.playbackState !== "none") {
+        if (
+          ch.nowPlaying &&
+          ch.nowPlaying.playbackState &&
+          ch.nowPlaying.playbackState !== "none"
+        ) {
           live.add(winId);
           if (!this.metadataSources.has(winId)) {
             this.metadataSources.set(winId, ch);
@@ -249,7 +267,11 @@ class MediaPlayerTray {
 
   getLiveChannel(winId) {
     try {
-      return audioMixer().channels.get(winId) || this.metadataSources.get(winId) || null;
+      return (
+        audioMixer().channels.get(winId) ||
+        this.metadataSources.get(winId) ||
+        null
+      );
     } catch {
       return null;
     }
@@ -258,7 +280,8 @@ class MediaPlayerTray {
   getActiveSource() {
     if (this.activeType === "element" && this.activeId) {
       const s = this.mediaSources.get(this.activeId);
-      if (s) return { type: "element", winId: this.activeId, element: s.element };
+      if (s)
+        return { type: "element", winId: this.activeId, element: s.element };
     }
     if (this.activeType === "metadata" && this.activeId) {
       const ch = this.getLiveChannel(this.activeId);
@@ -268,13 +291,21 @@ class MediaPlayerTray {
     if (elEntry) {
       this.activeType = "element";
       this.activeId = elEntry[0];
-      return { type: "element", winId: elEntry[0], element: elEntry[1].element };
+      return {
+        type: "element",
+        winId: elEntry[0],
+        element: elEntry[1].element,
+      };
     }
     const metaEntry = this.metadataSources.entries().next().value;
     if (metaEntry) {
       this.activeType = "metadata";
       this.activeId = metaEntry[0];
-      return { type: "metadata", winId: metaEntry[0], channel: this.getLiveChannel(metaEntry[0]) || metaEntry[1] };
+      return {
+        type: "metadata",
+        winId: metaEntry[0],
+        channel: this.getLiveChannel(metaEntry[0]) || metaEntry[1],
+      };
     }
     return null;
   }
@@ -296,7 +327,7 @@ class MediaPlayerTray {
       resident: true,
       showInTray: true,
       priority: 70,
-      onClick: () => this.toggle()
+      onClick: () => this.toggle(),
     });
   }
 
@@ -356,9 +387,15 @@ class MediaPlayerTray {
     `;
     document.body.appendChild(this.panel);
 
-    this.panel.querySelector(".mp-collapse").addEventListener("click", () => this.close());
-    this.panel.querySelector(".mp-close").addEventListener("click", () => this.close());
-    this.panel.querySelector(".tray-pin-btn").addEventListener("click", () => this.togglePin());
+    this.panel
+      .querySelector(".mp-collapse")
+      .addEventListener("click", () => this.close());
+    this.panel
+      .querySelector(".mp-close")
+      .addEventListener("click", () => this.close());
+    this.panel
+      .querySelector(".tray-pin-btn")
+      .addEventListener("click", () => this.togglePin());
     const seekEl = this.panel.querySelector(".mp-seek");
     seekEl.addEventListener("pointerdown", () => {
       this.isSeeking = true;
@@ -374,7 +411,10 @@ class MediaPlayerTray {
         const dur = Number(src.element.duration) || 0;
         if (!(dur > 0)) return;
         setText(this.panel.querySelector(".mp-elapsed"), formatTime(pct * dur));
-        setText(this.panel.querySelector(".mp-remaining"), `-${formatTime(Math.max(0, dur - pct * dur))}`);
+        setText(
+          this.panel.querySelector(".mp-remaining"),
+          `-${formatTime(Math.max(0, dur - pct * dur))}`,
+        );
         e.target.style.setProperty("--p", `${pct * 100}%`);
         return;
       }
@@ -382,20 +422,37 @@ class MediaPlayerTray {
       const dur = Number(live?.nowPlaying?.duration) || 0;
       if (!(dur > 0)) return;
       setText(this.panel.querySelector(".mp-elapsed"), formatTime(pct * dur));
-      setText(this.panel.querySelector(".mp-remaining"), `-${formatTime(Math.max(0, dur - pct * dur))}`);
+      setText(
+        this.panel.querySelector(".mp-remaining"),
+        `-${formatTime(Math.max(0, dur - pct * dur))}`,
+      );
       e.target.style.setProperty("--p", `${pct * 100}%`);
     });
     seekEl.addEventListener("change", (e) => this.handleSeek(e));
-    this.panel.querySelector(".mp-repeat").addEventListener("click", (e) => this.toggleRepeat(e));
-    this.panel.querySelector(".mp-prev").addEventListener("click", (e) => this.sendControl(e, "prev"));
-    this.panel.querySelector(".mp-next").addEventListener("click", (e) => this.sendControl(e, "next"));
-    this.panel.querySelector(".mp-play").addEventListener("click", (e) => this.sendControl(e, "playpause"));
-    this.panel.querySelector(".mp-speed-btn").addEventListener("click", (e) => this.cycleSpeed(e));
+    this.panel
+      .querySelector(".mp-repeat")
+      .addEventListener("click", (e) => this.toggleRepeat(e));
+    this.panel
+      .querySelector(".mp-prev")
+      .addEventListener("click", (e) => this.sendControl(e, "prev"));
+    this.panel
+      .querySelector(".mp-next")
+      .addEventListener("click", (e) => this.sendControl(e, "next"));
+    this.panel
+      .querySelector(".mp-play")
+      .addEventListener("click", (e) => this.sendControl(e, "playpause"));
+    this.panel
+      .querySelector(".mp-speed-btn")
+      .addEventListener("click", (e) => this.cycleSpeed(e));
   }
 
   togglePin() {
     this.pinned = !this.pinned;
-    setTrayPinState(this.panel, this.panel.querySelector(".tray-pin-btn"), this.pinned);
+    setTrayPinState(
+      this.panel,
+      this.panel.querySelector(".tray-pin-btn"),
+      this.pinned,
+    );
   }
 
   handleSeek(e) {
@@ -406,7 +463,8 @@ class MediaPlayerTray {
       return;
     }
     let pct = this.pendingPct;
-    if (!Number.isFinite(pct)) pct = Math.min(1, Math.max(0, parseInt(e.target.value, 10) / 1000));
+    if (!Number.isFinite(pct))
+      pct = Math.min(1, Math.max(0, parseInt(e.target.value, 10) / 1000));
     this.isSeeking = false;
     this.pendingPct = null;
     if (!Number.isFinite(pct)) return;
@@ -427,7 +485,12 @@ class MediaPlayerTray {
       } catch {
         void 0;
       }
-      this.lastMeta = { pos: pct * dur, dur, playing: live?.nowPlaying?.playbackState === "playing", at: Date.now() };
+      this.lastMeta = {
+        pos: pct * dur,
+        dur,
+        playing: live?.nowPlaying?.playbackState === "playing",
+        at: Date.now(),
+      };
       this.updateProgress();
     }
   }
@@ -437,7 +500,9 @@ class MediaPlayerTray {
     const src = this.getActiveSource();
     this.panel.querySelector(".mp-repeat").classList.toggle("active");
     if (src && src.type === "element") {
-      src.element.loop = this.panel.querySelector(".mp-repeat").classList.contains("active");
+      src.element.loop = this.panel
+        .querySelector(".mp-repeat")
+        .classList.contains("active");
     }
   }
 
@@ -468,7 +533,9 @@ class MediaPlayerTray {
         el.currentTime = 0;
       } else if (kind === "next") {
         const winEl = el.closest(".window");
-        const siblings = winEl ? Array.from(winEl.querySelectorAll("audio, video")) : [el];
+        const siblings = winEl
+          ? Array.from(winEl.querySelectorAll("audio, video"))
+          : [el];
         const idx = siblings.indexOf(el);
         const nextEl = siblings[(idx + 1) % siblings.length];
         if (nextEl !== el) {
@@ -531,20 +598,33 @@ class MediaPlayerTray {
       const np = src.channel?.nowPlaying || {};
       const dur = Number(np.duration) || 0;
       const pos = Number(np.position) || 0;
-      if (!this.isSeeking) this.lastMeta = { pos, dur, playing: np.playbackState === "playing", at: Date.now() };
+      if (!this.isSeeking)
+        this.lastMeta = {
+          pos,
+          dur,
+          playing: np.playbackState === "playing",
+          at: Date.now(),
+        };
       if (dur > 0) {
         setText(
           elapsedEl,
-          formatTime(this.isSeeking && Number.isFinite(this.pendingPct) ? this.pendingPct * dur : pos)
+          formatTime(
+            this.isSeeking && Number.isFinite(this.pendingPct)
+              ? this.pendingPct * dur
+              : pos,
+          ),
         );
         setText(
           remainingEl,
-          `-${formatTime(Math.max(0, dur - (this.isSeeking && Number.isFinite(this.pendingPct) ? this.pendingPct * dur : pos)))}`
+          `-${formatTime(Math.max(0, dur - (this.isSeeking && Number.isFinite(this.pendingPct) ? this.pendingPct * dur : pos)))}`,
         );
         seekEl.disabled = false;
         if (!this.isSeeking) {
           seekEl.value = Math.round(Math.min(1, pos / dur) * 1000);
-          seekEl.style.setProperty("--p", `${Math.min(100, (pos / dur) * 100)}%`);
+          seekEl.style.setProperty(
+            "--p",
+            `${Math.min(100, (pos / dur) * 100)}%`,
+          );
         }
         progressEl.classList.remove("mp-live");
       } else {
@@ -599,7 +679,10 @@ class MediaPlayerTray {
       setText(elapsedEl, formatTime(pos));
       setText(remainingEl, `-${formatTime(Math.max(0, meta.dur - pos))}`);
       seekEl.value = Math.round(Math.min(1, pos / meta.dur) * 1000);
-      seekEl.style.setProperty("--p", `${Math.min(100, (pos / meta.dur) * 100)}%`);
+      seekEl.style.setProperty(
+        "--p",
+        `${Math.min(100, (pos / meta.dur) * 100)}%`,
+      );
     }, 500);
   }
 
@@ -645,7 +728,7 @@ class MediaPlayerTray {
         this.panel.classList.remove("closing");
         this.panel.style.display = "none";
       },
-      { once: true }
+      { once: true },
     );
   }
 
@@ -742,13 +825,16 @@ class MediaPlayerTray {
 
     const tilingActive = os.modes.isActive(MODES.TILING);
     const chromeShelf = $("#chromeos-shelf");
-    const chromeShelfVisible = chromeShelf && getComputedStyle(chromeShelf).display !== "none";
+    const chromeShelfVisible =
+      chromeShelf && getComputedStyle(chromeShelf).display !== "none";
     let atTop;
     if (chromeShelfVisible && chromeShelf.dataset.shelfPos === "top") {
       atTop = true;
     } else if (tilingActive) {
       const tilingBar = $("#tiling-bar");
-      atTop = tilingBar ? !tilingBar.classList.contains("position-bottom") : false;
+      atTop = tilingBar
+        ? !tilingBar.classList.contains("position-bottom")
+        : false;
     } else {
       atTop = isTaskbarTop();
     }
@@ -759,7 +845,10 @@ class MediaPlayerTray {
       let left;
       if (chromeShelfVisible && chromeShelf.dataset.shelfPos === "left") {
         left = btnRect.right + 8;
-      } else if (chromeShelfVisible && chromeShelf.dataset.shelfPos === "right") {
+      } else if (
+        chromeShelfVisible &&
+        chromeShelf.dataset.shelfPos === "right"
+      ) {
         left = window.innerWidth - btnRect.left - panelW;
         if (left < 8) left = 8;
       } else {
@@ -767,14 +856,25 @@ class MediaPlayerTray {
         if (left < 8) left = 8;
       }
       if (atTop) {
-        setStyle(this.panel, { top: `${btnRect.bottom + 6}px`, bottom: "auto" });
+        setStyle(this.panel, {
+          top: `${btnRect.bottom + 6}px`,
+          bottom: "auto",
+        });
       } else {
-        setStyle(this.panel, { bottom: `${window.innerHeight - btnRect.top + 6}px`, top: "auto" });
+        setStyle(this.panel, {
+          bottom: `${window.innerHeight - btnRect.top + 6}px`,
+          top: "auto",
+        });
       }
       this.panel.style.left = `${left}px`;
     } else {
       const pos = getTrayPosition();
-      setStyle(this.panel, { left: pos.left, right: pos.right, top: pos.top, bottom: pos.bottom });
+      setStyle(this.panel, {
+        left: pos.left,
+        right: pos.right,
+        top: pos.top,
+        bottom: pos.bottom,
+      });
     }
   }
 }

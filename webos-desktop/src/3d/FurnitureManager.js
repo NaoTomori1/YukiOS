@@ -19,8 +19,8 @@ export class FurnitureManager {
       options: {
         label: options.label || id,
         yOffset: options.yOffset || 0,
-        size: options.size || 0.5
-      }
+        size: options.size || 0.5,
+      },
     };
 
     mesh.position.copy(defaultPos);
@@ -59,7 +59,9 @@ export class FurnitureManager {
     forward.applyQuaternion(camera.quaternion);
 
     const distance = 0.9;
-    const targetPos = camera.position.clone().add(forward.multiplyScalar(distance));
+    const targetPos = camera.position
+      .clone()
+      .add(forward.multiplyScalar(distance));
     targetPos.y = Math.max(0.5, targetPos.y);
 
     this.povGrabbedItem.mesh.position.copy(targetPos);
@@ -106,13 +108,17 @@ export class FurnitureManager {
     const item = {
       id,
       mesh,
-      defaultPos: position.clone ? position.clone() : new this.THREE.Vector3(position.x, position.y, position.z),
-      currentPos: position.clone ? position.clone() : new this.THREE.Vector3(position.x, position.y, position.z),
+      defaultPos: position.clone
+        ? position.clone()
+        : new this.THREE.Vector3(position.x, position.y, position.z),
+      currentPos: position.clone
+        ? position.clone()
+        : new this.THREE.Vector3(position.x, position.y, position.z),
       options: {
         label: options.label || id,
         yOffset: options.yOffset || 0,
-        size: options.size || 0.5
-      }
+        size: options.size || 0.5,
+      },
     };
     mesh.position.copy(position);
     this.items.set(id, item);

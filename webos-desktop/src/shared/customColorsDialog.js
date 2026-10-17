@@ -5,11 +5,27 @@ import "../styles/customColorsDialog.css";
 
 export const CUSTOM_COLOR_FIELDS = [
   { key: "brand", label: "Brand Color", fallback: "oklch(55% 0.11 264)" },
-  { key: "bg-primary", label: "Background Primary", fallback: "oklch(18% 0.01 265)" },
-  { key: "bg-secondary", label: "Background Secondary", fallback: "oklch(24% 0.01 265)" },
-  { key: "text-primary", label: "Text Primary", fallback: "oklch(95% 0.01 265)" },
-  { key: "text-secondary", label: "Text Secondary", fallback: "oklch(72% 0.01 265)" },
-  { key: "glass", label: "Glass", fallback: "oklch(100% 0 0 / 0.04)" }
+  {
+    key: "bg-primary",
+    label: "Background Primary",
+    fallback: "oklch(18% 0.01 265)",
+  },
+  {
+    key: "bg-secondary",
+    label: "Background Secondary",
+    fallback: "oklch(24% 0.01 265)",
+  },
+  {
+    key: "text-primary",
+    label: "Text Primary",
+    fallback: "oklch(95% 0.01 265)",
+  },
+  {
+    key: "text-secondary",
+    label: "Text Secondary",
+    fallback: "oklch(72% 0.01 265)",
+  },
+  { key: "glass", label: "Glass", fallback: "oklch(100% 0 0 / 0.04)" },
 ];
 
 export function getStoredCustomColors() {
@@ -18,18 +34,23 @@ export function getStoredCustomColors() {
 
 export function applyCustomColors(colors) {
   os.storage.set(StorageKeys.customColors, colors);
-  applyTheme(os.storage.get(StorageKeys.theme) || "dark", () => getStoredCustomColors());
+  applyTheme(os.storage.get(StorageKeys.theme) || "dark", () =>
+    getStoredCustomColors(),
+  );
 }
 
 export function clearCustomColors() {
   os.storage.remove(StorageKeys.customColors);
-  applyTheme(os.storage.get(StorageKeys.theme) || "dark", () => getStoredCustomColors());
+  applyTheme(os.storage.get(StorageKeys.theme) || "dark", () =>
+    getStoredCustomColors(),
+  );
 }
 
 export function pickCustomColors(colors) {
   const picked = {};
   CUSTOM_COLOR_FIELDS.forEach((field) => {
-    picked[field.key] = colors && colors[field.key] ? colors[field.key] : field.fallback;
+    picked[field.key] =
+      colors && colors[field.key] ? colors[field.key] : field.fallback;
   });
   return picked;
 }
@@ -49,7 +70,7 @@ export function openCustomColorsDialog(initialColors = null) {
         <label style="font-size:12px;font-weight:600;color:var(--text-secondary);display:block;margin-bottom:6px;">${field.label}</label>
         <input type="color" id="custom-${field.key}" value="${seed[field.key] || field.fallback}" style="width:100%;height:36px;border:1px solid var(--glass-border);border-radius:6px;cursor:pointer;background:var(--glass);">
       </div>
-    `
+    `,
   ).join("");
 
   dialog.innerHTML = `
@@ -92,8 +113,14 @@ export function openCustomColorsDialog(initialColors = null) {
     });
     const glass = dialog.querySelector("#custom-glass").value;
     previewEl.style.setProperty("--glass-border", glass + "40");
-    previewEl.style.setProperty("--tx1", dialog.querySelector("#custom-text-primary").value);
-    previewEl.style.setProperty("--surface-hover", dialog.querySelector("#custom-bg-secondary").value);
+    previewEl.style.setProperty(
+      "--tx1",
+      dialog.querySelector("#custom-text-primary").value,
+    );
+    previewEl.style.setProperty(
+      "--surface-hover",
+      dialog.querySelector("#custom-bg-secondary").value,
+    );
     previewEl.style.setProperty("--error", "#e5534b");
     previewEl.style.setProperty("--text-on-brand", "#ffffff");
   };
@@ -101,7 +128,9 @@ export function openCustomColorsDialog(initialColors = null) {
   updatePreview();
 
   CUSTOM_COLOR_FIELDS.forEach((field) => {
-    dialog.querySelector(`#custom-${field.key}`).addEventListener("input", updatePreview);
+    dialog
+      .querySelector(`#custom-${field.key}`)
+      .addEventListener("input", updatePreview);
   });
 
   dialog.querySelector("#custom-colors-reset").addEventListener("click", () => {

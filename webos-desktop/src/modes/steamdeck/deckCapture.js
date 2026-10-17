@@ -29,7 +29,11 @@ export const deckCapture = {
     });
     this.keyHandler = (e) => {
       if (!KeybindManager.matches(e, "global.screenshot.deck")) return;
-      if (e.target instanceof Element && e.target.closest("input, textarea, [contenteditable]")) return;
+      if (
+        e.target instanceof Element &&
+        e.target.closest("input, textarea, [contenteditable]")
+      )
+        return;
       e.preventDefault();
       e.stopPropagation();
       this.capture();
@@ -57,12 +61,21 @@ export const deckCapture = {
       const blob = await shotApp.pageCapture();
       const name = `Screenshot-${Date.now()}.png`;
       const source = getActiveSourceName();
-      await os.fs.writeBinaryFile(SCREENSHOT_DIR, name, blob, "image", "@content");
-      await os.fs.writeMeta(SCREENSHOT_DIR, name, { source, capturedAt: Date.now() });
+      await os.fs.writeBinaryFile(
+        SCREENSHOT_DIR,
+        name,
+        blob,
+        "image",
+        "@content",
+      );
+      await os.fs.writeMeta(SCREENSHOT_DIR, name, {
+        source,
+        capturedAt: Date.now(),
+      });
       os.notify.send("Screenshot", `Captured ${name} from ${source}`);
       os.events.emit(BusEvents.SCREENSHOT_CAPTURED, {});
     } catch {
       os.notify.send("Screenshot", "Capture failed", { type: "error" });
     }
-  }
+  },
 };

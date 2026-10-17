@@ -13,7 +13,7 @@ function createLeaf(winId) {
     right: null,
     winId: winId || null,
     parent: null,
-    nodeId: newNodeId()
+    nodeId: newNodeId(),
   };
 }
 
@@ -26,7 +26,7 @@ function createInternal(split, ratio, left, right) {
     right: right || null,
     winId: null,
     parent: null,
-    nodeId: newNodeId()
+    nodeId: newNodeId(),
   };
   if (node.left) node.left.parent = node;
   if (node.right) node.right.parent = node;
@@ -252,7 +252,8 @@ function resizeSplit(root, winId, direction, delta) {
   const isLeft = parent.left === node;
   const isTop = parent.split === "v" && isLeft;
 
-  if ((direction === "left" || direction === "up") && (isLeft || isTop)) return false;
+  if ((direction === "left" || direction === "up") && (isLeft || isTop))
+    return false;
   if ((direction === "right" || direction === "down") && !isLeft && !isTop) {
     parent.ratio = Math.max(0.1, Math.min(0.9, parent.ratio + delta));
   } else {
@@ -265,7 +266,8 @@ function calculateLayout(root, x, y, w, h, gaps) {
   const results = [];
   const inner = gaps && gaps.inner != null ? gaps.inner : 4;
   const outer = gaps && gaps.outer != null ? gaps.outer : 3;
-  const outerBottom = gaps && gaps.outerBottom != null ? gaps.outerBottom : outer;
+  const outerBottom =
+    gaps && gaps.outerBottom != null ? gaps.outerBottom : outer;
 
   function walk(node, rx, ry, rw, rh, depth) {
     if (!node) return;
@@ -279,7 +281,7 @@ function calculateLayout(root, x, y, w, h, gaps) {
           x: Math.round(rx),
           y: Math.round(ry),
           w: Math.round(Math.max(rw, 0)),
-          h: Math.round(Math.max(rh, 0))
+          h: Math.round(Math.max(rh, 0)),
         });
       }
       return;
@@ -353,5 +355,5 @@ export const TilingLayoutEngine = {
   getDirectionalNeighbor,
   swapWindows,
   resizeSplit,
-  calculateLayout
+  calculateLayout,
 };

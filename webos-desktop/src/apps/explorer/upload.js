@@ -14,7 +14,7 @@ import {
   isExeFile,
   isSwfFile,
   isZipFile,
-  isISOFile
+  isISOFile,
 } from "../../fileDisplay.js";
 import { showConflictDialog } from "../../shared/conflictDialog.js";
 import { splitWebkitPath, pluralize } from "../../utils/utils.js";
@@ -22,7 +22,16 @@ import { Achievements } from "../../achievements.js";
 import { AppSource } from "../../AppSource.js";
 
 const BINARY_OFFICE_EXTS = [".pdf", ".docx", ".xlsx", ".xls", ".pptx", ".ppt"];
-const ARCHIVE_EXTS = [".zip", ".gz", ".tgz", ".tar", ".rar", ".7z", ".bz2", ".xz"];
+const ARCHIVE_EXTS = [
+  ".zip",
+  ".gz",
+  ".tgz",
+  ".tar",
+  ".rar",
+  ".7z",
+  ".bz2",
+  ".xz",
+];
 
 function isBinaryWrite(kind, isBinaryOffice, isBinary) {
   return kind === FileKind.VIDEO || isBinaryOffice || isBinary;
@@ -32,7 +41,10 @@ export async function resolveFilePayload(file, name) {
   const kind = fileKindFromName(name);
   const icon = resolveFileIcon(name);
   const isBinaryOffice =
-    isOfficeFile(name) && BINARY_OFFICE_EXTS.includes(name.substring(name.lastIndexOf(".")).toLowerCase());
+    isOfficeFile(name) &&
+    BINARY_OFFICE_EXTS.includes(
+      name.substring(name.lastIndexOf(".")).toLowerCase(),
+    );
   const isBinary =
     isBinaryOffice ||
     ARCHIVE_EXTS.some((ext) => name.toLowerCase().endsWith(ext)) ||
@@ -57,7 +69,15 @@ export async function resolveFilePayload(file, name) {
   return { kind, content, icon, isBinaryOffice, isBinary };
 }
 
-async function saveFilePayload(targetPath, name, kind, content, icon, isBinaryOffice = false, isBinary = false) {
+async function saveFilePayload(
+  targetPath,
+  name,
+  kind,
+  content,
+  icon,
+  isBinaryOffice = false,
+  isBinary = false,
+) {
   os.events.emit(BusEvents.DESKTOP_ICON_ADDED, { name, kind });
   if (isBinaryWrite(kind, isBinaryOffice, isBinary)) {
     await os.fs.writeBinaryFile(targetPath, name, content, kind, icon);
@@ -66,7 +86,15 @@ async function saveFilePayload(targetPath, name, kind, content, icon, isBinaryOf
   }
 }
 
-async function replaceFilePayload(targetPath, name, kind, content, icon, isBinaryOffice = false, isBinary = false) {
+async function replaceFilePayload(
+  targetPath,
+  name,
+  kind,
+  content,
+  icon,
+  isBinaryOffice = false,
+  isBinary = false,
+) {
   if (isBinaryWrite(kind, isBinaryOffice, isBinary)) {
     await os.fs.deleteBinaryFile(targetPath, name).catch(() => {});
     await os.fs.writeBinaryFile(targetPath, name, content, kind, icon);
@@ -103,7 +131,9 @@ export async function handleFileUpload(explorer, files, isFolder, win, inst) {
         pathMap.get(key).files.push({ file, fileName });
       }
       flatFiles = [];
-      const sortedEntries = [...pathMap.values()].sort((a, b) => a.path.length - b.path.length);
+      const sortedEntries = [...pathMap.values()].sort(
+        (a, b) => a.path.length - b.path.length,
+      );
       for (const { path, files: grouped } of sortedEntries) {
         await os.fs.mkdir(path);
         for (const { file, fileName } of grouped) {
@@ -111,7 +141,11 @@ export async function handleFileUpload(explorer, files, isFolder, win, inst) {
         }
       }
     } else {
-      flatFiles = files.map((file) => ({ file, targetPath: targetPath, name: file.name }));
+      flatFiles = files.map((file) => ({
+        file,
+        targetPath: targetPath,
+        name: file.name,
+      }));
     }
 
     for (const { file, targetPath, name } of flatFiles) {
@@ -122,7 +156,10 @@ export async function handleFileUpload(explorer, files, isFolder, win, inst) {
         continue;
       }
 
-      const existingPath = explorer.fs.join(explorer.fs.resolveUserPath(targetPath), name);
+      const existingPath = explorer.fs.join(
+        explorer.fs.resolveUserPath(targetPath),
+        name,
+      );
       const exists = await os.fs.exists(existingPath);
       const payload = await resolveFilePayload(file, name);
 
@@ -134,7 +171,7 @@ export async function handleFileUpload(explorer, files, isFolder, win, inst) {
           payload.content,
           payload.icon,
           payload.isBinaryOffice,
-          payload.isBinary
+          payload.isBinary,
         );
         uploadedCount++;
         continue;
@@ -156,7 +193,7 @@ export async function handleFileUpload(explorer, files, isFolder, win, inst) {
           payload.content,
           payload.icon,
           payload.isBinaryOffice,
-          payload.isBinary
+          payload.isBinary,
         );
       } else {
         await saveFilePayload(
@@ -166,14 +203,17 @@ export async function handleFileUpload(explorer, files, isFolder, win, inst) {
           payload.content,
           payload.icon,
           payload.isBinaryOffice,
-          payload.isBinary
+          payload.isBinary,
         );
       }
       uploadedCount++;
     }
 
     const parts = [];
-    if (uploadedCount > 0) parts.push(`${uploadedCount} ${pluralize(uploadedCount, "file")} uploaded`);
+    if (uploadedCount > 0)
+      parts.push(
+        `${uploadedCount} ${pluralize(uploadedCount, "file")} uploaded`,
+      );
     if (skippedCount > 0) parts.push(`${skippedCount} skipped`);
     if (parts.length) os.notify.send(parts.join(", "));
   } finally {
@@ -183,22 +223,41 @@ export async function handleFileUpload(explorer, files, isFolder, win, inst) {
   if (inst) await explorer.renderInstance(inst);
 }
 
-export async function uploadSingleFile(explorer, file, targetPath, overrideName = null) {
+export async function uploadSingleFile(
+  explorer,
+  file,
+  targetPath,
+  overrideName = null,
+) {
   const name = overrideName || file.name;
-  const { kind, content, icon, isBinaryOffice, isBinary } = await resolveFilePayload(file, name);
+  const { kind, content, icon, isBinaryOffice, isBinary } =
+    await resolveFilePayload(file, name);
   if (isWallpaperPath(targetPath)) {
     await saveToWallpapers(explorer, name, content, kind, icon);
     return;
   }
-  await saveFilePayload(targetPath, name, kind, content, icon, isBinaryOffice, isBinary);
+  await saveFilePayload(
+    targetPath,
+    name,
+    kind,
+    content,
+    icon,
+    isBinaryOffice,
+    isBinary,
+  );
 }
 
 export async function saveToWallpapers(explorer, name, content, kind, icon) {
-  os.events.emit(BusEvents.ACHIEVEMENT_TRIGGER, { achievementId: Achievements.PersonalSpace });
+  os.events.emit(BusEvents.ACHIEVEMENT_TRIGGER, {
+    achievementId: Achievements.PersonalSpace,
+  });
 
   const wallpapersPath = ["Pictures", "Wallpapers"];
   await os.fs.mkdir(wallpapersPath);
-  const safeIcon = kind === FileKind.IMAGE ? "@content" : icon || resolveIconUrl("static/icons/file.webp");
+  const safeIcon =
+    kind === FileKind.IMAGE
+      ? "@content"
+      : icon || resolveIconUrl("static/icons/explorerwin11.png");
   await explorer.fs.createFile(wallpapersPath, name, content, kind, safeIcon);
 }
 

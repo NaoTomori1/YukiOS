@@ -5,7 +5,8 @@ import { fetchGamePlayCounts } from "../analytics.js";
 import { fetchFriends, getCachedFriends } from "../social/friendsApi.js";
 import { escapeHtml as esc } from "../utils/utils.js";
 
-export const avatarSrcForIndex = (avatarIndex) => avatarUrlForIndex(avatarIndex) || PREDEFINED_AVATARS[0];
+export const avatarSrcForIndex = (avatarIndex) =>
+  avatarUrlForIndex(avatarIndex) || PREDEFINED_AVATARS[0];
 
 export function achievementsPercent(totalMin) {
   if (!totalMin) return 0;
@@ -17,10 +18,12 @@ export async function fetchCommunityOverview(appId) {
   const [counts, nowPlaying, recentPlayers] = await Promise.all([
     fetchGamePlayCounts().catch(() => ({})),
     liveActivityManager.getNowPlaying().catch(() => []),
-    liveActivityManager.getRecentPlayers(normalized).catch(() => [])
+    liveActivityManager.getRecentPlayers(normalized).catch(() => []),
   ]);
   const playCount = counts[normalized] || 0;
-  const playingNow = nowPlaying.filter((u) => String(u.appId || "").toLowerCase() === normalized);
+  const playingNow = nowPlaying.filter(
+    (u) => String(u.appId || "").toLowerCase() === normalized,
+  );
   return { playCount, playingNow, recentPlayers: recentPlayers.slice(0, 6) };
 }
 
@@ -49,7 +52,7 @@ export function buildPlayerRows(recentPlayers, playingNow, classes) {
           <span>${playingNow.some((p) => p.userId && p.userId === u.userId) ? "Playing right now" : "Played recently"}</span>
         </div>
       </div>
-    `
+    `,
     )
     .join("");
 }
@@ -65,11 +68,16 @@ export function buildFriendCards(friends, count, classes) {
           <span>${f.note ? esc(f.note) : count > 1 ? "Recently played together" : "On your friends list"}</span>
         </div>
       </div>
-    `
+    `,
     )
     .join("");
 }
 
 export function buildAvatarStrip(friends, className) {
-  return friends.map((f) => `<img class="${className}" src="${avatarSrcForIndex(f.avatarIndex)}" alt="">`).join("");
+  return friends
+    .map(
+      (f) =>
+        `<img class="${className}" src="${avatarSrcForIndex(f.avatarIndex)}" alt="">`,
+    )
+    .join("");
 }

@@ -13,7 +13,7 @@ export class MetadataManager {
     });
     this.metaLocks.set(
       dir,
-      prev.then(() => next)
+      prev.then(() => next),
     );
     return prev.then(() => release);
   }

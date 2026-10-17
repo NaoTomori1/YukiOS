@@ -8,7 +8,9 @@ const __dirname = dirname(__filename);
 const manifestPath = join(__dirname, "../src/registry/AppManifest.js");
 const manifestContent = readFileSync(manifestPath, "utf-8");
 
-const manifestMatch = manifestContent.match(/export const APP_MANIFESTS = (\[[\s\S]*\]);/);
+const manifestMatch = manifestContent.match(
+  /export const APP_MANIFESTS = (\[[\s\S]*\]);/,
+);
 if (!manifestMatch) {
   console.error("Could not find APP_MANIFESTS in AppManifest.js");
   process.exit(1);
@@ -16,12 +18,21 @@ if (!manifestMatch) {
 
 const manifestString = manifestMatch[1];
 
-const requiredFields = ["serviceKey", "type", "title", "icon", "launchType", "category"];
+const requiredFields = [
+  "serviceKey",
+  "type",
+  "title",
+  "icon",
+  "launchType",
+  "category",
+];
 let hasErrors = false;
 let hasWarnings = false;
 
 const simpleValidation =
-  manifestString.includes("serviceKey") && manifestString.includes("type") && manifestString.includes("title");
+  manifestString.includes("serviceKey") &&
+  manifestString.includes("type") &&
+  manifestString.includes("title");
 
 if (!simpleValidation) {
   console.error("APP_MANIFESTS appears to be malformed");
@@ -32,7 +43,9 @@ const descriptionCount = (manifestString.match(/description:/g) || []).length;
 const manifestCount = (manifestString.match(/serviceKey:/g) || []).length;
 
 if (descriptionCount < manifestCount) {
-  console.error(`Missing descriptions: ${manifestCount - descriptionCount} apps without descriptions`);
+  console.error(
+    `Missing descriptions: ${manifestCount - descriptionCount} apps without descriptions`,
+  );
   hasErrors = true;
 }
 

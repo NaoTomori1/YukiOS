@@ -16,7 +16,7 @@ const CATEGORY_LABELS = {
   office: "Office",
   games: "Games",
   steamdeck: "Yuki Deck",
-  custom: "Custom"
+  custom: "Custom",
 };
 
 function getCategoryLabel(cat) {
@@ -34,7 +34,13 @@ function formatKeys(keys) {
       if (lower === "ctrl" || lower === "control") return "Ctrl";
       if (lower === "shift") return "Shift";
       if (lower === "alt" || lower === "option") return "Alt";
-      if (lower === "meta" || lower === "cmd" || lower === "command" || lower === "super") return "Cmd";
+      if (
+        lower === "meta" ||
+        lower === "cmd" ||
+        lower === "command" ||
+        lower === "super"
+      )
+        return "Cmd";
       if (k === "ArrowLeft") return "←";
       if (k === "ArrowRight") return "→";
       if (k === "ArrowUp") return "↑";
@@ -49,7 +55,7 @@ function getActionTypeLabel(type) {
     launchApp: "Launch App",
     openUrl: "Open URL",
     runCode: "Run Code",
-    notify: "Notify"
+    notify: "Notify",
   };
   return labels[type] || type;
 }
@@ -59,7 +65,7 @@ function getActionTypeIcon(type) {
     launchApp: "fas fa-rocket",
     openUrl: "fas fa-link",
     runCode: "fas fa-code",
-    notify: "fas fa-bell"
+    notify: "fas fa-bell",
   };
   return icons[type] || "fas fa-star";
 }
@@ -222,7 +228,8 @@ export function mountShortcutsPanel(container, options = {}) {
   const beginKeyCapture = ({ currentKeys, onValid, onReset }) => {
     stopCapture();
     listeningOverlay.style.display = "flex";
-    listeningCurrent.textContent = currentKeys && currentKeys.length > 0 ? formatKeys(currentKeys) : "None";
+    listeningCurrent.textContent =
+      currentKeys && currentKeys.length > 0 ? formatKeys(currentKeys) : "None";
     listeningPreview.innerHTML = "";
     listeningPreview.className = "sc-listening-preview";
 
@@ -239,7 +246,12 @@ export function mountShortcutsPanel(container, options = {}) {
         e.preventDefault();
         return;
       }
-      if (e.key === "Shift" || e.key === "Control" || e.key === "Alt" || e.key === "Meta") {
+      if (
+        e.key === "Shift" ||
+        e.key === "Control" ||
+        e.key === "Alt" ||
+        e.key === "Meta"
+      ) {
         showPreviewMessage("sc-listening-msg", "Press a non-modifier key...");
         return;
       }
@@ -252,11 +264,17 @@ export function mountShortcutsPanel(container, options = {}) {
       recorded.push(e.key === " " ? "Space" : e.key);
 
       if (KeybindManager.isCustomizationValid(recorded)) {
-        showPreviewMessage("sc-listening-ok", `<i class="fas fa-check"></i> Set to ${formatKeys(recorded)}`);
+        showPreviewMessage(
+          "sc-listening-ok",
+          `<i class="fas fa-check"></i> Set to ${formatKeys(recorded)}`,
+        );
         onValid(recorded);
         stopCapture();
       } else {
-        showPreviewMessage("sc-listening-err", "Invalid shortcut (must include exactly one non-modifier key)");
+        showPreviewMessage(
+          "sc-listening-err",
+          "Invalid shortcut (must include exactly one non-modifier key)",
+        );
       }
     };
 
@@ -289,7 +307,8 @@ export function mountShortcutsPanel(container, options = {}) {
 
       const hint = createElement("div");
       hint.className = "sc-custom-hint";
-      hint.textContent = "TIP: Use os.app.getAllApps() to see all available app IDs";
+      hint.textContent =
+        "TIP: Use os.app.getAllApps() to see all available app IDs";
       customConfigFields.appendChild(hint);
 
       const appList = createElement("div");
@@ -304,12 +323,17 @@ export function mountShortcutsPanel(container, options = {}) {
           const entries = Object.entries(allApps)
             .filter(([id, info]) => {
               const q = query.toLowerCase();
-              return !q || id.toLowerCase().includes(q) || (info.title || "").toLowerCase().includes(q);
+              return (
+                !q ||
+                id.toLowerCase().includes(q) ||
+                (info.title || "").toLowerCase().includes(q)
+              );
             })
             .slice(0, 20);
 
           if (entries.length === 0) {
-            appList.innerHTML = '<div class="sc-custom-app-empty">No matching apps</div>';
+            appList.innerHTML =
+              '<div class="sc-custom-app-empty">No matching apps</div>';
             return;
           }
 
@@ -325,7 +349,8 @@ export function mountShortcutsPanel(container, options = {}) {
             appList.appendChild(item);
           });
         } catch (e) {
-          appList.innerHTML = '<div class="sc-custom-app-empty">Could not load app list</div>';
+          appList.innerHTML =
+            '<div class="sc-custom-app-empty">Could not load app list</div>';
         }
       };
 
@@ -392,11 +417,15 @@ export function mountShortcutsPanel(container, options = {}) {
 
   const openCustomModal = (editData) => {
     customEditingId = editData ? editData.id : null;
-    customTitle.textContent = editData ? "Edit Custom Shortcut" : "Create Custom Shortcut";
+    customTitle.textContent = editData
+      ? "Edit Custom Shortcut"
+      : "Create Custom Shortcut";
     customDesc.value = editData ? editData.desc : "";
     customRecordedKeys = editData ? [...editData.currentKeys] : [];
     customKeysPlaceholder.textContent =
-      customRecordedKeys.length > 0 ? formatKeys(customRecordedKeys) : "Click to record...";
+      customRecordedKeys.length > 0
+        ? formatKeys(customRecordedKeys)
+        : "Click to record...";
 
     const actionType = editData?.action?.type || "launchApp";
     const actionConfig = editData?.action?.config || {};
@@ -454,8 +483,8 @@ export function mountShortcutsPanel(container, options = {}) {
       icon: getActionTypeIcon(actionType),
       action: {
         type: actionType,
-        config: config
-      }
+        config: config,
+      },
     };
 
     if (customEditingId) {
@@ -466,8 +495,12 @@ export function mountShortcutsPanel(container, options = {}) {
       KeybindManager.setKeys(newId, customRecordedKeys);
     }
 
-    os.events.emit(BusEvents.ACHIEVEMENT_TRIGGER, { achievementId: Achievements.Customizer });
-    os.events.emit(BusEvents.ACHIEVEMENT_TRIGGER, { achievementId: Achievements.MacroMaker });
+    os.events.emit(BusEvents.ACHIEVEMENT_TRIGGER, {
+      achievementId: Achievements.Customizer,
+    });
+    os.events.emit(BusEvents.ACHIEVEMENT_TRIGGER, {
+      achievementId: Achievements.MacroMaker,
+    });
     closeCustomModal();
     render();
   };
@@ -482,7 +515,7 @@ export function mountShortcutsPanel(container, options = {}) {
       onReset: () => {
         customRecordedKeys = [];
         customKeysPlaceholder.textContent = "Click to record...";
-      }
+      },
     });
   });
 
@@ -523,14 +556,18 @@ export function mountShortcutsPanel(container, options = {}) {
     if (search) {
       shortcuts = shortcuts.filter((s) => {
         const matchDesc = s.desc.toLowerCase().includes(search);
-        const matchKeys = s.currentKeys.some((k) => k.toLowerCase().includes(search));
+        const matchKeys = s.currentKeys.some((k) =>
+          k.toLowerCase().includes(search),
+        );
         const matchCat = getCategoryLabel(s.cat).toLowerCase().includes(search);
         return matchDesc || matchKeys || matchCat;
       });
     }
 
     listTitle.textContent = getCategoryLabel(currentCategory);
-    const customized = shortcuts.filter((s) => KeybindManager.isCustomized(s.id)).length;
+    const customized = shortcuts.filter((s) =>
+      KeybindManager.isCustomized(s.id),
+    ).length;
     const customCount = shortcuts.filter((s) => s.cat === "custom").length;
     listCount.textContent = `${shortcuts.length} item${shortcuts.length !== 1 ? "s" : ""}${customized > 0 ? ` (${customized} customized)` : ""}${customCount > 0 ? ` · ${customCount} custom` : ""}`;
 
@@ -598,7 +635,7 @@ export function mountShortcutsPanel(container, options = {}) {
           onReset: () => {
             KeybindManager.reset(item.id);
             render();
-          }
+          },
         });
       });
 

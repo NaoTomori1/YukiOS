@@ -101,7 +101,7 @@ export class EmojiSelectorApp extends BaseApp {
         set: "native",
         skinTonePosition: "search",
         previewPosition: "none",
-        className: "emoji-mart-picker"
+        className: "emoji-mart-picker",
       });
 
       const container = win.querySelector("#emoji-mart-container");
@@ -112,10 +112,16 @@ export class EmojiSelectorApp extends BaseApp {
   }
 
   async open() {
-    const win = os.window.create("emoji-selector-window", "Emoji Selector", "355px", "500px", {
-      icon: "fas fa-face-smile",
-      appId: "emojiSelectorApp"
-    });
+    const win = os.window.create(
+      "emoji-selector-window",
+      "Emoji Selector",
+      "355px",
+      "500px",
+      {
+        icon: "fas fa-face-smile",
+        appId: "emojiSelectorApp",
+      },
+    );
     win.innerHTML = `
       <div class="emoji-selector-container">
         <div id="emoji-mart-container" class="emoji-mart-container"></div>

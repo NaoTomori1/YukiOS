@@ -5,7 +5,7 @@ export const FileKind = {
   AUDIO: "audio",
   ROM: "rom",
   FONT: "font",
-  OTHER: "other"
+  OTHER: "other",
 };
 
 export const IMAGE_EXTS = [
@@ -29,7 +29,7 @@ export const IMAGE_EXTS = [
   "arw",
   "psd",
   "ai",
-  "eps"
+  "eps",
 ];
 
 export const VIDEO_EXTS = [
@@ -48,7 +48,7 @@ export const VIDEO_EXTS = [
   "m2ts",
   "ts",
   "3gp",
-  "asf"
+  "asf",
 ];
 
 export const AUDIO_EXTS = [
@@ -64,7 +64,7 @@ export const AUDIO_EXTS = [
   "mid",
   "midi",
   "aiff",
-  "caf"
+  "caf",
 ];
 
 export const OFFICE_EXTS = [
@@ -89,10 +89,25 @@ export const OFFICE_EXTS = [
   "pub",
   "xps",
   "wpd",
-  "rtfx"
+  "rtfx",
 ];
 
-export const ZIP_EXTS = ["zip", "gz", "tgz", "tar", "rar", "7z", "bz2", "xz", "lz", "lzma", "zst", "cab", "dmg", "pak"];
+export const ZIP_EXTS = [
+  "zip",
+  "gz",
+  "tgz",
+  "tar",
+  "rar",
+  "7z",
+  "bz2",
+  "xz",
+  "lz",
+  "lzma",
+  "zst",
+  "cab",
+  "dmg",
+  "pak",
+];
 
 export const ISO_EXTS = ["iso", "bin", "img", "nrg", "mdf", "cdi"];
 
@@ -154,7 +169,7 @@ export const TEXT_EXTS = [
   "jsonc",
   "toml",
   "conf",
-  "config"
+  "config",
 ];
 
 export const CODE_EXTS = [
@@ -212,7 +227,7 @@ export const CODE_EXTS = [
   "mdx",
   "jsonc",
   "conf",
-  "config"
+  "config",
 ];
 
 const ALL_TEXT_EXTS = new Set([...TEXT_EXTS, ...HTML_EXTS, ...MARKDOWN_EXTS]);
@@ -246,7 +261,8 @@ export function fileKindFromName(name) {
 export function inferKind(fileName) {
   const ext = getExt(fileName);
   if (IMAGE_EXTS.includes(ext)) return FileKind.IMAGE;
-  if (TEXT_EXTS.concat(HTML_EXTS, MARKDOWN_EXTS).includes(ext)) return FileKind.TEXT;
+  if (TEXT_EXTS.concat(HTML_EXTS, MARKDOWN_EXTS).includes(ext))
+    return FileKind.TEXT;
   if (VIDEO_EXTS.includes(ext)) return FileKind.VIDEO;
   if (AUDIO_EXTS.includes(ext)) return FileKind.AUDIO;
   return FileKind.OTHER;
@@ -317,7 +333,7 @@ export const VIDEO_MIME_MAP = {
   m2ts: "video/mp2t",
   ts: "video/mp2t",
   "3gp": "video/3gpp",
-  asf: "video/x-ms-asf"
+  asf: "video/x-ms-asf",
 };
 
 export const IMAGE_MIME_MAP = {
@@ -341,7 +357,7 @@ export const IMAGE_MIME_MAP = {
   arw: "image/x-sony-arw",
   psd: "image/vnd.adobe.photoshop",
   ai: "application/postscript",
-  eps: "application/postscript"
+  eps: "application/postscript",
 };
 
 export function mimeFromName(name) {
@@ -373,7 +389,7 @@ export function mimeFromName(name) {
     gz: "application/gzip",
     tar: "application/x-tar",
     rar: "application/vnd.rar",
-    "7z": "application/x-7z-compressed"
+    "7z": "application/x-7z-compressed",
   };
   return map[ext] ?? "application/octet-stream";
 }

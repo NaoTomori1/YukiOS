@@ -8,7 +8,7 @@ import { isSocialDisabled } from "./socialSettings.js";
 export const PRESENCE = Object.freeze({
   ONLINE: "online",
   INVISIBLE: "invisible",
-  OFFLINE: "offline"
+  OFFLINE: "offline",
 });
 
 const PRESENCE_VALUES = new Set(Object.values(PRESENCE));
@@ -43,5 +43,9 @@ export function isPollingAllowed() {
 }
 
 export function isPopupAllowed() {
-  return !isSocialDisabled() && !getDnd() && SteamSettings.get("currentlyPlayingPopups") !== false;
+  return (
+    !isSocialDisabled() &&
+    !getDnd() &&
+    SteamSettings.get("currentlyPlayingPopups") !== false
+  );
 }

@@ -1,4 +1,9 @@
-let snapshot = { level: 1, charging: true, dischargingTime: Infinity, chargingTime: Infinity };
+let snapshot = {
+  level: 1,
+  charging: true,
+  dischargingTime: Infinity,
+  chargingTime: Infinity,
+};
 let listeners = new Set();
 let handle = null;
 let started = false;
@@ -7,8 +12,12 @@ function refreshFromHandle() {
   snapshot = {
     level: handle.level,
     charging: handle.charging,
-    dischargingTime: Number.isFinite(handle.dischargingTime) ? handle.dischargingTime : Infinity,
-    chargingTime: Number.isFinite(handle.chargingTime) ? handle.chargingTime : Infinity
+    dischargingTime: Number.isFinite(handle.dischargingTime)
+      ? handle.dischargingTime
+      : Infinity,
+    chargingTime: Number.isFinite(handle.chargingTime)
+      ? handle.chargingTime
+      : Infinity,
   };
 }
 
@@ -53,7 +62,7 @@ function getSnapshot() {
     charging: snapshot.charging,
     dischargingTime: snapshot.dischargingTime,
     chargingTime: snapshot.chargingTime,
-    percent: Math.round(snapshot.level * 100)
+    percent: Math.round(snapshot.level * 100),
   };
 }
 
@@ -101,14 +110,16 @@ function getFillColor() {
 }
 
 function getBoltOrFaHtml() {
-  if (isCharging()) return `<i class="fas fa-bolt" style="color: var(--charging)"></i>`;
+  if (isCharging())
+    return `<i class="fas fa-bolt" style="color: var(--charging)"></i>`;
   return `<i class="${getFaIconClass()}"></i>`;
 }
 
 function getTimeLeftText() {
   if (isCharging()) return "Charging";
   const dischargingTime = snapshot.dischargingTime;
-  if (!Number.isFinite(dischargingTime) || dischargingTime <= 0) return "On Battery";
+  if (!Number.isFinite(dischargingTime) || dischargingTime <= 0)
+    return "On Battery";
   const h = Math.floor(dischargingTime / 3600);
   const mm = String(Math.floor((dischargingTime % 3600) / 60)).padStart(2, "0");
   return `${h}:${mm} left`;
@@ -116,7 +127,8 @@ function getTimeLeftText() {
 
 function getFooterText() {
   const pct = getPercent();
-  if (isCharging()) return pct >= 100 ? "100% Fully Charged" : `${pct}% Charging`;
+  if (isCharging())
+    return pct >= 100 ? "100% Fully Charged" : `${pct}% Charging`;
   const left = getTimeLeftText();
   if (left === "On Battery") return `${pct}% On Battery`;
   return `${pct}% - ${left}`;
@@ -133,5 +145,5 @@ export const batteryService = {
   getFillColor,
   getBoltOrFaHtml,
   getTimeLeftText,
-  getFooterText
+  getFooterText,
 };

@@ -1,4 +1,5 @@
 import { os, StorageKeys } from "../framework.js";
+import { getWispUrl, isEpoxyOnlyWisp } from "./wispConfig.js";
 import {
   fetchViaWisp,
   fetchViaWispRaw,
@@ -10,6 +11,13 @@ const textPattern = /text|html|xml|json|javascript|css|svg|csv|yaml|markdown/i;
 const titlePattern = /<title[^>]*>([^<]*)<\/title>/i;
 
 export function getActiveTransport() {
+  try {
+    if (isEpoxyOnlyWisp(getWispUrl())) {
+      return "epoxy";
+    }
+  } catch (wispErr) {
+    void wispErr;
+  }
   try {
     const stored = os.storage.get(StorageKeys.browserTransport);
     if (stored === "epoxy" || stored === "libcurl") {
@@ -67,14 +75,29 @@ function buildEpoxyOptions(options) {
   };
 }
 
-export async function fetchPage(target, opts = {}) {
-  const options = opts || {};
-  if (getActiveTransport() !== "epoxy") {
-    return fetchViaWisp(target, buildForwarded(options));
-  }
+async function fetchPageWithLibcurl(target, options) {
+  const result = await fetchViaWisp(target, buildForwarded(options));
+  const usedWispUrl = result.usedWispUrl || options.wispUrl || "";
+  return {
+    status: result.status,
+    contentType: result.contentType,
+    text: result.text,
+    blobUrl: result.blobUrl,
+    title: result.title,
+    usedWispUrl,
+    fallbackUsed:
+      result.fallbackUsed === true ||
+      (usedWispUrl !== "" &&
+        String(options.wispUrl || "") !== "" &&
+        usedWispUrl !== options.wispUrl),
+  };
+}
+
+async function fetchPageWithEpoxy(target, options) {
   const response = await fetchThroughWisp(target, buildEpoxyOptions(options));
   const status = response.status || 0;
   const mime = readMime(response);
+  const usedWispUrl = options.wispUrl || "";
   if (!mime || textPattern.test(mime)) {
     const text = await response.text();
     return {
@@ -83,6 +106,8 @@ export async function fetchPage(target, opts = {}) {
       text,
       blobUrl: null,
       title: extractTitle(text, target),
+      usedWispUrl,
+      fallbackUsed: false,
     };
   }
   const buffer = await response.arrayBuffer();
@@ -93,14 +118,50 @@ export async function fetchPage(target, opts = {}) {
     text: null,
     blobUrl: URL.createObjectURL(blob),
     title: target,
+    usedWispUrl,
+    fallbackUsed: false,
   };
 }
 
-export async function fetchRaw(target, opts = {}) {
+export async function fetchPage(target, opts = {}) {
   const options = opts || {};
-  if (getActiveTransport() !== "epoxy") {
-    return fetchViaWispRaw(target, buildForwarded(options));
+  const primary = getActiveTransport() !== "epoxy" ? "libcurl" : "epoxy";
+  try {
+    if (primary !== "epoxy") {
+      return await fetchPageWithLibcurl(target, options);
+    }
+    return await fetchPageWithEpoxy(target, options);
+  } catch (primaryErr) {
+    void primaryErr;
+    let secondaryResult = null;
+    if (primary !== "epoxy") {
+      secondaryResult = await fetchPageWithEpoxy(target, options);
+    } else {
+      secondaryResult = await fetchPageWithLibcurl(target, options);
+    }
+    secondaryResult.fallbackUsed = true;
+    return secondaryResult;
   }
+}
+
+async function fetchRawWithLibcurl(target, options) {
+  const result = await fetchViaWispRaw(target, buildForwarded(options));
+  const usedWispUrl = result.usedWispUrl || options.wispUrl || "";
+  return {
+    status: result.status,
+    contentType: result.contentType,
+    headers: result.headers,
+    buffer: result.buffer,
+    usedWispUrl,
+    fallbackUsed:
+      result.fallbackUsed === true ||
+      (usedWispUrl !== "" &&
+        String(options.wispUrl || "") !== "" &&
+        usedWispUrl !== options.wispUrl),
+  };
+}
+
+async function fetchRawWithEpoxy(target, options) {
   const response = await fetchThroughWisp(target, buildEpoxyOptions(options));
   const buffer = await response.arrayBuffer();
   const bag = {};
@@ -116,7 +177,30 @@ export async function fetchRaw(target, opts = {}) {
     contentType: readMime(response),
     headers: bag,
     buffer,
+    usedWispUrl: options.wispUrl || "",
+    fallbackUsed: false,
   };
+}
+
+export async function fetchRaw(target, opts = {}) {
+  const options = opts || {};
+  const primary = getActiveTransport() !== "epoxy" ? "libcurl" : "epoxy";
+  try {
+    if (primary !== "epoxy") {
+      return await fetchRawWithLibcurl(target, options);
+    }
+    return await fetchRawWithEpoxy(target, options);
+  } catch (primaryErr) {
+    void primaryErr;
+    let secondaryResult = null;
+    if (primary !== "epoxy") {
+      secondaryResult = await fetchRawWithEpoxy(target, options);
+    } else {
+      secondaryResult = await fetchRawWithLibcurl(target, options);
+    }
+    secondaryResult.fallbackUsed = true;
+    return secondaryResult;
+  }
 }
 
 export function resetTransports() {

@@ -1,6 +1,10 @@
 import { createElement, setHTML, setStyle } from "../../shared/domUtils.js";
 import { os } from "../../framework.js";
-import { renderSelectMenu, getSelectMenuValue, bindSelectMenu } from "../../shared/selectMenu.js";
+import {
+  renderSelectMenu,
+  getSelectMenuValue,
+  bindSelectMenu,
+} from "../../shared/selectMenu.js";
 
 const LEVEL_TEXTS = {
   0: "Store (No Compression)",
@@ -12,11 +16,18 @@ const LEVEL_TEXTS = {
   6: "Normal (6)",
   7: "High (7)",
   8: "High (8)",
-  9: "Ultra (Maximum)"
+  9: "Ultra (Maximum)",
 };
 
-export function showConfirmDialog({ title, message, confirmText = "OK", onConfirm }) {
-  const overlay = createElement("div", { className: "explorer-confirmation-overlay" });
+export function showConfirmDialog({
+  title,
+  message,
+  confirmText = "OK",
+  onConfirm,
+}) {
+  const overlay = createElement("div", {
+    className: "explorer-confirmation-overlay",
+  });
   setHTML(
     overlay,
     `
@@ -28,7 +39,7 @@ export function showConfirmDialog({ title, message, confirmText = "OK", onConfir
         <button class="fd-btn fd-btn-confirm fd-btn-confirm--danger">${confirmText}</button>
       </div>
     </div>
-  `
+  `,
   );
   document.body.appendChild(overlay);
 
@@ -46,8 +57,16 @@ export function showConfirmDialog({ title, message, confirmText = "OK", onConfir
   };
 }
 
-export function showInputDialog({ title, label, defaultValue, confirmText = "Create", onConfirm }) {
-  const overlay = createElement("div", { className: "explorer-confirmation-overlay" });
+export function showInputDialog({
+  title,
+  label,
+  defaultValue,
+  confirmText = "Create",
+  onConfirm,
+}) {
+  const overlay = createElement("div", {
+    className: "explorer-confirmation-overlay",
+  });
   setHTML(
     overlay,
     `
@@ -61,7 +80,7 @@ export function showInputDialog({ title, label, defaultValue, confirmText = "Cre
         <button class="fd-btn fd-btn-confirm">${confirmText}</button>
       </div>
     </div>
-  `
+  `,
   );
   document.body.appendChild(overlay);
 
@@ -115,12 +134,14 @@ export function showInputDialog({ title, label, defaultValue, confirmText = "Cre
 }
 
 export function showArchiveDialog({ title, defaultValue, onConfirm }) {
-  const overlay = createElement("div", { className: "explorer-confirmation-overlay" });
+  const overlay = createElement("div", {
+    className: "explorer-confirmation-overlay",
+  });
   const formatOptions = [
     { value: "zip", label: "ZIP (.zip)" },
     { value: "7z", label: "7z (.7z)" },
     { value: "tar", label: "TAR (.tar)" },
-    { value: "tar.gz", label: "TAR.GZ (.tar.gz)" }
+    { value: "tar.gz", label: "TAR.GZ (.tar.gz)" },
   ];
   overlay.innerHTML = `
     <div class="fd-dialog" style="width: 480px;">
@@ -181,7 +202,10 @@ export function showArchiveDialog({ title, defaultValue, onConfirm }) {
   };
 
   overlay.addEventListener("change", (e) => {
-    if (e.target.id === "archive-format-select" || e.target.closest?.("#archive-format-select")) {
+    if (
+      e.target.id === "archive-format-select" ||
+      e.target.closest?.("#archive-format-select")
+    ) {
       updateLevelState();
     }
   });

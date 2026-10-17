@@ -67,8 +67,14 @@ async function buildThumb(name, entry, container) {
     return null;
   }
   active.urls.set(name, url);
-  const tile = createElement("button", { className: "deck-media-thumb", attributes: { tabindex: "0" } });
-  const img = createElement("img", { className: "deck-media-thumb-img", attributes: { loading: "lazy", decoding: "async" } });
+  const tile = createElement("button", {
+    className: "deck-media-thumb",
+    attributes: { tabindex: "0" },
+  });
+  const img = createElement("img", {
+    className: "deck-media-thumb-img",
+    attributes: { loading: "lazy", decoding: "async" },
+  });
   img.src = url;
   tile.appendChild(img);
   const captured = createElement("div", { className: "deck-media-thumb-meta" });
@@ -113,13 +119,12 @@ export async function renderDeckMediaView(container) {
     viewer: null,
     io: null,
     grid: null,
-    onKey: null
+    onKey: null,
   };
 
   if (entries.length === 0) {
     const empty = createElement("div", { className: "deck-carousel-empty" });
-    empty.innerHTML =
-      `<i class="fas fa-camera" style="font-size:40px;opacity:0.6"></i><span>No screenshots yet</span><span style="font-size:12px;opacity:0.6">Press F12 on the Steam Deck to capture</span>`;
+    empty.innerHTML = `<i class="fas fa-camera" style="font-size:40px;opacity:0.6"></i><span>No screenshots yet</span><span style="font-size:12px;opacity:0.6">Press F12 on the Steam Deck to capture</span>`;
     container.appendChild(empty);
     return;
   }
@@ -141,19 +146,25 @@ export async function renderDeckMediaView(container) {
       sentinel?.remove();
       return;
     }
-    Promise.allSettled(chunk.map(({ name, entry }) => buildThumb(name, entry, container))).then((results) => {
+    Promise.allSettled(
+      chunk.map(({ name, entry }) => buildThumb(name, entry, container)),
+    ).then((results) => {
       if (!active || active.container !== container) return;
       results.forEach((res) => {
-        if (res.status === "fulfilled" && res.value) grid.insertBefore(res.value, sentinel);
+        if (res.status === "fulfilled" && res.value)
+          grid.insertBefore(res.value, sentinel);
       });
     });
   };
 
   sentinel = createElement("div", { className: "deck-load-sentinel" });
   grid.appendChild(sentinel);
-  io = new IntersectionObserver((ioEntries) => {
-    if (ioEntries[0]?.isIntersecting) renderPage();
-  }, { root: grid, rootMargin: "800px 0px" });
+  io = new IntersectionObserver(
+    (ioEntries) => {
+      if (ioEntries[0]?.isIntersecting) renderPage();
+    },
+    { root: grid, rootMargin: "800px 0px" },
+  );
   active.io = io;
   renderPage();
   io.observe(sentinel);
@@ -169,26 +180,34 @@ async function renderCarouselOverlay(container, startIndex) {
   if (!active || active.container !== container) return;
   destroyViewer();
 
-  const overlay = createElement("div", { className: "deck-carousel deck-carousel-overlay" });
+  const overlay = createElement("div", {
+    className: "deck-carousel deck-carousel-overlay",
+  });
   container.appendChild(overlay);
   active.viewer = overlay;
   container.classList.add("deck-carousel-open");
 
-  const backBtn = createElement("button", { className: "deck-carousel-back", attributes: { title: "Back to grid" } });
+  const backBtn = createElement("button", {
+    className: "deck-carousel-back",
+    attributes: { title: "Back to grid" },
+  });
   backBtn.innerHTML = `<i class="fas fa-arrow-left"></i>`;
   overlay.appendChild(backBtn);
 
-  const stage = createElement("div", { className: "deck-carousel-stage", attributes: { tabindex: "0" } });
+  const stage = createElement("div", {
+    className: "deck-carousel-stage",
+    attributes: { tabindex: "0" },
+  });
   const track = createElement("div", { className: "deck-carousel-track" });
   stage.appendChild(track);
   const prevBtn = createElement("button", {
     className: "deck-carousel-arrow deck-carousel-prev",
-    attributes: { title: "Previous screenshot" }
+    attributes: { title: "Previous screenshot" },
   });
   prevBtn.innerHTML = `<i class="fas fa-chevron-left"></i>`;
   const nextBtn = createElement("button", {
     className: "deck-carousel-arrow deck-carousel-next",
-    attributes: { title: "Next screenshot" }
+    attributes: { title: "Next screenshot" },
   });
   nextBtn.innerHTML = `<i class="fas fa-chevron-right"></i>`;
   stage.appendChild(prevBtn);
@@ -196,11 +215,21 @@ async function renderCarouselOverlay(container, startIndex) {
 
   const bar = createElement("div", { className: "deck-carousel-bar" });
   const sourceEl = createElement("div", { className: "deck-carousel-source" });
-  const capturedEl = createElement("div", { className: "deck-carousel-captured" });
-  const actionsEl = createElement("div", { className: "deck-carousel-actions" });
-  const renameBtn = createElement("button", { className: "deck-carousel-action", attributes: { title: "Rename" } });
+  const capturedEl = createElement("div", {
+    className: "deck-carousel-captured",
+  });
+  const actionsEl = createElement("div", {
+    className: "deck-carousel-actions",
+  });
+  const renameBtn = createElement("button", {
+    className: "deck-carousel-action",
+    attributes: { title: "Rename" },
+  });
   renameBtn.innerHTML = `<i class="fas fa-pen"></i>`;
-  const deleteBtn = createElement("button", { className: "deck-carousel-action deck-carousel-delete", attributes: { title: "Delete" } });
+  const deleteBtn = createElement("button", {
+    className: "deck-carousel-action deck-carousel-delete",
+    attributes: { title: "Delete" },
+  });
   deleteBtn.innerHTML = `<i class="fas fa-trash"></i>`;
   actionsEl.appendChild(renameBtn);
   actionsEl.appendChild(deleteBtn);
@@ -263,7 +292,10 @@ async function renderCarouselOverlay(container, startIndex) {
     });
     const meta = currentMeta();
     setText(sourceEl, meta.source || "Yuki Steam Client");
-    setText(capturedEl, `CAPTURED ${formatCaptureDate(toTimestamp(null, meta))}`);
+    setText(
+      capturedEl,
+      `CAPTURED ${formatCaptureDate(toTimestamp(null, meta))}`,
+    );
   };
 
   const navigate = (dir) => {
@@ -278,60 +310,72 @@ async function renderCarouselOverlay(container, startIndex) {
   };
 
   const showRenameDialog = () => {
-    showDeckPrompt(container, "Rename Screenshot", active.list[index], async (newName) => {
-      if (!newName || newName === active.list[index]) return;
-      const oldName = active.list[index];
-      const ext = oldName.split(".").pop();
-      const finalName = newName.endsWith("." + ext) ? newName : newName + "." + ext;
-      try {
-        await os.fs.renameItem(SCREENSHOT_DIR, oldName, finalName);
-        const url = active.urls.get(oldName);
-        const meta = active.metas.get(oldName);
-        active.urls.delete(oldName);
-        active.metas.delete(oldName);
-        if (url) active.urls.set(finalName, url);
-        if (meta) active.metas.set(finalName, meta);
-        const thumb = active.thumbs.get(oldName);
-        if (thumb) {
-          active.thumbs.delete(oldName);
-          active.thumbs.set(finalName, thumb);
-        }
-        active.list[index] = finalName;
-        steamDeckAudio.playSwitchNav();
-        updateTrack();
-      } catch {}
-    });
+    showDeckPrompt(
+      container,
+      "Rename Screenshot",
+      active.list[index],
+      async (newName) => {
+        if (!newName || newName === active.list[index]) return;
+        const oldName = active.list[index];
+        const ext = oldName.split(".").pop();
+        const finalName = newName.endsWith("." + ext)
+          ? newName
+          : newName + "." + ext;
+        try {
+          await os.fs.renameItem(SCREENSHOT_DIR, oldName, finalName);
+          const url = active.urls.get(oldName);
+          const meta = active.metas.get(oldName);
+          active.urls.delete(oldName);
+          active.metas.delete(oldName);
+          if (url) active.urls.set(finalName, url);
+          if (meta) active.metas.set(finalName, meta);
+          const thumb = active.thumbs.get(oldName);
+          if (thumb) {
+            active.thumbs.delete(oldName);
+            active.thumbs.set(finalName, thumb);
+          }
+          active.list[index] = finalName;
+          steamDeckAudio.playSwitchNav();
+          updateTrack();
+        } catch {}
+      },
+    );
   };
 
   const showDeleteDialog = () => {
-    showDeckConfirm(container, "Delete Screenshot", `Are you sure you want to delete "${active.list[index]}"?`, async () => {
-      try {
-        const name = active.list[index];
-        const url = active.urls.get(name);
-        if (url) URL.revokeObjectURL(url);
-        active.urls.delete(name);
-        active.metas.delete(name);
-        const thumb = active.thumbs.get(name);
-        if (thumb) thumb.remove();
-        active.thumbs.delete(name);
-        active.list.splice(index, 1);
-        imgElements[index]?.remove();
-        imgElements.splice(index, 1);
+    showDeckConfirm(
+      container,
+      "Delete Screenshot",
+      `Are you sure you want to delete "${active.list[index]}"?`,
+      async () => {
+        try {
+          const name = active.list[index];
+          const url = active.urls.get(name);
+          if (url) URL.revokeObjectURL(url);
+          active.urls.delete(name);
+          active.metas.delete(name);
+          const thumb = active.thumbs.get(name);
+          if (thumb) thumb.remove();
+          active.thumbs.delete(name);
+          active.list.splice(index, 1);
+          imgElements[index]?.remove();
+          imgElements.splice(index, 1);
 
-        if (active.list.length === 0) {
-          destroyActiveCarousel();
-          renderDeckMediaView(container);
-          return;
-        }
+          if (active.list.length === 0) {
+            destroyActiveCarousel();
+            renderDeckMediaView(container);
+            return;
+          }
 
-        if (index >= active.list.length) {
-          index = active.list.length - 1;
-        }
+          if (index >= active.list.length) {
+            index = active.list.length - 1;
+          }
 
-        steamDeckAudio.playSwitchNav();
-        updateTrack();
-      } catch {}
-    });
+          steamDeckAudio.playSwitchNav();
+          updateTrack();
+        } catch {}
+      },
+    );
   };
 
   const handleRename = () => {
@@ -357,7 +401,7 @@ async function renderCarouselOverlay(container, startIndex) {
     navigate(1);
   });
   overlay.addEventListener("click", (e) => {
-    if (e.button === 0 && e.target === stage || e.target === track) {
+    if ((e.button === 0 && e.target === stage) || e.target === track) {
       navigate(1);
     }
   });

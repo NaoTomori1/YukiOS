@@ -23,7 +23,7 @@ export const CONVERT_FORMATS = {
     "eps",
     "jxl",
     "bpg",
-    "jp2"
+    "jp2",
   ],
   text: [
     "txt",
@@ -42,7 +42,7 @@ export const CONVERT_FORMATS = {
     "tex",
     "rst",
     "adoc",
-    "org"
+    "org",
   ],
   structured: ["json", "csv", "xml", "yaml", "yml", "tsv", "toml", "ini"],
   audio: [
@@ -71,7 +71,7 @@ export const CONVERT_FORMATS = {
     "gsm",
     "alac",
     "mid",
-    "midi"
+    "midi",
   ],
   video: [
     "mp4",
@@ -97,8 +97,8 @@ export const CONVERT_FORMATS = {
     "f4v",
     "hevc",
     "mpg",
-    "mpeg"
-  ]
+    "mpeg",
+  ],
 };
 
 export function getFileExtension(name) {
@@ -138,7 +138,7 @@ export function detectCategory(ext) {
     "eps",
     "jxl",
     "bpg",
-    "jp2"
+    "jp2",
   ];
   const texts = [
     "txt",
@@ -157,9 +157,18 @@ export function detectCategory(ext) {
     "tex",
     "rst",
     "adoc",
-    "org"
+    "org",
   ];
-  const structured = ["json", "csv", "xml", "yaml", "yml", "tsv", "toml", "ini"];
+  const structured = [
+    "json",
+    "csv",
+    "xml",
+    "yaml",
+    "yml",
+    "tsv",
+    "toml",
+    "ini",
+  ];
   const audio = [
     "mp3",
     "wav",
@@ -182,7 +191,7 @@ export function detectCategory(ext) {
     "tta",
     "mka",
     "caf",
-    "gsm"
+    "gsm",
   ];
   const video = [
     "mp4",
@@ -205,7 +214,7 @@ export function detectCategory(ext) {
     "rmvb",
     "asf",
     "mxf",
-    "f4v"
+    "f4v",
   ];
   if (images.includes(target)) return "image";
   if (audio.includes(target)) return "audio";
@@ -251,8 +260,12 @@ function decodeHtmlEntities(value) {
     .replace(/&gt;/g, ">")
     .replace(/&quot;/g, '"')
     .replace(/&#39;/g, "'")
-    .replace(/&#x([0-9a-fA-F]+);/g, (match, hex) => String.fromCharCode(parseInt(hex, 16)))
-    .replace(/&#(\d+);/g, (match, digits) => String.fromCharCode(parseInt(digits, 10)));
+    .replace(/&#x([0-9a-fA-F]+);/g, (match, hex) =>
+      String.fromCharCode(parseInt(hex, 16)),
+    )
+    .replace(/&#(\d+);/g, (match, digits) =>
+      String.fromCharCode(parseInt(digits, 10)),
+    );
 }
 
 export function stripHtml(html) {
@@ -310,13 +323,20 @@ export function flattenJson(obj, prefix = "") {
 
 export function jsonToCsv(json, delimiter = ",") {
   let arr = Array.isArray(json) ? json : [json];
-  arr = arr.map((item) => (typeof item === "object" && item !== null ? flattenJson(item) : { value: item }));
+  arr = arr.map((item) =>
+    typeof item === "object" && item !== null
+      ? flattenJson(item)
+      : { value: item },
+  );
   const allKeys = [...new Set(arr.flatMap((item) => Object.keys(item)))];
-  const header = allKeys.map((key) => `"${String(key).replace(/"/g, '""')}"`).join(delimiter);
+  const header = allKeys
+    .map((key) => `"${String(key).replace(/"/g, '""')}"`)
+    .join(delimiter);
   const rows = arr.map((item) => {
     return allKeys
       .map((key) => {
-        const val = item[key] === undefined || item[key] === null ? "" : item[key];
+        const val =
+          item[key] === undefined || item[key] === null ? "" : item[key];
         return `"${String(val).replace(/"/g, '""')}"`;
       })
       .join(delimiter);
@@ -478,7 +498,9 @@ export function xmlToJson(xmlStr) {
     .replace(/<!--[\s\S]*?-->/g, "")
     .replace(/<([A-Za-z_][\w:.-]*)(\s[^>]*)?\/>/g, "<$1></$1>")
     .trim();
-  const root = clean.match(/^<([A-Za-z_][\w:.-]*)(\s[^>]*)?>([\s\S]*)<\/\1\s*>$/);
+  const root = clean.match(
+    /^<([A-Za-z_][\w:.-]*)(\s[^>]*)?>([\s\S]*)<\/\1\s*>$/,
+  );
   if (!root) return clean;
   return parseXmlFragment(root[3]);
 }
@@ -509,14 +531,16 @@ function convertTxtSource(targetFormat, text) {
   if (targetFormat === "html") {
     return `<pre style="font-family:monospace;color:#fff;background:#1e1e24;padding:12px;border-radius:6px;overflow:auto;">${text}</pre>`;
   }
-  if (targetFormat === "json") return JSON.stringify({ content: text }, null, 2);
+  if (targetFormat === "json")
+    return JSON.stringify({ content: text }, null, 2);
   return null;
 }
 
 function convertMdSource(targetFormat, text) {
   if (targetFormat === "txt") return stripMd(text);
   if (targetFormat === "html") return mdToHtml(text);
-  if (targetFormat === "json") return JSON.stringify({ markdown: text, html: mdToHtml(text) }, null, 2);
+  if (targetFormat === "json")
+    return JSON.stringify({ markdown: text, html: mdToHtml(text) }, null, 2);
   return null;
 }
 
@@ -541,7 +565,12 @@ function convertJsonTextSource(targetFormat, text) {
   return null;
 }
 
-export function convertTextContent({ sourceExt, targetFormat, text, cleanup = false }) {
+export function convertTextContent({
+  sourceExt,
+  targetFormat,
+  text,
+  cleanup = false,
+}) {
   let working = text === undefined || text === null ? "" : String(text);
   if (cleanup) working = normalizeWhitespace(working);
   const source = String(sourceExt).toLowerCase();
@@ -568,7 +597,9 @@ export function parseStructuredSource(sourceExt, text) {
 function flattenParsedItems(parsed, flatten) {
   const arr = Array.isArray(parsed) ? parsed : [parsed];
   if (!flatten) return arr;
-  return arr.map((item) => (typeof item === "object" && item !== null ? flattenJson(item) : item));
+  return arr.map((item) =>
+    typeof item === "object" && item !== null ? flattenJson(item) : item,
+  );
 }
 
 function stringifyStructuredTarget(parsed, targetFormat, pretty, flatten) {
@@ -582,9 +613,16 @@ function stringifyStructuredTarget(parsed, targetFormat, pretty, flatten) {
   return null;
 }
 
-export function convertStructuredContent({ sourceExt, targetFormat, text, pretty = true, flatten = false }) {
+export function convertStructuredContent({
+  sourceExt,
+  targetFormat,
+  text,
+  pretty = true,
+  flatten = false,
+}) {
   const parsed = parseStructuredSource(sourceExt, text);
-  if (parsed === null || parsed === undefined) throw new Error("Failed to parse source file.");
+  if (parsed === null || parsed === undefined)
+    throw new Error("Failed to parse source file.");
   return stringifyStructuredTarget(parsed, targetFormat, pretty, flatten);
 }
 
@@ -621,18 +659,31 @@ async function decodeImageSource(blob, imageSource) {
 }
 
 function canvasToBlob(canvas, mime, quality) {
-  if (canvas.convertToBlob) return canvas.convertToBlob({ type: mime, quality });
+  if (canvas.convertToBlob)
+    return canvas.convertToBlob({ type: mime, quality });
   return new Promise((resolve) => {
     canvas.toBlob((result) => resolve(result), mime, quality);
   });
 }
 
-export async function convertImageBlob({ blob = null, image = null, targetFormat, options = {} }) {
-  const source = await decodeImageSource(blob, image || options.imageSource || null);
+export async function convertImageBlob({
+  blob = null,
+  image = null,
+  targetFormat,
+  options = {},
+}) {
+  const source = await decodeImageSource(
+    blob,
+    image || options.imageSource || null,
+  );
   const naturalWidth = source.naturalWidth || source.width;
   const naturalHeight = source.naturalHeight || source.height;
   const dims = computeImageDimensions(naturalWidth, naturalHeight, options);
-  const canvas = createConvertCanvas(dims.width, dims.height, options.canvasFactory || null);
+  const canvas = createConvertCanvas(
+    dims.width,
+    dims.height,
+    options.canvasFactory || null,
+  );
   canvas.width = dims.width;
   canvas.height = dims.height;
   const ctx = canvas.getContext("2d");
@@ -685,7 +736,11 @@ export function audioBufferToWav(buffer) {
   for (let i = 0; i < buffer.length; i++) {
     for (let ch = 0; ch < numChannels; ch++) {
       const sample = Math.max(-1, Math.min(1, channels[ch][i]));
-      view.setInt16(offset, sample < 0 ? sample * 0x8000 : sample * 0x7fff, true);
+      view.setInt16(
+        offset,
+        sample < 0 ? sample * 0x8000 : sample * 0x7fff,
+        true,
+      );
       offset += 2;
     }
   }
@@ -705,7 +760,9 @@ export function mixChannelsToCount(channels, targetCount) {
     }
     return [mixed];
   }
-  return Array.from({ length: targetCount }, (item, index) => Float32Array.from(channels[index % channels.length]));
+  return Array.from({ length: targetCount }, (item, index) =>
+    Float32Array.from(channels[index % channels.length]),
+  );
 }
 
 export function resampleChannelData(data, fromRate, toRate) {
@@ -745,7 +802,8 @@ export function trimSilenceFromChannels(channels, threshold = 0.01) {
   const total = channels[0].length;
   let start = 0;
   let end = total;
-  const isAudible = (index) => channels.some((channel) => Math.abs(channel[index]) > threshold);
+  const isAudible = (index) =>
+    channels.some((channel) => Math.abs(channel[index]) > threshold);
   while (start < total && !isAudible(start)) start++;
   while (end > start && !isAudible(end - 1)) end--;
   if (start === 0 && end === total) return channels;
@@ -766,7 +824,7 @@ function wrapChannelsAsBuffer(channels, sampleRate) {
     numberOfChannels: channels.length,
     sampleRate,
     length: channels[0].length,
-    getChannelData: (index) => channels[index]
+    getChannelData: (index) => channels[index],
   };
 }
 
@@ -776,7 +834,7 @@ export function convertAudioSamples({
   channels,
   volumeBoost = 0,
   normalize = false,
-  trim = false
+  trim = false,
 }) {
   if (!audioBuffer) throw new Error("Audio not fully loaded.");
   let list = extractChannelList(audioBuffer);
@@ -785,7 +843,9 @@ export function convertAudioSamples({
   const targetCount = parseInt(channels, 10) || audioBuffer.numberOfChannels;
   if (targetCount !== list.length) list = mixChannelsToCount(list, targetCount);
   if (targetRate !== rate) {
-    list = list.map((channel) => resampleChannelData(channel, rate, targetRate));
+    list = list.map((channel) =>
+      resampleChannelData(channel, rate, targetRate),
+    );
     rate = targetRate;
   }
   const gain = Math.pow(10, (parseFloat(volumeBoost) || 0) / 20);
@@ -795,9 +855,25 @@ export function convertAudioSamples({
   return { channels: list, sampleRate: rate };
 }
 
-export function convertAudioBufferToWav({ audioBuffer, sampleRate, channels, volumeBoost, normalize, trim }) {
-  const processed = convertAudioSamples({ audioBuffer, sampleRate, channels, volumeBoost, normalize, trim });
-  const wavBytes = audioBufferToWav(wrapChannelsAsBuffer(processed.channels, processed.sampleRate));
+export function convertAudioBufferToWav({
+  audioBuffer,
+  sampleRate,
+  channels,
+  volumeBoost,
+  normalize,
+  trim,
+}) {
+  const processed = convertAudioSamples({
+    audioBuffer,
+    sampleRate,
+    channels,
+    volumeBoost,
+    normalize,
+    trim,
+  });
+  const wavBytes = audioBufferToWav(
+    wrapChannelsAsBuffer(processed.channels, processed.sampleRate),
+  );
   return new Blob([wavBytes], { type: "audio/wav" });
 }
 
@@ -808,10 +884,12 @@ export async function ensureFFmpegWasm() {
   if (ffmpegModuleInstance) return ffmpegModuleInstance;
   if (ffmpegModulePromise) return ffmpegModulePromise;
   ffmpegModulePromise = (async () => {
-    const { createFFmpeg } = await import("https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.10/dist/esm/index.js");
+    const { createFFmpeg } =
+      await import("https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.10/dist/esm/index.js");
     const ffmpeg = createFFmpeg({
       log: false,
-      corePath: "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/ffmpeg-core.js"
+      corePath:
+        "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/ffmpeg-core.js",
     });
     await ffmpeg.load();
     ffmpegModuleInstance = ffmpeg;
@@ -840,13 +918,14 @@ export function getFfmpegMimeType(format) {
     jpeg: "image/jpeg",
     webp: "image/webp",
     tiff: "image/tiff",
-    bmp: "image/bmp"
+    bmp: "image/bmp",
   };
   return mimeMap[String(format).toLowerCase()] || "application/octet-stream";
 }
 
 async function toByteArray(inputData) {
-  if (inputData instanceof Blob) return new Uint8Array(await inputData.arrayBuffer());
+  if (inputData instanceof Blob)
+    return new Uint8Array(await inputData.arrayBuffer());
   return inputData;
 }
 
@@ -858,7 +937,13 @@ function unlinkQuiet(ffmpeg, name) {
   }
 }
 
-export async function ffmpegConvert(inputData, inputExt, outputExt, extraArgs = [], runner = null) {
+export async function ffmpegConvert(
+  inputData,
+  inputExt,
+  outputExt,
+  extraArgs = [],
+  runner = null,
+) {
   const data = await toByteArray(inputData);
   if (runner) return runner(data, inputExt, outputExt, extraArgs);
   const ffmpeg = await ensureFFmpegWasm();
@@ -874,7 +959,12 @@ export async function ffmpegConvert(inputData, inputExt, outputExt, extraArgs = 
   return new Blob([outData.buffer], { type: getFfmpegMimeType(outputExt) });
 }
 
-export async function convertAudioFormat(blob, targetFormat, bitrate, runner = null) {
+export async function convertAudioFormat(
+  blob,
+  targetFormat,
+  bitrate,
+  runner = null,
+) {
   if (targetFormat === "wav") return blob;
   const bitrateArg = bitrate ? [`-b:a`, `${Math.round(bitrate / 1000)}k`] : [];
   return ffmpegConvert(blob, "wav", targetFormat, bitrateArg, runner);
@@ -889,10 +979,17 @@ export async function convertAudioBuffer({
   volumeBoost = 0,
   normalize = false,
   trim = false,
-  ffmpegRunner = null
+  ffmpegRunner = null,
 }) {
   if (!audioBuffer) throw new Error("Audio not fully loaded.");
-  const wavBlob = convertAudioBufferToWav({ audioBuffer, sampleRate, channels, volumeBoost, normalize, trim });
+  const wavBlob = convertAudioBufferToWav({
+    audioBuffer,
+    sampleRate,
+    channels,
+    volumeBoost,
+    normalize,
+    trim,
+  });
   if (String(targetFormat).toLowerCase() === "wav") return wavBlob;
   return convertAudioFormat(wavBlob, targetFormat, bitrate, ffmpegRunner);
 }
@@ -901,7 +998,7 @@ export function getVideoMimeType(format, codec) {
   const codecMap = {
     h264: "avc1.42E01E",
     vp9: "vp09.00.10.08",
-    av1: "av01.0.01M.08"
+    av1: "av01.0.01M.08",
   };
   const codecStr = codecMap[codec] || codec;
   if (format === "mp4") return `video/mp4; codecs="${codecStr}"`;
@@ -919,7 +1016,7 @@ export function buildVideoConvertArgs({
   bitrate = 0,
   codec = "h264",
   audioCodec = "aac",
-  mute = false
+  mute = false,
 }) {
   const args = [];
   if (resolution !== "original") {
@@ -959,13 +1056,31 @@ export function buildVideoConvertArgs({
   return { args, outputExt };
 }
 
-export async function convertVideoBlob({ blob, sourceExt, targetFormat, options = {}, ffmpegRunner = null }) {
+export async function convertVideoBlob({
+  blob,
+  sourceExt,
+  targetFormat,
+  options = {},
+  ffmpegRunner = null,
+}) {
   if (!blob) throw new Error("Video source not available.");
   const built = buildVideoConvertArgs({ targetFormat, ...options });
-  return ffmpegConvert(blob, sourceExt, built.outputExt, built.args, ffmpegRunner);
+  return ffmpegConvert(
+    blob,
+    sourceExt,
+    built.outputExt,
+    built.args,
+    ffmpegRunner,
+  );
 }
 
-export async function convertFileBlob({ blob = null, text = null, sourceExt, targetFormat, options = {} }) {
+export async function convertFileBlob({
+  blob = null,
+  text = null,
+  sourceExt,
+  targetFormat,
+  options = {},
+}) {
   const source = String(sourceExt).toLowerCase();
   const target = String(targetFormat).toLowerCase();
   const category = detectCategory(source);
@@ -975,7 +1090,7 @@ export async function convertFileBlob({ blob = null, text = null, sourceExt, tar
       blob,
       image: options.imageSource || null,
       targetFormat: target,
-      options
+      options,
     });
     return { blob: outputBlob, text: null };
   }
@@ -984,7 +1099,7 @@ export async function convertFileBlob({ blob = null, text = null, sourceExt, tar
       sourceExt: source,
       targetFormat: target,
       text: text || "",
-      cleanup: options.cleanup || false
+      cleanup: options.cleanup || false,
     });
     return { blob: null, text: outputText };
   }
@@ -994,7 +1109,7 @@ export async function convertFileBlob({ blob = null, text = null, sourceExt, tar
       targetFormat: target,
       text: text || "",
       pretty: options.pretty !== false,
-      flatten: options.flatten || false
+      flatten: options.flatten || false,
     });
     return { blob: null, text: outputText };
   }
@@ -1008,7 +1123,7 @@ export async function convertFileBlob({ blob = null, text = null, sourceExt, tar
       volumeBoost: options.volumeBoost || 0,
       normalize: options.normalize || false,
       trim: options.trim || false,
-      ffmpegRunner: options.ffmpegRunner || null
+      ffmpegRunner: options.ffmpegRunner || null,
     });
     return { blob: outputBlob, text: null };
   }
@@ -1017,7 +1132,7 @@ export async function convertFileBlob({ blob = null, text = null, sourceExt, tar
     sourceExt: source,
     targetFormat: target,
     options,
-    ffmpegRunner: options.ffmpegRunner || null
+    ffmpegRunner: options.ffmpegRunner || null,
   });
   return { blob: outputBlob, text: null };
 }
