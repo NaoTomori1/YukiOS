@@ -1,8 +1,59 @@
 [
   {
     "date": "October 17, 2026",
-    "label": "YukiOS v5.1",
+    "label": "YukiOS v5.2",
     "sections": [
+      {
+        "icon": "fas fa-tornado",
+        "title": "Code Red: Stickman",
+        "items": [
+          [
+            "fas fa-tornado",
+            "Trigger and Toggle Chaos Mode",
+            "Launch or contain Code Red whenever you choose. Red, the stickman sharpshooter, drops from the sky in an angel pose and invades your taskbar, shattering icons and windows."
+          ],
+          [
+            "fas fa-crosshairs",
+            "Laser Sweep and Sound",
+            "Red charges a powerful laser beam with a rising whine, then sweeps it across your desktop with humming and sizzling firing sounds, leaving dark scorch marks on windows and icons."
+          ],
+          [
+            "fas fa-bomb",
+            "Explosive Arsenal",
+            "Red attacks with homing rockets, bouncing grenades, and spinning knives, unleashing explosions that leave scorch marks across your desktop."
+          ],
+          [
+            "fas fa-hand-pointer",
+            "Cursor Wrestling, Slams, and Recovery",
+            "Red grabs your cursor when it gets close and starts wrestling with it. Shake your mouse hard to break free before Red slams the cursor three times. Three hits within four seconds shatter your cursor into six pieces. The pieces regroup at the center of the screen and gradually heal until the cursor is restored."
+          ],
+          [
+            "fas fa-dungeon",
+            "Jail Cage and Escape",
+            "Drag a selection box around Red to trap him inside a jail cage. Smash the cage against the taskbar to break him free and restart the chaos. While imprisoned, Red paces, dozes, hangs upside down, and rattles the bars."
+          ],
+          [
+            "fas fa-cubes",
+            "Shattered Debris and Box Selection",
+            "Destroyed desktop icons burst into draggable chunks that you can fling at Red. Drag a selection box around multiple debris pieces to grab and move them together."
+          ],
+          [
+            "fas fa-heart-crack",
+            "Red Takes Damage",
+            "Fling debris at Red to knock him down, then watch him recover and get back up for more chaos."
+          ],
+          [
+            "fas fa-hand",
+            "Grab and Throw Red",
+            "Drag Red around your desktop and fling him into windows, turning the environment into a physics playground."
+          ],
+          [
+            "fas fa-hand-sparkles",
+            "Dodge Click",
+            "Click beside Red and watch him hop away before the click lands."
+          ]
+        ]
+      },
       {
         "icon": "fas fa-video",
         "title": "Infrared YouTube",
@@ -52,34 +103,13 @@
         ]
       },
       {
-        "icon": "fas fa-tornado",
-        "title": "Code Red",
-        "items": [
-          [
-            "fas fa-tornado",
-            "Trigger Chaos Mode",
-            "Launch Code Red and unleash physics chaos as Red invades your taskbar."
-          ],
-          [
-            "fas fa-person-running",
-            "Red Attacks the Taskbar",
-            "Watch Red, the stickman sharpshooter, blast apart your taskbar and icons as it shatters."
-          ],
-          [
-            "fas fa-person",
-            "Living Prisoner",
-            "Red paces, dozes, and hangs upside down inside the cell."
-          ]
-        ]
-      },
-      {
         "icon": "fas fa-gamepad",
         "title": "Added Games",
         "items": [
           [
             "fas fa-gamepad",
             "New Games Added",
-            "Geometry Dash Lite, 2048 Merge Run, Baldi's Basics Plus, and Minecraft versions 1.8.8, 1.12.2, and 1.21.4."
+            "Minecraft:Story mode, Geometry Dash Lite, 2048 Merge Run, Baldi's Basics Plus, and Minecraft versions 1.8.8, 1.12.2, and 1.21.4."
           ]
         ]
       }

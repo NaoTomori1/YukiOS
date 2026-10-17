@@ -245,6 +245,7 @@ async function start() {
   const app = urlParams.get("app");
   const swf = parseBool(urlParams.get("swf"));
   const steamParam = urlParams.get("steam");
+  const redParam = urlParams.has("red");
 
   const pathMatch = window.location.pathname.match(
     /^\/(app|game)\/(.+)\.html$/,
@@ -291,6 +292,11 @@ async function start() {
   } else if (game) {
     setTimeout(() => {
       appLauncher.launch(game, swf);
+    }, 0);
+  }
+  if (redParam) {
+    setTimeout(() => {
+      appLauncher.launch("codeRedApp", false, { autoUnleash: true });
     }, 0);
   }
   setupStartMenu(sessionManager);

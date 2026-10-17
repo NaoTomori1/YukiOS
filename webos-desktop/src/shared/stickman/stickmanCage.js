@@ -1,5 +1,5 @@
-import { createElement } from "../framework.js";
-import { playShatter, playGrab, playHit } from "./chaosSfx.js";
+import { createElement } from "../../framework.js";
+import { playShatter, playGrab, playHit } from "../chaosSfx.js";
 
 export const CAGE_MIN_W = 64;
 export const CAGE_MIN_H = 96;

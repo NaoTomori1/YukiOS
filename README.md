@@ -75,6 +75,17 @@ A lightweight, tab-centric web-first environment with a dedicated shelf layout o
 - Simplified system tray with essential controls
 - Lightweight profile optimized for lower-resource machines
 
+## 🪟 Windows 11 Mode
+
+A Windows 11-inspired desktop shell with centered taskbar, Start menu, widgets board, quick settings, and transparent
+context menus.
+
+- **Centered taskbar** with pinned and running apps, system tray, and clock
+- **Start menu** with pinned apps, recommended files, and search
+- **Widgets board** with news, weather, and quick glance cards
+- **Quick settings** panel for Wi-Fi, Bluetooth, brightness, volume, and battery
+- **Transparent context menus** styled after Windows 11
+
 ## 🔲 Hyprland BSP Tiling Mode
 
 A keyboard-driven Binary Space Partitioning tiling window manager inspired by Hyprland, switchable from the session
@@ -130,8 +141,8 @@ applications, file system, or workspace context. The UI layout engine morphs aro
         │                               │                              │
         ▼                               ▼                              ▼
 ┌─────────────────┐            ┌─────────────────┐            ┌─────────────────┐
-│  🎮Yuki Deck    │            │ GNOME Shell 🧙‍♂️  │            │Windows(Upcoming)│
-│ (Gamepad Focus) │            │   (Upcoming)    │            │🪟(XP/Win7/10/11)│
+│  🎮Yuki Deck   │             │ GNOME Shell 🧙‍♂️  │           │ Windows 11 Now  │
+│ (Gamepad Focus) │            │   (Upcoming)    │            │🪟XP/Win7/10 soon│
 └───────┬─────────┘            └────────┬────────┘            └────────┬────────┘
         │                               │                              │
         └───────────────────────────────┼──────────────────────────────┘
@@ -276,7 +287,7 @@ applications, file system, or workspace context. The UI layout engine morphs aro
 
 - Custom App Creator for adding web shortcuts with auto-detected favicons and per-app CORS proxy
 - Scramjet/BareMux-based web app proxy for embedding third-party sites
-- URL parameter launch: `?app=`, `?game=`, `?deck=1` for Yuki Deck Mode
+- URL parameter launch: `?app=`, `?game=`, for launching games, `?deck=1` for Yuki Deck Mode and `?red` for launching stickman chaos mode
 
 </details>
 
@@ -522,6 +533,8 @@ top.
 - [Truffled](https://truffled.lol) Browser game ports.
 - [Aether](https://aether.ist/) Movie streaming frontend used by the Movies app.
 - [Famelack](https://famelack.com) Live TV frontend used by the TV Streaming app.
+- [win11React](https://github.com/blueedgetechno/win11React) Windows 11 UI reference used for the Win11 mode shell and
+  context menu styling.
 </details>
 
 ## Build tooling

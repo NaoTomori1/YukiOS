@@ -1,6 +1,22 @@
-import { $, $$, bindEvent, createElement } from "../framework.js";
-import { playGrab, playHit, playLand, playWooob } from "./chaosSfx.js";
+import { $, $$, bindEvent, createElement } from "../../framework.js";
+import { playGrab, playHit, playLand, playWooob } from "../chaosSfx.js";
 import { isCursorDestroyed } from "./stickmanCursorKill.js";
+import { createLaserWeapon } from "./stickmanLaser.js";
+import { createTussleController } from "./stickmanTussle.js";
+import { POSE_KEYS, pose } from "./stickmanRig.js";
+import { moonwalkPose, dodgePose } from "./stickmanMoves.js";
+import {
+  createJetpack,
+  createJetpackRig,
+  updateJetpackRig,
+} from "./stickmanJetpack.js";
+import {
+  createRageSystem,
+  slamDivePose,
+  slamLandPose,
+  RAGE_SLAM_LAND_MS,
+} from "./stickmanRage.js";
+import { createAfterimageCombo } from "./stickmanAfterimage.js";
 
 const NS = "http://www.w3.org/2000/svg";
 const INK = "#ff0000";
@@ -21,20 +37,30 @@ const JUMP_REACH = 110;
 const MOUNT_DEPTH = 48;
 const CAGE_FLOOR_PAD = 4;
 const PLAT_SCAN_MS = 150;
-const MODES = ["walk", "run", "idle", "creep", "rage", "punch"];
-const KEYS = [
-  "lean",
-  "tilt",
-  "a1",
-  "aK",
-  "b1",
-  "bK",
-  "armA",
-  "armAE",
-  "armB",
-  "armBE",
-  "shout",
-];
+const MODES = ["walk", "run", "idle", "creep", "rage", "punch", "moonwalk"];
+const PUNCH_REACH = 120;
+const RAGE_REACH = 220;
+const SWORD_REACH = 62;
+const DODGE_RADIUS = 96;
+const DODGE_CHANCE = 0.55;
+const DODGE_CD_MS = 6000;
+const DODGE_HOP = 8.4;
+const DODGE_PUSH = 8;
+const DODGE_POSE_MS = 420;
+const LASER_CD_MIN = 26000;
+const LASER_CD_MAX = 44000;
+const GHOST_COUNT = 3;
+const BLADE = "#d8dde6";
+const WEAPON_WINDUP = {
+  gun: [200, 320],
+  rocket: [380, 520],
+  grenade: [300, 400],
+  knife: [220, 320],
+  sword: [320, 420],
+};
+
+let platCache = [];
+let platScanAt = 0;
 
 function el(tag, attrs) {
   const node = document.createElementNS(NS, tag);
@@ -71,28 +97,10 @@ function pathOf(pts) {
   return s;
 }
 
-function pose(o) {
-  return Object.assign(
-    {
-      lean: 0.15,
-      tilt: 0.1,
-      a1: 0.15,
-      aK: 0.1,
-      b1: -0.15,
-      bK: 0.1,
-      armA: 0.5,
-      armAE: 1.7,
-      armB: 0.2,
-      armBE: 1.8,
-      shout: 0,
-    },
-    o,
-  );
-}
-
 function modePose(mode, p, now, both, glance) {
   const s = Math.sin(p);
   const c = Math.cos(p);
+  if (mode === "moonwalk") return moonwalkPose(p, now);
   if (mode === "walk") {
     return pose({
       lean: 0.2,
@@ -332,17 +340,13 @@ function hangPose(p, now) {
   });
 }
 
-function scanPlatforms(now) {
-  try {
-    if (now - platScanAt < PLAT_SCAN_MS && platCache) return platCache;
-  } catch {}
+function scanPlatforms(now, floorTop) {
+  if (now - platScanAt < PLAT_SCAN_MS && platCache) return platCache;
   const found = [];
   try {
     platScanAt = now;
-    let floorTop = 0;
-    try {
-      floorTop = resolveFloor();
-    } catch {}
+    const floorLine =
+      typeof floorTop === "number" ? floorTop : window.innerHeight;
     const wins = $$(".window");
     for (let i = 0; i < wins.length && i < 24; i++) {
       try {
@@ -355,33 +359,25 @@ function scanPlatforms(now) {
         if (node.offsetWidth < 120) continue;
         const rect = node.getBoundingClientRect();
         if (!rect || rect.width < 120 || rect.height <= 0) continue;
-        if (rect.top >= floorTop - 4) continue;
+        if (rect.top >= floorLine - 4) continue;
         found.push({ left: rect.left, right: rect.right, top: rect.top });
       } catch {}
     }
   } catch {}
-  try {
-    platCache = found;
-  } catch {}
+  platCache = found;
   return found;
 }
 
-function crossSurface(feetX, prevFeet, feet) {
+function crossSurface(feetX, prevFeet, feet, floorTop) {
   let best = -1;
-  try {
-    const floorTop = resolveFloor();
-    if (floorTop >= prevFeet - 2 && floorTop <= feet + 8) best = floorTop;
-  } catch {}
-  let plats = null;
-  try {
-    plats = scanPlatforms(performance.now());
-  } catch {}
+  if (floorTop >= prevFeet - 2 && floorTop <= feet) best = floorTop;
+  const plats = scanPlatforms(performance.now(), floorTop);
   if (plats) {
     for (let i = 0; i < plats.length; i++) {
       try {
         const p = plats[i];
         if (feetX < p.left - 4 || feetX > p.right + 4) continue;
-        if (p.top < prevFeet - 2 || p.top > feet + 8) continue;
+        if (p.top < prevFeet - 2 || p.top > feet) continue;
         if (best < 0 || p.top < best) best = p.top;
       } catch {}
     }
@@ -389,12 +385,9 @@ function crossSurface(feetX, prevFeet, feet) {
   return best < 0 ? null : { top: best };
 }
 
-function surfaceAhead(aheadX, feet, minAbove, maxAbove) {
+function surfaceAhead(aheadX, feet, minAbove, maxAbove, floorTop) {
   let best = -1;
-  let plats = null;
-  try {
-    plats = scanPlatforms(performance.now());
-  } catch {}
+  const plats = scanPlatforms(performance.now(), floorTop);
   if (!plats) return null;
   for (let i = 0; i < plats.length; i++) {
     try {
@@ -408,12 +401,10 @@ function surfaceAhead(aheadX, feet, minAbove, maxAbove) {
   return best < 0 ? null : { top: best };
 }
 
-function mountAssist() {
+function mountAssist(feetX, feet, floorTop) {
   let best = -1;
   try {
-    const feetX = posX + BOX_W / 2;
-    const feet = posY + BOX_H;
-    const plats = scanPlatforms(performance.now());
+    const plats = scanPlatforms(performance.now(), floorTop);
     if (!plats) return null;
     for (let i = 0; i < plats.length; i++) {
       try {
@@ -520,15 +511,7 @@ export function createStickmanActor(layer, hooks) {
   let shotsLeft = 0;
   let flashUntil = 0;
   let recoilUntil = 0;
-  let laserTarget = null;
-  let laserLockAt = 0;
-  let laserUntil = 0;
-  let laserFired = false;
-  let sweepActive = false;
-  let sweepAngle = 0;
-  let sweepRate = 0;
-  let sweepLastAngle = 0;
-  let sweepLastBurnAt = 0;
+  let laser = null;
   let last = null;
   let muzzle = null;
   let held = false;
@@ -556,12 +539,11 @@ export function createStickmanActor(layer, hooks) {
   let landTimer = null;
   let cageMode = "walk";
   let cageUntil = 0;
-  let platCache = [];
-  let platScanAt = 0;
   let nextAutoJumpAt = 0;
   let moveHandler = null;
   let upHandler = null;
   let downHandler = null;
+  let clickHandler = null;
   let introUntil = 0;
   let introBaseY = 0;
   let introToY = 0;
@@ -569,6 +551,38 @@ export function createStickmanActor(layer, hooks) {
   let lastCageHit = 0;
   let hp = STICKMAN_HP;
   let koUntil = 0;
+  let tussle = null;
+  let weapon = "gun";
+  let windSpan = 300;
+  let recoilSpan = 140;
+  let slashStart = 0;
+  let slashUntil = 0;
+  let slashDone = true;
+  let tipTrail = [];
+  let sq = 0;
+  let sqV = 0;
+  let ghosts = [];
+  let ghostTick = 0;
+  let ghostPX = 0;
+  let ghostPY = 0;
+  let pivotOverride = null;
+  let stepDustAt = 0;
+  let dodgeUntil = 0;
+  let dodgeCooldownAt = 0;
+  let laserCooldownAt = 0;
+  let jet = null;
+  let jetRig = null;
+  let jetLevel = 0;
+  let jetNozzle = null;
+  let landImpact = 0;
+  let rageSys = null;
+  let combo = null;
+  let comboOpacity = 1;
+  let slamArmed = false;
+  let slamAir = false;
+  let slamDived = false;
+  let slamVX = 0;
+  let slamLandUntil = 0;
 
   function isVisible(node) {
     try {
@@ -694,6 +708,11 @@ export function createStickmanActor(layer, hooks) {
     }
   }
 
+  function modePool(dist) {
+    if (dist < PUNCH_REACH) return ["punch", "walk", "run", "creep", "idle"];
+    return ["walk", "run", "creep", "idle"];
+  }
+
   function chooseMode(now) {
     const cur = resolveCursor();
     let near = false;
@@ -707,24 +726,29 @@ export function createStickmanActor(layer, hooks) {
     let next;
     if (near && Math.random() < 0.6) {
       if (dist < 120) next = Math.random() < 0.5 ? "punch" : "rage";
-      else if (dist < 200) next = "rage";
+      else if (dist < 200) next = "run";
       else next = Math.random() < 0.6 ? "run" : "walk";
       if (Math.abs(cdx) > 30) dir = cdx > 0 ? 1 : -1;
     } else {
       const roll = Math.random();
       next =
-        roll < 0.3
+        roll < 0.42
           ? "walk"
-          : roll < 0.5
+          : roll < 0.72
             ? "run"
-            : roll < 0.62
+            : roll < 0.86
               ? "idle"
-              : roll < 0.74
-                ? "creep"
-                : "rage";
+              : "creep";
+      if (Math.random() < 0.14) next = "moonwalk";
       if (Math.random() < 0.3) dir = -dir;
     }
-    if (next === mode) next = MODES[Math.floor(Math.random() * MODES.length)];
+    const pool = modePool(near ? dist : Infinity);
+    const allowed = next === "moonwalk" || pool.indexOf(next) !== -1;
+    if (next === mode || !allowed) {
+      let options = pool.filter((m) => m !== mode);
+      if (!options.length) options = pool;
+      next = options[Math.floor(Math.random() * options.length)];
+    }
     mode = next;
     const spans = {
       walk: [3600, 7000],
@@ -732,7 +756,8 @@ export function createStickmanActor(layer, hooks) {
       idle: [900, 1600],
       creep: [2800, 5200],
       rage: [2000, 3600],
-      punch: [2200, 3800],
+      punch: [1500, 2600],
+      moonwalk: [2400, 4200],
     };
     const span = spans[mode];
     modeUntil = now + rand(span[0], span[1]);
@@ -743,7 +768,22 @@ export function createStickmanActor(layer, hooks) {
           ? rand(1.6, 2.3)
           : mode === "creep"
             ? rand(0.4, 0.6)
-            : 0;
+            : mode === "moonwalk"
+              ? rand(0.5, 0.85)
+              : 0;
+    const fury = rageSys ? rageSys.intensity() : 0;
+    if (
+      fury > 0.25 &&
+      (mode === "walk" ||
+        mode === "creep" ||
+        mode === "idle" ||
+        mode === "moonwalk") &&
+      Math.random() < fury
+    ) {
+      mode = "run";
+      modeSpeed = rand(1.6, 2.3);
+    }
+    modeUntil = now + (modeUntil - now) * (1 - 0.4 * fury);
     rageBoth = Math.random() < 0.5;
     if (mode === "stomp") {
       stompAt = now + 350;
@@ -786,36 +826,102 @@ export function createStickmanActor(layer, hooks) {
     cageUntil = now + rand(span[0], span[1]);
   }
 
+  function callHook(name, a, b, c, d, e) {
+    try {
+      if (hooks && typeof hooks[name] === "function")
+        return hooks[name](a, b, c, d, e);
+    } catch {}
+    return undefined;
+  }
+
+  function chooseWeapon(target) {
+    let dist = 999;
+    try {
+      dist = Math.hypot(target.x - (posX + 14), target.y - (posY + 30));
+    } catch {}
+    const r = Math.random();
+    if (dist < SWORD_REACH + 40 && r < 0.65) return "sword";
+    if (r < 0.32) return "gun";
+    if (r < 0.5) return "rocket";
+    if (r < 0.7) return "grenade";
+    return "knife";
+  }
+
   function beginAim(now) {
     aiming = true;
     aimTarget = pickTarget();
-    aimStand = Math.random() < 0.6;
-    shotsLeft = Math.random() < 0.3 ? 2 + Math.floor(Math.random() * 2) : 1;
-    fireAt = now + rand(200, 320);
+    weapon = chooseWeapon(aimTarget);
+    aimStand = weapon === "sword" ? true : Math.random() < 0.6;
+    if (weapon === "gun")
+      shotsLeft = Math.random() < 0.3 ? 2 + Math.floor(Math.random() * 2) : 1;
+    else if (weapon === "knife") shotsLeft = 2 + Math.floor(Math.random() * 2);
+    else shotsLeft = 1;
+    const span = WEAPON_WINDUP[weapon];
+    windSpan = rand(span[0], span[1]);
+    fireAt = now + windSpan;
     aimEndAt = Infinity;
+    slashStart = 0;
+    slashUntil = 0;
+    slashDone = true;
+    tipTrail = [];
+  }
+
+  function tryLaser(now) {
+    try {
+      if (!laser) return false;
+      if (now < laserCooldownAt) return false;
+      if (!laser.begin(now, pickTarget())) return false;
+      laserCooldownAt = now + rand(LASER_CD_MIN, LASER_CD_MAX);
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   function doFire(now) {
     const sx = muzzle ? posX + muzzle.x : posX + 14;
     const sy = muzzle ? posY + muzzle.y : posY + 20;
     try {
-      if (hooks && typeof hooks.fire === "function")
-        hooks.fire(sx, sy, aimTarget.x, aimTarget.y);
+      if (weapon === "gun") {
+        callHook("fire", sx, sy, aimTarget.x, aimTarget.y);
+        flashUntil = now + 90;
+        recoilSpan = 140;
+      } else if (weapon === "rocket") {
+        callHook("fireWeapon", "rocket", sx, sy, aimTarget.x, aimTarget.y);
+        flashUntil = now + 140;
+        recoilSpan = 300;
+        callHook("dust", posX + 14 - dir * 10, posY + BOX_H, 0.6);
+        callHook("shake", 0.35);
+      } else if (weapon === "sword") {
+        slashStart = now;
+        slashUntil = now + 200;
+        slashDone = false;
+        tipTrail = [];
+        recoilSpan = 200;
+      } else {
+        callHook("fireWeapon", weapon, sx, sy, aimTarget.x, aimTarget.y);
+        recoilSpan = 220;
+      }
     } catch {}
-    flashUntil = now + 90;
-    recoilUntil = now + 140;
+    recoilUntil = now + recoilSpan;
   }
 
   function tickAim(now) {
+    if (!slashDone && now >= slashStart + 80) {
+      slashDone = true;
+      callHook("slash", posX + 14, posY + 26, SWORD_REACH, dir);
+      callHook("shake", 0.2);
+    }
     if (fireAt !== null && now >= fireAt) {
       doFire(now);
       shotsLeft--;
       if (shotsLeft > 0) {
-        fireAt = now + rand(140, 210);
+        windSpan = rand(140, 210);
+        fireAt = now + windSpan;
         aimTarget = pickTarget();
       } else {
         fireAt = null;
-        aimEndAt = now + rand(260, 420);
+        aimEndAt = now + rand(weapon === "sword" ? 320 : 260, 420);
       }
     }
     if (fireAt === null && now >= aimEndAt) {
@@ -824,33 +930,25 @@ export function createStickmanActor(layer, hooks) {
     }
   }
 
-  function beginLaser(now) {
-    try {
-      const tgt = pickTarget();
-      if (!tgt) return;
-      laserTarget = tgt;
-      laserLockAt = now + 200;
-      laserUntil = now + 650;
-      laserFired = false;
-      sweepActive = false;
-      sweepAngle = 0;
-      sweepRate = 0;
-      sweepLastAngle = 0;
-      sweepLastBurnAt = 0;
-    } catch {}
-  }
-
   function onGrabDown(e) {
     if (destroyed) return;
     try {
       held = true;
       try {
-        laserTarget = null;
+        if (laser) laser.cancel();
       } catch {}
-      sweepActive = false;
       try {
         introUntil = 0;
       } catch {}
+      try {
+        if (jet) jet.stop(performance.now(), true);
+      } catch {}
+      try {
+        if (combo) combo.cancel(performance.now());
+      } catch {}
+      slamArmed = false;
+      slamAir = false;
+      slamDived = false;
       playGrab();
       flying = false;
       velX = 0;
@@ -902,6 +1000,62 @@ export function createStickmanActor(layer, hooks) {
       try {
         e.preventDefault();
       } catch {}
+    } catch {}
+  }
+
+  function onClickPulse(e) {
+    try {
+      if (destroyed) return;
+      const now = performance.now();
+      if (held || flying || koUntil || now < introUntil) return;
+      if (pendingJump > 0 || now < landUntil) return;
+      if (tussle && tussle.isActive()) return;
+      if (combo && combo.isActive(now)) return;
+      if (slamAir || slamArmed) return;
+      try {
+        if (actor && e.target && actor.contains && actor.contains(e.target))
+          return;
+      } catch {}
+      const cx = posX + BOX_W / 2;
+      const cy = posY + BOX_H / 2;
+      const dx = e.clientX - cx;
+      const dy = e.clientY - cy;
+      if (!Number.isFinite(dx) || !Number.isFinite(dy)) return;
+      if (Math.hypot(dx, dy) > DODGE_RADIUS) return;
+      try {
+        if (isCursorDestroyed()) return;
+      } catch {}
+      callHook("clickRipple", e.clientX, e.clientY);
+      if (now < dodgeCooldownAt || Math.random() > DODGE_CHANCE) {
+        dir = dx === 0 ? dir : dx > 0 ? -1 : 1;
+        sq = 0.26;
+        sqV = 0;
+        playHit();
+        callHook("dust", cx - dir * 6, posY + BOX_H, 0.3);
+        return;
+      }
+      dodgeCooldownAt = now + DODGE_CD_MS;
+      dodgeUntil = now + DODGE_POSE_MS;
+      try {
+        if (jet) jet.stop(now, true);
+      } catch {}
+      const away = dx === 0 ? (Math.random() < 0.5 ? -1 : 1) : dx > 0 ? -1 : 1;
+      dir = away;
+      aiming = false;
+      fireAt = null;
+      pendingJump = 0;
+      try {
+        if (laser) laser.cancel();
+      } catch {}
+      velX = away * DODGE_PUSH;
+      velY = -DODGE_HOP;
+      flying = true;
+      wasAir = true;
+      flipping = true;
+      spinRate = (away * Math.PI * 2) / ((2 * DODGE_HOP) / GRAVITY);
+      sqV = 0.12;
+      playGrab();
+      callHook("dust", cx + away * 8, posY + BOX_H, 0.45);
     } catch {}
   }
 
@@ -977,7 +1131,11 @@ export function createStickmanActor(layer, hooks) {
       wasAir = true;
       try {
         if (Math.abs(velX) < 6 && Math.abs(velY) < 6) {
-          const mountTop = mountAssist();
+          const mountTop = mountAssist(
+            posX + BOX_W / 2,
+            posY + BOX_H,
+            resolveFloor(),
+          );
           if (mountTop !== null) {
             posY = mountTop - BOX_H;
             velX = 0;
@@ -995,11 +1153,120 @@ export function createStickmanActor(layer, hooks) {
     } catch {}
   }
 
+  function circlePath(c) {
+    return (
+      "M" +
+      f(c.x - HEAD_R) +
+      " " +
+      f(c.y) +
+      "a" +
+      HEAD_R +
+      " " +
+      HEAD_R +
+      " 0 1 0 " +
+      HEAD_R * 2 +
+      " 0a" +
+      HEAD_R +
+      " " +
+      HEAD_R +
+      " 0 1 0 " +
+      -HEAD_R * 2 +
+      " 0"
+    );
+  }
+
+  function bodyPath(j) {
+    return (
+      pathOf([j.hip, j.legs[0].knee, j.legs[0].foot]) +
+      pathOf([j.hip, j.legs[1].knee, j.legs[1].foot]) +
+      pathOf([j.shoulder, j.arms[0].elbow, j.arms[0].hand]) +
+      pathOf([j.shoulder, j.arms[1].elbow, j.arms[1].hand]) +
+      pathOf([j.hip, j.neck]) +
+      circlePath(j.headC)
+    );
+  }
+
+  function updateGhosts(j, pv) {
+    const dx = posX - ghostPX;
+    const dy = posY - ghostPY;
+    ghostPX = posX;
+    ghostPY = posY;
+    const fast = Math.hypot(dx, dy) > 4.5;
+    ghostTick += 1;
+    if (fast && ghostTick % 2 === 0) {
+      ghosts.push({
+        d: bodyPath(j),
+        x: posX,
+        y: posY,
+        rot: spin * 57.2958,
+        px: pv.x,
+        py: pv.y,
+      });
+      if (ghosts.length > GHOST_COUNT) ghosts.shift();
+    } else if (!fast && ghosts.length && ghostTick % 2 === 0) {
+      ghosts.shift();
+    }
+    for (let i = 0; i < parts.ghosts.length; i++) {
+      const gp = parts.ghosts[i];
+      const item = ghosts[ghosts.length - 1 - i];
+      if (!item) {
+        gp.setAttribute("display", "none");
+        continue;
+      }
+      gp.setAttribute("display", "inline");
+      gp.setAttribute("d", item.d);
+      gp.setAttribute("opacity", (0.34 - i * 0.1).toFixed(2));
+      gp.setAttribute(
+        "transform",
+        "translate(" +
+          f(item.x - posX) +
+          " " +
+          f(item.y - posY) +
+          ") rotate(" +
+          f(item.rot) +
+          " " +
+          f(item.px) +
+          " " +
+          f(item.py) +
+          ")",
+      );
+    }
+  }
+
+  function stepSquash(dt) {
+    sqV += (-sq * 0.32 - sqV * 0.2) * dt;
+    sq = clamp(sq + sqV * dt, -0.4, 0.4);
+  }
+
   function draw(j, now) {
-    const pivotY = j.hip.y - 8;
+    const pv = pivotOverride || { x: HIP_X, y: j.hip.y - 8 };
+    const stretch =
+      airBlend > 0.5 && !flipping && !pivotOverride
+        ? clamp(Math.abs(velY) * 0.01, 0, 0.12)
+        : 0;
+    const scY = 1 + sq + stretch;
+    const scX = 1 - (sq + stretch) * 0.6;
     parts.root.setAttribute(
       "transform",
-      "rotate(" + f(spin * 57.2958) + " " + HIP_X + " " + f(pivotY) + ")",
+      "translate(" +
+        HIP_X +
+        " " +
+        BOX_H +
+        ") scale(" +
+        scX.toFixed(3) +
+        " " +
+        scY.toFixed(3) +
+        ") translate(" +
+        -HIP_X +
+        " " +
+        -BOX_H +
+        ") rotate(" +
+        f(spin * 57.2958) +
+        " " +
+        f(pv.x) +
+        " " +
+        f(pv.y) +
+        ")",
     );
     parts.legB.setAttribute(
       "d",
@@ -1018,6 +1285,7 @@ export function createStickmanActor(layer, hooks) {
       pathOf([j.shoulder, j.arms[1].elbow, j.arms[1].hand]),
     );
     parts.torso.setAttribute("d", pathOf([j.hip, j.neck]));
+    jetNozzle = updateJetpackRig(jetRig, j, fv, jetLevel, now);
 
     parts.head.setAttribute("cx", f(j.headC.x));
     parts.head.setAttribute("cy", f(j.headC.y));
@@ -1048,115 +1316,480 @@ export function createStickmanActor(layer, hooks) {
       fx = fv;
       fy = 0;
     }
-    const tip = { x: hand.x + fx * 7, y: hand.y + fy * 7 };
     let px = -fy;
     let py = fx;
     if (py < 0) {
       px = -px;
       py = -py;
     }
-    const gs = { x: hand.x + fx * 1.5, y: hand.y + fy * 1.5 };
+    let tip = { x: hand.x + fx * 7, y: hand.y + fy * 7 };
+    let showGun = false;
+    let gunD = "";
+    let gunW = 2.8;
+    let gunColor = INK;
+    let showBall = false;
+    const armed = aiming || now < slashUntil;
+    if (armed) {
+      if (weapon === "gun") {
+        const gs = { x: hand.x + fx * 1.5, y: hand.y + fy * 1.5 };
+        gunD =
+          pathOf([hand, tip]) +
+          pathOf([gs, { x: gs.x + px * 3.4, y: gs.y + py * 3.4 }]);
+        showGun = true;
+      } else if (weapon === "rocket") {
+        tip = { x: hand.x + fx * 14, y: hand.y + fy * 14 };
+        gunD = pathOf([{ x: hand.x - fx * 9, y: hand.y - fy * 9 }, tip]);
+        gunW = 5.4;
+        showGun = true;
+      } else if (weapon === "knife") {
+        if (fireAt !== null) {
+          gunD = pathOf([hand, { x: hand.x + fx * 9, y: hand.y + fy * 9 }]);
+          gunW = 2.2;
+          gunColor = BLADE;
+          showGun = true;
+        }
+      } else if (weapon === "sword") {
+        const st = { x: hand.x + fx * 21, y: hand.y + fy * 21 };
+        const gA = {
+          x: hand.x + fx * 3 + px * 3.6,
+          y: hand.y + fy * 3 + py * 3.6,
+        };
+        const gB = {
+          x: hand.x + fx * 3 - px * 3.6,
+          y: hand.y + fy * 3 - py * 3.6,
+        };
+        gunD = pathOf([hand, st]) + pathOf([gA, gB]);
+        gunW = 2.6;
+        gunColor = BLADE;
+        showGun = true;
+        tip = st;
+      } else if (weapon === "grenade" && fireAt !== null) {
+        showBall = true;
+      }
+    }
     muzzle = tip;
-    if (aiming) {
+    if (showGun) {
       parts.gun.setAttribute("display", "inline");
-      parts.gun.setAttribute(
-        "d",
-        pathOf([hand, tip]) +
-          pathOf([gs, { x: gs.x + px * 3.4, y: gs.y + py * 3.4 }]),
-      );
+      parts.gun.setAttribute("d", gunD);
+      parts.gun.setAttribute("stroke-width", gunW);
+      parts.gun.style.stroke = gunColor;
     } else {
       parts.gun.setAttribute("display", "none");
     }
+    if (showBall) {
+      parts.ball.setAttribute("display", "inline");
+      parts.ball.setAttribute("cx", f(hand.x + fx * 2.5));
+      parts.ball.setAttribute("cy", f(hand.y + fy * 2.5));
+    } else {
+      parts.ball.setAttribute("display", "none");
+    }
+    if (now < slashUntil && weapon === "sword") {
+      tipTrail.push({ x: tip.x, y: tip.y });
+      while (tipTrail.length > 7) tipTrail.shift();
+      if (tipTrail.length > 1) {
+        parts.swoosh.setAttribute("display", "inline");
+        parts.swoosh.setAttribute("d", pathOf(tipTrail));
+      }
+    } else {
+      if (tipTrail.length) tipTrail = [];
+      parts.swoosh.setAttribute("display", "none");
+    }
     if (now < flashUntil) {
+      const big = weapon === "rocket";
       parts.flash.setAttribute("display", "inline");
+      parts.flash.setAttribute("fill", big ? "#ffb347" : "#ffd23c");
       parts.flash.setAttribute("cx", f(tip.x + fx * 2));
       parts.flash.setAttribute("cy", f(tip.y + fy * 2));
-      parts.flash.setAttribute("r", f(rand(3, 4.8)));
+      parts.flash.setAttribute("r", f(big ? rand(5, 8) : rand(3, 4.8)));
     } else {
       parts.flash.setAttribute("display", "none");
     }
-    if (laserTarget && !sweepActive && now >= laserLockAt && now < laserUntil) {
-      try {
-        const flick = 0.6 + 0.4 * Math.sin(now * 0.09);
-        const bx1 = f(j.headC.x);
-        const by1 = f(j.headC.y);
-        const bx2 = f(laserTarget.x - posX);
-        const by2 = f(laserTarget.y - posY);
-        parts.beamHalo.setAttribute("display", "inline");
-        parts.beamHalo.setAttribute("x1", bx1);
-        parts.beamHalo.setAttribute("y1", by1);
-        parts.beamHalo.setAttribute("x2", bx2);
-        parts.beamHalo.setAttribute("y2", by2);
-        parts.beamHalo.setAttribute(
-          "opacity",
-          (0.35 * flick + 0.15).toFixed(2),
+    updateGhosts(j, pv);
+    try {
+      if (laser) laser.render(now, posX, posY, j.headC);
+    } catch {}
+    try {
+      if (rageSys) rageSys.applyGlow(actor, now);
+    } catch {}
+    try {
+      const op = comboOpacity < 0.999 ? comboOpacity.toFixed(2) : "";
+      if (actor && actor.style.opacity !== op) actor.style.opacity = op;
+    } catch {}
+  }
+
+  function hangFrame(now, dt) {
+    const st = tussle ? tussle.getStatus() : null;
+    if (!st || st.phase !== "hang") return;
+    phase += (0.05 + Math.abs(st.swingV) * 0.4) * dt;
+    const target = tussle.getPose(now, phase, dir) || hangPose(phase, now);
+    const hk = ease(0.35, dt);
+    for (let i = 0; i < POSE_KEYS.length; i++)
+      P[POSE_KEYS[i]] += (target[POSE_KEYS[i]] - P[POSE_KEYS[i]]) * hk;
+    if (st.goal) {
+      const gx = st.goal.x - st.x;
+      if (Math.abs(gx) > 10) dir = gx > 0 ? 1 : -1;
+    }
+    fv += (dir - fv) * ease(0.3, dt);
+    airBlend += (1 - airBlend) * ease(0.3, dt);
+    rage += (0.95 - rage) * ease(0.1, dt);
+    sq = 0;
+    sqV = 0;
+    velX = 0;
+    velY = 0;
+    flying = false;
+    wasAir = false;
+    flipping = false;
+    spin += (st.swing - spin) * ease(0.6, dt);
+    last = solve(P, fv, 0, airBlend);
+    const h0 = last.arms[0].hand;
+    const h1 = last.arms[1].hand;
+    const pivot = { x: (h0.x + h1.x) / 2, y: (h0.y + h1.y) / 2 };
+    pivotOverride = pivot;
+    const pk = ease(0.5, dt);
+    posX += (st.x - pivot.x - posX) * pk;
+    posY += (st.y - pivot.y - posY) * pk;
+    draw(last, now);
+    try {
+      actor.style.left = posX + "px";
+      actor.style.top = posY + "px";
+    } catch {}
+  }
+
+  function applyAimPose(t, now) {
+    const recoil = clamp((recoilUntil - now) / Math.max(1, recoilSpan), 0, 1);
+    const sx = last ? posX + last.shoulder.x : posX + 14;
+    const sy = last ? posY + last.shoulder.y : posY + 22;
+    const dx = aimTarget.x - sx;
+    const dy = aimTarget.y - sy;
+    if (Math.abs(dx) > 8) dir = dx > 0 ? 1 : -1;
+    const ang = Math.atan2(dx * dir, dy);
+    const pre =
+      fireAt !== null ? clamp((fireAt - now) / Math.max(1, windSpan), 0, 1) : 0;
+    if (weapon === "rocket") {
+      t.armA = ang - 0.15 * recoil;
+      t.armAE = 0;
+      t.armB = ang + 0.45;
+      t.armBE = 0.25;
+      t.lean += 0.05 - 0.2 * recoil;
+      t.tilt -= 0.25 * recoil;
+      t.shout = fireAt === null ? 1 : 0.6;
+    } else if (weapon === "grenade" || weapon === "knife") {
+      const cock = weapon === "knife" ? 1.9 : 2.4;
+      t.armA = ang - cock * pre + 0.7 * recoil;
+      t.armAE = (weapon === "knife" ? 0.7 : 1.0) * pre;
+      t.lean += 0.05 - 0.15 * pre + 0.2 * recoil;
+      t.shout = fireAt === null ? 0.9 : 0.6;
+    } else if (weapon === "sword") {
+      if (slashUntil === 0) {
+        t.armA = ang - 2.5 + 0.08 * Math.sin(now * 0.02);
+        t.armAE = 0.5;
+        t.lean -= 0.1 * (1 - pre);
+      } else if (now < slashUntil) {
+        const u = clamp(
+          (now - slashStart) / Math.max(1, slashUntil - slashStart),
+          0,
+          1,
         );
-        parts.beam.setAttribute("display", "inline");
-        parts.beam.setAttribute("x1", bx1);
-        parts.beam.setAttribute("y1", by1);
-        parts.beam.setAttribute("x2", bx2);
-        parts.beam.setAttribute("y2", by2);
-        parts.beam.setAttribute("opacity", flick.toFixed(2));
-        parts.beamCore.setAttribute("display", "inline");
-        parts.beamCore.setAttribute("x1", bx1);
-        parts.beamCore.setAttribute("y1", by1);
-        parts.beamCore.setAttribute("x2", bx2);
-        parts.beamCore.setAttribute("y2", by2);
-        parts.beamCore.setAttribute("opacity", "1");
-        parts.laserGlow.setAttribute("display", "inline");
-        parts.laserGlow.setAttribute("cx", f(j.headC.x));
-        parts.laserGlow.setAttribute("cy", f(j.headC.y));
-      } catch {}
-    } else if (sweepActive && now >= laserLockAt) {
-      try {
-        const ang = sweepAngle;
-        const flick = 0.7 + 0.3 * Math.sin(now * 0.11);
-        const jx = f(j.headC.x);
-        const jy = f(j.headC.y);
-        const bx2 = jx + Math.cos(ang) * 3000;
-        const by2 = jy + Math.sin(ang) * 3000;
-        parts.beamHalo.setAttribute("display", "inline");
-        parts.beamHalo.setAttribute("x1", jx);
-        parts.beamHalo.setAttribute("y1", jy);
-        parts.beamHalo.setAttribute("x2", bx2);
-        parts.beamHalo.setAttribute("y2", by2);
-        parts.beamHalo.setAttribute(
-          "opacity",
-          (0.35 * flick + 0.15).toFixed(2),
-        );
-        parts.beam.setAttribute("display", "inline");
-        parts.beam.setAttribute("x1", jx);
-        parts.beam.setAttribute("y1", jy);
-        parts.beam.setAttribute("x2", bx2);
-        parts.beam.setAttribute("y2", by2);
-        parts.beam.setAttribute("opacity", flick.toFixed(2));
-        parts.beamCore.setAttribute("display", "inline");
-        parts.beamCore.setAttribute("x1", jx);
-        parts.beamCore.setAttribute("y1", jy);
-        parts.beamCore.setAttribute("x2", bx2);
-        parts.beamCore.setAttribute("y2", by2);
-        parts.beamCore.setAttribute("opacity", "1");
-        parts.laserGlow.setAttribute("display", "inline");
-        parts.laserGlow.setAttribute("cx", jx);
-        parts.laserGlow.setAttribute("cy", jy);
-      } catch {}
+        const e = 1 - Math.pow(1 - u, 3);
+        t.armA = ang - 2.5 + 3.05 * e;
+        t.armAE = 0.5 * (1 - e);
+        t.lean += 0.3 * e;
+      } else {
+        t.armA = ang + 0.55;
+        t.armAE = 0;
+        t.lean += 0.2;
+      }
+      t.shout = 1;
     } else {
-      parts.beamHalo.setAttribute("display", "none");
-      parts.beam.setAttribute("display", "none");
-      parts.beamCore.setAttribute("display", "none");
-      parts.laserGlow.setAttribute("display", "none");
+      t.armA = ang - 0.35 * recoil;
+      t.armAE = 0;
+      t.lean += 0.05;
+      t.tilt -= 0.2 * recoil;
+      t.shout = fireAt === null ? 1 : 0.5;
     }
   }
 
+  function buildJetpack() {
+    try {
+      jet = createJetpack({
+        getLayer: () =>
+          (hooks &&
+            typeof hooks.getFxLayer === "function" &&
+            hooks.getFxLayer()) ||
+          layer,
+        getSize: () => ({ w: BOX_W, h: BOX_H }),
+        getFloor: () => resolveFloor(),
+        getState: () => ({
+          x: posX,
+          y: posY,
+          velX: velX,
+          dir: dir,
+          phase: phase,
+          aiming: aiming,
+        }),
+        setState: (patch) => {
+          if (!patch) return;
+          if (patch.aiming !== undefined) aiming = patch.aiming;
+          if (patch.fireAt !== undefined) fireAt = patch.fireAt;
+          if (patch.flying !== undefined) flying = patch.flying;
+          if (patch.wasAir !== undefined) wasAir = patch.wasAir;
+          if (patch.flipping !== undefined) flipping = patch.flipping;
+          if (patch.spin !== undefined) spin = patch.spin;
+          if (patch.velX !== undefined) velX = patch.velX;
+          if (patch.velY !== undefined) velY = patch.velY;
+          if (patch.sqV !== undefined) sqV = patch.sqV;
+        },
+        getHead: () => (last ? last.headC : null),
+        getNozzle: () =>
+          jetNozzle ? { x: posX + jetNozzle.x, y: posY + jetNozzle.y } : null,
+        isLaserBusy: () => !!(laser && laser.isBusy()),
+        beginAim: (now) => beginAim(now),
+        tickAim: (now) => tickAim(now),
+        beginLaser: (now) => {
+          try {
+            if (Math.random() >= 0.1) return false;
+            return tryLaser(now);
+          } catch {
+            return false;
+          }
+        },
+        tickLaser: (now, dt, x, y, head) => {
+          try {
+            if (laser) laser.update(now, dt, x, y, head);
+          } catch {}
+        },
+        isTussling: () => !!(tussle && tussle.isActive()),
+        interruptTussle: (now) => {
+          if (tussle) tussle.interrupt(now);
+        },
+        resetAim: () => {
+          aiming = false;
+          fireAt = null;
+          nextShootAt = performance.now() + rand(1200, 2600);
+        },
+        canStart: (now) =>
+          !koUntil &&
+          !held &&
+          !flying &&
+          now >= introUntil &&
+          pendingJump === 0 &&
+          now >= landUntil &&
+          !(combo && combo.isActive(now)) &&
+          !slamAir &&
+          !slamArmed,
+        onStart: () => {
+          sqV = 0.1;
+          playGrab();
+          callHook("shake", 0.3);
+        },
+        onEnd: (now) => {
+          modeUntil = now + rand(400, 900);
+        },
+      });
+    } catch {
+      jet = null;
+    }
+  }
+
+  function buildRage() {
+    try {
+      rageSys = createRageSystem({
+        getLayer: () =>
+          (hooks &&
+            typeof hooks.getFxLayer === "function" &&
+            hooks.getFxLayer()) ||
+          layer,
+        getCursor: () => resolveCursor(),
+        cursorDead: () => isCursorDestroyed(),
+        getFloor: () => resolveFloor(),
+        hitCursor: (x, y) => callHook("hitCursor", x, y),
+        stomp: (x, y, r) => callHook("stomp", x, y, r),
+      });
+    } catch {
+      rageSys = null;
+    }
+  }
+
+  function buildCombo() {
+    try {
+      combo = createAfterimageCombo({
+        getLayer: () =>
+          (hooks &&
+            typeof hooks.getFxLayer === "function" &&
+            hooks.getFxLayer()) ||
+          layer,
+        getState: () => ({ x: posX, y: posY, dir: dir }),
+        setState: (patch) => {
+          if (!patch) return;
+          if (patch.flying !== undefined) flying = patch.flying;
+          if (patch.wasAir !== undefined) wasAir = patch.wasAir;
+          if (patch.flipping !== undefined) flipping = patch.flipping;
+          if (patch.spin !== undefined) spin = patch.spin;
+          if (patch.velX !== undefined) velX = patch.velX;
+          if (patch.velY !== undefined) velY = patch.velY;
+          if (patch.sqV !== undefined) sqV = patch.sqV;
+        },
+        getFloor: () => resolveFloor(),
+        getCursor: () => resolveCursor(),
+        cursorDead: () => isCursorDestroyed(),
+        getRage: () => (rageSys ? rageSys.intensity() : 0),
+        currentPath: () => (last ? bodyPath(last) : ""),
+        pathFor: (target, dirSign) => bodyPath(solve(target, dirSign, 0, 1)),
+        hitCursor: (x, y) => callHook("hitCursor", x, y),
+        stomp: (x, y, r) => callHook("stomp", x, y, r),
+        onWhiff: (now, x, y) => {
+          if (rageSys) rageSys.registerEscape(now, x, y);
+        },
+        resetAim: () => {
+          aiming = false;
+          fireAt = null;
+          nextShootAt = performance.now() + rand(1200, 2600);
+        },
+        canStart: (now) =>
+          !koUntil &&
+          !held &&
+          !flying &&
+          now >= introUntil &&
+          pendingJump === 0 &&
+          now >= landUntil &&
+          !aiming &&
+          !(laser && laser.isBusy()) &&
+          !(tussle && tussle.isActive()) &&
+          !(jet && jet.isActive(now)) &&
+          !slamAir &&
+          !slamArmed &&
+          !callHook("getCage"),
+        onStart: () => {
+          sqV = 0.1;
+          callHook("shake", 0.2);
+        },
+        onEnd: (now) => {
+          comboOpacity = 1;
+          modeUntil = now + rand(400, 900);
+        },
+      });
+    } catch {
+      combo = null;
+    }
+  }
+
+  function applyComboFrame(now, dt) {
+    const fr = combo.step(now, dt);
+    if (!fr) {
+      comboOpacity = 1;
+      if (!flying) return false;
+      try {
+        if (last) draw(last, now);
+        actor.style.left = posX + "px";
+        actor.style.top = posY + "px";
+      } catch {}
+      return true;
+    }
+    posX = fr.x;
+    posY = fr.y;
+    velX = 0;
+    velY = 0;
+    dir = fr.dir;
+    speed = 0;
+    flying = false;
+    wasAir = true;
+    flipping = false;
+    pendingJump = 0;
+    aiming = false;
+    fireAt = null;
+    phase += 0.2 * dt;
+    const k = ease(fr.snap ? 0.7 : 0.45, dt);
+    for (let i = 0; i < POSE_KEYS.length; i++)
+      P[POSE_KEYS[i]] += (fr.target[POSE_KEYS[i]] - P[POSE_KEYS[i]]) * k;
+    fv = dir;
+    airBlend += (1 - airBlend) * ease(0.4, dt);
+    rage += (1 - rage) * ease(0.1, dt);
+    spin = 0;
+    comboOpacity = fr.opacity;
+    last = solve(P, fv, 0, airBlend);
+    draw(last, now);
+    try {
+      actor.style.left = posX + "px";
+      actor.style.top = posY + "px";
+    } catch {}
+    return true;
+  }
+
+  function applyJetFrame(now, dt) {
+    const frameStep = jet.step(now, dt);
+    if (!frameStep) {
+      if (!flying) return false;
+      try {
+        if (last) draw(last, now);
+        actor.style.left = posX + "px";
+        actor.style.top = posY + "px";
+      } catch {}
+      return true;
+    }
+    posX = frameStep.x;
+    posY = frameStep.y;
+    velX = frameStep.velX;
+    velY = 0;
+    dir = frameStep.dir;
+    speed = 0;
+    flying = false;
+    wasAir = true;
+    flipping = false;
+    pendingJump = 0;
+    phase += frameStep.phaseStep * dt;
+    const target = frameStep.target;
+    if (aiming && aimTarget) applyAimPose(target, now);
+    const k = ease(aiming ? 0.5 : 0.22, dt);
+    for (let i = 0; i < POSE_KEYS.length; i++)
+      P[POSE_KEYS[i]] += (target[POSE_KEYS[i]] - P[POSE_KEYS[i]]) * k;
+    fv += (dir - fv) * ease(0.3, dt);
+    airBlend += (1 - airBlend) * ease(0.3, dt);
+    rage += (frameStep.rageTarget - rage) * ease(0.08, dt);
+    spin += (clamp(velX * 0.035, -0.14, 0.14) - spin) * ease(0.15, dt);
+    last = solve(P, fv, Math.sin(now * 0.08) * 0.5, airBlend);
+    draw(last, now);
+    try {
+      actor.style.left = posX + "px";
+      actor.style.top = posY + "px";
+    } catch {}
+    return true;
+  }
+
   function frame(now, dt) {
-    const groundY = Math.max(0, resolveFloor() - BOX_H);
+    pivotOverride = null;
+    stepSquash(dt);
+    jetLevel += ((jet && jet.isActive(now) ? 1 : 0) - jetLevel) * ease(0.1, dt);
+    const floorTop = resolveFloor();
+    const groundY = Math.max(0, floorTop - BOX_H);
     const maxX = Math.max(0, window.innerWidth - BOX_W);
     let cageRect = null;
     try {
       if (hooks && typeof hooks.getCage === "function")
         cageRect = hooks.getCage();
     } catch {}
+    if (
+      jet &&
+      jet.isActive(now) &&
+      (cageRect || koUntil || held || now < introUntil)
+    )
+      jet.stop(now, true);
+    if (
+      combo &&
+      combo.isActive(now) &&
+      (cageRect || koUntil || held || now < introUntil)
+    )
+      combo.cancel(now);
+    if (
+      laser &&
+      laser.isBusy() &&
+      (held || koUntil || cageRect || flying || now < introUntil)
+    ) {
+      try {
+        laser.cancel();
+      } catch {}
+    }
     if (cageRect) {
+      if (tussle && tussle.isActive()) tussle.interrupt(now);
       try {
         const minX = cageRect.left;
         const maxXc = cageRect.left + cageRect.width - BOX_W;
@@ -1215,8 +1848,8 @@ export function createStickmanActor(layer, hooks) {
         else if (cageMode === "sleep") ct = sleepPose(now);
         else ct = hangPose(phase, now);
         const ck = ease(0.13, dt);
-        for (let i = 0; i < KEYS.length; i++)
-          P[KEYS[i]] += (ct[KEYS[i]] - P[KEYS[i]]) * ck;
+        for (let i = 0; i < POSE_KEYS.length; i++)
+          P[POSE_KEYS[i]] += (ct[POSE_KEYS[i]] - P[POSE_KEYS[i]]) * ck;
         fv += (dir - fv) * ease(0.3, dt);
         last = solve(P, fv, 0, airBlend);
         draw(last, now);
@@ -1228,6 +1861,17 @@ export function createStickmanActor(layer, hooks) {
         } catch {}
       } catch {}
       return;
+    }
+    if (
+      tussle &&
+      tussle.isActive() &&
+      (koUntil ||
+        held ||
+        (flying && !tussle.isLeaping() && !tussle.isHanging()) ||
+        now < introUntil ||
+        (jet && jet.isActive(now)))
+    ) {
+      tussle.interrupt(now);
     }
     try {
       if (koUntil && now >= koUntil) {
@@ -1243,8 +1887,8 @@ export function createStickmanActor(layer, hooks) {
         airBlend += (0 - airBlend) * ease(0.3, dt);
         const kt = modePose("idle", phase, now, false, glance);
         const kk = ease(0.2, dt);
-        for (let i = 0; i < KEYS.length; i++)
-          P[KEYS[i]] += (kt[KEYS[i]] - P[KEYS[i]]) * kk;
+        for (let i = 0; i < POSE_KEYS.length; i++)
+          P[POSE_KEYS[i]] += (kt[POSE_KEYS[i]] - P[POSE_KEYS[i]]) * kk;
         fv += (dir - fv) * ease(0.3, dt);
         last = solve(P, fv, 0, airBlend);
         draw(last, now);
@@ -1269,8 +1913,8 @@ export function createStickmanActor(layer, hooks) {
         phase += 0.05 * dt;
         const it = angelPose(phase, now);
         const ik = ease(0.2, dt);
-        for (let i = 0; i < KEYS.length; i++)
-          P[KEYS[i]] += (it[KEYS[i]] - P[KEYS[i]]) * ik;
+        for (let i = 0; i < POSE_KEYS.length; i++)
+          P[POSE_KEYS[i]] += (it[POSE_KEYS[i]] - P[POSE_KEYS[i]]) * ik;
         fv += (dir - fv) * ease(0.3, dt);
         airBlend += (1 - airBlend) * ease(0.25, dt);
         last = solve(P, fv, 0, airBlend);
@@ -1282,6 +1926,11 @@ export function createStickmanActor(layer, hooks) {
           actor.style.top = posY + "px";
         } catch {}
       } catch {}
+      return;
+    }
+    if (!held && tussle) tussle.update(now, dt);
+    if (!held && tussle && tussle.isHanging()) {
+      hangFrame(now, dt);
       return;
     }
     if (held) {
@@ -1337,8 +1986,8 @@ export function createStickmanActor(layer, hooks) {
           shout: 0.9,
         });
         const hk = ease(0.45, dt);
-        for (let i = 0; i < KEYS.length; i++)
-          P[KEYS[i]] += (t[KEYS[i]] - P[KEYS[i]]) * hk;
+        for (let i = 0; i < POSE_KEYS.length; i++)
+          P[POSE_KEYS[i]] += (t[POSE_KEYS[i]] - P[POSE_KEYS[i]]) * hk;
         fv += (dir - fv) * ease(0.3, dt);
         airBlend += (0 - airBlend) * ease(0.3, dt);
         rage += (0.95 - rage) * ease(0.1, dt);
@@ -1361,7 +2010,20 @@ export function createStickmanActor(layer, hooks) {
       return;
     }
 
+    if (combo) {
+      if (!combo.isActive(now) && !flying) combo.tryStart(now);
+      if (combo.isActive(now) && applyComboFrame(now, dt)) return;
+    }
+
+    if (jet) {
+      if (!jet.isActive(now) && !flying) jet.tryStart(now);
+      if (jet.isActive(now) && applyJetFrame(now, dt)) return;
+    }
+
     if (flying) {
+      slamArmed = false;
+      slamAir = false;
+      slamDived = false;
       const prevFlyFeet = posY + BOX_H;
       velY += GRAVITY * dt;
       posY += velY * dt;
@@ -1386,11 +2048,27 @@ export function createStickmanActor(layer, hooks) {
             posX + BOX_W / 2,
             prevFlyFeet,
             posY + BOX_H,
+            floorTop,
           );
       } catch {}
       if (flySurface || posY >= groundY) {
+        const impact = velY;
         if (flySurface) posY = flySurface.top - BOX_H;
         else posY = groundY;
+        try {
+          if (tussle && tussle.isLeaping()) tussle.miss(now);
+        } catch {}
+        sq = -clamp(impact * 0.03, 0.08, 0.34);
+        sqV = 0;
+        callHook(
+          "dust",
+          posX + BOX_W / 2,
+          posY + BOX_H,
+          clamp(impact / 9, 0.4, 1.5),
+        );
+        if (impact > 12) callHook("shake", clamp(impact / 30, 0.2, 0.6));
+        if (rageSys && impact > 7)
+          rageSys.landing(now, posX + BOX_W / 2, posY + BOX_H, impact, false);
         velX = 0;
         velY = 0;
         flying = false;
@@ -1418,10 +2096,15 @@ export function createStickmanActor(layer, hooks) {
           landTimer = null;
         }, 250);
       }
-      let ft = airPose(velY, flipping);
+      const leapPose =
+        tussle && tussle.isLeaping() ? tussle.getPose(now, phase, dir) : null;
+      const dodgeActive = now < dodgeUntil;
+      let ft =
+        leapPose ||
+        (dodgeActive ? dodgePose(phase, now) : airPose(velY, flipping));
       const fk = ease(0.28, dt);
-      for (let i = 0; i < KEYS.length; i++)
-        P[KEYS[i]] += (ft[KEYS[i]] - P[KEYS[i]]) * fk;
+      for (let i = 0; i < POSE_KEYS.length; i++)
+        P[POSE_KEYS[i]] += (ft[POSE_KEYS[i]] - P[POSE_KEYS[i]]) * fk;
       fv += (dir - fv) * ease(0.3, dt);
       airBlend += (1 - airBlend) * ease(0.3, dt);
       rage += (0.65 - rage) * ease(0.08, dt);
@@ -1441,55 +2124,28 @@ export function createStickmanActor(layer, hooks) {
       glance = rand(-0.3, 0.4);
       nextGlanceAt = now + rand(500, 1500);
     }
-    if (!aiming && !laserTarget && now >= nextShootAt) {
-      if (Math.random() < 0.25) beginLaser(now);
-      else beginAim(now);
+    const tussling = !!(tussle && tussle.isActive());
+    const laserBusy = laser ? laser.isBusy() : false;
+    if (!aiming && !laserBusy && !tussling && now >= nextShootAt) {
+      if (Math.random() < 0.12 && tryLaser(now)) {
+        nextShootAt = now + rand(1200, 2600);
+      } else beginAim(now);
     }
     if (aiming) tickAim(now);
-    if (laserTarget && !laserFired && now >= laserLockAt) {
-      try {
-        laserFired = true;
-      } catch {}
-      try {
-        const worldX = posX + j.headC.x;
-        const worldY = posY + j.headC.y;
-        const baseAng = Math.atan2(
-          laserTarget.y - worldY,
-          laserTarget.x - worldX,
-        );
-        const dir = Math.random() < 0.5 ? -1 : 1;
-        sweepAngle = baseAng;
-        sweepRate = dir * 0.55;
-        sweepLastAngle = baseAng;
-        sweepLastBurnAt = 0;
-        sweepActive = true;
-        laserTarget = null;
-      } catch {}
-    }
-    if (sweepActive) {
-      sweepAngle += sweepRate * dt;
-    }
-    if (sweepActive && hooks && typeof hooks.laserSweep === "function") {
-      try {
-        const worldX = posX + j.headC.x;
-        const worldY = posY + j.headC.y;
-        if (now - sweepLastBurnAt > 90 && sweepAngle !== sweepLastAngle) {
-          sweepLastBurnAt = now;
-          sweepLastAngle = sweepAngle;
-          const sx = worldX + Math.cos(sweepAngle) * 3000;
-          const sy = worldY + Math.sin(sweepAngle) * 3000;
-          hooks.laserSweep(worldX, worldY, sx, sy);
-        }
-      } catch {}
-    }
-    if (laserTarget && now >= laserUntil) {
-      try {
-        laserTarget = null;
-      } catch {}
-    }
+    try {
+      if (laser) laser.update(now, dt, posX, posY, last ? last.headC : null);
+    } catch {}
 
     const standing = aiming && aimStand;
-    const effective = standing ? "idle" : mode;
+    let effective = standing ? "idle" : mode;
+    if (tussling) {
+      effective = "tussle";
+      const goal = tussle.getGoal();
+      if (goal) {
+        const gx = goal.x - (posX + 14);
+        if (Math.abs(gx) > 8) dir = gx > 0 ? 1 : -1;
+      }
+    }
 
     const prevFeet = posY + BOX_H;
     velY += GRAVITY * dt;
@@ -1498,15 +2154,21 @@ export function createStickmanActor(layer, hooks) {
     let groundSurface = null;
     try {
       if (velY >= 0)
-        groundSurface = crossSurface(posX + BOX_W / 2, prevFeet, posY + BOX_H);
+        groundSurface = crossSurface(
+          posX + BOX_W / 2,
+          prevFeet,
+          posY + BOX_H,
+          floorTop,
+        );
     } catch {}
     if (groundSurface || posY >= groundY) {
       let slamFall = false;
       try {
         slamFall = wasAir && velY > 6;
+        landImpact = velY;
       } catch {}
       if (wasAir) {
-        landUntil = now + 80 + clamp(velY, 0, 14) * 7;
+        if (velY > 8) landUntil = now + 80 + clamp(velY, 0, 14) * 7;
         spin = norm(spin);
         flipping = false;
       }
@@ -1518,6 +2180,32 @@ export function createStickmanActor(layer, hooks) {
         try {
           playLand();
         } catch {}
+        sq = -clamp(landImpact * 0.028, 0.06, 0.3);
+        sqV = 0;
+        callHook(
+          "dust",
+          posX + BOX_W / 2,
+          posY + BOX_H,
+          clamp(landImpact / 10, 0.3, 1.3),
+        );
+        if (landImpact > 12) callHook("shake", 0.3);
+      }
+      if (slamAir) {
+        const dived = slamDived;
+        slamAir = false;
+        slamDived = false;
+        slamLandUntil = now + RAGE_SLAM_LAND_MS;
+        landUntil = Math.max(landUntil, slamLandUntil);
+        if (rageSys)
+          rageSys.landing(
+            now,
+            posX + BOX_W / 2,
+            posY + BOX_H,
+            landImpact,
+            dived,
+          );
+      } else if (rageSys && slamFall && landImpact > 7) {
+        rageSys.landing(now, posX + BOX_W / 2, posY + BOX_H, landImpact, false);
       }
     }
     if (posY < 0) {
@@ -1525,16 +2213,40 @@ export function createStickmanActor(layer, hooks) {
       if (velY < 0) velY = 0;
     }
 
-    if (grounded && !pendingJump && !aiming && now >= nextJumpAt) {
-      const r = Math.random();
-      pendingJump =
-        r < 0.5 ? rand(10.5, 12) : r < 0.78 ? rand(13, 14.5) : rand(13, 14);
-      flipNext = r >= 0.78;
-      windupUntil = now + rand(110, 170);
-      nextJumpAt = now + rand(1800, 4500);
+    if (
+      rageSys &&
+      grounded &&
+      !slamAir &&
+      !slamArmed &&
+      pendingJump === 0 &&
+      now >= landUntil &&
+      !aiming &&
+      !laserBusy &&
+      !tussling &&
+      !(tussle && tussle.isPosing(now)) &&
+      !(jet && jet.isActive(now)) &&
+      rageSys.trySlam(now, posX + BOX_W / 2, posY + BOX_H / 2)
+    ) {
+      slamArmed = true;
+      pendingJump = 15.5;
+      windupUntil = now + 300;
+      flipNext = false;
+      const target = resolveCursor();
+      if (Math.abs(target.x - (posX + BOX_W / 2)) > 8)
+        dir = target.x > posX + BOX_W / 2 ? 1 : -1;
+      callHook("shake", 0.15);
     }
     if (pendingJump && grounded && now >= windupUntil) {
       velY = -pendingJump;
+      if (slamArmed) {
+        slamArmed = false;
+        slamAir = true;
+        slamDived = false;
+        slamVX = 0;
+        sqV = 0.12;
+        playGrab();
+        callHook("dust", posX + BOX_W / 2, posY + BOX_H, 0.8);
+      }
       if (flipNext) {
         flipping = true;
         spinRate = (dir * 6.1) / ((2 * pendingJump) / GRAVITY);
@@ -1544,28 +2256,49 @@ export function createStickmanActor(layer, hooks) {
       grounded = false;
     }
     wasAir = !grounded;
-    if (false) {
+    if (slamAir && !grounded) {
+      const tgt = resolveCursor();
+      const sx = posX + BOX_W / 2;
+      if (!slamDived && velY > -1) {
+        slamDived = true;
+        velY = 17;
+        sqV = -0.06;
+        callHook("shake", 0.15);
+      }
+      const pull = slamDived ? 0.09 : 0.05;
+      const lim = slamDived ? 10 : 8;
+      if (tgt.seen) slamVX = clamp((tgt.x - sx) * pull, -lim, lim);
+      if (Math.abs(slamVX) > 0.5) dir = slamVX > 0 ? 1 : -1;
+      posX = clamp(posX + slamVX * dt, 0, maxX);
     }
 
+    const laserBusyNow = laser ? laser.isBusy() : false;
+    const posing = tussle ? tussle.isPosing(now) : false;
     const busy =
-      pendingJump > 0 ||
-      now < landUntil ||
-      (laserTarget && now < laserUntil) ||
-      sweepActive;
-    const targetSpeed = standing || busy ? 0 : modeSpeed;
+      pendingJump > 0 || now < landUntil || laserBusyNow || tussling || posing;
+    const targetSpeed =
+      standing || busy ? 0 : modeSpeed * (rageSys ? rageSys.speedMul() : 1);
     speed += (targetSpeed - speed) * ease(0.12, dt);
     if (grounded && targetSpeed > 0.5 && now >= nextAutoJumpAt) {
       try {
         const feetNow = posY + BOX_H;
-        const aheadX = posX + BOX_W / 2 + dir * 30;
-        const stepTop = surfaceAhead(aheadX, feetNow, 1, STEP_UP);
+        const centerX = posX + BOX_W / 2;
+        const aheadX = centerX + dir * 30;
+        const stepTop = surfaceAhead(centerX, feetNow, 1, STEP_UP, floorTop);
         if (stepTop) {
-          posY -= Math.min(feetNow - stepTop.top, 7 * dt);
+          posY = stepTop.top - BOX_H;
         } else {
-          const jumpTop = surfaceAhead(aheadX, feetNow, STEP_UP, JUMP_REACH);
+          const jumpTop = surfaceAhead(
+            aheadX,
+            feetNow,
+            STEP_UP,
+            JUMP_REACH,
+            floorTop,
+          );
           if (jumpTop) {
             const rise = feetNow - jumpTop.top;
             velY = -clamp(Math.sqrt(2 * GRAVITY * rise) + 1.5, 9, 14);
+            sqV = 0.08;
             grounded = false;
             pendingJump = 0;
             flipNext = false;
@@ -1574,7 +2307,8 @@ export function createStickmanActor(layer, hooks) {
         }
       } catch {}
     }
-    posX += speed * dir * dt;
+    const moveDir = effective === "moonwalk" ? -dir : dir;
+    posX += speed * moveDir * dt;
     if (posX <= 0) {
       posX = 0;
       if (speed > 0.2) dir = 1;
@@ -1583,46 +2317,69 @@ export function createStickmanActor(layer, hooks) {
       if (speed > 0.2) dir = -1;
     }
     if (now >= nextTurnAt) {
-      if (!aiming && speed > 0.5) dir = -dir;
+      if (!aiming && !tussling && speed > 0.5) dir = -dir;
       nextTurnAt = now + rand(1800, 5000);
     }
 
-    const gk = effective === "run" ? 0.085 : effective === "creep" ? 0.14 : 0.1;
+    if (
+      (effective === "walk" ||
+        effective === "run" ||
+        effective === "creep" ||
+        effective === "moonwalk") &&
+      speed < 0.25
+    )
+      effective = "idle";
+    const gk =
+      effective === "run"
+        ? 0.085
+        : effective === "creep"
+          ? 0.14
+          : effective === "moonwalk"
+            ? 0.06
+            : 0.1;
     let rate;
-    if (effective === "walk" || effective === "run" || effective === "creep")
-      rate = speed * gk + 0.02;
+    if (
+      effective === "walk" ||
+      effective === "run" ||
+      effective === "creep" ||
+      effective === "moonwalk"
+    )
+      rate = speed * gk;
     else
       rate = effective === "rage" ? 0.26 : effective === "punch" ? 0.2 : 0.05;
     phase += rate * dt;
-
-    let t;
-    if (!grounded) t = airPose(velY, flipping);
-    else if (pendingJump) t = crouchPose(true);
-    else if (now < landUntil) t = crouchPose(false);
-    else t = modePose(effective, phase, now, rageBoth, glance);
-
-    const recoil = clamp((recoilUntil - now) / 140, 0, 1);
-    if (aiming && aimTarget) {
-      const sx = last ? posX + last.shoulder.x : posX + 14;
-      const sy = last ? posY + last.shoulder.y : posY + 22;
-      const dx = aimTarget.x - sx;
-      const dy = aimTarget.y - sy;
-      if (Math.abs(dx) > 8) dir = dx > 0 ? 1 : -1;
-      t.armA = Math.atan2(dx * dir, dy) - 0.35 * recoil;
-      t.armAE = 0;
-      t.lean += 0.05;
-      t.tilt -= 0.2 * recoil;
-      t.shout = fireAt === null ? 1 : 0.5;
+    if (grounded && speed > 1.4 && now >= stepDustAt) {
+      stepDustAt = now + 150;
+      callHook("dust", posX + BOX_W / 2 - dir * 7, posY + BOX_H, 0.3);
     }
 
+    let t;
+    if (!grounded)
+      t = slamAir
+        ? slamDivePose(slamDived, now)
+        : now < dodgeUntil && !flipping
+          ? dodgePose(phase, now)
+          : airPose(velY, flipping);
+    else if (pendingJump) t = crouchPose(true);
+    else if (now < slamLandUntil)
+      t = slamLandPose(1 - (slamLandUntil - now) / RAGE_SLAM_LAND_MS);
+    else if (now < landUntil) t = crouchPose(false);
+    else {
+      const tussleTarget = tussle ? tussle.getPose(now, phase, dir) : null;
+      t = tussleTarget || modePose(effective, phase, now, rageBoth, glance);
+    }
+
+    if (aiming && aimTarget) applyAimPose(t, now);
+
     const k = ease(aiming ? 0.55 : grounded ? 0.32 : 0.28, dt);
-    for (let i = 0; i < KEYS.length; i++)
-      P[KEYS[i]] += (t[KEYS[i]] - P[KEYS[i]]) * k;
+    for (let i = 0; i < POSE_KEYS.length; i++)
+      P[POSE_KEYS[i]] += (t[POSE_KEYS[i]] - P[POSE_KEYS[i]]) * k;
     fv += (dir - fv) * ease(0.3, dt);
     airBlend += ((grounded ? 0 : 1) - airBlend) * ease(0.3, dt);
 
-    const rt =
-      effective === "rage"
+    const rt = tussling
+      ? 0.9
+      : effective === "rage"
         ? 1
         : aiming
           ? 0.85
@@ -1631,7 +2388,8 @@ export function createStickmanActor(layer, hooks) {
             : effective === "run"
               ? 0.65
               : 0.4;
-    rage += (rt - rage) * ease(0.08, dt);
+    rage +=
+      (Math.max(rt, rageSys ? rageSys.rageFloor() : 0) - rage) * ease(0.08, dt);
 
     if (!grounded && flipping) spin += spinRate * dt;
     else if (grounded) spin *= Math.pow(0.55, dt);
@@ -1648,10 +2406,99 @@ export function createStickmanActor(layer, hooks) {
     actor.style.top = posY + "px";
   }
 
+  function frontHandPoint() {
+    if (!last) return null;
+    try {
+      const arm = last.arms[1];
+      return { x: posX + arm.hand.x, y: posY + arm.hand.y };
+    } catch {
+      return null;
+    }
+  }
+
+  function tussleReady(now) {
+    if (koUntil || held || flying || now < introUntil) return false;
+    if (pendingJump > 0 || now < landUntil) return false;
+    if (aiming || (laser && laser.isBusy())) return false;
+    if (jet && jet.isActive(now)) return false;
+    return true;
+  }
+
+  function buildTussle() {
+    try {
+      tussle = createTussleController({
+        getPointer: () => resolveCursor(),
+        getHand: () => frontHandPoint(),
+        getBody: () => {
+          if (!last) return null;
+          return { x: posX + last.shoulder.x, y: posY + last.shoulder.y };
+        },
+        getFloor: () => resolveFloor(),
+        canStart: (now) => tussleReady(now),
+        pickTarget: hooks && hooks.pickTussleTarget,
+        onSlam: hooks && hooks.onTussleSlam,
+        onWin: () => playWooob(),
+        onLeap: (vx, vy) => {
+          velX = clamp(vx, -18, 18);
+          velY = vy;
+          flying = true;
+          wasAir = true;
+          flipping = false;
+          spin = 0;
+          speed = 0;
+          sqV = 0.1;
+          if (Math.abs(vx) > 1) dir = vx > 0 ? 1 : -1;
+          callHook("dust", posX + BOX_W / 2, posY + BOX_H, 0.8);
+        },
+        onSteer: (vx, vy) => {
+          if (!flying) return;
+          velX += (clamp(vx, -16, 16) - velX) * 0.3;
+          velY += (clamp(vy, -19, 15) - velY) * 0.2;
+          if (Math.abs(vx) > 2) dir = vx > 0 ? 1 : -1;
+        },
+        onHang: () => {
+          flying = false;
+          wasAir = false;
+          flipping = false;
+          velX = 0;
+          velY = 0;
+          speed = 0;
+          pendingJump = 0;
+          aiming = false;
+          fireAt = null;
+          try {
+            if (laser) laser.cancel();
+          } catch {}
+          callHook("shake", 0.25);
+        },
+        onDetach: (vx, vy, sp) => {
+          flying = true;
+          wasAir = true;
+          velX = clamp(vx, -18, 18);
+          velY = clamp(vy, -18, 18);
+          if (Math.abs(sp) > 0.1) {
+            flipping = true;
+            spinRate = clamp(sp, -0.5, 0.5);
+          } else {
+            flipping = false;
+          }
+        },
+      });
+    } catch {
+      tussle = null;
+    }
+  }
+
   function update(now, dt) {
     try {
       if (destroyed || !actor) return;
-      frame(now, clamp(dt || 1, 0.2, 3));
+      const baseDt = clamp(dt || 1, 0.2, 3);
+      if (rageSys) {
+        rageSys.observe(now, posX + BOX_W / 2, posY + BOX_H / 2);
+        rageSys.update(now, baseDt, posX + BOX_W / 2, posY + BOX_H / 2);
+      }
+      if (combo) combo.observe(now);
+      frame(now, clamp(baseDt * (rageSys ? rageSys.timeScale() : 1), 0.2, 3));
     } catch {}
   }
 
@@ -1726,6 +2573,9 @@ export function createStickmanActor(layer, hooks) {
       hp -= 1;
     } catch {}
     try {
+      if (tussle && tussle.isActive()) tussle.interrupt(performance.now());
+    } catch {}
+    try {
       playHit();
     } catch {}
     try {
@@ -1737,6 +2587,15 @@ export function createStickmanActor(layer, hooks) {
     try {
       introUntil = 0;
     } catch {}
+    try {
+      if (jet) jet.stop(performance.now(), true);
+    } catch {}
+    try {
+      if (combo) combo.cancel(performance.now());
+    } catch {}
+    slamArmed = false;
+    slamAir = false;
+    slamDived = false;
     let cagedNow = false;
     try {
       cagedNow = !!(
@@ -1775,9 +2634,23 @@ export function createStickmanActor(layer, hooks) {
   }
   function destroy() {
     destroyed = true;
+    try {
+      if (rageSys) rageSys.destroy();
+    } catch {}
+    try {
+      if (combo) combo.destroy();
+    } catch {}
+    if (tussle && tussle.isActive()) {
+      try {
+        tussle.destroy();
+      } catch {}
+    }
     pinDot = null;
     try {
       if (moveHandler) window.removeEventListener("pointermove", moveHandler);
+    } catch {}
+    try {
+      if (clickHandler) window.removeEventListener("pointerdown", clickHandler);
     } catch {}
     try {
       if (upHandler) window.removeEventListener("pointerup", upHandler);
@@ -1789,6 +2662,7 @@ export function createStickmanActor(layer, hooks) {
     moveHandler = null;
     upHandler = null;
     downHandler = null;
+    clickHandler = null;
     try {
       if (actor) actor.remove();
     } catch {}
@@ -1843,43 +2717,38 @@ export function createStickmanActor(layer, hooks) {
       "stroke-width": 1,
       display: "none",
     });
-    parts.beamHalo = el("line", {
-      x1: 0,
-      y1: 0,
-      x2: 0,
-      y2: 0,
-      style: "stroke:var(--error)",
-      "stroke-width": 14,
-      "stroke-linecap": "round",
+    jetRig = createJetpackRig();
+    parts.ball = el("circle", {
+      r: 3.3,
+      fill: "#38502f",
+      style: "stroke:#1d2b19",
+      "stroke-width": 1,
       display: "none",
     });
-    parts.beam = el("line", {
-      x1: 0,
-      y1: 0,
-      x2: 0,
-      y2: 0,
-      style: "stroke:var(--error)",
-      "stroke-width": 7,
-      "stroke-linecap": "round",
-      display: "none",
-    });
-    parts.beamCore = el("line", {
-      x1: 0,
-      y1: 0,
-      x2: 0,
-      y2: 0,
-      style: "stroke:var(--text-primary)",
-      "stroke-width": 2.5,
-      "stroke-linecap": "round",
-      display: "none",
-    });
-    parts.laserGlow = el("circle", {
-      r: 5,
+    parts.swoosh = el("path", {
+      d: "",
       fill: "none",
-      style: "stroke:var(--error)",
-      "stroke-width": 2,
+      style: "stroke:#ffffff",
+      "stroke-width": 3,
+      "stroke-linecap": "round",
+      "stroke-linejoin": "round",
+      opacity: 0.75,
       display: "none",
     });
+    parts.ghosts = [];
+    parts.ghostG = el("g", {});
+    for (let gi = 0; gi < GHOST_COUNT; gi++) {
+      const gp = el("path", {
+        fill: "none",
+        style: "stroke:" + INK,
+        "stroke-width": 2.6,
+        "stroke-linecap": "round",
+        "stroke-linejoin": "round",
+        display: "none",
+      });
+      parts.ghosts.push(gp);
+      parts.ghostG.appendChild(gp);
+    }
     parts.vein = el("path", {
       d: "M-2.4 -0.8Q-0.8 -0.8 -0.8 -2.4M0.8 -2.4Q0.8 -0.8 2.4 -0.8M2.4 0.8Q0.8 0.8 0.8 2.4M-0.8 2.4Q-0.8 0.8 -2.4 0.8",
       fill: "none",
@@ -1888,7 +2757,18 @@ export function createStickmanActor(layer, hooks) {
       "stroke-linecap": "round",
       opacity: 0,
     });
+    laser = createLaserWeapon({
+      strike:
+        hooks && typeof hooks.laserStrike === "function"
+          ? hooks.laserStrike
+          : null,
+      sweep:
+        hooks && typeof hooks.laserSweepAlong === "function"
+          ? hooks.laserSweepAlong
+          : null,
+    });
     const order = [
+      jetRig.root,
       parts.legB,
       parts.armB,
       parts.torso,
@@ -1896,14 +2776,17 @@ export function createStickmanActor(layer, hooks) {
       parts.head,
       parts.armA,
       parts.gun,
+      parts.ball,
+      parts.swoosh,
       parts.flash,
-      parts.beamHalo,
-      parts.beam,
-      parts.beamCore,
-      parts.laserGlow,
+      laser.parts.halo,
+      laser.parts.beam,
+      laser.parts.core,
+      laser.parts.glow,
       parts.vein,
     ];
     for (let i = 0; i < order.length; i++) parts.root.appendChild(order[i]);
+    svg.appendChild(parts.ghostG);
     svg.appendChild(parts.root);
     return svg;
   }
@@ -1911,9 +2794,22 @@ export function createStickmanActor(layer, hooks) {
   try {
     actor = build();
     try {
+      buildTussle();
+    } catch {}
+    try {
+      buildJetpack();
+    } catch {}
+    try {
+      buildRage();
+    } catch {}
+    try {
+      buildCombo();
+    } catch {}
+    try {
       layer.appendChild(actor);
     } catch {}
     downHandler = onGrabDown;
+    clickHandler = onClickPulse;
     moveHandler = onGrabMove;
     upHandler = onGrabUp;
     if (draggable) {
@@ -1925,6 +2821,9 @@ export function createStickmanActor(layer, hooks) {
       } catch {}
       try {
         bindEvent(window, "pointerup", upHandler);
+      } catch {}
+      try {
+        bindEvent(window, "pointerdown", clickHandler);
       } catch {}
     }
     const floor = resolveFloor();

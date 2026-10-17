@@ -1,7 +1,7 @@
 html[data-cmstyle="win11"] #context-menu,
 html[data-cmstyle="win11"] .context-menu,
 .cm-preview[data-cmstyle="win11"] .context-menu {
-  background: var(--menu-bg);
+  background: var(--win11-acrylic-dark, rgb(64 67 81 / 40%));
   backdrop-filter: saturate(2) blur(20px);
   -webkit-backdrop-filter: saturate(2) blur(20px);
   border: 1px solid var(--glass-border);
@@ -15,8 +15,13 @@ html[data-cmstyle="win11"] .context-menu,
 html[data-cmstyle="win11"][data-theme="light"] #context-menu,
 html[data-cmstyle="win11"][data-theme="light"] .context-menu,
 html[data-theme="light"] .cm-preview[data-cmstyle="win11"] .context-menu {
-  background: var(--menu-bg);
+  background: var(--win11-acrylic-light, rgba(249, 249, 249, 0.9));
   border-color: var(--glass-border);
+
+  html[data-cmstyle="win11"][data-theme="light"] #context-menu .context-menu,
+  html[data-cmstyle="win11"][data-theme="light"] .context-menu .context-menu {
+    background: var(--win11-acrylic-light, rgba(249, 249, 249, 0.9));
+  }
   box-shadow: var(--shadow-md);
   color: var(--text-primary);
 }
@@ -70,8 +75,23 @@ html[data-cmstyle="win11"] .context-menu > div:hover,
 html[data-cmstyle="win11"] #context-menu > div.cm-focused,
 html[data-cmstyle="win11"] .context-menu > div.cm-focused,
 .cm-preview[data-cmstyle="win11"] .context-menu > div.cm-focused {
-  background: var(--glass-hover);
+  background: rgba(255, 255, 255, 0.08);
   color: var(--text-primary);
+}
+
+html[data-cmstyle="win11"][data-theme="light"] #context-menu > div:hover,
+html[data-cmstyle="win11"][data-theme="light"] .context-menu > div:hover,
+html[data-theme="light"]
+  .cm-preview[data-cmstyle="win11"]
+  .context-menu
+  > div:hover,
+html[data-cmstyle="win11"][data-theme="light"] #context-menu > div.cm-focused,
+html[data-cmstyle="win11"][data-theme="light"] .context-menu > div.cm-focused,
+html[data-theme="light"]
+  .cm-preview[data-cmstyle="win11"]
+  .context-menu
+  > div.cm-focused {
+  background: rgba(0, 0, 0, 0.08);
 }
 html[data-cmstyle="win11"] #context-menu > div:hover > i,
 html[data-cmstyle="win11"] .context-menu > div:hover > i,
@@ -87,7 +107,7 @@ html[data-cmstyle="win11"] .context-menu > hr,
   height: 1px;
   width: 100%;
   border: none;
-  background: var(--glass-border);
+  background: #ccc5;
   margin: 4px 0;
 }
 html[data-cmstyle="win11"] #context-menu .submenu-arrow,
@@ -109,9 +129,7 @@ html[data-cmstyle="win11"] .context-menu .context-menu,
   top: 0;
   left: 99%;
   min-width: 140px;
-  background: var(--menu-bg);
-  backdrop-filter: saturate(2) blur(20px);
-  -webkit-backdrop-filter: saturate(2) blur(20px);
+  background: var(--win11-acrylic-dark, rgba(34, 36, 47, 0.8));
   border: 1px solid var(--glass-border);
   border-radius: 8px;
   box-shadow: var(--shadow-lg);
@@ -137,4 +155,10 @@ html[data-cmstyle="win11"] .cm-preview .context-menu,
 html[data-cmstyle="win11"] .cm-preview .context-menu > div,
 .cm-preview[data-cmstyle="win11"] .context-menu > div {
   pointer-events: none;
+}
+
+html[data-cmstyle="win11"] #context-menu,
+html[data-cmstyle="win11"] .context-menu,
+.cm-preview[data-cmstyle="win11"] .context-menu {
+  --clrPrm: #4cc2ff;
 }

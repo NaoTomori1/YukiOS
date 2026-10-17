@@ -1,3 +1,8 @@
+:root {
+  --stk-flame-outer: #ff7a12;
+  --stk-flame-core: #ffe6a8;
+}
+
 .stk-layer {
   position: fixed;
   inset: 0;
@@ -272,6 +277,11 @@ html[data-theme="light"] .stk-layer .stk-spark {
   box-shadow: 0 0 8px var(--error);
 }
 
+html[data-theme="light"] {
+  --stk-flame-outer: #ff8a2a;
+  --stk-flame-core: #fff1c9;
+}
+
 @keyframes stk-legswing {
   from {
     transform: rotate(25deg);
@@ -343,6 +353,45 @@ html[data-theme="light"] .stk-layer .stk-spark {
 html.stk-cursor-dead,
 html.stk-cursor-dead * {
   cursor: none !important;
+}
+
+html.stk-cursor-held,
+html.stk-cursor-held * {
+  cursor: none !important;
+}
+
+.stk-cursor-hand {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 32px;
+  height: 32px;
+  margin-left: -16px;
+  margin-top: -16px;
+  z-index: 25003;
+  pointer-events: none;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+  filter: drop-shadow(0 0 6px var(--error));
+  animation: stk-cursor-hand-wobble 0.34s infinite alternate ease-in-out;
+}
+
+.stk-cursor-hand.stk-cursor-hand-strain {
+  animation-duration: 0.1s;
+}
+
+html[data-theme="light"] .stk-cursor-hand {
+  filter: drop-shadow(0 0 8px var(--error));
+}
+
+@keyframes stk-cursor-hand-wobble {
+  from {
+    transform: rotate(-7deg) scale(1);
+  }
+  to {
+    transform: rotate(7deg) scale(1.07);
+  }
 }
 
 .stk-cursor-blocker {
@@ -632,4 +681,43 @@ html.stk-cursor-dead * {
     transform: scale(1);
     opacity: 1;
   }
+}
+
+.stk-jet-flame {
+  transform-box: fill-box;
+  transform-origin: center top;
+  filter: drop-shadow(0 0 3px var(--stk-flame-outer));
+  animation: stk-jet-flicker 0.09s infinite alternate ease-in-out;
+}
+
+.stk-jet-core {
+  transform-box: fill-box;
+  transform-origin: center top;
+  animation: stk-jet-core-flicker 0.06s infinite alternate ease-in-out;
+}
+
+@keyframes stk-jet-flicker {
+  from {
+    transform: scaleY(0.86) scaleX(1.12) skewX(3deg);
+    opacity: 0.82;
+  }
+  to {
+    transform: scaleY(1.18) scaleX(0.9) skewX(-3deg);
+    opacity: 1;
+  }
+}
+
+@keyframes stk-jet-core-flicker {
+  from {
+    transform: scaleY(0.72) scaleX(1.2) skewX(-4deg);
+    opacity: 0.66;
+  }
+  to {
+    transform: scaleY(1.24) scaleX(0.84) skewX(4deg);
+    opacity: 0.98;
+  }
+}
+
+html[data-theme="light"] .stk-jet-flame {
+  filter: drop-shadow(0 0 6px var(--stk-flame-outer));
 }

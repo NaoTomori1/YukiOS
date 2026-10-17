@@ -4,7 +4,7 @@ import {
   isPhysicsChaosActive,
   togglePhysicsChaos,
 } from "../shared/desktopPhysics.js";
-import { createCellCompanion } from "../shared/stickmanCellCompanion.js";
+import { createCellCompanion } from "../shared/stickman/stickmanCellCompanion.js";
 
 export class CodeRedApp extends BaseApp {
   constructor(services) {
@@ -15,7 +15,7 @@ export class CodeRedApp extends BaseApp {
   async open(opts = {}) {
     const winId = "code-red";
     if (await this.isSingletonOpen(winId)) return;
-    const win = os.window.create(winId, "Code Red", "360px", "560px", {
+    const win = os.window.create(winId, "Code Red", "300px", "360px", {
       icon: "icons/codered.svg",
     });
     win.innerHTML = `<div class="code-red-root"><div class="code-red-jail"><div class="code-red-cell"><div class="code-red-interior"><div class="code-red-floor"></div><div class="code-red-pet"></div></div><div class="code-red-gate-slot"><div class="code-red-gate"></div></div></div><div class="code-red-jail-label">Contained</div></div><button class="code-red-toggle"></button></div>`;
@@ -70,13 +70,12 @@ export class CodeRedApp extends BaseApp {
       else startCompanion();
       refresh();
     };
-    bindEvent(toggleEl, "click", () => {
-      const willContain = isPhysicsChaosActive();
-      if (willContain) {
-        togglePhysicsChaos();
-        syncState();
-        return;
-      }
+    const contain = () => {
+      togglePhysicsChaos();
+      syncState();
+    };
+    const unleash = () => {
+      if (isPhysicsChaosActive()) return;
       toggleEl.disabled = true;
       jailEl.classList.add("code-red-breaking");
       try {
@@ -112,6 +111,10 @@ export class CodeRedApp extends BaseApp {
         } catch {}
         jailEl.classList.remove("code-red-breaking");
       }, 1500);
+    };
+    bindEvent(toggleEl, "click", () => {
+      if (isPhysicsChaosActive()) contain();
+      else unleash();
     });
     this.openWindows.add(winId);
     bindEvent(win, "remove", () => {
@@ -129,6 +132,11 @@ export class CodeRedApp extends BaseApp {
     if (!lastActive) startCompanion();
     refresh();
     syncTimer = setInterval(syncState, 300);
+    if (opts.autoUnleash) {
+      try {
+        unleash();
+      } catch {}
+    }
   }
 
   onClose(winId) {

@@ -1,5 +1,5 @@
-import "../styles/stickmanChaos.css";
-import { $, $$, createElement, bindEvent } from "../framework.js";
+import "../../styles/stickmanChaos.css";
+import { $, $$, createElement, bindEvent } from "../../framework.js";
 import { createStickmanActor } from "./stickmanActor.js";
 import {
   playShoot,
@@ -7,8 +7,15 @@ import {
   playShatter,
   playRebuild,
   playGrab,
-} from "./chaosSfx.js";
-import { registerCursorHit, cleanupCursorKill } from "./stickmanCursorKill.js";
+} from "../chaosSfx.js";
+import {
+  registerCursorHit,
+  cleanupCursorKill,
+  isCursorDestroyed,
+} from "./stickmanCursorKill.js";
+import { createWeaponSystem } from "./stickmanWeapons.js";
+import { resetLaserSfx } from "./stickmanLaserSfx.js";
+import { fxRing, fxDust, screenShake, fxStreak, fxBlob } from "./stickmanFx.js";
 import {
   captureCage,
   updateCage,
@@ -23,9 +30,11 @@ import {
   setShardSelected,
   clearShardSelection,
 } from "./stickmanSelection.js";
+import { cleanupTussle } from "./stickmanTussle.js";
 
 let layer = null;
 let actorRef = null;
+let weapons = null;
 let active = false;
 let frameId = null;
 let lastTime = 0;
@@ -1164,7 +1173,7 @@ function restoreElement(el) {
     el.classList.remove("stk-shatter-hidden");
   } catch {}
   try {
-    const burns = el.querySelectorAll(".stk-burn-blob");
+    const burns = el.querySelectorAll(".stk-burn-blob, .stk-stain, .stk-stuck");
     for (let i = 0; i < burns.length; i++) {
       try {
         burns[i].remove();
@@ -1251,11 +1260,8 @@ function damageTarget(el) {
   } catch {}
 }
 
-function laserStrikeAt(tx, ty) {
-  try {
-    playShoot();
-  } catch {}
-  let hit = null;
+function findTargetAt(x, y, radius) {
+  const reach = Number.isFinite(radius) ? radius : 0;
   try {
     const desk = $$("#taskbar .taskbar-item, #system-tray > *");
     for (let t = 0; t < desk.length; t++) {
@@ -1265,66 +1271,57 @@ function laserStrikeAt(tx, ty) {
         const rect = node.getBoundingClientRect();
         if (rect.width <= 0 || rect.height <= 0) continue;
         if (
-          tx >= rect.left &&
-          tx <= rect.right &&
-          ty >= rect.top &&
-          ty <= rect.bottom
-        ) {
-          hit = node;
-          break;
-        }
+          x >= rect.left &&
+          x <= rect.right &&
+          y >= rect.top &&
+          y <= rect.bottom
+        )
+          return node;
       } catch {}
     }
   } catch {}
+  let targets = [];
   try {
-    if (hit) {
-      const rect = hit.getBoundingClientRect();
-      impactX = Math.min(Math.max(tx, rect.left), rect.right);
-      impactY = Math.min(Math.max(ty, rect.top), rect.bottom);
-      try {
-        damageTarget(hit);
-      } catch {}
-      try {
-        plantBurn(hit, impactX, impactY);
-      } catch {}
-      try {
-        spawnSparks(tx, ty, 10);
-      } catch {}
-      return;
-    }
-    const targets = getLiveTargets();
-    for (let t = 0; t < targets.length; t++) {
-      try {
-        const rect = targets[t].getBoundingClientRect();
-        if (
-          tx >= rect.left &&
-          tx <= rect.right &&
-          ty >= rect.top &&
-          ty <= rect.bottom
-        ) {
-          hit = targets[t];
-          break;
-        }
-      } catch {}
-    }
-    if (!hit) {
-      let bestDist = 90;
-      for (let t = 0; t < targets.length; t++) {
-        try {
-          const rect = targets[t].getBoundingClientRect();
-          if (rect.width <= 0 || rect.height <= 0) continue;
-          const d = Math.hypot(
-            rect.left + rect.width / 2 - tx,
-            rect.top + rect.height / 2 - ty,
-          );
-          if (d < bestDist) {
-            bestDist = d;
-            hit = targets[t];
-          }
-        } catch {}
-      }
-    }
+    targets = Array.from(getLiveTargets());
   } catch {}
+  for (let t = 0; t < targets.length; t++) {
+    try {
+      const rect = targets[t].getBoundingClientRect();
+      if (rect.width <= 0 || rect.height <= 0) continue;
+      if (
+        x >= rect.left &&
+        x <= rect.right &&
+        y >= rect.top &&
+        y <= rect.bottom
+      )
+        return targets[t];
+    } catch {}
+  }
+  if (reach <= 0) return null;
+  let best = null;
+  let bestDist = reach;
+  for (let t = 0; t < targets.length; t++) {
+    try {
+      const rect = targets[t].getBoundingClientRect();
+      if (rect.width <= 0 || rect.height <= 0) continue;
+      const d = Math.hypot(
+        rect.left + rect.width / 2 - x,
+        rect.top + rect.height / 2 - y,
+      );
+      if (d < bestDist) {
+        bestDist = d;
+        best = targets[t];
+      }
+    } catch {}
+  }
+  return best;
+}
+
+function laserStrikeAt(tx, ty) {
+  try {
+    playShoot();
+  } catch {}
+  const hit = findTargetAt(tx, ty, 90);
   if (!hit) {
     try {
       spawnSparks(tx, ty, 6);
@@ -1346,20 +1343,294 @@ function laserStrikeAt(tx, ty) {
     spawnSparks(tx, ty, 10);
   } catch {}
 }
+
+function getWeaponTargets() {
+  const list = getLiveTargets();
+  try {
+    const bar = $$("#taskbar .taskbar-item, #system-tray > *");
+    for (let i = 0; i < bar.length && i < 40; i++) {
+      try {
+        const node = bar[i];
+        if (node && node.isConnected && isVisible(node)) list.push(node);
+      } catch {}
+    }
+  } catch {}
+  return list;
+}
+
+function pushDebris(x, y, radius, force) {
+  try {
+    for (let i = 0; i < debris.length; i++) {
+      const s = debris[i];
+      if (!s || s.held) continue;
+      const cx = s.baseX + s.x + s.w / 2;
+      const cy = s.baseY + s.y + s.h / 2;
+      const dx = cx - x;
+      const dy = cy - y;
+      const d = Math.hypot(dx, dy);
+      if (d > radius) continue;
+      const k = (1 - d / radius) * force;
+      const m = Math.max(1, d);
+      s.vx += (dx / m) * k * 2;
+      s.vy += (dy / m) * k * 2 - k * 0.6;
+      s.spin += (Math.random() - 0.5) * k * 2;
+      s.settled = false;
+      s.restOn = null;
+    }
+  } catch {}
+}
+
+function clipSegment(a, b, w, h) {
+  let t0 = 0;
+  let t1 = 1;
+  const dx = b.x - a.x;
+  const dy = b.y - a.y;
+  const p = [-dx, dx, -dy, dy];
+  const q = [a.x, w - a.x, a.y, h - a.y];
+  for (let i = 0; i < 4; i++) {
+    if (p[i] === 0) {
+      if (q[i] < 0) return null;
+      continue;
+    }
+    const r = q[i] / p[i];
+    if (p[i] < 0) {
+      if (r > t1) return null;
+      if (r > t0) t0 = r;
+    } else {
+      if (r < t0) return null;
+      if (r < t1) t1 = r;
+    }
+  }
+  return {
+    x0: a.x + dx * t0,
+    y0: a.y + dy * t0,
+    x1: a.x + dx * t1,
+    y1: a.y + dy * t1,
+  };
+}
+
+function stainShardsAlong(x1, y1, x2, y2) {
+  try {
+    if (Math.hypot(x2 - x1, y2 - y1) < 1) return;
+    for (let i = 0; i < debris.length; i++) {
+      try {
+        const s = debris[i];
+        if (!s || !s.node || !s.node.isConnected) continue;
+        const cx = s.baseX + s.x + s.w / 2;
+        const cy = s.baseY + s.y + s.h / 2;
+        const rad = (-(s.angle || 0) * Math.PI) / 180;
+        const cos = Math.cos(rad);
+        const sin = Math.sin(rad);
+        const toLocal = (px, py) => {
+          const dx = px - cx;
+          const dy = py - cy;
+          return {
+            x: dx * cos - dy * sin + s.w / 2,
+            y: dx * sin + dy * cos + s.h / 2,
+          };
+        };
+        const a = toLocal(x1, y1);
+        const b = toLocal(x2, y2);
+        const clip = clipSegment(a, b, s.w, s.h);
+        if (!clip) continue;
+        const len = Math.hypot(clip.x1 - clip.x0, clip.y1 - clip.y0);
+        if (len < 3) continue;
+        const ang = Math.atan2(b.y - a.y, b.x - a.x);
+        fxStreak(
+          s.node,
+          (clip.x0 + clip.x1) / 2,
+          (clip.y0 + clip.y1) / 2,
+          len,
+          ang,
+          3 + Math.random() * 2.5,
+        );
+        if (Math.random() < 0.45) {
+          const t = Math.random();
+          fxBlob(
+            s.node,
+            clip.x0 + (clip.x1 - clip.x0) * t,
+            clip.y0 + (clip.y1 - clip.y0) * t,
+            8 + Math.random() * 10,
+          );
+        }
+      } catch {}
+    }
+  } catch {}
+}
+
+function stainDomAlong(x1, y1, x2, y2) {
+  try {
+    if (Math.random() < 0.4) return;
+    const list = getLiveTargets();
+    const ang = Math.atan2(y2 - y1, x2 - x1);
+    for (let i = 0; i < list.length; i++) {
+      try {
+        const node = list[i];
+        const rect = node.getBoundingClientRect();
+        if (rect.width <= 0 || rect.height <= 0) continue;
+        const clip = clipSegment(
+          { x: x1 - rect.left, y: y1 - rect.top },
+          { x: x2 - rect.left, y: y2 - rect.top },
+          rect.width,
+          rect.height,
+        );
+        if (!clip) continue;
+        const len = Math.hypot(clip.x1 - clip.x0, clip.y1 - clip.y0);
+        if (len < 3) continue;
+        fxStreak(
+          node,
+          (clip.x0 + clip.x1) / 2,
+          (clip.y0 + clip.y1) / 2,
+          len,
+          ang,
+          3 + Math.random() * 2,
+        );
+      } catch {}
+    }
+  } catch {}
+}
+
+function slashAt(cx, cy, reach, dirSign) {
+  const sign = dirSign < 0 ? -1 : 1;
+  const fx = cx + sign * reach * 0.5;
+  const radius = reach * 0.8;
+  try {
+    spawnSparks(fx + sign * reach * 0.3, cy, 10);
+    playHit();
+  } catch {}
+  let hits = 0;
+  try {
+    const list = getWeaponTargets();
+    for (let i = 0; i < list.length && hits < 2; i++) {
+      try {
+        const node = list[i];
+        const rect = node.getBoundingClientRect();
+        if (rect.width <= 0 || rect.height <= 0) continue;
+        const px = Math.min(Math.max(fx, rect.left), rect.right);
+        const py = Math.min(Math.max(cy, rect.top), rect.bottom);
+        if (Math.hypot(px - fx, py - cy) > radius) continue;
+        impactX = px;
+        impactY = py;
+        damageTarget(node);
+        fxStreak(
+          node,
+          px - rect.left,
+          py - rect.top,
+          34,
+          -0.6 * sign,
+          2.4,
+          true,
+        );
+        hits += 1;
+      } catch {}
+    }
+  } catch {}
+  try {
+    if (cursorSeen && !isCursorDestroyed()) {
+      if (Math.hypot(cursorX - fx, cursorY - cy) <= radius) {
+        registerCursorHit(cursorX, cursorY);
+      }
+    }
+  } catch {}
+  try {
+    pushDebris(fx, cy, reach * 1.2, 5);
+  } catch {}
+}
+
+function pickTussleTarget(hx, hy, maxDist) {
+  const reach = Number.isFinite(maxDist) ? maxDist : 185;
+  const nearest = (list) => {
+    let best = null;
+    let bestDist = reach;
+    for (let i = 0; i < list.length; i++) {
+      try {
+        const node = list[i];
+        if (!node || !node.isConnected) continue;
+        if (node.closest && node.closest(".stk-layer")) continue;
+        if (!isVisible(node)) continue;
+        const rect = node.getBoundingClientRect();
+        if (rect.width <= 0 || rect.height <= 0) continue;
+        const x = rect.left + rect.width / 2;
+        const y = rect.top + rect.height / 2;
+        const d = Math.hypot(x - hx, y - hy);
+        if (d < bestDist) {
+          bestDist = d;
+          best = { x, y };
+        }
+      } catch {}
+    }
+    return best;
+  };
+  try {
+    const bar = $("#taskbar");
+    if (bar && isVisible(bar)) {
+      const hit = nearest($$("#taskbar .taskbar-item, #system-tray > *"));
+      if (hit) return hit;
+    }
+  } catch {}
+  try {
+    const hit = nearest($$(".window"));
+    if (hit) return hit;
+  } catch {}
+  try {
+    const hit = nearest($$("#desktop > .icon"));
+    if (hit) return hit;
+  } catch {}
+  return null;
+}
+
+function slamCursor(x, y) {
+  try {
+    impactX = x;
+    impactY = y;
+  } catch {}
+  try {
+    spawnSparks(x, y, 14);
+  } catch {}
+  try {
+    playHit();
+  } catch {}
+  try {
+    registerCursorHit(x, y, true);
+  } catch {}
+  try {
+    fxRing(layer, x, y, 80, "#ffffff");
+    fxDust(layer, x, y, 0.6);
+    screenShake(0.5);
+  } catch {}
+  try {
+    const hit = findTargetAt(x, y, 0);
+    if (hit) {
+      const rect = hit.getBoundingClientRect();
+      impactX = Math.min(Math.max(x, rect.left), rect.right);
+      impactY = Math.min(Math.max(y, rect.top), rect.bottom);
+      damageTarget(hit);
+      plantBurn(hit, impactX, impactY);
+    }
+  } catch {}
+  try {
+    syncDesktopBottom();
+  } catch {}
+}
+
 export function laserSweepAlong(x1, y1, x2, y2) {
+  try {
+    stainShardsAlong(x1, y1, x2, y2);
+    stainDomAlong(x1, y1, x2, y2);
+  } catch {}
   const steps = 24;
-  const hitList = [];
-  for (let s = 0; s <= steps; s++) {
+  let nearest = null;
+  let impactX = 0;
+  let impactY = 0;
+  for (let s = 0; s <= steps && !nearest; s++) {
     const px = x1 + ((x2 - x1) * s) / steps;
     const py = y1 + ((y2 - y1) * s) / steps;
-    let found = null;
     try {
       const desk = $$("#taskbar .taskbar-item, #system-tray > *");
       for (let t = 0; t < desk.length; t++) {
         try {
           const node = desk[t];
           if (!node || !node.isConnected) continue;
-          if (hitList.includes(node)) continue;
           const rect = node.getBoundingClientRect();
           if (rect.width <= 0 || rect.height <= 0) continue;
           if (
@@ -1368,44 +1639,46 @@ export function laserSweepAlong(x1, y1, x2, y2) {
             py >= rect.top &&
             py <= rect.bottom
           ) {
-            found = node;
+            nearest = node;
             break;
           }
         } catch {}
       }
     } catch {}
-    if (!found) {
+    if (!nearest) {
       try {
         const targets = getLiveTargets();
         for (let t = 0; t < targets.length; t++) {
           try {
-            if (hitList.includes(targets[t])) continue;
             const rect = targets[t].getBoundingClientRect();
+            if (rect.width <= 0 || rect.height <= 0) continue;
             if (
               px >= rect.left &&
               px <= rect.right &&
               py >= rect.top &&
               py <= rect.bottom
             ) {
-              found = targets[t];
+              nearest = targets[t];
               break;
             }
           } catch {}
         }
       } catch {}
     }
-    if (found) hitList.push(found);
+    if (nearest) {
+      try {
+        const rect = nearest.getBoundingClientRect();
+        impactX = Math.min(Math.max(px, rect.left), rect.right);
+        impactY = Math.min(Math.max(py, rect.top), rect.bottom);
+      } catch {}
+    }
   }
-  for (let i = 0; i < hitList.length; i++) {
-    try {
-      const rect = hitList[i].getBoundingClientRect();
-      const impactX = Math.min(Math.max((x1 + x2) / 2, rect.left), rect.right);
-      const impactY = Math.min(Math.max((y1 + y2) / 2, rect.top), rect.bottom);
-      damageTarget(hitList[i]);
-      plantBurn(hitList[i], impactX, impactY);
-      spawnSparks(impactX, impactY, 4);
-    } catch {}
-  }
+  if (!nearest) return;
+  try {
+    damageTarget(nearest);
+    plantBurn(nearest, impactX, impactY);
+    spawnSparks(impactX, impactY, 4);
+  } catch {}
 }
 function plantBurn(node, x, y) {
   try {
@@ -1702,6 +1975,9 @@ function loop(now) {
       if (actorRef) actorRef.update(now, dt);
     } catch {}
     updateBullets(dt, dtSec);
+    try {
+      if (weapons) weapons.update(dt, dtSec);
+    } catch {}
     updateSparks(dt, dtSec);
     updateDebris(dt);
     try {
@@ -1730,10 +2006,55 @@ export function spawnStickman(opts) {
     layer = createElement("div", { className: "stk-layer" });
     document.body.appendChild(layer);
     try {
+      if (weapons) weapons.clear();
+    } catch {}
+    weapons = createWeaponSystem({
+      getLayer: () => layer,
+      getTargets: () => getWeaponTargets(),
+      getFloor: () => getFloor(),
+      getCursor: () => ({ x: cursorX, y: cursorY, seen: cursorSeen }),
+      cursorDead: () => isCursorDestroyed(),
+      sparks: (x, y, n) => spawnSparks(x, y, n),
+      damage: (node, x, y) => {
+        impactX = x;
+        impactY = y;
+        damageTarget(node);
+        plantBurn(node, x, y);
+      },
+      hitCursor: (x, y) => registerCursorHit(x, y, true),
+      push: (x, y, r, force) => pushDebris(x, y, r, force),
+      sfx: { hit: playHit, shatter: playShatter },
+    });
+    try {
       actorRef = createStickmanActor(layer, {
         fire: (sx, sy, tx, ty) => {
           try {
             fireAt(sx, sy, tx, ty);
+          } catch {}
+        },
+        fireWeapon: (kind, sx, sy, tx, ty) => {
+          try {
+            if (weapons) weapons.fire(kind, sx, sy, tx, ty);
+          } catch {}
+        },
+        slash: (cx, cy, reach, dirSign) => {
+          try {
+            slashAt(cx, cy, reach, dirSign);
+          } catch {}
+        },
+        dust: (x, y, power) => {
+          try {
+            fxDust(layer, x, y, power);
+          } catch {}
+        },
+        shake: (power) => {
+          try {
+            screenShake(power);
+          } catch {}
+        },
+        clickRipple: (x, y) => {
+          try {
+            fxRing(layer, x, y, 74, "#ffffff");
           } catch {}
         },
         getCursor: () => {
@@ -1758,6 +2079,13 @@ export function spawnStickman(opts) {
             stompAt(sx, sy, radius);
           } catch {}
         },
+        hitCursor: (x, y) => {
+          try {
+            return registerCursorHit(x, y, true);
+          } catch {
+            return false;
+          }
+        },
         cagePunch: () => {
           try {
             nudgeCage(Math.random() * 6 - 3);
@@ -1771,6 +2099,18 @@ export function spawnStickman(opts) {
         laserSweepAlong: (x1, y1, x2, y2) => {
           try {
             laserSweepAlong(x1, y1, x2, y2);
+          } catch {}
+        },
+        pickTussleTarget: (hx, hy, maxDist) => {
+          try {
+            return pickTussleTarget(hx, hy, maxDist);
+          } catch {
+            return null;
+          }
+        },
+        onTussleSlam: (x, y) => {
+          try {
+            slamCursor(x, y);
           } catch {}
         },
       });
@@ -1829,6 +2169,9 @@ export function spawnStickman(opts) {
     } catch {}
     try {
       cleanupCage();
+    } catch {}
+    try {
+      cleanupTussle();
     } catch {}
     try {
       onCageBreak((state) => {
@@ -1917,12 +2260,22 @@ export function despawnStickman() {
       cleanupCursorKill();
     } catch {}
     try {
+      resetLaserSfx();
+    } catch {}
+    try {
       cleanupCage();
+    } catch {}
+    try {
+      cleanupTussle();
     } catch {}
     try {
       if (actorRef) actorRef.destroy();
     } catch {}
     actorRef = null;
+    try {
+      if (weapons) weapons.clear();
+    } catch {}
+    weapons = null;
     try {
       const hitKeys = Array.from(hitTimers.keys());
       for (let i = 0; i < hitKeys.length && i < 50; i++) {

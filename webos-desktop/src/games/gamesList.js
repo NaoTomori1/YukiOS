@@ -19,6 +19,12 @@ export const appMap = {
     icon: "/static/icons/minecraft.webp",
     title: "Minecraft: Story Mode",
   },
+  ultrakillWebport: {
+    type: "game",
+    url: "https://cdn.jsdelivr.net/gh/isaidgg5/ukprerevamp@main/index.html",
+    icon: "/static/icons/ultrakill.webp",
+    title: "Ultrakill Webport",
+  },
   howToFish: {
     type: "game",
     url: "https://cdn.jsdelivr.net/gh/NaoTomori1/yukios-games@main/html/howToFish.html",

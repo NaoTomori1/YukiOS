@@ -3,7 +3,7 @@ import {
   spawnStickman,
   despawnStickman,
   onPhysicsHit,
-} from "./stickmanChaos.js";
+} from "./stickman/stickmanChaos.js";
 
 const GRAVITY = 0.6;
 const MAX_SPIN = 5;

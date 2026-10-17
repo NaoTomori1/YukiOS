@@ -524,6 +524,9 @@ export class FileSystemManager {
 
     const normalizeBytes = (data) => {
       if (!data) return new Uint8Array();
+      if (typeof data === "string") {
+        return new TextEncoder().encode(data);
+      }
       if (data instanceof Uint8Array) return data;
       if (data.buffer && typeof data.byteLength === "number") {
         return new Uint8Array(

@@ -1226,9 +1226,9 @@ html.win11-mode .context-menu,
 html.win11-mode .context-menu-glass,
 html.win11-mode #context-menu {
   border-radius: 8px;
-  background: rgba(36, 36, 36, 0.85);
-  -webkit-backdrop-filter: blur(20px);
-  backdrop-filter: blur(20px);
+  background: rgba(36, 36, 36, 0.6);
+  -webkit-backdrop-filter: saturate(1.8) blur(30px);
+  backdrop-filter: saturate(1.8) blur(30px);
   border: 1px solid rgba(255, 255, 255, 0.08);
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
   overflow: hidden;
@@ -1316,7 +1316,7 @@ html[data-theme="light"].win11-mode #context-menu,
 html[data-theme="light"].win11-mode .notification,
 html[data-theme="light"].win11-mode .calendar-popup,
 html[data-theme="light"].win11-mode #calendar-popup {
-  background: rgba(242, 242, 242, 0.92);
+  background: rgba(242, 242, 242, 0.7);
   border: 1px solid rgba(0, 0, 0, 0.06);
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2);
 }

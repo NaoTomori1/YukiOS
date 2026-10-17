@@ -197,10 +197,15 @@ export class SessionManager {
     const urlParams = new URLSearchParams(window.location.search);
     const steamParam = urlParams.get("steam");
     const deckParam = urlParams.get("deck");
-    const directBoot = steamParam || deckParam;
+    const redParam = urlParams.has("red");
+    const directBoot = steamParam || deckParam || redParam;
 
     if (directBoot) {
       if (deckParam) this.selectedSession = "Yuki Deck Mode";
+      if (redParam) this.selectedSession = "Yuki Desktop(Default)";
+
+      window.history.replaceState({}, document.title, window.location.pathname);
+
       this.currentSession = {
         name: os.storage.get(StorageKeys.username) || "Guest",
         key: os.storage.get(StorageKeys.userId) || this.ensureUserId(),

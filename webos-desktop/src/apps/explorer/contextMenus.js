@@ -599,7 +599,7 @@ export function showFileContextMenu(explorer, e, itemName, isFile, inst) {
     );
     menu.appendChild(
       item(
-        "Compress...",
+        "Compress to Zip file",
         async () => {
           await createArchiveFromItems(explorer, itemName, isFile, inst);
         },

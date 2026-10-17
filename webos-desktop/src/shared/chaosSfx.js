@@ -10,7 +10,7 @@ let lastWooobAt = 0;
 let lastGrabAt = 0;
 let lastLandAt = 0;
 
-function ensureContext() {
+export function ensureContext() {
   try {
     if (!contextRef) {
       const Ctor = window.AudioContext || window.webkitAudioContext;
@@ -33,7 +33,7 @@ function ensureContext() {
   }
 }
 
-function ensureNoiseBuffer(context) {
+export function ensureNoiseBuffer(context) {
   try {
     if (cachedNoise) {
       return cachedNoise;
@@ -51,7 +51,7 @@ function ensureNoiseBuffer(context) {
   }
 }
 
-function computeVolume(mixer, level) {
+export function computeVolume(mixer, level) {
   try {
     return mixer.masterVolume * mixer.systemVolume * level;
   } catch (err) {

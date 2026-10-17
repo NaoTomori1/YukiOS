@@ -1,4 +1,4 @@
-import { $$ } from "../framework.js";
+import { $$ } from "../../framework.js";
 export function getShardNodes() {
   let nodes = [];
   try {

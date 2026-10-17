@@ -1,14 +1,16 @@
 import { $, bindEvent, createElement } from "./domUtils.js";
 import { getEffectiveIcon } from "./iconPack.js";
-import { getContextMenuStyle } from "./contextMenuStyle.js";
+import { getContextMenuStyle, CM_STYLES } from "./contextMenuStyle.js";
 import { resolveIconUrl } from "./assetResolver.js";
 
 const MENU_ID = "context-menu";
 const bodySubmenus = [];
+let forcedCmStyle = null;
 
-function syncCmStyle() {
+function syncCmStyle(forced) {
   try {
-    document.documentElement.dataset.cmstyle = getContextMenuStyle();
+    document.documentElement.dataset.cmstyle =
+      forced || forcedCmStyle || getContextMenuStyle();
   } catch {}
 }
 
@@ -411,6 +413,17 @@ function createItemElement(text, onclick, icon) {
       iconImg.src = iconVal;
       iconImg.alt = "";
       el.appendChild(iconImg);
+    } else if (iconVal.startsWith("<svg")) {
+      const iconWrap = createElement("div");
+      iconWrap.className = "context-menu-item-icon-svg";
+      iconWrap.style.width = "16px";
+      iconWrap.style.textAlign = "center";
+      iconWrap.style.opacity = "0.7";
+      iconWrap.style.display = "inline-flex";
+      iconWrap.style.alignItems = "center";
+      iconWrap.style.justifyContent = "center";
+      iconWrap.innerHTML = iconVal;
+      el.appendChild(iconWrap);
     } else {
       const iconCls = iconVal.includes(" ") ? iconVal : `fas ${iconVal}`;
       const iconEl = createElement("i");
@@ -434,7 +447,8 @@ function createItemElement(text, onclick, icon) {
   return el;
 }
 
-export function showDynamicContextMenu(e, buildFn) {
+export function showDynamicContextMenu(e, buildFn, options = {}) {
+  forcedCmStyle = options.style || null;
   syncCmStyle();
   const menu = getMenu();
   if (!menu) return;
@@ -589,6 +603,18 @@ export function showDynamicContextMenu(e, buildFn) {
   menu.focus({ preventScroll: true });
   bindDismissal();
 }
+
+export function showYukiDynamicContextMenu(e, buildFn) {
+  const existing = getMenu();
+  if (existing) existing.remove();
+  const menu = createElement("div");
+  menu.id = MENU_ID;
+  menu.classList.add("context-menu-glass");
+  document.body.appendChild(menu);
+  showDynamicContextMenu(e, buildFn, { style: CM_STYLES.YUKIOS });
+  return menu;
+}
+
 export function showStartStyleMenu(e, buildFn) {
   const existing = $("#taskbar-context-menu");
   if (existing) existing.remove();
