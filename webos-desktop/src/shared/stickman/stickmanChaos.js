@@ -15,6 +15,11 @@ import {
 } from "./stickmanCursorKill.js";
 import { createWeaponSystem } from "./stickmanWeapons.js";
 import { resetLaserSfx } from "./stickmanLaserSfx.js";
+import {
+  setRageWallpaper,
+  clearRageWallpaper,
+  restoreWallpaper,
+} from "./stickmanWallpaper.js";
 import { fxRing, fxDust, screenShake, fxStreak, fxBlob } from "./stickmanFx.js";
 import {
   captureCage,
@@ -2113,6 +2118,12 @@ export function spawnStickman(opts) {
             slamCursor(x, y);
           } catch {}
         },
+        rage: (on) => {
+          try {
+            if (on) setRageWallpaper();
+            else clearRageWallpaper();
+          } catch {}
+        },
       });
     } catch {}
     try {
@@ -2261,6 +2272,9 @@ export function despawnStickman() {
     } catch {}
     try {
       resetLaserSfx();
+    } catch {}
+    try {
+      restoreWallpaper();
     } catch {}
     try {
       cleanupCage();

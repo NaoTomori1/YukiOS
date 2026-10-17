@@ -53,6 +53,7 @@ export class SessionManager {
     this.timeInterval = null;
     this.userHistory = this.loadUserHistory();
     this.sessionState = "login";
+    this.skipSetup = false;
     this.selectedUser = null;
     this.selectedSession =
       os.storage.get(StorageKeys.selectedSession) || "Yuki Desktop(Default)";
@@ -199,12 +200,11 @@ export class SessionManager {
     const deckParam = urlParams.get("deck");
     const redParam = urlParams.has("red");
     const directBoot = steamParam || deckParam || redParam;
+    if (directBoot) this.skipSetup = true;
 
     if (directBoot) {
       if (deckParam) this.selectedSession = "Yuki Deck Mode";
       if (redParam) this.selectedSession = "Yuki Desktop(Default)";
-
-      window.history.replaceState({}, document.title, window.location.pathname);
 
       this.currentSession = {
         name: os.storage.get(StorageKeys.username) || "Guest",
@@ -1763,6 +1763,7 @@ export class SessionManager {
     setTimeout(() => os.window.restoreSession(), 500);
 
     if (
+      !this.skipSetup &&
       !os.storage.get(StorageKeys.setupCompleted) &&
       this.selectedSession === "Yuki Desktop(Default)"
     ) {

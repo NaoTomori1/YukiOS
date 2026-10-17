@@ -750,6 +750,7 @@ export function createStickmanActor(layer, hooks) {
       next = options[Math.floor(Math.random() * options.length)];
     }
     mode = next;
+    callHook("rage", mode === "rage");
     const spans = {
       walk: [3600, 7000],
       run: [2400, 5000],
@@ -1798,7 +1799,8 @@ export function createStickmanActor(layer, hooks) {
         if (now >= cageUntil) chooseCageMode(now);
         const hanging = cageMode === "hang";
         const targetY = hanging ? cageRect.top + 7 : floorC;
-        posY += (targetY - posY) * ease(0.1, dt);
+        if (cageRect.held) posY = targetY;
+        else posY += (targetY - posY) * ease(0.5, dt);
         if (hanging) {
           posX = clamp(posX, minX, maxXc);
         } else {

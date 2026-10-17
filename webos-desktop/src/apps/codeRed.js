@@ -5,6 +5,10 @@ import {
   togglePhysicsChaos,
 } from "../shared/desktopPhysics.js";
 import { createCellCompanion } from "../shared/stickman/stickmanCellCompanion.js";
+import {
+  activateChaosWallpaper,
+  restoreWallpaper,
+} from "../shared/stickman/stickmanWallpaper.js";
 
 export class CodeRedApp extends BaseApp {
   constructor(services) {
@@ -128,10 +132,16 @@ export class CodeRedApp extends BaseApp {
       syncTimer = null;
       stopCompanion();
       this.openWindows.delete(winId);
+      try {
+        restoreWallpaper();
+      } catch {}
     });
     if (!lastActive) startCompanion();
     refresh();
     syncTimer = setInterval(syncState, 300);
+    try {
+      activateChaosWallpaper();
+    } catch {}
     if (opts.autoUnleash) {
       try {
         unleash();

@@ -33,7 +33,13 @@ export function isCaged() {
 export function getCageRect() {
   try {
     if (!cage) return null;
-    return { left: cage.x, top: cage.y, width: cage.w, height: cage.h };
+    return {
+      left: cage.x,
+      top: cage.y,
+      width: cage.w,
+      height: cage.h,
+      held: !!cage.held,
+    };
   } catch {
     return null;
   }

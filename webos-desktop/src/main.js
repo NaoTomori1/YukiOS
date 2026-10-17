@@ -223,6 +223,14 @@ async function start() {
   windowManager.restorePinnedItems();
   desktopPeekManager.setupPeekButton();
 
+  const queryString = window.location.search;
+  const urlParams = new URLSearchParams(queryString);
+  const game = urlParams.get("game");
+  const app = urlParams.get("app");
+  const swf = parseBool(urlParams.get("swf"));
+  const steamParam = urlParams.get("steam");
+  const redParam = urlParams.has("red");
+
   const sessionPromise = sessionManager.showLogin();
   await boot.hide();
   await sessionPromise;
@@ -238,14 +246,6 @@ async function start() {
     url.hostname = "yukios.netlify.app";
     location.replace(url.toString());
   }
-
-  const queryString = window.location.search;
-  const urlParams = new URLSearchParams(queryString);
-  const game = urlParams.get("game");
-  const app = urlParams.get("app");
-  const swf = parseBool(urlParams.get("swf"));
-  const steamParam = urlParams.get("steam");
-  const redParam = urlParams.has("red");
 
   const pathMatch = window.location.pathname.match(
     /^\/(app|game)\/(.+)\.html$/,
