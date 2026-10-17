@@ -5,9 +5,9 @@ import { playHit, playGrab } from "../chaosSfx.js";
 const NS = "http://www.w3.org/2000/svg";
 const TAU = Math.PI * 2;
 
-export const COMBO_CHANCE = 0.16;
-export const COMBO_ROLL_MS = 1600;
-export const COMBO_CD_MS = 10000;
+export const COMBO_CHANCE = 0.28;
+export const COMBO_ROLL_MS = 1400;
+export const COMBO_CD_MS = 7500;
 export const COMBO_MIN_DIST = 70;
 export const COMBO_MAX_DIST = 760;
 export const COMBO_RING = 86;

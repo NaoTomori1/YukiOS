@@ -14,13 +14,24 @@ import {
   isCursorDestroyed,
 } from "./stickmanCursorKill.js";
 import { createWeaponSystem } from "./stickmanWeapons.js";
+import { createSpearSystem } from "./stickmanSpear.js";
+import { createScytheSystem } from "./stickmanScythe.js";
 import { resetLaserSfx } from "./stickmanLaserSfx.js";
 import {
   setRageWallpaper,
   clearRageWallpaper,
   restoreWallpaper,
 } from "./stickmanWallpaper.js";
-import { fxRing, fxDust, screenShake, fxStreak, fxBlob } from "./stickmanFx.js";
+import { resetRealityRift } from "./stickmanRift.js";
+import {
+  fxRing,
+  fxDust,
+  screenShake,
+  fxStreak,
+  fxBlob,
+  fxNinjaSmoke,
+  fxSubstitutionLog,
+} from "./stickmanFx.js";
 import {
   captureCage,
   updateCage,
@@ -40,11 +51,16 @@ import { cleanupTussle } from "./stickmanTussle.js";
 let layer = null;
 let actorRef = null;
 let weapons = null;
+let spearSys = null;
+let scytheSys = null;
 let active = false;
 let frameId = null;
 let lastTime = 0;
 let cursorX = -9999;
 let cursorY = -9999;
+let cursorPin = null;
+let cursorKickX = 0;
+let cursorKickY = 0;
 let cursorSeen = false;
 let mouseHandler = null;
 let impactX = 0;
@@ -146,8 +162,60 @@ function isMenuOpen(menu) {
   }
 }
 
+function pinCursor(x, y, ms) {
+  cursorPin = { x: x, y: y, until: performance.now() + (ms || 2000) };
+  cursorKickX = 0;
+  cursorKickY = 0;
+  cursorX = x;
+  cursorY = y;
+}
+
+function launchCursor(fx, fy) {
+  cursorKickX += fx;
+  cursorKickY += fy;
+  if (cursorPin) cursorPin = null;
+}
+
+function updateCursorPhysics(dtSec) {
+  const now = performance.now();
+  if (cursorPin) {
+    if (now >= cursorPin.until) cursorPin = null;
+    else {
+      cursorX = cursorPin.x;
+      cursorY = cursorPin.y;
+      cursorKickX = 0;
+      cursorKickY = 0;
+    }
+  }
+  if (cursorKickX || cursorKickY) {
+    cursorX += cursorKickX * dtSec;
+    cursorY += cursorKickY * dtSec;
+    cursorKickX *= 0.86;
+    cursorKickY *= 0.86;
+    if (Math.abs(cursorKickX) < 0.02) cursorKickX = 0;
+    if (Math.abs(cursorKickY) < 0.02) cursorKickY = 0;
+    if (cursorX < 2) {
+      cursorX = 2;
+      cursorKickX = Math.abs(cursorKickX) * 0.5;
+    }
+    if (cursorX > window.innerWidth - 2) {
+      cursorX = window.innerWidth - 2;
+      cursorKickX = -Math.abs(cursorKickX) * 0.5;
+    }
+    if (cursorY < 2) {
+      cursorY = 2;
+      cursorKickY = Math.abs(cursorKickY) * 0.5;
+    }
+    if (cursorY > window.innerHeight - 2) {
+      cursorY = window.innerHeight - 2;
+      cursorKickY = -Math.abs(cursorKickY) * 0.5;
+    }
+  }
+}
+
 function onMouseMove(e) {
   try {
+    if (cursorPin) return;
     cursorX = e.clientX;
     cursorY = e.clientY;
     cursorSeen = true;
@@ -1983,6 +2051,15 @@ function loop(now) {
     try {
       if (weapons) weapons.update(dt, dtSec);
     } catch {}
+    try {
+      updateCursorPhysics(dtSec);
+    } catch {}
+    try {
+      if (spearSys) spearSys.update(now, dt, dtSec);
+    } catch {}
+    try {
+      if (scytheSys) scytheSys.update(now, dt, dtSec);
+    } catch {}
     updateSparks(dt, dtSec);
     updateDebris(dt);
     try {
@@ -2029,7 +2106,60 @@ export function spawnStickman(opts) {
       hitCursor: (x, y) => registerCursorHit(x, y, true),
       push: (x, y, r, force) => pushDebris(x, y, r, force),
       sfx: { hit: playHit, shatter: playShatter },
+      cutCage: (x, y, radius) => {
+        try {
+          const rect = getCageRect();
+          if (!rect) return false;
+          if (
+            x >= rect.left - radius &&
+            x <= rect.left + rect.width + radius &&
+            y >= rect.top - radius &&
+            y <= rect.top + rect.height + radius
+          ) {
+            nudgeCage(12);
+            playShatter();
+            spawnSparks(x, y, 16);
+            return true;
+          }
+        } catch {}
+        return false;
+      },
     });
+    const weaponCtx = {
+      getLayer: () => layer,
+      getTargets: () => getWeaponTargets(),
+      getFloor: () => getFloor(),
+      getCursor: () => ({ x: cursorX, y: cursorY, seen: cursorSeen }),
+      cursorDead: () => isCursorDestroyed(),
+      damage: (node, x, y) => {
+        impactX = x;
+        impactY = y;
+        damageTarget(node);
+        plantBurn(node, x, y);
+      },
+      hitCursor: (x, y) => registerCursorHit(x, y, true),
+      pinCursor: (x, y, ms) => pinCursor(x, y, ms),
+      launchCursor: (fx, fy) => launchCursor(fx, fy),
+      sparks: (x, y, n) => spawnSparks(x, y, n),
+      push: (x, y, r, force) => pushDebris(x, y, r, force),
+      rectOf: (node) => {
+        try {
+          if (node && node.getBoundingClientRect)
+            return node.getBoundingClientRect();
+        } catch {}
+        return null;
+      },
+    };
+    try {
+      spearSys = createSpearSystem(weaponCtx);
+    } catch {
+      spearSys = null;
+    }
+    try {
+      scytheSys = createScytheSystem(weaponCtx);
+    } catch {
+      scytheSys = null;
+    }
     try {
       actorRef = createStickmanActor(layer, {
         fire: (sx, sy, tx, ty) => {
@@ -2060,6 +2190,56 @@ export function spawnStickman(opts) {
         clickRipple: (x, y) => {
           try {
             fxRing(layer, x, y, 74, "#ffffff");
+          } catch {}
+        },
+        ninjaSmoke: (x, y) => {
+          try {
+            fxNinjaSmoke(layer, x, y);
+          } catch {}
+        },
+        electricBurst: (x, y) => {
+          try {
+            fxElectricSpark(layer, x, y, 10);
+          } catch {}
+        },
+        throwSpear: (sx, sy, tx, ty) => {
+          try {
+            if (spearSys) spearSys.throwSpear(sx, sy, tx, ty);
+          } catch {}
+        },
+        swingScythe: (x, y, ang, full) => {
+          try {
+            if (scytheSys)
+              scytheSys.startSwing(performance.now(), x, y, ang, full);
+          } catch {}
+        },
+        nearestSpear: (x, y) => {
+          try {
+            return spearSys ? spearSys.nearestGraspable(x, y) : null;
+          } catch {
+            return null;
+          }
+        },
+        vaultSpear: (s) => {
+          try {
+            return spearSys ? spearSys.vaultFrom(s, performance.now()) : null;
+          } catch {
+            return null;
+          }
+        },
+        pinCursor: (x, y, ms) => {
+          try {
+            pinCursor(x, y, ms);
+          } catch {}
+        },
+        launchCursor: (fx, fy) => {
+          try {
+            launchCursor(fx, fy);
+          } catch {}
+        },
+        substitutionLog: (x, y) => {
+          try {
+            fxSubstitutionLog(layer, x, y);
           } catch {}
         },
         getCursor: () => {
@@ -2277,6 +2457,9 @@ export function despawnStickman() {
       restoreWallpaper();
     } catch {}
     try {
+      resetRealityRift();
+    } catch {}
+    try {
       cleanupCage();
     } catch {}
     try {
@@ -2290,6 +2473,17 @@ export function despawnStickman() {
       if (weapons) weapons.clear();
     } catch {}
     weapons = null;
+    try {
+      if (spearSys) spearSys.clear();
+    } catch {}
+    spearSys = null;
+    try {
+      if (scytheSys) scytheSys.clear();
+    } catch {}
+    scytheSys = null;
+    cursorPin = null;
+    cursorKickX = 0;
+    cursorKickY = 0;
     try {
       const hitKeys = Array.from(hitTimers.keys());
       for (let i = 0; i < hitKeys.length && i < 50; i++) {

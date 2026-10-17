@@ -23,6 +23,11 @@
             "Red attacks with homing rockets, bouncing grenades, and spinning knives, unleashing explosions that leave scorch marks across your desktop."
           ],
           [
+            "fas fa-bolt",
+            "Reality Cutter Blade",
+            "Red unleashes flying dimensional slashes that sever projectiles, cage bars, and shatter objects with cross explosions."
+          ],
+          [
             "fas fa-hand-pointer",
             "Cursor Wrestling, Slams, and Recovery",
             "Red grabs your cursor when it gets close and starts wrestling with it. Shake your mouse hard to break free before Red slams the cursor three times. Three hits within four seconds shatter your cursor into six pieces. The pieces regroup at the center of the screen and gradually heal until the cursor is restored."
@@ -756,22 +761,6 @@
             "fa-trophy",
             "New Gaming Pane",
             "Explore new Gaming settings for ruffle and steam"
-          ]
-        ]
-      },
-      {
-        "icon": "fa-share-nodes",
-        "title": "Themes United",
-        "items": [
-          [
-            "fa-palette",
-            "Theme Hub Merged",
-            "Theme app is removed, create and manage themes directly inside Settings appearance."
-          ],
-          [
-            "fa-star",
-            "Featured Themes",
-            "Apply curated themes from the new featured grid."
           ]
         ]
       },

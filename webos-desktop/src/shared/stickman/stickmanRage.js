@@ -9,6 +9,7 @@ export const RAGE_ESCAPE_WINDOW_MS = 2400;
 export const RAGE_ESCAPE_TRAVEL = 150;
 export const RAGE_ESCAPE_CD_MS = 1500;
 export const RAGE_DECAY_MS = 40000;
+export const RAGE_DURATION_MS = 15000;
 export const RAGE_SLAM_MIN_DIST = 150;
 export const RAGE_SLAM_MAX_DIST = 680;
 export const RAGE_SLAM_CD_MS = 8000;
@@ -338,6 +339,8 @@ export function createRageSystem(host) {
   let level = 0;
   let glow = 0;
   let levelAt = 0;
+  let lockedUntil = 0;
+  let rageUntil = 0;
   let engaged = false;
   let engagedAt = 0;
   let travel = 0;
@@ -390,13 +393,44 @@ export function createRageSystem(host) {
     } catch {}
   }
 
+  function cool() {
+    level = 0;
+    levelAt = 0;
+    engaged = false;
+    travel = 0;
+    rageUntil = 0;
+    escapeAt = -1e9;
+    for (let i = 0; i < waves.length; i++) {
+      try {
+        waves[i].el.remove();
+      } catch {}
+    }
+    waves = [];
+    if (vignette) {
+      try {
+        vignette.style.opacity = "0";
+      } catch {}
+    }
+  }
+
+  function lock(now, ms) {
+    lockedUntil = now + ms;
+    cool();
+  }
+
+  function isLocked(now) {
+    return now < lockedUntil;
+  }
+
   function registerEscape(now, x, y) {
+    if (isLocked(now)) return false;
     if (now - escapeAt < RAGE_ESCAPE_CD_MS) return false;
     escapeAt = now;
     engaged = false;
     travel = 0;
     level = Math.min(RAGE_MAX_LEVEL, level + 1);
     levelAt = now;
+    rageUntil = now + RAGE_DURATION_MS;
     roar(x, y);
     return true;
   }
@@ -590,7 +624,9 @@ export function createRageSystem(host) {
 
   function update(now, dt, cx, cy) {
     const step = clamp(dt || 1, 0.2, 3);
-    if (level > 0 && now - levelAt > RAGE_DECAY_MS) {
+    if (rageUntil && now >= rageUntil) {
+      cool();
+    } else if (level > 0 && now - levelAt > RAGE_DECAY_MS) {
       level -= 1;
       levelAt = now;
     }
@@ -701,6 +737,10 @@ export function createRageSystem(host) {
     landing,
     trySlam,
     registerEscape,
+    cool,
+    lock,
+    isLocked,
+    rageTimeLeft: (now) => (rageUntil ? Math.max(0, rageUntil - now) : 0),
     destroy,
     level: () => level,
     intensity: () => glow,

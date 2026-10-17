@@ -1,3 +1,5 @@
+import { openRealityRift } from "./stickmanRift.js";
+
 const MAX_FX = 90;
 const MAX_STAINS = 44;
 
@@ -406,4 +408,220 @@ export function fxStuckBlade(node, x, y, deg) {
     } catch {}
   }, 9000);
   return el;
+}
+
+export function fxElectricSpark(layer, x, y, count) {
+  if (!layer || !layer.isConnected) return;
+  const n = Math.min(count || 8, 18);
+  for (let i = 0; i < n; i++) {
+    const size = 2 + Math.random() * 2.5;
+    const ang = (i / n) * Math.PI * 2 + (Math.random() - 0.5) * 0.8;
+    const reach = 18 + Math.random() * 28;
+    const node = box(
+      x,
+      y,
+      size,
+      "border-radius:50%;background:radial-gradient(circle,#e8f8ff 0%,#40b0ff 55%,rgba(64,160,255,0) 80%);",
+    );
+    run(
+      layer,
+      node,
+      [
+        { transform: "translate(0px,0px) scale(1)", opacity: 1 },
+        {
+          transform:
+            "translate(" +
+            f(Math.cos(ang) * reach) +
+            "px," +
+            f(Math.sin(ang) * reach) +
+            "px) scale(0.2)",
+          opacity: 0,
+        },
+      ],
+      {
+        duration: 180 + Math.random() * 120,
+        easing: "ease-out",
+        fill: "forwards",
+      },
+    );
+  }
+}
+
+export function fxEnergyBurst(layer, x, y, color, radius) {
+  if (!layer || !layer.isConnected) return;
+  const r = radius || 80;
+  fxRing(layer, x, y, r, color || "#9060ff");
+  fxRing(layer, x, y, r * 0.5, "#ffffff");
+  const size = r * 0.7;
+  const node = box(
+    x,
+    y,
+    size,
+    "border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.95) 0%," +
+      (color || "rgba(144,96,255,.8)") +
+      " 35%,rgba(80,0,200,0) 70%);",
+  );
+  run(
+    layer,
+    node,
+    [
+      { transform: "scale(.1)", opacity: 1 },
+      { transform: "scale(.7)", opacity: 0.8, offset: 0.4 },
+      { transform: "scale(1.1)", opacity: 0 },
+    ],
+    { duration: 380, easing: "ease-out", fill: "forwards" },
+  );
+  for (let i = 0; i < 5; i++) {
+    const ang = (i / 5) * Math.PI * 2;
+    const ds = 3 + Math.random() * 3;
+    const reach = r * (0.4 + Math.random() * 0.5);
+    const debris = box(
+      x,
+      y,
+      ds,
+      "border-radius:50%;background:" + (color || "#9060ff") + ";",
+    );
+    run(
+      layer,
+      debris,
+      [
+        { transform: "translate(0px,0px) scale(1)", opacity: 1 },
+        {
+          transform:
+            "translate(" +
+            f(Math.cos(ang) * reach) +
+            "px," +
+            f(Math.sin(ang) * reach) +
+            "px) scale(0.1)",
+          opacity: 0,
+        },
+      ],
+      {
+        duration: 400 + Math.random() * 200,
+        easing: "ease-out",
+        fill: "forwards",
+      },
+    );
+  }
+}
+
+export function fxChargeParticle(layer, ox, oy, tx, ty, color) {
+  if (!layer || !layer.isConnected) return;
+  const node = box(
+    ox,
+    oy,
+    3,
+    "border-radius:50%;background:" + (color || "#a0e8ff") + ";",
+  );
+  run(
+    layer,
+    node,
+    [
+      { transform: "translate(0px,0px) scale(1)", opacity: 0.9 },
+      {
+        transform:
+          "translate(" + f(tx - ox) + "px," + f(ty - oy) + "px) scale(0.15)",
+        opacity: 0,
+      },
+    ],
+    {
+      duration: 200 + Math.random() * 100,
+      easing: "ease-in",
+      fill: "forwards",
+    },
+  );
+}
+
+export function fxNinjaSmoke(layer, x, y) {
+  if (!layer || !layer.isConnected) return;
+  fxRing(layer, x, y, 64, "rgba(220,220,230,.7)");
+  for (let i = 0; i < 9; i++) {
+    const size = 18 + Math.random() * 18;
+    const node = box(
+      x + (Math.random() - 0.5) * 16,
+      y + (Math.random() - 0.5) * 24,
+      size,
+      "border-radius:50%;background:radial-gradient(circle,rgba(240,240,245,.95) 0%,rgba(160,160,170,.6) 50%,rgba(100,100,110,0) 75%);",
+    );
+    const dx = (Math.random() - 0.5) * 52;
+    const dy = -16 - Math.random() * 32;
+    run(
+      layer,
+      node,
+      [
+        { transform: "translate(0px,0px) scale(0.35)", opacity: 0.95 },
+        {
+          transform:
+            "translate(" +
+            f(dx) +
+            "px," +
+            f(dy) +
+            "px) scale(" +
+            (1.5 + Math.random() * 0.8).toFixed(2) +
+            ")",
+          opacity: 0,
+        },
+      ],
+      {
+        duration: 480 + Math.random() * 260,
+        easing: "cubic-bezier(0.1, 0.8, 0.3, 1)",
+        fill: "forwards",
+      },
+    );
+  }
+}
+
+export function fxSubstitutionLog(layer, x, y) {
+  if (!layer || !layer.isConnected) return;
+  const node = document.createElement("div");
+  node.style.cssText =
+    "position:absolute;pointer-events:none;z-index:4;left:" +
+    f(x - 9) +
+    "px;top:" +
+    f(y - 20) +
+    "px;width:18px;height:40px;border-radius:6px;background:linear-gradient(90deg,#5a3618 0%,#8b5a2b 35%,#6f421b 70%,#46270e 100%);box-shadow:inset 0 4px 0 #9c6c39,0 4px 10px rgba(0,0,0,.5);";
+  run(
+    layer,
+    node,
+    [
+      { transform: "translate(0px,0px) rotate(0deg) scale(1)", opacity: 1 },
+      {
+        transform:
+          "translate(" +
+          f((Math.random() - 0.5) * 16) +
+          "px,8px) rotate(" +
+          (Math.random() < 0.5 ? 14 : -14) +
+          "deg) scale(0.95)",
+        opacity: 0,
+        offset: 0.7,
+      },
+      {
+        transform: "translate(0px,16px) rotate(22deg) scale(0.8)",
+        opacity: 0,
+      },
+    ],
+    { duration: 850, easing: "ease-out", fill: "forwards" },
+  );
+}
+
+export function fxRealityRift(layer, x, y, ang) {
+  if (!layer || !layer.isConnected) return;
+  openRealityRift(x, y, ang);
+  try {
+    const body = document.body;
+    if (body && body.animate) {
+      body.animate(
+        [
+          { filter: "none" },
+          {
+            filter:
+              "invert(0.1) drop-shadow(-3px 0 0 rgba(255,0,0,0.6)) drop-shadow(3px 0 0 rgba(120,200,255,0.5))",
+            offset: 0.3,
+          },
+          { filter: "none" },
+        ],
+        { duration: 340, easing: "ease-out" },
+      );
+    }
+  } catch {}
 }

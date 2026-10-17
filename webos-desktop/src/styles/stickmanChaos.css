@@ -721,3 +721,289 @@ html[data-theme="light"] .stk-cursor-hand {
 html[data-theme="light"] .stk-jet-flame {
   filter: drop-shadow(0 0 6px var(--stk-flame-outer));
 }
+
+.stk-rift-space {
+  position: fixed;
+  inset: -70px;
+  z-index: -3;
+  pointer-events: none;
+  background-color: #000;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.18s ease;
+  will-change: transform;
+}
+
+.stk-rift-space-live {
+  opacity: 1;
+  visibility: visible;
+  animation: stk-rift-stars-drift 24s linear infinite;
+}
+
+.stk-rift-rim {
+  position: fixed;
+  width: 300px;
+  height: 300px;
+  z-index: -2;
+  pointer-events: none;
+  transform-origin: 50% 50%;
+  mix-blend-mode: screen;
+  will-change: transform, opacity;
+}
+
+.stk-rift-rim svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.stk-rift-blade {
+  transform-box: view-box;
+  transform-origin: 50% 50%;
+}
+
+.stk-rift-blade-right {
+  transform: rotate(var(--blade-r, 0deg));
+}
+
+.stk-rift-blade-left {
+  transform: rotate(var(--blade-l, 0deg));
+}
+
+.stk-rift-rim-glow {
+  fill: none;
+  stroke: rgba(214, 150, 255, 0.85);
+  stroke-width: 0.075;
+  filter: blur(10px);
+}
+
+.stk-rift-rim-core {
+  fill: none;
+  stroke: rgba(255, 252, 255, 0.95);
+  stroke-width: 0.02;
+}
+
+@keyframes stk-rift-stars-drift {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(-46px, -34px, 0);
+  }
+}
+
+.stk-bolt {
+  pointer-events: none;
+}
+
+.stk-bolt-corona {
+  stroke: rgba(255, 30, 50, 0.15);
+  stroke-width: 14;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  filter: blur(8px);
+  animation: stk-bolt-flicker 0.07s infinite alternate;
+}
+
+.stk-bolt-glow {
+  stroke: rgba(255, 50, 70, 0.7);
+  stroke-width: 5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  filter: blur(3px);
+  animation: stk-bolt-flicker 0.05s infinite alternate-reverse;
+}
+
+.stk-bolt-core {
+  stroke: #fff0f2;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  filter: drop-shadow(0 0 4px rgba(255, 80, 100, 1))
+    drop-shadow(0 0 8px rgba(255, 40, 60, 0.8));
+}
+
+.stk-bolt-arc {
+  stroke: rgba(255, 120, 140, 0.5);
+  stroke-width: 1.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 4 6;
+  filter: blur(1px);
+  animation: stk-bolt-flicker 0.09s infinite alternate;
+}
+
+@keyframes stk-bolt-flicker {
+  from {
+    opacity: 0.7;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.stk-freeze-flash {
+  position: fixed;
+  inset: 0;
+  z-index: 2147482900;
+  pointer-events: none;
+  background: rgba(255, 255, 255, 0.9);
+  opacity: 0;
+}
+
+.stk-freeze-flash-live {
+  opacity: 1;
+}
+
+.stk-spear {
+  pointer-events: none;
+}
+
+.stk-spear-aura {
+  stroke: rgba(100, 210, 255, 0.25);
+  stroke-width: 18;
+  stroke-linecap: round;
+  filter: blur(8px);
+}
+
+.stk-spear-shaft {
+  stroke: rgba(160, 230, 255, 0.65);
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-dasharray: 8 4;
+}
+
+.stk-spear-blade {
+  stroke: rgba(210, 245, 255, 0.95);
+  stroke-width: 4.2;
+  stroke-linecap: round;
+  filter: drop-shadow(0 0 6px rgba(80, 200, 255, 1))
+    drop-shadow(0 0 16px rgba(40, 160, 255, 0.75));
+}
+
+.stk-spear-core {
+  stroke: #ffffff;
+  stroke-width: 1.4;
+  stroke-linecap: round;
+  opacity: 0.9;
+}
+
+.stk-spear-tip {
+  stroke: #c8f0ff;
+  stroke-width: 2.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: none;
+  filter: drop-shadow(0 0 8px rgba(80, 200, 255, 1))
+    drop-shadow(0 0 18px rgba(40, 160, 255, 0.85));
+}
+
+.stk-spear-guard {
+  stroke: rgba(120, 210, 255, 0.85);
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  filter: drop-shadow(0 0 5px rgba(80, 180, 255, 0.9));
+}
+
+.stk-spear-stuck {
+  opacity: 0.95;
+  animation: stk-spear-settle 0.4s ease-out;
+}
+
+.stk-spear-trap {
+  opacity: 1;
+  animation: stk-spear-pulse 0.8s ease-in-out infinite;
+}
+
+.stk-spear-trap .stk-spear-aura {
+  stroke: rgba(255, 90, 25, 0.3);
+}
+
+.stk-spear-trap .stk-spear-blade {
+  stroke: #ffb070;
+  filter: drop-shadow(0 0 8px rgba(255, 95, 25, 1))
+    drop-shadow(0 0 20px rgba(255, 50, 0, 0.75));
+}
+
+.stk-spear-trap .stk-spear-core {
+  stroke: #fff4e0;
+}
+
+.stk-spear-trap .stk-spear-tip {
+  stroke: #ffcc88;
+  filter: drop-shadow(0 0 10px rgba(255, 95, 20, 1))
+    drop-shadow(0 0 22px rgba(255, 45, 0, 0.85));
+}
+
+.stk-spear-trap .stk-spear-guard {
+  stroke: rgba(255, 130, 50, 0.95);
+  filter: drop-shadow(0 0 6px rgba(255, 95, 20, 0.9));
+}
+
+.stk-scythe {
+  pointer-events: none;
+}
+
+.stk-scythe-vacuum {
+  fill: rgba(130, 30, 220, 0.16);
+  stroke: rgba(190, 110, 255, 0.35);
+  stroke-width: 1.5;
+  filter: blur(5px);
+}
+
+.stk-scythe-pole {
+  stroke: rgba(190, 140, 255, 0.8);
+  stroke-width: 3.5;
+  stroke-linecap: round;
+  filter: drop-shadow(0 0 4px rgba(160, 70, 255, 0.8));
+}
+
+.stk-scythe-edge {
+  fill: none;
+  stroke: rgba(245, 220, 255, 0.8);
+  stroke-width: 2.8;
+  stroke-linecap: round;
+  filter: blur(1.5px);
+}
+
+.stk-scythe-blade {
+  fill: rgba(85, 12, 170, 0.65);
+  stroke: #f3e5ff;
+  stroke-width: 3.2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  filter: drop-shadow(0 0 12px rgba(180, 85, 255, 1))
+    drop-shadow(0 0 26px rgba(130, 45, 235, 0.75));
+}
+
+.stk-scythe-vortex {
+  pointer-events: none;
+}
+
+.stk-vortex-ring {
+  fill: rgba(120, 35, 230, 0.22);
+  stroke: rgba(220, 175, 255, 0.95);
+  stroke-width: 2.8;
+  stroke-linecap: round;
+  filter: drop-shadow(0 0 10px rgba(175, 80, 255, 1))
+    drop-shadow(0 0 22px rgba(110, 25, 215, 0.75));
+}
+
+@keyframes stk-spear-settle {
+  from {
+    opacity: 0.2;
+  }
+  to {
+    opacity: 0.95;
+  }
+}
+
+@keyframes stk-spear-pulse {
+  0%,
+  100% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
+}

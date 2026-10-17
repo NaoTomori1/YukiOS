@@ -6,6 +6,9 @@ import {
   fxDust,
   screenShake,
   fxStuckBlade,
+  fxElectricSpark,
+  fxEnergyBurst,
+  fxRealityRift,
 } from "./stickmanFx.js";
 
 const ROCKET_TURN = 0.07;
@@ -16,6 +19,10 @@ const GRENADE_FLIGHT = 46;
 const KNIFE_SPEED = 15;
 const BLAST_RADIUS = 96;
 const MAX_SHOTS = 16;
+const LIGHTNING_LIFE = 0.11;
+const ORB_SPEED_MAX = 11;
+const ORB_TURN = 0.06;
+const ORB_RADIUS = 85;
 
 function clampV(v, a, b) {
   return v < a ? a : v > b ? b : v;
@@ -211,20 +218,118 @@ export function createWeaponSystem(ctx) {
   function makeKnife(layer, sx, sy, tx, ty) {
     const el = createElement("div", { className: "stk-weapon-shot" });
     el.style.cssText =
-      "position:absolute;pointer-events:none;width:15px;height:5px;clip-path:polygon(0 50%,24% 0,100% 34%,100% 66%,24% 100%);background:linear-gradient(90deg,#aeb4c0,#f6f8fc);";
+      "position:absolute;pointer-events:none;width:13px;height:13px;clip-path:polygon(50% 0%,62% 38%,100% 50%,62% 62%,50% 100%,38% 62%,0% 50%,38% 38%);background:radial-gradient(circle,#ffffff 0%,#d0d6e2 40%,#545b69 100%);filter:drop-shadow(0 0 4px rgba(220,230,255,0.7));";
     layer.appendChild(el);
-    const dir = Math.atan2(ty - sy, tx - sx) + (Math.random() - 0.5) * 0.1;
+    const dir = Math.atan2(ty - sy, tx - sx) + (Math.random() - 0.5) * 0.08;
     return {
       kind: "knife",
       el,
       x: sx,
       y: sy,
-      vx: Math.cos(dir) * KNIFE_SPEED,
-      vy: Math.sin(dir) * KNIFE_SPEED,
+      vx: Math.cos(dir) * (KNIFE_SPEED + 2),
+      vy: Math.sin(dir) * (KNIFE_SPEED + 2),
       dir,
       ang: dir,
-      spinRate: (Math.random() < 0.5 ? -1 : 1) * 0.5,
+      spinRate: (Math.random() < 0.5 ? -1 : 1) * 0.75,
       flying: 0,
+      age: 0,
+    };
+  }
+
+  function explodeLightning(x, y) {
+    const layer = host();
+    try {
+      ctx.sparks(x, y, 12);
+    } catch {}
+    try {
+      ctx.sfx.shatter();
+    } catch {}
+    if (layer) {
+      fxElectricSpark(layer, x, y, 14);
+      fxRing(layer, x, y, 72, "#a0e8ff");
+      fxRing(layer, x, y, 36, "#ffffff");
+    }
+    screenShake(0.28);
+    const hit = hitTarget(x, y);
+    if (hit) {
+      try {
+        ctx.damage(hit.node, x, y);
+      } catch {}
+      try {
+        ctx.sparks(x, y, 6);
+      } catch {}
+    }
+    const c = cursor();
+    if (c && Math.hypot(c.x - x, c.y - y) < 30) {
+      try {
+        ctx.hitCursor(c.x, c.y);
+      } catch {}
+    }
+  }
+
+  function makeLightning(layer, sx, sy, tx, ty) {
+    const dist = Math.max(1, Math.hypot(tx - sx, ty - sy));
+    const ang = Math.atan2(ty - sy, tx - sx);
+    const el = createElement("div", { className: "stk-weapon-shot" });
+    el.style.cssText =
+      "position:absolute;pointer-events:none;height:3px;width:" +
+      dist.toFixed(1) +
+      "px;background:linear-gradient(90deg,rgba(180,230,255,0) 0%,#c0e8ff 12%,#ffffff 50%,#c0e8ff 88%,rgba(180,230,255,0) 100%);clip-path:polygon(0 33%,8% 0,14% 60%,24% 15%,32% 70%,44% 10%,52% 65%,64% 5%,72% 60%,84% 20%,92% 55%,100% 33%,100% 67%,92% 45%,84% 80%,72% 40%,64% 95%,52% 35%,44% 90%,32% 30%,24% 85%,14% 40%,8% 100%,0 67%);box-shadow:0 0 8px 2px rgba(120,200,255,0.9);";
+    layer.appendChild(el);
+    el.style.left = sx.toFixed(1) + "px";
+    el.style.top = sy.toFixed(1) + "px";
+    el.style.transformOrigin = "0 50%";
+    el.style.transform =
+      "rotate(" + ((ang * 180) / Math.PI).toFixed(1) + "deg)";
+    return {
+      kind: "lightning",
+      el,
+      x: sx,
+      y: sy,
+      tx,
+      ty,
+      ang,
+      life: LIGHTNING_LIFE,
+      age: 0,
+    };
+  }
+
+  function makeOrb(layer, sx, sy, tx, ty) {
+    const el = createElement("div", { className: "stk-weapon-shot" });
+    el.style.cssText =
+      "position:absolute;pointer-events:none;width:16px;height:16px;border-radius:50%;background:radial-gradient(circle,#ffffff 0%,#9060ff 35%,#4020aa 65%,rgba(40,0,120,0) 80%);box-shadow:0 0 14px 5px rgba(140,60,255,0.9);";
+    layer.appendChild(el);
+    return {
+      kind: "orb",
+      el,
+      x: sx,
+      y: sy,
+      tx,
+      ty,
+      ang: Math.atan2(ty - sy, tx - sx),
+      speed: 3,
+      trail: 0,
+      age: 0,
+    };
+  }
+
+  function makeRealityCutter(layer, sx, sy, tx, ty) {
+    const el = createElement("div", { className: "stk-weapon-shot" });
+    el.style.cssText =
+      "position:absolute;pointer-events:none;width:44px;height:7px;background:linear-gradient(90deg,rgba(0,0,0,0) 0%,#050102 20%,#ff1028 50%,#050102 80%,rgba(0,0,0,0) 100%);box-shadow:0 0 14px 4px rgba(255,10,30,0.9),0 0 2px 1px #fff;clip-path:polygon(0 50%,20% 0,80% 0,100% 50%,80% 100%,20% 100%);filter:drop-shadow(0 0 8px #ff0022);";
+    layer.appendChild(el);
+    const ang = Math.atan2(ty - sy, tx - sx);
+    const isX = Math.hypot(tx - sx, ty - sy) < 400 && Math.random() < 0.45;
+    fxRealityRift(layer, sx, sy, ang);
+    return {
+      kind: "cutter",
+      el,
+      x: sx,
+      y: sy,
+      ang,
+      isX,
+      speed: 13,
+      riftCd: 0,
       age: 0,
     };
   }
@@ -236,6 +341,9 @@ export function createWeaponSystem(ctx) {
     if (kind === "rocket") s = makeRocket(layer, sx, sy, tx, ty);
     else if (kind === "grenade") s = makeGrenade(layer, sx, sy, tx, ty);
     else if (kind === "knife") s = makeKnife(layer, sx, sy, tx, ty);
+    else if (kind === "lightning") s = makeLightning(layer, sx, sy, tx, ty);
+    else if (kind === "orb") s = makeOrb(layer, sx, sy, tx, ty);
+    else if (kind === "cutter") s = makeRealityCutter(layer, sx, sy, tx, ty);
     if (!s) return;
     shots.push(s);
     place(s);
@@ -352,6 +460,121 @@ export function createWeaponSystem(ctx) {
     return null;
   }
 
+  function stepLightning(s, dt, dtSec) {
+    s.life -= dtSec;
+    try {
+      s.el.style.opacity = (0.7 + Math.random() * 0.3).toFixed(2);
+    } catch {}
+    if (s.life <= 0) {
+      explodeLightning(s.tx, s.ty);
+      return "gone";
+    }
+    return null;
+  }
+
+  function stepOrb(s, dt, dtSec) {
+    const layer = host();
+    const c = cursor();
+    if (c) {
+      const want = Math.atan2(c.y - s.y, c.x - s.x);
+      const diff = wrap(want - s.ang);
+      s.ang += clampV(diff, -ORB_TURN * dt, ORB_TURN * dt);
+    } else {
+      const want = Math.atan2(s.ty - s.y, s.tx - s.x);
+      s.ang += clampV(wrap(want - s.ang), -ORB_TURN * dt, ORB_TURN * dt);
+    }
+    s.speed = Math.min(ORB_SPEED_MAX, s.speed + 0.22 * dt);
+    s.x += Math.cos(s.ang) * s.speed * dt;
+    s.y += Math.sin(s.ang) * s.speed * dt;
+    s.age += dtSec;
+    s.trail -= dt;
+    if (s.trail <= 0 && layer) {
+      s.trail = 1.4;
+      fxSmoke(layer, s.x, s.y, 0.4);
+    }
+    place(s);
+    if (s.age > 2.8) return "gone";
+    if (
+      s.x < -60 ||
+      s.x > window.innerWidth + 60 ||
+      s.y < -60 ||
+      s.y > window.innerHeight + 60
+    )
+      return "gone";
+    if (s.y >= floorLine()) return "orbBoom";
+    const c2 = cursor();
+    if (c2 && Math.hypot(c2.x - s.x, c2.y - s.y) < 24) return "orbBoom";
+    if (hitTarget(s.x, s.y)) return "orbBoom";
+    if (Math.hypot(s.tx - s.x, s.ty - s.y) < 14) return "orbBoom";
+    return null;
+  }
+
+  function stepRealityCutter(s, dt, dtSec) {
+    const layer = host();
+    s.x += Math.cos(s.ang) * s.speed * dt;
+    s.y += Math.sin(s.ang) * s.speed * dt;
+    s.age += dtSec;
+    s.riftCd -= dt;
+    if (s.riftCd <= 0 && layer) {
+      s.riftCd = 4.5;
+      fxRealityRift(layer, s.x, s.y, s.ang);
+    }
+    for (let j = shots.length - 1; j >= 0; j--) {
+      const other = shots[j];
+      if (
+        other &&
+        other !== s &&
+        (other.kind === "rocket" ||
+          other.kind === "knife" ||
+          other.kind === "grenade")
+      ) {
+        if (Math.hypot(other.x - s.x, other.y - s.y) < 32) {
+          try {
+            if (other.el) other.el.remove();
+          } catch {}
+          shots.splice(j, 1);
+          try {
+            ctx.sparks(s.x, s.y, 8);
+          } catch {}
+          screenShake(0.18);
+        }
+      }
+    }
+    place(s);
+    if (s.age > 2.6) return "gone";
+    if (
+      s.x < -80 ||
+      s.x > window.innerWidth + 80 ||
+      s.y < -80 ||
+      s.y > window.innerHeight + 80
+    ) {
+      return "gone";
+    }
+    try {
+      if (typeof ctx.cutCage === "function" && ctx.cutCage(s.x, s.y, 40)) {
+        if (s.isX) return "xBoom";
+      }
+    } catch {}
+    const c = cursor();
+    if (c && Math.hypot(c.x - s.x, c.y - s.y) < 28) {
+      try {
+        ctx.hitCursor(c.x, c.y);
+        ctx.sparks(s.x, s.y, 10);
+      } catch {}
+      return s.isX ? "xBoom" : "gone";
+    }
+    const hit = hitTarget(s.x, s.y);
+    if (hit) {
+      try {
+        ctx.damage(hit.node, s.x, s.y);
+        ctx.sparks(s.x, s.y, 10);
+        screenShake(0.25);
+      } catch {}
+      return s.isX ? "xBoom" : "gone";
+    }
+    return null;
+  }
+
   function update(dt, dtSec) {
     for (let i = shots.length - 1; i >= 0; i--) {
       const s = shots[i];
@@ -359,6 +582,9 @@ export function createWeaponSystem(ctx) {
       try {
         if (s.kind === "rocket") verdict = stepRocket(s, dt, dtSec);
         else if (s.kind === "grenade") verdict = stepGrenade(s, dt, dtSec);
+        else if (s.kind === "lightning") verdict = stepLightning(s, dt, dtSec);
+        else if (s.kind === "orb") verdict = stepOrb(s, dt, dtSec);
+        else if (s.kind === "cutter") verdict = stepRealityCutter(s, dt, dtSec);
         else verdict = stepKnife(s, dt, dtSec);
       } catch {
         verdict = "gone";
@@ -366,11 +592,79 @@ export function createWeaponSystem(ctx) {
       if (!verdict) continue;
       const x = s.x;
       const y = s.y;
+      const isX = s.isX;
       removeShot(i);
       if (verdict === "boom") {
         try {
           explode(x, y, BLAST_RADIUS, s.kind === "rocket" ? 1 : 0.8);
         } catch {}
+      } else if (
+        verdict === "xBoom" ||
+        (verdict === "gone" && isX && Math.random() < 0.5)
+      ) {
+        const layer = host();
+        try {
+          ctx.sparks(x, y, 22);
+          ctx.sfx.shatter();
+        } catch {}
+        if (layer) {
+          fxRealityRift(layer, x, y, Math.PI / 4);
+          fxRealityRift(layer, x, y, -Math.PI / 4);
+          fxRing(layer, x, y, 140, "#ff1028");
+          fxRing(layer, x, y, 70, "#000000");
+          fxFireball(layer, x, y, 48);
+        }
+        screenShake(0.5);
+        const list = targets();
+        for (let j = 0; j < list.length; j++) {
+          const r = rectOf(list[j]);
+          if (!r) continue;
+          const cx = clampV(x, r.left, r.right);
+          const cy = clampV(y, r.top, r.bottom);
+          if (Math.hypot(cx - x, cy - y) > 90) continue;
+          try {
+            ctx.damage(list[j], cx, cy);
+          } catch {}
+        }
+        try {
+          ctx.push(x, y, 120, 6);
+        } catch {}
+        const cur = cursor();
+        if (cur && Math.hypot(cur.x - x, cur.y - y) < 80) {
+          try {
+            ctx.hitCursor(cur.x, cur.y);
+          } catch {}
+        }
+      } else if (verdict === "orbBoom") {
+        const layer = host();
+        try {
+          ctx.sparks(x, y, 14);
+        } catch {}
+        try {
+          ctx.sfx.shatter();
+        } catch {}
+        if (layer) fxEnergyBurst(layer, x, y, "#9060ff", ORB_RADIUS);
+        screenShake(0.3);
+        const list = targets();
+        for (let j = 0; j < list.length; j++) {
+          const r = rectOf(list[j]);
+          if (!r) continue;
+          const cx = clampV(x, r.left, r.right);
+          const cy = clampV(y, r.top, r.bottom);
+          if (Math.hypot(cx - x, cy - y) > ORB_RADIUS) continue;
+          try {
+            ctx.damage(list[j], cx, cy);
+          } catch {}
+        }
+        try {
+          ctx.push(x, y, ORB_RADIUS * 1.4, 4);
+        } catch {}
+        const c = cursor();
+        if (c && Math.hypot(c.x - x, c.y - y) < ORB_RADIUS + 12) {
+          try {
+            ctx.hitCursor(c.x, c.y);
+          } catch {}
+        }
       }
     }
   }

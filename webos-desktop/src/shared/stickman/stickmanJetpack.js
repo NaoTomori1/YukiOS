@@ -345,7 +345,7 @@ export function createJetpack(host) {
 
     if (!state.aiming && !laserBusy && now >= nextShoot) {
       let fired = false;
-      if (beginLaser && Math.random() < 0.2) {
+      if (beginLaser) {
         try {
           fired = !!beginLaser(now);
         } catch {}

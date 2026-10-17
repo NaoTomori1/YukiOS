@@ -1,9 +1,25 @@
-import { $, $$, bindEvent, createElement } from "../../framework.js";
+import {
+  $,
+  $$,
+  bindEvent,
+  createElement,
+  toggleClass,
+} from "../../framework.js";
 import { playGrab, playHit, playLand, playWooob } from "../chaosSfx.js";
 import { isCursorDestroyed } from "./stickmanCursorKill.js";
 import { createLaserWeapon } from "./stickmanLaser.js";
 import { createTussleController } from "./stickmanTussle.js";
 import { POSE_KEYS, pose } from "./stickmanRig.js";
+import {
+  createElectricRig,
+  hideElectric,
+  paintElectric,
+} from "./stickmanElectric.js";
+import {
+  createFreezeSystem,
+  FREEZE_MIN_MS,
+  FREEZE_MAX_MS,
+} from "./stickmanFreeze.js";
 import { moonwalkPose, dodgePose } from "./stickmanMoves.js";
 import {
   createJetpack,
@@ -47,8 +63,18 @@ const DODGE_CD_MS = 6000;
 const DODGE_HOP = 8.4;
 const DODGE_PUSH = 8;
 const DODGE_POSE_MS = 420;
-const LASER_CD_MIN = 26000;
-const LASER_CD_MAX = 44000;
+const RAGE_LOCK_MS = 180000;
+const LASER_CD_MIN = 15000;
+const LASER_CD_MAX = 28000;
+const LASER_ROLL = 0.3;
+const JET_LASER_ROLL = 0.12;
+const SHOOT_GAP_MIN = 1200;
+const SHOOT_GAP_MAX = 2600;
+const BOLT_DASH_SPEED = 2.6;
+const BOLT_ACTIVE_MS = 620;
+const BOLT_CD_MS = 5200;
+const BOLT_CHANCE = 0.5;
+const BOLT_IMPACT_SPEED = 6;
 const GHOST_COUNT = 3;
 const BLADE = "#d8dde6";
 const WEAPON_WINDUP = {
@@ -57,6 +83,11 @@ const WEAPON_WINDUP = {
   grenade: [300, 400],
   knife: [220, 320],
   sword: [320, 420],
+  cutter: [280, 380],
+  lightning: [280, 400],
+  orb: [480, 680],
+  spear: [340, 460],
+  scythe: [240, 340],
 };
 
 let platCache = [];
@@ -570,12 +601,21 @@ export function createStickmanActor(layer, hooks) {
   let dodgeUntil = 0;
   let dodgeCooldownAt = 0;
   let laserCooldownAt = 0;
+  let rageLockedUntil = 0;
+  let cursorWasDead = false;
   let jet = null;
   let jetRig = null;
   let jetLevel = 0;
   let jetNozzle = null;
   let landImpact = 0;
   let rageSys = null;
+  let boltRig = null;
+  let boltUntil = 0;
+  let boltCdAt = 0;
+  let boltLastX = 0;
+  let boltLastY = 0;
+  let freezeSys = null;
+  let freezeFlash = null;
   let combo = null;
   let comboOpacity = 1;
   let slamArmed = false;
@@ -742,6 +782,7 @@ export function createStickmanActor(layer, hooks) {
       if (Math.random() < 0.14) next = "moonwalk";
       if (Math.random() < 0.3) dir = -dir;
     }
+    if (now < rageLockedUntil && next === "rage") next = "punch";
     const pool = modePool(near ? dist : Infinity);
     const allowed = next === "moonwalk" || pool.indexOf(next) !== -1;
     if (next === mode || !allowed) {
@@ -766,7 +807,7 @@ export function createStickmanActor(layer, hooks) {
       mode === "walk"
         ? rand(0.7, 1.1)
         : mode === "run"
-          ? rand(1.6, 2.3)
+          ? rand(1.3, 1.85)
           : mode === "creep"
             ? rand(0.4, 0.6)
             : mode === "moonwalk"
@@ -782,7 +823,7 @@ export function createStickmanActor(layer, hooks) {
       Math.random() < fury
     ) {
       mode = "run";
-      modeSpeed = rand(1.6, 2.3);
+      modeSpeed = rand(1.3, 1.85);
     }
     modeUntil = now + (modeUntil - now) * (1 - 0.4 * fury);
     rageBoth = Math.random() < 0.5;
@@ -841,11 +882,26 @@ export function createStickmanActor(layer, hooks) {
       dist = Math.hypot(target.x - (posX + 14), target.y - (posY + 30));
     } catch {}
     const r = Math.random();
-    if (dist < SWORD_REACH + 40 && r < 0.65) return "sword";
-    if (r < 0.32) return "gun";
-    if (r < 0.5) return "rocket";
+    if (dist < SWORD_REACH + 40 && r < 0.45) return "sword";
+    if (r < 0.48) return "gun";
+    if (r < 0.6) return "rocket";
     if (r < 0.7) return "grenade";
-    return "knife";
+    if (r < 0.8) return "knife";
+    if (r < 0.8) return "cutter";
+    if (r < 0.85) return "lightning";
+    if (r < 0.89) return "orb";
+    if (dist > 220) return "spear";
+    return "scythe";
+  }
+
+  function stampShootGap(now) {
+    nextShootAt = now + rand(SHOOT_GAP_MIN, SHOOT_GAP_MAX);
+  }
+
+  function abortAim(now) {
+    aiming = false;
+    fireAt = null;
+    stampShootGap(now);
   }
 
   function beginAim(now) {
@@ -854,7 +910,7 @@ export function createStickmanActor(layer, hooks) {
     weapon = chooseWeapon(aimTarget);
     aimStand = weapon === "sword" ? true : Math.random() < 0.6;
     if (weapon === "gun")
-      shotsLeft = Math.random() < 0.3 ? 2 + Math.floor(Math.random() * 2) : 1;
+      shotsLeft = Math.random() < 0.65 ? 2 + Math.floor(Math.random() * 3) : 1;
     else if (weapon === "knife") shotsLeft = 2 + Math.floor(Math.random() * 2);
     else shotsLeft = 1;
     const span = WEAPON_WINDUP[weapon];
@@ -865,12 +921,14 @@ export function createStickmanActor(layer, hooks) {
     slashUntil = 0;
     slashDone = true;
     tipTrail = [];
+    stampShootGap(now);
   }
 
   function tryLaser(now) {
     try {
       if (!laser) return false;
       if (now < laserCooldownAt) return false;
+      if (laser.isBusy()) return false;
       if (!laser.begin(now, pickTarget())) return false;
       laserCooldownAt = now + rand(LASER_CD_MIN, LASER_CD_MAX);
       return true;
@@ -899,6 +957,44 @@ export function createStickmanActor(layer, hooks) {
         slashDone = false;
         tipTrail = [];
         recoilSpan = 200;
+      } else if (weapon === "cutter") {
+        callHook("fireWeapon", "cutter", sx, sy, aimTarget.x, aimTarget.y);
+        slashStart = now;
+        slashUntil = now + 180;
+        slashDone = true;
+        tipTrail = [];
+        flashUntil = now + 140;
+        recoilSpan = 240;
+        callHook("shake", 0.35);
+      } else if (weapon === "lightning") {
+        callHook("fireWeapon", "lightning", sx, sy, aimTarget.x, aimTarget.y);
+        flashUntil = now + 120;
+        recoilSpan = 160;
+        callHook("shake", 0.22);
+      } else if (weapon === "orb") {
+        callHook("fireWeapon", "orb", sx, sy, aimTarget.x, aimTarget.y);
+        flashUntil = now + 180;
+        recoilSpan = 280;
+        callHook("shake", 0.18);
+      } else if (weapon === "spear") {
+        const px = posX + 18;
+        const py = posY + 24;
+        callHook("throwSpear", px, py, aimTarget.x, aimTarget.y);
+        recoilSpan = 300;
+        callHook("shake", 0.26);
+      } else if (weapon === "scythe") {
+        const full = Math.random() < 0.32;
+        const cx = posX + BOX_W / 2;
+        const cy = posY + BOX_H * 0.45;
+        const toX = aimTarget.x - cx;
+        const toY = aimTarget.y - cy;
+        callHook("swingScythe", cx, cy, Math.atan2(toY, toX), full);
+        slashStart = now;
+        slashUntil = now + (full ? 320 : 240);
+        slashDone = true;
+        tipTrail = [];
+        recoilSpan = full ? 300 : 190;
+        callHook("shake", full ? 0.42 : 0.24);
       } else {
         callHook("fireWeapon", weapon, sx, sy, aimTarget.x, aimTarget.y);
         recoilSpan = 220;
@@ -927,7 +1023,7 @@ export function createStickmanActor(layer, hooks) {
     }
     if (fireAt === null && now >= aimEndAt) {
       aiming = false;
-      nextShootAt = now + rand(1200, 2600);
+      stampShootGap(now);
     }
   }
 
@@ -954,8 +1050,7 @@ export function createStickmanActor(layer, hooks) {
       flying = false;
       velX = 0;
       velY = 0;
-      aiming = false;
-      fireAt = null;
+      abortAim(performance.now());
       pendingJump = 0;
       grabDX = posX - e.clientX;
       grabDY = posY - e.clientY;
@@ -1027,6 +1122,33 @@ export function createStickmanActor(layer, hooks) {
         if (isCursorDestroyed()) return;
       } catch {}
       callHook("clickRipple", e.clientX, e.clientY);
+      const spear = callHook("nearestSpear", e.clientX, e.clientY);
+      if (spear && now >= dodgeCooldownAt) {
+        const vault = callHook("vaultSpear", spear);
+        if (vault) {
+          dodgeCooldownAt = now + DODGE_CD_MS;
+          dodgeUntil = now + DODGE_POSE_MS;
+          abortAim(now);
+          pendingJump = 0;
+          try {
+            if (laser) laser.cancel();
+          } catch {}
+          const aimAng = Math.atan2(vault.y - cy, vault.x - cx);
+          const sp = 15.5;
+          velX = Math.cos(aimAng) * sp;
+          velY = Math.sin(aimAng) * sp - 6.5;
+          if (Math.abs(velX) > 0.5) dir = velX > 0 ? 1 : -1;
+          flying = true;
+          wasAir = true;
+          flipping = true;
+          spinRate = 0.13;
+          sq = 0.3;
+          sqV = 0.1;
+          callHook("ninjaSmoke", cx, cy);
+          playGrab();
+          return;
+        }
+      }
       if (now < dodgeCooldownAt || Math.random() > DODGE_CHANCE) {
         dir = dx === 0 ? dir : dx > 0 ? -1 : 1;
         sq = 0.26;
@@ -1042,8 +1164,7 @@ export function createStickmanActor(layer, hooks) {
       } catch {}
       const away = dx === 0 ? (Math.random() < 0.5 ? -1 : 1) : dx > 0 ? -1 : 1;
       dir = away;
-      aiming = false;
-      fireAt = null;
+      abortAim(now);
       pendingJump = 0;
       try {
         if (laser) laser.cancel();
@@ -1057,6 +1178,10 @@ export function createStickmanActor(layer, hooks) {
       sqV = 0.12;
       playGrab();
       callHook("dust", cx + away * 8, posY + BOX_H, 0.45);
+      callHook("ninjaSmoke", cx, cy);
+      if (Math.random() < 0.6) {
+        callHook("substitutionLog", cx, posY + BOX_H - 16);
+      }
     } catch {}
   }
 
@@ -1185,6 +1310,77 @@ export function createStickmanActor(layer, hooks) {
       pathOf([j.hip, j.neck]) +
       circlePath(j.headC)
     );
+  }
+
+  function setBolt(on) {
+    try {
+      if (on) {
+        parts.legB.setAttribute("opacity", "0");
+        parts.armB.setAttribute("opacity", "0");
+        parts.torso.setAttribute("opacity", "0");
+        parts.legA.setAttribute("opacity", "0");
+        parts.armA.setAttribute("opacity", "0");
+        parts.head.setAttribute("opacity", "0");
+      } else {
+        parts.legB.removeAttribute("opacity");
+        parts.armB.removeAttribute("opacity");
+        parts.torso.removeAttribute("opacity");
+        parts.legA.removeAttribute("opacity");
+        parts.armA.removeAttribute("opacity");
+        parts.head.removeAttribute("opacity");
+      }
+    } catch {}
+  }
+
+  function triggerFreeze(now, impact) {
+    ensureFreeze();
+    if (!freezeSys) return;
+    const power = clamp((impact || 0) / 16, 0, 1);
+    const ms = FREEZE_MIN_MS + (FREEZE_MAX_MS - FREEZE_MIN_MS) * power;
+    freezeSys.trigger(now, ms);
+    try {
+      if (!freezeFlash) {
+        freezeFlash = createElement("div", {
+          className: "stk-freeze-flash",
+        });
+        document.body.appendChild(freezeFlash);
+      }
+      toggleClass(freezeFlash, "stk-freeze-flash-live", true);
+    } catch {}
+  }
+
+  function endBolt(now) {
+    if (!boltUntil) return;
+    boltUntil = 0;
+    boltCdAt = now + BOLT_CD_MS;
+    setBolt(false);
+    hideElectric(boltRig);
+  }
+
+  function startBolt(now) {
+    boltUntil = now + BOLT_ACTIVE_MS;
+    setBolt(true);
+  }
+
+  function updateBolt(now, j) {
+    const dashX = Math.abs(posX - boltLastX);
+    const dashY = Math.abs(posY - boltLastY);
+    boltLastX = posX;
+    boltLastY = posY;
+    if (now >= boltUntil) {
+      if (boltUntil) endBolt(now);
+      else if (
+        now >= boltCdAt &&
+        (dashX >= BOLT_DASH_SPEED || dashY >= BOLT_DASH_SPEED) &&
+        Math.random() < BOLT_CHANCE
+      ) {
+        startBolt(now);
+      }
+    } else {
+      paintElectric(boltRig, j, 1);
+      if (dashY >= BOLT_IMPACT_SPEED || dashX >= BOLT_IMPACT_SPEED * 1.6)
+        endBolt(now);
+    }
   }
 
   function updateGhosts(j, pv) {
@@ -1364,6 +1560,77 @@ export function createStickmanActor(layer, hooks) {
         gunColor = BLADE;
         showGun = true;
         tip = st;
+      } else if (weapon === "cutter") {
+        const ct = { x: hand.x + fx * 24, y: hand.y + fy * 24 };
+        const cGuardA = {
+          x: hand.x + fx * 3.5 + px * 4.2,
+          y: hand.y + fy * 3.5 + py * 4.2,
+        };
+        const cGuardB = {
+          x: hand.x + fx * 3.5 - px * 4.2,
+          y: hand.y + fy * 3.5 - py * 4.2,
+        };
+        gunD = pathOf([hand, ct]) + pathOf([cGuardA, cGuardB]);
+        gunW = 3.6;
+        gunColor = "#ff182e";
+        showGun = true;
+        tip = ct;
+      } else if (weapon === "spear") {
+        const back = { x: hand.x - fx * 32, y: hand.y - fy * 32 };
+        const st = { x: hand.x + fx * 94, y: hand.y + fy * 94 };
+        const tipL = { x: st.x - fx * 16 + px * 7, y: st.y - fy * 16 + py * 7 };
+        const tipR = { x: st.x - fx * 16 - px * 7, y: st.y - fy * 16 - py * 7 };
+        const gA = { x: hand.x + px * 9, y: hand.y + py * 9 };
+        const gB = { x: hand.x - px * 9, y: hand.y - py * 9 };
+        gunD =
+          pathOf([back, hand, st]) +
+          pathOf([tipL, st, tipR]) +
+          pathOf([gA, gB]);
+        gunW = 3.2;
+        gunColor = "#92e2ff";
+        showGun = true;
+        tip = st;
+      } else if (weapon === "scythe") {
+        const poleEnd = { x: hand.x + fx * 64, y: hand.y + fy * 64 };
+        const poleBack = { x: hand.x - fx * 22, y: hand.y - fy * 22 };
+        const bladeA = {
+          x: poleEnd.x + px * 8 - fx * 6,
+          y: poleEnd.y + py * 8 - fy * 6,
+        };
+        const bladeB = {
+          x: poleEnd.x - fx * 10 + px * 60,
+          y: poleEnd.y - fy * 10 + py * 60,
+        };
+        const bladeC = {
+          x: poleEnd.x - fx * 36 + px * 14,
+          y: poleEnd.y - fy * 36 + py * 14,
+        };
+        gunD =
+          pathOf([poleBack, hand, poleEnd]) +
+          "M" +
+          bladeA.x.toFixed(1) +
+          " " +
+          bladeA.y.toFixed(1) +
+          "Q" +
+          (poleEnd.x - fx * 16 + px * 70).toFixed(1) +
+          " " +
+          (poleEnd.y - fy * 16 + py * 70).toFixed(1) +
+          " " +
+          bladeB.x.toFixed(1) +
+          " " +
+          bladeB.y.toFixed(1) +
+          "Q" +
+          (poleEnd.x - fx * 40 + px * 14).toFixed(1) +
+          " " +
+          (poleEnd.y - fy * 40 + py * 14).toFixed(1) +
+          " " +
+          bladeC.x.toFixed(1) +
+          " " +
+          bladeC.y.toFixed(1);
+        gunW = 3.6;
+        gunColor = "#d7a6ff";
+        showGun = true;
+        tip = bladeB;
       } else if (weapon === "grenade" && fireAt !== null) {
         showBall = true;
       }
@@ -1384,12 +1651,17 @@ export function createStickmanActor(layer, hooks) {
     } else {
       parts.ball.setAttribute("display", "none");
     }
-    if (now < slashUntil && weapon === "sword") {
+    if (now < slashUntil && (weapon === "sword" || weapon === "cutter")) {
       tipTrail.push({ x: tip.x, y: tip.y });
       while (tipTrail.length > 7) tipTrail.shift();
       if (tipTrail.length > 1) {
         parts.swoosh.setAttribute("display", "inline");
         parts.swoosh.setAttribute("d", pathOf(tipTrail));
+        parts.swoosh.style.stroke = weapon === "cutter" ? "#ff182e" : "#ffffff";
+        parts.swoosh.setAttribute(
+          "stroke-width",
+          weapon === "cutter" ? "4.5" : "3",
+        );
       }
     } else {
       if (tipTrail.length) tipTrail = [];
@@ -1406,6 +1678,7 @@ export function createStickmanActor(layer, hooks) {
       parts.flash.setAttribute("display", "none");
     }
     updateGhosts(j, pv);
+    updateBolt(now, j);
     try {
       if (laser) laser.render(now, posX, posY, j.headC);
     } catch {}
@@ -1480,7 +1753,7 @@ export function createStickmanActor(layer, hooks) {
       t.armAE = (weapon === "knife" ? 0.7 : 1.0) * pre;
       t.lean += 0.05 - 0.15 * pre + 0.2 * recoil;
       t.shout = fireAt === null ? 0.9 : 0.6;
-    } else if (weapon === "sword") {
+    } else if (weapon === "sword" || weapon === "cutter") {
       if (slashUntil === 0) {
         t.armA = ang - 2.5 + 0.08 * Math.sin(now * 0.02);
         t.armAE = 0.5;
@@ -1548,7 +1821,7 @@ export function createStickmanActor(layer, hooks) {
         tickAim: (now) => tickAim(now),
         beginLaser: (now) => {
           try {
-            if (Math.random() >= 0.1) return false;
+            if (Math.random() >= JET_LASER_ROLL) return false;
             return tryLaser(now);
           } catch {
             return false;
@@ -1564,9 +1837,7 @@ export function createStickmanActor(layer, hooks) {
           if (tussle) tussle.interrupt(now);
         },
         resetAim: () => {
-          aiming = false;
-          fireAt = null;
-          nextShootAt = performance.now() + rand(1200, 2600);
+          abortAim(performance.now());
         },
         canStart: (now) =>
           !koUntil &&
@@ -1611,6 +1882,17 @@ export function createStickmanActor(layer, hooks) {
     }
   }
 
+  function ensureFreeze() {
+    if (freezeSys) return;
+    try {
+      freezeSys = createFreezeSystem({
+        getLayer: () => layer,
+      });
+    } catch {
+      freezeSys = null;
+    }
+  }
+
   function buildCombo() {
     try {
       combo = createAfterimageCombo({
@@ -1642,9 +1924,7 @@ export function createStickmanActor(layer, hooks) {
           if (rageSys) rageSys.registerEscape(now, x, y);
         },
         resetAim: () => {
-          aiming = false;
-          fireAt = null;
-          nextShootAt = performance.now() + rand(1200, 2600);
+          abortAim(performance.now());
         },
         canStart: (now) =>
           !koUntil &&
@@ -1696,8 +1976,7 @@ export function createStickmanActor(layer, hooks) {
     wasAir = true;
     flipping = false;
     pendingJump = 0;
-    aiming = false;
-    fireAt = null;
+    abortAim(now);
     phase += 0.2 * dt;
     const k = ease(fr.snap ? 0.7 : 0.45, dt);
     for (let i = 0; i < POSE_KEYS.length; i++)
@@ -2071,6 +2350,11 @@ export function createStickmanActor(layer, hooks) {
         if (impact > 12) callHook("shake", clamp(impact / 30, 0.2, 0.6));
         if (rageSys && impact > 7)
           rageSys.landing(now, posX + BOX_W / 2, posY + BOX_H, impact, false);
+        if (boltUntil && impact > 4) {
+          endBolt(now);
+          callHook("electricBurst", posX + BOX_W / 2, posY + BOX_H);
+        }
+        if (impact > 10) triggerFreeze(now, impact);
         velX = 0;
         velY = 0;
         flying = false;
@@ -2080,7 +2364,7 @@ export function createStickmanActor(layer, hooks) {
         speed = 0;
         modeUntil = now + 1000;
         nextJumpAt = now + rand(1500, 3000);
-        nextShootAt = now + rand(1200, 2200);
+        stampShootGap(now);
         landUntil = now + 250;
         try {
           actor.classList.add("stk-land");
@@ -2129,8 +2413,10 @@ export function createStickmanActor(layer, hooks) {
     const tussling = !!(tussle && tussle.isActive());
     const laserBusy = laser ? laser.isBusy() : false;
     if (!aiming && !laserBusy && !tussling && now >= nextShootAt) {
-      if (Math.random() < 0.12 && tryLaser(now)) {
-        nextShootAt = now + rand(1200, 2600);
+      if (now < rageLockedUntil) {
+        beginAim(now);
+      } else if (Math.random() < LASER_ROLL && tryLaser(now)) {
+        stampShootGap(now);
       } else beginAim(now);
     }
     if (aiming) tickAim(now);
@@ -2466,8 +2752,7 @@ export function createStickmanActor(layer, hooks) {
           velY = 0;
           speed = 0;
           pendingJump = 0;
-          aiming = false;
-          fireAt = null;
+          abortAim(performance.now());
           try {
             if (laser) laser.cancel();
           } catch {}
@@ -2494,13 +2779,43 @@ export function createStickmanActor(layer, hooks) {
   function update(now, dt) {
     try {
       if (destroyed || !actor) return;
+      let cursorDead = false;
+      try {
+        cursorDead = isCursorDestroyed();
+      } catch {}
+      if (cursorDead && !cursorWasDead) {
+        cursorWasDead = true;
+        rageLockedUntil = now + RAGE_LOCK_MS;
+        if (rageSys) rageSys.lock(now, RAGE_LOCK_MS);
+        triggerFreeze(now, 16);
+        endBolt(now);
+        if (mode === "rage") {
+          mode = "idle";
+          modeUntil = now + rand(400, 900);
+          callHook("rage", false);
+        }
+      } else if (!cursorDead) {
+        cursorWasDead = false;
+      }
       const baseDt = clamp(dt || 1, 0.2, 3);
+      if (freezeSys) {
+        freezeSys.update(now);
+        if (freezeSys.isFrozen(now)) {
+          try {
+            if (freezeFlash)
+              toggleClass(freezeFlash, "stk-freeze-flash-live", false);
+          } catch {}
+          return;
+        }
+      }
       if (rageSys) {
         rageSys.observe(now, posX + BOX_W / 2, posY + BOX_H / 2);
         rageSys.update(now, baseDt, posX + BOX_W / 2, posY + BOX_H / 2);
       }
       if (combo) combo.observe(now);
-      frame(now, clamp(baseDt * (rageSys ? rageSys.timeScale() : 1), 0.2, 3));
+      const surge = freezeSys ? freezeSys.surge(now) : 1;
+      const scaled = baseDt * (rageSys ? rageSys.timeScale() : 1) * surge;
+      frame(now, clamp(scaled, 0.2, 9));
     } catch {}
   }
 
@@ -2581,10 +2896,7 @@ export function createStickmanActor(layer, hooks) {
       playHit();
     } catch {}
     try {
-      aiming = false;
-    } catch {}
-    try {
-      fireAt = null;
+      abortAim(performance.now());
     } catch {}
     try {
       introUntil = 0;
@@ -2616,6 +2928,7 @@ export function createStickmanActor(layer, hooks) {
         const pw = clamp(power || 8, 4, 14);
         velX = clamp((dx / m) * pw, -16, 16);
         velY = clamp((dy / m) * pw - 4, -16, 16);
+        callHook("ninjaSmoke", cx, cy);
       } catch {}
       try {
         flying = true;
@@ -2636,6 +2949,19 @@ export function createStickmanActor(layer, hooks) {
   }
   function destroy() {
     destroyed = true;
+    rageLockedUntil = 0;
+    cursorWasDead = false;
+    endBolt(performance.now());
+    try {
+      if (freezeSys) freezeSys.destroy();
+    } catch {}
+    try {
+      if (freezeFlash) {
+        freezeFlash.remove();
+      }
+    } catch {}
+    freezeFlash = null;
+    freezeSys = null;
     try {
       if (rageSys) rageSys.destroy();
     } catch {}
@@ -2787,6 +3113,8 @@ export function createStickmanActor(layer, hooks) {
       laser.parts.glow,
       parts.vein,
     ];
+    boltRig = createElectricRig();
+    order.push(boltRig.group);
     for (let i = 0; i < order.length; i++) parts.root.appendChild(order[i]);
     svg.appendChild(parts.ghostG);
     svg.appendChild(parts.root);
@@ -2842,7 +3170,7 @@ export function createStickmanActor(layer, hooks) {
     const now = performance.now();
     modeUntil = 0;
     nextJumpAt = now + rand(1500, 3000);
-    nextShootAt = now + rand(1200, 2200);
+    stampShootGap(now);
     nextTurnAt = now + rand(2000, 4000);
     nextGlanceAt = now;
     actor.style.left = posX + "px";
