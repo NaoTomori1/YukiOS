@@ -16,7 +16,7 @@ import {
   slamLandPose,
   RAGE_SLAM_LAND_MS,
 } from "./stickmanRage.js";
-import { createAfterimageCombo } from "./stickmanAfterimage.js";
+import { createAfterimageCombo } from "./stickmanAfterImage.js";
 
 const NS = "http://www.w3.org/2000/svg";
 const INK = "#ff0000";
