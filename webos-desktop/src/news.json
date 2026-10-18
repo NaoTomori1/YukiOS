@@ -1,5 +1,22 @@
 [
   {
+    "date": "October 18, 2026",
+    "label": "Red Rivals",
+    "sections": [
+      {
+        "icon": "fas fa-user-fight",
+        "title": "Code Red: Red Rivals",
+        "items": [
+          [
+            "fas fa-user-fight",
+            "Spawn a Red Rival",
+            "Press G in Controller Mode to summon a second red stickman that runs on its own AI."
+          ]
+        ]
+      }
+    ]
+  },
+  {
     "date": "October 17, 2026",
     "label": "YukiOS v5.2",
     "sections": [
@@ -21,6 +38,11 @@
             "fas fa-bomb",
             "Explosive Arsenal",
             "Red attacks with homing rockets, bouncing grenades, and spinning knives, unleashing explosions that leave scorch marks across your desktop."
+          ],
+          [
+            "fas fa-gamepad",
+            "Take Direct Control",
+            "Flip between AI MODE and CONTROLLER, then control stickman with the keyboard and mouse."
           ],
           [
             "fas fa-bolt",

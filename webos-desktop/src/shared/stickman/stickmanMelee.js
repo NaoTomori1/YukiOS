@@ -1,4 +1,3 @@
-import { createElement } from "../../framework.js";
 import { fxRing, fxDust, screenShake } from "./stickmanFx.js";
 
 const SPEAR_SPEED = 15;
@@ -10,6 +9,7 @@ const STUCK_LIFE_MS = 9000;
 const TRAP_ARM_MS = 620;
 const TRAP_RADIUS = 30;
 const TRAP_LIFE_MS = 7000;
+const SPEAR_HURT_CD = 30;
 const GRASP_RANGE = 58;
 const MAX_SPEARS = 5;
 
@@ -35,6 +35,7 @@ export function createSpearSystem(ctx) {
   const cursorDead = fn("cursorDead");
   const damage = fn("damage");
   const hitCursor = fn("hitCursor");
+  const hitStickman = fn("hitStickman");
   const pinCursor = fn("pinCursor");
   const sparks = fn("sparks");
   const push = fn("push");
@@ -184,7 +185,7 @@ export function createSpearSystem(ctx) {
     place(s);
   }
 
-  function throwSpear(sx, sy, tx, ty) {
+  function throwSpear(sx, sy, tx, ty, ownerPlayer) {
     const host = ensureRoot();
     if (!host) return null;
     const built = buildNode();
@@ -196,6 +197,8 @@ export function createSpearSystem(ctx) {
       x: sx,
       y: sy,
       ang: Math.atan2(ty - sy, tx - sx),
+      ownerPlayer: ownerPlayer === true,
+      hurtCd: 0,
       age: 0,
       armed: false,
     };
@@ -244,7 +247,13 @@ export function createSpearSystem(ctx) {
         s.y += Math.sin(s.ang) * SPEAR_SPEED * dt;
         s.age += dtSec;
         place(s);
-        const c = cursor();
+        s.hurtCd -= dt;
+        if (s.hurtCd <= 0 && hitStickman) {
+          try {
+            if (hitStickman(s.x, s.y, s.ownerPlayer)) s.hurtCd = SPEAR_HURT_CD;
+          } catch {}
+        }
+        const c = s.ownerPlayer ? cursor() : null;
         if (c && Math.hypot(c.x - s.x, c.y - s.y) < CURSOR_HIT_R) {
           if (pinCursor) {
             try {

@@ -331,6 +331,7 @@ export function createRageSystem(host) {
     host && typeof host[name] === "function" ? host[name] : null;
   const getLayer = fn("getLayer");
   const getCursor = fn("getCursor");
+  const getAnchor = fn("getAnchor");
   const cursorDead = fn("cursorDead");
   const hitCursor = fn("hitCursor");
   const stomp = fn("stomp");
@@ -371,6 +372,16 @@ export function createRageSystem(host) {
     } catch {
       return null;
     }
+  }
+
+  function anchor() {
+    try {
+      if (getAnchor) {
+        const a = getAnchor();
+        if (a && a.seen) return { x: a.x, y: a.y };
+      }
+    } catch {}
+    return cursor();
   }
 
   function floorY() {
@@ -436,7 +447,7 @@ export function createRageSystem(host) {
   }
 
   function observe(now, cx, cy) {
-    const c = cursor();
+    const c = anchor();
     if (!c) {
       engaged = false;
       lastCX = null;
@@ -515,7 +526,7 @@ export function createRageSystem(host) {
 
   function launchWave(x, y) {
     const lay = layer();
-    const c = cursor();
+    const c = anchor();
     if (!lay || !c || waves.length >= MAX_WAVES) return;
     const node = document.createElement("div");
     node.style.cssText = arcStyle(1);
@@ -570,9 +581,9 @@ export function createRageSystem(host) {
     const floor = floorY();
     for (let i = waves.length - 1; i >= 0; i--) {
       const w = waves[i];
-      const c = cursor();
-      if (c) {
-        const want = Math.atan2(c.y - w.y, c.x - w.x);
+      const a = anchor();
+      if (a) {
+        const want = Math.atan2(a.y - w.y, a.x - w.x);
         w.ang += clamp(norm(want - w.ang), -WAVE_TURN * dt, WAVE_TURN * dt);
       }
       w.speed = Math.min(WAVE_SPEED, w.speed + 0.7 * dt);
@@ -602,6 +613,7 @@ export function createRageSystem(host) {
           stomp(w.x, w.y, 18);
         } catch {}
       }
+      const c = cursor();
       if (c && Math.hypot(c.x - w.x, c.y - w.y) < WAVE_HIT_DIST) {
         try {
           if (hitCursor) hitCursor(c.x, c.y);
@@ -706,7 +718,7 @@ export function createRageSystem(host) {
     if (level < 1) return false;
     if (now < nextSlamAt || now < nextRollAt) return false;
     nextRollAt = now + RAGE_SLAM_ROLL_MS;
-    const c = cursor();
+    const c = anchor();
     if (!c) return false;
     const d = Math.hypot(c.x - cx, c.y - cy);
     if (d < RAGE_SLAM_MIN_DIST || d > RAGE_SLAM_MAX_DIST) return false;

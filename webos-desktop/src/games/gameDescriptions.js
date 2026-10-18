@@ -12,6 +12,8 @@ const APP_DESCRIPTIONS = APP_MANIFESTS.reduce((acc, manifest) => {
 export { APP_DESCRIPTIONS };
 
 export const descriptionMap = {
+  feedAndGrowFish:
+    "Feed and Grow: Fish is an aquarium simulator by F4 Games. Start with a small selection of bottom feeders, then earn new species through food, achievement, and bond upgrades. Every fish has its own appetite, temperament, and growth stage, so building a balanced tank takes patience as aggressive species chase the timid ones and the food chain turns on itself.",
   catGoesFishing:
     "Start out on an island with a basic rod. Progress into a radar-wielding master fisher-cat scouring the sea for the biggest and baddest fish. Each fish has unique behaviors that you will learn to exploit as you tailor your arsenal of fishing rods to suit your style of play. Mrrrow!",
   tabs: "Totally Accurate Battle Simulator (TABS) is a physics based ragdoll tactics game developed by Landfall Games. Players pit armies of historical, mythological, and absurd units - from mammoths and squires to laser wielding raptors - against each other in a series of wobbly, unpredictable battles where the engine's chaotic physics are just as important as strategy.",

@@ -1382,64 +1382,112 @@ export class DesktopUI {
   }
 
   setupInteractableSelection() {
-    let selectionState = { startX: 0, startY: 0, isActive: false };
+    let selectionState = {
+      startX: 0,
+      startY: 0,
+      isActive: false,
+      hasDragged: false,
+    };
     let selRafId = null;
-    let selLastX = 0,
-      selLastY = 0;
+    let selLastX = 0;
+    let selLastY = 0;
+    const dragThreshold = 4;
 
     const onMouseDown = (e) => {
       if (e.target !== this.desktop) return;
       if (e.target?.closest?.(".window")) return;
+
       this.lastFocusedContext = "desktop";
-      $$(".icon.selectable").forEach((i) => {
-        setStyle(i, { zIndex: "", opacity: "", cursor: "" });
-      });
-      selectionState = { startX: e.pageX, startY: e.pageY, isActive: true };
-      Object.assign(this.selectionBox.style, {
-        left: `${e.pageX}px`,
-        top: `${e.pageY}px`,
-        width: "0px",
-        height: "0px",
-        display: "block",
-      });
-      this.selectionManager.clear();
-      try {
-        clearShardSelection();
-      } catch {}
+
+      selectionState = {
+        startX: e.pageX,
+        startY: e.pageY,
+        isActive: true,
+        hasDragged: false,
+      };
+
+      selLastX = e.pageX;
+      selLastY = e.pageY;
+
       document.addEventListener("mousemove", onMouseMove);
       document.addEventListener("mouseup", onMouseUp);
     };
 
     const onMouseMove = (e) => {
       if (!selectionState.isActive) return;
+
       selLastX = e.pageX;
       selLastY = e.pageY;
+
+      const dx = e.pageX - selectionState.startX;
+      const dy = e.pageY - selectionState.startY;
+
+      if (!selectionState.hasDragged) {
+        if (Math.hypot(dx, dy) < dragThreshold) return;
+
+        selectionState.hasDragged = true;
+
+        $$(".icon.selectable").forEach((i) => {
+          setStyle(i, {
+            zIndex: "",
+            opacity: "",
+            cursor: "",
+          });
+        });
+
+        Object.assign(this.selectionBox.style, {
+          left: `${selectionState.startX}px`,
+          top: `${selectionState.startY}px`,
+          width: "0px",
+          height: "0px",
+          display: "block",
+        });
+
+        this.selectionManager.clear();
+
+        try {
+          clearShardSelection();
+        } catch {}
+      }
+
       Object.assign(this.selectionBox.style, {
-        width: `${Math.abs(e.pageX - selectionState.startX)}px`,
-        height: `${Math.abs(e.pageY - selectionState.startY)}px`,
+        width: `${Math.abs(dx)}px`,
+        height: `${Math.abs(dy)}px`,
         left: `${Math.min(e.pageX, selectionState.startX)}px`,
         top: `${Math.min(e.pageY, selectionState.startY)}px`,
       });
+
       if (selRafId) return;
+
       selRafId = requestAnimationFrame(() => {
         selRafId = null;
+
+        if (!selectionState.isActive || !selectionState.hasDragged) return;
+
         const boxRect = this.selectionBox.getBoundingClientRect();
+
         $$(".icon.selectable").forEach((icon) => {
           if (icon.style.display === "none") return;
+
           const r = icon.getBoundingClientRect();
           const overlaps = rectsIntersect(r, boxRect);
+
           if (overlaps) this.selectionManager.add(icon);
           else this.selectionManager.remove(icon);
         });
+
         try {
           const shards = getShardNodes();
+
           for (let i = 0; i < shards.length; i++) {
             try {
               const sr = shards[i].getBoundingClientRect();
+
               if (sr.width <= 0 || sr.height <= 0) {
                 setShardSelected(shards[i], false);
                 continue;
               }
+
               setShardSelected(shards[i], rectsIntersect(sr, boxRect));
             } catch {}
           }
@@ -1449,31 +1497,40 @@ export class DesktopUI {
 
     const onMouseUp = () => {
       if (!selectionState.isActive) return;
-      try {
-        if (!isCaged()) {
-          const actorNode = $(".stk-layer .stk-actor");
-          if (actorNode) {
-            const boxRect = this.selectionBox.getBoundingClientRect();
-            const ar = actorNode.getBoundingClientRect();
-            if (
-              ar.width > 0 &&
-              ar.height > 0 &&
-              boxRect.left <= ar.left &&
-              boxRect.top <= ar.top &&
-              boxRect.right >= ar.right &&
-              boxRect.bottom >= ar.bottom
-            )
-              captureCage({
-                left: boxRect.left,
-                top: boxRect.top,
-                width: boxRect.width,
-                height: boxRect.height,
-              });
+
+      if (selectionState.hasDragged) {
+        try {
+          if (!isCaged()) {
+            const actorNode = $(".stk-layer .stk-actor");
+
+            if (actorNode) {
+              const boxRect = this.selectionBox.getBoundingClientRect();
+              const ar = actorNode.getBoundingClientRect();
+
+              if (
+                ar.width > 0 &&
+                ar.height > 0 &&
+                boxRect.left <= ar.left &&
+                boxRect.top <= ar.top &&
+                boxRect.right >= ar.right &&
+                boxRect.bottom >= ar.bottom
+              ) {
+                captureCage({
+                  left: boxRect.left,
+                  top: boxRect.top,
+                  width: boxRect.width,
+                  height: boxRect.height,
+                });
+              }
+            }
           }
-        }
-      } catch {}
-      this.selectionBox.style.display = "none";
+        } catch {}
+
+        this.selectionBox.style.display = "none";
+      }
+
       selectionState.isActive = false;
+
       document.removeEventListener("mousemove", onMouseMove);
       document.removeEventListener("mouseup", onMouseUp);
     };

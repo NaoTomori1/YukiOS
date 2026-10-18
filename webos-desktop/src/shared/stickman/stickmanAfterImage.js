@@ -271,6 +271,7 @@ export function createAfterimageCombo(host) {
   const getFloor = fn("getFloor");
   const getLayer = fn("getLayer");
   const getCursor = fn("getCursor");
+  const getAnchor = fn("getAnchor");
   const cursorDead = fn("cursorDead");
   const getRage = fn("getRage");
   const currentPath = fn("currentPath");
@@ -313,6 +314,16 @@ export function createAfterimageCombo(host) {
     }
   }
 
+  function anchor() {
+    try {
+      if (getAnchor) {
+        const a = getAnchor();
+        if (a && a.seen) return { x: a.x, y: a.y };
+      }
+    } catch {}
+    return cursor();
+  }
+
   function rageNow() {
     try {
       return getRage ? clamp(getRage(), 0, 1) : 0;
@@ -322,7 +333,7 @@ export function createAfterimageCombo(host) {
   }
 
   function observe(now) {
-    const c = cursor();
+    const c = anchor();
     if (!c) {
       lastCX = null;
       return;
@@ -349,8 +360,10 @@ export function createAfterimageCombo(host) {
   }
 
   function aimAt(px, py, dirSign, c) {
+    if (!c || !Number.isFinite(c.x) || !Number.isFinite(c.y)) return 0;
     const dx = c.x - px;
     const dy = c.y - (py - 10);
+    if (!Number.isFinite(dx) || !Number.isFinite(dy)) return 0;
     return Math.atan2(dx * dirSign, dy);
   }
 
@@ -374,7 +387,7 @@ export function createAfterimageCombo(host) {
   function start(now) {
     const state = getState ? getState() : null;
     const lay = layer();
-    const c = cursor();
+    const c = anchor();
     if (!state || !lay || !c || !pathFor) return false;
     const rage = rageNow();
     const k = 1 / (1 + 0.45 * rage);
@@ -457,7 +470,7 @@ export function createAfterimageCombo(host) {
   function tryStart(now) {
     if (run || now < cdAt || now < nextRollAt) return false;
     nextRollAt = now + COMBO_ROLL_MS;
-    const c = cursor();
+    const c = anchor();
     const state = getState ? getState() : null;
     if (!c || !state) return false;
     const d = Math.hypot(
@@ -473,6 +486,26 @@ export function createAfterimageCombo(host) {
       if (!ok) return false;
     }
     if (Math.random() >= COMBO_CHANCE * (1 + 1.5 * rageNow())) return false;
+    return start(now);
+  }
+
+  function launch(now) {
+    if (run || now < cdAt) return false;
+    const c = anchor();
+    const state = getState ? getState() : null;
+    if (!c || !state || !c.seen) return false;
+    const d = Math.hypot(
+      c.x - (state.x + BOX_W / 2),
+      c.y - (state.y + BOX_H / 2),
+    );
+    if (d < COMBO_MIN_DIST) return false;
+    if (canStart) {
+      let ok = false;
+      try {
+        ok = !!canStart(now);
+      } catch {}
+      if (!ok) return false;
+    }
     return start(now);
   }
 
@@ -621,7 +654,8 @@ export function createAfterimageCombo(host) {
     if (d <= COMBO_REACH) {
       s.hit = true;
       try {
-        if (hitCursor) hitCursor(c.x, c.y);
+        const live = cursor();
+        if (live && hitCursor) hitCursor(live.x, live.y);
         fxRing(lay, c.x, c.y, 130, "#ff2a2a");
         screenShake(0.6);
       } catch {}
@@ -675,7 +709,7 @@ export function createAfterimageCombo(host) {
       finish(now);
       return null;
     }
-    const live = cursor();
+    const live = anchor();
     if (live) run.lastC = live;
     const c = run.lastC;
     if (now >= run.coilEnd && !run.vanished) vanish(lay);
@@ -789,9 +823,12 @@ export function createAfterimageCombo(host) {
   return {
     observe,
     tryStart,
+    launch,
     step,
     cancel,
     destroy,
     isActive,
+    cooldownLeft: (now) => Math.max(0, cdAt - now),
+    cooldownSpan: () => COMBO_CD_MS,
   };
 }

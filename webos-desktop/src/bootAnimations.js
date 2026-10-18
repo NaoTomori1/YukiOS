@@ -650,62 +650,6 @@ const gravityDrop = {
   },
 };
 
-const pixelate = {
-  id: "pixelate",
-  label: "Pixelate",
-  createExtra: (overlay) => {
-    const wrap = overlay.querySelector(".boot-logo-wrap");
-    const grid = createElement("div");
-    grid.className = "boot-pixel-grid";
-    wrap.prepend(grid);
-
-    const cols = 5;
-    const rows = 5;
-    const blocks = [];
-    for (let r = 0; r < rows; r++) {
-      for (let c = 0; c < cols; c++) {
-        const block = createElement("div");
-        block.className = "boot-pixel-block";
-        block.style.left = `${(c / cols) * 100}%`;
-        block.style.top = `${(r / rows) * 100}%`;
-        block.style.width = `${100 / cols}%`;
-        block.style.height = `${100 / rows}%`;
-        grid.appendChild(block);
-        blocks.push(block);
-      }
-    }
-    return { pixelGrid: grid, blocks };
-  },
-  setup: (els) => {
-    const g = gsap;
-    const { blocks } = els.extEls;
-    g.set(els.overlay, { opacity: 0 });
-    g.set(blocks, { scale: 1, opacity: 1 });
-    g.set(els.logo, { opacity: 0, scale: 0.5 });
-    g.set(els.letters, { opacity: 0 });
-    g.set(els.version, { opacity: 0 });
-  },
-  show: (tl, els) => {
-    const { blocks } = els.extEls;
-    tl.to(els.overlay, { opacity: 1, duration: 0.3, ease: "power2.out" })
-      .to(blocks, {
-        scale: 0,
-        opacity: 0,
-        duration: 0.6,
-        stagger: 0.02,
-        ease: "power2.inOut",
-      })
-      .to(els.logo, { opacity: 1, scale: 1, duration: 0.4 }, "-=0.15")
-      .to(els.letters, { opacity: 1, duration: 0.3, stagger: 0.05 }, "-=0.15")
-      .to(els.version, { opacity: 1, duration: 0.3 }, "-=0.1");
-  },
-  hide: (tl, els) => {
-    tl.to(els.letters, { opacity: 0, duration: 0.1, stagger: 0.02 }, "-=0.2")
-      .to(els.logo, { opacity: 0, duration: 0.1 }, "-=0.1")
-      .to(els.overlay, { opacity: 0, duration: 0.3 }, "-=0.15");
-  },
-};
-
 const typewriter = {
   id: "typewriter",
   label: "Typewriter",
@@ -784,7 +728,6 @@ export const BOOT_ANIMATIONS = [
   orbitalConverge,
   lightBeam,
   gravityDrop,
-  pixelate,
   typewriter,
 ];
 

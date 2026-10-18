@@ -1,6 +1,14 @@
 import "../../styles/stickmanChaos.css";
-import { $, $$, createElement, bindEvent } from "../../framework.js";
+import {
+  $,
+  $$,
+  createElement,
+  bindEvent,
+  os,
+  StorageKeys,
+} from "../../framework.js";
 import { createStickmanActor } from "./stickmanActor.js";
+import { createFoeSystem } from "./stickmanFoe.js";
 import {
   playShoot,
   playHit,
@@ -14,9 +22,13 @@ import {
   isCursorDestroyed,
 } from "./stickmanCursorKill.js";
 import { createWeaponSystem } from "./stickmanWeapons.js";
-import { createSpearSystem } from "./stickmanSpear.js";
-import { createScytheSystem } from "./stickmanScythe.js";
-import { resetLaserSfx } from "./stickmanLaserSfx.js";
+import { createSpearSystem } from "./stickmanMelee.js";
+import { resetLaserSfx } from "./stickmanLaser.js";
+import {
+  createAirWarp,
+  AIR_WARP_LEAD_MS,
+  AIR_WARP_RADIUS,
+} from "./stickmanAirWarp.js";
 import {
   setRageWallpaper,
   clearRageWallpaper,
@@ -47,12 +59,32 @@ import {
   clearShardSelection,
 } from "./stickmanSelection.js";
 import { cleanupTussle } from "./stickmanTussle.js";
+import { createAmmoRack } from "./stickmanPlayerAmmo.js";
+import {
+  createControlsGuide,
+  createPlayerHud,
+  createPlayerInput,
+  createRivalHint,
+} from "./stickmanPlayerUi.js";
 
 let layer = null;
+const MELEE_SLACK = 46;
+const BODY_SEPARATION = 30;
+
 let actorRef = null;
+
+function syncFoeHud() {
+  try {
+    if (!playerHud || typeof playerHud.setFoeRank !== "function") return;
+    const alive = !!(foeSys && foeSys.isAlive());
+    playerHud.setFoeRank(alive ? foeSys.getProfile() : null);
+  } catch {}
+}
+let foeSys = null;
 let weapons = null;
 let spearSys = null;
-let scytheSys = null;
+let airWarp = null;
+let warpReleaseTimer = null;
 let active = false;
 let frameId = null;
 let lastTime = 0;
@@ -83,6 +115,13 @@ let dragSamples = [];
 let dragMoveHandler = null;
 let dragUpHandler = null;
 let physicsHitHandler = null;
+let controlMode = "ai";
+let playerInput = null;
+let playerRack = null;
+let playerGuide = null;
+let playerHud = null;
+let playerHint = null;
+const controlListeners = new Set();
 
 function releaseDragGroup() {
   try {
@@ -163,6 +202,7 @@ function isMenuOpen(menu) {
 }
 
 function pinCursor(x, y, ms) {
+  if (!cursorDamageAllowed()) return;
   cursorPin = { x: x, y: y, until: performance.now() + (ms || 2000) };
   cursorKickX = 0;
   cursorKickY = 0;
@@ -171,6 +211,7 @@ function pinCursor(x, y, ms) {
 }
 
 function launchCursor(fx, fy) {
+  if (!cursorDamageAllowed()) return;
   cursorKickX += fx;
   cursorKickY += fy;
   if (cursorPin) cursorPin = null;
@@ -928,13 +969,13 @@ function shatterElement(el, hitX, hitY) {
       return false;
     }
     if (!rect || rect.width <= 0 || rect.height <= 0) return false;
-    let cols = 3;
-    let rows = 2;
+    let cols = 2;
+    let rows = 1;
     try {
-      cols = Math.max(2, Math.min(4, Math.round(rect.width / 220)));
-      rows = Math.max(1, Math.min(3, Math.round(rect.height / 220)));
+      cols = Math.max(2, Math.min(3, Math.round(rect.width / 300)));
+      rows = Math.max(1, Math.min(2, Math.round(rect.height / 300)));
       let guard = 0;
-      while (cols * rows > 12 && guard < 10) {
+      while (cols * rows > 6 && guard < 10) {
         if (cols > 2 && cols >= rows) cols = cols - 1;
         else if (rows > 1) rows = rows - 1;
         else break;
@@ -1599,9 +1640,9 @@ function slashAt(cx, cy, reach, dirSign) {
     }
   } catch {}
   try {
-    if (cursorSeen && !isCursorDestroyed()) {
+    if (cursorSeen && !isCursorDestroyed() && cursorDamageAllowed()) {
       if (Math.hypot(cursorX - fx, cursorY - cy) <= radius) {
-        registerCursorHit(cursorX, cursorY);
+        hitCursorAt(cursorX, cursorY);
       }
     }
   } catch {}
@@ -1652,7 +1693,35 @@ function pickTussleTarget(hx, hy, maxDist) {
   return null;
 }
 
+function primeAirWarp(x, y, radius) {
+  try {
+    if (!airWarp) return;
+    clearWarpRelease();
+    airWarp.prime(x, y, radius);
+    warpReleaseTimer = setTimeout(() => {
+      warpReleaseTimer = null;
+      releaseAirWarp(x, y);
+    }, AIR_WARP_LEAD_MS);
+  } catch {}
+}
+
+function clearWarpRelease() {
+  try {
+    if (warpReleaseTimer) clearTimeout(warpReleaseTimer);
+    warpReleaseTimer = null;
+  } catch {}
+}
+
+function releaseAirWarp(x, y) {
+  try {
+    if (airWarp) airWarp.release(x, y);
+  } catch {}
+}
+
 function slamCursor(x, y) {
+  try {
+    primeAirWarp(x, y, AIR_WARP_RADIUS);
+  } catch {}
   try {
     impactX = x;
     impactY = y;
@@ -1664,7 +1733,7 @@ function slamCursor(x, y) {
     playHit();
   } catch {}
   try {
-    registerCursorHit(x, y, true);
+    hitCursorAt(x, y, true);
   } catch {}
   try {
     fxRing(layer, x, y, 80, "#ffffff");
@@ -1686,7 +1755,33 @@ function slamCursor(x, y) {
   } catch {}
 }
 
-export function laserSweepAlong(x1, y1, x2, y2) {
+export function laserSweepAlong(x1, y1, x2, y2, ownerPlayer) {
+  try {
+    const foe = foeSys && foeSys.getRef ? foeSys.getRef() : null;
+    const skip =
+      ownerPlayer === true ? actorRef : ownerPlayer === false ? foe : null;
+    const list = [actorRef, foe];
+    const steps = 10;
+    for (let s = 0; s <= steps; s++) {
+      const px = x1 + ((x2 - x1) * s) / steps;
+      const py = y1 + ((y2 - y1) * s) / steps;
+      let struck = false;
+      for (let i = 0; i < list.length; i++) {
+        const ref = list[i];
+        if (!ref || ref === skip || typeof ref.hurt !== "function") continue;
+        const box = ref.getPos();
+        if (!box) continue;
+        const nx = Math.max(box.x, Math.min(px, box.x + box.w));
+        const ny = Math.max(box.y, Math.min(py, box.y + box.h));
+        if (Math.hypot(nx - px, ny - py) > 10) continue;
+        ref.hurt(px, py, 1);
+        spawnSparks(nx, ny, 10);
+        struck = true;
+        break;
+      }
+      if (struck) break;
+    }
+  } catch {}
   try {
     stainShardsAlong(x1, y1, x2, y2);
     stainDomAlong(x1, y1, x2, y2);
@@ -1808,6 +1903,9 @@ function plantBurn(node, x, y) {
 }
 function stompAt(sx, sy, radius) {
   try {
+    primeAirWarp(sx, sy, Math.max(AIR_WARP_RADIUS, (radius || 0) * 2));
+  } catch {}
+  try {
     let targets = [];
     try {
       targets = getLiveTargets();
@@ -1859,7 +1957,7 @@ function hopTarget(node) {
     } catch {}
   } catch {}
 }
-function fireAt(sx, sy, tx, ty) {
+function fireAt(sx, sy, tx, ty, ownerPlayer) {
   try {
     if (!layer || bullets.length >= 24) return;
     const dx = tx - sx;
@@ -1878,6 +1976,7 @@ function fireAt(sx, sy, tx, ty) {
       vx: Math.cos(angle) * speed,
       vy: Math.sin(angle) * speed,
       age: 0,
+      ownerPlayer: ownerPlayer,
     });
     try {
       playShoot();
@@ -1898,7 +1997,6 @@ function updateBullets(dt, dtSec) {
           bullets.splice(i, 1);
           continue;
         }
-        b.vy += 0.12 * dt;
         b.x += b.vx * dt;
         b.y += b.vy * dt;
         b.age += dtSec;
@@ -1910,14 +2008,17 @@ function updateBullets(dt, dtSec) {
           b.y > window.innerHeight + 30
         )
           dead = true;
-        if (!dead && cursorSeen) {
+        if (!dead && hitStickmanAt(b.x, b.y, b.ownerPlayer)) {
+          dead = true;
+        }
+        if (!dead && b.ownerPlayer === true && cursorSeen) {
           const dx = b.x - cursorX;
           const dy = b.y - cursorY;
           if (Math.sqrt(dx * dx + dy * dy) <= 26) {
             spawnSparks(b.x, b.y, 5);
             let killed = false;
             try {
-              killed = registerCursorHit(b.x, b.y);
+              killed = hitCursorAt(b.x, b.y);
             } catch {}
             if (killed) spawnSparks(b.x, b.y, 16);
             dead = true;
@@ -2047,6 +2148,13 @@ function loop(now) {
     try {
       if (actorRef) actorRef.update(now, dt);
     } catch {}
+    separateActors();
+    try {
+      if (foeSys) foeSys.update(now, dt);
+    } catch {}
+    try {
+      if (playerHint) playerHint.update(now);
+    } catch {}
     updateBullets(dt, dtSec);
     try {
       if (weapons) weapons.update(dt, dtSec);
@@ -2057,10 +2165,10 @@ function loop(now) {
     try {
       if (spearSys) spearSys.update(now, dt, dtSec);
     } catch {}
-    try {
-      if (scytheSys) scytheSys.update(now, dt, dtSec);
-    } catch {}
     updateSparks(dt, dtSec);
+    try {
+      if (airWarp) airWarp.update(now);
+    } catch {}
     updateDebris(dt);
     try {
       updateCage(dt);
@@ -2076,6 +2184,233 @@ export function isStickmanActive() {
   return active;
 }
 
+export function getStickmanControlMode() {
+  return controlMode;
+}
+
+export function onStickmanControlMode(fn) {
+  try {
+    if (typeof fn === "function") controlListeners.add(fn);
+    else controlListeners.delete(fn);
+  } catch {}
+}
+
+function ensurePlayerUi() {
+  if (playerInput) return;
+  try {
+    playerRack = createAmmoRack();
+  } catch {
+    playerRack = null;
+  }
+  try {
+    playerInput = createPlayerInput();
+  } catch {
+    playerInput = null;
+  }
+  try {
+    playerHud = layer ? createPlayerHud(layer) : null;
+  } catch {
+    playerHud = null;
+  }
+  try {
+    playerHint = layer ? createRivalHint(layer) : null;
+  } catch {
+    playerHint = null;
+  }
+  try {
+    playerGuide = layer ? createControlsGuide(layer) : null;
+  } catch {
+    playerGuide = null;
+  }
+  if (playerInput) {
+    try {
+      playerInput.onPauseChange((paused) => {
+        if (playerGuide) playerGuide.setPaused(paused);
+      });
+    } catch {}
+  }
+  if (playerHud) {
+    try {
+      playerHud.setVisible(false);
+    } catch {}
+  }
+  if (playerGuide) {
+    try {
+      playerGuide.setVisible(false);
+      playerGuide.setCollapsed(true);
+    } catch {}
+  }
+}
+
+function teardownPlayerUi() {
+  try {
+    if (playerInput) playerInput.detach();
+  } catch {}
+  try {
+    if (playerHint) playerHint.destroy();
+  } catch {}
+  try {
+    if (playerGuide) playerGuide.destroy();
+  } catch {}
+  try {
+    if (playerHud) playerHud.destroy();
+  } catch {}
+  playerInput = null;
+  playerRack = null;
+  playerGuide = null;
+  playerHud = null;
+  playerHint = null;
+}
+
+function hitStickmanAt(x, y, ownerPlayer) {
+  try {
+    const foe = foeSys && foeSys.getRef ? foeSys.getRef() : null;
+    const playerRef = actorRef;
+    const foeRef = foe;
+    const skip =
+      ownerPlayer === true ? playerRef : ownerPlayer === false ? foeRef : null;
+    const list = [
+      { ref: playerRef, name: "PLAYER" },
+      { ref: foeRef, name: "RIVAL" },
+    ];
+    for (let i = 0; i < list.length; i++) {
+      const entry = list[i];
+      const ref = entry.ref;
+      if (!ref || ref === skip) continue;
+      if (typeof ref.hurt !== "function") continue;
+      const box = ref.getPos();
+      if (!box) continue;
+      const cx = Math.max(box.x, Math.min(x, box.x + box.w));
+      const cy = Math.max(box.y, Math.min(y, box.y + box.h));
+      const dist = Math.hypot(cx - x, cy - y);
+      if (dist > 14) continue;
+      ref.hurt(x, y, 1);
+      spawnSparks(cx, cy, 8);
+      return true;
+    }
+  } catch {}
+  return false;
+}
+
+function separateActors() {
+  try {
+    const foe = foeSys && foeSys.getRef ? foeSys.getRef() : null;
+    if (!actorRef || !foe) return;
+    const a = actorRef.getPos();
+    const b = foe.getPos();
+    if (!a || !b) return;
+    const ax = a.x + a.w / 2;
+    const bx = b.x + b.w / 2;
+    const overlap = BODY_SEPARATION - Math.abs(bx - ax);
+    if (overlap <= 0) return;
+    const dir = bx >= ax ? 1 : -1;
+    const shift = (overlap / 2) * dir;
+    if (typeof foe.nudge === "function") foe.nudge(-shift, 0);
+    if (typeof actorRef.nudge === "function") actorRef.nudge(shift, 0);
+  } catch {}
+}
+
+function cursorDamageAllowed() {
+  return controlMode !== "player";
+}
+
+function hitCursorAt(x, y, forced) {
+  if (!cursorDamageAllowed()) return false;
+  try {
+    return registerCursorHit(x, y, forced);
+  } catch {
+    return false;
+  }
+}
+
+function cursorAnchor() {
+  return { x: cursorX, y: cursorY, seen: cursorSeen };
+}
+
+function playerBodyAnchor() {
+  try {
+    if (actorRef && typeof actorRef.getPos === "function") {
+      const box = actorRef.getPos();
+      if (box)
+        return { x: box.x + box.w / 2, y: box.y + box.h / 2, seen: true };
+    }
+  } catch {}
+  return null;
+}
+
+function rivalAnchor() {
+  if (controlMode !== "player") return cursorAnchor();
+  return playerBodyAnchor() || { x: -9999, y: -9999, seen: false };
+}
+
+function shotAnchor(ownerPlayer) {
+  if (ownerPlayer === false) return rivalAnchor();
+  return cursorAnchor();
+}
+
+function applyControlMode(next) {
+  const mode = next === "player" ? "player" : "ai";
+  const wasPlayer = controlMode === "player";
+  controlMode = mode;
+  if (wasPlayer && mode === "ai") {
+    try {
+      cleanupCursorKill();
+    } catch {}
+  }
+  if (active) {
+    try {
+      if (actorRef && typeof actorRef.setControlMode === "function") {
+        actorRef.setControlMode(mode);
+      }
+    } catch {}
+    try {
+      if (foeSys && typeof foeSys.link === "function") foeSys.link();
+    } catch {}
+    try {
+      if (playerInput) {
+        if (mode === "player") {
+          playerInput.attach();
+          playerInput.setArmed(true);
+          playerInput.setPaused(false);
+        } else {
+          playerInput.releaseAll();
+          playerInput.setPaused(false);
+          playerInput.setArmed(false);
+          playerInput.detach();
+        }
+      }
+    } catch {}
+    try {
+      if (playerHud) playerHud.setVisible(mode === "player");
+    } catch {}
+    syncFoeHud();
+    try {
+      if (playerHint) {
+        if (mode === "player" && !(foeSys && foeSys.isAlive()))
+          playerHint.show(performance.now());
+        else playerHint.hide();
+      }
+    } catch {}
+    try {
+      if (playerGuide) {
+        playerGuide.setPaused(false);
+        playerGuide.setVisible(mode === "player");
+        playerGuide.setCollapsed(mode !== "player");
+      }
+    } catch {}
+  }
+  for (const fn of controlListeners) {
+    try {
+      fn(mode);
+    } catch {}
+  }
+  return controlMode;
+}
+
+export function setStickmanControlMode(mode) {
+  return applyControlMode(mode);
+}
+
 export function spawnStickman(opts) {
   if (active) return;
   try {
@@ -2085,8 +2420,22 @@ export function spawnStickman(opts) {
       } catch {}
       layer = null;
     }
+    try {
+      teardownPlayerUi();
+    } catch {}
     layer = createElement("div", { className: "stk-layer" });
     document.body.appendChild(layer);
+    try {
+      ensurePlayerUi();
+    } catch {}
+    try {
+      if (airWarp) airWarp.destroy();
+    } catch {}
+    try {
+      airWarp = createAirWarp({ getLayer: () => layer });
+    } catch {
+      airWarp = null;
+    }
     try {
       if (weapons) weapons.clear();
     } catch {}
@@ -2095,6 +2444,7 @@ export function spawnStickman(opts) {
       getTargets: () => getWeaponTargets(),
       getFloor: () => getFloor(),
       getCursor: () => ({ x: cursorX, y: cursorY, seen: cursorSeen }),
+      getAnchor: (ownerPlayer) => shotAnchor(ownerPlayer),
       cursorDead: () => isCursorDestroyed(),
       sparks: (x, y, n) => spawnSparks(x, y, n),
       damage: (node, x, y) => {
@@ -2103,7 +2453,8 @@ export function spawnStickman(opts) {
         damageTarget(node);
         plantBurn(node, x, y);
       },
-      hitCursor: (x, y) => registerCursorHit(x, y, true),
+      hitCursor: (x, y) => hitCursorAt(x, y, true),
+      hitStickman: (x, y, ownerPlayer) => hitStickmanAt(x, y, ownerPlayer),
       push: (x, y, r, force) => pushDebris(x, y, r, force),
       sfx: { hit: playHit, shatter: playShatter },
       cutCage: (x, y, radius) => {
@@ -2130,6 +2481,7 @@ export function spawnStickman(opts) {
       getTargets: () => getWeaponTargets(),
       getFloor: () => getFloor(),
       getCursor: () => ({ x: cursorX, y: cursorY, seen: cursorSeen }),
+      getAnchor: (ownerPlayer) => shotAnchor(ownerPlayer),
       cursorDead: () => isCursorDestroyed(),
       damage: (node, x, y) => {
         impactX = x;
@@ -2137,9 +2489,8 @@ export function spawnStickman(opts) {
         damageTarget(node);
         plantBurn(node, x, y);
       },
-      hitCursor: (x, y) => registerCursorHit(x, y, true),
-      pinCursor: (x, y, ms) => pinCursor(x, y, ms),
-      launchCursor: (fx, fy) => launchCursor(fx, fy),
+      hitCursor: (x, y) => hitCursorAt(x, y, true),
+      hitStickman: (x, y, ownerPlayer) => hitStickmanAt(x, y, ownerPlayer),
       sparks: (x, y, n) => spawnSparks(x, y, n),
       push: (x, y, r, force) => pushDebris(x, y, r, force),
       rectOf: (node) => {
@@ -2156,25 +2507,56 @@ export function spawnStickman(opts) {
       spearSys = null;
     }
     try {
-      scytheSys = createScytheSystem(weaponCtx);
-    } catch {
-      scytheSys = null;
-    }
-    try {
-      actorRef = createStickmanActor(layer, {
-        fire: (sx, sy, tx, ty) => {
+      const actorHooks = {
+        fire: (sx, sy, tx, ty, fromPlayer) => {
           try {
-            fireAt(sx, sy, tx, ty);
+            fireAt(sx, sy, tx, ty, fromPlayer);
           } catch {}
         },
-        fireWeapon: (kind, sx, sy, tx, ty) => {
+        fireWeapon: (kind, sx, sy, tx, ty, fromPlayer) => {
           try {
-            if (weapons) weapons.fire(kind, sx, sy, tx, ty);
+            if (weapons) weapons.fire(kind, sx, sy, tx, ty, fromPlayer);
           } catch {}
         },
-        slash: (cx, cy, reach, dirSign) => {
+        spawnFoe: (now) => {
+          try {
+            if (!foeSys) return false;
+            if (!foeSys.isAlive()) {
+              const spawned = foeSys.spawn(now || performance.now());
+              if (spawned) {
+                if (playerHint) playerHint.hide();
+                syncFoeHud();
+              }
+              return spawned;
+            }
+            foeSys.remove();
+            syncFoeHud();
+            return false;
+          } catch {
+            return false;
+          }
+        },
+        slash: (cx, cy, reach, dirSign, fromPlayer) => {
           try {
             slashAt(cx, cy, reach, dirSign);
+          } catch {}
+          try {
+            const victim = fromPlayer
+              ? foeSys && foeSys.getRef
+                ? foeSys.getRef()
+                : null
+              : actorRef;
+            if (!victim || typeof victim.hurt !== "function") return;
+            const box = victim.getPos();
+            if (!box) return;
+            const vx = box.x + box.w / 2;
+            const vy = box.y + box.h / 2;
+            const nearX = Math.max(box.x, Math.min(vx, box.x + box.w));
+            const nearY = Math.max(box.y, Math.min(vy, box.y + box.h));
+            if (Math.hypot(nearX - cx, nearY - cy) > reach + MELEE_SLACK)
+              return;
+            victim.hurt(cx, cy, 1);
+            spawnSparks(nearX, nearY, 8);
           } catch {}
         },
         dust: (x, y, power) => {
@@ -2202,15 +2584,9 @@ export function spawnStickman(opts) {
             fxElectricSpark(layer, x, y, 10);
           } catch {}
         },
-        throwSpear: (sx, sy, tx, ty) => {
+        throwSpear: (sx, sy, tx, ty, ownerPlayer) => {
           try {
-            if (spearSys) spearSys.throwSpear(sx, sy, tx, ty);
-          } catch {}
-        },
-        swingScythe: (x, y, ang, full) => {
-          try {
-            if (scytheSys)
-              scytheSys.startSwing(performance.now(), x, y, ang, full);
+            if (spearSys) spearSys.throwSpear(sx, sy, tx, ty, ownerPlayer);
           } catch {}
         },
         nearestSpear: (x, y) => {
@@ -2264,13 +2640,7 @@ export function spawnStickman(opts) {
             stompAt(sx, sy, radius);
           } catch {}
         },
-        hitCursor: (x, y) => {
-          try {
-            return registerCursorHit(x, y, true);
-          } catch {
-            return false;
-          }
-        },
+        hitCursor: (x, y) => hitCursorAt(x, y, true),
         cagePunch: () => {
           try {
             nudgeCage(Math.random() * 6 - 3);
@@ -2281,9 +2651,9 @@ export function spawnStickman(opts) {
             laserStrikeAt(tx, ty);
           } catch {}
         },
-        laserSweepAlong: (x1, y1, x2, y2) => {
+        laserSweepAlong: (x1, y1, x2, y2, fromPlayer) => {
           try {
-            laserSweepAlong(x1, y1, x2, y2);
+            laserSweepAlong(x1, y1, x2, y2, fromPlayer);
           } catch {}
         },
         pickTussleTarget: (hx, hy, maxDist) => {
@@ -2304,8 +2674,65 @@ export function spawnStickman(opts) {
             else clearRageWallpaper();
           } catch {}
         },
+        getFxLayer: () => layer,
+        cursorDamageAllowed: () => cursorDamageAllowed(),
+        playerInput: playerInput,
+        playerRack: playerRack,
+        playerGuide: playerGuide,
+        playerHud: playerHud,
+        onWeaponFired: (kind) => {
+          try {
+            if (playerRack) playerRack.onFired(kind, performance.now());
+          } catch {}
+        },
+      };
+      actorRef = createStickmanActor(layer, actorHooks);
+      foeSys = createFoeSystem({
+        getLayer: () => layer,
+        getPlayerRef: () => actorRef,
+        getPlayerPos: () => {
+          try {
+            if (actorRef && typeof actorRef.getPos === "function") {
+              return actorRef.getPos();
+            }
+          } catch {}
+          return null;
+        },
+        createActor: (lay) => {
+          const rivalHooks = Object.assign({}, actorHooks, {
+            draggable: false,
+          });
+          const rivalCursor = rivalHooks.getCursor;
+          rivalHooks.getCursor = () =>
+            controlMode === "player"
+              ? { x: -9999, y: -9999, seen: false }
+              : rivalCursor();
+          return createStickmanActor(lay, rivalHooks);
+        },
+        pop: (x, y, n) => spawnSparks(x, y, n),
+        loadRank: () => {
+          try {
+            return os.storage.get(StorageKeys.codeRedFoeRank);
+          } catch {
+            return null;
+          }
+        },
+        saveRank: (value) => {
+          try {
+            os.storage.set(StorageKeys.codeRedFoeRank, value);
+          } catch {}
+        },
+        onRankChange: (profile) => {
+          try {
+            if (playerHud && typeof playerHud.setFoeRank === "function") {
+              playerHud.setFoeRank(profile);
+            }
+          } catch {}
+        },
       });
-    } catch {}
+    } catch {
+      foeSys = null;
+    }
     try {
       if (
         opts &&
@@ -2399,6 +2826,10 @@ export function spawnStickman(opts) {
     lastTime = 0;
     frameId = requestAnimationFrame(loop);
     try {
+      if (opts && opts.controlMode) applyControlMode(opts.controlMode);
+      else applyControlMode(controlMode);
+    } catch {}
+    try {
       syncDesktopBottom();
     } catch {}
   } catch {}
@@ -2408,6 +2839,14 @@ export function despawnStickman() {
   if (!active && !layer) return;
   try {
     active = false;
+    try {
+      teardownPlayerUi();
+    } catch {}
+    for (const fn of controlListeners) {
+      try {
+        fn(controlMode);
+      } catch {}
+    }
     if (frameId !== null) {
       try {
         cancelAnimationFrame(frameId);
@@ -2466,6 +2905,12 @@ export function despawnStickman() {
       cleanupTussle();
     } catch {}
     try {
+      if (foeSys) {
+        try {
+          foeSys.clear();
+        } catch {}
+        foeSys = null;
+      }
       if (actorRef) actorRef.destroy();
     } catch {}
     actorRef = null;
@@ -2477,10 +2922,11 @@ export function despawnStickman() {
       if (spearSys) spearSys.clear();
     } catch {}
     spearSys = null;
+    clearWarpRelease();
     try {
-      if (scytheSys) scytheSys.clear();
+      if (airWarp) airWarp.destroy();
     } catch {}
-    scytheSys = null;
+    airWarp = null;
     cursorPin = null;
     cursorKickX = 0;
     cursorKickY = 0;

@@ -92,6 +92,12 @@ export const appMap = {
     icon: "/static/icons/cat.webp",
     title: "Cat Goes Fishing",
   },
+  feedAndGrowFish: {
+    type: "game",
+    url: "https://cdn.jsdelivr.net/gh/AlexBoops/Feed-and-Grow-Port@main/index.html",
+    icon: "/static/icons/fish.webp",
+    title: "Feed & Grow: Fish",
+  },
   tabs: {
     type: "game",
     url: "/static/games/html/tabs.html",

@@ -6,12 +6,19 @@ const NS = "http://www.w3.org/2000/svg";
 export const JET_CHANCE = 0.12;
 export const JET_ROLL_MS = 1500;
 export const JET_CD_MS = 26000;
-export const JET_MIN_MS = 3200;
-export const JET_MAX_MS = 6200;
+export const JET_MIN_MS = 7000;
+export const JET_MAX_MS = 7000;
 export const JET_HOVER_MIN = 70;
 export const JET_FLAME_MS = 70;
 export const JET_PHASE_STEP = 0.06;
 export const JET_RAGE_TARGET = 0.7;
+export const JET_X_THRUST = 0.3;
+export const JET_X_MAX = 8.6;
+export const JET_UP_THRUST = 0.46;
+export const JET_DOWN_THRUST = 0.36;
+export const JET_Y_MAX = 9.4;
+export const JET_HOVER_THRUST = 0.2;
+export const JET_LIFT_OFF = 2.4;
 
 const FLAME_OUTER_D = "M-3.2 0C-4.6 5.5-3 11.5 0 21C3 11.5 4.6 5.5 3.2 0Z";
 const FLAME_INNER_D = "M-1.5 0C-2.1 4-1.1 8.5 0 13C1.1 8.5 2.1 4 1.5 0Z";
@@ -24,6 +31,8 @@ const THRUST = 0.16;
 const DRIFT_DAMP = 0.95;
 const MAX_DRIFT = 3.2;
 const EDGE_GAP = 8;
+const PILOT_X_DAMP = 0.9;
+const PILOT_Y_DAMP = 0.87;
 
 function svgEl(tag, attrs) {
   const node = document.createElementNS(NS, tag);
@@ -59,6 +68,27 @@ export function jetPose(p, now, vn) {
     armB: 0.85,
     armBE: 1.05,
     shout: 0.35,
+  });
+}
+
+export function jetPilotPose(p, now, bank, lift, power) {
+  const sway = Math.sin(p * 1.6);
+  const flutter = Math.sin(now * 0.022);
+  const climbing = lift < 0 ? 1 : 0;
+  const diving = lift > 0 ? 1 : 0;
+  const v = power || 0;
+  return pose({
+    lean: 0.08 + bank * 0.34 + flutter * 0.03,
+    tilt: 0.05 + sway * 0.03 + climbing * 0.12 - diving * 0.16,
+    a1: 0.35 + sway * 0.22 - climbing * 0.6 + diving * 0.3 - v * 0.3,
+    aK: 1.3 + diving * 0.35,
+    b1: -0.25 - sway * 0.22 - climbing * 0.55 + diving * 0.3 - v * 0.25,
+    bK: 1.45 + climbing * 0.2,
+    armA: 1.1 - climbing * 0.55 + diving * 0.35,
+    armAE: 0.9,
+    armB: 0.8 - climbing * 0.5 + diving * 0.25,
+    armBE: 1.1,
+    shout: 0.3 + v * 0.45 + climbing * 0.2,
   });
 }
 
@@ -195,8 +225,15 @@ export function createJetpack(host) {
   const canStart = fn("canStart");
   const onStart = fn("onStart");
   const onEnd = fn("onEnd");
+  const surfaceAt = fn("surfaceAt");
 
   let until = 0;
+  let flightX = 0;
+  let flightY = 0;
+  let flightVX = 0;
+  let flightVY = 0;
+  let flightDir = 1;
+  let flightLive = false;
   let cooldownAt =
     (typeof performance !== "undefined" ? performance.now() : 0) +
     rand(5000, 12000);
@@ -223,10 +260,12 @@ export function createJetpack(host) {
 
   function stop(now, cooldown) {
     until = 0;
+    flightLive = false;
     if (cooldown) cooldownAt = now + JET_CD_MS;
   }
 
   function start(now) {
+    flightLive = false;
     if (isTussling && isTussling() && interruptTussle) {
       try {
         interruptTussle(now);
@@ -399,11 +438,180 @@ export function createJetpack(host) {
     };
   }
 
+  function releaseFlight(now, x, y, velX, velY) {
+    stop(now, false);
+    if (setState) {
+      try {
+        setState({
+          x: x,
+          y: y,
+          flying: true,
+          wasAir: true,
+          flipping: false,
+          spin: 0,
+          velX: velX,
+          velY: Math.max(velY, 1.2),
+          sqV: 0.1,
+        });
+      } catch {}
+    }
+    if (resetAim) {
+      try {
+        resetAim();
+      } catch {}
+    }
+    if (onEnd) {
+      try {
+        onEnd(now);
+      } catch {}
+    }
+  }
+
+  function pilot(now, dt, controls) {
+    const state = getState ? getState() : null;
+    if (!state) return null;
+    const c = controls || { moveX: 0, lift: 0 };
+    const size = sizeOf();
+    const floorTop = getFloor ? getFloor() : 0;
+    const lowest = Math.max(0, floorTop - size.h - EDGE_GAP);
+
+    if (!flightLive) {
+      flightX = state.x;
+      flightY = state.y;
+      flightVX = state.velX || 0;
+      flightVY = state.velY || 0;
+      flightDir = state.dir || 1;
+      flightLive = true;
+    }
+
+    let x = flightX;
+    let y = flightY;
+    let velX = flightVX;
+    let velY = flightVY;
+    let dir = flightDir;
+
+    if (now >= until) {
+      flightLive = false;
+      releaseFlight(now, x, y, velX, velY);
+      return null;
+    }
+
+    const moveX = clamp(c.moveX || 0, -1, 1);
+    const lift = clamp(c.lift || 0, -1, 1);
+
+    velX += moveX * JET_X_THRUST * dt;
+    velX *= Math.pow(PILOT_X_DAMP, dt);
+    velX = clamp(velX, -JET_X_MAX, JET_X_MAX);
+
+    if (lift < 0) velY -= JET_UP_THRUST * dt;
+    else if (lift > 0) velY += JET_DOWN_THRUST * dt;
+    else velY -= JET_HOVER_THRUST * dt;
+    velY *= Math.pow(PILOT_Y_DAMP, dt);
+    velY = clamp(velY, -JET_Y_MAX, JET_Y_MAX);
+
+    if (moveX > 0) dir = 1;
+    else if (moveX < 0) dir = -1;
+
+    const prevFeet = y + size.h;
+    x += velX * dt;
+    y += velY * dt;
+
+    const maxX = Math.max(0, window.innerWidth - size.w);
+    if (x <= 0) {
+      x = 0;
+      velX = Math.abs(velX) * 0.25;
+      if (dir < 0) dir = 1;
+    } else if (x >= maxX) {
+      x = maxX;
+      velX = -Math.abs(velX) * 0.25;
+      if (dir > 0) dir = -1;
+    }
+
+    if (y < 0) {
+      y = 0;
+      if (velY < 0) velY = 0;
+    }
+
+    let landed = false;
+    const atFloor = y >= lowest;
+    if (atFloor && lift < 0) {
+      y = lowest;
+      velY = Math.min(velY, -JET_LIFT_OFF);
+    } else {
+      if (surfaceAt && velY >= 0) {
+        const hit = surfaceAt(x + size.w / 2, prevFeet, y + size.h, floorTop);
+        if (hit && y + size.h >= hit.top) {
+          y = hit.top - size.h;
+          landed = true;
+        }
+      }
+      if (!landed && atFloor && velY >= 0) landed = true;
+    }
+    if (landed) {
+      flightLive = false;
+      releaseFlight(now, x, y, velX, velY);
+      return null;
+    }
+
+    flightX = x;
+    flightY = y;
+    flightVX = velX;
+    flightVY = velY;
+    flightDir = dir;
+
+    if (now >= flameAt) {
+      flameAt = now + JET_FLAME_MS;
+      const nozzle = getNozzle ? getNozzle() : null;
+      const px = nozzle ? nozzle.x : x + size.w / 2 - dir * 5;
+      const py = nozzle ? nozzle.y : y + size.h * 0.7;
+      const power = clamp(Math.abs(velX) / JET_X_MAX, 0.25, 1);
+      const lean = -dir * (0.25 + 0.35 * power);
+      const len = Math.hypot(lean, 1) || 1;
+      jetFire(
+        getLayer ? getLayer() : null,
+        px + rand(-1.5, 1.5),
+        py + rand(0, 3),
+        lean / len,
+        1 / len,
+        rand(0.85, 1.5),
+      );
+    }
+
+    return {
+      x: x,
+      y: y,
+      velX: velX,
+      velY: velY,
+      dir: dir,
+      target: jetPilotPose(
+        state.phase,
+        now,
+        clamp(velX / JET_X_MAX, -1, 1),
+        lift,
+        clamp(Math.abs(velX) / JET_X_MAX, 0, 1),
+      ),
+      phaseStep: JET_PHASE_STEP,
+      rageTarget: JET_RAGE_TARGET,
+    };
+  }
+
   return {
     isActive,
     step,
+    pilot,
     stop,
     tryStart,
+    launch: (now) => {
+      if (isActive(now)) return false;
+      start(now);
+      return true;
+    },
+    available: (now) => now >= cooldownAt,
+    cooldownLeft: (now) => Math.max(0, cooldownAt - now),
+    cooldownSpan: () => JET_CD_MS,
+    fuelLeft: (now) => Math.max(0, until - now),
+    fuelSpan: () => JET_MAX_MS,
+    maxSpan: () => JET_MAX_MS,
     jetFire,
   };
 }

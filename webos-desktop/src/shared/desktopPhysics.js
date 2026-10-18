@@ -379,16 +379,6 @@ export function startPhysicsChaos(opts) {
       spawnStickman(opts);
     } catch {}
     try {
-      if (!os.storage.get(StorageKeys.stickmanCageTipSeen)) {
-        os.notify.send(
-          "Red is loose",
-          "Drag a box on the desktop to trap Red inside a jail cage.",
-          { type: "info", appSource: "Chaos" },
-        );
-        os.storage.set(StorageKeys.stickmanCageTipSeen, "true");
-      }
-    } catch {}
-    try {
       onPhysicsHit(hitPhysicsBody);
     } catch {}
   } catch {}

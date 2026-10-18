@@ -27,5 +27,10 @@ const POSE_DEFAULTS = {
 };
 
 export function pose(o) {
-  return Object.assign({}, POSE_DEFAULTS, o);
+  const out = {};
+  for (const key in POSE_DEFAULTS) {
+    const v = o ? o[key] : undefined;
+    out[key] = Number.isFinite(v) ? v : POSE_DEFAULTS[key];
+  }
+  return out;
 }

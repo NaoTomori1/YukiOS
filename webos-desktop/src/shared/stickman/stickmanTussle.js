@@ -22,6 +22,7 @@ const VICTORY_MS = 2600;
 const WIN_COOLDOWN_MS = 3000;
 const LOSS_COOLDOWN_MS = 4200;
 const MISS_COOLDOWN_MS = 1800;
+const REQUEST_WINDOW_MS = 420;
 
 const FOLLOW_GAIN = 0.4;
 const TARGET_RANGE = 460;
@@ -298,6 +299,7 @@ export function createTussleController(host) {
   const getBody = fn("getBody");
   const getFloor = fn("getFloor");
   const canStart = fn("canStart");
+  const isAllowed = fn("isAllowed");
   const pickTarget = fn("pickTarget");
   const onSlam = fn("onSlam");
   const onWin = fn("onWin");
@@ -311,10 +313,13 @@ export function createTussleController(host) {
   let stunUntil = 0;
   let victoryUntil = 0;
   let cooldownAt = 0;
+  let cooldownSpan = LOSS_COOLDOWN_MS;
   let windup = null;
   let leap = null;
+  let requestedAt = -1e9;
 
   function end(now, reason) {
+    requestedAt = -1e9;
     const s = session;
     const wasHang = stage === "hang";
     const rvx = s ? s.vx : 0;
@@ -335,6 +340,7 @@ export function createTussleController(host) {
     }
     if (reason === "win") {
       cooldownAt = now + WIN_COOLDOWN_MS;
+      cooldownSpan = WIN_COOLDOWN_MS;
       stunUntil = 0;
       victoryUntil = now + VICTORY_MS;
       if (onWin) {
@@ -346,9 +352,11 @@ export function createTussleController(host) {
     }
     if (reason === "miss") {
       cooldownAt = now + MISS_COOLDOWN_MS;
+      cooldownSpan = MISS_COOLDOWN_MS;
       return;
     }
     cooldownAt = now + LOSS_COOLDOWN_MS;
+    cooldownSpan = LOSS_COOLDOWN_MS;
     if (reason === "shaken") stunUntil = now + SHAKEN_STUN_MS;
     else if (reason === "drop") stunUntil = now + RESOLVE_STUN_MS;
   }
@@ -360,8 +368,10 @@ export function createTussleController(host) {
     if (!pointer.seen || isCursorDestroyed()) return;
     const d = Math.hypot(pointer.x - body.x, pointer.y - body.y);
     if (d < LEAP_MIN || d > LEAP_MAX) return;
-    if (Math.random() > START_CHANCE) return;
+    const forced = requestedAt > now - REQUEST_WINDOW_MS;
+    if (!forced && Math.random() > START_CHANCE) return;
     if (!solveLeap(body, pointer)) return;
+    requestedAt = -1e9;
     stage = "windup";
     windup = {
       endAt: now + WINDUP_MS,
@@ -613,6 +623,10 @@ export function createTussleController(host) {
 
   function update(now, dt) {
     try {
+      if (isAllowed && !isAllowed(now)) {
+        if (stage !== null) end(now, "interrupted");
+        return;
+      }
       if (!getHand) return;
       const hand = getHand();
       if (!hand) return;
@@ -627,6 +641,14 @@ export function createTussleController(host) {
 
   return {
     update,
+    requestStart: (now) => {
+      requestedAt = now;
+    },
+    requested: () => requestedAt > performance.now() - REQUEST_WINDOW_MS,
+    isBlocked: (now) => stage !== null || stunUntil > now || now < cooldownAt,
+    cooldownSpan: () => cooldownSpan,
+    cooldownLeft: (now) =>
+      Math.max(0, stunUntil - now, cooldownAt - now, victoryUntil - now),
     isActive: () => stage !== null,
     isLeaping: () => stage === "leap",
     isHanging: () => stage === "hang",
@@ -658,6 +680,8 @@ export function createTussleController(host) {
       stunUntil = 0;
       victoryUntil = 0;
       cooldownAt = 0;
+      cooldownSpan = LOSS_COOLDOWN_MS;
+      requestedAt = -1e9;
     },
   };
 }

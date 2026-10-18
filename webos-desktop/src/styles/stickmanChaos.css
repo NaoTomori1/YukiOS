@@ -1,6 +1,8 @@
 :root {
   --stk-flame-outer: #ff7a12;
   --stk-flame-core: #ffe6a8;
+  --stk-player-ink: #ffffff;
+  --stk-player-aura: rgba(255, 255, 255, 0.22);
 }
 
 .stk-layer {
@@ -25,6 +27,23 @@
 
 .stk-layer .stk-actor:active {
   cursor: grabbing;
+}
+
+.stk-player-aura {
+  display: none;
+  fill: var(--stk-player-aura);
+  filter: blur(7px);
+  pointer-events: none;
+}
+
+.stk-layer .stk-actor.stk-player .stk-player-aura {
+  display: inline;
+}
+
+.stk-player-marker {
+  stroke: var(--stk-player-ink);
+  opacity: 0.9;
+  pointer-events: none;
 }
 
 .stk-layer .stk-actor.stk-land {
@@ -209,60 +228,66 @@
 
 .stk-layer .stk-rebuild-dock {
   position: fixed;
-  right: 16px;
-  bottom: 64px;
+  left: 18px;
+  top: 18px;
   pointer-events: auto;
-  z-index: 3;
+  z-index: 32;
+  --sk-ink: #111;
+  --sk-yellow: #ffd23f;
+  --sk-display:
+    "Impact", "Haettenschweiler", "Arial Narrow Bold", "Arial Black", sans-serif;
 }
 
 .stk-layer .stk-rebuild-all {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 9px 14px 9px 12px;
-  border-radius: 999px;
-  background: var(--glass);
-  backdrop-filter: blur(24px);
-  border: 1px solid var(--glass-border);
-  box-shadow:
-    0 12px 28px rgba(0, 0, 0, 0.5),
-    inset 0 1px 0 rgba(255, 255, 255, 0.08);
-  color: var(--text-primary);
-  font-size: 13px;
-  font-weight: 600;
+  gap: 9px;
+  padding: 7px 13px 6px;
+  background: var(--sk-ink);
+  color: #fff;
+  border: 3px solid #000;
+  box-shadow: 4px 4px 0 #000;
+  font: 400 15px/18px var(--sk-display);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
   cursor: pointer;
+  pointer-events: auto;
   transition:
-    transform 0.15s ease,
-    border-color 0.15s ease,
-    background 0.15s ease;
+    transform 0.1s ease,
+    box-shadow 0.1s ease;
 }
 
 .stk-layer .stk-rebuild-all i {
-  color: var(--brand);
-  font-size: 12px;
+  font-size: 13px;
 }
 
 .stk-layer .stk-rebuild-count {
-  min-width: 20px;
-  height: 20px;
-  padding: 0 6px;
-  border-radius: 999px;
-  background: var(--brand);
-  color: var(--text-on-brand);
-  font-size: 11px;
-  font-weight: 700;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  background: var(--sk-yellow);
+  color: #000;
+  border: 3px solid #000;
+  font: 400 13px/14px var(--sk-display);
 }
 
 .stk-layer .stk-rebuild-all:hover {
-  transform: translateY(-1px);
-  border-color: var(--brand);
+  background: var(--sk-ink);
+  color: #fff;
+  border-color: #000;
+  transform: translate(-1px, -1px);
+  box-shadow: 6px 6px 0 #000;
 }
 
 .stk-layer .stk-rebuild-all:active {
-  transform: scale(0.97);
+  background: var(--sk-ink);
+  color: #fff;
+  border-color: #000;
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0 #000;
 }
 
 .stk-shatter-hidden {
@@ -940,55 +965,6 @@ html[data-theme="light"] .stk-jet-flame {
   filter: drop-shadow(0 0 6px rgba(255, 95, 20, 0.9));
 }
 
-.stk-scythe {
-  pointer-events: none;
-}
-
-.stk-scythe-vacuum {
-  fill: rgba(130, 30, 220, 0.16);
-  stroke: rgba(190, 110, 255, 0.35);
-  stroke-width: 1.5;
-  filter: blur(5px);
-}
-
-.stk-scythe-pole {
-  stroke: rgba(190, 140, 255, 0.8);
-  stroke-width: 3.5;
-  stroke-linecap: round;
-  filter: drop-shadow(0 0 4px rgba(160, 70, 255, 0.8));
-}
-
-.stk-scythe-edge {
-  fill: none;
-  stroke: rgba(245, 220, 255, 0.8);
-  stroke-width: 2.8;
-  stroke-linecap: round;
-  filter: blur(1.5px);
-}
-
-.stk-scythe-blade {
-  fill: rgba(85, 12, 170, 0.65);
-  stroke: #f3e5ff;
-  stroke-width: 3.2;
-  stroke-linejoin: round;
-  stroke-linecap: round;
-  filter: drop-shadow(0 0 12px rgba(180, 85, 255, 1))
-    drop-shadow(0 0 26px rgba(130, 45, 235, 0.75));
-}
-
-.stk-scythe-vortex {
-  pointer-events: none;
-}
-
-.stk-vortex-ring {
-  fill: rgba(120, 35, 230, 0.22);
-  stroke: rgba(220, 175, 255, 0.95);
-  stroke-width: 2.8;
-  stroke-linecap: round;
-  filter: drop-shadow(0 0 10px rgba(175, 80, 255, 1))
-    drop-shadow(0 0 22px rgba(110, 25, 215, 0.75));
-}
-
 @keyframes stk-spear-settle {
   from {
     opacity: 0.2;
@@ -1006,4 +982,527 @@ html[data-theme="light"] .stk-jet-flame {
   50% {
     opacity: 1;
   }
+}
+
+.stk-layer .stk-hud {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: clamp(148px, 15vw, 196px);
+  padding: 0;
+  box-sizing: border-box;
+  color: var(--text-primary);
+  font-size: clamp(10px, 0.82vw, 12px);
+  font-weight: 600;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);
+  pointer-events: none;
+  z-index: 3;
+  container-type: inline-size;
+}
+
+.stk-layer .stk-hud.stk-hud-hidden {
+  display: none !important;
+}
+
+.stk-layer .stk-hud-tag {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.stk-layer .stk-hud-tag i {
+  color: var(--stk-player-ink);
+  font-size: 10px;
+}
+
+.stk-layer .stk-hud-meter {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.stk-layer .stk-hud-meter-hidden {
+  display: none;
+}
+
+.stk-layer .stk-hud-meter-label {
+  font-size: 9px;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  opacity: 0.75;
+}
+
+.stk-layer .stk-hud-meter-track {
+  display: block;
+  height: 5px;
+  border-radius: 999px;
+  background: var(--bg-primary);
+  overflow: hidden;
+  box-shadow: inset 0 0 0 1px var(--glass-border);
+}
+
+.stk-layer .stk-hud-meter-fill {
+  display: block;
+  height: 100%;
+  width: 100%;
+  border-radius: 999px;
+  background: var(--brand);
+  transition: width 0.12s linear;
+}
+
+.stk-layer .stk-hud-meter[data-tone="warn"] .stk-hud-meter-fill {
+  background: #f0a93a;
+}
+
+.stk-layer .stk-hud-meter[data-tone="danger"] .stk-hud-meter-fill {
+  background: var(--error);
+}
+
+.stk-layer .stk-hud-meter[data-tone="good"] .stk-hud-meter-fill {
+  background: var(--stk-player-ink);
+}
+
+.stk-layer .stk-hud-meter-active .stk-hud-meter-fill {
+  animation: stk-hud-pulse 0.6s infinite alternate ease-in-out;
+}
+
+.stk-layer .stk-hud-weapon {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding-top: 3px;
+  border-top: 1px solid var(--glass-border);
+  font-size: 12px;
+}
+
+.stk-layer .stk-hud-weapon-slot {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 4px;
+  background: var(--bg-primary);
+  color: var(--text-secondary);
+  font-size: 10px;
+  font-weight: 700;
+  font-family: "JetBrains Mono", monospace;
+}
+
+.stk-layer .stk-hud-weapon-icon {
+  color: var(--stk-player-ink);
+  font-size: 11px;
+}
+
+.stk-layer .stk-hud-weapon-name {
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+}
+
+.stk-layer .stk-hud-ammo {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.stk-layer .stk-hud-ammo-group {
+  display: flex;
+  align-items: baseline;
+  gap: 3px;
+}
+
+.stk-layer .stk-hud-ammo-count {
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1;
+  font-family: "JetBrains Mono", monospace;
+  color: var(--text-primary);
+}
+
+.stk-layer .stk-hud-ammo-cap {
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.stk-layer .stk-hud-ammo-track {
+  display: block;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--bg-primary);
+  overflow: hidden;
+  box-shadow: inset 0 0 0 1px var(--glass-border);
+}
+
+.stk-layer .stk-hud-ammo-fill {
+  display: block;
+  height: 100%;
+  width: 100%;
+  border-radius: 999px;
+  background: var(--stk-player-ink);
+  transition: width 0.12s linear;
+}
+
+.stk-layer .stk-hud-ammo.stk-hud-low .stk-hud-ammo-count {
+  color: #f0a93a;
+}
+
+.stk-layer .stk-hud-ammo.stk-hud-low .stk-hud-ammo-fill {
+  background: #f0a93a;
+}
+
+.stk-layer .stk-hud-ammo.stk-hud-empty .stk-hud-ammo-count {
+  color: var(--error);
+}
+
+.stk-layer .stk-hud-ammo.stk-hud-empty .stk-hud-ammo-fill {
+  background: var(--error);
+}
+
+.stk-layer .stk-hud-ammo.stk-hud-reloading .stk-hud-ammo-count {
+  animation: stk-hud-blink 0.4s infinite alternate ease-in-out;
+}
+
+.stk-layer .stk-hud-abilities {
+  display: flex;
+  gap: 4px;
+  padding-top: 4px;
+  border-top: 1px solid var(--glass-border);
+}
+
+.stk-layer .stk-hud-chip {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  flex: 1;
+  height: 32px;
+  border-radius: 6px;
+  background: var(--bg-primary);
+  color: var(--text-secondary);
+  overflow: hidden;
+}
+
+.stk-layer .stk-hud-chip::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: var(--chip-fill, 100%);
+  height: 2px;
+  background: var(--brand);
+  transition: width 0.12s linear;
+}
+
+.stk-layer .stk-hud-chip-key {
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  opacity: 0.6;
+}
+
+.stk-layer .stk-hud-chip i {
+  font-size: 10px;
+}
+
+.stk-layer .stk-hud-chip-cd {
+  position: absolute;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  font-family: "JetBrains Mono", monospace;
+  color: var(--text-primary);
+  background: rgba(0, 0, 0, 0.55);
+}
+
+.stk-layer .stk-hud-chip-cooling .stk-hud-chip-cd {
+  display: flex;
+}
+
+.stk-layer .stk-hud-chip-ready {
+  color: var(--stk-player-ink);
+  box-shadow: inset 0 0 0 1px var(--glass-border);
+}
+
+.stk-layer .stk-hud-paused {
+  opacity: 0.72;
+}
+
+@media (max-height: 680px), (max-width: 680px) {
+  .stk-layer .stk-hud {
+    top: 8px;
+    left: 8px;
+    gap: 4px;
+    width: clamp(126px, 22vw, 150px);
+    font-size: clamp(9px, 1.6vh, 10px);
+  }
+
+  .stk-layer .stk-hud-tag {
+    font-size: 8px;
+    letter-spacing: 1.4px;
+  }
+
+  .stk-layer .stk-hud-meter-label {
+    font-size: 8px;
+    letter-spacing: 0.8px;
+  }
+
+  .stk-layer .stk-hud-weapon {
+    font-size: 10px;
+  }
+
+  .stk-layer .stk-hud-ammo-count {
+    font-size: 16px;
+  }
+
+  .stk-layer .stk-hud-abilities {
+    gap: 3px;
+  }
+
+  .stk-layer .stk-hud-chip {
+    height: 24px;
+  }
+
+  .stk-layer .stk-hud-chip-cd {
+    font-size: 10px;
+  }
+}
+
+@media (max-height: 460px) {
+  .stk-layer .stk-hud-meter-charge {
+    display: none;
+  }
+
+  .stk-layer .stk-hud-abilities {
+    display: none;
+  }
+}
+
+@keyframes stk-hud-pulse {
+  from {
+    opacity: 0.65;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes stk-hud-blink {
+  from {
+    opacity: 0.4;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.stk-layer .stk-guide {
+  position: fixed;
+  left: 16px;
+  bottom: 64px;
+  width: 234px;
+  border-radius: 12px;
+  background: var(--glass);
+  backdrop-filter: blur(28px);
+  border: 1px solid var(--glass-border);
+  box-shadow:
+    0 18px 40px rgba(0, 0, 0, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  color: var(--text-primary);
+  pointer-events: auto;
+  overflow: hidden;
+  z-index: 4;
+}
+
+.stk-layer .stk-guide-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 10px;
+}
+
+.stk-layer .stk-guide-title {
+  flex: 1;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 2.4px;
+}
+
+.stk-layer .stk-guide-status {
+  display: none;
+  align-items: center;
+  gap: 5px;
+  font-size: 9px;
+  letter-spacing: 1.2px;
+  color: var(--text-secondary);
+}
+
+.stk-layer .stk-guide-status-live,
+.stk-layer .stk-guide-status-paused {
+  display: flex;
+}
+
+.stk-layer .stk-guide-status-live i {
+  color: #55d18a;
+  font-size: 6px;
+}
+
+.stk-layer .stk-guide-status-paused i {
+  color: #f0a93a;
+  font-size: 6px;
+}
+
+.stk-layer .stk-guide-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  border: 1px solid var(--glass-border);
+  background: var(--bg-primary);
+  color: var(--text-secondary);
+  font-size: 11px;
+  cursor: pointer;
+  transition:
+    color 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.stk-layer .stk-guide-toggle:hover {
+  color: var(--stk-player-ink);
+  border-color: var(--brand);
+}
+
+.stk-layer .stk-guide-body {
+  max-height: 62vh;
+  overflow-y: auto;
+  padding: 0 10px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.stk-layer .stk-guide-collapsed .stk-guide-body {
+  display: none;
+}
+
+.stk-layer .stk-guide-group-title {
+  font-size: 9px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  opacity: 0.65;
+  padding-bottom: 3px;
+  border-bottom: 1px solid var(--glass-border);
+  margin-bottom: 5px;
+}
+
+.stk-layer .stk-guide-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 2px 0;
+  border-radius: 5px;
+}
+
+.stk-layer .stk-guide-keys {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  flex: 0 0 78px;
+  flex-wrap: wrap;
+}
+
+.stk-layer .stk-guide-key {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 4px;
+  background: var(--bg-primary);
+  border: 1px solid var(--glass-border);
+  border-bottom-width: 2px;
+  color: var(--text-primary);
+  font-family: "JetBrains Mono", monospace;
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.stk-layer .stk-guide-keys i {
+  color: var(--stk-player-ink);
+  font-size: 12px;
+}
+
+.stk-layer .stk-guide-text {
+  flex: 1;
+  font-size: 11px;
+  color: var(--text-primary);
+  opacity: 0.85;
+}
+
+.stk-layer .stk-guide-row-active {
+  background: rgba(255, 255, 255, 0.08);
+  animation: stk-guide-flash 0.4s ease-out;
+}
+
+.stk-layer .stk-guide-row-active .stk-guide-key {
+  border-color: var(--brand);
+  color: var(--brand);
+}
+
+.stk-layer .stk-guide-is-paused .stk-guide-text {
+  opacity: 0.45;
+}
+
+@keyframes stk-guide-flash {
+  from {
+    background: rgba(255, 255, 255, 0.22);
+  }
+  to {
+    background: rgba(255, 255, 255, 0.08);
+  }
+}
+
+html[data-theme="light"] .stk-player-aura {
+  fill: rgba(40, 40, 60, 0.16);
+}
+
+html[data-theme="light"] .stk-player-marker {
+  stroke: #1a1a22;
+}
+
+html[data-theme="light"] .stk-layer .stk-hud-ammo-fill {
+  background: #2b2b38;
+}
+
+html[data-theme="light"] .stk-layer .stk-hud {
+  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.9);
+}
+
+html[data-theme="light"]
+  .stk-layer
+  .stk-hud-meter[data-tone="good"]
+  .stk-hud-meter-fill {
+  background: #2b2b38;
+}
+
+html[data-theme="light"] .stk-layer .stk-hud-chip-ready {
+  color: #1a1a22;
 }

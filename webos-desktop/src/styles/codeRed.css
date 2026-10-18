@@ -114,14 +114,6 @@
       transparent 15px 26px
     );
 }
-
-.code-red-jail-label {
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 3px;
-  color: var(--text-secondary);
-}
-
 .code-red-breaking .code-red-gate {
   animation: code-red-gate-open 1.5s ease-in-out forwards;
 }
@@ -140,6 +132,60 @@
 
 .code-red-cell.code-red-hit {
   animation: code-red-cell-hit 0.18s ease;
+}
+
+.code-red-modes {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.code-red-modes-label {
+  font-size: 9px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  opacity: 0.7;
+}
+
+.code-red-segment {
+  display: flex;
+  gap: 2px;
+  padding: 3px;
+  border-radius: 9px;
+  background: var(--bg-primary);
+  border: 1px solid var(--glass-border);
+}
+
+.code-red-mode {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 9px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+}
+
+.code-red-mode i {
+  font-size: 10px;
+}
+
+.code-red-mode:hover {
+  color: var(--text-primary);
+}
+
+.code-red-mode[data-on="true"] {
+  background: var(--brand);
+  color: var(--text-on-brand);
 }
 
 @keyframes code-red-cell-hit {

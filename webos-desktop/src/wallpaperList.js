@@ -256,7 +256,6 @@ export const videos2 = [
   "https://motionbgs.com/media/9760/azure-horizon.1920x1080.mp4",
   "https://motionbgs.com/media/9767/nikola-niko-kovac.1920x1080.mp4",
   "https://motionbgs.com/media/9778/homelander-above-earth.1920x1080.mp4",
-  "https://motionbgs.com/media/9795/tears-of-light.1920x1080.mp4",
   "https://motionbgs.com/media/9796/wistoria-wand-and-sword.1920x1080.mp4",
   "https://motionbgs.com/media/9800/michael-jackson-neon-moonwalk.1920x1080.mp4",
   "https://motionbgs.com/media/9802/michael-jackson-king.1920x1080.mp4",
@@ -264,10 +263,4 @@ export const videos2 = [
   "https://motionbgs.com/media/9805/yuito-sumeragi-scarlet-nexus.1920x1080.mp4",
   "https://motionbgs.com/media/9807/nakano-miku-ichika-itsuki-yotsuba-nino-quintuplets-sisters.1920x1080.mp4",
   "https://motionbgs.com/media/9808/summer-sky-melody.1920x1080.mp4",
-  "https://motionbgs.com/media/9814/high-noon-locke-league-of-legends.1920x1080.mp4",
-  "https://motionbgs.com/media/9815/yennefer-of-vengerberg-the-witcher.1920x1080.mp4",
-  "https://motionbgs.com/media/9816/aeolian-future-king.1920x1080.mp4",
-  "https://motionbgs.com/media/9818/t1-worlds-2025-skins-splash-art.1920x1080.mp4",
-  "https://motionbgs.com/media/9823/beneath-the-forgotten-arc.1920x1080.mp4",
-  "https://motionbgs.com/media/9839/fifa-world-cup-glory2.1920x1080.mp4",
 ];
