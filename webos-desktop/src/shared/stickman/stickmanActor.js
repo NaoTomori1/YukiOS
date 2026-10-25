@@ -9,7 +9,7 @@ import { playGrab, playHit, playLand, playWooob } from "../chaosSfx.js";
 import { isCursorDestroyed } from "./stickmanCursorKill.js";
 import { createLaserWeapon } from "./stickmanLaser.js";
 import { createTussleController } from "./stickmanTussle.js";
-import { POSE_KEYS, pose } from "./stickmanRig.js";
+import { POSE_KEYS, pose } from "./stickmanFx.js";
 import {
   createElectricRig,
   hideElectric,
@@ -17,6 +17,9 @@ import {
   createFreezeSystem,
   FREEZE_MIN_MS,
   FREEZE_MAX_MS,
+  createSpeedTrail,
+  updateSpeedTrail,
+  syncSpeedTrail,
 } from "./stickmanActorFx.js";
 import { createActorPlayerController } from "./stickmanPlayerController.js";
 import {
@@ -38,6 +41,8 @@ import {
   shapeFlameblade,
   SWORD_REACH,
 } from "./stickmanFlameblade.js";
+
+const DEFAULT_POSE = pose({});
 
 const NS = "http://www.w3.org/2000/svg";
 const INK = "#ff0000";
@@ -63,10 +68,6 @@ const PLAT_SCAN_MS = 150;
 const MODES = ["walk", "run", "idle", "creep", "rage", "punch", "moonwalk"];
 const PUNCH_REACH = 120;
 const RAGE_REACH = 220;
-const TUNNEL_LINES = 7;
-const TUNNEL_SPEED_MIN = 5;
-const TUNNEL_SPEED_MAX = 13;
-const TUNNEL_REACH = 360;
 const DODGE_RADIUS = 96;
 const DODGE_CHANCE = 0.55;
 const DODGE_CD_MS = 6000;
@@ -556,6 +557,13 @@ export function createStickmanActor(layer, hooks) {
   let destroyed = false;
   let opponentRef = null;
   const parts = {};
+  const ghostStates = [];
+  const styleCache = {
+    markerStroke: null,
+    gunStroke: null,
+    ballFill: null,
+    ballStroke: null,
+  };
   const P = pose({});
   let posX = 0;
   let posY = 0;
@@ -666,8 +674,7 @@ export function createStickmanActor(layer, hooks) {
   let flameRig = null;
   let boltUntil = 0;
   let boltCdAt = 0;
-  let tunnelLastX = 0;
-  let tunnelLastY = 0;
+  let trail = null;
   let boltLastX = 0;
   let boltLastY = 0;
   let freezeSys = null;
@@ -1363,12 +1370,7 @@ export function createStickmanActor(layer, hooks) {
         if (posX > maxLocalX) posX = maxLocalX;
         if (posY < 0) posY = 0;
       } catch {}
-      try {
-        actor.style.left = posX + "px";
-      } catch {}
-      try {
-        actor.style.top = posY + "px";
-      } catch {}
+      place(posX, posY);
       lastPX = e.clientX;
       lastPY = e.clientY;
       try {
@@ -1437,12 +1439,7 @@ export function createStickmanActor(layer, hooks) {
           }
         }
       } catch {}
-      try {
-        actor.style.left = posX + "px";
-      } catch {}
-      try {
-        actor.style.top = posY + "px";
-      } catch {}
+      place(posX, posY);
     } catch {}
   }
 
@@ -1573,79 +1570,51 @@ export function createStickmanActor(layer, hooks) {
     for (let i = 0; i < parts.ghosts.length; i++) {
       const gp = parts.ghosts[i];
       const item = ghosts[ghosts.length - 1 - i];
+      const state =
+        ghostStates[i] ||
+        (ghostStates[i] = {
+          display: null,
+          d: null,
+          opacity: null,
+          transform: null,
+        });
       if (!item) {
-        gp.setAttribute("display", "none");
+        if (state.display !== "none") {
+          gp.setAttribute("display", "none");
+          state.display = "none";
+        }
         continue;
       }
-      gp.setAttribute("display", "inline");
-      gp.setAttribute("d", item.d);
-      gp.setAttribute("opacity", (0.34 - i * 0.1).toFixed(2));
-      gp.setAttribute(
-        "transform",
+      if (state.display !== "inline") {
+        gp.setAttribute("display", "inline");
+        state.display = "inline";
+      }
+      if (state.d !== item.d) {
+        gp.setAttribute("d", item.d);
+        state.d = item.d;
+      }
+      const ghostOpacity = (0.34 - i * 0.1).toFixed(2);
+      if (state.opacity !== ghostOpacity) {
+        gp.setAttribute("opacity", ghostOpacity);
+        state.opacity = ghostOpacity;
+      }
+      const ghostTransform =
         "translate(" +
-          f(item.x - posX) +
-          " " +
-          f(item.y - posY) +
-          ") rotate(" +
-          f(item.rot) +
-          " " +
-          f(item.px) +
-          " " +
-          f(item.py) +
-          ")",
-      );
+        f(item.x - posX) +
+        " " +
+        f(item.y - posY) +
+        ") rotate(" +
+        f(item.rot) +
+        " " +
+        f(item.px) +
+        " " +
+        f(item.py) +
+        ")";
+      if (state.transform !== ghostTransform) {
+        gp.setAttribute("transform", ghostTransform);
+        state.transform = ghostTransform;
+      }
     }
-  }
-
-  function updateSpeedTunnel() {
-    const dx = posX - tunnelLastX;
-    const dy = posY - tunnelLastY;
-    tunnelLastX = Number.isFinite(posX) ? posX : tunnelLastX;
-    tunnelLastY = Number.isFinite(posY) ? posY : tunnelLastY;
-    const localX = dx * fv;
-    const mag = Math.hypot(localX, dy);
-    if (!Number.isFinite(mag)) {
-      parts.speedTunnel.setAttribute("display", "none");
-      return;
-    }
-    const span = Math.max(0.001, TUNNEL_SPEED_MAX - TUNNEL_SPEED_MIN);
-    const raw = (mag - TUNNEL_SPEED_MIN) / span;
-    const k = Number.isFinite(raw) ? clamp(raw, 0, 1) : 0;
-    if (k <= 0.01) {
-      parts.speedTunnel.setAttribute("display", "none");
-      return;
-    }
-    const dirX = mag > 0.001 ? localX / mag : 1;
-    const dirY = mag > 0.001 ? dy / mag : 0;
-    const normX = -dirY;
-    const normY = dirX;
-    const cx = BOX_W / 2;
-    const cy = BOX_H / 2;
-    const vpx = cx + dirX * 30;
-    const vpy = cy + dirY * 30;
-    const kids = parts.speedTunnel.childNodes;
-    for (let i = 0; i < kids.length; i++) {
-      const line = kids[i];
-      const spread = (Math.random() - 0.5) * 1.35;
-      const dist = (150 + k * 210) * (0.72 + Math.random() * 0.56);
-      const jitter = (Math.random() - 0.5) * 9;
-      const sx = vpx + normX * jitter;
-      const sy = vpy + normY * jitter;
-      const ex =
-        vpx - dirX * Math.cos(spread) * dist + normX * Math.sin(spread) * dist;
-      const ey =
-        vpy - dirY * Math.cos(spread) * dist + normY * Math.sin(spread) * dist;
-      line.setAttribute("x1", f(sx));
-      line.setAttribute("y1", f(sy));
-      line.setAttribute("x2", f(ex));
-      line.setAttribute("y2", f(ey));
-      line.setAttribute(
-        "stroke-width",
-        (0.9 + k * 2.6 + Math.random() * 0.9).toFixed(2),
-      );
-    }
-    parts.speedTunnel.setAttribute("display", "inline");
-    parts.speedTunnel.setAttribute("opacity", (k * 0.8).toFixed(2));
   }
 
   function stepSquash(dt) {
@@ -1718,7 +1687,10 @@ export function createStickmanActor(layer, hooks) {
             f(fv) +
             " 1)",
         );
-        parts.marker.style.stroke = playerInk;
+        if (styleCache.markerStroke !== playerInk) {
+          parts.marker.style.stroke = playerInk;
+          styleCache.markerStroke = playerInk;
+        }
       } else {
         parts.marker.setAttribute("display", "none");
       }
@@ -1883,7 +1855,10 @@ export function createStickmanActor(layer, hooks) {
       parts.gun.setAttribute("display", "inline");
       parts.gun.setAttribute("d", gunD);
       parts.gun.setAttribute("stroke-width", gunW);
-      parts.gun.style.stroke = gunColor;
+      if (styleCache.gunStroke !== gunColor) {
+        parts.gun.style.stroke = gunColor;
+        styleCache.gunStroke = gunColor;
+      }
     } else {
       parts.gun.setAttribute("display", "none");
     }
@@ -1894,8 +1869,14 @@ export function createStickmanActor(layer, hooks) {
       parts.ball.setAttribute("r", f(ballR));
       parts.ball.setAttribute("cx", f(ballX));
       parts.ball.setAttribute("cy", f(ballY));
-      parts.ball.style.fill = ballFill;
-      parts.ball.style.stroke = ballStroke;
+      if (styleCache.ballFill !== ballFill) {
+        parts.ball.style.fill = ballFill;
+        styleCache.ballFill = ballFill;
+      }
+      if (styleCache.ballStroke !== ballStroke) {
+        parts.ball.style.stroke = ballStroke;
+        styleCache.ballStroke = ballStroke;
+      }
     } else {
       parts.ball.setAttribute("display", "none");
     }
@@ -1927,7 +1908,7 @@ export function createStickmanActor(layer, hooks) {
     }
     updateGhosts(j, pv);
     updateBolt(now, j);
-    updateSpeedTunnel();
+    if (trail) updateSpeedTrail(trail, posX, posY);
     try {
       if (laser) laser.render(now, posX, posY, j.headC);
     } catch {}
@@ -1971,10 +1952,7 @@ export function createStickmanActor(layer, hooks) {
     posX += (st.x - pivot.x - posX) * pk;
     posY += (st.y - pivot.y - posY) * pk;
     draw(last, now);
-    try {
-      actor.style.left = posX + "px";
-      actor.style.top = posY + "px";
-    } catch {}
+    place(posX, posY);
   }
 
   function applyAimPose(t, now) {
@@ -2216,9 +2194,8 @@ export function createStickmanActor(layer, hooks) {
       if (!flying) return false;
       try {
         if (last) draw(last, now);
-        actor.style.left = posX + "px";
-        actor.style.top = posY + "px";
       } catch {}
+      place(posX, posY);
       return true;
     }
     posX = fr.x;
@@ -2242,10 +2219,7 @@ export function createStickmanActor(layer, hooks) {
     comboOpacity = fr.opacity;
     last = solve(P, fv, 0, airBlend);
     draw(last, now);
-    try {
-      actor.style.left = posX + "px";
-      actor.style.top = posY + "px";
-    } catch {}
+    place(posX, posY);
     return true;
   }
 
@@ -2265,9 +2239,8 @@ export function createStickmanActor(layer, hooks) {
       if (!flying) return false;
       try {
         if (last) draw(last, now);
-        actor.style.left = posX + "px";
-        actor.style.top = posY + "px";
       } catch {}
+      place(posX, posY);
       return true;
     }
     posX = frameStep.x;
@@ -2293,10 +2266,7 @@ export function createStickmanActor(layer, hooks) {
       (clamp(velX * 0.035, -bankLimit, bankLimit) - spin) * ease(0.15, dt);
     last = solve(P, fv, Math.sin(now * 0.08) * 0.5, airBlend);
     draw(last, now);
-    try {
-      actor.style.left = posX + "px";
-      actor.style.top = posY + "px";
-    } catch {}
+    place(posX, posY);
     return true;
   }
 
@@ -2394,12 +2364,7 @@ export function createStickmanActor(layer, hooks) {
         fv += (dir - fv) * ease(0.3, dt);
         last = solve(P, fv, 0, airBlend);
         draw(last, now);
-        try {
-          actor.style.left = posX + "px";
-        } catch {}
-        try {
-          actor.style.top = posY + "px";
-        } catch {}
+        place(posX, posY);
       } catch {}
       return;
     }
@@ -2429,12 +2394,7 @@ export function createStickmanActor(layer, hooks) {
         fv += (dir - fv) * ease(0.3, dt);
         last = solve(P, fv, 0, airBlend);
         draw(last, now);
-        try {
-          actor.style.left = posX + "px";
-        } catch {}
-        try {
-          actor.style.top = posY + "px";
-        } catch {}
+        place(posX, posY);
       } catch {}
       return;
     }
@@ -2455,12 +2415,7 @@ export function createStickmanActor(layer, hooks) {
         airBlend += (1 - airBlend) * ease(0.25, dt);
         last = solve(P, fv, 0, airBlend);
         draw(last, now);
-        try {
-          actor.style.left = posX + "px";
-        } catch {}
-        try {
-          actor.style.top = posY + "px";
-        } catch {}
+        place(posX, posY);
       } catch {}
       return;
     }
@@ -2528,15 +2483,13 @@ export function createStickmanActor(layer, hooks) {
         rage += (0.95 - rage) * ease(0.1, dt);
         last = solve(P, fv, 0, airBlend);
         draw(last, now);
-        actor.style.left = posX + "px";
-        actor.style.top = posY + "px";
+        place(posX, posY);
         try {
           if (pinDot) {
             const r = pinDot.getBoundingClientRect();
             posX += lastPX - (r.left + r.width / 2);
             posY += lastPY - (r.top + r.height / 2);
-            actor.style.left = posX + "px";
-            actor.style.top = posY + "px";
+            place(posX, posY);
           }
         } catch {}
         prevCX = lastPX;
@@ -2656,10 +2609,7 @@ export function createStickmanActor(layer, hooks) {
       else spin *= Math.pow(0.55, dt);
       last = solve(P, fv, 0, airBlend);
       draw(last, now);
-      try {
-        actor.style.left = posX + "px";
-        actor.style.top = posY + "px";
-      } catch {}
+      place(posX, posY);
       return;
     }
 
@@ -2947,8 +2897,7 @@ export function createStickmanActor(layer, hooks) {
 
     last = solve(P, fv, shake, airBlend);
     draw(last, now);
-    actor.style.left = posX + "px";
-    actor.style.top = posY + "px";
+    place(posX, posY);
   }
 
   function frontHandPoint() {
@@ -2974,8 +2923,7 @@ export function createStickmanActor(layer, hooks) {
 
   function place(x, y) {
     try {
-      actor.style.left = x + "px";
-      actor.style.top = y + "px";
+      actor.style.translate = x + "px " + y + "px";
     } catch {}
   }
 
@@ -3314,9 +3262,13 @@ export function createStickmanActor(layer, hooks) {
     if (!Number.isFinite(posY)) posY = 0;
     if (!Number.isFinite(velX)) velX = 0;
     if (!Number.isFinite(velY)) velY = 0;
+    let defaults = null;
     for (let i = 0; i < POSE_KEYS.length; i++) {
       const key = POSE_KEYS[i];
-      if (!Number.isFinite(P[key])) P[key] = pose({})[key];
+      if (!Number.isFinite(P[key])) {
+        if (!defaults) defaults = DEFAULT_POSE;
+        P[key] = defaults[key];
+      }
     }
   }
 
@@ -3393,12 +3345,8 @@ export function createStickmanActor(layer, hooks) {
     try {
       speed = 0;
     } catch {}
-    try {
-      actor.style.left = posX + "px";
-    } catch {}
-    try {
-      actor.style.top = posY + "px";
-    } catch {}
+    place(posX, posY);
+    if (trail) syncSpeedTrail(trail, posX, posY);
   }
 
   function startIntro(ms) {
@@ -3408,6 +3356,7 @@ export function createStickmanActor(layer, hooks) {
     try {
       introToY = Math.max(0, resolveFloor() - BOX_H);
     } catch {}
+    if (trail) syncSpeedTrail(trail, posX, posY);
     try {
       const nowMs = performance.now();
       introStartAt = nowMs;
@@ -3603,23 +3552,6 @@ export function createStickmanActor(layer, hooks) {
       "stroke-linejoin": "round",
       display: "none",
     });
-    parts.speedTunnel = el("g", {
-      class: "stk-speed-tunnel",
-      display: "none",
-    });
-    for (let t = 0; t < TUNNEL_LINES; t++) {
-      parts.speedTunnel.appendChild(
-        el("line", {
-          x1: 0,
-          y1: 0,
-          x2: 0,
-          y2: 0,
-          style: "stroke:rgba(255,255,255,0.9)",
-          "stroke-width": 1.5,
-          "stroke-linecap": "round",
-        }),
-      );
-    }
     parts.flash = el("circle", {
       r: 4,
       fill: "#ffd23c",
@@ -3658,6 +3590,12 @@ export function createStickmanActor(layer, hooks) {
         display: "none",
       });
       parts.ghosts.push(gp);
+      ghostStates.push({
+        display: "none",
+        d: null,
+        opacity: null,
+        transform: null,
+      });
       parts.ghostG.appendChild(gp);
     }
     parts.vein = el("path", {
@@ -3681,7 +3619,6 @@ export function createStickmanActor(layer, hooks) {
     });
     const order = [
       flameRig.defs,
-      parts.speedTunnel,
       flameRig.aura,
       parts.aura,
       jetRig.root,
@@ -3716,6 +3653,8 @@ export function createStickmanActor(layer, hooks) {
     });
     order.push(parts.marker);
     for (let i = 0; i < order.length; i++) parts.root.appendChild(order[i]);
+    trail = createSpeedTrail();
+    svg.appendChild(trail.group);
     svg.appendChild(parts.ghostG);
     svg.appendChild(parts.root);
     return svg;
@@ -3773,8 +3712,7 @@ export function createStickmanActor(layer, hooks) {
     stampShootGap(now);
     nextTurnAt = now + rand(2000, 4000);
     nextGlanceAt = now;
-    actor.style.left = posX + "px";
-    actor.style.top = posY + "px";
+    place(posX, posY);
   } catch {}
 
   return {
@@ -3809,8 +3747,7 @@ export function createStickmanActor(layer, hooks) {
         const maxX = Math.max(0, window.innerWidth - BOX_W);
         posX = clamp(posX + (dx || 0), 0, maxX);
         posY = Math.max(0, posY + (dy || 0));
-        actor.style.left = posX + "px";
-        actor.style.top = posY + "px";
+        place(posX, posY);
         return true;
       } catch {
         return false;

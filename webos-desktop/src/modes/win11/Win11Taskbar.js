@@ -8,19 +8,22 @@ import {
   createElement,
 } from "../../framework.js";
 import { openWin11SearchMode } from "./Win11StartMenu.js";
+import { toggleWin11Calendar, closeWin11Calendar } from "./Win11Calendar.js";
+import {
+  toggleWin11Band,
+  closeWin11Band,
+  WIN11_BAND_TRIGGER_CLASS,
+} from "./Win11Band.js";
 import { resolveIconUrl } from "../../shared/assetResolver.js";
+import { handleWin11TaskbarContextMenu } from "./Win11TaskbarMenu.js";
 
-const HIDDEN_SELECTORS = [
-  "#mac-menu-bar",
-  "#start-button",
-  "#taskbar-windows",
-  "#system-tray",
-  ".win11-taskbar-btn",
-  "#win11-start-tsicon",
-];
+const HIDDEN_SELECTORS = ["#mac-menu-bar", "#start-button", "#system-tray"];
 
 const SEARCH_SVG =
-  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="-2 -1 26 26" height="28" width="28"><circle cx="13" cy="11" r="8" fill="#ffffff24"></circle><g fill="none" stroke="currentColor" stroke-linejoin="round" stroke-width="2"><circle cx="13" cy="11" r="8"></circle><path d="M3 21l4-4" stroke-linecap="round"></path></g></svg>';
+  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="-2 -1 26 26" height="28" width="28"><defs><linearGradient id="win11-search-bar-gradient" x1="0" y1="1" x2="1" y2="0"><stop class="search-stop-1" offset="0%"></stop><stop class="search-stop-1b" offset="38%"></stop><stop class="search-stop-2" offset="70%"></stop><stop class="search-stop-3" offset="100%"></stop></linearGradient></defs><g class="search-ring" fill="none" stroke-linejoin="round" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><path d="M21 21l-4-4" stroke-linecap="round"></path></g></svg>';
+
+const WORKSPACE_SVG =
+  '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><rect x="2.5" y="8.5" width="12" height="12" rx="0.25" fill="#808080"></rect><rect x="9.5" y="2.5" width="12" height="12" rx="0.25" fill="#ffffff"></rect><rect x="9.5" y="8.5" width="5" height="6" rx="0.25" fill="#c5c5c5"></rect></svg>';
 
 const WIFI_SVG =
   '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12a10 10 0 0 1 14 0"></path><path d="M8.5 15.5a5 5 0 0 1 7 0"></path><circle cx="12" cy="19" r="1.2" fill="currentColor" stroke="none"></circle></svg>';
@@ -66,15 +69,14 @@ const PINNED_APPS = [
   },
 ];
 
-const CLOCK_APP_ID = "clockApp";
-
 let taskRoot = null;
 let clockTimer = null;
-let focusedWinId = null;
 let pinnedRefs = [];
 let createdHandler = null;
 let closedHandler = null;
 let focusedHandler = null;
+let taskbarWindowsHome = null;
+let taskbarWindowsNext = null;
 
 function readAlign() {
   try {
@@ -101,7 +103,21 @@ function restoreNativeTaskbar() {
   });
 }
 
+function dismissAllFlyouts() {
+  closeWin11Calendar();
+  closeWin11Band();
+  const sidepane = $("#win11-sidepane");
+  if (sidepane && sidepane.getAttribute("data-hide") === "false") {
+    sidepane.setAttribute("data-hide", "true");
+  }
+  const widgets = $("#win11-widgets-board");
+  if (widgets && widgets.getAttribute("data-hide") === "false") {
+    widgets.setAttribute("data-hide", "true");
+  }
+}
+
 function toggleNativeStartMenu() {
+  dismissAllFlyouts();
   import("../../desktopui/startMenu.js")
     .then((mod) => {
       if (mod && mod.toggleStartMenu) mod.toggleStartMenu();
@@ -119,7 +135,9 @@ function toggleNativeStartMenu() {
 function focusStartSearchInput() {
   setTimeout(() => {
     const menu = $("#start-menu");
-    const input = menu ? $(".searchBar input", menu) : $(".searchBar input");
+    const input = menu
+      ? $(".topSearch input", menu) || $(".searchBar input", menu)
+      : $(".topSearch input") || $(".searchBar input");
     if (input) input.focus();
   }, 80);
 }
@@ -160,53 +178,18 @@ function resolveLaunchId(entry) {
   return null;
 }
 
-function readOpenWindows() {
-  try {
-    return os.window.getOpenWindows() || null;
-  } catch {
-    return null;
-  }
-}
-
-function getWindowAppId(winId, entry) {
-  if (entry && entry.record && entry.record.appId) return entry.record.appId;
-  if (entry && entry.appId) return entry.appId;
-  if (typeof winId !== "string" || !winId) return null;
-  const el = $("#" + winId);
-  if (el && el.dataset && el.dataset.appId) return el.dataset.appId;
-  return null;
-}
-
-function findOpenWinId(appId) {
-  const wins = readOpenWindows();
-  if (!wins) return null;
-  const keys =
-    typeof wins.keys === "function"
-      ? Array.from(wins.keys())
-      : Object.keys(wins);
-  for (let i = 0; i < keys.length; i++) {
-    const entry =
-      typeof wins.get === "function" ? wins.get(keys[i]) : wins[keys[i]];
-    if (getWindowAppId(keys[i], entry) === appId) return keys[i];
-  }
-  return null;
+function findRunningTaskbarItem(appId) {
+  if (!appId) return null;
+  return $(`#taskbar-windows .taskbar-item.running[data-app-id="${appId}"]`);
 }
 
 function launchPinned(entry) {
   const target = resolveLaunchId(entry);
   if (!target) return;
-  const openId = findOpenWinId(target);
-  if (openId) {
-    const el = $("#" + openId);
-    if (el) {
-      if (el.style.display === "none") el.style.display = "";
-      try {
-        os.window.focus(el);
-      } catch {
-        return;
-      }
-      return;
-    }
+  const item = findRunningTaskbarItem(target);
+  if (item) {
+    item.click();
+    return;
   }
   try {
     const result = os.app.launch(target);
@@ -218,19 +201,14 @@ function launchPinned(entry) {
 
 function reconcileOpenState() {
   if (pinnedRefs.length === 0) return;
-  let focusAppId = null;
-  if (focusedWinId) {
-    const wins = readOpenWindows();
-    const entry =
-      wins && typeof wins.get === "function" ? wins.get(focusedWinId) : null;
-    focusAppId = getWindowAppId(focusedWinId, entry);
-  }
   pinnedRefs.forEach((ref) => {
     const appId = ref.entry ? ref.entry.appId : null;
-    const open = appId ? Boolean(findOpenWinId(appId)) : false;
-    ref.wrap.setAttribute("data-open", open ? "true" : "false");
-    const active = open && focusAppId ? focusAppId === appId : false;
-    ref.wrap.setAttribute("data-active", active ? "true" : "false");
+    const item = findRunningTaskbarItem(appId);
+    ref.wrap.setAttribute("data-open", item ? "true" : "false");
+    ref.wrap.setAttribute(
+      "data-active",
+      item && item.classList.contains("active") ? "true" : "false",
+    );
   });
 }
 
@@ -253,6 +231,7 @@ function buildStartButton() {
   const btn = buildIconButton("", "static/icons/win11-home.png", "Start");
   bindEvent(btn, "click", (e) => {
     if (e && e.stopPropagation) e.stopPropagation();
+    dismissAllFlyouts();
     toggleNativeStartMenu();
   });
   return btn;
@@ -265,6 +244,7 @@ function buildSearchButton() {
   });
   bindEvent(btn, "click", (e) => {
     if (e && e.stopPropagation) e.stopPropagation();
+    dismissAllFlyouts();
     try {
       openWin11SearchMode();
     } catch {
@@ -272,6 +252,21 @@ function buildSearchButton() {
       return;
     }
     focusStartSearchInput();
+  });
+  return btn;
+}
+
+function buildWorkspaceButton() {
+  const btn = createElement("div", {
+    className: "uicon tsIcon workspaceIcon",
+    attributes: { title: "Workspaces" },
+    html: WORKSPACE_SVG,
+  });
+  bindEvent(btn, "click", (e) => {
+    if (e && e.stopPropagation) e.stopPropagation();
+    const manager = os.windowManager?.workspaceManager;
+    if (!manager) return;
+    manager.toggleOverview();
   });
   return btn;
 }
@@ -284,23 +279,23 @@ function buildWidgetsButton() {
   );
   bindEvent(btn, "click", (e) => {
     if (e && e.stopPropagation) e.stopPropagation();
+    dismissAllFlyouts();
     toggleWidgetsPanel();
   });
   return btn;
 }
 
 function buildPinnedButton(entry) {
-  const wrap = createElement("div", {
-    attributes: {
-      value: entry.key,
-      "data-open": "false",
-      "data-active": "false",
-    },
-  });
-  wrap.appendChild(buildIconButton("", entry.icon, entry.title));
-  bindEvent(wrap, "click", () => launchPinned(entry));
-  pinnedRefs.push({ entry, wrap });
-  return wrap;
+  const btn = buildIconButton("", entry.icon, entry.title);
+  btn.setAttribute("value", entry.key);
+  btn.setAttribute("data-open", "false");
+  btn.setAttribute("data-active", "false");
+  btn.setAttribute("data-win11-app-id", entry.appId);
+  btn.setAttribute("data-title", entry.title);
+  btn.setAttribute("title", entry.title);
+  bindEvent(btn, "click", () => launchPinned(entry));
+  pinnedRefs.push({ entry, wrap: btn });
+  return btn;
 }
 
 function renderClock(timeEl, dateEl) {
@@ -343,7 +338,12 @@ function updateBatteryFill(fillEl, chargerEl) {
 }
 
 function minimizeAllWindows() {
-  const wins = readOpenWindows();
+  let wins = null;
+  try {
+    wins = os.window.getOpenWindows() || null;
+  } catch {
+    return;
+  }
   if (!wins) return;
   const keys =
     typeof wins.keys === "function"
@@ -358,17 +358,52 @@ function minimizeAllWindows() {
   });
 }
 
+function relocateTaskbarWindows(tsbar) {
+  const taskbarWindows = $("#taskbar-windows");
+  if (!taskbarWindows || !tsbar) return;
+  if (!taskbarWindowsHome) {
+    taskbarWindowsHome = taskbarWindows.parentElement;
+    taskbarWindowsNext = taskbarWindows.nextElementSibling;
+  }
+  tsbar.appendChild(taskbarWindows);
+}
+
+function restoreTaskbarWindows() {
+  const taskbarWindows = $("#taskbar-windows");
+  if (!taskbarWindows || !taskbarWindowsHome) {
+    taskbarWindowsHome = null;
+    taskbarWindowsNext = null;
+    return;
+  }
+  if (taskbarWindowsNext && taskbarWindowsHome.contains(taskbarWindowsNext)) {
+    taskbarWindowsHome.insertBefore(taskbarWindows, taskbarWindowsNext);
+  } else {
+    taskbarWindowsHome.appendChild(taskbarWindows);
+  }
+  taskbarWindowsHome = null;
+  taskbarWindowsNext = null;
+}
+
 function buildTaskRight() {
   const right = createElement("div", { className: "taskright" });
   const chev = createElement("div", {
-    className: "px-2 prtclk handcr hvlight flex",
+    className: `px-2 prtclk handcr hvlight flex ${WIN11_BAND_TRIGGER_CLASS}`,
+    attributes: { "data-open": "false" },
   });
   const chevIcon = createElement("div", {
     className: "uicon prtclk",
     html: CHEVRON_SVG,
   });
   chev.appendChild(chevIcon);
-  bindEvent(chev, "click", toggleSystemTray);
+  bindEvent(chev, "click", (e) => {
+    if (e && e.stopPropagation) e.stopPropagation();
+    closeWin11Calendar();
+    const sidepane = $("#win11-sidepane");
+    if (sidepane && sidepane.getAttribute("data-hide") === "false") {
+      sidepane.setAttribute("data-hide", "true");
+    }
+    toggleWin11Band();
+  });
   right.appendChild(chev);
   const cluster = createElement("div", {
     className: "prtclk handcr my-1 px-1 hvlight flex rounded",
@@ -397,7 +432,12 @@ function buildTaskRight() {
   cluster.appendChild(wifiWrap);
   cluster.appendChild(audioWrap);
   cluster.appendChild(batteryWrap);
-  bindEvent(cluster, "click", toggleSidePane);
+  bindEvent(cluster, "click", (e) => {
+    if (e && e.stopPropagation) e.stopPropagation();
+    closeWin11Calendar();
+    closeWin11Band();
+    toggleSidePane();
+  });
   right.appendChild(cluster);
   updateBatteryFill($(".btFull", batterySpan), $(".charger", batterySpan));
   const dateWrap = createElement("div", {
@@ -408,14 +448,14 @@ function buildTaskRight() {
   dateWrap.appendChild(timeEl);
   dateWrap.appendChild(dateEl);
   renderClock(timeEl, dateEl);
-  bindEvent(dateWrap, "click", () => {
-    try {
-      if (!os.app.hasApp(CLOCK_APP_ID)) return;
-      const result = os.app.launch(CLOCK_APP_ID);
-      if (result && typeof result.catch === "function") result.catch(() => {});
-    } catch {
-      return;
+  bindEvent(dateWrap, "click", (e) => {
+    if (e && e.stopPropagation) e.stopPropagation();
+    closeWin11Band();
+    const sidepane = $("#win11-sidepane");
+    if (sidepane && sidepane.getAttribute("data-hide") === "false") {
+      sidepane.setAttribute("data-hide", "true");
     }
+    toggleWin11Calendar();
   });
   right.appendChild(dateWrap);
   const sliver = createElement("div", { className: "uicon graybd my-4" });
@@ -429,7 +469,6 @@ export function setupWin11Taskbar() {
   if (taskRoot) return;
   hideNativeTaskbar();
   pinnedRefs = [];
-  focusedWinId = null;
   const taskbar = $("#taskbar");
   if (!taskbar) return;
   taskRoot = createElement("div", { className: "taskcont" });
@@ -440,21 +479,18 @@ export function setupWin11Taskbar() {
   const tsbar = createElement("div", { className: "tsbar" });
   tsbar.appendChild(buildStartButton());
   tsbar.appendChild(buildSearchButton());
+  tsbar.appendChild(buildWorkspaceButton());
   tsbar.appendChild(buildWidgetsButton());
   PINNED_APPS.forEach((entry) => tsbar.appendChild(buildPinnedButton(entry)));
   tasksCont.appendChild(tsbar);
   taskRoot.appendChild(tasksCont);
   taskRoot.appendChild(buildTaskRight());
   taskbar.appendChild(taskRoot);
-  createdHandler = () => reconcileOpenState();
-  closedHandler = (data) => {
-    if (data && data.winId && data.winId === focusedWinId) focusedWinId = null;
-    reconcileOpenState();
-  };
-  focusedHandler = (data) => {
-    if (data && data.winId) focusedWinId = data.winId;
-    reconcileOpenState();
-  };
+  bindEvent(taskRoot, "contextmenu", handleWin11TaskbarContextMenu, true);
+  relocateTaskbarWindows(tsbar);
+  createdHandler = () => queueMicrotask(reconcileOpenState);
+  closedHandler = () => reconcileOpenState();
+  focusedHandler = () => reconcileOpenState();
   os.events.on(BusEvents.WINDOW_CREATED, createdHandler);
   os.events.on(BusEvents.WINDOW_CLOSED, closedHandler);
   os.events.on(BusEvents.WINDOW_FOCUSED, focusedHandler);
@@ -466,6 +502,8 @@ export function teardownWin11Taskbar() {
     clearInterval(clockTimer);
     clockTimer = null;
   }
+  closeWin11Calendar();
+  closeWin11Band();
   if (createdHandler) {
     os.events.off(BusEvents.WINDOW_CREATED, createdHandler);
     createdHandler = null;
@@ -478,11 +516,11 @@ export function teardownWin11Taskbar() {
     os.events.off(BusEvents.WINDOW_FOCUSED, focusedHandler);
     focusedHandler = null;
   }
+  restoreTaskbarWindows();
   if (taskRoot) {
     taskRoot.remove();
     taskRoot = null;
   }
   pinnedRefs = [];
-  focusedWinId = null;
   restoreNativeTaskbar();
 }

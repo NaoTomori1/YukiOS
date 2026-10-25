@@ -1,17 +1,64 @@
+import { createElement } from "../../framework.js";
 import { openRealityRift } from "./stickmanRift.js";
+
+export const POSE_KEYS = [
+  "lean",
+  "tilt",
+  "a1",
+  "aK",
+  "b1",
+  "bK",
+  "armA",
+  "armAE",
+  "armB",
+  "armBE",
+  "shout",
+];
+
+const POSE_DEFAULTS = {
+  lean: 0.15,
+  tilt: 0.1,
+  a1: 0.15,
+  aK: 0.1,
+  b1: -0.15,
+  bK: 0.1,
+  armA: 0.5,
+  armAE: 1.7,
+  armB: 0.2,
+  armBE: 1.8,
+  shout: 0,
+};
+
+export function pose(o) {
+  const out = {};
+  for (const key in POSE_DEFAULTS) {
+    const v = o ? o[key] : undefined;
+    out[key] = Number.isFinite(v) ? v : POSE_DEFAULTS[key];
+  }
+  return out;
+}
 
 const MAX_FX = 90;
 const MAX_STAINS = 44;
+const MAX_STAINS_TOTAL = 320;
+const MAX_STUCK = 10;
+const STAIN_SELECTOR = ".stk-stain";
+const STUCK_SELECTOR = ".stk-stuck";
 
 let liveFx = 0;
 let shakeAnim = null;
+let shakePending = 0;
+
+const stainRegistry = new Map();
+const childLists = new WeakMap();
+const prepCache = new WeakMap();
 
 function f(n) {
   return n.toFixed(1);
 }
 
 function box(x, y, size, extra) {
-  const node = document.createElement("div");
+  const node = createElement("div");
   node.style.cssText =
     "position:absolute;pointer-events:none;left:" +
     f(x - size / 2) +
@@ -265,15 +312,17 @@ export function fxJetExhaust(layer, x, y, dirX, dirY, power) {
   } catch {}
 }
 
-export function screenShake(power) {
+const SHAKE_MAX_PENDING = 12;
+
+function startShakeCycle(amp) {
   const body = document.body;
   if (!body || !body.animate) return;
-  const p = Math.min(1.5, Math.max(0.1, power || 0.4)) * 7;
+  const p = amp;
   try {
     if (shakeAnim) shakeAnim.cancel();
   } catch {}
   try {
-    shakeAnim = body.animate(
+    const anim = body.animate(
       [
         { translate: "0px 0px" },
         { translate: f(-p) + "px " + f(p * 0.5) + "px" },
@@ -284,50 +333,178 @@ export function screenShake(power) {
       ],
       { duration: 280 + p * 14, easing: "ease-out" },
     );
+    shakeAnim = anim;
+    anim.onfinish = () => {
+      if (shakeAnim === anim) shakeAnim = null;
+      if (shakePending > 0) {
+        const next = shakePending;
+        shakePending = 0;
+        startShakeCycle(next);
+      }
+    };
+    anim.oncancel = () => {
+      if (shakeAnim === anim) shakeAnim = null;
+    };
   } catch {
     shakeAnim = null;
   }
 }
 
-function trim(node, selector, max) {
+export function screenShake(power) {
+  const amp = Math.min(1.5, Math.max(0.1, power || 0.4)) * 7;
+  if (shakeAnim) {
+    shakePending = Math.min(SHAKE_MAX_PENDING, shakePending + amp);
+    return;
+  }
+  const next =
+    shakePending > 0 ? Math.min(SHAKE_MAX_PENDING, shakePending + amp) : amp;
+  shakePending = 0;
+  startShakeCycle(next);
+}
+
+export function resetScreenShake() {
+  shakePending = 0;
   try {
-    const list = node.querySelectorAll(":scope > " + selector);
-    if (list.length >= max) list[0].remove();
+    if (shakeAnim) shakeAnim.cancel();
+  } catch {}
+  shakeAnim = null;
+  try {
+    const body = document.body;
+    if (body) body.style.translate = "";
   } catch {}
 }
 
-function prep(node) {
+function getChildList(node, selector) {
+  let lists = childLists.get(node);
+  if (!lists) {
+    lists = new Map();
+    childLists.set(node, lists);
+  }
+  let list = lists.get(selector);
+  if (!list) {
+    list = [];
+    lists.set(selector, list);
+  }
+  return list;
+}
+
+function removeFromLists(parent, el) {
+  if (!parent) return;
+  const lists = childLists.get(parent);
+  if (!lists) return;
+  for (const list of lists.values()) {
+    const index = list.indexOf(el);
+    if (index !== -1) list.splice(index, 1);
+  }
+}
+
+function untrackStain(el) {
+  if (!el) return;
+  const parent = stainRegistry.get(el);
+  if (!parent) return;
+  stainRegistry.delete(el);
+  removeFromLists(parent, el);
+}
+
+function enforceStainCap() {
   try {
-    if (window.getComputedStyle(node).position === "static") {
-      node.style.position = "relative";
+    for (const el of stainRegistry.keys()) {
+      if (!el.isConnected) stainRegistry.delete(el);
+    }
+    while (stainRegistry.size > MAX_STAINS_TOTAL) {
+      const oldest = stainRegistry.keys().next();
+      if (oldest.done) break;
+      const el = oldest.value;
+      const parent = stainRegistry.get(el);
+      stainRegistry.delete(el);
+      try {
+        if (el.isConnected) el.remove();
+      } catch {}
+      removeFromLists(parent, el);
     }
   } catch {}
 }
 
-function glow(el, strong) {
-  if (!el.animate) return;
+function trim(node, selector, max) {
   try {
-    el.animate(
-      [
-        {
-          boxShadow:
-            "0 0 10px 3px rgba(255,150,50,.95), 0 0 2px 1px rgba(255,235,170,.9)",
-          filter: "brightness(1.9)",
-        },
-        { boxShadow: "0 0 0 0 rgba(255,110,30,0)", filter: "brightness(1)" },
-      ],
-      { duration: strong === false ? 320 : 1200, easing: "ease-out" },
-    );
+    const list = getChildList(node, selector);
+    let count = 0;
+    for (let i = list.length - 1; i >= 0; i--) {
+      if (!list[i].isConnected) list.splice(i, 1);
+      else count += 1;
+    }
+    while (count >= max) {
+      const victim = list.shift();
+      if (!victim) break;
+      try {
+        victim.remove();
+      } catch {}
+      untrackStain(victim);
+      count -= 1;
+    }
   } catch {}
+}
+
+function trackChild(node, selector, el, max) {
+  trim(node, selector, max);
+  const list = getChildList(node, selector);
+  list.push(el);
+  if (selector === STAIN_SELECTOR) stainRegistry.set(el, node);
+  enforceStainCap();
+}
+
+function prep(node) {
+  try {
+    if (prepCache.has(node)) return;
+    const inlinePosition = node.style && node.style.position;
+    if (inlinePosition) {
+      prepCache.set(node, true);
+      return;
+    }
+    if (window.getComputedStyle(node).position === "static") {
+      node.style.position = "relative";
+    }
+  } catch {
+  } finally {
+    try {
+      prepCache.set(node, true);
+    } catch {}
+  }
+}
+
+function glow(el, strong) {
+  if (!el || !el.animate) return;
+  let overlay = null;
+  try {
+    overlay = createElement("i", { className: "stk-stain-glow" });
+    el.appendChild(overlay);
+    if (!overlay.animate) {
+      overlay.remove();
+      return;
+    }
+    const anim = overlay.animate([{ opacity: 1 }, { opacity: 0 }], {
+      duration: strong === false ? 320 : 1200,
+      easing: "ease-out",
+    });
+    const cleanup = () => {
+      try {
+        overlay.remove();
+      } catch {}
+    };
+    anim.onfinish = cleanup;
+    anim.oncancel = cleanup;
+  } catch {
+    try {
+      if (overlay) overlay.remove();
+    } catch {}
+  }
 }
 
 export function fxStreak(node, mx, my, len, rad, thick, strong) {
   if (!node || !node.isConnected) return null;
-  trim(node, ".stk-stain", MAX_STAINS);
   prep(node);
   const t = thick || 4;
-  const el = document.createElement("div");
-  el.className = "stk-stain stk-streak";
+  const el = createElement("div", { className: "stk-stain stk-streak" });
   el.style.cssText =
     "position:absolute;pointer-events:none;z-index:6;left:" +
     f(mx - len / 2) +
@@ -343,16 +520,15 @@ export function fxStreak(node, mx, my, len, rad, thick, strong) {
     rad.toFixed(3) +
     "rad);background:linear-gradient(90deg,rgba(30,12,4,0) 0%,rgba(22,9,3,.88) 10%,rgba(14,6,2,.94) 50%,rgba(22,9,3,.88) 90%,rgba(30,12,4,0) 100%);";
   node.appendChild(el);
+  trackChild(node, STAIN_SELECTOR, el, MAX_STAINS);
   glow(el, strong);
   return el;
 }
 
 export function fxBlob(node, x, y, size) {
   if (!node || !node.isConnected) return null;
-  trim(node, ".stk-stain", MAX_STAINS);
   prep(node);
-  const el = document.createElement("div");
-  el.className = "stk-stain stk-blob";
+  const el = createElement("div", { className: "stk-stain stk-blob" });
   el.style.cssText =
     "position:absolute;pointer-events:none;z-index:6;border-radius:50%;left:" +
     f(x - size / 2) +
@@ -364,6 +540,7 @@ export function fxBlob(node, x, y, size) {
     f(size) +
     "px;background:radial-gradient(circle,rgba(10,5,2,.95) 0%,rgba(28,12,5,.85) 38%,rgba(110,38,8,.5) 64%,rgba(255,120,30,0) 80%);";
   node.appendChild(el);
+  trackChild(node, STAIN_SELECTOR, el, MAX_STAINS);
   glow(el, true);
   return el;
 }
@@ -376,10 +553,8 @@ export function fxStuckBlade(node, x, y, deg) {
   } catch {
     return null;
   }
-  trim(node, ".stk-stuck", 10);
   prep(node);
-  const el = document.createElement("div");
-  el.className = "stk-stuck";
+  const el = createElement("div", { className: "stk-stuck" });
   el.style.cssText =
     "position:absolute;pointer-events:none;z-index:7;width:15px;height:5px;left:" +
     f(x - rect.left - 7) +
@@ -389,6 +564,7 @@ export function fxStuckBlade(node, x, y, deg) {
     f(deg) +
     "deg);clip-path:polygon(0 50%,24% 0,100% 34%,100% 66%,24% 100%);background:linear-gradient(90deg,#aeb4c0,#f6f8fc);";
   node.appendChild(el);
+  trackChild(node, STUCK_SELECTOR, el, MAX_STUCK);
   setTimeout(() => {
     try {
       if (!el.isConnected) return;
@@ -573,7 +749,7 @@ export function fxNinjaSmoke(layer, x, y) {
 
 export function fxSubstitutionLog(layer, x, y) {
   if (!layer || !layer.isConnected) return;
-  const node = document.createElement("div");
+  const node = createElement("div");
   node.style.cssText =
     "position:absolute;pointer-events:none;z-index:4;left:" +
     f(x - 9) +

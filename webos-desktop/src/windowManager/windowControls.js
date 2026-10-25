@@ -1,5 +1,10 @@
 import { os } from "../framework.js";
 import { wobbleCancel } from "./AnimationSystem.js";
+import {
+  scheduleOpenSnapLayoutPicker,
+  scheduleCloseSnapLayoutPicker,
+  closeSnapLayoutPicker,
+} from "./SnapLayoutPicker.js";
 
 export function updateMaximizeControls(win) {
   const maxBtn = win.querySelector(".maximize-btn");
@@ -9,7 +14,7 @@ export function updateMaximizeControls(win) {
   const restoreGlyph = maxBtn.querySelector(".restore-glyph");
   if (maximizeGlyph) maximizeGlyph.style.display = isMaximized ? "none" : "";
   if (restoreGlyph) restoreGlyph.style.display = isMaximized ? "block" : "none";
-  maxBtn.title = isMaximized ? "Restore" : "Maximize";
+  maxBtn.setAttribute("aria-label", isMaximized ? "Restore" : "Maximize");
 }
 
 export function setupWindowControls(win, wm) {
@@ -17,6 +22,7 @@ export function setupWindowControls(win, wm) {
   const maxBtn = win.querySelector(".maximize-btn");
   const minBtn = win.querySelector(".minimize-btn");
   const downloadBtn = win.querySelector(".download-btn");
+  const ownsAction = (btn) => !!(btn && btn.dataset && btn.dataset.action);
 
   updateMaximizeControls(win);
 
@@ -31,7 +37,7 @@ export function setupWindowControls(win, wm) {
     }
   });
 
-  if (closeBtn) {
+  if (closeBtn && !ownsAction(closeBtn)) {
     closeBtn.onclick = () => wm.closeWindow(win);
   }
 
@@ -86,18 +92,37 @@ export function setupWindowControls(win, wm) {
   }
 
   if (maxBtn) {
-    maxBtn.onclick = () => {
-      if (win.dataset.snapZone === "maximize") {
-        win.classList.add("snapping");
-        wm.unsnap(win);
-      } else {
-        win.classList.add("snapping");
-        wm.applySnap(win, "maximize");
-      }
-    };
+    if (!ownsAction(maxBtn)) {
+      maxBtn.onclick = () => {
+        if (win.dataset.snapZone === "maximize") {
+          win.classList.add("snapping");
+          wm.unsnap(win);
+        } else {
+          win.classList.add("snapping");
+          wm.applySnap(win, "maximize");
+        }
+      };
+    }
+    if (
+      maxBtn.classList.contains("win11-btn") ||
+      maxBtn.closest(".win11-header")
+    ) {
+      maxBtn.addEventListener("mouseenter", () => {
+        scheduleOpenSnapLayoutPicker(win, maxBtn, wm);
+      });
+      maxBtn.addEventListener("mouseleave", () => {
+        scheduleCloseSnapLayoutPicker();
+      });
+      maxBtn.addEventListener("click", () => {
+        closeSnapLayoutPicker();
+      });
+      win.addEventListener("remove", () => {
+        closeSnapLayoutPicker();
+      });
+    }
   }
 
-  if (minBtn) {
+  if (minBtn && !ownsAction(minBtn)) {
     minBtn.onclick = () => wm.minimizeWindow(win);
   }
 

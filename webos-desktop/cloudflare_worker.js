@@ -68,7 +68,22 @@ async function cachedJsonResponse(
         request,
       );
       const hit = await cache.match(cacheKey);
-      if (hit) return hit;
+      if (hit) {
+        const etag = hit.headers.get("ETag");
+        if (etag && request.headers.get("If-None-Match") === etag) {
+          return new Response(null, {
+            status: 304,
+            headers: {
+              ...corsHeaders(),
+              "Cache-Control":
+                hit.headers.get("Cache-Control") ||
+                publicCacheControl(ttlSeconds),
+              ETag: etag,
+            },
+          });
+        }
+        return hit;
+      }
     } catch {
       cacheKey = null;
     }
@@ -79,16 +94,69 @@ async function cachedJsonResponse(
   } catch (err) {
     return errorJsonResponse(err, 500);
   }
-  const response = jsonResponse(data);
+  let body;
+  try {
+    body = JSON.stringify(data);
+  } catch (err) {
+    return errorJsonResponse(err, 500);
+  }
+  const headers = publicCacheHeaders(body, Math.max(60, ttlSeconds || 0));
+  if (request.headers.get("If-None-Match") === headers.ETag) {
+    return new Response(null, { status: 304, headers });
+  }
+  const response = new Response(body, { status: 200, headers });
   if (!cache || !cacheKey) return response;
   try {
-    const toStore = new Response(response.body, response);
-    toStore.headers.set("Cache-Control", "public, max-age=" + ttlSeconds);
-    await cache.put(cacheKey, toStore.clone());
-    return toStore;
-  } catch {
-    return response;
+    await cache.put(cacheKey, response.clone());
+  } catch {}
+  return response;
+}
+
+function publicCacheControl(maxAgeSeconds) {
+  return "public, max-age=" + maxAgeSeconds + ", stale-while-revalidate=300";
+}
+
+function hashString(value) {
+  let hash = 2166136261;
+  for (let i = 0; i < value.length; i++) {
+    hash ^= value.charCodeAt(i);
+    hash = Math.imul(hash, 16777619);
   }
+  return (hash >>> 0).toString(16);
+}
+
+function publicCacheHeaders(body, maxAgeSeconds) {
+  return {
+    ...corsHeaders(),
+    "Content-Type": "application/json",
+    "Cache-Control": publicCacheControl(maxAgeSeconds),
+    ETag: '"' + hashString(body) + '"',
+  };
+}
+
+function publicJsonResponse(request, data, maxAgeSeconds = 60) {
+  let body;
+  try {
+    body = JSON.stringify(data);
+  } catch (err) {
+    return errorJsonResponse(err, 500);
+  }
+  const headers = publicCacheHeaders(body, maxAgeSeconds);
+  if (request.headers.get("If-None-Match") === headers.ETag) {
+    return new Response(null, { status: 304, headers });
+  }
+  return new Response(body, { status: 200, headers });
+}
+
+function noStoreJsonResponse(data) {
+  return new Response(JSON.stringify(data), {
+    status: 200,
+    headers: {
+      ...corsHeaders(),
+      "Content-Type": "application/json",
+      "Cache-Control": "no-store",
+    },
+  });
 }
 
 function invalidateThemeListCache() {
@@ -287,92 +355,6 @@ function ensureAnalyticsIndexes(env) {
   return analyticsIndexInitPromise;
 }
 
-async function fetchStatsData(env, range) {
-  let days = 30;
-  if (range === "7d") days = 7;
-  if (range === "90d") days = 90;
-  if (range === "1y") days = 365;
-
-  const daily = await env.DB.prepare(
-    `SELECT
-       date(timestamp)          AS day,
-       COUNT(*)                 AS requests,
-       COUNT(DISTINCT daily_id) AS unique_players
-     FROM analytics
-     WHERE timestamp >= datetime('now', '-' || ? || ' days')
-     GROUP BY day
-     ORDER BY day DESC`,
-  )
-    .bind(days)
-    .all();
-
-  const topGames = await env.DB.prepare(
-    `SELECT
-       date(timestamp)                                          AS day,
-       lower(trim(json_extract(data, '$.app')))                AS app,
-       COUNT(*)                                                 AS count
-     FROM analytics
-     WHERE timestamp >= datetime('now', '-' || ? || ' days')
-       AND json_extract(data, '$.event') = 'launch'
-     GROUP BY day, app`,
-  )
-    .bind(days)
-    .all();
-
-  const sessionsByDay = await env.DB.prepare(
-    `WITH ordered AS (
-       SELECT
-         daily_id,
-         timestamp,
-         date(timestamp) AS day,
-         LAG(timestamp) OVER (PARTITION BY daily_id ORDER BY timestamp) AS prev_ts
-       FROM analytics
-       WHERE timestamp >= datetime('now', '-' || ? || ' days')
-     ),
-     sessions AS (
-       SELECT
-         day,
-         daily_id,
-         SUM(CASE WHEN prev_ts IS NULL OR
-           (julianday(timestamp) - julianday(prev_ts)) * 86400 > 1800
-           THEN 1 ELSE 0 END) AS session_count
-       FROM ordered
-       GROUP BY day, daily_id
-     )
-     SELECT day, SUM(session_count) AS total_sessions
-     FROM sessions
-     GROUP BY day
-     ORDER BY day DESC`,
-  )
-    .bind(days)
-    .all();
-
-  const sessionMap = {};
-  for (const row of sessionsByDay.results) {
-    sessionMap[row.day] = row.total_sessions;
-  }
-
-  const gamesByDay = {};
-  for (const row of topGames.results) {
-    if (!gamesByDay[row.day]) gamesByDay[row.day] = [];
-    gamesByDay[row.day].push({ app: row.app, count: row.count });
-  }
-  for (const day in gamesByDay) {
-    gamesByDay[day].sort((a, b) => b.count - a.count);
-  }
-
-  const enrichedDaily = daily.results.map((d) => ({
-    ...d,
-    requests_per_user:
-      d.unique_players > 0
-        ? Math.round((d.requests / d.unique_players) * 10) / 10
-        : 0,
-    inferred_sessions: sessionMap[d.day] || 0,
-  }));
-
-  return { daily: enrichedDaily, topGames: gamesByDay };
-}
-
 async function fetchGameCounts(env) {
   const result = await env.DB.prepare(
     `SELECT
@@ -384,261 +366,6 @@ async function fetchGameCounts(env) {
      ORDER BY count DESC`,
   ).all();
   return result.results;
-}
-
-async function fetchTopTime(env) {
-  const result = await env.DB.prepare(
-    `SELECT
-       lower(trim(json_extract(data, '$.app')))                  AS app,
-       COUNT(*)                                                   AS event_count,
-       SUM(
-         CASE
-           WHEN json_extract(data, '$.durationMs') IS NOT NULL
-           THEN CAST(json_extract(data, '$.durationMs') AS REAL)
-           ELSE 0
-         END
-       )                                                          AS total_time_ms
-     FROM analytics
-     WHERE json_extract(data, '$.durationMs') IS NOT NULL
-       AND json_extract(data, '$.app')        IS NOT NULL
-     GROUP BY app
-     ORDER BY total_time_ms DESC
-     LIMIT 30`,
-  ).all();
-  return result.results;
-}
-
-async function buildAggregatedData(env, days = 90) {
-  const SESSION_GAP_S = 1800;
-  const BOUNCE_DURATION_MS = 20000;
-  const windowClause = "timestamp >= datetime('now', '-' || ? || ' days')";
-
-  const sessionsRaw = await env.DB.prepare(
-    `
-    WITH ordered AS (
-      SELECT
-        daily_id,
-        timestamp,
-        lower(trim(json_extract(data, '$.event'))) AS event,
-        lower(trim(json_extract(data, '$.app')))   AS app,
-        LAG(timestamp) OVER (PARTITION BY daily_id ORDER BY timestamp) AS prev_ts
-      FROM analytics
-      WHERE ${windowClause}
-    ),
-    session_starts AS (
-      SELECT
-        daily_id,
-        timestamp,
-        event,
-        app,
-        prev_ts,
-        CASE
-          WHEN prev_ts IS NULL
-            OR (julianday(timestamp) - julianday(prev_ts)) * 86400 > ?
-          THEN 1 ELSE 0
-        END AS is_new_session
-      FROM ordered
-    ),
-    with_session_id AS (
-      SELECT
-        daily_id,
-        timestamp,
-        event,
-        app,
-        SUM(is_new_session) OVER (PARTITION BY daily_id ORDER BY timestamp) AS session_num
-      FROM session_starts
-    ),
-    session_bounds AS (
-      SELECT
-        daily_id,
-        session_num,
-        MIN(timestamp) AS session_start,
-        MAX(timestamp) AS session_end,
-        COUNT(*)       AS event_count,
-        COUNT(CASE WHEN event = 'launch' THEN 1 END) AS launch_count,
-        (julianday(MAX(timestamp)) - julianday(MIN(timestamp))) * 86400000 AS duration_ms,
-        date(MIN(timestamp)) AS day
-      FROM with_session_id
-      GROUP BY daily_id, session_num
-    )
-    SELECT
-      COUNT(*)                          AS total_sessions,
-      AVG(duration_ms)                  AS avg_duration_ms,
-      AVG(launch_count)                 AS avg_apps_per_session,
-      MAX(duration_ms)                  AS longest_session_ms,
-      MIN(duration_ms)                  AS shortest_session_ms,
-      SUM(CASE WHEN event_count <= 1 OR duration_ms < ? THEN 1 ELSE 0 END) AS bounce_sessions
-    FROM session_bounds
-  `,
-  )
-    .bind(days, SESSION_GAP_S, BOUNCE_DURATION_MS)
-    .first();
-
-  const powerUsersRaw = await env.DB.prepare(
-    `
-    WITH daily_counts AS (
-      SELECT daily_id, date(timestamp) AS day, COUNT(*) AS event_count
-      FROM analytics
-      WHERE ${windowClause}
-      GROUP BY daily_id, day
-    )
-    SELECT COUNT(DISTINCT daily_id) AS power_users
-    FROM daily_counts
-    WHERE event_count >= 20
-  `,
-  )
-    .bind(days)
-    .first();
-
-  const flowsRaw = await env.DB.prepare(
-    `
-    WITH launches AS (
-      SELECT
-        daily_id,
-        timestamp,
-        lower(trim(json_extract(data, '$.app'))) AS app,
-        LAG(timestamp) OVER (PARTITION BY daily_id ORDER BY timestamp) AS prev_ts,
-        LAG(lower(trim(json_extract(data, '$.app')))) OVER (PARTITION BY daily_id ORDER BY timestamp) AS prev_app
-      FROM analytics
-      WHERE ${windowClause}
-        AND lower(trim(json_extract(data, '$.event'))) = 'launch'
-    )
-    SELECT prev_app AS source, app AS destination, COUNT(*) AS count
-    FROM launches
-    WHERE prev_app IS NOT NULL
-      AND app IS NOT NULL
-      AND prev_app != app
-      AND (julianday(timestamp) - julianday(prev_ts)) * 86400 <= ?
-    GROUP BY source, destination
-    ORDER BY count DESC
-    LIMIT 50
-  `,
-  )
-    .bind(days, SESSION_GAP_S)
-    .all();
-
-  const entryRaw = await env.DB.prepare(
-    `
-    WITH ordered_launches AS (
-      SELECT
-        daily_id,
-        lower(trim(json_extract(data, '$.app'))) AS app,
-        ROW_NUMBER() OVER (PARTITION BY daily_id ORDER BY timestamp ASC) AS rn
-      FROM analytics
-      WHERE ${windowClause}
-        AND lower(trim(json_extract(data, '$.event'))) = 'launch'
-    )
-    SELECT app, COUNT(*) AS count
-    FROM ordered_launches
-    WHERE rn = 1 AND app IS NOT NULL
-    GROUP BY app
-    ORDER BY count DESC
-    LIMIT 10
-  `,
-  )
-    .bind(days)
-    .all();
-
-  const exitRaw = await env.DB.prepare(
-    `
-    WITH ordered_launches AS (
-      SELECT
-        daily_id,
-        lower(trim(json_extract(data, '$.app'))) AS app,
-        ROW_NUMBER() OVER (PARTITION BY daily_id ORDER BY timestamp DESC) AS rn
-      FROM analytics
-      WHERE ${windowClause}
-        AND lower(trim(json_extract(data, '$.event'))) = 'launch'
-    )
-    SELECT app, COUNT(*) AS count
-    FROM ordered_launches
-    WHERE rn = 1 AND app IS NOT NULL
-    GROUP BY app
-    ORDER BY count DESC
-    LIMIT 10
-  `,
-  )
-    .bind(days)
-    .all();
-
-  const explorationRaw = await env.DB.prepare(
-    `
-    WITH session_apps AS (
-      SELECT
-        daily_id,
-        SUM(CASE
-          WHEN prev_ts IS NULL OR (julianday(timestamp) - julianday(prev_ts)) * 86400 > ?
-          THEN 1 ELSE 0
-        END) OVER (PARTITION BY daily_id ORDER BY timestamp) AS session_num,
-        lower(trim(json_extract(data, '$.app'))) AS app
-      FROM (
-        SELECT
-          daily_id,
-          timestamp,
-          LAG(timestamp) OVER (PARTITION BY daily_id ORDER BY timestamp) AS prev_ts,
-          data
-        FROM analytics
-        WHERE ${windowClause}
-          AND lower(trim(json_extract(data, '$.event'))) = 'launch'
-      )
-    ),
-    session_diversity AS (
-      SELECT daily_id, session_num, COUNT(DISTINCT app) AS unique_apps
-      FROM session_apps
-      WHERE app IS NOT NULL
-      GROUP BY daily_id, session_num
-    ),
-    user_exploration AS (
-      SELECT daily_id, AVG(unique_apps) AS avg_unique
-      FROM session_diversity
-      GROUP BY daily_id
-    )
-    SELECT
-      (SELECT AVG(unique_apps) FROM session_diversity) AS avg_unique_apps_per_session,
-      daily_id,
-      avg_unique
-    FROM user_exploration
-    ORDER BY avg_unique DESC
-    LIMIT 5
-  `,
-  )
-    .bind(SESSION_GAP_S, days)
-    .all();
-
-  const avgUnique = explorationRaw.results[0]?.avg_unique_apps_per_session || 0;
-  const topExplorers = explorationRaw.results.map((r) => ({
-    user_id: r.daily_id.slice(0, 8) + "...",
-    avg_unique: Math.round((r.avg_unique || 0) * 10) / 10,
-  }));
-
-  return {
-    sessionsResponse: {
-      total_sessions: sessionsRaw?.total_sessions || 0,
-      avg_duration_ms: Math.round(sessionsRaw?.avg_duration_ms || 0),
-      avg_apps_per_session:
-        Math.round((sessionsRaw?.avg_apps_per_session || 0) * 10) / 10,
-      longest_session_ms: sessionsRaw?.longest_session_ms || 0,
-      shortest_session_ms: sessionsRaw?.shortest_session_ms || 0,
-      bounce_sessions: sessionsRaw?.bounce_sessions || 0,
-      power_users: powerUsersRaw?.power_users || 0,
-    },
-    flowsResponse: {
-      flows: (flowsRaw.results || []).map((r) => ({
-        source: r.source,
-        destination: r.destination,
-        count: r.count,
-      })),
-    },
-    entryExitResponse: {
-      top_entry_apps: entryRaw.results || [],
-      top_exit_apps: exitRaw.results || [],
-    },
-    explorationResponse: {
-      avg_unique_apps_per_session: Math.round((avgUnique || 0) * 10) / 10,
-      top_explorers: topExplorers,
-      top_diverse_sessions: [],
-    },
-  };
 }
 
 async function fetchLive(env) {
@@ -684,142 +411,6 @@ async function fetchLive(env) {
   };
 }
 
-async function fetchPeakConcurrent(env, range) {
-  let days = 30;
-  if (range === "7d") days = 7;
-  if (range === "90d") days = 90;
-  if (range === "1y") days = 365;
-
-  const result = await env.DB.prepare(
-    `
-    WITH per_minute AS (
-      SELECT
-        date(timestamp) AS day,
-        strftime('%Y-%m-%d %H:%M', timestamp) AS minute,
-        COUNT(DISTINCT daily_id) AS concurrent
-      FROM analytics
-      WHERE timestamp >= datetime('now', '-' || ? || ' days')
-      GROUP BY day, minute
-    ),
-    daily_peak AS (
-      SELECT day, MAX(concurrent) AS peak
-      FROM per_minute
-      GROUP BY day
-    )
-    SELECT dp.day, dp.peak,
-      (SELECT MIN(pm.minute) FROM per_minute pm WHERE pm.day = dp.day AND pm.concurrent = dp.peak LIMIT 1) AS at_time
-    FROM daily_peak dp
-    ORDER BY dp.day DESC
-  `,
-  )
-    .bind(days)
-    .all();
-
-  const results = result.results || [];
-  let overallPeak = 0;
-  let overallTime = null;
-  for (const row of results) {
-    if (row.peak > overallPeak) {
-      overallPeak = row.peak;
-      overallTime = row.at_time;
-    }
-  }
-
-  return {
-    overall_peak: {
-      concurrent: overallPeak,
-      at_time: overallTime,
-    },
-    daily: results,
-  };
-}
-
-async function fetchInsights(env, range) {
-  let days = 30;
-  if (range === "7d") days = 7;
-  if (range === "90d") days = 90;
-  if (range === "1y") days = 365;
-  const G = 1800;
-
-  const [
-    eventTypes,
-    newReturning,
-    retention,
-    hourly,
-    userActivity,
-    appUnique,
-    appAvgTime,
-    dauWauMau,
-  ] = await Promise.all([
-    env.DB.prepare(
-      `SELECT COALESCE(lower(trim(json_extract(data,'$.event'))),'unknown') AS et,COUNT(*) AS c FROM analytics WHERE timestamp>=datetime('now',-?||' days') GROUP BY et ORDER BY c DESC`,
-    )
-      .bind(days)
-      .all(),
-    env.DB.prepare(
-      `WITH f AS(SELECT daily_id,MIN(date(timestamp)) AS fd FROM analytics GROUP BY daily_id),r AS(SELECT date(timestamp) AS d,daily_id FROM analytics WHERE timestamp>=datetime('now',-?||' days') GROUP BY d,daily_id)SELECT r.d,COUNT(DISTINCT r.daily_id) AS t,COUNT(DISTINCT CASE WHEN r.d=f.fd THEN r.daily_id END) AS n,COUNT(DISTINCT CASE WHEN r.d!=f.fd THEN r.daily_id END) AS rl FROM r JOIN f ON f.daily_id=r.daily_id GROUP BY r.d ORDER BY r.d`,
-    )
-      .bind(days)
-      .all(),
-    env.DB.prepare(
-      `WITH u AS(SELECT date(timestamp) AS d,daily_id FROM analytics WHERE timestamp>=datetime('now',-?||' days') GROUP BY d,daily_id)SELECT a.d AS d,COUNT(DISTINCT a.daily_id) AS dau,ROUND(COUNT(DISTINCT b.daily_id)*1.0/NULLIF(COUNT(DISTINCT a.daily_id),0),3) AS d1,ROUND(COUNT(DISTINCT c.daily_id)*1.0/NULLIF(COUNT(DISTINCT a.daily_id),0),3) AS d7 FROM u a LEFT JOIN u b ON a.daily_id=b.daily_id AND b.d=date(a.d,'+1 day') LEFT JOIN u c ON a.daily_id=c.daily_id AND c.d=date(a.d,'+7 days') GROUP BY a.d ORDER BY a.d`,
-    )
-      .bind(days)
-      .all(),
-    env.DB.prepare(
-      `SELECT CAST(strftime('%H',timestamp) AS INTEGER) AS h,COUNT(*) AS c FROM analytics WHERE timestamp>=datetime('now',-?||' days') GROUP BY h ORDER BY h`,
-    )
-      .bind(days)
-      .all(),
-    env.DB.prepare(
-      `SELECT CASE WHEN c<5 THEN '1-4' WHEN c<10 THEN '5-9' WHEN c<20 THEN '10-19' WHEN c<50 THEN '20-49' WHEN c<100 THEN '50-99' ELSE '100+' END AS b,COUNT(*) AS u FROM(SELECT daily_id,COUNT(*) AS c FROM analytics WHERE timestamp>=datetime('now',-?||' days') GROUP BY daily_id)GROUP BY b ORDER BY MIN(c)`,
-    )
-      .bind(days)
-      .all(),
-    env.DB.prepare(
-      `SELECT lower(trim(json_extract(data,'$.app'))) AS a,COUNT(DISTINCT daily_id) AS u,COUNT(*) AS l FROM analytics WHERE timestamp>=datetime('now',-?||' days') AND lower(trim(json_extract(data,'$.event')))='launch' GROUP BY a ORDER BY u DESC LIMIT 20`,
-    )
-      .bind(days)
-      .all(),
-    env.DB.prepare(
-      `SELECT lower(trim(json_extract(data,'$.app'))) AS a,AVG(CAST(json_extract(data,'$.durationMs') AS REAL)) AS d,COUNT(*) AS c FROM analytics WHERE timestamp>=datetime('now',-?||' days') AND lower(trim(json_extract(data,'$.event')))='usage' AND json_extract(data,'$.durationMs') IS NOT NULL GROUP BY a ORDER BY d DESC LIMIT 20`,
-    )
-      .bind(days)
-      .all(),
-    env.DB.prepare(
-      `WITH u AS(SELECT date(timestamp) AS d,daily_id FROM analytics WHERE timestamp>=datetime('now',-?||' days') GROUP BY d,daily_id),dd AS(SELECT DISTINCT d FROM u)SELECT d.d,(SELECT COUNT(DISTINCT daily_id) FROM u WHERE d.d=u.d) AS dau,(SELECT COUNT(DISTINCT daily_id) FROM u WHERE u.d>=date(d.d,'-6 days') AND u.d<=d.d) AS wau,(SELECT COUNT(DISTINCT daily_id) FROM u WHERE u.d>=date(d.d,'-29 days') AND u.d<=d.d) AS mau FROM dd d ORDER BY d.d`,
-    )
-      .bind(days)
-      .all(),
-  ]);
-
-  const sdBuckets = await env.DB.prepare(
-    `WITH o AS(SELECT daily_id,timestamp,LAG(timestamp)OVER(PARTITION BY daily_id ORDER BY timestamp) AS p FROM analytics WHERE timestamp>=datetime('now',-?||' days')),s AS(SELECT daily_id,timestamp,SUM(CASE WHEN p IS NULL OR(julianday(timestamp)-julianday(p))*86400>? THEN 1 ELSE 0 END)OVER(PARTITION BY daily_id ORDER BY timestamp) AS sn FROM o),b AS(SELECT daily_id,sn,MIN(timestamp) AS st,MAX(timestamp) AS en FROM s GROUP BY daily_id,sn),x AS(SELECT(julianday(en)-julianday(st))*86400000 AS du FROM b)SELECT COUNT(*) AS t,SUM(CASE WHEN du<60000 THEN 1 ELSE 0 END) AS a,SUM(CASE WHEN du>=60000 AND du<300000 THEN 1 ELSE 0 END) AS b,SUM(CASE WHEN du>=300000 AND du<900000 THEN 1 ELSE 0 END) AS c,SUM(CASE WHEN du>=900000 AND du<1800000 THEN 1 ELSE 0 END) AS d,SUM(CASE WHEN du>=1800000 AND du<3600000 THEN 1 ELSE 0 END) AS e,SUM(CASE WHEN du>=3600000 THEN 1 ELSE 0 END) AS f FROM x`,
-  )
-    .bind(days, G)
-    .first();
-
-  return {
-    event_types: eventTypes.results || [],
-    new_returning: newReturning.results || [],
-    retention: retention.results || [],
-    hourly: hourly.results || [],
-    user_activity: userActivity.results || [],
-    app_unique_users: appUnique.results || [],
-    app_avg_time: appAvgTime.results || [],
-    dau_wau_mau: dauWauMau.results || [],
-    session_durations: sdBuckets || {
-      t: 0,
-      a: 0,
-      b: 0,
-      c: 0,
-      d: 0,
-      e: 0,
-      f: 0,
-    },
-  };
-}
-
 function ensureThemesSchema(env) {
   if (themesInitPromise) return themesInitPromise;
   const statements = [
@@ -853,17 +444,15 @@ function ensureSocialSchema(env) {
     "CREATE TABLE IF NOT EXISTS live_users (user_id TEXT PRIMARY KEY, username TEXT NOT NULL DEFAULT 'Anonymous', avatar_index INTEGER NOT NULL DEFAULT -1, bio TEXT NOT NULL DEFAULT '', created_at TEXT NOT NULL, last_seen TEXT)",
     "CREATE TABLE IF NOT EXISTS user_achievements (user_id TEXT NOT NULL, achievement_id TEXT NOT NULL, unlocked_at TEXT NOT NULL, PRIMARY KEY (user_id, achievement_id))",
     "CREATE TABLE IF NOT EXISTS user_playtime (user_id TEXT NOT NULL, app TEXT NOT NULL, minutes REAL NOT NULL DEFAULT 0, last_played TEXT, PRIMARY KEY (user_id, app))",
-    "CREATE TABLE IF NOT EXISTS accounts (user_id TEXT PRIMARY KEY, nickname TEXT NOT NULL UNIQUE, email TEXT UNIQUE, pass_hash TEXT NOT NULL, salt TEXT NOT NULL, created_at TEXT NOT NULL)",
+    "CREATE TABLE IF NOT EXISTS accounts (user_id TEXT PRIMARY KEY, nickname TEXT NOT NULL UNIQUE, pass_hash TEXT NOT NULL, salt TEXT NOT NULL, created_at TEXT NOT NULL)",
     "CREATE TABLE IF NOT EXISTS friendships (user_id TEXT NOT NULL, friend_id TEXT NOT NULL, status TEXT NOT NULL, created_at TEXT NOT NULL, PRIMARY KEY (user_id, friend_id))",
     "CREATE TABLE IF NOT EXISTS reactions (target_id TEXT NOT NULL, reactor_id TEXT NOT NULL, reaction TEXT NOT NULL, created_at TEXT NOT NULL, PRIMARY KEY (target_id, reactor_id))",
     "CREATE TABLE IF NOT EXISTS daily_streaks (user_id TEXT PRIMARY KEY, streak INTEGER NOT NULL DEFAULT 0, last_seen_day TEXT)",
     "CREATE TABLE IF NOT EXISTS currency (user_id TEXT PRIMARY KEY, bonus_coins INTEGER NOT NULL DEFAULT 0, spent_coins INTEGER NOT NULL DEFAULT 0)",
     "CREATE TABLE IF NOT EXISTS inventory (user_id TEXT NOT NULL, item_id TEXT NOT NULL, acquired_at TEXT NOT NULL, PRIMARY KEY (user_id, item_id))",
-    "CREATE TABLE IF NOT EXISTS leaderboard_weekly (user_id TEXT NOT NULL, week TEXT NOT NULL, playtime_min INTEGER NOT NULL DEFAULT 0, reactions INTEGER NOT NULL DEFAULT 0, achievements INTEGER NOT NULL DEFAULT 0, PRIMARY KEY (user_id, week))",
     "CREATE TABLE IF NOT EXISTS messages (id INTEGER PRIMARY KEY AUTOINCREMENT, from_id TEXT NOT NULL, to_id TEXT NOT NULL, body TEXT NOT NULL, sent_at TEXT NOT NULL, read_at TEXT)",
     "CREATE TABLE IF NOT EXISTS feed (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT NOT NULL, actor_id TEXT NOT NULL, type TEXT NOT NULL, data TEXT NOT NULL DEFAULT '{}', created_at TEXT NOT NULL)",
     "CREATE TABLE IF NOT EXISTS quest_claims (user_id TEXT NOT NULL, quest_id TEXT NOT NULL, claim_day TEXT NOT NULL, claimed_at TEXT NOT NULL, PRIMARY KEY (user_id, quest_id, claim_day))",
-    "CREATE TABLE IF NOT EXISTS supporter_redemptions (code TEXT PRIMARY KEY, user_id TEXT NOT NULL, redeemed_at TEXT NOT NULL)",
     "CREATE TABLE IF NOT EXISTS sessions (token TEXT PRIMARY KEY, user_id TEXT NOT NULL, created_at TEXT NOT NULL, expires_at TEXT NOT NULL)",
     "CREATE TABLE IF NOT EXISTS user_sync (user_id TEXT PRIMARY KEY, payload TEXT, updated_at TEXT)",
     "CREATE INDEX IF NOT EXISTS idx_sessions_user ON sessions (user_id)",
@@ -874,7 +463,9 @@ function ensureSocialSchema(env) {
     "CREATE INDEX IF NOT EXISTS idx_user_achievements_user ON user_achievements (user_id)",
     "CREATE INDEX IF NOT EXISTS idx_user_playtime_user ON user_playtime (user_id)",
     "CREATE INDEX IF NOT EXISTS idx_accounts_nickname ON accounts (nickname)",
-    "CREATE INDEX IF NOT EXISTS idx_accounts_email ON accounts (email)",
+    "DROP INDEX IF EXISTS idx_accounts_email",
+    "DROP TABLE IF EXISTS leaderboard_weekly",
+    "DROP TABLE IF EXISTS supporter_redemptions",
   ];
   socialInitPromise = (async () => {
     await env.DB.batch(statements.map((sql) => env.DB.prepare(sql)));
@@ -1848,17 +1439,6 @@ const ACH_XP = 50;
 const PLAY_XP_PER_HOUR = 12;
 const XP_PER_LEVEL = 100;
 
-function supporterCodes(env) {
-  const raw = env.SUPPORTER_CODES;
-  if (!raw) return new Set();
-  return new Set(
-    String(raw)
-      .split(",")
-      .map((code) => code.trim().toUpperCase())
-      .filter(Boolean),
-  );
-}
-
 function weekStartIso() {
   const d = new Date();
   d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
@@ -2148,7 +1728,6 @@ function themeRateLimit(env, ip, bucket) {
     reactions: [30, 60 * 1000],
     messages: [30, 60 * 1000],
     purchase: [5, 60 * 1000],
-    redeem: [3, 24 * 60 * 60 * 1000],
     quests: [10, 10 * 60 * 1000],
     feed: [30, 60 * 1000],
     admin_list: [30, 60 * 1000],
@@ -2732,7 +2311,7 @@ async function handleYukiRequest(request, env) {
     const rawApp = url.searchParams.get("app") || "";
     const app = normalizeApp(rawApp);
     if (!app || app === "unknown" || !/^[a-z0-9_.-]{1,64}$/.test(app)) {
-      return jsonResponse({ users: [] });
+      return publicJsonResponse(request, { users: [] });
     }
 
     const users = await withCache(
@@ -2775,7 +2354,7 @@ async function handleYukiRequest(request, env) {
       60 * 1000,
     );
 
-    return jsonResponse({ users });
+    return publicJsonResponse(request, { users });
   }
 
   if (url.pathname === "/live/register" && request.method === "POST") {
@@ -3565,7 +3144,7 @@ async function handleYukiRequest(request, env) {
       30 * 1000,
     );
 
-    return jsonResponse(result);
+    return publicJsonResponse(request, result);
   }
 
   if (url.pathname === "/live/shop/catalog" && request.method === "GET") {
@@ -3580,7 +3159,7 @@ async function handleYukiRequest(request, env) {
         return false;
       return true;
     }).map((it) => ({ ...it, endsAt: it.availableTo || null }));
-    return jsonResponse({ items: activeItems });
+    return publicJsonResponse(request, { items: activeItems });
   }
 
   if (url.pathname === "/live/coins/purchase" && request.method === "POST") {
@@ -3648,67 +3227,6 @@ async function handleYukiRequest(request, env) {
       itemId: item.id,
       coins: coinsData.coins - item.priceCoins,
     });
-  }
-
-  if (url.pathname === "/live/supporter/redeem" && request.method === "POST") {
-    if (ipBlocked(env, clientIP)) {
-      return jsonResponse({ error: "Forbidden" }, 403);
-    }
-    if (!themeRateLimit(env, clientIP, "redeem")) {
-      return jsonResponse({ error: "Rate limited" }, 429);
-    }
-
-    let payload;
-    try {
-      payload = await request.json();
-    } catch {
-      return jsonResponse({ error: "invalid json" }, 400);
-    }
-
-    const userId = validUserId(payload.userId) ? payload.userId : null;
-    if (!userId) return jsonResponse({ error: "invalid userId" }, 400);
-
-    const code = String(payload.code || "")
-      .trim()
-      .toUpperCase();
-    if (!code) {
-      return jsonResponse({ error: "Enter a code." }, 400);
-    }
-    if (!supporterCodes(env).has(code)) {
-      return jsonResponse({ error: "That code is invalid." }, 400);
-    }
-
-    await ensureSocialSchema(env);
-    const now = new Date().toISOString();
-
-    const account = await env.DB.prepare(
-      "SELECT user_id FROM accounts WHERE user_id = ?",
-    )
-      .bind(userId)
-      .first();
-    if (!account) {
-      return jsonResponse({ error: "Create an account first." }, 403);
-    }
-
-    const existing = await env.DB.prepare(
-      "SELECT user_id FROM supporter_redemptions WHERE code = ?",
-    )
-      .bind(code)
-      .first();
-    if (existing) {
-      return jsonResponse({ error: "Code already used." }, 409);
-    }
-
-    await env.DB.batch([
-      env.DB.prepare(
-        "INSERT INTO supporter_redemptions (code, user_id, redeemed_at) VALUES (?, ?, ?)",
-      ).bind(code, userId, now),
-      env.DB.prepare(
-        "UPDATE accounts SET supporter = 1, supporter_since = ? WHERE user_id = ?",
-      ).bind(now, userId),
-    ]);
-
-    return jsonResponse({ status: "ok", supporter: true });
   }
 
   if (url.pathname === "/live/quests" && request.method === "GET") {
@@ -4154,10 +3672,12 @@ async function handleYukiRequest(request, env) {
 
     const inserts = launchEvents.map((event) => {
       if (event.app) event.app = normalizeApp(event.app);
+      const stored = { ...event };
+      delete stored.sessionAgeMs;
       const id = crypto.randomUUID();
       return env.DB.prepare(
         "INSERT INTO analytics (id, daily_id, timestamp, data) VALUES (?, ?, ?, ?)",
-      ).bind(id, dailyId, timestamp, JSON.stringify(event));
+      ).bind(id, dailyId, timestamp, JSON.stringify(stored));
     });
 
     const socialStatements = [];
@@ -4192,10 +3712,6 @@ async function handleYukiRequest(request, env) {
       status: "ok",
       count: launchEvents.length + usageEvents.length,
     });
-  }
-
-  if (url.pathname === "/admin/stats" && request.method === "GET") {
-    return jsonResponse({ daily: [], topGames: {} });
   }
 
   if (url.pathname === "/admin/list" && request.method === "GET") {
@@ -4234,54 +3750,6 @@ async function handleYukiRequest(request, env) {
       .bind(limit, offset)
       .all();
     return jsonResponse({ results: result.results });
-  }
-
-  if (url.pathname === "/admin/downloads/stats" && request.method === "GET") {
-    const range = url.searchParams.get("range") || "30d";
-    let days = range === "7d" ? 7 : range === "60d" ? 60 : 30;
-    if (days > 60) days = 60;
-
-    const total = await env.DB.prepare(
-      `SELECT COUNT(*) AS count,
-                COUNT(DISTINCT daily_id) AS unique_users
-         FROM analytics
-         WHERE json_extract(data, '$.event') = 'download'
-           AND timestamp >= datetime('now', '-' || ? || ' days')`,
-    )
-      .bind(days)
-      .first();
-
-    const topFiles = await env.DB.prepare(
-      `SELECT json_extract(data, '$.fileName') AS fileName,
-                json_extract(data, '$.app') AS app,
-                COUNT(*) AS count
-         FROM analytics
-         WHERE json_extract(data, '$.event') = 'download'
-           AND timestamp >= datetime('now', '-' || ? || ' days')
-         GROUP BY fileName, app
-         ORDER BY count DESC
-         LIMIT 20`,
-    )
-      .bind(days)
-      .all();
-
-    const byDay = await env.DB.prepare(
-      `SELECT date(timestamp) AS day, COUNT(*) AS count
-         FROM analytics
-         WHERE json_extract(data, '$.event') = 'download'
-           AND timestamp >= datetime('now', '-' || ? || ' days')
-         GROUP BY day
-         ORDER BY day DESC`,
-    )
-      .bind(days)
-      .all();
-
-    return jsonResponse({
-      total: total?.count || 0,
-      unique_users: total?.unique_users || 0,
-      top_files: topFiles.results || [],
-      by_day: byDay.results || [],
-    });
   }
 
   if (url.pathname === "/admin/electron-usage" && request.method === "GET") {
@@ -4324,69 +3792,20 @@ async function handleYukiRequest(request, env) {
     return jsonResponse({ results });
   }
 
-  if (
-    url.pathname === "/admin/top-played-time-games" &&
-    request.method === "GET"
-  ) {
-    return jsonResponse({ results: [] });
-  }
-
-  if (url.pathname === "/admin/sessions" && request.method === "GET") {
-    return jsonResponse({
-      total_sessions: 0,
-      avg_duration_ms: 0,
-      avg_apps_per_session: 0,
-      longest_session_ms: 0,
-      shortest_session_ms: 0,
-      bounce_sessions: 0,
-      power_users: 0,
-    });
-  }
-
-  if (url.pathname === "/admin/flows" && request.method === "GET") {
-    return jsonResponse({ flows: [] });
-  }
-
-  if (url.pathname === "/admin/entry-exit" && request.method === "GET") {
-    return jsonResponse({ top_entry_apps: [], top_exit_apps: [] });
-  }
-
-  if (url.pathname === "/admin/exploration" && request.method === "GET") {
-    return jsonResponse({
-      avg_unique_apps_per_session: 0,
-      top_explorers: [],
-      top_diverse_sessions: [],
-    });
-  }
-
-  if (
-    (url.pathname === "/live" || url.pathname === "/admin/live") &&
-    request.method === "GET"
-  ) {
+  if (url.pathname === "/live" && request.method === "GET") {
     return cachedJsonResponse(request, "live", 15, () =>
       withCache(Caches.live, null, () => fetchLive(env), 15000),
     );
   }
 
-  if (url.pathname === "/admin/peak-concurrent" && request.method === "GET") {
-    return jsonResponse({
-      overall_peak: { concurrent: 0, at_time: null },
-      daily: [],
-    });
-  }
-
-  if (url.pathname === "/admin/insights" && request.method === "GET") {
-    return jsonResponse({
-      event_types: [],
-      new_returning: [],
-      retention: [],
-      hourly: [],
-      user_activity: [],
-      app_unique_users: [],
-      app_avg_time: [],
-      dau_wau_mau: [],
-      session_durations: { t: 0, a: 0, b: 0, c: 0, d: 0, e: 0, f: 0 },
-    });
+  if (url.pathname === "/admin/live" && request.method === "GET") {
+    const data = await withCache(
+      Caches.live,
+      null,
+      () => fetchLive(env),
+      15000,
+    );
+    return noStoreJsonResponse(data);
   }
 
   if (url.pathname === "/admin/export" && request.method === "GET") {
@@ -4679,7 +4098,7 @@ async function handleYukiRequest(request, env) {
       },
       30000,
     );
-    return jsonResponse(result);
+    return publicJsonResponse(request, result);
   }
 
   if (url.pathname.startsWith("/api/themes/") && request.method === "GET") {
@@ -5250,32 +4669,8 @@ canvas{width:100%!important;height:100%!important}
     </div>
     <nav class="sidebar-nav">
       <div class="nav-section-label">Overview</div>
-      <div class="nav-item active" data-panel="dashboard" onclick="switchPanel('dashboard',this)">
-        <i class="fa-solid fa-gauge-high"></i>Dashboard
-      </div>
-      <div class="nav-item" data-panel="daily" onclick="switchPanel('daily',this)">
-        <i class="fa-solid fa-calendar-days"></i>Daily Stats
-      </div>
-      <div class="nav-section-label">Deep Dive</div>
-      <div class="nav-item" data-panel="playtime" onclick="switchPanel('playtime',this)">
-        <i class="fa-solid fa-clock"></i>Play Time
-      </div>
-      <div class="nav-item" data-panel="sessions" onclick="switchPanel('sessions',this)">
-        <i class="fa-solid fa-layer-group"></i>Sessions
-      </div>
-      <div class="nav-item" data-panel="flows" onclick="switchPanel('flows',this)">
-        <i class="fa-solid fa-route"></i>Flows
-      </div>
-      <div class="nav-section-label">Behavior</div>
-      <div class="nav-item" data-panel="entryexit" onclick="switchPanel('entryexit',this)">
-        <i class="fa-solid fa-door-open"></i>Entry / Exit
-      </div>
-      <div class="nav-item" data-panel="exploration" onclick="switchPanel('exploration',this)">
-        <i class="fa-solid fa-compass"></i>Exploration
-      </div>
-      <div class="nav-section-label">Analytics</div>
-      <div class="nav-item" data-panel="insights" onclick="switchPanel('insights',this)">
-        <i class="fa-solid fa-chart-pie"></i>Insights
+      <div class="nav-item active" data-panel="live" onclick="switchPanel('live',this)">
+        <i class="fa-solid fa-wave-square"></i>Live
       </div>
       <div class="nav-section-label">Admin</div>
       <div class="nav-item" data-panel="data" onclick="switchPanel('data',this)">
@@ -5298,22 +4693,17 @@ canvas{width:100%!important;height:100%!important}
   <div class="main">
     <div class="topbar">
       <div class="topbar-left">
-        <div class="topbar-title" id="panelTitle">Dashboard</div>
+        <div class="topbar-title" id="panelTitle">Live</div>
       </div>
       <div class="topbar-right">
         <input class="auth-input" id="token" type="password" placeholder="Auth token...">
-        <select class="range-select" id="range">
-          <option value="7d">7 days</option>
-          <option value="30d" selected>30 days</option>
-          <option value="60d">60 days</option>
-        </select>
         <button class="btn-load" onclick="loadAll()"><i class="fa-solid fa-bolt"></i>Load</button>
       </div>
     </div>
 
     <div class="content">
 
-      <div id="panel-dashboard" class="panel active">
+      <div id="panel-live" class="panel active">
         <div id="liveStrip" style="display:none">
           <div class="live-strip">
             <div class="live-strip-stat">
@@ -5331,147 +4721,6 @@ canvas{width:100%!important;height:100%!important}
             </div>
           </div>
         </div>
-
-        <div class="kpi-row" id="kpiRow">
-          <div class="kpi">
-            <div class="kpi-icon"><i class="fa-solid fa-arrow-trend-up"></i></div>
-            <div class="kpi-val" id="kTotal">-</div>
-            <div class="kpi-label">Total Requests</div>
-          </div>
-          <div class="kpi">
-            <div class="kpi-icon"><i class="fa-solid fa-users"></i></div>
-            <div class="kpi-val" id="kUsers">-</div>
-            <div class="kpi-label">Unique Users</div>
-          </div>
-          <div class="kpi">
-            <div class="kpi-icon"><i class="fa-solid fa-layer-group"></i></div>
-            <div class="kpi-val" id="kSessions">-</div>
-            <div class="kpi-label">Total Sessions</div>
-          </div>
-          <div class="kpi">
-            <div class="kpi-icon"><i class="fa-solid fa-clock"></i></div>
-            <div class="kpi-val" id="kAvgDur">-</div>
-            <div class="kpi-label">Avg Session</div>
-          </div>
-          <div class="kpi">
-            <div class="kpi-icon"><i class="fa-solid fa-bolt"></i></div>
-            <div class="kpi-val" id="kPower">-</div>
-            <div class="kpi-label">Power Users</div>
-          </div>
-          <div class="kpi">
-            <div class="kpi-icon"><i class="fa-solid fa-person-running"></i></div>
-            <div class="kpi-val" id="kBounce">-</div>
-            <div class="kpi-label">Bounce Sessions</div>
-          </div>
-          <div class="kpi">
-            <div class="kpi-icon"><i class="fa-solid fa-people-group"></i></div>
-            <div class="kpi-val" id="kPeak">-</div>
-            <div class="kpi-label">Peak Concurrent</div>
-            <div class="kpi-sub" id="kPeakTime"></div>
-          </div>
-        </div>
-
-        <div class="chart-grid">
-          <div class="chart-card">
-            <div class="chart-card-title"><i class="fa-solid fa-chart-bar"></i>Requests / Day</div>
-            <div class="canvas-wrap"><canvas id="chartReq"></canvas></div>
-          </div>
-          <div class="chart-card">
-            <div class="chart-card-title"><i class="fa-solid fa-chart-line"></i>Sessions / Day</div>
-            <div class="canvas-wrap"><canvas id="chartSess"></canvas></div>
-          </div>
-          <div class="chart-card">
-            <div class="chart-card-title"><i class="fa-solid fa-people-group"></i>Peak Concurrent / Day</div>
-            <div class="canvas-wrap"><canvas id="chartPeak"></canvas></div>
-          </div>
-        </div>
-      </div>
-
-      <div id="panel-daily" class="panel">
-        <div class="section-header">
-          <div class="section-title"><i class="fa-solid fa-calendar-days"></i>Daily Breakdown</div>
-          <div class="sort-bar">
-            <span style="font-size:11px;color:var(--muted);font-weight:600">Sort:</span>
-            <button class="sort-btn active" id="sortDate" onclick="sortDays('date')"><i class="fa-solid fa-calendar"></i>Date</button>
-            <button class="sort-btn" id="sortReq" onclick="sortDays('requests')"><i class="fa-solid fa-arrow-up"></i>Requests</button>
-            <button class="sort-btn" id="sortUsers" onclick="sortDays('users')"><i class="fa-solid fa-users"></i>Users</button>
-            <input class="filter-input" id="dayFilter" placeholder="Filter by date..." oninput="filterDays()">
-          </div>
-        </div>
-        <div class="days-grid" id="daysGrid"><div class="empty-state"><i class="fa-solid fa-calendar-xmark"></i>Load data to see daily stats.</div></div>
-      </div>
-
-      <div id="panel-playtime" class="panel">
-        <div class="section-header">
-          <div class="section-title"><i class="fa-solid fa-clock"></i>Play Time Rankings</div>
-          <div class="sort-bar">
-            <input class="filter-input" id="timeFilter" placeholder="Filter app..." oninput="filterTime()">
-          </div>
-        </div>
-        <div class="time-list" id="timeList"><div class="empty-state"><i class="fa-solid fa-clock"></i>Load data to see play time.</div></div>
-      </div>
-
-      <div id="panel-sessions" class="panel">
-        <div class="section-header">
-          <div class="section-title"><i class="fa-solid fa-layer-group"></i>Session Analytics</div>
-        </div>
-        <div class="cards-grid" id="sessionsGrid"><div class="empty-state"><i class="fa-solid fa-layer-group"></i>Load data to see session stats.</div></div>
-      </div>
-
-      <div id="panel-flows" class="panel">
-        <div class="section-header">
-          <div class="section-title"><i class="fa-solid fa-route"></i>Navigation Flows</div>
-          <div class="sort-bar">
-            <input class="filter-input" id="flowFilter" placeholder="Filter app..." oninput="filterFlows()">
-          </div>
-        </div>
-        <div class="flow-wrap"><table class="flow-table">
-          <thead><tr><th>From</th><th></th><th>To</th><th>Volume</th></tr></thead>
-          <tbody id="flowBody"><tr><td colspan="4" class="empty-state">Load data to see flows.</td></tr></tbody>
-        </table></div>
-      </div>
-
-      <div id="panel-entryexit" class="panel">
-        <div class="section-header">
-          <div class="section-title"><i class="fa-solid fa-door-open"></i>Entry &amp; Exit Apps</div>
-        </div>
-        <div class="entry-exit-grid" id="entryExitGrid"><div class="empty-state"><i class="fa-solid fa-door-open"></i>Load data to see entry/exit data.</div></div>
-      </div>
-
-      <div id="panel-exploration" class="panel">
-        <div class="section-header">
-          <div class="section-title"><i class="fa-solid fa-compass"></i>Exploration Stats</div>
-        </div>
-        <div class="explore-grid" id="exploreGrid"><div class="empty-state"><i class="fa-solid fa-compass"></i>Load data to see exploration stats.</div></div>
-      </div>
-
-      <div id="panel-insights" class="panel">
-        <div id="insightsContent" style="display:flex;flex-direction:column;gap:4px">
-          <div class="section-header"><div class="section-title"><i class="fa-solid fa-chart-pie"></i>Event Type Breakdown</div></div>
-          <div class="chart-grid">
-            <div class="chart-card"><div class="chart-card-title"><i class="fa-solid fa-chart-simple"></i>Events by Type</div><div class="canvas-wrap"><canvas id="chartET"></canvas></div></div>
-            <div class="chart-card"><div class="chart-card-title"><i class="fa-solid fa-clock"></i>Activity by Hour of Day</div><div class="canvas-wrap"><canvas id="chartHourly"></canvas></div></div>
-          </div>
-          <div class="section-header"><div class="section-title"><i class="fa-solid fa-users-line"></i>User Growth</div></div>
-          <div class="chart-grid">
-            <div class="chart-card"><div class="chart-card-title"><i class="fa-solid fa-user-plus"></i>New vs Returning Users / Day</div><div class="canvas-wrap"><canvas id="chartNR"></canvas></div></div>
-            <div class="chart-card"><div class="chart-card-title"><i class="fa-solid fa-chart-line"></i>DAU / WAU / MAU</div><div class="canvas-wrap"><canvas id="chartDWM"></canvas></div></div>
-          </div>
-          <div class="section-header"><div class="section-title"><i class="fa-solid fa-retweet"></i>Retention & Session Quality</div></div>
-          <div class="chart-grid">
-            <div class="chart-card"><div class="chart-card-title"><i class="fa-solid fa-percent"></i>Day-over-Day Retention (D1, D7)</div><div class="canvas-wrap"><canvas id="chartRet"></canvas></div></div>
-            <div class="chart-card"><div class="chart-card-title"><i class="fa-solid fa-clock-rotate-left"></i>Session Duration Distribution</div><div class="canvas-wrap"><canvas id="chartSD"></canvas></div></div>
-          </div>
-          <div class="section-header"><div class="section-title"><i class="fa-solid fa-gauge-high"></i>User & App Depth</div></div>
-          <div class="chart-grid">
-            <div class="chart-card"><div class="chart-card-title"><i class="fa-solid fa-gauge"></i>User Activity Levels (events)</div><div class="canvas-wrap"><canvas id="chartUA"></canvas></div></div>
-            <div class="chart-card"><div class="chart-card-title"><i class="fa-solid fa-users"></i>Apps by Unique Users</div><div class="canvas-wrap"><canvas id="chartAU"></canvas></div></div>
-          </div>
-          <div class="chart-grid">
-            <div class="chart-card"><div class="chart-card-title"><i class="fa-solid fa-stopwatch"></i>Avg Time Spent per App</div><div class="canvas-wrap"><canvas id="chartAT"></canvas></div></div>
-          </div>
-        </div>
-        <div id="insightsEmpty" class="empty-state" style="display:none"><i class="fa-solid fa-chart-pie"></i>Load data to see insights.</div>
       </div>
 
       <div id="panel-data" class="panel">
@@ -5543,7 +4792,6 @@ canvas{width:100%!important;height:100%!important}
   </div>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script>
 async function pruneOld(){
   if(!confirm("Delete all records older than 60 days? This cannot be undone.")) return;
@@ -5563,29 +4811,9 @@ async function pruneOld(){
 <script>
 var token="";
 var refreshTimer=null;
-var _statsData=null;
-var _sessionsData=null;
-var _timeData=null;
-var _flowsData=null;
-var _eeData=null;
-var _exploreData=null;
-var _daySort="date";
-var _chartReq=null;
-var _chartSess=null;
-var _chartPeak=null;
-var _peakData=null;
-var _insightsData=null;
-var _cET=null,_cH=null,_cNR=null,_cDWM=null,_cRet=null,_cSD=null,_cUA=null,_cAU=null,_cAT=null;
 
 var panelTitles={
-  dashboard:"Dashboard",
-  daily:"Daily Stats",
-  playtime:"Play Time",
-  sessions:"Session Analytics",
-  flows:"Navigation Flows",
-  entryexit:"Entry / Exit Apps",
-  exploration:"Exploration Stats",
-  insights:"Insights",
+  live:"Live",
   data:"Data Management",
   downloadstelemetry:"Downloads & Telemetry",
   themes:"Theme Management"
@@ -5605,14 +4833,6 @@ function switchPanel(id,el){
 }
 
 function getHeaders(){return{"Authorization":"Bearer "+token};}
-
-function fmtMs(ms){
-  if(!ms||ms<=0)return"0s";
-  var s=Math.floor(ms/1000),m=Math.floor(s/60),h=Math.floor(m/60);
-  if(h>0)return h+"h "+(m%60)+"m";
-  if(m>0)return m+"m "+(s%60)+"s";
-  return s+"s";
-}
 
 function displayApp(name){
   if(!name)return"Unknown";
@@ -5691,14 +4911,14 @@ function renderDTTable(){
       var d=typeof r.data==="string"?JSON.parse(r.data):r.data;
       var ts=r.timestamp?r.timestamp.slice(0,19).replace("T"," "):"-";
       var sz=typeof d.fileSize==="number"?(d.fileSize>1048576?(d.fileSize/1048576).toFixed(1)+" MB":(d.fileSize>1024?(d.fileSize/1024).toFixed(1)+" KB":d.fileSize+" B")):"-";
-      return '<tr><td class="flow-from">'+displayApp(d.app||"-")+'</td><td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(d.fileName||"-")+'</td><td>'+sz+'</td><td>'+(d.fileType||"-")+'</td><td>'+(d.source||"-")+'</td><td style="font-size:11px;color:var(--muted2)">'+ts+'</td></tr>';
+      return '<tr><td class="flow-from">'+displayApp(d.app||"-")+'</td><td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+escapeHtml(d.fileName||"-")+'</td><td>'+sz+'</td><td>'+escapeHtml(d.fileType||"-")+'</td><td>'+escapeHtml(d.source||"-")+'</td><td style="font-size:11px;color:var(--muted2)">'+ts+'</td></tr>';
     }).join("");
   } else {
     thead.innerHTML='<tr><th>Action</th><th>Platform</th><th>Version</th><th>Details</th><th>Dev</th><th>Timestamp</th></tr>';
     tbody.innerHTML=rows.map(function(r){
       var d=typeof r.data==="string"?JSON.parse(r.data):r.data;
       var ts=r.timestamp?r.timestamp.slice(0,19).replace("T"," "):"-";
-      return '<tr><td class="flow-from">'+(d.action||"-")+'</td><td>'+(d.platform||"-")+'</td><td>'+(d.version||"-")+'</td><td style="max-width:250px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(d.details||"-")+'</td><td>'+(d.isDev?"<span style='color:var(--green)'>Yes</span>":"No")+'</td><td style="font-size:11px;color:var(--muted2)">'+ts+'</td></tr>';
+      return '<tr><td class="flow-from">'+escapeHtml(d.action||"-")+'</td><td>'+escapeHtml(d.platform||"-")+'</td><td>'+escapeHtml(d.version||"-")+'</td><td style="max-width:250px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+escapeHtml(d.details||"-")+'</td><td>'+(d.isDev?"<span style='color:var(--green)'>Yes</span>":"No")+'</td><td style="font-size:11px;color:var(--muted2)">'+ts+'</td></tr>';
     }).join("");
   }
 }
@@ -5707,212 +4927,18 @@ function loadAll(){
   token=document.getElementById("token").value.trim();
   if(!token){alert("Enter auth token first");return;}
   localStorage.setItem("yukios_admin_token", token);
-  loadStats();loadTopTime();loadSessions();loadFlows();loadEntryExit();loadExploration();loadLive();loadPeak();loadInsights();
+  loadLive();
   document.getElementById("lastRefresh").textContent="Loaded "+new Date().toLocaleTimeString();
   if(refreshTimer)clearInterval(refreshTimer);
   refreshTimer=setInterval(function(){
-    loadStats();loadTopTime();loadSessions();loadFlows();loadEntryExit();loadExploration();loadLive();loadPeak();loadInsights();
+    loadLive();
     document.getElementById("lastRefresh").textContent="Loaded "+new Date().toLocaleTimeString();
   },60000);
-}
-
-function loadStats(){
-  var range=document.getElementById("range").value;
-  apiFetch("/admin/stats?range="+range, function(d){_statsData=d;renderDashboardCharts(d);renderDays(d);}, "Stats");
-}
-
-function loadTopTime(){
-  apiFetch("/admin/top-played-time-games", function(d){_timeData=d;renderTime(d);}, "Playtime");
-}
-
-function loadSessions(){
-  apiFetch("/admin/sessions", function(d){_sessionsData=d;renderSessions(d);updateKpiSessions(d);}, "Sessions");
-}
-
-function loadFlows(){
-  apiFetch("/admin/flows", function(d){_flowsData=d;renderFlows(d);}, "Flows");
-}
-
-function loadEntryExit(){
-  apiFetch("/admin/entry-exit", function(d){_eeData=d;renderEntryExit(d);}, "Navigation");
-}
-
-function loadExploration(){
-  apiFetch("/admin/exploration", function(d){_exploreData=d;renderExploration(d);}, "Exploration");
 }
 
 function loadLive(){
   apiFetch("/admin/live", renderLive, "Live");
 }
-
-function loadPeak(){
-  var range=document.getElementById("range").value;
-  apiFetch("/admin/peak-concurrent?range="+range, function(d){_peakData=d;updateKpiPeak(d);renderPeakChart(d);}, "Peak");
-}
-
-function updateKpiPeak(data){
-  document.getElementById("kPeak").textContent=data.overall_peak.concurrent||0;
-  var t=data.overall_peak.at_time;
-  document.getElementById("kPeakTime").textContent=t?"at "+t:"";
-}
-
-function renderPeakChart(data){
-  if(!data.daily||!data.daily.length)return;
-  var reversed=[].concat(data.daily).reverse();
-  var labels=reversed.map(function(d){return d.day.slice(5);});
-  var vals=reversed.map(function(d){return d.peak;});
-  var cfg={type:"bar",options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:function(ctx){return" "+ctx.parsed.y.toLocaleString();}}}},scales:{x:{grid:{color:"rgba(255,255,255,.04)"},ticks:{color:"#64748b",font:{size:9}}},y:{grid:{color:"rgba(255,255,255,.04)"},ticks:{color:"#64748b",font:{size:9}}}}}};
-  if(_chartPeak){_chartPeak.destroy();}
-  var ctx=document.getElementById("chartPeak").getContext("2d");
-  var grad=ctx.createLinearGradient(0,0,0,160);
-  grad.addColorStop(0,"oklch(55% 0.14 220 / 0.9)");
-  grad.addColorStop(1,"oklch(55% 0.14 220 / 0.15)");
-  _chartPeak=new Chart(ctx,Object.assign({},cfg,{data:{labels:labels,datasets:[{data:vals,backgroundColor:grad,borderRadius:4,borderSkipped:false}]}}));
-}
-
-function bCfg(){return{type:"bar",options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:function(ctx){return" "+ctx.parsed.y.toLocaleString();}}}},scales:{x:{grid:{color:"rgba(255,255,255,.04)"},ticks:{color:"#64748b",font:{size:9}}},y:{beginAtZero:true,grid:{color:"rgba(255,255,255,.04)"},ticks:{color:"#64748b",font:{size:9}}}}}};}
-function lCfg(multi){var c={type:"line",options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:"#94a3b8",font:{size:9},boxWidth:10,usePointStyle:true},display:!!multi,position:"bottom"},tooltip:{callbacks:{label:function(ctx){return" "+ctx.parsed.y.toLocaleString();}}}},scales:{x:{grid:{color:"rgba(255,255,255,.04)"},ticks:{color:"#64748b",font:{size:9}}},y:{beginAtZero:true,grid:{color:"rgba(255,255,255,.04)"},ticks:{color:"#64748b",font:{size:9}}}}}};return c;}
-function hCfg(){var c=bCfg();c.options.indexAxis="y";c.options.plugins.legend.display=true;c.options.plugins.legend.labels={color:"#94a3b8",font:{size:8},boxWidth:10};return c;}
-function destroyChart(arr){arr.forEach(function(c){if(c)c.destroy();});}
-function grad(ctx,color){var g=ctx.createLinearGradient(0,0,0,160);g.addColorStop(0,"oklch("+color+" / 0.9)");g.addColorStop(1,"oklch("+color+" / 0.15)");return g;}
-var COLORS=["#22c55e","#f59e0b","#ef4444","#3b82f6","#a855f7","#ec4899","#14b8a6","#f97316"];
-
-function loadInsights(){
-  var range=document.getElementById("range").value;
-  apiFetch("/admin/insights?range="+range,function(d){_insightsData=d;renderInsights(d);},"Insights");
-}
-
-function renderInsights(d){
-  if(!d.event_types||!d.event_types.length){
-    document.getElementById("insightsContent").style.display="none";
-    document.getElementById("insightsEmpty").style.display="block";
-    return;
-  }
-  document.getElementById("insightsContent").style.display="flex";
-  document.getElementById("insightsEmpty").style.display="none";
-  renderET(d.event_types);renderHourly(d.hourly);renderNR(d.new_returning);renderDWM(d.dau_wau_mau);
-  renderRet(d.retention);renderSD(d.session_durations);renderUA(d.user_activity);renderAU(d.app_unique_users);renderAT(d.app_avg_time);
-}
-
-function renderET(data){
-  destroyChart([_cET]);
-  var labels=data.map(function(r){return r.et||"unknown";});
-  var vals=data.map(function(r){return r.c;});
-  var colors=COLORS.slice(0,labels.length);
-  var cfg=bCfg();cfg.options.plugins.legend.display=true;cfg.options.plugins.legend.labels={color:"#94a3b8",font:{size:9},boxWidth:10};
-  var ctx=document.getElementById("chartET").getContext("2d");
-  _cET=new Chart(ctx,Object.assign({},cfg,{data:{labels:labels,datasets:[{data:vals,backgroundColor:colors,borderRadius:4,borderSkipped:false}]}}));
-}
-
-function renderHourly(data){
-  destroyChart([_cH]);
-  var labels=data.map(function(r){return r.h.toString().padStart(2,"0")+":00";});
-  var vals=data.map(function(r){return r.c;});
-  if(!labels.length)return;
-  var ctx=document.getElementById("chartHourly").getContext("2d");
-  var g=grad(ctx,"55% 0.14 220");
-  _cH=new Chart(ctx,Object.assign({},bCfg(),{data:{labels:labels,datasets:[{data:vals,backgroundColor:g,borderRadius:2,borderSkipped:false}]}}));
-}
-
-function renderNR(data){
-  destroyChart([_cNR]);
-  if(!data||!data.length)return;
-  var labels=data.map(function(r){return r.d.slice(5);});
-  var newVals=data.map(function(r){return parseInt(r.n)||0;});
-  var retVals=data.map(function(r){return parseInt(r.rl)||0;});
-  var cfg=bCfg();cfg.options.scales.x.stacked=true;cfg.options.scales.y.stacked=true;
-  cfg.options.plugins.legend.display=true;cfg.options.plugins.legend.labels={color:"#94a3b8",font:{size:9},boxWidth:10};
-  var ctx=document.getElementById("chartNR").getContext("2d");
-  _cNR=new Chart(ctx,Object.assign({},cfg,{data:{labels:labels,datasets:[
-    {label:"New",data:newVals,backgroundColor:"#22c55e",borderRadius:0},
-    {label:"Returning",data:retVals,backgroundColor:"#3b82f6",borderRadius:4}
-  ]}}));
-}
-
-function renderDWM(data){
-  destroyChart([_cDWM]);
-  if(!data||!data.length)return;
-  var labels=data.map(function(r){return r.d.slice(5);});
-  var cfg=lCfg(true);
-  var ctx=document.getElementById("chartDWM").getContext("2d");
-  _cDWM=new Chart(ctx,Object.assign({},cfg,{data:{labels:labels,datasets:[
-    {label:"DAU",data:data.map(function(r){return r.dau;}),borderColor:"#22c55e",backgroundColor:"rgba(34,197,94,0.1)",fill:true,tension:0.2,pointRadius:2},
-    {label:"WAU",data:data.map(function(r){return r.wau;}),borderColor:"#f59e0b",backgroundColor:"rgba(245,158,11,0.1)",fill:true,tension:0.2,pointRadius:2},
-    {label:"MAU",data:data.map(function(r){return r.mau;}),borderColor:"#a855f7",backgroundColor:"rgba(168,85,247,0.1)",fill:true,tension:0.2,pointRadius:2}
-  ]}}));
-}
-
-function renderRet(data){
-  destroyChart([_cRet]);
-  if(!data||!data.length)return;
-  var cutoff=new Date();cutoff.setDate(cutoff.getDate()-1);
-  var filtered=data.filter(function(r){return r.d1!==null||r.d7!==null;});
-  if(!filtered.length)return;
-  var labels=filtered.map(function(r){return r.d.slice(5);});
-  var d1=filtered.map(function(r){return r.d1?Math.round(r.d1*100):null;});
-  var d7=filtered.map(function(r){return r.d7?Math.round(r.d7*100):null;});
-  var cfg=bCfg();cfg.options.plugins.legend.display=true;cfg.options.plugins.legend.labels={color:"#94a3b8",font:{size:9},boxWidth:10};
-  var ctx=document.getElementById("chartRet").getContext("2d");
-  _cRet=new Chart(ctx,Object.assign({},cfg,{data:{labels:labels,datasets:[
-    {label:"D1%",data:d1,backgroundColor:"#22c55e",borderRadius:2},
-    {label:"D7%",data:d7,backgroundColor:"#3b82f6",borderRadius:2}
-  ]}}));
-}
-
-function renderSD(data){
-  destroyChart([_cSD]);
-  if(!data||!data.t)return;
-  var labels=["<1m","1-5m","5-15m","15-30m","30-60m","60m+"];
-  var vals=[data.a||0,data.b||0,data.c||0,data.d||0,data.e||0,data.f||0];
-  var colors=["#22c55e","#3b82f6","#f59e0b","#f97316","#ef4444","#a855f7"];
-  var cfg=bCfg();
-  var ctx=document.getElementById("chartSD").getContext("2d");
-  _cSD=new Chart(ctx,Object.assign({},cfg,{data:{labels:labels,datasets:[{data:vals,backgroundColor:colors,borderRadius:4,borderSkipped:false}]}}));
-}
-
-function renderUA(data){
-  destroyChart([_cUA]);
-  if(!data||!data.length)return;
-  var labels=data.map(function(r){return r.b;});
-  var vals=data.map(function(r){return r.u;});
-  var ctx=document.getElementById("chartUA").getContext("2d");
-  var g=grad(ctx,"55% 0.14 220");
-  _cUA=new Chart(ctx,Object.assign({},bCfg(),{data:{labels:labels,datasets:[{data:vals,backgroundColor:g,borderRadius:4,borderSkipped:false}]}}));
-}
-
-function renderAU(data){
-  destroyChart([_cAU]);
-  if(!data||!data.length)return;
-  var reversed=[].concat(data).reverse();
-  var labels=reversed.map(function(r){return r.a||"unknown";});
-  var vals=reversed.map(function(r){return r.u;});
-  var ctx=document.getElementById("chartAU").getContext("2d");
-  _cAU=new Chart(ctx,Object.assign({},hCfg(),{
-    data:{labels:labels,datasets:[{data:vals,backgroundColor:"#3b82f6",borderRadius:4,borderSkipped:false}]},
-    options:Object.assign({},hCfg().options,{indexAxis:"y",scales:{x:{beginAtZero:true,grid:{color:"rgba(255,255,255,.04)"},ticks:{color:"#64748b",font:{size:8}}},y:{grid:{color:"rgba(255,255,255,.04)"},ticks:{color:"#64748b",font:{size:8}}}}})
-  }));
-}
-
-function renderAT(data){
-  destroyChart([_cAT]);
-  if(!data||!data.length)return;
-  var reversed=[].concat(data).reverse();
-  var labels=reversed.map(function(r){return r.a||"unknown";});
-  var vals=reversed.map(function(r){return Math.round((r.d||0)/1000);});
-  var ctx=document.getElementById("chartAT").getContext("2d");
-  _cAT=new Chart(ctx,Object.assign({},hCfg(),{
-    data:{labels:labels,datasets:[{data:vals,backgroundColor:"#a855f7",borderRadius:4,borderSkipped:false}]},
-    options:Object.assign({},hCfg().options,{indexAxis:"y",scales:{x:{beginAtZero:true,grid:{color:"rgba(255,255,255,.04)"},ticks:{color:"#64748b",font:{size:8},callback:function(v){return v+"s";}}},y:{grid:{color:"rgba(255,255,255,.04)"},ticks:{color:"#64748b",font:{size:8}}}}})
-  }));
-}
-
-document.addEventListener("DOMContentLoaded", function() {
-  var savedToken = localStorage.getItem("yukios_admin_token");
-  if (savedToken) {
-    document.getElementById("token").value = savedToken;
-    loadAll();
-  }
-});
 
 function renderLive(data){
   document.getElementById("liveStrip").style.display="block";
@@ -5929,241 +4955,13 @@ function renderLive(data){
   if(!chips.children.length)chips.innerHTML='<span style="color:var(--muted);font-size:11px">No active apps</span>';
 }
 
-function updateKpiSessions(d){
-  document.getElementById("kSessions").textContent=(d.total_sessions||0).toLocaleString();
-  document.getElementById("kAvgDur").textContent=fmtMs(d.avg_duration_ms);
-  document.getElementById("kPower").textContent=(d.power_users||0).toLocaleString();
-  document.getElementById("kBounce").textContent=(d.bounce_sessions||0).toLocaleString();
-}
-
-function renderDashboardCharts(data){
-  if(!data.daily||!data.daily.length)return;
-  var reversed=[].concat(data.daily).reverse();
-  var labels=reversed.map(function(d){return d.day.slice(5);});
-  var reqVals=reversed.map(function(d){return d.requests;});
-  var sessVals=reversed.map(function(d){return d.inferred_sessions||0;});
-
-  var totalReq=data.daily.reduce(function(s,d){return s+d.requests;},0);
-  var totalUsers=new Set(data.daily.map(function(d){return d.unique_players;})).size;
-  document.getElementById("kTotal").textContent=totalReq.toLocaleString();
-  document.getElementById("kUsers").textContent=data.daily.reduce(function(s,d){return s+(d.unique_players||0);},0).toLocaleString();
-
-  var cfg={type:"bar",options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:function(ctx){return" "+ctx.parsed.y.toLocaleString();}}}},scales:{x:{grid:{color:"rgba(255,255,255,.04)"},ticks:{color:"#64748b",font:{size:9}}},y:{grid:{color:"rgba(255,255,255,.04)"},ticks:{color:"#64748b",font:{size:9}}}}}};
-
-  if(_chartReq){_chartReq.destroy();}
-  var ctx1=document.getElementById("chartReq").getContext("2d");
-  var grad1=ctx1.createLinearGradient(0,0,0,160);
-  grad1.addColorStop(0,"oklch(55% 0.14 220 / 0.9)");
-  grad1.addColorStop(1,"oklch(55% 0.14 220 / 0.15)");
-  _chartReq=new Chart(ctx1,Object.assign({},cfg,{data:{labels:labels,datasets:[{data:reqVals,backgroundColor:grad1,borderRadius:4,borderSkipped:false}]}}));
-
-  if(_chartSess){_chartSess.destroy();}
-  var ctx2=document.getElementById("chartSess").getContext("2d");
-  var grad2=ctx2.createLinearGradient(0,0,0,160);
-  grad2.addColorStop(0,"oklch(72% 0.12 220 / 0.9)");
-  grad2.addColorStop(1,"oklch(72% 0.12 220 / 0.15)");
-  _chartSess=new Chart(ctx2,Object.assign({},cfg,{data:{labels:labels,datasets:[{data:sessVals,backgroundColor:grad2,borderRadius:4,borderSkipped:false}]}}));
-}
-
-function renderDays(data){
-  if(!data.daily||!data.daily.length){
-    document.getElementById("daysGrid").innerHTML='<div class="empty-state"><i class="fa-solid fa-calendar-xmark"></i>No daily data found.</div>';
-    return;
+document.addEventListener("DOMContentLoaded", function() {
+  var savedToken = localStorage.getItem("yukios_admin_token");
+  if (savedToken) {
+    document.getElementById("token").value = savedToken;
+    loadAll();
   }
-  _daySort=_daySort||"date";
-  var days=[].concat(data.daily);
-  sortAndRenderDays(days,data.topGames);
-}
-
-var _lastDays=null,_lastGames=null;
-function sortAndRenderDays(days,games){
-  _lastDays=days||_lastDays;
-  _lastGames=games||_lastGames;
-  if(!_lastDays)return;
-  var filter=document.getElementById("dayFilter").value.toLowerCase().trim();
-  var sorted=[].concat(_lastDays).filter(function(d){return!filter||d.day.includes(filter);});
-  if(_daySort==="requests")sorted.sort(function(a,b){return b.requests-a.requests;});
-  else if(_daySort==="users")sorted.sort(function(a,b){return b.unique_players-a.unique_players;});
-  else sorted.sort(function(a,b){return b.day.localeCompare(a.day);});
-  var grid=document.getElementById("daysGrid");
-  grid.innerHTML="";
-  sorted.forEach(function(day){
-    var card=document.createElement("div");
-    card.className="day-card";
-    var list=(_lastGames&&_lastGames[day.day]||[]).slice(0,5);
-    var maxC=list.length?list[0].count:1;
-    var gamesHTML=list.length?list.map(function(g,i){
-      var pct=maxC>0?Math.round((g.count/maxC)*100):0;
-      return '<div class="game-item"><span class="game-rank">#'+(i+1)+'</span><span class="game-name">'+displayApp(g.app)+'</span><div class="game-bar-wrap"><div class="game-bar-fill" style="width:'+pct+'%"></div></div><span class="game-count">'+g.count+'</span></div>';
-    }).join(""):'<div style="font-size:11px;color:var(--muted);padding:6px 0">No launches</div>';
-    card.innerHTML=
-      '<div class="day-card-header" onclick="toggleDay(this)">'
-        +'<span class="day-card-date"><i class="fa-regular fa-calendar" style="margin-right:8px;color:var(--accent)"></i>'+day.day+'</span>'
-        +'<div class="day-card-quick">'
-          +'<div class="day-card-quick-stat"><div class="qv">'+day.requests+'</div><div class="ql">Req</div></div>'
-          +'<div class="day-card-quick-stat"><div class="qv">'+day.unique_players+'</div><div class="ql">Users</div></div>'
-          +'<div class="day-card-quick-stat"><div class="qv">'+(day.inferred_sessions||0)+'</div><div class="ql">Sess</div></div>'
-        +'</div>'
-        +'<i class="fa-solid fa-chevron-down day-expand-icon"></i>'
-      +'</div>'
-      +'<div class="day-card-body">'
-        +'<div class="day-stats-row">'
-          +'<div class="day-stat-box"><div class="dsv">'+day.requests+'</div><div class="dsl">Requests</div></div>'
-          +'<div class="day-stat-box"><div class="dsv">'+day.unique_players+'</div><div class="dsl">Unique Users</div></div>'
-          +'<div class="day-stat-box"><div class="dsv">'+(day.requests_per_user||0)+'</div><div class="dsl">Req / User</div></div>'
-          +'<div class="day-stat-box"><div class="dsv">'+(day.inferred_sessions||0)+'</div><div class="dsl">Sessions</div></div>'
-        +'</div>'
-        +'<div class="games-section-label"><i class="fa-solid fa-gamepad" style="margin-right:6px;color:var(--accent)"></i>Top Launches</div>'
-        +gamesHTML
-      +'</div>';
-    grid.appendChild(card);
-  });
-}
-
-function toggleDay(header){
-  var card=header.parentElement;
-  card.classList.toggle("open");
-}
-
-function sortDays(by){
-  _daySort=by;
-  document.querySelectorAll(".sort-btn").forEach(function(b){b.classList.remove("active");});
-  document.getElementById("sort"+by.charAt(0).toUpperCase()+by.slice(1)).classList.add("active");
-  if(_lastDays)sortAndRenderDays();
-}
-
-function filterDays(){
-  if(_lastDays)sortAndRenderDays();
-}
-
-function renderTime(data){
-  var results=(data.results||[]);
-  var list=document.getElementById("timeList");
-  var filter=document.getElementById("timeFilter")&&document.getElementById("timeFilter").value.toLowerCase()||"";
-  var filtered=filter?results.filter(function(r){return (r.app||"").toLowerCase().includes(filter);}):results;
-  if(!filtered.length){list.innerHTML='<div class="empty-state"><i class="fa-solid fa-clock"></i>No playtime data found.</div>';return;}
-  var max=filtered[0].total_time_ms||1;
-  list.innerHTML="";
-  filtered.forEach(function(r,i){
-    var pct=max>0?Math.round(((r.total_time_ms||0)/max)*100):0;
-    var item=document.createElement("div");
-    item.className="time-item";
-    item.innerHTML=
-      '<div class="time-rank-badge">'+(i+1)+'</div>'
-      +'<div class="time-info">'
-        +'<div class="time-app">'+displayApp(r.app)+'</div>'
-        +'<div class="time-bar-track"><div class="time-bar-fill" style="width:'+pct+'%"></div></div>'
-      +'</div>'
-      +'<div class="time-stats">'
-        +'<div class="time-duration">'+fmtMs(r.total_time_ms)+'</div>'
-        +'<div class="time-sessions"><i class="fa-solid fa-rotate" style="margin-right:3px"></i>'+(r.event_count||0)+' events</div>'
-      +'</div>';
-    list.appendChild(item);
-  });
-}
-
-function filterTime(){
-  if(_timeData)renderTime(_timeData);
-}
-
-function renderSessions(data){
-  var grid=document.getElementById("sessionsGrid");
-  var items=[
-    {icon:"fa-layer-group",label:"Total Sessions",val:(data.total_sessions||0).toLocaleString(),sub:"inferred from event gaps"},
-    {icon:"fa-stopwatch",label:"Avg Duration",val:fmtMs(data.avg_duration_ms),sub:"per session"},
-    {icon:"fa-gamepad",label:"Avg Apps / Session",val:data.avg_apps_per_session,sub:"launches per session"},
-    {icon:"fa-trophy",label:"Longest Session",val:fmtMs(data.longest_session_ms),sub:"single session"},
-    {icon:"fa-hourglass-start",label:"Shortest Session",val:fmtMs(data.shortest_session_ms),sub:"single session"},
-    {icon:"fa-person-running",label:"Bounce Sessions",val:(data.bounce_sessions||0).toLocaleString(),sub:"1 event or <20s"},
-    {icon:"fa-bolt",label:"Power Users",val:(data.power_users||0).toLocaleString(),sub:"20+ events in one day"}
-  ];
-  grid.innerHTML="";
-  items.forEach(function(item){
-    var c=document.createElement("div");
-    c.className="stat-card";
-    c.innerHTML='<div class="sc-label"><i class="fa-solid '+item.icon+'" style="margin-right:6px;color:var(--accent)"></i>'+item.label+'</div><div class="sc-val">'+item.val+'</div><div class="sc-sub">'+item.sub+'</div>';
-    grid.appendChild(c);
-  });
-}
-
-var _allFlows=[];
-function renderFlows(data){
-  _allFlows=data.flows||[];
-  buildFlowTable(_allFlows);
-}
-
-function buildFlowTable(flows){
-  var filter=(document.getElementById("flowFilter").value||"").toLowerCase();
-  var filtered=filter?flows.filter(function(f){return (f.source||"").includes(filter)||(f.destination||"").includes(filter);}):flows;
-  var tbody=document.getElementById("flowBody");
-  if(!filtered.length){tbody.innerHTML='<tr><td colspan="4" class="empty-state">No navigation flows found.</td></tr>';return;}
-  var maxC=filtered[0].count||1;
-  tbody.innerHTML="";
-  filtered.slice(0,30).forEach(function(f){
-    var pct=Math.round((f.count/maxC)*100);
-    var tr=document.createElement("tr");
-    tr.innerHTML=
-      '<td class="flow-from">'+displayApp(f.source)+'</td>'
-      +'<td class="flow-arrow"><i class="fa-solid fa-arrow-right"></i></td>'
-      +'<td class="flow-to">'+displayApp(f.destination)+'</td>'
-      +'<td><div class="flow-bar-cell"><span class="flow-count">'+f.count+'</span><div class="flow-bar"><div class="flow-bar-inner" style="width:'+pct+'%"></div></div></div></td>';
-    tbody.appendChild(tr);
-  });
-}
-
-function filterFlows(){buildFlowTable(_allFlows);}
-
-function renderEntryExit(data){
-  var grid=document.getElementById("entryExitGrid");
-  grid.innerHTML="";
-  function makeCard(title,cls,items,barClass){
-    var card=document.createElement("div");
-    card.className="entry-exit-card";
-    var icon=cls==="entry"?'<i class="fa-solid fa-right-to-bracket"></i>':'<i class="fa-solid fa-right-from-bracket"></i>';
-    card.innerHTML='<div class="entry-exit-card-title '+cls+'">'+icon+' '+title+'</div>';
-    if(!items||!items.length){card.innerHTML+='<div class="empty-state" style="padding:16px">No data</div>';return card;}
-    var maxC=items[0].count||1;
-    items.forEach(function(item){
-      var pct=Math.round((item.count/maxC)*100);
-      var row=document.createElement("div");
-      row.className="ee-item";
-      row.innerHTML='<span class="ee-name">'+displayApp(item.app)+'</span><div class="ee-bar-wrap"><div class="'+barClass+'" style="width:'+pct+'%"></div></div><span class="ee-count">'+item.count+'</span>';
-      card.appendChild(row);
-    });
-    return card;
-  }
-  grid.appendChild(makeCard("Top Entry Apps","entry",data.top_entry_apps,"ee-bar-entry"));
-  grid.appendChild(makeCard("Top Exit Apps","exit",data.top_exit_apps,"ee-bar-exit"));
-}
-
-function renderExploration(data){
-  var grid=document.getElementById("exploreGrid");
-  grid.innerHTML="";
-  var avg=document.createElement("div");
-  avg.className="explore-card";
-  avg.innerHTML='<div class="explore-card-title"><i class="fa-solid fa-compass" style="margin-right:6px;color:var(--accent)"></i>Avg Unique Apps / Session</div><div class="explore-big">'+data.avg_unique_apps_per_session+'</div><div class="explore-sub">app diversity per session</div>';
-  grid.appendChild(avg);
-
-  var explorers=document.createElement("div");
-  explorers.className="explore-card";
-  explorers.innerHTML='<div class="explore-card-title"><i class="fa-solid fa-ranking-star" style="margin-right:6px;color:var(--accent)"></i>Most Exploratory Users</div>';
-  if(data.top_explorers&&data.top_explorers.length){
-    data.top_explorers.forEach(function(u){
-      explorers.innerHTML+='<div class="user-row"><span class="user-id">'+u.user_id+'</span><span class="user-val">'+u.avg_unique+' apps/sess</span></div>';
-    });
-  } else {explorers.innerHTML+='<div style="font-size:11px;color:var(--muted);margin-top:8px">No data</div>';}
-  grid.appendChild(explorers);
-
-  var diverse=document.createElement("div");
-  diverse.className="explore-card";
-  diverse.innerHTML='<div class="explore-card-title"><i class="fa-solid fa-shuffle" style="margin-right:6px;color:var(--accent)"></i>Most Diverse Sessions</div>';
-  if(data.top_diverse_sessions&&data.top_diverse_sessions.length){
-    data.top_diverse_sessions.forEach(function(s){
-      diverse.innerHTML+='<div class="user-row"><span class="user-id">'+s.user_id+'</span><span class="user-val">'+s.unique_apps+' unique apps</span></div>';
-    });
-  } else {diverse.innerHTML+='<div style="font-size:11px;color:var(--muted);margin-top:8px">No data</div>';}
-  grid.appendChild(diverse);
-}
+});
 
 function exportData(){
   fetch("/admin/export",{headers:getHeaders()})

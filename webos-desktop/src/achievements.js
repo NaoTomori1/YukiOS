@@ -54,11 +54,7 @@ export class AchievementsApp extends BaseApp {
     super(services);
     this.achievements = this.createAchievements();
     this.unlocked = new Map();
-    this.s1 = new Audio(
-      resolveGhUrl(
-        "https://cdn.jsdelivr.net/gh/NaoTomori1/yukios@main/static/audio/steam.opus",
-      ),
-    );
+    this.s1 = null;
 
     this.initBusListeners();
     this.thresholds = {
@@ -660,11 +656,16 @@ export class AchievementsApp extends BaseApp {
 
     if (!skipSound) {
       try {
-        const sounds = [this.s1];
-        const pick = sounds[Math.floor(Math.random() * sounds.length)];
-        pick.currentTime = 0;
-        pick.volume = audioMixer().masterVolume * audioMixer().systemVolume;
-        pick.play();
+        if (!this.s1) {
+          this.s1 = new Audio(
+            resolveGhUrl(
+              "https://cdn.jsdelivr.net/gh/NaoTomori1/yukios@main/static/audio/steam.opus",
+            ),
+          );
+        }
+        this.s1.currentTime = 0;
+        this.s1.volume = audioMixer().masterVolume * audioMixer().systemVolume;
+        this.s1.play().catch(() => {});
       } catch (e) {
         console.error("[Achievements]", e);
       }

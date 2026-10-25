@@ -1,5 +1,4 @@
-import { fxJetExhaust } from "./stickmanFx.js";
-import { pose } from "./stickmanRig.js";
+import { fxJetExhaust, pose } from "./stickmanFx.js";
 
 const NS = "http://www.w3.org/2000/svg";
 

@@ -4,6 +4,7 @@ import {
   showSnapGhost,
   hideSnapGhost,
   applySnap,
+  applySnapRect,
   unsnap,
 } from "./makeDraggable.js";
 import { $, createElement } from "../shared/domUtils.js";
@@ -42,6 +43,10 @@ export class SnapSystem {
 
   applySnap(win, zone, skipSavePreSnap = false) {
     applySnap(this.manager, win, zone, skipSavePreSnap);
+  }
+
+  applySnapRect(win, rect) {
+    applySnapRect(this.manager, win, rect);
   }
 
   unsnap(win) {

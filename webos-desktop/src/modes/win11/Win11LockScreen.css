@@ -1,0 +1,396 @@
+.session-overlay.win11-session {
+  --win11-lock-fg: rgba(255, 255, 255, 0.94);
+  --win11-lock-fg-dim: rgba(255, 255, 255, 0.78);
+  --win11-lock-btn-bg: rgba(255, 255, 255, 0.2);
+  --win11-lock-btn-bg-active: rgba(255, 255, 255, 0.33);
+  --win11-lock-btn-border: rgba(255, 255, 255, 0.33);
+  overflow: hidden;
+}
+
+.session-overlay.win11-session .session-background {
+  -webkit-backdrop-filter: blur(25px) brightness(0.5);
+  backdrop-filter: blur(25px) brightness(0.5);
+}
+
+.session-overlay.win11-session .session-content > * {
+  transition:
+    opacity 250ms ease-in-out,
+    visibility 0s linear 250ms;
+}
+
+.session-overlay.win11-session[data-win11-stage="splash"]
+  .session-content
+  > *:not(.session-clock-block) {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.session-overlay.win11-session[data-win11-stage="revealed"]
+  .session-content
+  > *:not(.session-clock-block) {
+  opacity: 1;
+  visibility: visible;
+  transition:
+    opacity 250ms ease-in-out,
+    visibility 0s linear 0s;
+}
+
+.session-overlay.win11-session .session-mode-btn,
+.session-overlay.win11-session .user-carousel-tile span,
+.session-overlay.win11-session .system-icon {
+  color: var(--win11-lock-fg);
+}
+
+.session-overlay.win11-session.win11-session-locked
+  .session-content
+  > *:not(.session-clock-block) {
+  display: none;
+}
+
+.session-overlay.win11-session .system-actions-row,
+.session-overlay.win11-session .session-status-widget,
+.session-overlay.win11-session .session-support-btn {
+  display: none;
+}
+
+.session-overlay.win11-session .session-support-btn,
+.session-overlay.win11-session .session-github-btn,
+.session-overlay.win11-session .session-discord-btn {
+  margin-left: -70px;
+}
+
+.session-overlay.win11-session:not(.win11-session-locked)
+  .session-features-link {
+  display: none;
+}
+
+.session-overlay.win11-session .session-clock-block {
+  position: absolute;
+  top: -200px;
+  left: 0;
+  width: 100%;
+  text-align: center;
+  z-index: 2;
+  opacity: 1;
+  transform: translateY(0);
+  transition:
+    opacity 200ms ease-in-out,
+    transform 200ms ease-in-out;
+  pointer-events: none;
+}
+
+.session-overlay.win11-session[data-win11-stage="revealed"]
+  .session-clock-block {
+  opacity: 0;
+  transform: translateY(-200px);
+}
+
+.session-overlay.win11-session .session-time {
+  font-size: 60px;
+  font-weight: 600;
+  letter-spacing: normal;
+  line-height: 1.1;
+  color: var(--win11-lock-fg);
+  text-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+
+.session-overlay.win11-session .session-date {
+  margin-top: 4px;
+  margin-bottom: 0;
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--win11-lock-fg-dim);
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+}
+
+.session-overlay.win11-session .user-carousel-tile img {
+  width: 96px;
+  height: 96px;
+}
+
+.session-overlay.win11-session .user-carousel-tile.selected img {
+  border-color: transparent;
+}
+
+.session-overlay.win11-session .system-icon,
+.session-overlay.win11-session .session-mode-btn,
+.session-overlay.win11-session .session-settings-btn,
+.session-overlay.win11-session .session-status-toggle,
+.session-overlay.win11-session .session-status-panel,
+.session-overlay.win11-session .modal-content {
+  background: transparent;
+  border: none;
+}
+
+.session-overlay.win11-session .system-icon:hover,
+.session-overlay.win11-session .session-mode-btn:hover,
+.session-overlay.win11-session .session-settings-btn:hover,
+.session-overlay.win11-session .session-status-toggle:hover {
+  background: transparent;
+  border: none;
+}
+
+.session-overlay.win11-session .session-mode-btn.active {
+  border-color: transparent;
+}
+
+.session-overlay.win11-session .session-electron-banner {
+  display: none;
+}
+
+.session-overlay.win11-session .login-tip {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 16px;
+  width: fit-content;
+  max-width: min(520px, calc(100vw - 40px));
+  margin: 0 auto;
+  min-height: 0;
+  padding: 0;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  color: var(--win11-lock-fg-dim);
+}
+
+.session-overlay.win11-session .login-tip i {
+  color: var(--win11-lock-fg);
+}
+
+.session-overlay.win11-session .session-features-link {
+  bottom: 46px;
+}
+
+.session-overlay.win11-session .action-button,
+.win11-lock-signin {
+  background: var(--win11-lock-btn-bg);
+  font-size: 13px;
+  font-weight: 400;
+  padding: 12px;
+  color: #fff;
+  border: 2px solid transparent;
+  border-radius: 4px;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  transform: none;
+}
+
+.session-overlay.win11-session .action-button:hover,
+.win11-lock-signin:hover {
+  background: var(--win11-lock-btn-bg);
+  border: 2px solid var(--win11-lock-btn-border);
+  transform: none;
+}
+
+.session-overlay.win11-session .action-button:active,
+.win11-lock-signin:active {
+  background: var(--win11-lock-btn-bg-active);
+  border: 2px solid transparent;
+}
+
+.session-overlay.win11-session.win11-session-locked
+  .login-center-panel
+  .action-button {
+  display: none;
+}
+
+.win11-lock-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+  color: var(--win11-lock-fg);
+  font-family: var(
+    --win11-segoe,
+    "Segoe UI Variable",
+    "Segoe UI",
+    system-ui,
+    sans-serif
+  );
+}
+
+.win11-lock-panel {
+  position: absolute;
+  top: 25%;
+  left: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  opacity: 0;
+  visibility: hidden;
+  transform: translate(-50%, 60px);
+  transition:
+    opacity 400ms ease-in-out,
+    transform 400ms ease-in-out,
+    visibility 0s linear 400ms;
+}
+
+.session-overlay.win11-session[data-win11-stage="revealed"] .win11-lock-panel {
+  opacity: 1;
+  visibility: visible;
+  transform: translate(-50%, 0);
+  pointer-events: auto;
+  transition:
+    opacity 400ms ease-in-out,
+    transform 400ms ease-in-out,
+    visibility 0s linear 0s;
+}
+
+.win11-lock-avatar {
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: var(--win11-lock-btn-bg);
+}
+
+.win11-lock-name {
+  margin-top: 8px;
+  font-size: 24px;
+  font-weight: 500;
+  color: var(--win11-lock-fg);
+  text-shadow: 0 2px 14px rgba(0, 0, 0, 0.45);
+}
+
+.win11-lock-signin {
+  margin-top: 24px;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.win11-lock-signin:focus-visible {
+  outline: 2px solid var(--win11-accent);
+  outline-offset: 2px;
+}
+
+.win11-lock-corner {
+  position: absolute;
+  right: 24px;
+  bottom: 24px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--win11-lock-fg);
+}
+
+.win11-lock-options {
+  position: absolute;
+  left: 24px;
+  bottom: 72px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  pointer-events: auto;
+}
+
+.win11-lock-options .session-selector {
+  position: static;
+  bottom: auto;
+  left: auto;
+  z-index: auto;
+}
+
+.win11-lock-options .session-modes-grid {
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+}
+
+.win11-lock-options .session-mode-btn {
+  padding: 8px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  min-width: 0;
+}
+
+.win11-lock-options .session-mode-btn img {
+  width: 18px;
+  height: 18px;
+}
+
+.win11-lock-layer .login-tip,
+.win11-lock-layer .session-support-btn {
+  pointer-events: auto;
+}
+
+.win11-lock-corner .uicon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.win11-lock-corner .win11-battery {
+  display: flex;
+  position: relative;
+  width: 20px;
+  height: 20px;
+}
+
+.win11-lock-corner .win11-btFull {
+  position: absolute;
+  top: 0;
+  left: 0;
+  overflow: hidden;
+  z-index: 0;
+}
+
+.win11-lock-corner .win11-charger {
+  display: none;
+}
+
+.win11-lock-corner .win11-charger svg {
+  position: absolute;
+  z-index: 1;
+}
+
+.win11-lock-battery[data-charging="true"] .win11-charger {
+  display: block;
+}
+
+.win11-lock-corner .session-settings-btn {
+  position: static;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  color: var(--win11-lock-fg);
+  pointer-events: auto;
+}
+
+.win11-lock-corner .session-settings-btn svg {
+  width: 18px;
+  height: 18px;
+  display: block;
+}
+
+.win11-lock-wifi {
+  color: var(--win11-lock-fg);
+}
+
+.win11-lock-wifi img {
+  width: 16px;
+  height: 16px;
+  filter: invert(1);
+  opacity: 0.9;
+}
+
+.win11-lock-wifi[data-online="false"] img {
+  opacity: 0.35;
+}
+
+.session-overlay.win11-session.exit {
+  animation: win11LockFadeOut 0.6s forwards ease-in;
+}
+
+@keyframes win11LockFadeOut {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(0);
+  }
+}

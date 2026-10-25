@@ -15,13 +15,11 @@
 - [ ] New app
 - [ ] Refactor / code quality
 - [ ] Documentation
-- [ ] Testing
 - [ ] Build / CI
 
 ## Testing
 
 - [ ] `pnpm build:dev` passes
-- [ ] `pnpm test` passes (all 90+ tests)
 - [ ] Manual testing performed (describe below)
 
 ## Checklist

@@ -565,15 +565,29 @@ function ensureCrumbs(win, winId, app, inst) {
     });
     if (wrap.firstChild) wrap.insertBefore(crumbs, wrap.firstChild);
     else wrap.appendChild(crumbs);
-    bindEvent(crumbs, "click", (e) => {
-      if (e.target === crumbs) {
-        const input = $(`#${winId}-path`, win);
-        if (input) input.focus();
-      }
-    });
     const input = $(`#${winId}-path`, win);
+    if (!wrap.dataset.crumbEditBound) {
+      wrap.dataset.crumbEditBound = "1";
+      bindEvent(wrap, "click", (e) => {
+        const target = e.target;
+        const field = $(`#${winId}-path`, win);
+        if (!field || target === field) return;
+        if (
+          target.classList &&
+          target.classList.contains("explorer-reload-icon")
+        )
+          return;
+        if (target.closest && target.closest(".dncont")) return;
+        wrap.classList.add("crumb-editing");
+        field.focus();
+        field.select();
+      });
+    }
     if (input) {
       input.classList.add("path-field");
+      bindEvent(input, "focus", () => {
+        wrap.classList.add("crumb-editing");
+      });
       bindEvent(input, "blur", () => {
         wrap.classList.remove("crumb-editing");
       });

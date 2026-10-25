@@ -1,11 +1,11 @@
 import { os } from "../../framework.js";
 import { FileKind } from "../../shared/fileKindDetector.js";
 import { showTransferDialog } from "../../shared/transferDialog.js";
-
 import { zipSync } from "fflate";
 import { $, $$, setStyle } from "../../shared/domUtils.js";
 import { pluralize, downloadBlob } from "../../utils/utils.js";
 import { showArchiveDialog } from "./dialogs.js";
+import { playSfx, SystemSfx } from "../../sfx/systemSfx.js";
 
 export async function copyItem(explorer, name, isFile, srcPath, destPath) {
   if (isFile) {
@@ -368,7 +368,8 @@ export async function downloadItems(explorer, itemName, isFile, inst) {
     );
     os.notify.send("Download ready");
   } catch {
-    os.notify.send("Download failed");
+    playSfx(SystemSfx.HARDWARE_FAIL);
+    os.notify.send("Download failed", "", { silent: true });
   } finally {
     dialog.complete();
   }

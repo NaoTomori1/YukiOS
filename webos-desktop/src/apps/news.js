@@ -1,6 +1,13 @@
 import newsUpdates from "../news.json";
 import "../styles/news.css";
-import { $, $$, bindEvent, setStyle, toggleClass } from "../shared/domUtils.js";
+import {
+  $,
+  addClass,
+  bindEvent,
+  removeClass,
+  setStyle,
+  setText,
+} from "../shared/domUtils.js";
 import { APP_MANIFESTS, BaseApp, StorageKeys, os } from "../framework.js";
 
 const appNewsEntries = APP_MANIFESTS.filter((manifest) => manifest.news).map(
@@ -10,6 +17,9 @@ const appNewsEntries = APP_MANIFESTS.filter((manifest) => manifest.news).map(
 const EXISTING_NEWS_UPDATES = newsUpdates;
 
 const NEWS_UPDATES = [...appNewsEntries, ...EXISTING_NEWS_UPDATES];
+
+const NEWS_PAGE_SIZE = 6;
+const NEWS_SCROLL_THRESHOLD = 240;
 
 const hashStringDjb2 = (text) => {
   let hash = 5381;
@@ -50,21 +60,11 @@ export const updateNewsBadge = () => {
   }
 };
 
-export class NewsApp extends BaseApp {
-  singletonWindowIds = ["news-yukios"];
-
-  constructor(services) {
-    super(services);
-  }
-
-  async open() {
-    const updates = NEWS_UPDATES;
-
-    const renderSections = (sections) =>
-      (Array.isArray(sections) ? sections : [])
-        .filter((section) => section && Array.isArray(section.items))
-        .map(
-          (section) => `
+const renderSections = (sections) =>
+  (Array.isArray(sections) ? sections : [])
+    .filter((section) => section && Array.isArray(section.items))
+    .map(
+      (section) => `
         <div class="news-section">
           <h2 class="news-section-title">
             <i class="fas ${section.icon}"></i>
@@ -90,13 +90,10 @@ export class NewsApp extends BaseApp {
           </div>
         </div>
       `,
-        )
-        .join("");
+    )
+    .join("");
 
-    const updatesHtml = (Array.isArray(updates) ? updates : [])
-      .filter((update) => update && (update.sections || update.label))
-      .map(
-        (update) => `
+const renderUpdate = (update) => `
       <div class="news-update">
         <div class="news-update-head">
           ${update.date ? `<div class="news-date">${update.date}</div>` : ""}
@@ -104,9 +101,26 @@ export class NewsApp extends BaseApp {
         </div>
         ${renderSections(update.sections)}
       </div>
-    `,
-      )
-      .join("");
+    `;
+
+const renderUpdates = (updates) =>
+  (Array.isArray(updates) ? updates : []).map(renderUpdate).join("");
+
+const getRenderableUpdates = () =>
+  (Array.isArray(NEWS_UPDATES) ? NEWS_UPDATES : []).filter(
+    (update) => update && (update.sections || update.label),
+  );
+
+export class NewsApp extends BaseApp {
+  singletonWindowIds = ["news-yukios"];
+
+  constructor(services) {
+    super(services);
+  }
+
+  async open() {
+    const updates = getRenderableUpdates();
+    const latestDate = updates[0]?.date ?? "-";
 
     const content = `
       <div class="window-content" style="padding:0; height: calc(100% - 40px); overflow: hidden;">
@@ -124,12 +138,13 @@ export class NewsApp extends BaseApp {
             <div class="news-hero-meta">
               <div class="news-pill" title="Latest update shown first">
                 <i class="fas fa-clock"></i>
-                <span>Latest: ${updates[0]?.date ?? "-"}</span>
+                <span>Latest: ${latestDate}</span>
               </div>
             </div>
           </div>
 
-          ${updatesHtml}
+          <div class="news-list"></div>
+          <div class="news-list-status" role="status"></div>
         </div>
       </div>
     `;
@@ -145,8 +160,71 @@ export class NewsApp extends BaseApp {
       },
     );
     win.innerHTML = content;
+    this.setupLazyLoading(win, updates);
     this.initNews();
     return win;
+  }
+
+  setupLazyLoading(win, updates) {
+    const scroller = $(".news-root", win);
+    const list = $(".news-list", win);
+    const status = $(".news-list-status", win);
+    if (!scroller || !list) return;
+
+    let loaded = 0;
+
+    const hasMore = () => loaded < updates.length;
+
+    const appendBatch = () => {
+      if (!hasMore()) return false;
+      const next = updates.slice(loaded, loaded + NEWS_PAGE_SIZE);
+      loaded += next.length;
+      list.insertAdjacentHTML("beforeend", renderUpdates(next));
+      return true;
+    };
+
+    const isNearBottom = () =>
+      scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight <=
+      NEWS_SCROLL_THRESHOLD;
+
+    const renderStatus = () => {
+      if (!status) return;
+      if (hasMore()) {
+        setText(status, "Scroll for more updates");
+        addClass(status, "news-list-status-active");
+      } else {
+        setText(status, "You are all caught up");
+        removeClass(status, "news-list-status-active");
+      }
+    };
+
+    const loadMore = () => {
+      if (!appendBatch()) return;
+      renderStatus();
+      if (isNearBottom() && hasMore()) loadMore();
+    };
+
+    renderStatus();
+    loadMore();
+
+    let framePending = false;
+    const onScroll = () => {
+      if (framePending) return;
+      framePending = true;
+      requestAnimationFrame(() => {
+        framePending = false;
+        if (isNearBottom() && hasMore()) loadMore();
+      });
+    };
+
+    bindEvent(scroller, "scroll", onScroll, { passive: true });
+    bindEvent(status, "click", () => {
+      if (hasMore()) loadMore();
+    });
+
+    win.addEventListener("remove", () => {
+      scroller.removeEventListener("scroll", onScroll);
+    });
   }
 
   initNews() {

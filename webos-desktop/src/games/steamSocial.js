@@ -48,6 +48,10 @@ import {
   PRESENCE,
 } from "../social/presence.js";
 import { showContextMenu } from "../shared/contextMenu.js";
+import {
+  createAdaptiveInterval,
+  guardVisible,
+} from "../shared/pollThrottle.js";
 import { initSteamPopupWindow } from "./steamPopupWindow.js";
 import {
   callIfFunction,
@@ -1353,8 +1357,8 @@ export function openFriendDmWindow(friend) {
     bindEvent(input, "keydown", (e) => {
       if (e.key === "Enter") doSend();
     });
-  const pollTimer = setInterval(poll, 15000);
-  win.addEventListener("remove", () => clearInterval(pollTimer));
+  const stopPolling = createAdaptiveInterval(guardVisible(poll), 45000, 120000);
+  win.addEventListener("remove", stopPolling);
   poll();
 }
 

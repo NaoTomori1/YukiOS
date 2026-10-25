@@ -123,10 +123,17 @@ export class BaseApp {
     duration = 5000,
     icon = null,
     appSource = null,
+    category = null,
   ) {
     const source = appSource || this.getAppSource();
     const os = osBridge;
-    os.notify.send(title, message, { type, duration, icon, appSource: source });
+    os.notify.send(title, message, {
+      type,
+      duration,
+      icon,
+      appSource: source,
+      category,
+    });
   }
 
   getAppSource() {

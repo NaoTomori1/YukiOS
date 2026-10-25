@@ -8,9 +8,17 @@ function displayPct(clamped, min, max) {
   return min > 0 ? Math.max(pct, 3) : pct;
 }
 
-export function renderRangeSlider(id, min, max, step, value, disabled = false) {
+export function renderRangeSlider(
+  id,
+  min,
+  max,
+  step,
+  value,
+  disabled = false,
+  extraAttrs = "",
+) {
   const pct = displayPct(value, min, max);
-  return `<div class="range-slider${disabled ? " range-slider--disabled" : ""}" id="${id}" data-min="${min}" data-max="${max}" data-step="${step}" data-value="${value}" tabindex="0" role="slider" aria-valuemin="${min}" aria-valuemax="${max}" aria-valuenow="${value}">
+  return `<div class="range-slider${disabled ? " range-slider--disabled" : ""}" id="${id}" ${extraAttrs} data-min="${min}" data-max="${max}" data-step="${step}" data-value="${value}" tabindex="0" role="slider" aria-valuemin="${min}" aria-valuemax="${max}" aria-valuenow="${value}">
     <div class="range-slider__track">
       <div class="range-slider__fill" style="width: ${pct}%"></div>
       <div class="range-slider__thumb" style="left: ${pct}%"></div>

@@ -85,6 +85,8 @@ context menus.
 - **Widgets board** with news, weather, and quick glance cards
 - **Quick settings** panel for Wi-Fi, Bluetooth, brightness, volume, and battery
 - **Transparent context menus** styled after Windows 11
+- **Windows 11 system sound pack** with startup, shutdown, logoff, unlock, notification, error, hardware, recycle, menu,
+  and navigation sounds.
 
 ## 🔲 Hyprland BSP Tiling Mode
 
@@ -264,7 +266,6 @@ applications, file system, or workspace context. The UI layout engine morphs aro
 
 - Audio mixer with per-app volume sliders, live waveform intensity visualizer, master/system volume, mute toggle, and
   tray scroll-to-adjust
-- System sounds with interaction noises
 - Achievement tracking and usage milestones
 - Theme system: 40+ presets, custom theme support, light/dark and transparency modes
 - Wallpaper engine: 400+ animated wallpapers and customizable Vanta.js support in the wallpaper engine app
@@ -533,7 +534,7 @@ top.
 - [Truffled](https://truffled.lol) Browser game ports.
 - [Aether](https://aether.ist/) Movie streaming frontend used by the Movies app.
 - [Famelack](https://famelack.com) Live TV frontend used by the TV Streaming app.
-- [win11React](https://github.com/blueedgetechno/win11React) Windows 11 UI reference used for the Win11 mode shell and
+- [win11React](https://github.com/blueedgetechno/win11React) Windows 11 UI used for the Win11 mode shell and
   context menu styling.
 </details>
 

@@ -25,6 +25,7 @@ export class AquariumWidget extends WidgetBase {
     this.height = 180;
     this.dpr = Math.min(window.devicePixelRatio || 1, 2);
     this.rafId = null;
+    this.mountRaf = null;
     this.lastTime = 0;
     this.canvas = null;
     this.ctx = null;
@@ -68,12 +69,26 @@ export class AquariumWidget extends WidgetBase {
     this.visHandler = () => {
       if (!document.hidden && this.pausedHidden && this.ctx) {
         this.pausedHidden = false;
-        this.lastTime = performance.now();
-        this.loop();
+        this.startLoop();
       }
     };
     document.addEventListener("visibilitychange", this.visHandler);
-    this.loop();
+    this.startLoop();
+  }
+
+  startLoop() {
+    if (this.rafId || this.mountRaf) return;
+    this.mountRaf = requestAnimationFrame(() => {
+      this.mountRaf = null;
+      if (!this.ctx || !this.canvas) return;
+      if (this.element?.isConnected) {
+        this.setupCanvas();
+        this.createSeaweeds();
+        this.createBubbles(8);
+      }
+      this.lastTime = performance.now();
+      this.loop();
+    });
   }
 
   bindWidgetEvents(contentEl) {
@@ -209,9 +224,13 @@ export class AquariumWidget extends WidgetBase {
 
   loop = () => {
     if (!this.ctx || !this.canvas) return;
-    if (document.hidden || !this.element?.isConnected) {
+    if (document.hidden) {
       this.rafId = null;
       this.pausedHidden = true;
+      return;
+    }
+    if (!this.element?.isConnected) {
+      this.rafId = requestAnimationFrame(this.loop);
       return;
     }
     this.rafId = requestAnimationFrame(this.loop);
@@ -389,6 +408,8 @@ export class AquariumWidget extends WidgetBase {
   destroy() {
     if (this.rafId) cancelAnimationFrame(this.rafId);
     this.rafId = null;
+    if (this.mountRaf) cancelAnimationFrame(this.mountRaf);
+    this.mountRaf = null;
     if (this.visHandler)
       document.removeEventListener("visibilitychange", this.visHandler);
     if (this.resizeObserver) {

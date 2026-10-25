@@ -3,6 +3,7 @@ import { performanceManager } from "../shared/performanceManager.js";
 import { parseBool } from "../utils/utils.js";
 import { StorageKeys, os } from "../framework.js";
 import { SystemUtilities } from "../system.js";
+import { playSfx, SystemSfx } from "../sfx/systemSfx.js";
 
 class BatteryPerformanceManager {
   constructor() {
@@ -12,6 +13,7 @@ class BatteryPerformanceManager {
     this.enabled = false;
     this.threshold = 20;
     this.isMobile = false;
+    this.criticalNotified = false;
   }
 
   async init() {
@@ -59,6 +61,15 @@ class BatteryPerformanceManager {
     const level = Math.round(this.battery.level * 100);
     const charging = this.battery.charging;
 
+    if (!charging && level <= 5) {
+      if (!this.criticalNotified) {
+        this.criticalNotified = true;
+        playSfx(SystemSfx.BATTERY_CRITICAL);
+      }
+    } else if (this.criticalNotified) {
+      this.criticalNotified = false;
+    }
+
     if (this.isMobile) {
       if (!charging && level <= this.threshold && !this.saverActive) {
         this.mobileLowBattery(level);
@@ -77,6 +88,7 @@ class BatteryPerformanceManager {
   }
 
   mobileLowBattery(level) {
+    playSfx(SystemSfx.BATTERY_LOW);
     this.saverActive = true;
     document.documentElement.classList.add("battery-saver");
     performanceManager.setMode("performance");
@@ -106,6 +118,7 @@ class BatteryPerformanceManager {
   }
 
   desktopLowBattery(level) {
+    playSfx(SystemSfx.BATTERY_LOW);
     this.saverActive = true;
     this.previousMode = performanceManager.getMode();
 

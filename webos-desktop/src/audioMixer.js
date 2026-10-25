@@ -34,6 +34,7 @@ class AudioMixer {
     this.isOpen = false;
     this.justOpened = false;
     this.pinned = false;
+    this.sfxModulePromise = null;
     this.load();
   }
 
@@ -470,6 +471,7 @@ class AudioMixer {
         const delta = e.deltaY > 0 ? -0.05 : 0.05;
         const newVol = Math.max(0, Math.min(1, this.masterVolume + delta));
         this.setMaster(newVol);
+        this.playMixerFeedback();
       },
     });
     setTimeout(() => this.setupTrayIcon(), 0);
@@ -581,6 +583,7 @@ class AudioMixer {
       }
       this.setMaster(val);
     });
+    masterSlider.addEventListener("change", () => this.playMixerFeedback());
 
     const systemSlider = this.panel.querySelector(".am-system-slider");
     systemSlider.addEventListener("input", (e) => {
@@ -588,6 +591,7 @@ class AudioMixer {
       this.updateSystemLabel();
       this.save();
     });
+    systemSlider.addEventListener("change", () => this.playMixerFeedback());
 
     this.renderSliders();
   }
@@ -674,6 +678,11 @@ class AudioMixer {
         const val = parseInt(e.target.value) / 100;
         label.textContent = `${e.target.value}%`;
         this.setChannel(winId, val);
+      });
+      slider.addEventListener("change", (e) => {
+        const channel = this.channels.get(winId);
+        const level = channel?.muted ? 0 : parseInt(e.target.value) / 100;
+        this.playMixerFeedback(level);
       });
 
       row.querySelectorAll(".am-np-btn").forEach((btn) => {
@@ -883,7 +892,28 @@ class AudioMixer {
     }
   }
 
-  playCriticalWarning() {
+  getSfxModule() {
+    if (!this.sfxModulePromise) {
+      this.sfxModulePromise = import("./sfx/systemSfx.js").catch(() => null);
+    }
+    return this.sfxModulePromise;
+  }
+
+  playMixerFeedback(level = 1) {
+    this.getSfxModule().then((mod) => {
+      if (!mod) return;
+      mod.playSfx(mod.SystemSfx.BACKGROUND, {
+        minGap: 300,
+        volume: level,
+      });
+    });
+  }
+
+  async playCriticalWarning() {
+    try {
+      const mod = await this.getSfxModule();
+      if (mod && mod.playSfx(mod.SystemSfx.CRITICAL_STOP)) return;
+    } catch {}
     this.playSystemSound(SystemAudio.WARNING);
   }
 

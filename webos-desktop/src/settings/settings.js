@@ -131,6 +131,11 @@ import { bindTilingCategory } from "./pane-tiling.js";
 import { bindShortcutsCategory } from "./pane-shortcuts.js";
 import { bindChromeOsCategory } from "../modes/chromeos/settings.js";
 import { bindWin11Category } from "../modes/win11/settings.js";
+import { buildWin11SettingsHTML } from "../modes/win11/settings/win11SettingsShell.js";
+import {
+  bindWin11Settings,
+  navigateWin11Section,
+} from "../modes/win11/settings/win11SettingsBinders.js";
 import { bindRuffleCategory } from "./pane-ruffle.js";
 import { bindGamingCategory } from "./pane-gaming.js";
 import { exportData, importData, deleteAllData } from "./settingsData.js";
@@ -209,6 +214,10 @@ export class SettingsApp extends BaseApp {
         systemVolume: Number.isFinite(rawSystemVol)
           ? Math.max(0, Math.min(1, rawSystemVol))
           : 1,
+        windowsSfxEnabled: parseBool(
+          os.storage.get(StorageKeys.windowsSfxEnabled),
+          true,
+        ),
         dnd: parseBool(os.storage.get(StorageKeys.dndKey)),
         taskbarPosition:
           os.storage.get(StorageKeys.taskbarPosition) || "bottom",
@@ -374,6 +383,20 @@ export class SettingsApp extends BaseApp {
         } catch {}
       }
     }, 0);
+
+    this.registerWin11ModeListener();
+  }
+
+  registerWin11ModeListener() {
+    if (this.win11ModeListener) return;
+    this.win11ModeListener = (data) => {
+      if (!data || data.id !== MODES.WIN11) return;
+      try {
+        this.rebuildForWin11Mode();
+      } catch {}
+    };
+    os.events.on(BusEvents.MODE_ENTERED, this.win11ModeListener);
+    os.events.on(BusEvents.MODE_EXITED, this.win11ModeListener);
   }
 
   open(options = {}) {
@@ -385,6 +408,11 @@ export class SettingsApp extends BaseApp {
         this.navigateToSection(existing, options.section, options.target);
       }
       this.focusSettingsSearch(existing);
+      return;
+    }
+
+    if (modeManager.isActive(MODES.WIN11)) {
+      this.openWin11Settings(options);
       return;
     }
 
@@ -404,14 +432,50 @@ export class SettingsApp extends BaseApp {
     this.focusSettingsSearch(win);
   }
 
+  openWin11Settings(options = {}) {
+    const winId = "yukiOS-settings";
+    const win = os.window.create(winId, "Settings", "1040px", "720px", {
+      ...options,
+      icon: "fas fa-cog",
+    });
+    win.innerHTML = buildWin11SettingsHTML(this.wm);
+
+    if (this.desktopUI !== undefined) this.desktopUI.closeAllMenus();
+
+    bindWin11Settings(win);
+
+    if (options && typeof options.section === "string") {
+      navigateWin11Section(win, options.section);
+    }
+    this.focusSettingsSearch(win);
+  }
+
+  rebuildForWin11Mode() {
+    const win = $("#yukiOS-settings");
+    if (!win) return;
+    if (modeManager.isActive(MODES.WIN11)) {
+      win.innerHTML = buildWin11SettingsHTML(this.wm);
+      bindWin11Settings(win);
+    } else {
+      win.innerHTML = buildSettingsHTML(this.settings, this.wm);
+      this.bindControls(win);
+    }
+  }
+
   focusSettingsSearch(win) {
     setTimeout(() => {
-      const searchEl = win.querySelector("#settingsSearch");
+      const searchEl =
+        win.querySelector("#win11SettingsSearch") ||
+        win.querySelector("#settingsSearch");
       if (searchEl) searchEl.focus();
     }, 60);
   }
 
   navigateToSection(win, section, target) {
+    if (modeManager.isActive(MODES.WIN11)) {
+      navigateWin11Section(win, section);
+      return;
+    }
     let navItem = null;
     if (target) {
       navItem = win.querySelector(

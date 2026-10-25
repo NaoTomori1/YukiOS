@@ -10,7 +10,13 @@ function closeAll() {
   }
 }
 
-export function renderSelectMenu(id, options, currentValue, extraClass = "") {
+export function renderSelectMenu(
+  id,
+  options,
+  currentValue,
+  extraClass = "",
+  extraAttrs = "",
+) {
   const selected = options.find((o) => o.value === currentValue) || options[0];
   const opts = options
     .map(
@@ -18,7 +24,7 @@ export function renderSelectMenu(id, options, currentValue, extraClass = "") {
         `<div class="select-menu__option${o.value === currentValue ? " selected" : ""}" data-value="${o.value}">${o.label}</div>`,
     )
     .join("");
-  return `<div class="select-menu ${extraClass}" id="${id}" tabindex="0">
+  return `<div class="select-menu ${extraClass}" id="${id}" ${extraAttrs} tabindex="0">
     <div class="select-menu__trigger">
       <span class="select-menu__label">${selected ? selected.label : ""}</span>
       <i class="fas fa-chevron-down select-menu__arrow"></i>

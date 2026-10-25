@@ -1,15 +1,112 @@
 [
   {
+    "date": "October 25, 2026",
+    "label": "Windows 11 UI and System Update",
+    "sections": [
+      {
+        "icon": "fas fa-window-maximize",
+        "title": "Windows 11 Taskbar and Navigation",
+        "items": [
+          [
+            "fas fa-align-center",
+            "Taskbar and Workspaces",
+            "Center or left-align app icons, open Start and Search, access Widgets, switch workspaces, and view network, volume, battery, and calendar information from the taskbar."
+          ],
+          [
+            "fas fa-table-cells-large",
+            "Redesigned Start Menu",
+            "Pin favorite apps, revisit recent apps and files, browse all installed apps alphabetically with a jump list, group apps into Productivity, Games, Creativity, and other categories, and search apps, settings, documents, and the web."
+          ]
+        ]
+      },
+      {
+        "icon": "fas fa-sliders",
+        "title": "Quick Settings, Widgets, and Calendar",
+        "items": [
+          [
+            "fas fa-wifi",
+            "Quick Settings Controls",
+            "Toggle WiFi, Bluetooth, Flight Mode, Battery Saver, theme, and Night Light, with inline brightness and master volume sliders."
+          ],
+          [
+            "fas fa-newspaper",
+            "Widgets and Calendar",
+            "Display the clock, local weather, weekly forecast, and top news in the Widgets board, with a taskbar calendar flyout for checking dates and browsing months."
+          ]
+        ]
+      },
+      {
+        "icon": "fas fa-folder-open",
+        "title": "File Explorer, Settings, and Personalization",
+        "items": [
+          [
+            "fas fa-folder-open",
+            "Windows 11 File Explorer",
+            "Use the command bar, navigation pane, file search, sorting, and view options."
+          ],
+          [
+            "fas fa-gear",
+            "Complete Settings App",
+            "Configure system, personalization, apps, accounts, network, gaming, privacy, and other Windows settings through a unified Windows 11-style interface."
+          ],
+          [
+            "fas fa-lock",
+            "Lock Screen, Boot, and Wallpaper",
+            "Provide a Windows 11 lock and sign-in screen, boot animation, desktop wallpaper, and matching login backdrop."
+          ]
+        ]
+      },
+      {
+        "icon": "fas fa-cat",
+        "title": "Desktop Companions",
+        "items": [
+          [
+            "fas fa-cat",
+            "Neko Cursor-Chasing Cat",
+            "Add a playful cat that roams the desktop and chases the cursor."
+          ],
+          [
+            "fas fa-thumbtack",
+            "Clippy Toggle",
+            "Allow Clippy to be enabled or disabled by clicking its entry in the app list."
+          ]
+        ]
+      },
+      {
+        "icon": "fas fa-gauge-high",
+        "title": "Stickman Performance Optimization",
+        "items": [
+          [
+            "fas fa-gauge-high",
+            "Smoother Battles",
+            "Optimize the Stickman so Code Red runs more smoothly."
+          ]
+        ]
+      },
+      {
+        "icon": "fas fa-volume-high",
+        "title": "Complete Windows 11 Sound System",
+        "items": [
+          [
+            "fas fa-volume-high",
+            "System Sound Pack",
+            "Startup, shutdown, error, warning, notification, window minimize and restore, Recycle Bin, device connection, drive mount, ISO image, menu navigation, and system interaction sounds, with mode-aware playback and one unified toggle in Audio settings."
+          ]
+        ]
+      }
+    ]
+  },
+  {
     "date": "October 18, 2026",
-    "label": "Red Rivals",
+    "label": "Red Enemy",
     "sections": [
       {
         "icon": "fas fa-user-fight",
-        "title": "Code Red: Red Rivals",
+        "title": "Code Red: Red Enemy",
         "items": [
           [
             "fas fa-user-fight",
-            "Spawn a Red Rival",
+            "Spawn a Red Enemy",
             "Press G in Controller Mode to summon a second red stickman that runs on its own AI."
           ]
         ]

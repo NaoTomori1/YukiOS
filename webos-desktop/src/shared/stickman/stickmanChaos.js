@@ -21,7 +21,7 @@ import {
   cleanupCursorKill,
   isCursorDestroyed,
 } from "./stickmanCursorKill.js";
-import { createWeaponSystem } from "./stickmanWeapons.js";
+import { createWeaponSystem, createAmmoRack } from "./stickmanWeapons.js";
 import { createSpearSystem } from "./stickmanMelee.js";
 import { resetLaserSfx } from "./stickmanLaser.js";
 import {
@@ -39,6 +39,7 @@ import {
   fxRing,
   fxDust,
   screenShake,
+  resetScreenShake,
   fxStreak,
   fxBlob,
   fxNinjaSmoke,
@@ -52,14 +53,16 @@ import {
   isCaged,
   onCageBreak,
   nudgeCage,
-} from "./stickmanCage.js";
-import {
   getSelectedShards,
   setShardSelected,
   clearShardSelection,
-} from "./stickmanSelection.js";
+} from "./stickmanCage.js";
 import { cleanupTussle } from "./stickmanTussle.js";
-import { createAmmoRack } from "./stickmanPlayerAmmo.js";
+import {
+  getRegistryTargets,
+  getRegistryTargetEntries,
+  initTargetRegistry,
+} from "./stickmanTargetRegistry.js";
 import {
   createControlsGuide,
   createPlayerHud,
@@ -103,6 +106,7 @@ let hpMap = new Map();
 let shattered = new Map();
 let hitTimers = new Map();
 let shatterOverlays = new Map();
+let shatterOverlayIndex = new Map();
 let husks = new Map();
 let liveShardTotal = 0;
 let debris = [];
@@ -178,13 +182,45 @@ function isVisible(el) {
   }
 }
 
-function getFloor() {
+const FLOOR_CACHE_MS = 250;
+let floorCacheValue = null;
+let floorCacheAt = 0;
+let floorCacheHeight = 0;
+let floorResizeHandler = null;
+
+function measureFloor() {
   try {
     const bar = $("#taskbar");
     if (!bar || !isVisible(bar)) return window.innerHeight;
     const rect = bar.getBoundingClientRect();
     if (rect.width <= 0 || rect.height <= 0) return window.innerHeight;
     return Math.max(0, window.innerHeight - rect.height);
+  } catch {
+    return window.innerHeight;
+  }
+}
+
+function invalidateFloorCache() {
+  floorCacheValue = null;
+  floorCacheAt = 0;
+  floorCacheHeight = 0;
+}
+
+function getFloor() {
+  try {
+    const height = window.innerHeight;
+    const now = nowMs();
+    if (
+      floorCacheValue !== null &&
+      floorCacheHeight === height &&
+      now - floorCacheAt < FLOOR_CACHE_MS
+    )
+      return floorCacheValue;
+    const value = measureFloor();
+    floorCacheValue = value;
+    floorCacheAt = now;
+    floorCacheHeight = height;
+    return value;
   } catch {
     return window.innerHeight;
   }
@@ -370,53 +406,55 @@ function renderDock() {
 }
 
 function getLiveTargets() {
-  const list = [];
   try {
-    const menu = $("#start-menu");
-    if (menu && isMenuOpen(menu)) list.push(menu);
+    return getRegistryTargets();
+  } catch {
+    return [];
+  }
+}
+
+const LIVE_TARGET_CACHE_MS = 100;
+let liveTargetsCache = null;
+let liveTargetsCacheAt = 0;
+
+function nowMs() {
+  try {
+    if (typeof performance !== "undefined" && performance.now)
+      return performance.now();
   } catch {}
   try {
-    const wins = $$(".window");
-    for (let i = 0; i < wins.length && i < 50; i++) {
-      try {
-        const el = wins[i];
-        if (!el) continue;
-        try {
-          if (el.closest && el.closest(".stk-layer")) continue;
-        } catch {}
-        if (!isVisible(el)) continue;
-        if (el.offsetWidth < 200 || el.offsetHeight < 120) continue;
-        try {
-          const rect = el.getBoundingClientRect();
-          if (rect.width <= 0 || rect.height <= 0) continue;
-        } catch {
-          continue;
-        }
-        list.push(el);
-      } catch {}
-    }
+    return Date.now();
   } catch {}
+  return 0;
+}
+
+function getLiveTargetEntries() {
+  const now = nowMs();
+  if (liveTargetsCache && now - liveTargetsCacheAt < LIVE_TARGET_CACHE_MS)
+    return liveTargetsCache;
+  let entries = [];
   try {
-    const icons = $$("#desktop > .icon");
-    for (let i = 0; i < icons.length && i < 60; i++) {
-      try {
-        const el = icons[i];
-        if (!el) continue;
-        try {
-          if (el.closest && el.closest(".stk-layer")) continue;
-        } catch {}
-        if (!isVisible(el)) continue;
-        try {
-          const rect = el.getBoundingClientRect();
-          if (rect.width <= 0 || rect.height <= 0) continue;
-        } catch {
-          continue;
-        }
-        list.push(el);
-      } catch {}
-    }
-  } catch {}
-  return list;
+    entries = getRegistryTargetEntries();
+  } catch {
+    entries = [];
+  }
+  const targets = [];
+  for (let i = 0; i < entries.length; i++) {
+    try {
+      targets.push(entries[i].el);
+    } catch {}
+  }
+  liveTargetsCache = { targets: targets, entries: entries };
+  liveTargetsCacheAt = now;
+  return liveTargetsCache;
+}
+
+function getLiveTargetsCached() {
+  try {
+    return getLiveTargetEntries().targets;
+  } catch {
+    return [];
+  }
 }
 
 function spawnSparks(x, y, count) {
@@ -427,8 +465,9 @@ function spawnSparks(x, y, count) {
       try {
         if (sparks.length >= 100) break;
         const el = createElement("div", { className: "stk-spark" });
-        el.style.left = x + "px";
-        el.style.top = y + "px";
+        el.style.left = "0px";
+        el.style.top = "0px";
+        el.style.translate = x + "px " + y + "px";
         layer.appendChild(el);
         sparks.push({
           el: el,
@@ -458,6 +497,9 @@ function removeShatterOverlay(el) {
     try {
       const overlay = record ? record.overlay : null;
       if (overlay) {
+        try {
+          shatterOverlayIndex.delete(overlay);
+        } catch {}
         try {
           for (let i = debris.length - 1; i >= 0; i--) {
             try {
@@ -513,16 +555,13 @@ function freeSettledSpace(need) {
           liveShardTotal = debris.length;
         } catch {}
         try {
-          const entries = Array.from(shatterOverlays.entries());
-          for (let k = 0; k < entries.length; k++) {
+          const rec =
+            victim && victim.overlay
+              ? shatterOverlayIndex.get(victim.overlay)
+              : null;
+          if (rec) {
             try {
-              const rec = entries[k][1];
-              if (rec && victim && rec.overlay === victim.overlay) {
-                try {
-                  rec.count = Math.max(0, rec.count - 1);
-                } catch {}
-                break;
-              }
+              rec.count = Math.max(0, rec.count - 1);
             } catch {}
           }
         } catch {}
@@ -654,15 +693,11 @@ function updateDebris(dt) {
                     liveShardTotal = debris.length;
                   } catch {}
                   try {
-                    const entries = Array.from(shatterOverlays.entries());
-                    for (let k = 0; k < entries.length; k++) {
-                      try {
-                        const rec = entries[k][1];
-                        if (rec && s.overlay && rec.overlay === s.overlay) {
-                          rec.count = Math.max(0, rec.count - 1);
-                          break;
-                        }
-                      } catch {}
+                    const rec = s.overlay
+                      ? shatterOverlayIndex.get(s.overlay)
+                      : null;
+                    if (rec) {
+                      rec.count = Math.max(0, rec.count - 1);
                     }
                   } catch {}
                 } else {
@@ -719,8 +754,7 @@ function updateDebris(dt) {
           if (cageRect) collideShardWithCage(s, cageRect);
         } catch {}
         try {
-          s.node.style.left = s.x + "px";
-          s.node.style.top = s.y + "px";
+          s.node.style.translate = s.x + "px " + s.y + "px";
           s.node.style.transform = "rotate(" + s.angle.toFixed(2) + "deg)";
         } catch {}
       } catch {}
@@ -780,8 +814,7 @@ function onDragMove(e) {
             const item = group[i];
             const target = item && item.entry ? item.entry : null;
             if (!target || !target.node) continue;
-            target.node.style.left = target.x + "px";
-            target.node.style.top = target.y + "px";
+            target.node.style.translate = target.x + "px " + target.y + "px";
           } catch {}
         }
       } else {
@@ -793,8 +826,8 @@ function onDragMove(e) {
     } catch {}
     try {
       if (!dragGroup || dragGroup.length === 0) {
-        dragEntry.node.style.left = dragEntry.x + "px";
-        dragEntry.node.style.top = dragEntry.y + "px";
+        dragEntry.node.style.translate =
+          dragEntry.x + "px " + dragEntry.y + "px";
       }
     } catch {}
     try {
@@ -899,9 +932,9 @@ function onDragUp(e) {
   } catch {}
 }
 
-function freezeHiddenSubtrees(src, dst) {
+function collectHiddenPaths(src, path, out) {
   try {
-    if (!src || !dst) return;
+    if (!src) return;
     let hidden = false;
     let invisible = false;
     try {
@@ -910,22 +943,49 @@ function freezeHiddenSubtrees(src, dst) {
       invisible = !hidden && style.visibility === "hidden";
     } catch {}
     if (hidden) {
-      try {
-        dst.style.display = "none";
-      } catch {}
+      out.push({ path: path.slice(), mode: "none" });
       return;
     }
     if (invisible) {
+      out.push({ path: path.slice(), mode: "visibility" });
+    }
+    const children = src.children;
+    for (let i = 0; i < children.length; i++) {
+      path.push(i);
+      collectHiddenPaths(children[i], path, out);
+      path.pop();
+    }
+  } catch {}
+}
+
+function applyHiddenPaths(clone, records) {
+  try {
+    if (!clone || !records || !records.length) return;
+    for (let i = 0; i < records.length; i++) {
+      const record = records[i];
       try {
-        dst.style.visibility = "hidden";
+        const steps = record.path;
+        let node = clone;
+        let valid = true;
+        for (let j = 0; j < steps.length; j++) {
+          if (!node || !node.children || steps[j] >= node.children.length) {
+            valid = false;
+            break;
+          }
+          node = node.children[steps[j]];
+        }
+        if (!valid || !node) continue;
+        if (record.mode === "none") {
+          try {
+            node.style.display = "none";
+          } catch {}
+        } else {
+          try {
+            node.style.visibility = "hidden";
+          } catch {}
+        }
       } catch {}
     }
-    try {
-      const sc = src.children;
-      const dc = dst.children;
-      const n = Math.min(sc.length, dc.length);
-      for (let i = 0; i < n; i++) freezeHiddenSubtrees(sc[i], dc[i]);
-    } catch {}
   } catch {}
 }
 
@@ -1029,6 +1089,10 @@ function shatterElement(el, hitX, hitY) {
       return false;
     }
     const shards = [];
+    const hiddenRecords = [];
+    try {
+      collectHiddenPaths(el, [], hiddenRecords);
+    } catch {}
     try {
       const tileWBase = rect.width / cols;
       const tileHBase = rect.height / rows;
@@ -1041,8 +1105,9 @@ function shatterElement(el, hitX, hitY) {
             const tileH = r === rows - 1 ? rect.height - tileY : tileHBase;
             const wrapper = createElement("div", { className: "stk-shard" });
             wrapper.style.position = "absolute";
-            wrapper.style.left = tileX + "px";
-            wrapper.style.top = tileY + "px";
+            wrapper.style.left = "0px";
+            wrapper.style.top = "0px";
+            wrapper.style.translate = tileX + "px " + tileY + "px";
             wrapper.style.width = tileW + "px";
             wrapper.style.height = tileH + "px";
             wrapper.style.overflow = "hidden";
@@ -1074,7 +1139,7 @@ function shatterElement(el, hitX, hitY) {
               }
             } catch {}
             try {
-              freezeHiddenSubtrees(el, clone);
+              applyHiddenPaths(clone, hiddenRecords);
             } catch {}
             try {
               clone.classList.remove("stk-shatter-hidden");
@@ -1124,7 +1189,9 @@ function shatterElement(el, hitX, hitY) {
       liveShardTotal = liveShardTotal + shards.length;
     } catch {}
     try {
-      shatterOverlays.set(el, { overlay: overlay, count: shards.length });
+      const shatterRecord = { overlay: overlay, count: shards.length };
+      shatterOverlays.set(el, shatterRecord);
+      shatterOverlayIndex.set(overlay, shatterRecord);
     } catch {}
     try {
       if (el.id === "start-menu") createHusk(el, rect);
@@ -1157,6 +1224,8 @@ function shatterElement(el, hitX, hitY) {
             h: info.tileH,
             settled: false,
             held: false,
+            stainCount: 0,
+            lastStainAt: 0,
           };
           try {
             entry.node.style.transform = "rotate(0deg)";
@@ -1459,7 +1528,7 @@ function laserStrikeAt(tx, ty) {
 }
 
 function getWeaponTargets() {
-  const list = getLiveTargets();
+  const list = getLiveTargetsCached().slice();
   try {
     const bar = $$("#taskbar .taskbar-item, #system-tray > *");
     for (let i = 0; i < bar.length && i < 40; i++) {
@@ -1523,13 +1592,52 @@ function clipSegment(a, b, w, h) {
   };
 }
 
+const STAIN_REACH = 2400;
+const SHARD_STAIN_PER_CALL = 24;
+const SHARD_STAIN_COOLDOWN = 90;
+const SHARD_STAIN_LIFETIME = 16;
+
+function clampSegment(x1, y1, x2, y2) {
+  const dx = x2 - x1;
+  const dy = y2 - y1;
+  const len = Math.hypot(dx, dy);
+  if (len <= STAIN_REACH || len === 0)
+    return { x1: x1, y1: y1, x2: x2, y2: y2 };
+  const k = STAIN_REACH / len;
+  return { x1: x1, y1: y1, x2: x1 + dx * k, y2: y1 + dy * k };
+}
+
+function segmentDistanceSq(px, py, x1, y1, x2, y2) {
+  const dx = x2 - x1;
+  const dy = y2 - y1;
+  const lenSq = dx * dx + dy * dy;
+  if (lenSq <= 0) {
+    const ex = px - x1;
+    const ey = py - y1;
+    return ex * ex + ey * ey;
+  }
+  let t = ((px - x1) * dx + (py - y1) * dy) / lenSq;
+  if (t < 0) t = 0;
+  else if (t > 1) t = 1;
+  const ex = px - (x1 + dx * t);
+  const ey = py - (y1 + dy * t);
+  return ex * ex + ey * ey;
+}
+
 function stainShardsAlong(x1, y1, x2, y2) {
   try {
     if (Math.hypot(x2 - x1, y2 - y1) < 1) return;
+    const now = nowMs();
+    const candidates = [];
     for (let i = 0; i < debris.length; i++) {
       try {
         const s = debris[i];
         if (!s || !s.node || !s.node.isConnected) continue;
+        if (!s.w || !s.h) continue;
+        if ((s.stainCount || 0) >= SHARD_STAIN_LIFETIME) continue;
+        const lastStainAt = s.lastStainAt || 0;
+        if (lastStainAt > 0 && now - lastStainAt < SHARD_STAIN_COOLDOWN)
+          continue;
         const cx = s.baseX + s.x + s.w / 2;
         const cy = s.baseY + s.y + s.h / 2;
         const rad = (-(s.angle || 0) * Math.PI) / 180;
@@ -1549,12 +1657,33 @@ function stainShardsAlong(x1, y1, x2, y2) {
         if (!clip) continue;
         const len = Math.hypot(clip.x1 - clip.x0, clip.y1 - clip.y0);
         if (len < 3) continue;
-        const ang = Math.atan2(b.y - a.y, b.x - a.x);
+        candidates.push({
+          shard: s,
+          a: a,
+          b: b,
+          clip: clip,
+          len: len,
+          dist: segmentDistanceSq(cx, cy, x1, y1, x2, y2),
+          order: i,
+        });
+      } catch {}
+    }
+    candidates.sort((left, right) => {
+      if (left.dist !== right.dist) return left.dist - right.dist;
+      return left.order - right.order;
+    });
+    const limit = Math.min(SHARD_STAIN_PER_CALL, candidates.length);
+    for (let c = 0; c < limit; c++) {
+      try {
+        const cand = candidates[c];
+        const s = cand.shard;
+        const clip = cand.clip;
+        const ang = Math.atan2(cand.b.y - cand.a.y, cand.b.x - cand.a.x);
         fxStreak(
           s.node,
           (clip.x0 + clip.x1) / 2,
           (clip.y0 + clip.y1) / 2,
-          len,
+          cand.len,
           ang,
           3 + Math.random() * 2.5,
         );
@@ -1567,6 +1696,8 @@ function stainShardsAlong(x1, y1, x2, y2) {
             8 + Math.random() * 10,
           );
         }
+        s.stainCount = (s.stainCount || 0) + 1;
+        s.lastStainAt = now;
       } catch {}
     }
   } catch {}
@@ -1575,13 +1706,14 @@ function stainShardsAlong(x1, y1, x2, y2) {
 function stainDomAlong(x1, y1, x2, y2) {
   try {
     if (Math.random() < 0.4) return;
-    const list = getLiveTargets();
+    const list = getLiveTargetEntries().entries;
     const ang = Math.atan2(y2 - y1, x2 - x1);
     for (let i = 0; i < list.length; i++) {
       try {
-        const node = list[i];
-        const rect = node.getBoundingClientRect();
-        if (rect.width <= 0 || rect.height <= 0) continue;
+        const entry = list[i];
+        const node = entry.el;
+        const rect = entry.rect || node.getBoundingClientRect();
+        if (!rect || rect.width <= 0 || rect.height <= 0) continue;
         const clip = clipSegment(
           { x: x1 - rect.left, y: y1 - rect.top },
           { x: x2 - rect.left, y: y2 - rect.top },
@@ -1783,18 +1915,30 @@ export function laserSweepAlong(x1, y1, x2, y2, ownerPlayer) {
     }
   } catch {}
   try {
-    stainShardsAlong(x1, y1, x2, y2);
-    stainDomAlong(x1, y1, x2, y2);
+    const clamped = clampSegment(x1, y1, x2, y2);
+    stainShardsAlong(clamped.x1, clamped.y1, clamped.x2, clamped.y2);
+    stainDomAlong(clamped.x1, clamped.y1, clamped.x2, clamped.y2);
   } catch {}
   const steps = 24;
   let nearest = null;
   let impactX = 0;
   let impactY = 0;
+  let desk = [];
+  let targets = [];
+  try {
+    desk = $$("#taskbar .taskbar-item, #system-tray > *");
+  } catch {
+    desk = [];
+  }
+  try {
+    targets = getLiveTargetEntries().entries;
+  } catch {
+    targets = [];
+  }
   for (let s = 0; s <= steps && !nearest; s++) {
     const px = x1 + ((x2 - x1) * s) / steps;
     const py = y1 + ((y2 - y1) * s) / steps;
     try {
-      const desk = $$("#taskbar .taskbar-item, #system-tray > *");
       for (let t = 0; t < desk.length; t++) {
         try {
           const node = desk[t];
@@ -1815,18 +1959,19 @@ export function laserSweepAlong(x1, y1, x2, y2, ownerPlayer) {
     } catch {}
     if (!nearest) {
       try {
-        const targets = getLiveTargets();
         for (let t = 0; t < targets.length; t++) {
           try {
-            const rect = targets[t].getBoundingClientRect();
-            if (rect.width <= 0 || rect.height <= 0) continue;
+            const entry = targets[t];
+            const node = entry.el;
+            const rect = entry.rect || node.getBoundingClientRect();
+            if (!rect || rect.width <= 0 || rect.height <= 0) continue;
             if (
               px >= rect.left &&
               px <= rect.right &&
               py >= rect.top &&
               py <= rect.bottom
             ) {
-              nearest = targets[t];
+              nearest = node;
               break;
             }
           } catch {}
@@ -1908,13 +2053,14 @@ function stompAt(sx, sy, radius) {
   try {
     let targets = [];
     try {
-      targets = getLiveTargets();
+      targets = getLiveTargetEntries().entries;
     } catch {}
     for (let t = 0; t < targets.length; t++) {
       try {
-        const node = targets[t];
-        const rect = node.getBoundingClientRect();
-        if (rect.width <= 0 || rect.height <= 0) continue;
+        const entry = targets[t];
+        const node = entry.el;
+        const rect = entry.rect || node.getBoundingClientRect();
+        if (!rect || rect.width <= 0 || rect.height <= 0) continue;
         const cx = rect.left + rect.width / 2;
         const cy = rect.top + rect.height / 2;
         const dist = Math.hypot(cx - sx, cy - sy);
@@ -1966,8 +2112,9 @@ function fireAt(sx, sy, tx, ty, ownerPlayer) {
     const angle = Math.atan2(dy, dx) + (Math.random() - 0.5) * 0.12;
     const speed = 11 + Math.random() * 3;
     const el = createElement("div", { className: "stk-bullet" });
-    el.style.left = sx + "px";
-    el.style.top = sy + "px";
+    el.style.left = "0px";
+    el.style.top = "0px";
+    el.style.translate = sx + "px " + sy + "px";
     layer.appendChild(el);
     bullets.push({
       el: el,
@@ -1986,9 +2133,10 @@ function fireAt(sx, sy, tx, ty, ownerPlayer) {
 
 function updateBullets(dt, dtSec) {
   try {
+    if (bullets.length === 0) return;
     let targets = [];
     try {
-      targets = getLiveTargets();
+      targets = getLiveTargetEntries().entries;
     } catch {}
     for (let i = bullets.length - 1; i >= 0; i--) {
       try {
@@ -2027,7 +2175,10 @@ function updateBullets(dt, dtSec) {
         if (!dead) {
           for (let t = 0; t < targets.length; t++) {
             try {
-              const rect = targets[t].getBoundingClientRect();
+              const entry = targets[t];
+              const node = entry.el;
+              const rect = entry.rect || node.getBoundingClientRect();
+              if (!rect) continue;
               if (
                 b.x >= rect.left &&
                 b.x <= rect.right &&
@@ -2036,7 +2187,7 @@ function updateBullets(dt, dtSec) {
               ) {
                 impactX = b.x;
                 impactY = b.y;
-                damageTarget(targets[t]);
+                damageTarget(node);
                 dead = true;
                 break;
               }
@@ -2051,8 +2202,7 @@ function updateBullets(dt, dtSec) {
           continue;
         }
         try {
-          b.el.style.left = b.x + "px";
-          b.el.style.top = b.y + "px";
+          b.el.style.translate = b.x + "px " + b.y + "px";
         } catch {}
       } catch {}
     }
@@ -2061,6 +2211,7 @@ function updateBullets(dt, dtSec) {
 
 function updateSparks(dt, dtSec) {
   try {
+    if (sparks.length === 0) return;
     for (let i = sparks.length - 1; i >= 0; i--) {
       try {
         const s = sparks[i];
@@ -2080,8 +2231,7 @@ function updateSparks(dt, dtSec) {
           continue;
         }
         try {
-          s.el.style.left = s.x + "px";
-          s.el.style.top = s.y + "px";
+          s.el.style.translate = s.x + "px " + s.y + "px";
           s.el.style.opacity = String(Math.max(0, 1 - s.age / 0.6));
         } catch {}
       } catch {}
@@ -2091,6 +2241,7 @@ function updateSparks(dt, dtSec) {
 
 function checkShardHits() {
   try {
+    if (debris.length === 0) return;
     if (!actorRef || typeof actorRef.getPos !== "function") return;
     let ax = 0;
     let ay = 0;
@@ -2425,6 +2576,9 @@ export function spawnStickman(opts) {
     } catch {}
     layer = createElement("div", { className: "stk-layer" });
     document.body.appendChild(layer);
+    try {
+      initTargetRegistry();
+    } catch {}
     try {
       ensurePlayerUi();
     } catch {}
@@ -2773,6 +2927,9 @@ export function spawnStickman(opts) {
       shatterOverlays.clear();
     } catch {}
     try {
+      shatterOverlayIndex.clear();
+    } catch {}
+    try {
       shattered.clear();
     } catch {}
     try {
@@ -2811,6 +2968,17 @@ export function spawnStickman(opts) {
     mouseHandler = onMouseMove;
     bindEvent(window, "mousemove", mouseHandler);
     try {
+      if (floorResizeHandler) {
+        try {
+          window.removeEventListener("resize", floorResizeHandler);
+        } catch {}
+      }
+      floorResizeHandler = () => {
+        invalidateFloorCache();
+      };
+      bindEvent(window, "resize", floorResizeHandler);
+    } catch {}
+    try {
       dragMoveHandler = onDragMove;
     } catch {}
     try {
@@ -2840,6 +3008,9 @@ export function despawnStickman() {
   try {
     active = false;
     try {
+      resetScreenShake();
+    } catch {}
+    try {
       teardownPlayerUi();
     } catch {}
     for (const fn of controlListeners) {
@@ -2859,6 +3030,17 @@ export function despawnStickman() {
       } catch {}
       mouseHandler = null;
     }
+    try {
+      if (floorResizeHandler) {
+        try {
+          window.removeEventListener("resize", floorResizeHandler);
+        } catch {}
+        floorResizeHandler = null;
+      }
+    } catch {}
+    try {
+      invalidateFloorCache();
+    } catch {}
     try {
       if (dragMoveHandler) {
         try {
@@ -2949,6 +3131,9 @@ export function despawnStickman() {
     } catch {}
     try {
       shatterOverlays.clear();
+    } catch {}
+    try {
+      shatterOverlayIndex.clear();
     } catch {}
     try {
       const pending = Array.from(shattered.keys());

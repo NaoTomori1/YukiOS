@@ -12,6 +12,8 @@ export const AIR_WARP_MAX_TARGETS = 14;
 const MIN_RADIUS = 90;
 const MAX_RADIUS = 2400;
 const NOISE_FREQ = "0.012 0.02";
+const SCALE_WRITE_INTERVAL = 33;
+const RECT_CACHE_TTL = 250;
 
 function svgEl(tag, attrs) {
   const node = document.createElementNS(NS, tag);
@@ -47,6 +49,11 @@ export function createAirWarp(ctx) {
   let primed = false;
   let startedAt = 0;
   let peak = AIR_WARP_PEAK;
+  let lastScaleWrite = -Infinity;
+  let lastScaleValue = null;
+  let cachedNodes = [];
+  let cachedNodesTime = -Infinity;
+  let rectCache = new Map();
 
   function layer() {
     try {
@@ -102,10 +109,22 @@ export function createAirWarp(ctx) {
     return displacement;
   }
 
-  function setScale(value) {
+  function writeScale(value) {
     try {
       if (displacement) displacement.setAttribute("scale", String(value));
     } catch {}
+  }
+
+  function setScale(value) {
+    lastScaleValue = value;
+    lastScaleWrite = stamp();
+    writeScale(value);
+  }
+
+  function scaleDue(value, complete) {
+    if (value === lastScaleValue) return false;
+    if (complete) return true;
+    return stamp() - lastScaleWrite >= SCALE_WRITE_INTERVAL;
   }
 
   function detach() {
@@ -130,11 +149,48 @@ export function createAirWarp(ctx) {
     tracked = kept;
   }
 
-  function collect(x, y, radius) {
-    const found = [];
+  function refreshNodes(now) {
     let nodes = [];
     try {
       nodes = $$(TARGET_SELECTOR);
+    } catch {
+      nodes = [];
+    }
+    cachedNodes = nodes;
+    cachedNodesTime = now;
+    const live = new Set(nodes);
+    rectCache.forEach((value, key) => {
+      if (!live.has(key) || !key.isConnected) rectCache.delete(key);
+    });
+    return nodes;
+  }
+
+  function measureRect(node, now) {
+    const cached = rectCache.get(node);
+    if (cached && now - cached.time < RECT_CACHE_TTL && node.isConnected) {
+      return cached.rect;
+    }
+    const raw = node.getBoundingClientRect();
+    const rect = {
+      left: raw.left,
+      top: raw.top,
+      width: raw.width,
+      height: raw.height,
+    };
+    rectCache.set(node, { rect: rect, time: now });
+    return rect;
+  }
+
+  function collect(x, y, radius) {
+    const found = [];
+    const now = stamp();
+    let nodes = [];
+    try {
+      if (now - cachedNodesTime >= RECT_CACHE_TTL) {
+        nodes = refreshNodes(now);
+      } else {
+        nodes = cachedNodes;
+      }
     } catch {
       nodes = [];
     }
@@ -142,8 +198,8 @@ export function createAirWarp(ctx) {
       const node = nodes[i];
       try {
         if (!node || !node.isConnected) continue;
-        const rect = node.getBoundingClientRect();
-        if (rect.width <= 0 || rect.height <= 0) continue;
+        const rect = measureRect(node, now);
+        if (!rect || rect.width <= 0 || rect.height <= 0) continue;
         const cx = rect.left + rect.width / 2;
         const cy = rect.top + rect.height / 2;
         const dist = Math.hypot(cx - x, cy - y);
@@ -189,7 +245,10 @@ export function createAirWarp(ctx) {
       prune();
       const at = Number.isFinite(now) ? now : stamp();
       const t = clamp((at - startedAt) / RAMP_MS, 0, 1);
-      setScale(peak * easeOutCubic(t));
+      const complete = t >= 1;
+      const value = peak * easeOutCubic(t);
+      if (!scaleDue(value, complete)) return;
+      setScale(value);
     } catch {}
   }
 
@@ -224,6 +283,9 @@ export function createAirWarp(ctx) {
       detach();
     } catch {}
     primed = false;
+    cachedNodes = [];
+    cachedNodesTime = -Infinity;
+    rectCache.clear();
     try {
       if (svg && svg.parentNode) svg.parentNode.removeChild(svg);
     } catch {}

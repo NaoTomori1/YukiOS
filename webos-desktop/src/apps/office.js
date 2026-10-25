@@ -20,6 +20,7 @@ import {
 import { getLibraryUrl } from "../shared/cdnConfig.js";
 import { audioMixer } from "../audioMixer.js";
 import { resolveIconUrl } from "../shared/assetResolver.js";
+import { playSfx, SystemSfx } from "../sfx/systemSfx.js";
 
 class OfficeModuleLoader {
   constructor() {
@@ -2428,6 +2429,7 @@ export class OfficeApp extends BaseApp {
     setTimeout(() => {
       printWindow.print();
       printWindow.close();
+      playSfx(SystemSfx.PRINT_COMPLETE);
     }, 250);
   }
 

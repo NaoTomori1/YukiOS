@@ -18,7 +18,11 @@ const skipRefPattern = /^(data:|blob:|mailto:|javascript:|#)/i;
 const attrRefPattern =
   /((?:src|href|data-src|poster|cite|action|formaction|longdesc|profile)\s*=\s*["'])([^"']+)(["'])/gi;
 const srcsetPattern = /\bsrcset\s*=\s*(["'])([^"']*)\1/gi;
-const directLoadDomains = ["reeyuki.github.io", "reeyuki.neocities.org"];
+const directLoadDomains = [
+  "reeyuki.github.io",
+  "reeyuki.neocities.org",
+  "camerasonworld.com",
+];
 
 function normalizeEngineUrl(input) {
   const trimmed = String(input || "").trim();

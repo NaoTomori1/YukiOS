@@ -1,5 +1,6 @@
 import { os, StorageKeys, createElement } from "../framework.js";
-import { formatSize } from "../utils/utils.js";
+import { formatSize, escapeHtml } from "../utils/utils.js";
+import { $$, bindEvent } from "../shared/domUtils.js";
 
 export function renderDisksPane() {
   return `
@@ -39,7 +40,8 @@ export async function bindDisks(win) {
     const pct = quota > 0 ? Math.min((used / quota) * 100, 100) : 0;
 
     const mounts = (os.fs.getMounts && os.fs.getMounts()) || [];
-    const driveCount = 1 + mounts.length;
+    const isoMounts = (os.fs.getISOMounts && os.fs.getISOMounts()) || [];
+    const driveCount = 1 + mounts.length + isoMounts.length;
 
     let mountRows = "";
     for (const m of mounts) {
@@ -50,11 +52,32 @@ export async function bindDisks(win) {
       mountRows += diskCard(m.label, mountUsed, mPct, "mount");
     }
 
+    const isoRows = isoMounts
+      .map(
+        (iso) => `
+      <div class="settings-row">
+        <div class="settings-label-group">
+          <span class="settings-label-title">${escapeHtml(iso.label)}</span>
+          <span class="settings-label-desc">Disc image at ${escapeHtml(iso.mountPoint)}</span>
+        </div>
+        <button class="settings-btn" data-eject-iso="${escapeHtml(iso.label)}"><i class="fas fa-eject"></i> Eject</button>
+      </div>`,
+      )
+      .join("");
+
     container.innerHTML = `
       <div class="settings-card">
         <div class="settings-card-header"><i class="fas fa-hdd"></i> Devices and drives (${driveCount})</div>
         ${diskCard("Local Disk (C:)", used, pct, "local")}
         ${mountRows}
+        ${isoRows}
+        <div class="settings-row">
+          <div class="settings-label-group">
+            <span class="settings-label-title">Mount disc image</span>
+            <span class="settings-label-desc">Choose an ISO, BIN, IMG, NRG, MDF or CDI file</span>
+          </div>
+          <button class="settings-btn" data-mount-iso><i class="fas fa-compact-disc"></i> Mount</button>
+        </div>
       </div>
       <div class="settings-card" style="margin-top: 16px;">
         <div class="settings-card-header"><i class="fas fa-compass"></i> Explore Files</div>
@@ -74,6 +97,32 @@ export async function bindDisks(win) {
         os.app.launch("explorerApp").catch(() => {});
       });
     }
+    $$("[data-eject-iso]", container).forEach((button) => {
+      bindEvent(button, "click", async () => {
+        const label = button.dataset.ejectIso;
+        if (!label) return;
+        os.fs.unmountISO(label);
+        await bindDisks(win);
+      });
+    });
+    $$("[data-mount-iso]", container).forEach((button) => {
+      bindEvent(button, "click", async () => {
+        const picked = await os.dialog.fileOpen({ initialPath: ["Home"] });
+        if (!picked) return;
+        const parts = picked.split("/").filter(Boolean);
+        const name = parts.pop();
+        if (!name) return;
+        try {
+          await os.fs.mountISO(parts, name);
+          await bindDisks(win);
+        } catch (error) {
+          os.dialog.alert(
+            "Disc image",
+            error?.message || "Could not mount that file.",
+          );
+        }
+      });
+    });
   } catch (err) {
     if (container) {
       container.innerHTML = `

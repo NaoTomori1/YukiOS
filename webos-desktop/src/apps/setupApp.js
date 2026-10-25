@@ -15,6 +15,7 @@ import { SystemUtilities } from "../system.js";
 import { Achievements } from "../achievements.js";
 import { AppSource } from "../AppSource.js";
 import { PREDEFINED_AVATARS } from "../utils/avatarData.js";
+import { playSfx, SystemSfx } from "../sfx/systemSfx.js";
 import {
   applyFontFamily,
   applyTheme,
@@ -1353,9 +1354,11 @@ Have fun!`;
       console.error("Failed to create welcome file:", e);
     }
 
+    playSfx(SystemSfx.TADA);
     os.notify.send("Welcome to YukiOS", "", {
       type: "success",
       duration: 3000,
+      silent: true,
     });
 
     os.window.close(win);

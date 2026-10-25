@@ -17,9 +17,9 @@
     "build:electron": "cross-env VITE_SINGLE_FILE=false VITE_ELECTRON=true vite build",
     "build:dev:single": "cross-env VITE_SINGLE_FILE=true VITE_DEV_BUILD=true vite build",
     "bd": "cross-env VITE_DEV_BUILD=true vite build",
-    "b": "pnpm build && cp -r dist/* ../desktop/",
-    "b:single": "pnpm build:single && cp -r dist/* ../desktop/",
-    "bf": "pnpm format && pnpm build:dev && cp -r dist/* ../desktop/",
+    "b": "pnpm build && node scripts/copyToDesktop.js",
+    "b:single": "pnpm build:single && node scripts/copyToDesktop.js",
+    "bf": "pnpm format && pnpm build:dev && node scripts/copyToDesktop.js",
     "build-win": "vite build",
     "preview": "vite preview",
     "serve": "node scripts/serveRoot.js --host 0.0.0.0",
@@ -29,10 +29,7 @@
     "electron:build": "pnpm build:electron && node -e \"require('fs').existsSync('dist/favicon.ico')&&require('fs').unlinkSync('dist/favicon.ico')\" && electron-builder --config",
     "electron:build:win": "pnpm build:electron && node -e \"require('fs').existsSync('dist/favicon.ico')&&require('fs').unlinkSync('dist/favicon.ico')\" && electron-builder --win --config",
     "electron:build:linux": "pnpm build:electron && node -e \"require('fs').existsSync('dist/favicon.ico')&&require('fs').unlinkSync('dist/favicon.ico')\" && electron-builder --linux --config",
-    "electron:build:mac": "pnpm build:electron && node -e \"require('fs').existsSync('dist/favicon.ico')&&require('fs').unlinkSync('dist/favicon.ico')\" && electron-builder --mac --config",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage"
+    "electron:build:mac": "pnpm build:electron && node -e \"require('fs').existsSync('dist/favicon.ico')&&require('fs').unlinkSync('dist/favicon.ico')\" && electron-builder --mac --config"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",
@@ -41,14 +38,12 @@
     "electron-builder": "^25.1.8",
     "eslint": "^9.39.5",
     "eslint-config-prettier": "^10.1.8",
-    "jsdom": "^29.1.1",
     "prettier": "^3.9.6",
     "rollup-plugin-visualizer": "^7.1.1",
     "sharp": "^0.33.4",
     "vite": "^7.3.6",
     "vite-plugin-node-polyfills": "^0.28.0",
-    "vite-plugin-singlefile": "^2.3.3",
-    "vitest": "^4.1.10"
+    "vite-plugin-singlefile": "^2.3.3"
   },
   "dependencies": {
     "7z-wasm": "^1.2.0",

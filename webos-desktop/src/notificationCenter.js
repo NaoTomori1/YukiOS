@@ -1,7 +1,7 @@
 import { makeDraggable } from "./shared/dragUtils.js";
 import { isImageFile } from "./fileDisplay.js";
 import { appMap } from "./games/gamesList.js";
-import { audioMixer, SystemAudio } from "./audioMixer.js";
+import { playSfx, SystemSfx } from "./sfx/systemSfx.js";
 import {
   $,
   createElement,
@@ -27,6 +27,16 @@ const APP_SOURCE_TO_APP_MAP_KEY = APP_MANIFESTS.reduce(
     MonacoApp: "monaco",
   },
 );
+
+function playNotificationSfx(notification) {
+  const typeSounds = {
+    error: SystemSfx.ERROR,
+    warning: SystemSfx.WARNING,
+    success: SystemSfx.NOTIFICATION_SYSTEM,
+    info: SystemSfx.NOTIFICATION,
+  };
+  playSfx(typeSounds[notification.type] || SystemSfx.DEFAULT);
+}
 
 export class NotificationCenter {
   constructor() {
@@ -78,7 +88,7 @@ export class NotificationCenter {
       `
       <div class="ntf-panel__head">
         <span>Notifications</span>
-        <button class="ntf-panel__dnd" title="Do Not Disturb">DND</button>
+        <button class="ntf-panel__dnd" title="Do Not Disturb"><i class="fas fa-bell"></i></button>
         <button class="ntf-panel__dismiss" title="Close">×</button>
       </div>
       <div class="ntf-panel__feed"></div>
@@ -172,6 +182,8 @@ export class NotificationCenter {
     duration = 5000,
     icon = null,
     appSource = null,
+    category = null,
+    silent = false,
   ) {
     const enabled = this.getSetting("notificationsEnabled", true);
     if (!enabled) return null;
@@ -203,6 +215,8 @@ export class NotificationCenter {
       timestamp: new Date(),
       icon,
       appSource,
+      category,
+      silent,
     };
 
     if (this.doNotDisturb) {
@@ -227,9 +241,7 @@ export class NotificationCenter {
   showToast(notif) {
     if (this.doNotDisturb) return;
 
-    if (notif.type === "warning") {
-      audioMixer().playSystemSound(SystemAudio.WARNING);
-    }
+    if (!notif.silent) playNotificationSfx(notif);
 
     let container = $("#ntf-toast-container");
     if (!container) {
@@ -445,6 +457,10 @@ export class NotificationCenter {
       ? [...this.snoozedNotifications, ...this.notifications]
       : this.notifications;
 
+    const foot = $(".ntf-panel__foot");
+    if (foot)
+      foot.style.display = visibleNotifications.length === 0 ? "none" : "";
+
     if (visibleNotifications.length === 0) {
       const empty = createElement("div", {
         className: "ntf-panel__blank",
@@ -626,6 +642,8 @@ export class NotificationCenter {
             timestamp: n.timestamp ? new Date(n.timestamp) : new Date(),
             icon: n.icon ?? null,
             appSource: n.appSource ?? null,
+            category: n.category ?? null,
+            silent: Boolean(n.silent),
           }))
           .filter((n) => !isNaN(n.timestamp.getTime()));
       this.notifications = normalize(rawNotifications);

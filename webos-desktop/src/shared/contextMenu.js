@@ -615,13 +615,36 @@ export function showYukiDynamicContextMenu(e, buildFn) {
   return menu;
 }
 
-export function showStartStyleMenu(e, buildFn) {
+function closeStartStyleMenu(menu) {
+  if (!menu || menu.dataset.closing === "1") return;
+  menu.dataset.closing = "1";
+  const openAnimation = getComputedStyle(menu).animationName;
+  const onAnimationEnd = (event) => {
+    if (event.animationName === openAnimation) return;
+    menu.removeEventListener("animationend", onAnimationEnd);
+    menu.remove();
+  };
+  menu.classList.add("closing");
+  menu.addEventListener("animationend", onAnimationEnd);
+  setTimeout(() => {
+    menu.removeEventListener("animationend", onAnimationEnd);
+    menu.remove();
+  }, 400);
+}
+
+export function showStartStyleMenu(e, buildFn, options = {}) {
   const existing = $("#taskbar-context-menu");
   if (existing) existing.remove();
 
   const menu = createElement("div");
   menu.id = "taskbar-context-menu";
   menu.classList.add("context-menu-glass");
+  if (options.className) {
+    options.className
+      .split(" ")
+      .filter(Boolean)
+      .forEach((name) => menu.classList.add(name));
+  }
 
   const addMenuItem = (text, action, icon = null) => {
     const menuItem = createElement("div");
@@ -666,10 +689,7 @@ export function showStartStyleMenu(e, buildFn) {
 
     menuItem.onclick = () => {
       action();
-      menu.classList.add("closing");
-      menu.addEventListener("animationend", () => menu.remove(), {
-        once: true,
-      });
+      closeStartStyleMenu(menu);
     };
     menu.appendChild(menuItem);
   };
@@ -681,7 +701,8 @@ export function showStartStyleMenu(e, buildFn) {
 
   buildFn(addMenuItem, addSeparator);
 
-  document.body.appendChild(menu);
+  const container = options.container || document.body;
+  container.appendChild(menu);
 
   menu.style.display = "block";
   menu.style.maxHeight = "";
@@ -691,12 +712,14 @@ export function showStartStyleMenu(e, buildFn) {
   const viewportWidth = window.innerWidth;
   const viewportHeight = window.innerHeight;
 
+  let left = e.clientX;
+  let bottom = 0;
+
   const spaceRight = viewportWidth - e.clientX;
   const spaceLeft = e.clientX;
   const spaceBelow = viewportHeight - e.clientY;
   const spaceAbove = e.clientY;
 
-  let left = e.clientX;
   let top = e.clientY;
 
   if (rect.width > spaceRight && spaceLeft >= rect.width) {
@@ -721,16 +744,14 @@ export function showStartStyleMenu(e, buildFn) {
     top = 10;
   }
 
+  bottom = viewportHeight - top - rect.height;
+
   menu.style.setProperty("--ctx-left", `${left}px`);
-  menu.style.setProperty(
-    "--ctx-bottom",
-    `${viewportHeight - top - rect.height}px`,
-  );
+  menu.style.setProperty("--ctx-bottom", `${bottom}px`);
 
   document.addEventListener("click", function removeMenu() {
     document.removeEventListener("click", removeMenu);
-    menu.classList.add("closing");
-    menu.addEventListener("animationend", () => menu.remove(), { once: true });
+    closeStartStyleMenu(menu);
   });
 
   refreshIcons(menu);

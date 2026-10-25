@@ -96,6 +96,13 @@ function collectPackageLicenses() {
     repo: "https://github.com/blueedgetechno/win11React",
   });
 
+  entries.push({
+    name: "neko",
+    version: "git",
+    license: "BSD-2-Clause",
+    repo: "https://github.com/crgimenes/neko",
+  });
+
   entries.sort((a, b) => a.name.localeCompare(b.name));
 
   return entries;

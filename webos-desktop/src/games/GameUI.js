@@ -49,6 +49,10 @@ import {
   createElement,
 } from "../shared/domUtils.js";
 import { isSocialDisabled } from "../social/socialSettings.js";
+import {
+  createAdaptiveInterval,
+  guardVisible,
+} from "../shared/pollThrottle.js";
 import { getCurrentUser } from "../desktopui/startMenu.js";
 import { resolveAppId } from "../utils/utils.js";
 import { resolveAvatarUrl } from "../social/avatarResolver.js";
@@ -1562,12 +1566,16 @@ export class GameUI {
           : "";
       await this.loadFriendsPanel(win, query);
     };
-    this.friendsPollTimer = setInterval(refreshFriends, 8000);
+    this.friendsPollStop = createAdaptiveInterval(
+      guardVisible(refreshFriends),
+      30000,
+      120000,
+    );
     win.addEventListener("remove", () => {
       os.events.off(BusEvents.SOCIAL_PRESENCE_CHANGED, onPresenceChanged);
-      if (this.friendsPollTimer) {
-        clearInterval(this.friendsPollTimer);
-        this.friendsPollTimer = null;
+      if (this.friendsPollStop) {
+        this.friendsPollStop();
+        this.friendsPollStop = null;
       }
     });
     this.loadFriendsPanel(win);
@@ -1698,11 +1706,11 @@ export class GameUI {
       skipAutoSetup: true,
     });
     win.appendChild(host);
-    this.dmPollTimers = this.dmPollTimers || {};
+    this.dmPollStops = this.dmPollStops || {};
     win.addEventListener("remove", () => {
-      if (this.dmPollTimers[conversation.friendId]) {
-        clearInterval(this.dmPollTimers[conversation.friendId]);
-        delete this.dmPollTimers[conversation.friendId];
+      if (this.dmPollStops[conversation.friendId]) {
+        this.dmPollStops[conversation.friendId]();
+        delete this.dmPollStops[conversation.friendId];
       }
     });
 
@@ -1775,7 +1783,11 @@ export class GameUI {
       });
     }
     poll();
-    this.dmPollTimers[conversation.friendId] = setInterval(poll, 6000);
+    this.dmPollStops[conversation.friendId] = createAdaptiveInterval(
+      guardVisible(poll),
+      20000,
+      60000,
+    );
   }
 
   async updateFriendRequestsBadge(win) {

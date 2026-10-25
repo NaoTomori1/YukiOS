@@ -1,5 +1,4 @@
-import { fxRing, fxDust, screenShake } from "./stickmanFx.js";
-import { pose } from "./stickmanRig.js";
+import { fxRing, fxDust, screenShake, pose } from "./stickmanFx.js";
 import { playHit, playShatter } from "../chaosSfx.js";
 
 export const RAGE_MAX_LEVEL = 5;
@@ -15,6 +14,10 @@ export const RAGE_SLAM_MAX_DIST = 680;
 export const RAGE_SLAM_CD_MS = 8000;
 export const RAGE_SLAM_ROLL_MS = 900;
 export const RAGE_SLAM_LAND_MS = 460;
+
+const RAGE_FILTER_STEP_MS = 100;
+const RAGE_GLOW_STEPS = 16;
+const RAGE_PULSE_STEPS = 16;
 
 const WAVE_SPEED = 17;
 const WAVE_TURN = 0.035;
@@ -352,7 +355,9 @@ export function createRageSystem(host) {
   let nextRollAt = 0;
   let nextEmberAt = 0;
   let vignette = null;
+  let lastVignetteOpacity = "";
   let lastFilter = "";
+  let lastFilterNode = null;
   let waves = [];
 
   function layer() {
@@ -421,6 +426,7 @@ export function createRageSystem(host) {
       try {
         vignette.style.opacity = "0";
       } catch {}
+      lastVignetteOpacity = "0";
     }
   }
 
@@ -485,12 +491,14 @@ export function createRageSystem(host) {
         } catch {}
         vignette = null;
       }
+      lastVignetteOpacity = "";
       return;
     }
     if (!vignette || !vignette.isConnected) {
       vignette = document.createElement("div");
       vignette.style.cssText =
         "position:fixed;left:0;top:0;width:100vw;height:100vh;pointer-events:none;opacity:0;background:radial-gradient(ellipse at 50% 50%,rgba(255,0,0,0) 54%,rgba(190,0,10,.45) 84%,rgba(110,0,0,.78) 100%);";
+      lastVignetteOpacity = "";
       try {
         lay.insertBefore(vignette, lay.firstChild);
       } catch {
@@ -499,7 +507,11 @@ export function createRageSystem(host) {
       }
     }
     const pulse = 0.82 + 0.18 * Math.sin(now * 0.006 * (1 + glow * 2));
-    vignette.style.opacity = (glow * 0.85 * pulse).toFixed(3);
+    const value = (glow * 0.85 * pulse).toFixed(3);
+    if (value !== lastVignetteOpacity) {
+      lastVignetteOpacity = value;
+      vignette.style.opacity = value;
+    }
   }
 
   function trailArc(lay, w) {
@@ -659,22 +671,29 @@ export function createRageSystem(host) {
     if (!node) return;
     let next = "none";
     if (glow >= 0.02) {
-      const pulse = 0.75 + 0.25 * Math.sin(now * 0.012 * (1 + glow));
-      const r1 = 2 + 4 * glow * pulse;
-      const r2 = 6 + 14 * glow * pulse;
+      const stepped =
+        Math.floor(now / RAGE_FILTER_STEP_MS) * RAGE_FILTER_STEP_MS;
+      const heat = Math.round(glow * RAGE_GLOW_STEPS) / RAGE_GLOW_STEPS;
+      const rawPulse = 0.75 + 0.25 * Math.sin(stepped * 0.012 * (1 + heat));
+      const pulse =
+        0.5 +
+        Math.round((rawPulse - 0.5) * RAGE_PULSE_STEPS) / RAGE_PULSE_STEPS;
+      const r1 = Math.round(2 + 4 * heat * pulse);
+      const r2 = Math.round(6 + 14 * heat * pulse);
       next =
         "drop-shadow(0 0 " +
-        r1.toFixed(1) +
+        r1 +
         "px rgba(255,60,30,.95)) drop-shadow(0 0 " +
-        r2.toFixed(1) +
+        r2 +
         "px rgba(255,0,0," +
-        (0.35 + 0.5 * glow).toFixed(2) +
+        (0.35 + 0.5 * heat).toFixed(2) +
         ")) brightness(" +
-        (1 + 0.22 * glow * pulse).toFixed(2) +
+        (1 + 0.22 * heat * pulse).toFixed(2) +
         ")";
     }
-    if (next !== lastFilter) {
+    if (next !== lastFilter || node !== lastFilterNode) {
       lastFilter = next;
+      lastFilterNode = node;
       try {
         node.style.filter = next;
       } catch {}
@@ -740,6 +759,7 @@ export function createRageSystem(host) {
       } catch {}
       vignette = null;
     }
+    lastVignetteOpacity = "";
   }
 
   return {

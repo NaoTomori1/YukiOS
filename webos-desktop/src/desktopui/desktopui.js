@@ -47,11 +47,12 @@ import {
 } from "./startButtonManager.js";
 import { applyAppCustomizations } from "../shared/appCustomizer.js";
 import {
+  captureCage,
+  isCaged,
   getShardNodes,
   setShardSelected,
   clearShardSelection,
-} from "../shared/stickman/stickmanSelection.js";
-import { captureCage, isCaged } from "../shared/stickman/stickmanCage.js";
+} from "../shared/stickman/stickmanCage.js";
 import "../styles/startButtonPicker.css";
 
 let GRID_CONFIG = { width: 84, height: 92, gap: 1, marginX: 24, marginY: 24 };

@@ -1,6 +1,7 @@
 import { getRawSetting } from "../utils/utils.js";
 import { StorageKeys, os, $, createElement } from "../framework.js";
 import { playFallApartAnimation } from "./FallApartAnimation.js";
+import { playSfx, SystemSfx } from "../sfx/systemSfx.js";
 
 let animToken = 0;
 export const OPEN_ANIMATIONS = {
@@ -301,6 +302,7 @@ export function animateWindowOpen(win, isRestoring = false) {
 
 export function restoreWindowAnimated(win) {
   if (!win) return;
+  playSfx(SystemSfx.RESTORE);
   const token = ++animToken;
   win._lastAnimToken = token;
   requestAnimationFrame(() => {

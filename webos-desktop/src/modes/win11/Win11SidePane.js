@@ -8,25 +8,19 @@ import {
   BusEvents,
 } from "../../framework.js";
 import { resolveIconUrl } from "../../shared/assetResolver.js";
+import { playSfx, SystemSfx } from "../../sfx/systemSfx.js";
+import { mountFlyoutStage, unmountFlyoutStage } from "./Win11FlyoutStage.js";
 
 const PANE_ID = "win11-sidepane";
 const BRIGHTNESS_ID = "brightnessSlider";
 
-const CHARGER_SVG =
-  '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none" viewBox="0 0 24 24"><path fill="#000" stroke="#f3f3f3" stroke-width="2" d="m8.294 14-1.767 7.068c-.187.746.736 1.256 1.269.701L19.79 9.27A.75.75 0 0 0 19.25 8h-4.46l1.672-5.013A.75.75 0 0 0 15.75 2h-7a.75.75 0 0 0-.721.544l-3 10.5A.75.75 0 0 0 5.75 14h2.544Z"></path></svg>';
-const BATTERY_BODY_SVG =
-  '<svg xmlns="http://www.w3.org/2000/svg" height="20" width="20" fill="none" viewBox="0 0 24 24"><path xmlns="http://www.w3.org/2000/svg" fill="#000" d="M17 6a3 3 0 0 1 3 3v1h1a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1h-1v1a3 3 0 0 1-3 3H5a3 3 0 0 1-3-3V9a3 3 0 0 1 3-3h12Zm-.002 1.5H5a1.5 1.5 0 0 0-1.493 1.356L3.5 9v6a1.5 1.5 0 0 0 1.355 1.493L5 16.5h11.998a1.5 1.5 0 0 0 1.493-1.355l.007-.145V9a1.5 1.5 0 0 0-1.355-1.493l-.145-.007Z"></path></svg>';
-const BATTERY_FILL_SVG =
-  '<svg xmlns="http://www.w3.org/2000/svg" height="20" width="20" fill="none" viewBox="0 0 24 24"><path fill="#000" d="M17 6a3 3 0 0 1 3 3v1h1a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1h-1v1a3 3 0 0 1-3 3H5a3 3 0 0 1-3-3V9a3 3 0 0 1 3-3h12Zm-.002 1.5H5a1.5 1.5 0 0 0-1.494 1.356L3.5 9v6a1.5 1.5 0 0 0 1.355 1.493L5 16.5h11.998a1.5 1.5 0 0 0 1.493-1.355l.007-.145V9a1.5 1.5 0 0 0-1.355-1.493l-.145-.007ZM6 9h10a1 1 0 0 1 .993.883L17 10v4a1 1 0 0 1-.883.993L16 15H6a1 1 0 0 1-.993-.883L5 14v-4a1 1 0 0 1 .883-.993L6 9h10H6Z"></path></svg>';
-
 let paneRoot = null;
+let stageRoot = null;
 let quickButtons = [];
 let quickIcons = [];
 let brightnessInput = null;
 let volumeInput = null;
 let volumeIconNode = null;
-let batteryFillNode = null;
-let batteryPctNode = null;
 let saverRestoreValue = null;
 let outsideHandler = null;
 
@@ -163,29 +157,15 @@ async function refreshVolumeSlider() {
   paintSlider(volumeInput, level);
 }
 
-async function refreshBattery() {
-  let level = 100;
-  try {
-    if (navigator.getBattery) {
-      const bt = await navigator.getBattery();
-      if (bt && Number.isFinite(Number(bt.level)))
-        level = Math.round(Number(bt.level) * 100);
-    }
-  } catch {
-    level = 100;
-  }
-  if (!batteryFillNode || !batteryPctNode) return;
-  batteryFillNode.style.width = `${level}%`;
-  setText(batteryPctNode, `${level}%`);
-}
-
 function handleQuickClick(index) {
   if (index === 0) {
     const cur = readStoredBool(StorageKeys.win11Wifi, true);
-    os.storage.set(StorageKeys.win11Wifi, !cur);
+    const next = !cur;
+    os.storage.set(StorageKeys.win11Wifi, next);
   } else if (index === 1) {
     const cur = readStoredBool(StorageKeys.win11Bluetooth, false);
-    os.storage.set(StorageKeys.win11Bluetooth, !cur);
+    const next = !cur;
+    os.storage.set(StorageKeys.win11Bluetooth, next);
   } else if (index === 2) {
     const cur = readStoredBool(StorageKeys.win11Airplane, false);
     const next = !cur;
@@ -237,6 +217,7 @@ function handleBrightnessInput(evt) {
   os.storage.set(StorageKeys.brightness, String(val));
   paintSlider(target, val);
   applyDisplayFilter();
+  playSfx(SystemSfx.BACKGROUND, { minGap: 300 });
 }
 
 async function handleVolumeInput(evt) {
@@ -254,6 +235,7 @@ async function handleVolumeInput(evt) {
   }
   updateVolumeIcon(val);
   paintSlider(target, val);
+  playSfx(SystemSfx.BACKGROUND, { minGap: 300 });
 }
 
 function handleOutsidePress(evt) {
@@ -263,7 +245,14 @@ function handleOutsidePress(evt) {
   const target = evt ? evt.target : null;
   if (!target || !target.closest) return;
   if (target.closest("#" + PANE_ID)) return;
-  if (target.closest(".taskright")) return;
+  if (target.closest(".taskright")) {
+    if (
+      !target.closest(".win11-band-trigger") &&
+      !target.closest(".taskDate")
+    ) {
+      return;
+    }
+  }
   pane.setAttribute("data-hide", "true");
 }
 
@@ -273,7 +262,10 @@ function buildPane() {
     className: "sidePane dpShad",
     attributes: { "data-hide": "true" },
   });
-  pane.setAttribute("style", "--prefix: PANE;");
+  pane.setAttribute(
+    "style",
+    "--prefix: PANE; backdrop-filter: blur(24px); background: var(--win11-flyout-bg);",
+  );
   const quickSettings = createElement("div", {
     className: "quickSettings p-5 pb-8",
   });
@@ -408,31 +400,6 @@ function buildPane() {
   sliderContTwo.appendChild(volumeInput);
   quickSettings.appendChild(sliderContTwo);
   bindEvent(volumeInput, "input", handleVolumeInput);
-  const bottomBar = createElement("div", { className: "p-1 bottomBar" });
-  pane.appendChild(bottomBar);
-  const batteryBox = createElement("div", {
-    className: "px-3 battery-sidepane",
-  });
-  bottomBar.appendChild(batteryBox);
-  const taskIcon = createElement("div", { className: "uicon taskIcon" });
-  batteryBox.appendChild(taskIcon);
-  const batterySpan = createElement("span", {
-    className: "battery",
-    html:
-      '<div class="charger">' +
-      CHARGER_SVG +
-      "</div>" +
-      BATTERY_BODY_SVG +
-      '<div class="btFull">' +
-      BATTERY_FILL_SVG +
-      "</div>",
-  });
-  taskIcon.appendChild(batterySpan);
-  batteryFillNode = $(".btFull", batterySpan);
-  batteryFillNode.style.width = "100%";
-  batteryPctNode = createElement("div", { className: "text-xs" });
-  setText(batteryPctNode, "100%");
-  batteryBox.appendChild(batteryPctNode);
   return pane;
 }
 
@@ -441,14 +408,13 @@ export function setupWin11SidePane() {
   const pane = buildPane();
   const bodyNode = $("body");
   if (!bodyNode) return;
-  bodyNode.appendChild(pane);
+  stageRoot = mountFlyoutStage(pane, "win11-flyout-stage--sidepane");
   paneRoot = pane;
   outsideHandler = handleOutsidePress;
   bindEvent(document, "pointerdown", outsideHandler);
   refreshQuicks();
   refreshBrightnessSlider();
   refreshVolumeSlider();
-  refreshBattery();
   applyDisplayFilter();
 }
 
@@ -467,13 +433,13 @@ export function teardownWin11SidePane() {
     const existing = $("#" + PANE_ID);
     if (existing) existing.remove();
   }
+  unmountFlyoutStage(stageRoot);
+  stageRoot = null;
   quickButtons = [];
   quickIcons = [];
   brightnessInput = null;
   volumeInput = null;
   volumeIconNode = null;
-  batteryFillNode = null;
-  batteryPctNode = null;
 }
 
 export function toggleWin11SidePane() {
@@ -481,14 +447,23 @@ export function toggleWin11SidePane() {
   if (!pane) return;
   const hidden = pane.getAttribute("data-hide") !== "false";
   if (hidden) {
+    import("./Win11Band.js").then((m) => m.closeWin11Band?.()).catch(() => {});
+    import("./Win11Calendar.js")
+      .then((m) => m.closeWin11Calendar?.())
+      .catch(() => {});
     pane.setAttribute("data-hide", "false");
     refreshQuicks();
     refreshBrightnessSlider();
     refreshVolumeSlider();
-    refreshBattery();
   } else {
     pane.setAttribute("data-hide", "true");
   }
+}
+
+export function isWin11SidePaneOpen() {
+  const pane = paneRoot || $("#" + PANE_ID);
+  if (!pane) return false;
+  return pane.getAttribute("data-hide") === "false";
 }
 
 export function hideWin11SidePane() {

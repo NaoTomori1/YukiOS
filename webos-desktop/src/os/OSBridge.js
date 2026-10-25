@@ -20,6 +20,8 @@ export class NotificationAPI {
       options?.duration || 5000,
       options?.icon,
       options?.appSource,
+      options?.category,
+      options?.silent,
     );
   }
 
@@ -282,6 +284,10 @@ export class TrayAPI {
 
   getTrayItems() {
     return this.tray.items;
+  }
+
+  getAllItems() {
+    return this.tray.getAllItems?.() || [];
   }
 
   isRegistered(winId) {

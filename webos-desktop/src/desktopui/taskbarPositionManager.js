@@ -79,6 +79,7 @@ export class TaskbarPositionManager {
       if (!(target instanceof Element)) return;
       const taskbar = target.closest("#taskbar");
       if (!taskbar) return;
+      if (document.documentElement.classList.contains("win11-mode")) return;
       if (target.closest(".taskbar-item")) return;
       const onTaskbarWindows = target.closest("#taskbar-windows");
       const isEmptyTaskbarWindows = !!onTaskbarWindows;

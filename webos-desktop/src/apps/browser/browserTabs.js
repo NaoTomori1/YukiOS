@@ -546,10 +546,19 @@ export function createTabsStore(viewportContainer, opts = {}) {
       return;
     }
   }
+
   const DEFAULT_BOOKMARKS = [
     {
       name: "YukiOS Alpha Historical",
       url: "https://reeyuki.github.io/YukiOS-AlphaHistorical/desktop/",
+    },
+    {
+      name: "Cameras on world",
+      url: "https://camerasonworld.com/",
+    },
+    {
+      name: "Reeyuki site",
+      url: "https://reeyuki.github.io/",
     },
   ];
   function loadBookmarks() {
@@ -605,10 +614,8 @@ export function createTabsStore(viewportContainer, opts = {}) {
     const active = getActiveTab();
     const effective =
       active && Number.isFinite(active.zoom) ? active.zoom : zoomLevel;
-    const label = rootNode ? $(".browser-zoom-label", rootNode) : null;
+    const label = rootNode ? $(".nav-zoom-label", rootNode) : null;
     if (label) setText(label, Math.round(effective * 100) + "%");
-    const alt = rootNode ? $(".nav-zoom-label", rootNode) : null;
-    if (alt && alt !== label) setText(alt, Math.round(effective * 100) + "%");
   }
   function showTabViewports() {
     tabs.forEach((tab) => {

@@ -11,6 +11,303 @@ import {
   fxRealityRift,
 } from "./stickmanFx.js";
 
+export const PLAYER_WEAPONS = [
+  {
+    slot: 0,
+    id: "gun",
+    label: "Gun",
+    icon: "gun",
+    resource: "mag",
+    mag: 12,
+    reserve: 96,
+    reloadMs: 850,
+    gapMs: 130,
+    auto: true,
+    key: "1",
+  },
+  {
+    slot: 1,
+    id: "rocket",
+    label: "Rocket",
+    icon: "rocket",
+    resource: "mag",
+    mag: 4,
+    reserve: 20,
+    reloadMs: 1600,
+    gapMs: 480,
+    auto: false,
+    key: "2",
+  },
+  {
+    slot: 2,
+    id: "grenade",
+    label: "Grenade",
+    icon: "grenade",
+    resource: "mag",
+    mag: 3,
+    reserve: 15,
+    reloadMs: 1750,
+    gapMs: 520,
+    auto: false,
+    key: "3",
+  },
+  {
+    slot: 3,
+    id: "knife",
+    label: "Knife",
+    icon: "knife",
+    resource: "mag",
+    mag: 8,
+    reserve: 40,
+    reloadMs: 780,
+    gapMs: 110,
+    auto: true,
+    key: "4",
+  },
+  {
+    slot: 4,
+    id: "lightning",
+    label: "Lightning",
+    icon: "lightning",
+    resource: "charge",
+    cooldownMs: 1500,
+    key: "5",
+  },
+  {
+    slot: 5,
+    id: "orb",
+    label: "Orb",
+    icon: "orb",
+    resource: "charge",
+    cooldownMs: 2800,
+    key: "6",
+  },
+  {
+    slot: 6,
+    id: "laser",
+    label: "Laser",
+    icon: "laser",
+    resource: "charge",
+    cooldownMs: 9000,
+    key: "7",
+  },
+  {
+    slot: 7,
+    id: "sword",
+    label: "Flameblade",
+    icon: "sword",
+    resource: "melee",
+    cooldownMs: 0,
+    key: "8",
+  },
+  {
+    slot: 8,
+    id: "cutter",
+    label: "Cutter",
+    icon: "cutter",
+    resource: "charge",
+    cooldownMs: 60000,
+    key: "9",
+  },
+];
+
+export const CYCLE_EXTRA = [
+  { id: "spear", label: "Spear", resource: "melee", cooldownMs: 0 },
+];
+
+const BY_ID = new Map();
+for (const entry of PLAYER_WEAPONS) BY_ID.set(entry.id, entry);
+for (const entry of CYCLE_EXTRA) {
+  if (!BY_ID.has(entry.id)) BY_ID.set(entry.id, entry);
+}
+
+export const CYCLE_ORDER = [
+  ...PLAYER_WEAPONS.map((entry) => entry.id),
+  ...CYCLE_EXTRA.map((entry) => entry.id),
+];
+
+export function getWeaponSpec(id) {
+  return BY_ID.get(id) || BY_ID.get("gun");
+}
+
+export function getWeaponSlot(id) {
+  const spec = BY_ID.get(id);
+  return spec && Number.isFinite(spec.slot) ? spec.slot : -1;
+}
+
+export function createAmmoRack() {
+  const mags = new Map();
+  const reserves = new Map();
+  const nextShotAt = new Map();
+  const cooldowns = new Map();
+  let reloadUntil = 0;
+  let reloadStart = 0;
+  let reloadSpan = 0;
+  let reloading = null;
+  let current = "gun";
+
+  function magOf(id) {
+    const spec = getWeaponSpec(id);
+    const cap = spec.resource === "mag" ? spec.mag : 0;
+    if (!mags.has(id)) mags.set(id, cap);
+    return mags.get(id);
+  }
+
+  function reserveOf(id) {
+    const spec = getWeaponSpec(id);
+    if (!reserves.has(id)) {
+      reserves.set(id, spec.resource === "mag" ? spec.reserve : 0);
+    }
+    return reserves.get(id);
+  }
+
+  function refill(id) {
+    const spec = getWeaponSpec(id);
+    if (spec.resource !== "mag") return;
+    const cap = spec.mag;
+    const need = cap - mags.get(id);
+    if (need <= 0) return;
+    const take = Math.min(need, reserves.get(id));
+    mags.set(id, mags.get(id) + take);
+    reserves.set(id, reserves.get(id) - take);
+  }
+
+  function isReloading() {
+    return !!reloading;
+  }
+
+  function reloadProgress(now) {
+    if (!reloading || reloadSpan <= 0) return 0;
+    return Math.min(1, Math.max(0, (now - reloadStart) / reloadSpan));
+  }
+
+  function canFire(id, now) {
+    if (isReloading()) return false;
+    if (now < (nextShotAt.get(id) || 0)) return false;
+    const spec = getWeaponSpec(id);
+    if (spec.resource === "charge") {
+      return now >= (cooldowns.get(id) || 0);
+    }
+    if (spec.resource === "mag") {
+      return (mags.get(id) || 0) > 0;
+    }
+    return true;
+  }
+
+  function startReload(now) {
+    const spec = getWeaponSpec(current);
+    if (spec.resource !== "mag") return false;
+    if (isReloading()) return false;
+    if ((mags.get(current) || 0) >= spec.mag) return false;
+    if ((reserves.get(current) || 0) <= 0) return false;
+    reloading = current;
+    reloadStart = now;
+    reloadSpan = spec.reloadMs;
+    reloadUntil = now + spec.reloadMs;
+    return true;
+  }
+
+  function cancelReload() {
+    reloading = null;
+    reloadSpan = 0;
+    reloadUntil = 0;
+  }
+
+  function onFired(id, now) {
+    const spec = getWeaponSpec(id);
+    if (spec.resource === "mag") {
+      const left = Math.max(0, (mags.get(id) || 0) - 1);
+      mags.set(id, left);
+      if (left === 0) startReload(now);
+    } else if (spec.resource === "charge") {
+      cooldowns.set(id, now + spec.cooldownMs);
+    }
+    nextShotAt.set(id, now + (spec.gapMs || 0));
+  }
+
+  function update(now) {
+    if (!reloading) return;
+    if (now < reloadUntil) return;
+    refill(reloading);
+    cancelReload();
+  }
+
+  function snapshot(id, now) {
+    const weaponId = id || current;
+    const spec = getWeaponSpec(weaponId);
+    const base = {
+      id: weaponId,
+      label: spec.label,
+      icon: spec.icon,
+      resource: spec.resource,
+      key: spec.key || "",
+      mag: 0,
+      magSize: 0,
+      reserve: 0,
+      cooldownLeft: 0,
+      cooldownSpan: spec.cooldownMs || 0,
+      reloading: isReloading() && reloading === weaponId,
+      reloadProgress: 0,
+      low: false,
+      empty: false,
+    };
+    if (spec.resource === "mag") {
+      const mag = magOf(weaponId);
+      base.mag = mag;
+      base.magSize = spec.mag;
+      base.reserve = reserveOf(weaponId);
+      base.low = spec.mag > 0 && mag <= Math.max(1, Math.ceil(spec.mag * 0.34));
+      base.empty = mag <= 0;
+      base.reloading = isReloading() && reloading === weaponId;
+      base.reloadProgress = base.reloading ? reloadProgress(now) : 0;
+    } else if (spec.resource === "charge") {
+      const left = Math.max(0, (cooldowns.get(weaponId) || 0) - now);
+      base.cooldownLeft = left;
+      base.cooldownSpan = spec.cooldownMs || 1;
+      base.empty = left > 0;
+      base.low = left > 0;
+    }
+    return base;
+  }
+
+  function setWeapon(id) {
+    if (!BY_ID.has(id)) return false;
+    current = id;
+    magOf(id);
+    reserveOf(id);
+    if (isReloading() && reloading !== id) cancelReload();
+    return true;
+  }
+
+  function reset() {
+    mags.clear();
+    reserves.clear();
+    nextShotAt.clear();
+    cooldowns.clear();
+    cancelReload();
+    current = "gun";
+    magOf(current);
+    reserveOf(current);
+  }
+
+  magOf(current);
+  reserveOf(current);
+
+  return {
+    canFire,
+    onFired,
+    startReload,
+    cancelReload,
+    update,
+    snapshot,
+    setWeapon,
+    reset,
+    isReloading,
+    reloadProgress,
+    getWeapon: () => current,
+  };
+}
+
 const ROCKET_TURN = 0.07;
 const ROCKET_TOP_SPEED = 15;
 const GRENADE_FUSE = 64;
@@ -324,8 +621,7 @@ export function createWeaponSystem(ctx) {
 
   function place(s) {
     if (s.kind === "lightning") return;
-    s.el.style.left = s.x.toFixed(1) + "px";
-    s.el.style.top = s.y.toFixed(1) + "px";
+    s.el.style.translate = s.x.toFixed(1) + "px " + s.y.toFixed(1) + "px";
     s.el.style.transform =
       "translate(-50%,-50%) rotate(" +
       ((s.ang * 180) / Math.PI).toFixed(1) +
@@ -413,7 +709,7 @@ export function createWeaponSystem(ctx) {
   function makeRocket(layer, sx, sy, tx, ty, ownerPlayer) {
     const el = createElement("div", { className: "stk-weapon-shot" });
     el.style.cssText =
-      "position:absolute;pointer-events:none;width:26px;height:9px;filter:drop-shadow(0 0 5px rgba(255,140,40,0.8));";
+      "position:absolute;left:0px;top:0px;pointer-events:none;width:26px;height:9px;filter:drop-shadow(0 0 5px rgba(255,140,40,0.8));";
     const body = document.createElement("i");
     body.style.cssText =
       "position:absolute;left:0;top:0;width:26px;height:9px;clip-path:polygon(0 0,18% 22%,58% 22%,78% 36%,100% 50%,78% 64%,58% 78%,18% 78%,0 100%,8% 50%);background:linear-gradient(180deg,rgba(255,255,255,0.6) 0%,rgba(0,0,0,0) 45%,rgba(0,0,0,0.4) 100%),linear-gradient(90deg,#5a0a0a 0%,#c42020 18%,#dcdcdc 20%,#f6f6f6 52%,#c02020 56%,#c02020 63%,#e8e8e8 65%,#b9bfc9 80%,#e03030 100%);";
@@ -457,7 +753,7 @@ export function createWeaponSystem(ctx) {
   function makeGrenade(layer, sx, sy, tx, ty) {
     const el = createElement("div", { className: "stk-weapon-shot" });
     el.style.cssText =
-      "position:absolute;pointer-events:none;width:11px;height:13px;";
+      "position:absolute;left:0px;top:0px;pointer-events:none;width:11px;height:13px;";
     const body = document.createElement("i");
     body.style.cssText =
       "position:absolute;left:0;top:2px;width:11px;height:11px;border-radius:46%;background:radial-gradient(circle at 32% 28%,rgba(255,255,255,0.45) 0%,rgba(255,255,255,0) 35%),repeating-linear-gradient(0deg,rgba(0,0,0,0.28) 0 1px,rgba(0,0,0,0) 1px 3px),radial-gradient(circle at 40% 35%,#7da06a 0%,#3c5632 60%,#1a2716 100%);box-shadow:0 1px 3px rgba(0,0,0,0.5);";
@@ -495,7 +791,7 @@ export function createWeaponSystem(ctx) {
   function makeKnife(layer, sx, sy, tx, ty) {
     const el = createElement("div", { className: "stk-weapon-shot" });
     el.style.cssText =
-      "position:absolute;pointer-events:none;width:15px;height:15px;clip-path:polygon(50% 0%,60% 36%,100% 50%,60% 64%,50% 100%,40% 64%,0% 50%,40% 36%);background:radial-gradient(circle,#2a2f3a 0%,#2a2f3a 12%,#ffffff 14%,#d8deea 42%,#5a6270 100%);filter:drop-shadow(0 0 5px rgba(200,225,255,0.85));";
+      "position:absolute;left:0px;top:0px;pointer-events:none;width:15px;height:15px;clip-path:polygon(50% 0%,60% 36%,100% 50%,60% 64%,50% 100%,40% 64%,0% 50%,40% 36%);background:radial-gradient(circle,#2a2f3a 0%,#2a2f3a 12%,#ffffff 14%,#d8deea 42%,#5a6270 100%);filter:drop-shadow(0 0 5px rgba(200,225,255,0.85));";
     layer.appendChild(el);
     const dir = Math.atan2(ty - sy, tx - sx) + (Math.random() - 0.5) * 0.08;
     return {
@@ -653,7 +949,7 @@ export function createWeaponSystem(ctx) {
   function makeOrb(layer, sx, sy, tx, ty) {
     const el = createElement("div", { className: "stk-weapon-shot" });
     el.style.cssText =
-      "position:absolute;pointer-events:none;width:16px;height:16px;border-radius:50%;background:radial-gradient(circle,#ffffff 0%,#c8b0ff 25%,#9060ff 45%,#4020aa 68%,rgba(40,0,120,0) 82%);box-shadow:0 0 14px 5px rgba(140,60,255,0.9),0 0 30px 10px rgba(90,30,200,0.45);";
+      "position:absolute;left:0px;top:0px;pointer-events:none;width:16px;height:16px;border-radius:50%;background:radial-gradient(circle,#ffffff 0%,#c8b0ff 25%,#9060ff 45%,#4020aa 68%,rgba(40,0,120,0) 82%);box-shadow:0 0 14px 5px rgba(140,60,255,0.9),0 0 30px 10px rgba(90,30,200,0.45);";
     const halo = document.createElement("i");
     halo.style.cssText =
       "position:absolute;left:-8px;top:-8px;width:32px;height:32px;border-radius:50%;background:radial-gradient(circle,rgba(160,110,255,0.35) 0%,rgba(100,40,220,0) 70%);";
@@ -709,7 +1005,7 @@ export function createWeaponSystem(ctx) {
   function makeRealityCutter(layer, sx, sy, tx, ty) {
     const el = createElement("div", { className: "stk-weapon-shot" });
     el.style.cssText =
-      "position:absolute;pointer-events:none;width:48px;height:8px;background:linear-gradient(90deg,rgba(0,0,0,0) 0%,#050102 18%,#ff1028 48%,#ffffff 50%,#ff1028 52%,#050102 82%,rgba(0,0,0,0) 100%);box-shadow:0 0 16px 5px rgba(255,10,30,0.9),0 0 2px 1px #fff;clip-path:polygon(0 50%,20% 0,80% 0,100% 50%,80% 100%,20% 100%);filter:drop-shadow(0 0 9px #ff0022);";
+      "position:absolute;left:0px;top:0px;pointer-events:none;width:48px;height:8px;background:linear-gradient(90deg,rgba(0,0,0,0) 0%,#050102 18%,#ff1028 48%,#ffffff 50%,#ff1028 52%,#050102 82%,rgba(0,0,0,0) 100%);box-shadow:0 0 16px 5px rgba(255,10,30,0.9),0 0 2px 1px #fff;clip-path:polygon(0 50%,20% 0,80% 0,100% 50%,80% 100%,20% 100%);filter:drop-shadow(0 0 9px #ff0022);";
     try {
       if (el.animate) {
         el.animate(

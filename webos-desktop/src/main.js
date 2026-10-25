@@ -38,6 +38,7 @@ import { init } from "./cursorEffect.js";
 import { versionChecker } from "./versionChecker.js";
 import { $, createElement } from "./shared/domUtils.js";
 import { StorageKeys } from "./StorageKeys.js";
+import { initSystemSfx } from "./sfx/sfxController.js";
 import { ServiceKeys } from "./ServiceKeys.js";
 import { showBootScreen } from "./bootScreen.js";
 import { deckCapture } from "./modes/steamdeck/deckCapture.js";
@@ -231,6 +232,7 @@ async function start() {
   const steamParam = urlParams.get("steam");
   const redParam = urlParams.has("red");
 
+  initSystemSfx();
   const sessionPromise = sessionManager.showLogin();
   await boot.hide();
   await sessionPromise;

@@ -15,14 +15,56 @@ import {
 } from "./shared/domUtils.js";
 import { parseBool } from "./utils/utils.js";
 import { isFunction } from "./shared/functionUtils.js";
+import { MODES, MODE_DEFS } from "./modeManager.js";
+import {
+  showWin11BootScreenHold,
+  fadeOutWin11BootScreen,
+} from "./modes/win11/Win11BootScreen.js";
 
 const BRAND = "YukiOS";
 const MIN_DURATION = 2500;
+const WIN11_SESSION_NAME = MODE_DEFS[MODES.WIN11].label;
+const WIN11_BLACKOUT_MIN_DURATION = 600;
+
+function isWin11SessionSelected() {
+  try {
+    return os.storage.get(StorageKeys.selectedSession) === WIN11_SESSION_NAME;
+  } catch {
+    return false;
+  }
+}
+
+function createWin11LaunchBoot() {
+  const skippingLogo = Boolean(
+    os.storage.get(StorageKeys.win11SkipStartupBoot),
+  );
+  const startedAt = performance.now();
+  const pending = showWin11BootScreenHold({
+    phase: skippingLogo ? "blackout" : "logo",
+  });
+  const minDuration = skippingLogo ? WIN11_BLACKOUT_MIN_DURATION : MIN_DURATION;
+  return {
+    hide: () => {
+      const elapsed = performance.now() - startedAt;
+      const delay = Math.max(0, minDuration - elapsed);
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          fadeOutWin11BootScreen();
+        }, delay);
+        pending.then(resolve);
+      });
+    },
+  };
+}
 
 export function showBootScreen() {
   const raw = os.storage.get(StorageKeys.disableBootScreen);
   if (parseBool(raw)) {
     return { hide: () => Promise.resolve() };
+  }
+
+  if (isWin11SessionSelected()) {
+    return createWin11LaunchBoot();
   }
 
   const launchRaw = os.storage.get(StorageKeys.lastLaunchTime);

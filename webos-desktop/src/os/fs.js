@@ -3,6 +3,7 @@ import {
   requireLibraryEntry,
   syncSystemOverrideAfterWrite,
 } from "../fs/SystemLibrary.js";
+import { playSfx, SystemSfx } from "../sfx/systemSfx.js";
 
 export class FileSystemAPI {
   constructor(fileSystemManager) {
@@ -79,6 +80,7 @@ export class FileSystemAPI {
       const basename = this.fs.basename(pathStr);
       await this.fs.deleteItem(dir, basename);
     }
+    playSfx(SystemSfx.RECYCLE);
   }
 
   async exists(path) {
@@ -245,11 +247,15 @@ export class FileSystemAPI {
       throw new Error("Protected system library file");
     }
     if (name) {
-      return await this.fs.trash.moveToTrash(pathStr, name);
+      const result = await this.fs.trash.moveToTrash(pathStr, name);
+      playSfx(SystemSfx.RECYCLE);
+      return result;
     }
     const dir = this.fs.dirname(pathStr);
     const basename = this.fs.basename(pathStr);
-    return await this.fs.trash.moveToTrash(dir, basename);
+    const result = await this.fs.trash.moveToTrash(dir, basename);
+    playSfx(SystemSfx.RECYCLE);
+    return result;
   }
 
   async getTrashItems() {
@@ -259,22 +265,28 @@ export class FileSystemAPI {
 
   async restoreTrashItem(id) {
     await this.fs.fsReady;
-    return await this.fs.trash.restoreItem(id);
+    const result = await this.fs.trash.restoreItem(id);
+    playSfx(SystemSfx.RESTORE);
+    return result;
   }
 
   async restoreAllTrashItems() {
     await this.fs.fsReady;
-    return await this.fs.trash.restoreAll();
+    const result = await this.fs.trash.restoreAll();
+    playSfx(SystemSfx.RESTORE);
+    return result;
   }
 
   async deleteTrashItem(id) {
     await this.fs.fsReady;
     await this.fs.trash.deletePermanently(id);
+    playSfx(SystemSfx.RECYCLE);
   }
 
   async emptyTrash() {
     await this.fs.fsReady;
     await this.fs.trash.emptyTrash();
+    playSfx(SystemSfx.RECYCLE);
   }
 
   async getTrashCount() {
@@ -316,11 +328,14 @@ export class FileSystemAPI {
   }
 
   registerMount(handle, label) {
-    return this.fs.mountManager.registerMount(handle, label);
+    const result = this.fs.mountManager.registerMount(handle, label);
+    playSfx(SystemSfx.HARDWARE_INSERT);
+    return result;
   }
 
   unmount(label) {
     this.fs.mountManager.unmount(label);
+    playSfx(SystemSfx.HARDWARE_REMOVE);
   }
 
   getMounts() {
@@ -329,11 +344,15 @@ export class FileSystemAPI {
 
   async mountISO(path, name) {
     const pathStr = await this.resolve(path);
-    return await this.fs.mountISO(pathStr, name);
+    const result = await this.fs.mountISO(pathStr, name);
+    playSfx(SystemSfx.HARDWARE_INSERT);
+    return result;
   }
 
   unmountISO(label) {
-    return this.fs.unmountISO(label);
+    const result = this.fs.unmountISO(label);
+    playSfx(SystemSfx.HARDWARE_REMOVE);
+    return result;
   }
 
   getISOMounts() {

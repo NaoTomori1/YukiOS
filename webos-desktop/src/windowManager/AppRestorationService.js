@@ -397,7 +397,9 @@ export class AppRestorationService {
         if (state.fullscreen && win.dataset.appId !== "browserApp") {
           this.wm.toggleFullscreen(win);
         }
-        if (state.snapZone) {
+        if (state.snapZone === "snap-layout" && state.snapRect) {
+          this.wm.applySnapRect(win, state.snapRect);
+        } else if (state.snapZone) {
           this.wm.applySnap(win, state.snapZone, true);
         }
 

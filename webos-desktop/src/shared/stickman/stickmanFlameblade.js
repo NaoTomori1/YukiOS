@@ -11,6 +11,9 @@ const CORE_ID = "stk-sword-core";
 const AURA_ID = "stk-sword-aura";
 const FIRE_ID = "stk-sword-fire";
 
+const FLAME_FILTER_STEP_MS = 60;
+const FLAME_FILTER_PULSE_STEPS = 16;
+
 function f(n) {
   return Number(n.toFixed(2));
 }
@@ -198,6 +201,9 @@ export function createFlamebladeRig() {
     hilt,
     grip,
     pommel,
+    fuller: null,
+    fullerParent: undefined,
+    fullerCount: -1,
   };
 }
 
@@ -367,11 +373,53 @@ export function shapeFlameblade(hand, fx, fy, px, py) {
   };
 }
 
+function resolveFuller(rig) {
+  if (!rig) return null;
+  let parent = null;
+  try {
+    parent = rig.blade ? rig.blade.parentNode : null;
+  } catch {
+    parent = null;
+  }
+  let count = -1;
+  try {
+    count = parent ? parent.childElementCount : -1;
+  } catch {
+    count = -1;
+  }
+  if (rig.fullerParent === parent && rig.fullerCount === count)
+    return rig.fuller;
+  rig.fullerParent = parent;
+  rig.fullerCount = count;
+  try {
+    rig.fuller = parent
+      ? parent.querySelector('[data-flameblade-fuller="true"]')
+      : null;
+  } catch {
+    rig.fuller = null;
+  }
+  return rig.fuller;
+}
+
+const lastFilterValues = new WeakMap();
+
+function writeFilter(node, value) {
+  if (!node) return;
+  if (lastFilterValues.get(node) === value) return;
+  lastFilterValues.set(node, value);
+  node.style.filter = value;
+}
+
 export function paintFlameblade(rig, model, now) {
   if (!rig || !model) return;
 
   const flicker = Math.sin(now * 0.018);
   const pulse = 0.5 + 0.5 * Math.sin(now * 0.025);
+  const stepped = Math.floor(now / FLAME_FILTER_STEP_MS) * FLAME_FILTER_STEP_MS;
+  const rawFilterPulse = 0.5 + 0.5 * Math.sin(stepped * 0.025);
+  const filterPulse =
+    Math.round(rawFilterPulse * FLAME_FILTER_PULSE_STEPS) /
+    FLAME_FILTER_PULSE_STEPS;
 
   rig.blade.setAttribute("display", "inline");
   rig.blade.setAttribute("d", model.bladeD);
@@ -403,24 +451,39 @@ export function paintFlameblade(rig, model, now) {
   rig.pommel.setAttribute("cx", f(model.pommel.x));
   rig.pommel.setAttribute("cy", f(model.pommel.y));
 
-  const fuller = rig.blade.parentNode.querySelector(
-    '[data-flameblade-fuller="true"]',
-  );
+  const fuller = resolveFuller(rig);
 
   if (fuller) {
     fuller.setAttribute("d", model.fullerD || "");
     fuller.setAttribute("display", "inline");
   }
 
-  rig.aura.style.filter = `blur(${4 + pulse * 2}px)`;
-  rig.fire.style.filter = `blur(${0.5 + pulse * 0.8}px)`;
-  rig.blade.style.filter = `drop-shadow(0 0 ${2 + pulse * 2}px #ff5a0a)`;
+  const auraFilter = `blur(${(4 + filterPulse * 2).toFixed(1)}px)`;
+  const fireFilter = `blur(${(0.5 + filterPulse * 0.8).toFixed(1)}px)`;
+  const bladeFilter = `drop-shadow(0 0 ${Math.round(2 + filterPulse * 2)}px #ff5a0a)`;
+  writeFilter(rig.aura, auraFilter);
+  writeFilter(rig.fire, fireFilter);
+  writeFilter(rig.blade, bladeFilter);
 }
+
+let cachedFireSource = null;
+let cachedFirePulse = null;
+let cachedFirePath = "";
 
 function buildFireFromModel(model, now) {
   if (!model.fireD) return "";
-  const pulse = Math.sin(now * 0.021) * 0.8;
-  return model.fireD.replace(/Z/g, ` Q${pulse} ${pulse} ${pulse} ${pulse} Z`);
+  const pulse = Number((Math.sin(now * 0.021) * 0.8).toFixed(2));
+  if (pulse === cachedFirePulse && model.fireD === cachedFireSource) {
+    return cachedFirePath;
+  }
+  const path = model.fireD.replace(
+    /Z/g,
+    ` Q${pulse} ${pulse} ${pulse} ${pulse} Z`,
+  );
+  cachedFireSource = model.fireD;
+  cachedFirePulse = pulse;
+  cachedFirePath = path;
+  return path;
 }
 
 export function hideFlameblade(rig) {
@@ -434,9 +497,6 @@ export function hideFlameblade(rig) {
     },
   );
 
-  const fuller = rig.blade.parentNode?.querySelector(
-    '[data-flameblade-fuller="true"]',
-  );
-
+  const fuller = resolveFuller(rig);
   if (fuller) fuller.setAttribute("display", "none");
 }

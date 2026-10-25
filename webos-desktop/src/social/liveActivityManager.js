@@ -14,6 +14,10 @@ import {
 } from "./endpoints.js";
 import { isBroadcastAllowed, isPopupAllowed } from "./presence.js";
 import { areFriends } from "./friendsApi.js";
+import {
+  createAdaptiveInterval,
+  guardVisible,
+} from "../shared/pollThrottle.js";
 
 function isUrlPrefixed(value) {
   const v = String(value).trim().toLowerCase();
@@ -22,6 +26,7 @@ function isUrlPrefixed(value) {
 
 const ACTIVITY_FLUSH_INTERVAL = 15000;
 const POLL_INTERVAL = 120000;
+const POLL_INTERVAL_HIDDEN = 600000;
 const ACTIVITY_TTL_MINUTES = 5;
 
 export class LiveActivityManager {
@@ -30,7 +35,7 @@ export class LiveActivityManager {
     this.activeUsers = new Map();
     this.knownUsers = new Map();
     this.flushTimer = null;
-    this.pollTimer = null;
+    this.pollStop = null;
     this.nowPlayingCache = { data: null, time: 0 };
     this.recentPlayersCache = new Map();
     this.isShowingPopup = false;
@@ -102,7 +107,11 @@ export class LiveActivityManager {
   startTimers() {
     this.stopTimers();
     if (!this.isEnabled()) return;
-    this.pollTimer = setInterval(() => this.poll(), POLL_INTERVAL);
+    this.pollStop = createAdaptiveInterval(
+      guardVisible(() => this.poll()),
+      POLL_INTERVAL,
+      POLL_INTERVAL_HIDDEN,
+    );
     this.poll();
   }
 
@@ -111,9 +120,9 @@ export class LiveActivityManager {
       clearTimeout(this.flushTimer);
       this.flushTimer = null;
     }
-    if (this.pollTimer) {
-      clearInterval(this.pollTimer);
-      this.pollTimer = null;
+    if (this.pollStop) {
+      this.pollStop();
+      this.pollStop = null;
     }
   }
 

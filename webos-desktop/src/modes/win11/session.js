@@ -3,11 +3,41 @@ import { os, StorageKeys, BusEvents } from "../../framework.js";
 import { taskbarPositionManager } from "../../desktopui/taskbarPositionManager.js";
 import { SessionMode } from "../shared/sessionBase.js";
 import { win11Manager } from "./Win11Manager.js";
+import { WIN11_WALLPAPER } from "./Win11Wallpaper.js";
 import { showWin11BootScreen, hideWin11BootScreen } from "./Win11BootScreen.js";
+import { playSfx, SystemSfx } from "../../sfx/systemSfx.js";
+import { SystemUtilities } from "../../system.js";
+import { trayManager } from "../../tray/tray.js";
 
 const win11Session = new SessionMode(MODES.WIN11);
 
-export function applyWin11Settings() {
+let win11WallpaperApplied = false;
+
+function applyWin11Wallpaper() {
+  try {
+    SystemUtilities.applyWallpaperOnly(WIN11_WALLPAPER);
+    win11WallpaperApplied = true;
+  } catch {}
+}
+
+function restoreUserWallpaper() {
+  if (!win11WallpaperApplied) return;
+  win11WallpaperApplied = false;
+  try {
+    const result = SystemUtilities.loadWallpaper();
+    if (result && typeof result.catch === "function") {
+      result.catch(() => {});
+    }
+  } catch {}
+}
+
+function syncSpeakerIndicators() {
+  try {
+    os.windowManager?.taskbarSystem?.syncSpeakerIndicators();
+  } catch {}
+}
+
+export function applyWin11Settings({ playStartup = false } = {}) {
   win11Session.enter();
   const runSetup = () => {
     const prevPos =
@@ -33,8 +63,20 @@ export function applyWin11Settings() {
     os.storage.set(StorageKeys.windowHeaderStyle, "win11");
     os.events.emit(BusEvents.SETTINGS_CHANGED, {});
     win11Manager.setup();
+    syncSpeakerIndicators();
+    applyWin11Wallpaper();
+    trayManager.render();
   };
-  showWin11BootScreen(1500).then(runSetup).catch(runSetup);
+  const finish = () => {
+    runSetup();
+    if (playStartup) playSfx(SystemSfx.STARTUP);
+  };
+  if (os.storage.get(StorageKeys.win11SkipStartupBoot)) {
+    os.storage.remove(StorageKeys.win11SkipStartupBoot);
+    finish();
+    return;
+  }
+  showWin11BootScreen(1500).then(finish).catch(finish);
 }
 
 export function disableWin11Settings() {
@@ -60,4 +102,7 @@ export function disableWin11Settings() {
     os.events.emit(BusEvents.SETTINGS_CHANGED, {});
   }
   win11Manager.teardown();
+  syncSpeakerIndicators();
+  restoreUserWallpaper();
+  trayManager.render();
 }

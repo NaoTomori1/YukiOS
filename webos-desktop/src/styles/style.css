@@ -28,6 +28,23 @@
   --brand-dark: oklch(38% 0.12 260);
   --brand-glow: oklch(55% 0.08 260 / 0.18);
   --brand-dim: oklch(55% 0.12 260 / 0.12);
+  --win11-accent: #4cc2ff;
+  --win11-accent-light: #0067c0;
+  --win11-mica-base: #202020;
+  --win11-mica-tint: #1a1f35;
+  --win11-mica-light-base: #f3f3f3;
+  --win11-mica-light-tint: #eff4f9;
+  --win11-tile-light: rgba(255, 255, 255, 0.67);
+  --win11-tile-light-hover: rgba(255, 255, 255, 0.33);
+  --win11-tile-dark: rgba(255, 255, 255, 0.05);
+  --win11-tile-dark-hover: rgba(255, 255, 255, 0.1);
+  --win11-tile-border: rgba(0, 0, 0, 0.1);
+  --win11-search-light: #ffffff;
+  --win11-search-dark: rgba(255, 255, 255, 0.0333);
+  --win11-search-dark-hover: rgba(255, 255, 255, 0.05);
+  --win11-search-light-hover: rgba(255, 255, 255, 0.33);
+  --win11-select-light: rgba(255, 255, 255, 0.8);
+  --win11-select-dark: rgba(255, 255, 255, 0.07);
 
   --r-xxs: 2px;
   --r-xs: 4px;

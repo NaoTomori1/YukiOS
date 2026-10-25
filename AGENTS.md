@@ -11,6 +11,10 @@ You are working under webos-desktop directory. when src is mentioned it means we
   JSDoc-style doc comments are only allowed for complex functions with non-obvious signatures.
 - Before finalizing any code changes, run `pnpm build:dev` in `webos-desktop/`. A change that breaks the build is
   incomplete.
+- Exception for trivial value-only edits (a color, size, text, timing constant, gradient stop, SVG coordinate, single
+  variable) that add, remove or rename no file and change no import, export or signature: skip the build, run
+  `node --check` on the changed JavaScript instead, and state that the build was skipped.
+- Build once per task, not once per step.
 - Always use CSS variables from `src/styles/style.css`. Never hardcode colors.
 - When making significant changes, new features, or new apps: add a news entry to the top of `src/news.json` with a
   `date`, optional `label`, and `sections` array. Each section has an `icon`, `title`, and `items` (array of

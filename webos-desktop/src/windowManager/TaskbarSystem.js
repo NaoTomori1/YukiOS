@@ -20,6 +20,7 @@ import {
   setStyle,
 } from "../shared/domUtils.js";
 import { StorageKeys, os } from "../framework.js";
+import { modeManager, MODES } from "../modeManager.js";
 import { createAdaptiveInterval } from "../shared/pollThrottle.js";
 import { Achievements } from "../achievements.js";
 export class TaskbarSystem {
@@ -277,6 +278,48 @@ export class TaskbarSystem {
     return icon;
   }
 
+  shouldShowSpeakerIndicator() {
+    try {
+      return !modeManager.isActive(MODES.WIN11);
+    } catch {
+      return true;
+    }
+  }
+
+  buildSpeakerIndicator(winId) {
+    const speakerIndicator = createElement("span", {
+      className: "taskbar-speaker-indicator",
+    });
+    const speakerEffective = getEffectiveIcon(
+      "papirus:status/audio-volume-high",
+    );
+    speakerIndicator.innerHTML =
+      typeof speakerEffective === "string" &&
+      speakerEffective.startsWith("papirus:")
+        ? `<img src="${resolveIconUrl(speakerEffective)}" class="papirus-icon papirus-icon--16" alt="" />`
+        : `<i class="${speakerEffective}"></i>`;
+    speakerIndicator.addEventListener("click", (e) => {
+      e.stopPropagation();
+      audioMixer().toggleChannelMute(winId);
+    });
+    return speakerIndicator;
+  }
+
+  syncSpeakerIndicators() {
+    const show = this.shouldShowSpeakerIndicator();
+    this.manager.openWindows.forEach((entry, winId) => {
+      const taskbarItem = entry.taskbarItem;
+      if (!taskbarItem) return;
+      const existing = $(".taskbar-speaker-indicator", taskbarItem);
+      if (show && !existing) {
+        taskbarItem.appendChild(this.buildSpeakerIndicator(winId));
+      } else if (!show && existing) {
+        existing.remove();
+      }
+    });
+    this.updateAudioIndicators();
+  }
+
   addToTaskbar(winId, title, iconValue, color = null) {
     this.manager.triggerSessionSave();
     if ($(`#taskbar-${winId}`)) return;
@@ -317,22 +360,9 @@ export class TaskbarSystem {
       });
       taskbarItem.appendChild(label);
     }
-    const speakerIndicator = createElement("span", {
-      className: "taskbar-speaker-indicator",
-    });
-    const speakerEffective = getEffectiveIcon(
-      "papirus:status/audio-volume-high",
-    );
-    speakerIndicator.innerHTML =
-      typeof speakerEffective === "string" &&
-      speakerEffective.startsWith("papirus:")
-        ? `<img src="${resolveIconUrl(speakerEffective)}" class="papirus-icon papirus-icon--16" alt="" />`
-        : `<i class="${speakerEffective}"></i>`;
-    speakerIndicator.addEventListener("click", (e) => {
-      e.stopPropagation();
-      audioMixer().toggleChannelMute(winId);
-    });
-    taskbarItem.appendChild(speakerIndicator);
+    if (this.shouldShowSpeakerIndicator()) {
+      taskbarItem.appendChild(this.buildSpeakerIndicator(winId));
+    }
     os.events.emit(BusEvents.WINDOW_CREATED, { winId });
 
     taskbarItem.onclick = () => this.handleRunningItemClick(winId);

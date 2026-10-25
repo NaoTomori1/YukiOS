@@ -1,7 +1,7 @@
 import { BusEvents } from "./core/EventBus.js";
 import { PREDEFINED_AVATARS } from "./utils/avatarData.js";
 import { SystemUtilities } from "./system.js";
-import { audioMixer, SystemAudio } from "./audioMixer.js";
+import { playSfx, SystemSfx } from "./sfx/systemSfx.js";
 import { YUKIOS_VERSION } from "./apps/about.js";
 import { resolveAvatarUrl } from "./social/avatarResolver.js";
 import { $, createElement } from "./shared/domUtils.js";
@@ -34,6 +34,15 @@ import {
   applyWin11Settings,
   disableWin11Settings,
 } from "./modes/win11/session.js";
+import {
+  setupWin11SessionUI,
+  unmountWin11SessionUI,
+  isWin11SessionUI,
+} from "./modes/win11/Win11LockScreen.js";
+import {
+  applyWin11LoginWallpaper,
+  resetWin11LoginWallpaper,
+} from "./modes/win11/Win11Wallpaper.js";
 import { getRecentNews } from "./apps/news.js";
 import { pickLoginTip } from "./shared/loginTips.js";
 import { BOOT_ANIMATIONS, pickAnimation } from "./bootAnimations.js";
@@ -41,8 +50,6 @@ import { runLoopingBootPreview } from "./bootScreen.js";
 import gsap from "gsap";
 import logoImg from "./assets/logo.png";
 import { setDeckBootVideoSkip } from "./modes/steamdeck/deckBootVideo.js";
-
-const HIDE_WIN11 = true;
 
 export class SessionManager {
   constructor(os) {
@@ -57,10 +64,7 @@ export class SessionManager {
     this.selectedUser = null;
     this.selectedSession =
       os.storage.get(StorageKeys.selectedSession) || "Yuki Desktop(Default)";
-    if (HIDE_WIN11 && this.selectedSession === "Yuki Windows 11") {
-      this.selectedSession = "Yuki Desktop(Default)";
-      os.storage.set(StorageKeys.selectedSession, this.selectedSession);
-    }
+
     this.ensureUserId();
     this.setupProfileUpdateListener();
     this.startTime = Date.now();
@@ -267,7 +271,7 @@ export class SessionManager {
     const timeStr = this.formatLoginClock(now);
     const dateStr = now.toLocaleDateString([], {
       weekday: "long",
-      month: "short",
+      month: this.selectedSession === "Yuki Windows 11" ? "long" : "short",
       day: "numeric",
     });
 
@@ -298,8 +302,10 @@ export class SessionManager {
       <div class="session-background"></div>
       <div class="session-content${state === "locked" ? "" : " extra-hidden"}">
         <div class="session-brand">YukiOS</div>
-        <div class="session-time">${timeStr}</div>
-        <div class="session-date">${dateStr}</div>
+        <div class="session-clock-block">
+          <div class="session-time">${timeStr}</div>
+          <div class="session-date">${dateStr}</div>
+        </div>
 
         <div class="session-extra">
         <div class="session-support-btn" id="session-support-btn" title="Support YukiOS">
@@ -416,14 +422,10 @@ export class SessionManager {
                 <img src="https://cdn.jsdelivr.net/gh/PapirusDevelopmentTeam/papirus-icon-theme@master/Papirus/22x22/apps/steam.svg" class="papirus-icon papirus-icon--32" alt="" />
                 <span>Deck</span>
               </button>
-              ${
-                HIDE_WIN11
-                  ? ""
-                  : `<button type="button" class="session-mode-btn" data-mode="win11">
+              ${`<button type="button" class="session-mode-btn" data-mode="win11">
                 <i class="fab fa-windows" aria-hidden="true"></i>
                 <span>Windows 11</span>
-              </button>`
-              }
+              </button>`}
               <button type="button" class="session-mode-btn" data-mode="3d">
                 <img src="https://cdn.jsdelivr.net/gh/PapirusDevelopmentTeam/papirus-icon-theme@master/Papirus/22x22/apps/kjumpingcube.svg" class="papirus-icon papirus-icon--32" alt="" />
                 <span>3D Fps Game</span>
@@ -673,6 +675,7 @@ export class SessionManager {
     this.bindSettingsEvents();
 
     await this.applySessionWallpaper(this.container);
+    await this.applySessionModeUI();
     await this.bindSessionEvents(onComplete);
     this.startClock();
     this.startUptimeCounter();
@@ -737,6 +740,9 @@ export class SessionManager {
       avatar: this.selectedUser.avatar,
     };
     setDeckBootVideoSkip(false);
+    if (this.selectedSession !== "Yuki Windows 11") {
+      playSfx(SystemSfx.STARTUP);
+    }
     await this.initializeSession();
     this.stopLoginTips();
     this.container.classList.add("exit");
@@ -790,6 +796,7 @@ export class SessionManager {
     const wp = await SystemUtilities.getLoginWallpaper();
     let bgEl = container.querySelector(".session-wallpaper");
     const blurOverlay = container.querySelector(".session-background");
+    resetWin11LoginWallpaper(container);
     if (!wp) {
       if (bgEl) bgEl.remove();
       if (blurOverlay) blurOverlay.style.display = "";
@@ -824,6 +831,27 @@ export class SessionManager {
       }
     }
     if (blurOverlay) blurOverlay.style.display = "none";
+  }
+
+  async applySessionModeUI() {
+    if (!this.container) return;
+    if (this.sessionState === "locked") return;
+    if (this.selectedSession === "Yuki Windows 11") {
+      applyWin11LoginWallpaper(this.container);
+      if (!isWin11SessionUI(this.container)) {
+        const avatarUrl = await resolveAvatarUrl(
+          this.selectedUser?.avatar,
+          PREDEFINED_AVATARS[0],
+        );
+        setupWin11SessionUI(this.container, {
+          userName: this.selectedUser?.name,
+          avatarUrl,
+        });
+      }
+      return;
+    }
+    unmountWin11SessionUI(this.container);
+    await this.applySessionWallpaper(this.container);
   }
 
   startClock() {
@@ -886,7 +914,7 @@ export class SessionManager {
         tiling: modes.tiling !== false,
         "3d": modes["3d"] !== false,
         steamdeck: modes.steamdeck !== false,
-        win11: HIDE_WIN11 ? false : modes.win11 !== false,
+        win11: modes.win11 !== false,
       },
       showSocial,
       showBanner,
@@ -916,10 +944,6 @@ export class SessionManager {
     this.container
       .querySelectorAll("#session-modes .session-mode-btn")
       .forEach((btn) => {
-        if (HIDE_WIN11 && btn.dataset.mode === "win11") {
-          btn.style.display = "none";
-          return;
-        }
         btn.style.display = prefs.modes[btn.dataset.mode] ? "" : "none";
       });
 
@@ -1309,6 +1333,19 @@ export class SessionManager {
 
     actionBtn.addEventListener("click", handleAction);
 
+    if (this.sessionState === "locked" && modeManager.isActive(MODES.WIN11)) {
+      const avatarUrl = await resolveAvatarUrl(
+        this.selectedUser?.avatar,
+        PREDEFINED_AVATARS[0],
+      );
+      setupWin11SessionUI(this.container, {
+        locked: true,
+        userName: this.selectedUser?.name,
+        avatarUrl,
+        onSignIn: handleAction,
+      });
+    }
+
     this.container.addEventListener("click", (e) => {
       if (e.target.closest("#avatar-edit-btn")) {
         avatarModal.style.display = "flex";
@@ -1357,12 +1394,14 @@ export class SessionManager {
 
     powerBtn.addEventListener("click", async () => {
       if (await os.dialog.confirm("Shutdown", `Shut down YukiOS?`)) {
+        playSfx(SystemSfx.SHUTDOWN);
         window.close();
       }
     });
 
     restartBtn.addEventListener("click", async () => {
       if (await os.dialog.confirm("Restart", `Restart YukiOS?`)) {
+        playSfx(SystemSfx.SHUTDOWN);
         location.reload();
       }
     });
@@ -1400,6 +1439,7 @@ export class SessionManager {
         this.selectedSession = modeToSession[btn.dataset.mode];
         os.storage.set(StorageKeys.selectedSession, this.selectedSession);
         sessionModes.forEach((b) => b.classList.toggle("active", b === btn));
+        this.applySessionModeUI().catch(() => {});
       });
     });
     await this.bindCarouselEvents();
@@ -1748,7 +1788,7 @@ export class SessionManager {
     }
 
     if (this.selectedSession === "Yuki Windows 11") {
-      applyWin11Settings();
+      applyWin11Settings({ playStartup: true });
     } else {
       disableWin11Settings();
     }
@@ -1829,7 +1869,7 @@ export class SessionManager {
       this.onlineUsersInterval = null;
     }
 
-    audioMixer().playSystemSound(SystemAudio.SHUTDOWN);
+    playSfx(SystemSfx.LOGOFF);
 
     os.window.closeAll();
 
@@ -1866,6 +1906,7 @@ export class SessionManager {
 
     if (this.container) {
       this.container.classList.add("exit");
+      unmountWin11SessionUI(this.container);
       setTimeout(() => {
         this.container.remove();
         this.container = null;
@@ -1875,6 +1916,8 @@ export class SessionManager {
           this.keyboardHandler = null;
         }
       }, 500);
+    } else {
+      unmountWin11SessionUI(this.container);
     }
 
     if (this.timeWorkerUnsub) {

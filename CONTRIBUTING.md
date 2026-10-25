@@ -23,7 +23,6 @@ pnpm run dev     # start dev server
 ### Before submitting
 
 - Run `pnpm build:dev` in `webos-desktop/` - the build must pass
-- Run `pnpm test` - all tests must pass
 
 ### Style
 

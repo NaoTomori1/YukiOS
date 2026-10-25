@@ -28,6 +28,7 @@ import { TilingManager } from "./modes/tiling/TilingManager.js";
 import { StorageKeys, os, MODES } from "./framework.js";
 import { $, createElement } from "./shared/domUtils.js";
 import { isMobile } from "./shared/platformUtils.js";
+import { playSfx, SystemSfx } from "./sfx/systemSfx.js";
 
 if (typeof Element !== "undefined" && !Element.prototype._yukiosRemovePatched) {
   const origRemove = Element.prototype.remove;
@@ -614,6 +615,7 @@ export class WindowManager {
   }
 
   minimizeWindow(win) {
+    playSfx(SystemSfx.MINIMIZE);
     this.windowStateManager.minimizeWindow(win);
   }
 
@@ -687,6 +689,10 @@ export class WindowManager {
 
   applySnap(win, zone) {
     this.snapSystem.applySnap(win, zone);
+  }
+
+  applySnapRect(win, rect) {
+    this.snapSystem.applySnapRect(win, rect);
   }
 
   unsnap(win) {

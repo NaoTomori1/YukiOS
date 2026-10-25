@@ -4,6 +4,12 @@ const SPACE_ID = "stk-rift-space";
 const RIM_ID = "stk-rift-rim";
 const WALLPAPER_IDS = ["wallpaper-img", "wallpaper-video"];
 
+const SVG_NS = "http://www.w3.org/2000/svg";
+const MASK_SVG_ID = "stk-rift-mask-svg";
+const MASK_ID = "stk-rift-mask";
+const MASK_BLUR_ID = "stk-rift-mask-blur";
+const MASK_REF = 'url("#' + MASK_ID + '")';
+
 const RIM_VIEW = "-1.5 -1.5 3 3";
 const RIM_BASE_PX = 100;
 const RIM_W = 300;
@@ -95,6 +101,14 @@ let maskPrimed = false;
 let frame = null;
 let spaceEl = null;
 let rimEl = null;
+let maskSvg = null;
+let maskNode = null;
+let maskFilter = null;
+let maskPlaced = null;
+let maskRight = null;
+let maskLeft = null;
+let maskWidth = 0;
+let maskHeight = 0;
 
 function clamp01(v) {
   return v < 0 ? 0 : v > 1 ? 1 : v;
@@ -239,6 +253,104 @@ function bladeAngles(p) {
   };
 }
 
+function svgNode(tag, attrs) {
+  const node = document.createElementNS(SVG_NS, tag);
+  if (attrs) {
+    for (const key in attrs) node.setAttribute(key, attrs[key]);
+  }
+  return node;
+}
+
+function buildMaskNode(w, h) {
+  const svg = svgNode("svg", {
+    xmlns: SVG_NS,
+    id: MASK_SVG_ID,
+    width: String(w),
+    height: String(h),
+    viewBox: "0 0 " + w + " " + h,
+    "aria-hidden": "true",
+    focusable: "false",
+  });
+  svg.style.cssText =
+    "position:fixed;left:-20000px;top:-20000px;pointer-events:none;overflow:hidden;";
+  const defs = svgNode("defs", null);
+  const filter = svgNode("filter", {
+    id: MASK_BLUR_ID,
+    filterUnits: "userSpaceOnUse",
+    x: "0",
+    y: "0",
+    width: "10",
+    height: "10",
+    "color-interpolation-filters": "sRGB",
+  });
+  filter.appendChild(
+    svgNode("feGaussianBlur", { stdDeviation: EDGE_BLUR.toFixed(2) }),
+  );
+  const mask = svgNode("mask", {
+    id: MASK_ID,
+    maskUnits: "userSpaceOnUse",
+    x: "0",
+    y: "0",
+    width: String(w),
+    height: String(h),
+  });
+  mask.appendChild(
+    svgNode("rect", { width: String(w), height: String(h), fill: "#fff" }),
+  );
+  const blurGroup = svgNode("g", { filter: "url(#" + MASK_BLUR_ID + ")" });
+  const placed = svgNode("g", {
+    transform: "translate(0,0) rotate(0) scale(1)",
+  });
+  const right = svgNode("g", { transform: "rotate(0)" });
+  right.appendChild(svgNode("path", { fill: "#000", d: RIGHT_BLADE_D }));
+  const left = svgNode("g", { transform: "rotate(0)" });
+  left.appendChild(svgNode("path", { fill: "#000", d: LEFT_BLADE_D }));
+  placed.appendChild(right);
+  placed.appendChild(left);
+  blurGroup.appendChild(placed);
+  mask.appendChild(blurGroup);
+  defs.appendChild(filter);
+  defs.appendChild(mask);
+  svg.appendChild(defs);
+  document.body.appendChild(svg);
+  maskSvg = svg;
+  maskNode = mask;
+  maskFilter = filter;
+  maskPlaced = placed;
+  maskRight = right;
+  maskLeft = left;
+  maskWidth = w;
+  maskHeight = h;
+}
+
+function removeMaskNode() {
+  try {
+    if (maskSvg && maskSvg.parentNode) maskSvg.parentNode.removeChild(maskSvg);
+  } catch {}
+  maskSvg = null;
+  maskNode = null;
+  maskFilter = null;
+  maskPlaced = null;
+  maskRight = null;
+  maskLeft = null;
+  maskWidth = 0;
+  maskHeight = 0;
+}
+
+function ensureMaskNode(w, h) {
+  if (maskSvg && maskSvg.isConnected && maskWidth === w && maskHeight === h) {
+    return false;
+  }
+  removeMaskNode();
+  try {
+    buildMaskNode(w, h);
+  } catch {
+    removeMaskNode();
+    return false;
+  }
+  return true;
+}
+
 function buildMask(w, h, span, spread01) {
   const base =
     "translate(" +
@@ -251,64 +363,48 @@ function buildMask(w, h, span, spread01) {
     span.toFixed(4) +
     ")";
   const blade = bladeAngles(spread01);
-  const svg =
-    "<svg xmlns='http://www.w3.org/2000/svg' width='" +
-    w +
-    "' height='" +
-    h +
-    "' viewBox='0 0 " +
-    w +
-    " " +
-    h +
-    "'>" +
-    "<defs>" +
-    "<filter id='rb' filterUnits='userSpaceOnUse' x='" +
-    (rift.x - span * 2).toFixed(1) +
-    "' y='" +
-    (rift.y - span * 2).toFixed(1) +
-    "' width='" +
-    (span * 4).toFixed(1) +
-    "' height='" +
-    (span * 4).toFixed(1) +
-    "' color-interpolation-filters='sRGB'>" +
-    "<feGaussianBlur stdDeviation='" +
-    EDGE_BLUR.toFixed(2) +
-    "'/></filter>" +
-    "<mask id='m' maskUnits='userSpaceOnUse' x='0' y='0' width='" +
-    w +
-    "' height='" +
-    h +
-    "'>" +
-    "<rect width='" +
-    w +
-    "' height='" +
-    h +
-    "' fill='#fff'/>" +
-    "<g filter='url(#rb)'>" +
-    "<g transform='" +
-    base +
-    "'>" +
-    "<g transform='rotate(" +
-    blade.right.toFixed(2) +
-    ")'><path fill='#000' d='" +
-    RIGHT_BLADE_D +
-    "'/></g>" +
-    "<g transform='rotate(" +
-    blade.left.toFixed(2) +
-    ")'><path fill='#000' d='" +
-    LEFT_BLADE_D +
-    "'/></g>" +
-    "</g>" +
-    "</g>" +
-    "</mask>" +
-    "</defs>" +
-    "<rect width='" +
-    w +
-    "' height='" +
-    h +
-    "' fill='#fff' mask='url(#m)'/>" +
-    "</svg>";
-  return 'url("data:image/svg+xml,' + encodeURIComponent(svg) + '")';
+  try {
+    if (maskPlaced) maskPlaced.setAttribute("transform", base);
+    if (maskRight) {
+      maskRight.setAttribute(
+        "transform",
+        "rotate(" + blade.right.toFixed(2) + ")",
+      );
+    }
+    if (maskLeft) {
+      maskLeft.setAttribute(
+        "transform",
+        "rotate(" + blade.left.toFixed(2) + ")",
+      );
+    }
+    if (maskFilter) {
+      maskFilter.setAttribute("x", (rift.x - span * 2).toFixed(1));
+      maskFilter.setAttribute("y", (rift.y - span * 2).toFixed(1));
+      maskFilter.setAttribute("width", (span * 4).toFixed(1));
+      maskFilter.setAttribute("height", (span * 4).toFixed(1));
+    }
+  } catch {}
+  return MASK_REF;
+}
+
+function linkMask() {
+  for (let i = 0; i < WALLPAPER_IDS.length; i++) {
+    let el = null;
+    try {
+      el = $("#" + WALLPAPER_IDS[i]);
+    } catch {}
+    if (!el) continue;
+    try {
+      if (el.style.maskImage !== MASK_REF) {
+        el.style.maskImage = MASK_REF;
+        el.style.maskRepeat = "no-repeat";
+        el.style.maskSize = "100% 100%";
+        el.style.webkitMaskImage = MASK_REF;
+        el.style.webkitMaskRepeat = "no-repeat";
+        el.style.webkitMaskSize = "100% 100%";
+      }
+    } catch {}
+  }
 }
 
 function applyMask() {
@@ -319,29 +415,20 @@ function applyMask() {
     w = probe && probe.clientWidth ? probe.clientWidth : window.innerWidth;
     h = probe && probe.clientHeight ? probe.clientHeight : window.innerHeight;
   } catch {
-    return;
+    return false;
   }
   if (!w || !h) return false;
-  const mask = buildMask(
-    w,
-    h,
-    Math.max(MIN_MASK_SPAN, rift.span * rift.open),
-    rift.spread,
-  );
-  for (let i = 0; i < WALLPAPER_IDS.length; i++) {
-    let el = null;
-    try {
-      el = $("#" + WALLPAPER_IDS[i]);
-    } catch {}
-    if (!el) continue;
-    try {
-      el.style.maskImage = mask;
-      el.style.maskRepeat = "no-repeat";
-      el.style.maskSize = "100% 100%";
-      el.style.webkitMaskImage = mask;
-      el.style.webkitMaskRepeat = "no-repeat";
-      el.style.webkitMaskSize = "100% 100%";
-    } catch {}
+  try {
+    ensureMaskNode(w, h);
+    buildMask(
+      w,
+      h,
+      Math.max(MIN_MASK_SPAN, rift.span * rift.open),
+      rift.spread,
+    );
+    linkMask();
+  } catch {
+    return false;
   }
   return true;
 }
@@ -362,6 +449,7 @@ function clearMask() {
       el.style.webkitMaskSize = "";
     } catch {}
   }
+  removeMaskNode();
 }
 
 function hideSpace() {

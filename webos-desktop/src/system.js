@@ -918,6 +918,9 @@ export class SystemUtilities {
   static async setWallpaper(url) {
     await WallpaperManager.setWallpaper(url);
   }
+  static applyWallpaperOnly(url) {
+    WallpaperManager.applyWallpaper(url);
+  }
   static async setLoginWallpaper(url) {
     await WallpaperManager.setLoginWallpaper(url);
   }

@@ -31,14 +31,12 @@ function collectSourceFiles(currentDir, excludedDirs) {
   for (const dirEntry of dirEntries) {
     const fullPath = join(currentDir, dirEntry.name);
     if (dirEntry.isDirectory()) {
-      if (dirEntry.name === "__tests__" || excludedDirs.has(fullPath)) continue;
+      if (excludedDirs.has(fullPath)) continue;
       collected.push(...collectSourceFiles(fullPath, excludedDirs));
       continue;
     }
     if (!dirEntry.isFile()) continue;
     if (!/\.(js|css)$/.test(dirEntry.name)) continue;
-    if (/\.test\.js$/.test(dirEntry.name) || /\.spec\.js$/.test(dirEntry.name))
-      continue;
     collected.push(fullPath);
   }
   return collected;

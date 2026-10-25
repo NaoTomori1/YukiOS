@@ -1,4 +1,4 @@
-import { createElement } from "../../framework.js";
+import { $$, createElement } from "../../framework.js";
 import { playShatter, playGrab, playHit } from "../chaosSfx.js";
 
 export const CAGE_MIN_W = 64;
@@ -102,10 +102,13 @@ export function captureCage(rect) {
     return false;
   }
   try {
-    node.style.left = x + "px";
+    node.style.left = "0px";
   } catch {}
   try {
-    node.style.top = y + "px";
+    node.style.top = "0px";
+  } catch {}
+  try {
+    node.style.translate = x + "px " + y + "px";
   } catch {}
   try {
     node.style.width = w + "px";
@@ -128,8 +131,9 @@ export function captureCage(rect) {
   }
   try {
     if (front) {
-      front.style.left = x + "px";
-      front.style.top = y + "px";
+      front.style.left = "0px";
+      front.style.top = "0px";
+      front.style.translate = x + "px " + y + "px";
       front.style.width = w + "px";
       front.style.height = h + "px";
     }
@@ -197,15 +201,11 @@ export function updateCage(dt) {
     }
   } catch {}
   try {
-    cage.node.style.left = cage.x + "px";
-  } catch {}
-  try {
-    cage.node.style.top = cage.y + "px";
+    cage.node.style.translate = cage.x + "px " + cage.y + "px";
   } catch {}
   try {
     if (cage.front) {
-      cage.front.style.left = cage.x + "px";
-      cage.front.style.top = cage.y + "px";
+      cage.front.style.translate = cage.x + "px " + cage.y + "px";
     }
   } catch {}
 }
@@ -253,10 +253,10 @@ export function nudgeCage(dx) {
     cage.x = Math.min(Math.max(cage.x + dx, 0), maxX);
   } catch {}
   try {
-    cage.node.style.left = cage.x + "px";
+    cage.node.style.translate = cage.x + "px " + cage.y + "px";
   } catch {}
   try {
-    if (cage.front) cage.front.style.left = cage.x + "px";
+    if (cage.front) cage.front.style.translate = cage.x + "px " + cage.y + "px";
   } catch {}
 }
 
@@ -420,15 +420,11 @@ function onCageMove(e) {
     }
   } catch {}
   try {
-    cage.node.style.left = cage.x + "px";
-  } catch {}
-  try {
-    cage.node.style.top = cage.y + "px";
+    cage.node.style.translate = cage.x + "px " + cage.y + "px";
   } catch {}
   try {
     if (cage.front) {
-      cage.front.style.left = cage.x + "px";
-      cage.front.style.top = cage.y + "px";
+      cage.front.style.translate = cage.x + "px " + cage.y + "px";
     }
   } catch {}
 }
@@ -522,4 +518,46 @@ function onCageUp(e) {
   try {
     samples = [];
   } catch {}
+}
+
+export function getShardNodes() {
+  let nodes = [];
+  try {
+    nodes = Array.from($$(".stk-layer .stk-shard") || []);
+  } catch {}
+  return nodes.filter((node) => {
+    try {
+      return !!node && node.isConnected;
+    } catch {
+      return false;
+    }
+  });
+}
+
+export function setShardSelected(node, on) {
+  try {
+    if (!node) return;
+    node.classList.toggle("stk-selected", !!on);
+  } catch {}
+}
+
+export function clearShardSelection() {
+  try {
+    const nodes = getShardNodes();
+    for (let i = 0; i < nodes.length; i++) setShardSelected(nodes[i], false);
+  } catch {}
+}
+
+export function getSelectedShards() {
+  try {
+    return getShardNodes().filter((node) => {
+      try {
+        return node.classList.contains("stk-selected");
+      } catch {
+        return false;
+      }
+    });
+  } catch {
+    return [];
+  }
 }

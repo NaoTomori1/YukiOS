@@ -46,6 +46,7 @@ import { LavatApp } from "./apps/lavat.js";
 import { BtopApp } from "./apps/btop.js";
 import { CmatrixApp } from "./apps/cmatrix.js";
 import { MagnifierApp } from "./apps/magnifier.js";
+import { NekoApp } from "./apps/neko.js";
 import { RemoteHostApp } from "./apps/RemoteHostApp.js";
 import { IntroTourApp } from "./apps/introTour.js";
 import { ModeSwitcherApp } from "./apps/modeSwitcher.js";
@@ -53,6 +54,7 @@ import { AquariumApp } from "./apps/aquarium.js";
 import { InfaredYoutubeApp } from "./apps/infaredYoutube.js";
 import { BoxedWineApp } from "./apps/boxedWine.js";
 import { CodeRedApp } from "./apps/codeRed.js";
+import { ClippyApp } from "./apps/clippy.js";
 
 const APP_CLASS_MAP = {
   terminalApp: TerminalApp,
@@ -106,9 +108,11 @@ const APP_CLASS_MAP = {
   btopApp: BtopApp,
   cmatrixApp: CmatrixApp,
   magnifierApp: MagnifierApp,
+  nekoApp: NekoApp,
   remoteHostApp: RemoteHostApp,
   boxedWineApp: BoxedWineApp,
   codeRedApp: CodeRedApp,
+  clippyApp: ClippyApp,
 };
 
 const APP_DEFINITIONS = APP_MANIFESTS.map((manifest) => {

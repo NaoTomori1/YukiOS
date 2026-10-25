@@ -4,6 +4,7 @@ import { modeManager, MODES } from "../modeManager.js";
 import { bus, BusEvents } from "../core/EventBus.js";
 import { updateGridConfig } from "../desktopui/desktopui.js";
 import { audioMixer, SystemAudio } from "../audioMixer.js";
+import { setSystemSfxEnabled } from "../sfx/systemSfx.js";
 import { applyTrayEnabled } from "./settingsApply.js";
 import {
   applyTheme,
@@ -1758,6 +1759,7 @@ export function bindAudioCategory(win, settings, showSaved) {
   const systemAudioToggle = $("#settingsSystemAudioEnabled", win);
   const systemVolumeSlider = $("#settingsSystemVolume", win);
   const systemVolumeValue = $("#settingsSystemVolumeValue", win);
+  const windowsSfxToggle = $("#settingsWindowsSfxEnabled", win);
 
   if (soundToggle) {
     bindEvent(soundToggle, "change", () => {
@@ -1816,13 +1818,22 @@ export function bindAudioCategory(win, settings, showSaved) {
       showSaved();
     });
   }
+
+  if (windowsSfxToggle) {
+    bindEvent(windowsSfxToggle, "change", () => {
+      const enabled = windowsSfxToggle.checked;
+      settings.windowsSfxEnabled = enabled;
+      setSystemSfxEnabled(enabled);
+      showSaved();
+    });
+  }
 }
 
 export function renderTrayAppsList(win, settings) {
   const trayAppsList = $("#trayAppsList", win);
   if (!trayAppsList) return;
 
-  const trayItems = os.tray.getTrayItems();
+  const trayItems = os.tray.getAllItems();
   if (trayItems.length === 0) {
     setHTML(
       trayAppsList,

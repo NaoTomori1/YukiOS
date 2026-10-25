@@ -12,6 +12,12 @@ import { resolveIconUrl } from "../../shared/assetResolver.js";
 import { isImageFile } from "../../shared/fileKindDetector.js";
 import { appMap } from "../../games/gamesList.js";
 import { getAppRegistry } from "../../appRegistry.js";
+import { playSfx, SystemSfx } from "../../sfx/systemSfx.js";
+import { buildCategorySection } from "./Win11Categories.js";
+import { showWin11BootChoreography } from "./Win11BootScreen.js";
+
+const SEARCH_SVG =
+  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="15" height="15" aria-hidden="true"><defs><linearGradient id="win11-search-menu-gradient" x1="0" y1="1" x2="1" y2="0"><stop class="search-stop-1" offset="0%"></stop><stop class="search-stop-1b" offset="38%"></stop><stop class="search-stop-2" offset="70%"></stop><stop class="search-stop-3" offset="100%"></stop></linearGradient></defs><path class="search-ring" fill-rule="evenodd" d="M416 208c0 45.9-14.9 88.3-40 122.7L502.6 457.4c12.5 12.5 12.5 32.8 0 45.3s-32.8 12.5-45.3 0L330.7 376c-34.4 25.2-76.8 40-122.7 40C93.1 416 0 322.9 0 208S93.1 0 208 0S416 93.1 416 208zM208 352a144 144 0 1 0 0-288 144 144 0 1 0 0 288z"></path></svg>';
 
 const DEFAULT_PINNED = [
   "explorerApp",
@@ -35,13 +41,17 @@ const QUICK_SEARCHES = [
 let observer = null;
 let builtForSig = "";
 let showingAll = false;
+let showingAllLast = false;
 let showSearch = false;
+let searchQuery = "";
 
 export function setupWin11StartMenu() {
   if (observer) return;
   observer = new MutationObserver(() => {
     const menuEl = $("#start-menu");
-    if (menuEl && menuEl.style.display === "flex") renderWin11Menu(false);
+    if (!menuEl || menuEl.style.display !== "flex") return;
+    renderWin11Menu(false);
+    applySearchState();
   });
   observer.observe(document.body, {
     attributes: true,
@@ -71,7 +81,9 @@ export function teardownWin11StartMenu() {
   }
   builtForSig = "";
   showingAll = false;
+  showingAllLast = false;
   showSearch = false;
+  searchQuery = "";
 }
 
 export function refreshWin11StartMenu() {
@@ -151,7 +163,7 @@ function getMergedApps() {
 
 function collectPinnedIds(merged, ids, picked, seen, byId) {
   ids.forEach((id) => {
-    if (picked.length >= 18 || typeof id !== "string" || seen.has(id)) return;
+    if (picked.length >= 12 || typeof id !== "string" || seen.has(id)) return;
     const row = byId.get(id);
     if (!row) return;
     seen.add(id);
@@ -167,7 +179,7 @@ function getPinnedApps(merged) {
   collectPinnedIds(merged, Array.isArray(favs) ? favs : [], picked, seen, byId);
   collectPinnedIds(merged, DEFAULT_PINNED, picked, seen, byId);
   merged.forEach((row) => {
-    if (picked.length >= 18 || seen.has(row.id)) return;
+    if (picked.length >= 12 || seen.has(row.id)) return;
     seen.add(row.id);
     picked.push(row);
   });
@@ -182,13 +194,13 @@ function padSix(rows) {
   return out;
 }
 
-function getRecentAppRows(merged) {
+function getRecentAppRows(merged, limit = 6) {
   const byId = new Map(merged.map((row) => [row.id, row]));
   const stored = readStore(StorageKeys.recentlyUsedApps, []);
   const list = Array.isArray(stored) ? stored : [];
   const rows = [];
   list.forEach((id) => {
-    if (rows.length >= 6 || typeof id !== "string") return;
+    if (rows.length >= limit || typeof id !== "string") return;
     const row = byId.get(id);
     if (!row) return;
     rows.push(row);
@@ -196,12 +208,12 @@ function getRecentAppRows(merged) {
   return rows;
 }
 
-function getRecentFileRows() {
+function getRecentFileRows(limit = 6) {
   const stored = readStore(StorageKeys.recentFiles, []);
   const list = Array.isArray(stored) ? stored : [];
   const rows = [];
   list.forEach((item) => {
-    if (rows.length >= 6 || !item || typeof item !== "object" || !item.name)
+    if (rows.length >= limit || !item || typeof item !== "object" || !item.name)
       return;
     rows.push({ name: item.name, path: item.path || [] });
   });
@@ -225,10 +237,10 @@ function formatTimeLabel(mins) {
   return Math.floor(mins / 60) + "h ago";
 }
 
-function getRecommended(merged) {
+function getLastEntries(merged, limit) {
   const entries = [];
-  getRecentAppRows(merged).forEach((row, index) => {
-    if (entries.length >= 6) return;
+  getRecentAppRows(merged, limit).forEach((row, index) => {
+    if (entries.length >= limit) return;
     const mins = getLaunchMinutes(row.id);
     entries.push({
       type: "app",
@@ -238,11 +250,11 @@ function getRecommended(merged) {
       ),
     });
   });
-  getRecentFileRows().forEach((file) => {
-    if (entries.length >= 6) return;
+  getRecentFileRows(limit).forEach((file) => {
+    if (entries.length >= limit) return;
     entries.push({ type: "file", file, label: "Recently Added" });
   });
-  if (entries.length < 6) {
+  if (entries.length < limit) {
     const byId = new Map(merged.map((row) => [row.id, row]));
     const present = new Set();
     entries.forEach((entry) => {
@@ -256,15 +268,15 @@ function getRecommended(merged) {
       "notepadApp",
       "calculatorApp",
     ].forEach((id) => {
-      if (entries.length >= 6 || present.has(id)) return;
+      if (entries.length >= limit || present.has(id)) return;
       const row = byId.get(id);
       if (!row) return;
       present.add(id);
       entries.push({ type: "app", row, label: "Recently added" });
     });
-    if (entries.length < 6) {
+    if (entries.length < limit) {
       merged.forEach((row) => {
-        if (!row || entries.length >= 6 || present.has(row.id)) return;
+        if (!row || entries.length >= limit || present.has(row.id)) return;
         present.add(row.id);
         entries.push({ type: "app", row, label: "Recently added" });
       });
@@ -331,8 +343,23 @@ function buildWinIcon(iconVal, size) {
 
 function setShowingAll(value) {
   showingAll = value;
+  if (value) showingAllLast = false;
   const root = $("#win11-start-root");
   if (!root) return;
+  const flag = showingAll ? "true" : "false";
+  const stmenu = $(".stmenu", root);
+  if (stmenu) stmenu.setAttribute("data-allapps", flag);
+  const allCont = $(".allCont", root);
+  if (allCont) allCont.setAttribute("data-allapps", flag);
+  root.setAttribute("data-lastall", showingAllLast ? "true" : "false");
+}
+
+function setShowingAllLast(value) {
+  showingAllLast = value;
+  if (value) showingAll = false;
+  const root = $("#win11-start-root");
+  if (!root) return;
+  root.setAttribute("data-lastall", value ? "true" : "false");
   const flag = showingAll ? "true" : "false";
   const stmenu = $(".stmenu", root);
   if (stmenu) stmenu.setAttribute("data-allapps", flag);
@@ -443,7 +470,7 @@ function fillPinned(grid, rows, menuEl) {
   rows.forEach((row) => grid.appendChild(buildPinnedCell(row, menuEl)));
 }
 
-function buildRecRow(entry, menuEl) {
+function buildLastRow(entry, menuEl) {
   if (entry.type === "app")
     return buildMatchRow(entry.row.icon, entry.row.title, entry.label, 32, () =>
       launchWinApp(entry.row.id, menuEl),
@@ -460,21 +487,23 @@ function showAlpha(scope, open) {
   if (box) box.setAttribute("data-alpha", open ? "true" : "false");
 }
 
-function buildBarButton(label, chevClass, onClick) {
+function buildBackButton(label, onClick) {
   const btn = createElement("div", { className: "gpbtn" });
-  if (chevClass === "left") {
-    const wrap = createElement("span", { className: "chevLeft" });
-    wrap.appendChild(createElement("i", { className: "fas fa-chevron-left" }));
-    btn.appendChild(wrap);
-  }
+  const wrap = createElement("span", { className: "chevLeft" });
+  wrap.appendChild(createElement("i", { className: "fas fa-chevron-left" }));
+  btn.appendChild(wrap);
   btn.appendChild(createElement("div", { text: label }));
-  if (chevClass === "right")
-    btn.appendChild(createElement("i", { className: "fas fa-chevron-right" }));
   bindEvent(btn, "click", onClick);
   return btn;
 }
 
-function buildMainMenu(menuEl, padded, recommended) {
+function buildTextButton(label, onClick) {
+  const btn = createElement("div", { className: "showAllBtn", text: label });
+  bindEvent(btn, "click", onClick);
+  return btn;
+}
+
+function buildMainMenu(menuEl, padded, lastEntries, merged) {
   const stmenu = createElement("div", {
     className: "stmenu",
     attributes: { "data-allapps": showingAll ? "true" : "false" },
@@ -486,7 +515,8 @@ function buildMainMenu(menuEl, padded, recommended) {
     createElement("div", { className: "gpname", text: "Pinned" }),
   );
   pinBar.appendChild(
-    buildBarButton("All apps", "right", () => {
+    buildTextButton("All apps", () => {
+      playSfx(SystemSfx.NAV_NEXT);
       setShowingAll(true);
     }),
   );
@@ -494,19 +524,29 @@ function buildMainMenu(menuEl, padded, recommended) {
   fillPinned(pnApps, padded, menuEl);
   pinnedApps.appendChild(pinBar);
   pinnedApps.appendChild(pnApps);
-  const recApps = createElement("div", { className: "recApps" });
-  const recBar = createElement("div", { className: "stAcbar" });
-  recBar.appendChild(
-    createElement("div", { className: "gpname", text: "Recommended" }),
+  const lastApps = createElement("div", { className: "lastApps" });
+  const lastBar = createElement("div", { className: "stAcbar" });
+  lastBar.appendChild(
+    createElement("div", { className: "gpname", text: "Last" }),
   );
-  const reApps = createElement("div", { className: "reApps" });
-  recommended.forEach((entry) =>
-    reApps.appendChild(buildRecRow(entry, menuEl)),
+  const showAllBtn = buildTextButton("Show All", () => {
+    playSfx(SystemSfx.NAV_NEXT);
+    setShowingAllLast(true);
+  });
+  lastBar.appendChild(showAllBtn);
+  const lastGrid = createElement("div", { className: "lastGrid" });
+  lastEntries.forEach((entry) =>
+    lastGrid.appendChild(buildLastRow(entry, menuEl)),
   );
-  recApps.appendChild(recBar);
-  recApps.appendChild(reApps);
+  lastApps.appendChild(lastBar);
+  lastApps.appendChild(lastGrid);
   menuUp.appendChild(pinnedApps);
-  menuUp.appendChild(recApps);
+  menuUp.appendChild(lastApps);
+  menuUp.appendChild(
+    buildCategorySection(menuEl, merged, (appId) =>
+      launchWinApp(appId, menuEl),
+    ),
+  );
   stmenu.appendChild(menuUp);
   return { stmenu, pnApps };
 }
@@ -580,7 +620,7 @@ function buildAllCont(menuEl, groups) {
     createElement("div", { className: "gpname", text: "All apps" }),
   );
   bar.appendChild(
-    buildBarButton("Back", "left", () => {
+    buildBackButton("Back", () => {
       setShowingAll(false);
     }),
   );
@@ -601,6 +641,28 @@ function buildAllCont(menuEl, groups) {
   appCont.appendChild(alphaBox);
   allCont.appendChild(appCont);
   return allCont;
+}
+
+function buildLastCont(menuEl, entries) {
+  const lastCont = createElement("div", {
+    className: "lastCont",
+    attributes: { "data-lastall": showingAllLast ? "true" : "false" },
+  });
+  const cont = createElement("div", { className: "appCont" });
+  const bar = createElement("div", { className: "stAcbar" });
+  bar.appendChild(createElement("div", { className: "gpname", text: "Last" }));
+  bar.appendChild(
+    buildBackButton("Back", () => {
+      playSfx(SystemSfx.NAV_BACK);
+      setShowingAllLast(false);
+    }),
+  );
+  const grid = createElement("div", { className: "lastFull" });
+  entries.forEach((entry) => grid.appendChild(buildLastRow(entry, menuEl)));
+  cont.appendChild(bar);
+  cont.appendChild(grid);
+  lastCont.appendChild(cont);
+  return lastCont;
 }
 
 function fillSearchDefault(leftSide, rightSide, input, menuEl, merged) {
@@ -697,7 +759,7 @@ function updateSearch(query, refs, menuEl, merged, padded, pnApps) {
   fillSearchResult(refs, menuEl, matches[0], q);
 }
 
-function buildSearchBlock(menuEl, merged) {
+function buildSearchBlock(menuEl, merged, input) {
   const searchMenu = createElement("div", { className: "searchMenu" });
   const backRow = createElement("div", { className: "backRow" });
   const backBtn = createElement("button", {
@@ -705,24 +767,10 @@ function buildSearchBlock(menuEl, merged) {
     text: "Back",
   });
   bindEvent(backBtn, "click", () => {
-    showSearch = false;
-    renderWin11Menu(true);
+    playSfx(SystemSfx.NAV_BACK);
+    exitSearch();
   });
   backRow.appendChild(backBtn);
-  const searchBar = createElement("div", { className: "searchBar" });
-  const iconWrap = createElement("span", { className: "searchIcon" });
-  iconWrap.appendChild(
-    createElement("i", { className: "fas fa-magnifying-glass" }),
-  );
-  const input = createElement("input", {
-    attributes: {
-      type: "text",
-      placeholder: "Type here to search",
-      autocomplete: "off",
-    },
-  });
-  searchBar.appendChild(iconWrap);
-  searchBar.appendChild(input);
   const shResult = createElement("div", { className: "shResult" });
   const leftSide = createElement("div", { className: "leftSide" });
   const rightSide = createElement("div", {
@@ -732,11 +780,43 @@ function buildSearchBlock(menuEl, merged) {
   shResult.appendChild(leftSide);
   shResult.appendChild(rightSide);
   searchMenu.appendChild(backRow);
-  searchMenu.appendChild(searchBar);
   searchMenu.appendChild(shResult);
   const refs = { searchMenu, input, leftSide, rightSide };
   fillSearchDefault(leftSide, rightSide, input, menuEl, merged);
   return refs;
+}
+
+function buildTopSearchBar() {
+  const bar = createElement("div", { className: "topSearch" });
+  const iconWrap = createElement("span", { className: "searchIcon" });
+  iconWrap.innerHTML = SEARCH_SVG;
+  const input = createElement("input", {
+    attributes: {
+      type: "text",
+      placeholder: "Search for apps, settings, and documents",
+      autocomplete: "off",
+    },
+  });
+  if (searchQuery) input.value = searchQuery;
+  bar.appendChild(iconWrap);
+  bar.appendChild(input);
+  return { bar, input };
+}
+
+function setSearchFlag(root, flag) {
+  if (!root) return;
+  if (root.getAttribute("data-search") === flag) return;
+  root.setAttribute("data-search", flag);
+}
+
+function exitSearch() {
+  showSearch = false;
+  searchQuery = "";
+  const root = $("#win11-start-root");
+  if (!root) return;
+  setSearchFlag(root, "false");
+  const input = $(".topSearch input", root);
+  if (input) input.value = "";
 }
 
 function setPowerVisible(powerCont, open) {
@@ -786,23 +866,43 @@ function buildMenuBar(menuEl) {
     buildPowerRow("fas fa-lock", "Lock", () => {
       setPowerVisible(powerCont, false);
       hideWinMenu(menuEl);
+      playSfx(SystemSfx.NAV_INVOKE);
+      os.app.lockSession();
     }),
   );
   powerCont.appendChild(
     buildPowerRow("fas fa-power-off", "Shut down", async () => {
       setPowerVisible(powerCont, false);
+      hideWinMenu(menuEl);
       let ok = false;
       try {
         ok = await os.dialog.confirm("Shut down", "Shut down YukiOS?");
       } catch {
         ok = false;
       }
-      if (ok) window.location.reload();
+      if (!ok) return;
+      playSfx(SystemSfx.SHUTDOWN);
+      showWin11BootChoreography({
+        mode: "shutdown",
+        onComplete: () => {
+          os.storage.set(StorageKeys.win11SkipStartupBoot, true);
+          window.location.reload();
+        },
+      });
     }),
   );
   powerCont.appendChild(
     buildPowerRow("fas fa-rotate-right", "Restart", () => {
-      window.location.reload();
+      setPowerVisible(powerCont, false);
+      hideWinMenu(menuEl);
+      playSfx(SystemSfx.SHUTDOWN);
+      showWin11BootChoreography({
+        mode: "restart",
+        onComplete: () => {
+          os.storage.set(StorageKeys.win11SkipStartupBoot, true);
+          window.location.reload();
+        },
+      });
     }),
   );
   const powerBtn = createElement("i", { className: "fas fa-power-off" });
@@ -838,7 +938,7 @@ function appendWin11CreditPanel() {
   const licensePara = createElement("p");
   setText(
     licensePara,
-    "Start menu layout and taskbar styling are adapted from the ",
+    "Start menu layout, taskbar and settings app styling are adapted from the ",
   );
   const licenseAnchor = createElement("a", {
     attributes: {
@@ -926,19 +1026,13 @@ function renderWin11Menu(force) {
   if (!existing) {
     showingAll = false;
     showSearch = false;
+    searchQuery = "";
   }
   const merged = getMergedApps();
   const pinnedReal = getPinnedApps(merged);
   const alignRaw = readStore(StorageKeys.win11TaskbarAlign, "center");
   const align = alignRaw === "left" ? "left" : "center";
-  const sig =
-    showingAll +
-    "|" +
-    showSearch +
-    "|" +
-    align +
-    "|" +
-    pinnedReal.map((row) => row.id).join(",");
+  const sig = align + "|" + pinnedReal.map((row) => row.id).join(",");
   if (!force && existing && sig === builtForSig) return;
   builtForSig = sig;
   hideNativeStart(menuEl);
@@ -950,28 +1044,44 @@ function renderWin11Menu(force) {
   const root = createElement("div", {
     id: "win11-start-root",
     className: "startMenu",
-    attributes: { "data-align": align, "data-hide": "false" },
+    attributes: {
+      "data-align": align,
+      "data-hide": "false",
+      "data-search": "false",
+      "data-lastall": showingAllLast ? "true" : "false",
+    },
   });
-  if (showSearch) {
-    const searchRefs = buildSearchBlock(menuEl, merged);
-    root.appendChild(searchRefs.searchMenu);
-    menuEl.appendChild(root);
-    bindEvent(searchRefs.input, "input", () => {
-      updateSearch(
-        searchRefs.input.value,
-        searchRefs,
-        menuEl,
-        merged,
-        padded,
-        null,
-      );
-    });
-    return;
-  }
-  const mainRefs = buildMainMenu(menuEl, padded, getRecommended(merged));
+  const topSearch = buildTopSearchBar();
+  const searchRefs = buildSearchBlock(menuEl, merged, topSearch.input);
+  const mainRefs = buildMainMenu(
+    menuEl,
+    padded,
+    getLastEntries(merged, 6),
+    merged,
+  );
+  root.appendChild(topSearch.bar);
   root.appendChild(mainRefs.stmenu);
   root.appendChild(buildAllCont(menuEl, groups));
+  root.appendChild(buildLastCont(menuEl, getLastEntries(merged, 18)));
+  root.appendChild(searchRefs.searchMenu);
   root.appendChild(buildMenuBar(menuEl));
   appendWin11Credit(root);
   menuEl.appendChild(root);
+  bindEvent(topSearch.input, "input", () => {
+    const value = topSearch.input.value;
+    searchQuery = value;
+    showSearch = Boolean(value.trim());
+    setSearchFlag(root, showSearch ? "true" : "false");
+    if (showSearch) {
+      updateSearch(value, searchRefs, menuEl, merged, padded, null);
+    }
+  });
+  applySearchState();
+  if (showSearch) topSearch.input.focus();
+}
+
+function applySearchState() {
+  const root = $("#win11-start-root");
+  if (!root) return;
+  setSearchFlag(root, showSearch ? "true" : "false");
 }

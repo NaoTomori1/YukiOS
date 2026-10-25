@@ -9,6 +9,7 @@ import {
 import { getWeatherInfo } from "../../shared/weatherCodes.js";
 import { detectUserLocation } from "../../apps/weather.js";
 import yukiUpdates from "../../news.json";
+import { playSfx, SystemSfx } from "../../sfx/systemSfx.js";
 
 let boardRoot = null;
 let clockNode = null;
@@ -29,6 +30,7 @@ let allNewsListNode = null;
 let clockTimer = null;
 let loadToken = 0;
 let outsideHandler = null;
+let feedDiscoveryPlayed = false;
 
 const BOARD_ID = "win11-widgets-board";
 

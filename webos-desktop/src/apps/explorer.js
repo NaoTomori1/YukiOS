@@ -39,6 +39,7 @@ import { getEffectiveIcon } from "../shared/iconPack.js";
 import { trigger as triggerCursorEffect } from "../cursorEffect.js";
 import { AppSource } from "../AppSource.js";
 import { showDynamicContextMenu } from "../shared/contextMenu.js";
+import { playSfx, SystemSfx } from "../sfx/systemSfx.js";
 
 import { makePaneResizable } from "../shared/paneResizer.js";
 import {
@@ -1952,6 +1953,7 @@ export class ExplorerApp extends BaseApp {
       });
     });
 
+    const currentFullPath = () => os.fs.resolveUserPath(inst.currentPath);
     bindEvents(pathInput, {
       keydown: async (e) => {
         e.stopPropagation();
@@ -1962,7 +1964,11 @@ export class ExplorerApp extends BaseApp {
             return;
           }
 
-          const targetParts = val.split("/").filter(Boolean);
+          const targetParts = this.segmentsFromFullPath(val);
+          if (targetParts.length === 0) {
+            this.navigateInstance(inst, []);
+            return;
+          }
           try {
             if (await os.fs.exists(targetParts)) {
               const isDir = await os.fs
@@ -1973,19 +1979,19 @@ export class ExplorerApp extends BaseApp {
                 this.navigateInstance(inst, targetParts);
               } else {
                 os.notify.send(`"${val}" is a file, not a directory.`);
-                pathInput.value = "/" + inst.currentPath.join("/");
+                pathInput.value = currentFullPath();
               }
             } else {
               os.notify.send(`Directory not found: ${val}`);
-              pathInput.value = "/" + inst.currentPath.join("/");
+              pathInput.value = currentFullPath();
             }
           } catch (err) {
             os.notify.send(`Failed to open directory: ${val}`);
-            pathInput.value = "/" + inst.currentPath.join("/");
+            pathInput.value = currentFullPath();
           }
           pathInput.blur();
         } else if (KeybindManager.matches(e, "explorer.escape")) {
-          pathInput.value = "/" + inst.currentPath.join("/");
+          pathInput.value = currentFullPath();
           pathInput.blur();
         }
       },
@@ -2000,6 +2006,16 @@ export class ExplorerApp extends BaseApp {
         this.renderInstance(inst);
       };
     }
+  }
+
+  segmentsFromFullPath(value) {
+    const root = os.fs.resolveUserPath([]);
+    const normalized = "/" + value.split("/").filter(Boolean).join("/");
+    const underRoot =
+      root !== "/" &&
+      (normalized === root || normalized.startsWith(root + "/"));
+    const relative = underRoot ? normalized.slice(root.length) : normalized;
+    return relative.split("/").filter(Boolean);
   }
 
   setupViewToggle(win, inst) {
@@ -2353,6 +2369,7 @@ export class ExplorerApp extends BaseApp {
     if (typeof path === "string") {
       path = path.replace(/^\//, "").split("/").filter(Boolean);
     }
+    const isInitialNavigation = inst.history.length === 0;
     inst.isTrashView = false;
     inst.isDiskView = false;
     inst.searchContentCache = new Map();
@@ -2362,6 +2379,10 @@ export class ExplorerApp extends BaseApp {
     inst.historyIndex = inst.history.length - 1;
     inst.selectedFile = null;
     inst.selectedItems = new Set();
+
+    if (!isInitialNavigation) {
+      playSfx(SystemSfx.NAVIGATION_START);
+    }
 
     if (inst.mode === "select") {
       const win = $(`#${inst.winId}`);
@@ -2406,9 +2427,9 @@ export class ExplorerApp extends BaseApp {
       this.ensureSelBox(view);
       if (pathDisplay) {
         if (pathDisplay.tagName === "INPUT") {
-          pathDisplay.value = "/" + inst.currentPath.join("/");
+          pathDisplay.value = os.fs.resolveUserPath(inst.currentPath);
         } else {
-          pathDisplay.textContent = "/" + inst.currentPath.join("/");
+          pathDisplay.textContent = os.fs.resolveUserPath(inst.currentPath);
         }
       }
 
@@ -3318,7 +3339,7 @@ export class ExplorerApp extends BaseApp {
     const view = $(`#${inst.winId}-view`, win);
     const pathDisplay = $(`#${inst.winId}-path`, win);
     if (!view) return;
-    if (pathDisplay) pathDisplay.value = "/";
+    if (pathDisplay) pathDisplay.value = os.fs.resolveUserPath([]);
     await this.renderDiskView(inst, view, win);
   }
 

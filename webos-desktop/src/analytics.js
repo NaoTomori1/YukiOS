@@ -12,7 +12,7 @@ const ELECTRON_USAGE_ENDPOINT = SOCIAL_BASE + "/api/electron-usage";
 const ANALYTICS_DISABLED = () =>
   ANALYTICS_NETWORK_DISABLED ||
   parseBool(os.storage.get(StorageKeys.analyticsDisabled));
-const FLUSH_INTERVAL_MS = 5000;
+const FLUSH_INTERVAL_MS = 30000;
 const MAX_QUEUE_SIZE = 15;
 const SEND_FAIL_THRESHOLD = 5;
 const SEND_COOLDOWN_MS = 5 * 60 * 1000;
@@ -28,7 +28,6 @@ let cachedLiveStats = null;
 let liveStatsCacheTime = 0;
 let liveStatsPromise = null;
 
-let pageLoadTime = Date.now();
 let flushTimer = null;
 const launchDedup = new Map();
 const DEDUP_WINDOW_MS = 10000;
@@ -43,7 +42,6 @@ export function getAnalyticsBase(app) {
     app: app ?? "unknown",
     name: $(".start-user span")?.textContent ?? "",
     timestamp: now,
-    sessionAgeMs: now - pageLoadTime,
   };
 }
 
@@ -83,10 +81,22 @@ function sendBatch(events) {
     saveQueue(events.slice(-MAX_QUEUE_SIZE));
     return;
   }
+  const body = JSON.stringify(events);
+  if (
+    typeof navigator !== "undefined" &&
+    typeof navigator.sendBeacon === "function"
+  ) {
+    try {
+      if (navigator.sendBeacon(ENDPOINT, body)) {
+        recordSendOutcome(true);
+        return;
+      }
+    } catch {}
+  }
   fetch(ENDPOINT, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(events),
+    headers: { "Content-Type": "text/plain;charset=UTF-8" },
+    body,
     keepalive: true,
   }).then(
     (res) => recordSendOutcome(res.ok),
@@ -124,7 +134,6 @@ function queueEvent(event) {
 export function initAnalytics() {
   if (ANALYTICS_DISABLED()) return;
   ensureLiveUserId().catch(() => {});
-  pageLoadTime = Date.now();
   flushQueue();
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "hidden") flushQueue();
@@ -151,7 +160,6 @@ export function sendLaunchAnalytics(app) {
     app,
     event: "launch",
     timestamp: Date.now(),
-    sessionAgeMs: Date.now() - pageLoadTime,
   });
 }
 
@@ -167,7 +175,6 @@ export function recordUsageDuration(appId, durationMs) {
     event: "usage",
     durationMs: Math.max(60000, ms),
     timestamp: Date.now(),
-    sessionAgeMs: Date.now() - pageLoadTime,
   });
 }
 

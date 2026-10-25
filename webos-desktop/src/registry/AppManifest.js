@@ -1999,4 +1999,30 @@ export const APP_MANIFESTS = [
     category: "system",
     description: "Unleash Red and watch chaos tear the desktop apart.",
   },
+  {
+    serviceKey: "nekoApp",
+    enhanced: true,
+    type: "system",
+    title: "Neko",
+    icon: "fas fa-cat",
+    launchType: "instance",
+    windowIdPatterns: ["neko"],
+    category: "games",
+    clippy: {
+      message: "Watch a playful cat chase your cursor across the desktop.",
+      animation: ClippyAnimation.Show,
+    },
+    description: "A playful cat roams the desktop chasing your cursor.",
+  },
+  {
+    serviceKey: "clippyApp",
+    enhanced: true,
+    type: "system",
+    title: "Clippy",
+    icon: "fas fa-paperclip",
+    launchType: "instance",
+    category: "help",
+    description:
+      "Toggle the Clippy desktop assistant on or off from the app list.",
+  },
 ];

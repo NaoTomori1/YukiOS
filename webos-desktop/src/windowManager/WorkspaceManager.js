@@ -4,6 +4,7 @@ import { $$ } from "../shared/domUtils.js";
 import { StorageKeys, os, $, createElement } from "../framework.js";
 import { KeybindManager } from "../keybindManager.js";
 import { bus, BusEvents } from "../core/EventBus.js";
+import { MODES } from "../modeManager.js";
 export class WorkspaceManager {
   constructor(windowManager) {
     this.wm = windowManager;
@@ -14,11 +15,18 @@ export class WorkspaceManager {
     this.overviewEl = null;
     this.overviewOpen = false;
     this.dragState = null;
+    this.enteringWorkspaceId = null;
     this.render();
 
     Promise.resolve().then(() => {
       os.events.on(BusEvents.SETTINGS_CHANGED, (settings) => {
         this.updateVisibility(settings.showWorkspace);
+      });
+      os.events.on(BusEvents.MODE_ENTERED, (payload) => {
+        if (payload?.id === MODES.WIN11) this.render();
+      });
+      os.events.on(BusEvents.MODE_EXITED, (payload) => {
+        if (payload?.id === MODES.WIN11) this.render();
       });
       const showWorkspace =
         os.storage.get(StorageKeys.showWorkspace) !== "false";
@@ -26,10 +34,17 @@ export class WorkspaceManager {
     });
   }
 
+  isWin11Mode() {
+    return document.documentElement.classList.contains("win11-mode");
+  }
+
   updateVisibility(showWorkspace) {
-    if (this.barEl) {
-      this.barEl.style.display = showWorkspace ? "flex" : "none";
+    if (!this.barEl) return;
+    if (this.isWin11Mode()) {
+      this.barEl.style.display = "none";
+      return;
     }
+    this.barEl.style.display = showWorkspace ? "flex" : "none";
   }
 
   get active() {
@@ -57,6 +72,11 @@ export class WorkspaceManager {
     this.updateVisibility(showWorkspace);
 
     this.barEl.innerHTML = "";
+
+    if (this.isWin11Mode()) {
+      this.barEl.style.display = "none";
+      return;
+    }
 
     const overviewBtn = createElement("button");
     overviewBtn.className =
@@ -143,6 +163,9 @@ export class WorkspaceManager {
       name: name || `WS ${id + 1}`,
       windows: new Set(),
     });
+    if (this.isWin11Mode()) {
+      this.enteringWorkspaceId = id;
+    }
     this.render();
     if (this.overviewOpen) {
       this.switchInstant(id, { keepEmptyPrevious: true });
@@ -150,6 +173,7 @@ export class WorkspaceManager {
     } else {
       this.switchInstant(id, { keepEmptyPrevious: true });
     }
+    this.enteringWorkspaceId = null;
     os.events.emit(BusEvents.WORKSPACE_ADDED);
   }
 
@@ -157,6 +181,8 @@ export class WorkspaceManager {
     if (this.workspaces.length <= 1) return;
     const ws = this.workspaces.find((w) => w.id === id);
     if (!ws) return;
+
+    const positions = this.captureWorkspaceButtonPositions();
 
     ws.windows.forEach((winId) => {
       const win = $("#" + winId);
@@ -175,7 +201,10 @@ export class WorkspaceManager {
 
     this.render();
     this.applyVisibility();
-    if (this.overviewOpen) this.renderOverview();
+    if (this.overviewOpen) {
+      this.renderOverview();
+      this.animateWorkspaceButtonShift(positions);
+    }
     os.events.emit(BusEvents.WORKSPACE_REMOVED, { workspaceId: id });
   }
 
@@ -443,9 +472,40 @@ export class WorkspaceManager {
     return clone;
   }
 
+  captureWorkspaceButtonPositions() {
+    const positions = new Map();
+    if (!this.overviewOpen || !this.overviewEl) return positions;
+    $$(".ov-ws-btn[data-ws-id]", this.overviewEl).forEach((btn) => {
+      const id = btn.dataset.wsId;
+      if (id === undefined) return;
+      positions.set(id, btn.getBoundingClientRect().left);
+    });
+    return positions;
+  }
+
+  animateWorkspaceButtonShift(positions) {
+    if (!this.overviewOpen || !this.overviewEl) return;
+    if (!positions || positions.size === 0) return;
+    $$(".ov-ws-btn[data-ws-id]", this.overviewEl).forEach((btn) => {
+      const id = btn.dataset.wsId;
+      if (!positions.has(id)) return;
+      const delta = positions.get(id) - btn.getBoundingClientRect().left;
+      if (Math.abs(delta) < 1) return;
+      btn.style.transition = "none";
+      btn.style.transform = `translateX(${delta}px)`;
+      document.body.offsetHeight;
+      requestAnimationFrame(() => {
+        btn.style.transition = "transform 0.28s cubic-bezier(0.22, 1, 0.36, 1)";
+        btn.style.transform = "translateX(0px)";
+      });
+    });
+  }
+
   renderOverview() {
     const el = this.overviewEl;
     el.innerHTML = "";
+
+    const isWin11 = this.isWin11Mode();
 
     const desktop = $("#desktop");
     const dw = desktop.offsetWidth;
@@ -458,6 +518,8 @@ export class WorkspaceManager {
     header.className = "ov-header";
 
     const previewAspect = dw / dh;
+    const previewH = 100;
+    const previewW = Math.round(previewH * previewAspect);
 
     this.workspaces.forEach((ws) => {
       const wsBtn = createElement("button");
@@ -465,13 +527,28 @@ export class WorkspaceManager {
         "ov-ws-btn" + (ws.id === this.activeId ? " ov-ws-active" : "");
       wsBtn.dataset.wsId = String(ws.id);
 
+      if (this.enteringWorkspaceId === ws.id) {
+        wsBtn.classList.add("ov-ws-entering");
+      }
+
       const wsLabel = createElement("span");
       wsLabel.className = "ov-ws-label";
       wsLabel.textContent = ws.name;
+      wsLabel.title = "Double click to rename";
+      wsLabel.addEventListener("dblclick", async (event) => {
+        event.stopPropagation();
+        const newName = await os.dialog.prompt(
+          "Prompt",
+          "Rename workspace:",
+          ws.name,
+        );
+        if (newName && newName.trim()) {
+          ws.name = newName.trim();
+          this.render();
+          this.renderOverview();
+        }
+      });
       wsBtn.appendChild(wsLabel);
-
-      const previewH = 100;
-      const previewW = Math.round(previewH * previewAspect);
 
       const wsPreview = createElement("div");
       wsPreview.className = "ov-ws-preview";
@@ -500,7 +577,22 @@ export class WorkspaceManager {
 
       wsBtn.appendChild(wsPreview);
 
-      wsBtn.addEventListener("click", () => {
+      if (isWin11) {
+        const closeBtn = createElement("button", {
+          className: "ov-ws-close",
+          attributes: { type: "button", title: "Remove workspace" },
+        });
+        closeBtn.textContent = "×";
+        closeBtn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          this.removeWorkspace(ws.id);
+        });
+        closeBtn.addEventListener("dblclick", (e) => e.stopPropagation());
+        wsBtn.appendChild(closeBtn);
+      }
+
+      wsBtn.addEventListener("click", (event) => {
+        if (event.detail > 1) return;
         if (ws.id === this.activeId) {
           this.closeOverview();
         } else {
@@ -535,23 +627,45 @@ export class WorkspaceManager {
 
     const addWsBtn = createElement("button");
     addWsBtn.className = "ov-ws-btn ov-ws-add";
-    addWsBtn.textContent = "+";
-    addWsBtn.title = "Add workspace";
+    if (isWin11) {
+      addWsBtn.title = "New desktop";
+      addWsBtn.appendChild(
+        createElement("span", { className: "ov-ws-label", text: "\u00A0" }),
+      );
+      const addPreview = createElement("div", {
+        className: "ov-ws-preview ov-ws-add-preview",
+      });
+      addPreview.style.width = previewW + "px";
+      addPreview.style.height = previewH + "px";
+      addPreview.appendChild(
+        createElement("div", { className: "ov-ws-add-icon", text: "+" }),
+      );
+      addWsBtn.appendChild(addPreview);
+    } else {
+      addWsBtn.textContent = "+";
+      addWsBtn.title = "Add workspace";
+    }
     addWsBtn.addEventListener("click", () => this.addWorkspace());
     header.appendChild(addWsBtn);
 
-    el.appendChild(header);
+    if (isWin11) {
+      el.appendChild(header);
+    }
 
     const taskbarH = $("#taskbar")?.offsetHeight ?? 40;
     const vpW = window.innerWidth;
     const vpH = window.innerHeight - taskbarH - 160;
+    const headerHeight = isWin11 ? header.offsetHeight : 0;
+    const areaH = isWin11
+      ? Math.max(160, el.clientHeight - 20 - headerHeight)
+      : vpH;
 
     const activeWs = this.workspaces.find((w) => w.id === this.activeId);
 
     const mainArea = createElement("div");
     mainArea.className = "ov-main-area";
     mainArea.style.width = "100%";
-    mainArea.style.height = vpH + "px";
+    mainArea.style.height = areaH + "px";
 
     const bgLayer = createElement("div");
     bgLayer.className = "ov-section-bg";
@@ -570,7 +684,6 @@ export class WorkspaceManager {
       const padding = 40;
 
       const areaW = vpW - padding * 2;
-      const areaH = vpH;
 
       const cols = Math.ceil(Math.sqrt(winCount * (areaW / areaH)));
       const rows = Math.ceil(winCount / cols);
@@ -777,7 +890,11 @@ export class WorkspaceManager {
     }
 
     mainArea.appendChild(tilesLayer);
-    el.appendChild(mainArea);
+    if (isWin11) {
+      el.insertBefore(mainArea, header);
+    } else {
+      el.appendChild(mainArea);
+    }
   }
 
   makeTileDraggable(tile, winId, fromWsId) {

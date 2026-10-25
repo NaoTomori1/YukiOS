@@ -830,9 +830,6 @@ export class WallpaperEngineApp extends BaseApp {
   }
 
   bindGridEvents(content) {
-    if (this.gridEventsBound) return;
-    this.gridEventsBound = true;
-
     bindEvent(content, "click", (e) => {
       const card = e.target.closest(".we-card");
       const favBtn = e.target.closest(".we-card-fav");
@@ -866,7 +863,7 @@ export class WallpaperEngineApp extends BaseApp {
     });
   }
 
-  async setDesktop(item, silent = false) {
+  async setDesktop(item) {
     try {
       if (item.type === "vanta") {
         await SystemUtilities.setWallpaper(item.src);
@@ -882,10 +879,7 @@ export class WallpaperEngineApp extends BaseApp {
       }
       this.addToHistory(item.id);
       this.applyColorFilter();
-      if (!silent) this.notify(`Desktop wallpaper set to "${item.name}"`);
-    } catch {
-      if (!silent) this.notify("Failed to set wallpaper");
-    }
+    } catch {}
   }
 
   async setLogin(item) {
@@ -895,17 +889,11 @@ export class WallpaperEngineApp extends BaseApp {
           ["Pictures", "Wallpapers"],
           item.userFileName,
         );
-        if (content) {
-          await SystemUtilities.setLoginWallpaper(content);
-          this.notify(`Login wallpaper set to "${item.name}"`);
-        }
+        if (content) await SystemUtilities.setLoginWallpaper(content);
       } else {
         await SystemUtilities.setLoginWallpaper(item.src);
-        this.notify(`Login wallpaper set to "${item.name}"`);
       }
-    } catch {
-      this.notify("Failed to set login wallpaper");
-    }
+    } catch {}
   }
 
   toggleFavorite(id) {

@@ -3,6 +3,26 @@
   --stk-flame-core: #ffe6a8;
   --stk-player-ink: #ffffff;
   --stk-player-aura: rgba(255, 255, 255, 0.22);
+  --stk-trail-core: #e8ecff;
+  --stk-burn-glow: rgba(255, 150, 50, 0.95);
+  --stk-burn-core: rgba(255, 235, 170, 0.9);
+  --stk-burn-flash: rgba(255, 200, 130, 0.4);
+}
+
+.stk-stain-glow {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  box-shadow:
+    0 0 10px 3px var(--stk-burn-glow),
+    0 0 2px 1px var(--stk-burn-core);
+  background: var(--stk-burn-flash);
+}
+
+.stk-speed-trail {
+  pointer-events: none;
 }
 
 .stk-layer {
@@ -223,7 +243,6 @@
 
 .stk-layer .stk-shard-inner {
   position: absolute;
-  will-change: transform;
 }
 
 .stk-layer .stk-rebuild-dock {

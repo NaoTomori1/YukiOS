@@ -1,4 +1,5 @@
 import { createElement } from "./domUtils.js";
+import { playSfx, SystemSfx } from "../sfx/systemSfx.js";
 
 export function showConflictDialog(fileName) {
   return new Promise((resolve) => {
@@ -92,6 +93,7 @@ export function showConflictDialog(fileName) {
 
     overlay.appendChild(dialog);
     document.body.appendChild(overlay);
+    playSfx(SystemSfx.INFORMATION_BAR);
 
     dialog.querySelectorAll("button[data-action]").forEach((btn) => {
       btn.addEventListener(

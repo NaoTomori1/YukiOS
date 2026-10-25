@@ -10,6 +10,9 @@ export const REGEN_MS = 15000;
 const CURSOR_ICON = "static/icons/cursor.webp";
 const SHARD_SIZE = 30;
 const REBUILD_MS = 850;
+const SHARD_BASE_FILTER = "drop-shadow(0 0 2px rgba(255,255,255,.75))";
+const SHARD_REBUILD_FILTER =
+  "drop-shadow(0 0 4px rgba(120,200,255,.95)) brightness(1.4)";
 const SHARD_CUTS = [
   { poly: "0 0, 50% 0, 35% 40%, 0 55%", cx: 0.2, cy: 0.25 },
   { poly: "50% 0, 100% 0, 100% 30%, 70% 38%, 35% 40%", cx: 0.7, cy: 0.18 },
@@ -112,6 +115,14 @@ function impactFlash() {
   } catch {}
 }
 
+function applyShardFilter(s) {
+  if (!s || s.filter === s.lastFilter) return;
+  s.lastFilter = s.filter;
+  try {
+    s.node.style.filter = s.filter;
+  } catch {}
+}
+
 function applyShard(s) {
   s.node.style.transform =
     "translate(" +
@@ -121,6 +132,7 @@ function applyShard(s) {
     "px) rotate(" +
     s.rot.toFixed(1) +
     "deg)";
+  applyShardFilter(s);
 }
 
 function buildShards(x, y) {
@@ -163,6 +175,8 @@ function buildShards(x, y) {
       fromX: 0,
       fromY: 0,
       fromRot: 0,
+      filter: SHARD_BASE_FILTER,
+      lastFilter: SHARD_BASE_FILTER,
     };
     applyShard(s);
     shards.push(s);
@@ -254,10 +268,9 @@ function startRebuild() {
     s.fromX = s.x;
     s.fromY = s.y;
     s.fromRot = s.rot % 360;
-    try {
-      s.node.style.filter =
-        "drop-shadow(0 0 4px rgba(120,200,255,.95)) brightness(1.4)";
-    } catch {}
+    s.filter = SHARD_REBUILD_FILTER;
+    s.lastFilter = null;
+    applyShardFilter(s);
   }
   rebuildStart = performance.now();
   rebuilding = true;

@@ -1,4 +1,4 @@
-import { CYCLE_ORDER, getWeaponSpec } from "./stickmanPlayerAmmo.js";
+import { CYCLE_ORDER, getWeaponSpec } from "./stickmanWeapons.js";
 
 const PLAYER_TUNE = {
   boxW: 28,

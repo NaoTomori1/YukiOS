@@ -2,12 +2,12 @@
  * Custom dialog functions that replace native browser dialogs
  */
 
-import { audioMixer, SystemAudio } from "../audioMixer.js";
+import { playSfx, SystemSfx } from "../sfx/systemSfx.js";
 import { createElement } from "./domUtils.js";
 
 export function showAlert(title, message, buttonText = "OK") {
   return new Promise((resolve) => {
-    audioMixer().playSystemSound(SystemAudio.ERROR);
+    playSfx(SystemSfx.ERROR);
     const overlay = createElement("div");
     overlay.className = "explorer-confirmation-overlay";
     overlay.innerHTML = `
@@ -75,7 +75,7 @@ export function showPrompt(
     };
 
     const showError = (msg) => {
-      audioMixer().playSystemSound(SystemAudio.ERROR);
+      playSfx(SystemSfx.ERROR);
       errorEl.textContent = msg;
       errorEl.style.display = "block";
       input.style.borderColor = "var(--error)";
@@ -131,6 +131,7 @@ export function showConfirm(
       </div>
     `;
     document.body.appendChild(overlay);
+    playSfx(SystemSfx.DING);
 
     const close = () => {
       overlay.remove();
@@ -177,7 +178,7 @@ export const customConfirm = async (message, title = "Confirm") => {
 
 export function showCdnPrompt(mirrors, currentMirror) {
   return new Promise((resolve) => {
-    audioMixer().playSystemSound(SystemAudio.ERROR);
+    playSfx(SystemSfx.DING);
     const overlay = createElement("div");
     overlay.className = "explorer-confirmation-overlay";
     const optionsHtml = mirrors

@@ -15,6 +15,17 @@ import {
   releasePhysicsBody,
 } from "../shared/desktopPhysics.js";
 import { updateMaximizeControls } from "./windowControls.js";
+import {
+  showSnapBar,
+  revealSnapBar,
+  hideSnapBar,
+  isSnapBarAt,
+  getSnapBarHover,
+  snapBarTipSize,
+  snapBarActivationZone,
+  snapBarDragThreshold,
+} from "./SnapLayoutBar.js";
+import { getSnapAreaPx } from "./snapGeometry.js";
 import { BusEvents } from "../core/EventBus.js";
 const desktop = $("#desktop");
 
@@ -326,11 +337,39 @@ export function windowMakeDraggable(win, wm) {
       magnetAxis: null,
       stuckVpLeft: null,
       stuckVpTop: null,
+      snapBarShown: false,
+      snapPicked: false,
     };
+  };
+
+  const updateSnapBar = (clientX, clientY) => {
+    if (!drag || drag.snapPicked) return;
+    if (drag.tiling) return;
+    if (isPhysicsChaosActive()) return;
+    try {
+      if (wm.tilingManager && wm.tilingManager.enabled) return;
+    } catch {}
+    const inZone = clientY <= snapBarActivationZone();
+    if (!inZone) {
+      if (drag.snapBarShown) {
+        drag.snapBarShown = false;
+        hideSnapBar();
+      }
+      return;
+    }
+    if (!drag.snapBarShown) {
+      const dx = clientX - drag.grabX;
+      const dy = clientY - drag.grabY;
+      if (Math.hypot(dx, dy) < snapBarDragThreshold()) return;
+      drag.snapBarShown = true;
+      showSnapBar(win, wm);
+    }
+    if (clientY <= snapBarTipSize()) revealSnapBar();
   };
 
   const applyDragMove = (clientX, clientY) => {
     if (!drag) return;
+    if (drag.snapPicked) return;
     drag.moved = true;
     if (drag.unsnapPending) {
       drag.unsnapPending = false;
@@ -397,7 +436,10 @@ export function windowMakeDraggable(win, wm) {
         }
       }
     } else {
-      const zone = getSnapZoneFromBounds(clientX, clientY, drag.snapBounds);
+      const barBlocks = drag.snapBarShown && isSnapBarAt(clientY);
+      const zone = barBlocks
+        ? null
+        : getSnapZoneFromBounds(clientX, clientY, drag.snapBounds);
       drag.activeZone = zone;
       wm.activeSnapZone = zone;
       if (zone) {
@@ -431,9 +473,9 @@ export function windowMakeDraggable(win, wm) {
           tiling.swapWindowWithTarget(win.id, targetWinId);
         }
       }
-    } else if (drag.activeZone && !chaos) {
+    } else if (!drag.snapPicked && drag.activeZone && !chaos) {
       wm.applySnap(win, drag.activeZone);
-    } else if (drag.moved) {
+    } else if (!drag.snapPicked && drag.moved) {
       if (chaos) {
         releasePhysicsBody(win);
       } else {
@@ -486,9 +528,18 @@ export function windowMakeDraggable(win, wm) {
 
         move(e, dx, dy, clientX, clientY) {
           applyDragMove(clientX, clientY);
+          updateSnapBar(clientX, clientY);
         },
 
         end() {
+          const hovered = getSnapBarHover();
+          hideSnapBar();
+          if (hovered && drag) {
+            drag.snapPicked = true;
+            try {
+              wm.applySnapRect(win, hovered);
+            } catch {}
+          }
           endDrag();
         },
       },
@@ -842,6 +893,40 @@ export function hideSnapGhost(wm) {
   }
 }
 
+function snapPercent(value, total) {
+  const num =
+    typeof value === "number" ? value : parseFloat(String(value ?? "0"));
+  if (!Number.isFinite(num)) return 0;
+  return (num / 100) * total;
+}
+
+export function applySnapRect(wm, win, rect) {
+  if (!win || !rect) return;
+  const entry = wm.openWindows.get(win.id);
+  if (entry?.record) {
+    entry.record.savePreSnapGeometry();
+    entry.record.snapZone = "snap-layout";
+    entry.record.snapRect = { ...rect };
+  }
+  win.dataset.snapZone = "snap-layout";
+  win.dataset.oldStyle = win.getAttribute("style");
+  updateMaximizeControls(win);
+
+  const area = getSnapAreaPx();
+  const left = area.left + snapPercent(rect.left, area.width);
+  const top = area.top + snapPercent(rect.top, area.height);
+  const width = Math.max(0, snapPercent(rect.width, area.width));
+  const height = Math.max(0, snapPercent(rect.height, area.height));
+
+  Object.assign(win.style, {
+    top: `${Math.round(top)}px`,
+    left: `${Math.round(left)}px`,
+    width: `${Math.round(width)}px`,
+    height: `${Math.round(height)}px`,
+  });
+  os.events.emit(BusEvents.WINDOW_SNAPPED);
+}
+
 export function applySnap(wm, win, zone, skipSavePreSnap = false) {
   const entry = wm.openWindows.get(win.id);
   if (entry?.record) {
@@ -849,6 +934,7 @@ export function applySnap(wm, win, zone, skipSavePreSnap = false) {
       entry.record.savePreSnapGeometry();
     }
     entry.record.snapZone = zone;
+    entry.record.snapRect = null;
   }
   win.dataset.snapZone = zone;
   win.dataset.oldStyle = win.getAttribute("style");
@@ -967,6 +1053,7 @@ export function unsnap(wm, win) {
   const entry = wm.openWindows.get(win.id);
   if (entry?.record) {
     entry.record.restorePreSnapGeometry();
+    entry.record.snapRect = null;
   }
   const old = win.dataset.oldStyle;
   if (old) {

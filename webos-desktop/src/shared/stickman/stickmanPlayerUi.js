@@ -5,7 +5,7 @@ import {
   setText,
   toggleClass,
 } from "../../framework.js";
-import { PLAYER_WEAPONS } from "./stickmanPlayerAmmo.js";
+import { PLAYER_WEAPONS } from "./stickmanWeapons.js";
 
 const KEY_MAP = {
   KeyA: "left",
@@ -745,6 +745,7 @@ export function createPlayerHud(layer) {
   let lastMag = -1;
   let lastCharge = -1;
   let lastCap = "";
+  let lastPaused = null;
 
   function setCap(text) {
     if (text === lastCap) return;
@@ -753,12 +754,35 @@ export function createPlayerHud(layer) {
   }
 
   function setMeter(entry, ratio, tone) {
+    const width = Math.round(Math.max(0, Math.min(1, ratio)) * 100) + "%";
+    if (entry.lastWidth !== width) {
+      try {
+        entry.fill.style.width = width;
+        entry.lastWidth = width;
+      } catch {}
+    }
+    const nextTone = tone || "ok";
+    if (entry.lastTone !== nextTone) {
+      try {
+        entry.track.setAttribute("data-tone", nextTone);
+        entry.lastTone = nextTone;
+      } catch {}
+    }
+  }
+
+  function setAmmoWidth(value) {
+    if (ammoBar.lastWidth === value) return;
     try {
-      entry.fill.style.width =
-        Math.round(Math.max(0, Math.min(1, ratio)) * 100) + "%";
+      ammoBar.fill.style.width = value;
+      ammoBar.lastWidth = value;
     } catch {}
+  }
+
+  function setAmmoOpacity(value) {
+    if (ammoBar.lastOpacity === value) return;
     try {
-      entry.track.setAttribute("data-tone", tone || "ok");
+      ammoBar.fill.style.opacity = value;
+      ammoBar.lastOpacity = value;
     } catch {}
   }
 
@@ -792,17 +816,11 @@ export function createPlayerHud(layer) {
         }
         setCap(ammo.reloading ? "RELOAD" : "/ " + ammo.magSize);
         const ratio = ammo.magSize > 0 ? ammo.mag / ammo.magSize : 0;
-        try {
-          ammoBar.fill.style.width = Math.round(ratio * 100) + "%";
-        } catch {}
+        setAmmoWidth(Math.round(ratio * 100) + "%");
         toggleClass(weapon, "sk-low", !!ammo.low);
         toggleClass(weapon, "sk-empty", !!ammo.empty);
         toggleClass(weapon, "sk-reloading", !!ammo.reloading);
-        try {
-          ammoBar.fill.style.opacity = ammo.reloading
-            ? String(ammo.reloadProgress)
-            : "1";
-        } catch {}
+        setAmmoOpacity(ammo.reloading ? String(ammo.reloadProgress) : "1");
       } else if (ammo.resource === "charge") {
         const ready = ammo.cooldownLeft <= 0;
         if (Math.round(ammo.cooldownLeft) !== lastCharge) {
@@ -816,22 +834,20 @@ export function createPlayerHud(layer) {
         toggleClass(weapon, "sk-empty", !ready);
         toggleClass(weapon, "sk-low", !ready);
         toggleClass(weapon, "sk-reloading", false);
-        try {
-          ammoBar.fill.style.opacity = "1";
-          ammoBar.fill.style.width = ready
+        setAmmoOpacity("1");
+        setAmmoWidth(
+          ready
             ? "100%"
             : Math.round(
                 (1 - ammo.cooldownLeft / Math.max(1, ammo.cooldownSpan)) * 100,
-              ) + "%";
-        } catch {}
+              ) + "%",
+        );
       } else {
         lastMag = -1;
         setText(ammoCount, "MELEE");
         setCap("");
-        try {
-          ammoBar.fill.style.opacity = "1";
-          ammoBar.fill.style.width = "100%";
-        } catch {}
+        setAmmoOpacity("1");
+        setAmmoWidth("100%");
         toggleClass(weapon, "sk-empty", false);
         toggleClass(weapon, "sk-low", false);
         toggleClass(weapon, "sk-reloading", false);
@@ -855,19 +871,33 @@ export function createPlayerHud(layer) {
     for (const id of ABILITY_ORDER) {
       const entry = abilityChips[id];
       const state = abilities[id] || { ready: false, ratio: 0 };
-      toggleClass(entry.chip, "sk-chip-ready", !!state.ready);
-      toggleClass(entry.chip, "sk-chip-on", id === "jet" && !!jetState.active);
-      try {
-        entry.chip.style.setProperty(
-          "--chip-fill",
-          Math.round(Math.max(0, Math.min(1, state.ratio)) * 100) + "%",
-        );
-      } catch {}
+      const ready = !!state.ready;
+      if (entry.lastReady !== ready) {
+        entry.lastReady = ready;
+        toggleClass(entry.chip, "sk-chip-ready", ready);
+      }
+      const on = id === "jet" && !!jetState.active;
+      if (entry.lastOn !== on) {
+        entry.lastOn = on;
+        toggleClass(entry.chip, "sk-chip-on", on);
+      }
+      const fill =
+        Math.round(Math.max(0, Math.min(1, state.ratio)) * 100) + "%";
+      if (entry.lastFill !== fill) {
+        entry.lastFill = fill;
+        try {
+          entry.chip.style.setProperty("--chip-fill", fill);
+        } catch {}
+      }
     }
 
-    try {
-      root.classList.toggle("sk-hud-paused", !!model.paused);
-    } catch {}
+    const paused = !!model.paused;
+    if (lastPaused !== paused) {
+      lastPaused = paused;
+      try {
+        root.classList.toggle("sk-hud-paused", paused);
+      } catch {}
+    }
   }
 
   return {

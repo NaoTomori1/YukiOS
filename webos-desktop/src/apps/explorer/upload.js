@@ -18,6 +18,7 @@ import {
 } from "../../fileDisplay.js";
 import { showConflictDialog } from "../../shared/conflictDialog.js";
 import { splitWebkitPath, pluralize } from "../../utils/utils.js";
+import { playSfx, SystemSfx } from "../../sfx/systemSfx.js";
 import { Achievements } from "../../achievements.js";
 import { AppSource } from "../../AppSource.js";
 
@@ -215,7 +216,8 @@ export async function handleFileUpload(explorer, files, isFolder, win, inst) {
         `${uploadedCount} ${pluralize(uploadedCount, "file")} uploaded`,
       );
     if (skippedCount > 0) parts.push(`${skippedCount} skipped`);
-    if (parts.length) os.notify.send(parts.join(", "));
+    if (parts.length) os.notify.send(parts.join(", "), "", { silent: true });
+    if (uploadedCount > 0) playSfx(SystemSfx.BALLOON);
   } finally {
     if (progressEl) setStyle(progressEl, { display: "none" });
   }

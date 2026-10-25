@@ -376,7 +376,7 @@ function buildNavRow(suffix, initialUrl, fireAction, els) {
   const windowControls = createElement("div", { className: "window-controls" });
   const minBtn = createElement("button", {
     className: "minimize-btn",
-    attributes: { title: "Minimize", "data-action": "minimize" },
+    attributes: { "aria-label": "Minimize", "data-action": "minimize" },
   });
   setHTML(minBtn, '<svg viewBox="0 0 10 1"><path d="M0 0h10v1H0z"/></svg>');
   bindEvent(minBtn, "click", () => {
@@ -384,7 +384,7 @@ function buildNavRow(suffix, initialUrl, fireAction, els) {
   });
   const maxBtn = createElement("button", {
     className: "maximize-btn",
-    attributes: { title: "Maximize", "data-action": "maximize" },
+    attributes: { "aria-label": "Maximize", "data-action": "maximize" },
   });
   setHTML(
     maxBtn,
@@ -395,7 +395,7 @@ function buildNavRow(suffix, initialUrl, fireAction, els) {
   });
   const closeBtn = createElement("button", {
     className: "close-btn",
-    attributes: { title: "Close", "data-action": "close" },
+    attributes: { "aria-label": "Close", "data-action": "close" },
   });
   setHTML(
     closeBtn,
@@ -532,6 +532,7 @@ function buildNavRow(suffix, initialUrl, fireAction, els) {
   );
   setStyle(zoomOutBtn, { width: "30px" });
   const zoomLabel = createElement("span", {
+    className: "nav-zoom-label",
     id: makeId("nav-zoom-label", suffix),
     text: "100%",
     attributes: {

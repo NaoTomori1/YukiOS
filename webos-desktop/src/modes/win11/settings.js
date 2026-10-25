@@ -47,11 +47,8 @@ export function bindWin11Category(win, showSaved) {
       toggleClass(b, "active", b.dataset.win11Align === align),
     );
     os.storage.set(StorageKeys.win11TaskbarAlign, align);
-    const taskbarWindows = $("#taskbar-windows");
-    if (taskbarWindows) {
-      const justifyMap = { left: "flex-start", center: "center" };
-      taskbarWindows.style.justifyContent = justifyMap[align] || "center";
-    }
+    const tasksCont = $("#taskbar .tasksCont");
+    if (tasksCont) tasksCont.setAttribute("data-side", align);
     showSaved();
   };
 

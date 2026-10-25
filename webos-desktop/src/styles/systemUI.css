@@ -303,6 +303,7 @@
   align-items: center;
   gap: 5px;
   flex-shrink: 0;
+  position: relative;
 }
 
 .ov-ws-btn:hover {
@@ -339,6 +340,24 @@
   pointer-events: none;
 }
 
+.ov-ws-preview.ov-ws-add-preview {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+.ov-ws-add-icon {
+  font-size: 24px;
+  line-height: 1;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.ov-ws-btn.ov-ws-add:hover .ov-ws-add-icon {
+  color: var(--text-primary);
+}
+
 .ov-win-clone {
   pointer-events: none !important;
   user-select: none !important;
@@ -355,6 +374,36 @@
 
 .ov-ws-btn.ov-ws-add:hover {
   color: var(--text-primary);
+}
+
+.ov-ws-close {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.5);
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.ov-ws-btn:hover .ov-ws-close {
+  opacity: 1;
+}
+
+.ov-ws-close:hover {
+  background: var(--error-bg);
+  color: #fff;
 }
 
 .ov-main-area {
@@ -411,6 +460,19 @@
     transform: translateX(0) scale(1);
     filter: blur(0px);
   }
+}
+
+@keyframes ovWsEnter {
+  from {
+    transform: translateY(-100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+.ov-ws-btn.ov-ws-entering {
+  animation: ovWsEnter 0.3s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .ov-window-tile:hover {

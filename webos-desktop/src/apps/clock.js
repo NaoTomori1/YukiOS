@@ -7,6 +7,7 @@ import {
   bindSelectMenu,
 } from "../shared/selectMenu.js";
 import { generateId } from "../utils/utils.js";
+import { playSfx, startSfxLoop, SystemSfx } from "../sfx/systemSfx.js";
 
 function formatTime(ms, showMs = false) {
   const totalSeconds = Math.floor(ms / 1000);
@@ -226,13 +227,13 @@ export class ClockApp extends BaseApp {
     this.timerInitial = 0;
     this.scheduledAlarms = new Map();
     this.checkAlarmInterval = null;
+    this.alarmLoop = null;
   }
 
   loadSettings() {
     const defaults = {
       use24h: true,
       snoozeDuration: 5,
-      alarmSound: "classic",
       calendarClockStyle: "analog",
     };
     const saved = os.storage.get(StorageKeys.clockSettings);
@@ -305,27 +306,40 @@ export class ClockApp extends BaseApp {
         </div>
       </div>
     `;
+    if (this.alarmLoop) this.alarmLoop.stop();
+    this.alarmLoop = startSfxLoop(SystemSfx.RING_IN, {
+      ignoreMode: true,
+      ignoreToggle: true,
+    });
     document.body.appendChild(overlay);
     const snoozeBtn = overlay.querySelector(".snooze");
     const dismissBtn = overlay.querySelector(".dismiss");
     snoozeBtn.onclick = () => {
+      if (this.alarmLoop) {
+        this.alarmLoop.stop();
+        this.alarmLoop = null;
+      }
       overlay.remove();
       const snoozeMs = this.settings.snoozeDuration * 60 * 1000;
       const timeoutId = setTimeout(() => this.fireAlarm(alarm), snoozeMs);
       this.scheduledAlarms.set(alarm.id + "snooze", timeoutId);
     };
     dismissBtn.onclick = () => {
+      if (this.alarmLoop) {
+        this.alarmLoop.stop();
+        this.alarmLoop = null;
+      }
       overlay.remove();
       if (alarm.recurring && alarm.recurring.length > 0) {
         this.scheduleAlarm(alarm);
       }
     };
-    this.notify(
-      "Alarm",
-      `${alarm.label || "Alarm"}: ${alarm.time}`,
-      "info",
-      10000,
-    );
+    os.notify.send("Alarm", `${alarm.label || "Alarm"}: ${alarm.time}`, {
+      type: "info",
+      duration: 10000,
+      category: "calendar",
+      silent: true,
+    });
   }
 
   async open() {
@@ -528,11 +542,6 @@ export class ClockApp extends BaseApp {
       { value: "15", label: "15 minutes" },
       { value: "30", label: "30 minutes" },
     ];
-    const soundOpts = [
-      { value: "classic", label: "Classic" },
-      { value: "digital", label: "Digital" },
-      { value: "gentle", label: "Gentle" },
-    ];
     return `
       <div class="clock-settings">
         <div class="clock-settings-group">
@@ -552,10 +561,6 @@ export class ClockApp extends BaseApp {
         <div class="clock-settings-group">
           <label class="clock-settings-label">Snooze Duration</label>
           ${renderSelectMenu("clock-snooze-select", snoozeOpts, String(this.settings.snoozeDuration))}
-        </div>
-        <div class="clock-settings-group">
-          <label class="clock-settings-label">Alarm Sound</label>
-          ${renderSelectMenu("clock-sound-select", soundOpts, this.settings.alarmSound)}
         </div>
       </div>
     `;
@@ -657,13 +662,8 @@ export class ClockApp extends BaseApp {
 
       const selectEl = e.target.closest(".select-menu");
       if (selectEl) {
-        const key =
-          selectEl.id === "clock-snooze-select"
-            ? "snoozeDuration"
-            : "alarmSound";
         const raw = getSelectMenuValue(selectEl.id, this.win);
-        const value = key === "snoozeDuration" ? parseInt(raw) : raw;
-        this.settings[key] = value;
+        this.settings.snoozeDuration = parseInt(raw);
         this.saveSettings();
         return;
       }
@@ -760,7 +760,6 @@ export class ClockApp extends BaseApp {
           label: newLabel,
           enabled: true,
           recurring: newRecurring,
-          sound: this.settings.alarmSound,
         });
       }
       this.saveAlarms();
@@ -928,7 +927,12 @@ export class ClockApp extends BaseApp {
     if (pauseBtn) pauseBtn.disabled = true;
     const resetBtn = this.win?.querySelector("#clock-timer-reset");
     if (resetBtn) resetBtn.disabled = true;
-    this.notify("Timer", "Timer finished!", "info", 10000);
+    playSfx(SystemSfx.RING_IN);
+    os.notify.send("Timer", "Timer finished!", {
+      type: "info",
+      duration: 10000,
+      silent: true,
+    });
   }
 
   disableTimerInputs(disabled) {

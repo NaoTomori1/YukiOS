@@ -2,7 +2,7 @@ import { createElement } from "../../framework.js";
 import { resolveIconUrl } from "../assetResolver.js";
 import { playGrab } from "../chaosSfx.js";
 import { isCursorDestroyed, getCursorDamage } from "./stickmanCursorKill.js";
-import { pose } from "./stickmanRig.js";
+import { pose } from "./stickmanFx.js";
 
 const CURSOR_ICON = "static/icons/cursor.webp";
 const CRACK_SVG =
@@ -115,15 +115,12 @@ function renderHand() {
   const node = ensureHandNode();
   if (!node) return;
   try {
-    node.style.left = s.x + "px";
-    node.style.top = s.y + "px";
-    node.style.rotate = (s.swing * 0.55).toFixed(3) + "rad";
     const jitter = s.grip < 0.4 ? (0.4 - s.grip) * 7 : 0;
+    const jitterX = Math.sin(performance.now() * 0.09) * jitter;
+    const jitterY = Math.cos(performance.now() * 0.11) * jitter;
     node.style.translate =
-      (Math.sin(performance.now() * 0.09) * jitter).toFixed(1) +
-      "px " +
-      (Math.cos(performance.now() * 0.11) * jitter).toFixed(1) +
-      "px";
+      (s.x + jitterX).toFixed(1) + "px " + (s.y + jitterY).toFixed(1) + "px";
+    node.style.rotate = (s.swing * 0.55).toFixed(3) + "rad";
     node.classList.toggle("stk-cursor-hand-strain", s.grip < 0.45);
     if (crackNode) {
       const dmg = getCursorDamage();

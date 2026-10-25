@@ -1,5 +1,4 @@
-import { fxRing, fxDust, screenShake } from "./stickmanFx.js";
-import { pose } from "./stickmanRig.js";
+import { fxRing, fxDust, screenShake, pose } from "./stickmanFx.js";
 import { playHit, playGrab } from "../chaosSfx.js";
 
 const NS = "http://www.w3.org/2000/svg";
@@ -50,9 +49,9 @@ function silhouette(layer, d, x, y, alpha, dur, delay, dx, dy) {
   svg.setAttribute("height", BOX_H);
   svg.setAttribute("viewBox", "0 0 " + BOX_W + " " + BOX_H);
   svg.style.cssText =
-    "position:absolute;pointer-events:none;overflow:visible;opacity:0;left:" +
+    "position:absolute;pointer-events:none;overflow:visible;opacity:0;left:0px;top:0px;translate:" +
     f(x) +
-    "px;top:" +
+    "px " +
     f(y) +
     "px;filter:drop-shadow(0 0 4px rgba(255,40,30,.9)) drop-shadow(0 0 10px rgba(255,0,0,.5));";
   const path = document.createElementNS(NS, "path");
@@ -251,7 +250,7 @@ function decoyNode(layer) {
   svg.setAttribute("height", BOX_H);
   svg.setAttribute("viewBox", "0 0 " + BOX_W + " " + BOX_H);
   svg.style.cssText =
-    "position:absolute;pointer-events:none;overflow:visible;opacity:0;filter:drop-shadow(0 0 5px rgba(255,40,30,.95)) drop-shadow(0 0 12px rgba(255,0,0,.55));";
+    "position:absolute;pointer-events:none;overflow:visible;opacity:0;left:0px;top:0px;filter:drop-shadow(0 0 5px rgba(255,40,30,.95)) drop-shadow(0 0 12px rgba(255,0,0,.55));";
   const path = document.createElementNS(NS, "path");
   path.setAttribute("fill", "none");
   path.setAttribute("stroke", "#ff2a2a");
@@ -672,8 +671,8 @@ export function createAfterimageCombo(host) {
     const u =
       s.state >= 3 ? clamp((now - s.strikeAt) / (STRIKE_MS * run.k), 0, 1) : 0;
     const lunge = easeOut(u);
-    node.svg.style.left = f(s.x + s.lx * lunge) + "px";
-    node.svg.style.top = f(s.y + s.ly * lunge) + "px";
+    node.svg.style.translate =
+      f(s.x + s.lx * lunge) + "px " + f(s.y + s.ly * lunge) + "px";
     const c = run.lastC;
     const ang = aimAt(s.px, s.py, s.dir, c);
     let p = null;

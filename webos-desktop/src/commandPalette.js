@@ -15,6 +15,7 @@ import {
 } from "./settings/settingsNav.js";
 import { animateThemeChange } from "./settings/themeTransition.js";
 import { escapeHtml } from "./utils/utils.js";
+import { playSfx, SystemSfx } from "./sfx/systemSfx.js";
 export class CommandPalette {
   constructor(os) {
     this.os = os;
@@ -103,11 +104,13 @@ export class CommandPalette {
         e.preventDefault();
         this.activeIndex = (this.activeIndex + 1) % this.results.length;
         this.updateActiveSelection();
+        playSfx(SystemSfx.FOCUS_1);
       } else if (e.key === "ArrowUp") {
         e.preventDefault();
         this.activeIndex =
           (this.activeIndex - 1 + this.results.length) % this.results.length;
         this.updateActiveSelection();
+        playSfx(SystemSfx.FOCUS_1);
       } else if (e.key === "Enter") {
         e.preventDefault();
         this.executeActive();
@@ -1216,6 +1219,7 @@ export class CommandPalette {
   executeActive() {
     const activeItem = this.results[this.activeIndex];
     if (activeItem) {
+      playSfx(SystemSfx.MENU_COMMAND);
       activeItem.execute();
       if (
         activeItem.tag !== "nav" &&

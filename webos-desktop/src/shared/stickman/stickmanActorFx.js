@@ -343,3 +343,238 @@ export const FREEZE_MIN_MS = MIN_FREEZE_MS;
 export const FREEZE_MAX_MS = MAX_FREEZE_MS;
 export const FREEZE_SURGE_MS = SURGE_MS;
 export const FREEZE_SURGE_BOOST = SURGE_BOOST;
+
+const TRAIL_COUNT = 6;
+const TRAIL_SPEED_MIN = 6;
+const TRAIL_SPEED_MAX = 15;
+const TRAIL_LEN_BASE = 40;
+const TRAIL_LEN_MAX = 150;
+const TRAIL_HEAD_BASE = 1.2;
+const TRAIL_HEAD_MAX = 2;
+const TRAIL_EASE = 0.2;
+const TRAIL_ORIGIN_X = 14;
+const TRAIL_ORIGIN_Y = 29;
+const TRAIL_GRADIENT_SPAN = 190;
+const TRAIL_SPEED_STEPS = 2;
+const TRAIL_DIR_STEPS = 24;
+let trailSeq = 0;
+
+const round1 = (n) => Number(n.toFixed(1));
+
+function hashSeed(a, b, c) {
+  let h = Math.imul(a | 0, 0x9e3779b1) >>> 0;
+  h = (h ^ Math.imul(b | 0, 0x85ebca77)) >>> 0;
+  h = (h ^ Math.imul(c | 0, 0xc2b2ae3d)) >>> 0;
+  h = Math.imul(h ^ (h >>> 15), 0x2c1b3c6d) >>> 0;
+  h = Math.imul(h ^ (h >>> 12), 0x297a2d39) >>> 0;
+  return (h ^ (h >>> 15)) >>> 0;
+}
+
+function seededUnit(seed, salt) {
+  let t = (seed ^ Math.imul(salt + 1, 0x9e3779b1)) >>> 0;
+  t = Math.imul(t ^ (t >>> 16), 0x21f0aaad) >>> 0;
+  t = Math.imul(t ^ (t >>> 15), 0x735a2d97) >>> 0;
+  return ((t ^ (t >>> 15)) >>> 0) / 4294967296;
+}
+
+function buildTrailGradient(gradId) {
+  const grad = el("linearGradient", {
+    id: gradId,
+    gradientUnits: "userSpaceOnUse",
+    x1: 0,
+    y1: 0,
+    x2: 1,
+    y2: 0,
+  });
+  const stops = [
+    { offset: "0%", opacity: "0" },
+    { offset: "45%", opacity: "1" },
+    { offset: "100%", opacity: "0" },
+  ];
+  for (let i = 0; i < stops.length; i++) {
+    const stop = el("stop", {
+      offset: stops[i].offset,
+      "stop-opacity": stops[i].opacity,
+      style: "stop-color: var(--stk-trail-core)",
+    });
+    grad.appendChild(stop);
+  }
+  return grad;
+}
+
+function buildTrailFilter(filterId) {
+  const filter = el("filter", {
+    id: filterId,
+    x: "-30%",
+    y: "-30%",
+    width: "160%",
+    height: "160%",
+  });
+  filter.appendChild(el("feGaussianBlur", { stdDeviation: "1.1" }));
+  return filter;
+}
+
+export function createSpeedTrail() {
+  const gradId = "stk-trail-grad-" + ++trailSeq;
+  const filterId = "stk-trail-blur-" + ++trailSeq;
+  const group = el("g", {
+    class: "stk-speed-trail",
+    display: "none",
+    filter: "url(#" + filterId + ")",
+  });
+  const defs = el("defs");
+  const grad = buildTrailGradient(gradId);
+  defs.appendChild(grad);
+  defs.appendChild(buildTrailFilter(filterId));
+  group.appendChild(defs);
+  const streaks = [];
+  for (let i = 0; i < TRAIL_COUNT; i++) {
+    const path = el("path", {
+      d: "",
+      fill: "url(#" + gradId + ")",
+      opacity: "0",
+    });
+    streaks.push(path);
+    group.appendChild(path);
+  }
+  return { group, streaks, grad, alpha: 0, lastX: 0, lastY: 0, speedEma: 0 };
+}
+
+function setTrailDisplay(trail, value) {
+  if (!trail || !trail.group) return;
+  if (trail.group.getAttribute("display") === value) return;
+  trail.group.setAttribute("display", value);
+}
+
+function setTrailGradient(trail, name, value) {
+  if (!trail || !trail.grad) return;
+  if (trail.grad.getAttribute(name) === value) return;
+  trail.grad.setAttribute(name, value);
+}
+
+export function updateSpeedTrail(trail, x, y) {
+  if (!trail || !trail.group) return;
+  const px = Number.isFinite(x) ? x : trail.lastX;
+  const py = Number.isFinite(y) ? y : trail.lastY;
+  const dx = px - trail.lastX;
+  const dy = py - trail.lastY;
+  trail.lastX = px;
+  trail.lastY = py;
+  const speed = Math.hypot(dx, dy);
+  if (!Number.isFinite(speed)) {
+    setTrailDisplay(trail, "none");
+    return;
+  }
+  let strength = 0;
+  if (speed > TRAIL_SPEED_MIN) {
+    const raw = (speed - TRAIL_SPEED_MIN) / (TRAIL_SPEED_MAX - TRAIL_SPEED_MIN);
+    const k = raw > 1 ? 1 : raw < 0 ? 0 : raw;
+    strength = k * k * (3 - 2 * k);
+  }
+  trail.alpha += (strength - trail.alpha) * TRAIL_EASE;
+  if (trail.alpha < 0.02 || speed < 0.001) {
+    setTrailDisplay(trail, "none");
+    return;
+  }
+  const dirX = dx / speed;
+  const dirY = dy / speed;
+  const ema = trail.speedEma
+    ? trail.speedEma + (speed - trail.speedEma) * 0.25
+    : speed;
+  trail.speedEma = ema;
+  const speedKey = Math.round(ema * TRAIL_SPEED_STEPS);
+  const dirKey = Math.round(Math.atan2(dirY, dirX) * TRAIL_DIR_STEPS);
+  const stepAngle = dirKey / TRAIL_DIR_STEPS;
+  const dirQX = Math.cos(stepAngle);
+  const dirQY = Math.sin(stepAngle);
+  const normQX = -dirQY;
+  const normQY = dirQX;
+  let keyStrength = 0;
+  if (speedKey > TRAIL_SPEED_MIN * TRAIL_SPEED_STEPS) {
+    const raw =
+      (speedKey - TRAIL_SPEED_MIN * TRAIL_SPEED_STEPS) /
+      ((TRAIL_SPEED_MAX - TRAIL_SPEED_MIN) * TRAIL_SPEED_STEPS);
+    const k = raw > 1 ? 1 : raw < 0 ? 0 : raw;
+    keyStrength = k * k * (3 - 2 * k);
+  }
+  for (let i = 0; i < trail.streaks.length; i++) {
+    const streak = trail.streaks[i];
+    const seed = hashSeed(i + 1, speedKey, dirKey);
+    const back = 6 + seededUnit(seed, 1) * 18;
+    const lateral = (seededUnit(seed, 2) - 0.5) * 28;
+    const sx = TRAIL_ORIGIN_X - dirQX * back + normQX * lateral;
+    const sy = TRAIL_ORIGIN_Y - dirQY * back + normQY * lateral;
+    const len =
+      (TRAIL_LEN_BASE + keyStrength * TRAIL_LEN_MAX) *
+      (0.45 + seededUnit(seed, 3) * 0.55);
+    const w =
+      (TRAIL_HEAD_BASE + keyStrength * TRAIL_HEAD_MAX) *
+      (0.6 + seededUnit(seed, 4) * 0.7);
+    const tx = sx - dirQX * len;
+    const ty = sy - dirQY * len;
+    const h1x = sx + (normQX * w) / 2;
+    const h1y = sy + (normQY * w) / 2;
+    const h2x = sx - (normQX * w) / 2;
+    const h2y = sy - (normQY * w) / 2;
+    const midX = (sx + tx) / 2;
+    const midY = (sy + ty) / 2;
+    const bow = w * 0.7;
+    const c1x = midX + normQX * bow - dirQX * len * 0.15;
+    const c1y = midY + normQY * bow - dirQY * len * 0.15;
+    const c2x = midX - normQX * bow - dirQX * len * 0.15;
+    const c2y = midY - normQY * bow - dirQY * len * 0.15;
+    const d =
+      "M" +
+      round1(h1x) +
+      " " +
+      round1(h1y) +
+      " Q" +
+      round1(c1x) +
+      " " +
+      round1(c1y) +
+      " " +
+      round1(tx) +
+      " " +
+      round1(ty) +
+      " Q" +
+      round1(c2x) +
+      " " +
+      round1(c2y) +
+      " " +
+      round1(h2x) +
+      " " +
+      round1(h2y) +
+      " Z";
+    if (streak.stkTrailD !== d) {
+      streak.setAttribute("d", d);
+      streak.stkTrailD = d;
+    }
+    const opacityValue = (
+      (0.16 + strength * 0.34) *
+      (0.55 + seededUnit(seed, 5) * 0.45)
+    ).toFixed(3);
+    if (streak.stkTrailOpacity !== opacityValue) {
+      streak.setAttribute("opacity", opacityValue);
+      streak.stkTrailOpacity = opacityValue;
+    }
+  }
+  setTrailGradient(trail, "x1", String(round1(TRAIL_ORIGIN_X)));
+  setTrailGradient(trail, "y1", String(round1(TRAIL_ORIGIN_Y)));
+  setTrailGradient(
+    trail,
+    "x2",
+    String(round1(TRAIL_ORIGIN_X - dirX * TRAIL_GRADIENT_SPAN)),
+  );
+  setTrailGradient(
+    trail,
+    "y2",
+    String(round1(TRAIL_ORIGIN_Y - dirY * TRAIL_GRADIENT_SPAN)),
+  );
+  setTrailDisplay(trail, "inline");
+}
+
+export function syncSpeedTrail(trail, x, y) {
+  if (!trail) return;
+  trail.lastX = Number.isFinite(x) ? x : trail.lastX;
+  trail.lastY = Number.isFinite(y) ? y : trail.lastY;
+}

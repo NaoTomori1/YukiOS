@@ -3,10 +3,18 @@ import { showDynamicContextMenu } from "../shared/contextMenu.js";
 import { parseBool } from "../utils/utils.js";
 import { resolveIconUrl } from "../shared/assetResolver.js";
 import { getEffectiveIcon } from "../shared/iconPack.js";
+import { playSfx, SystemSfx } from "../sfx/systemSfx.js";
 
 import { BusEvents } from "../core/EventBus.js";
 import { StorageKeys, os, MODES, createElement } from "../framework.js";
 import { isTaskbarTop, getTaskbarPosition } from "../utils/utils.js";
+
+const WIN11_HIDDEN_TRAY_IDS = new Set([
+  "audio-mixer",
+  "network-tray-window",
+  "display-performance-window",
+]);
+
 class TrayManager {
   constructor() {
     this.items = new Map();
@@ -44,6 +52,8 @@ class TrayManager {
       }
     });
     os.events.on("icon-pack-changed", () => this.render());
+    os.events.on(BusEvents.MODE_ENTERED, () => this.render());
+    os.events.on(BusEvents.MODE_EXITED, () => this.render());
   }
 
   register(winId, icon, label, options = {}) {
@@ -122,7 +132,12 @@ class TrayManager {
       os.window.bringToFront(win);
       if (this.wm) {
         const entry = this.wm.openWindows.get(winId);
-        if (entry?.record?.snapZone) {
+        if (
+          entry?.record?.snapZone === "snap-layout" &&
+          entry.record.snapRect
+        ) {
+          this.wm.applySnapRect(win, entry.record.snapRect);
+        } else if (entry?.record?.snapZone) {
           this.wm.applySnap(win, entry.record.snapZone);
         }
       }
@@ -273,8 +288,15 @@ class TrayManager {
       }
     })();
 
+    const isWin11 =
+      os.modes.isActive(MODES.WIN11) ||
+      document.documentElement.classList.contains("win11-mode") ||
+      document.documentElement.dataset.win11 === "true";
+
     const trayItems = this.getTrayItems().filter(
-      (item) => trayAppVisibility[item.winId] !== false,
+      (item) =>
+        trayAppVisibility[item.winId] !== false &&
+        (!isWin11 || !WIN11_HIDDEN_TRAY_IDS.has(item.winId)),
     );
 
     if (trayItems.length === 0) {
@@ -494,11 +516,16 @@ class TrayManager {
         return {};
       }
     })();
+    const isWin11 =
+      os.modes.isActive(MODES.WIN11) ||
+      document.documentElement.classList.contains("win11-mode") ||
+      document.documentElement.dataset.win11 === "true";
     const allItems = this.getAllItems()
       .filter((item) => trayAppVisibility[item.winId] !== false)
       .filter(
         (item) => includeDedicated || !this.dedicatedContainers.has(item.winId),
-      );
+      )
+      .filter((item) => !isWin11 || !WIN11_HIDDEN_TRAY_IDS.has(item.winId));
     if (allItems.length === 0) {
       containerEl.style.display = "none";
       return;

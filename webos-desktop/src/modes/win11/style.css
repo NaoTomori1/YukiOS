@@ -4,6 +4,38 @@ html.win11-mode {
   --win11-hover-dark: rgba(255, 255, 255, 0.1);
   --win11-hover-light: rgba(255, 255, 255, 0.67);
   --win11-segoe: "Segoe UI Variable", "Segoe UI", system-ui, sans-serif;
+  --win11-flyout-bg: rgba(32, 32, 32, 0.6);
+  --win11-flyout-surface: rgba(255, 255, 255, 0.05);
+  --win11-flyout-border: rgba(255, 255, 255, 0.1);
+  --win11-flyout-shadow: 0 24px 64px rgba(0, 0, 0, 0.55);
+  --win11-flyout-ease: cubic-bezier(0.62, 0, 0.32, 1);
+  --win11-taskbar-h: 48px;
+  --win11-flyout-lift: 12px;
+  --win11-scroll-thumb: #9ea0a3;
+  --win11-search-c1: #0284c7;
+  --win11-search-c1b: #0ea5e9;
+  --win11-search-c2: #4ade80;
+  --win11-search-c3: #a3e635;
+  --win11-search-hover: #ffffff;
+}
+
+html.win11-mode .win11-flyout-stage {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: var(--win11-taskbar-h);
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 9500;
+}
+
+html.win11-mode .win11-flyout-stage.win11-flyout-stage--sidepane {
+  z-index: 9600;
+}
+
+html.win11-mode .win11-flyout-stage > * {
+  pointer-events: auto;
 }
 
 html.win11-mode #taskbar {
@@ -13,28 +45,84 @@ html.win11-mode #taskbar {
   right: 0;
   top: auto;
   width: 100%;
-  height: 48px;
+  height: var(--win11-taskbar-h);
   flex-direction: row;
   align-items: center;
   justify-content: center;
   padding: 0;
   background: var(--win11-acrylic-dark);
+  z-index: 10000;
   -webkit-backdrop-filter: saturate(3) blur(20px);
   backdrop-filter: saturate(3) blur(20px);
   border: none;
   box-shadow: none;
 }
 
-html.win11-mode #taskbar-windows {
+html.win11-mode #taskbar .tsbar #taskbar-windows {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   gap: 4px;
-  flex: 1;
+  flex: 0 1 auto;
+  min-width: 0;
   height: 100%;
   overflow-x: auto;
   overflow-y: hidden;
   padding: 0 4px;
+  scrollbar-width: none;
+}
+
+html.win11-mode #taskbar .tsbar #taskbar-windows::-webkit-scrollbar {
+  display: none;
+}
+
+html.win11-mode #workspace-bar {
+  display: none !important;
+}
+
+html.win11-mode .ov-ws-btn.ov-ws-add {
+  padding: 6px 6px 4px 6px;
+  align-self: auto;
+  justify-content: flex-start;
+}
+
+html.win11-mode #taskbar .taskbar-scroll-indicator {
+  display: none;
+}
+
+html.win11-mode #taskbar .taskbar-item-label {
+  display: none;
+}
+
+html.win11-mode
+  #taskbar
+  .tsbar
+  #taskbar-windows
+  .taskbar-item.pinned:not(.running) {
+  display: none;
+}
+
+html.win11-mode
+  #taskbar
+  .tsbar
+  #taskbar-windows
+  .taskbar-item.running[data-app-id="settingsApp"],
+html.win11-mode
+  #taskbar
+  .tsbar
+  #taskbar-windows
+  .taskbar-item.running[data-app-id="explorerApp"],
+html.win11-mode
+  #taskbar
+  .tsbar
+  #taskbar-windows
+  .taskbar-item.running[data-app-id="browserApp"],
+html.win11-mode
+  #taskbar
+  .tsbar
+  #taskbar-windows
+  .taskbar-item.running[data-app-id="shittifyApp"] {
+  display: none;
 }
 
 html.win11-mode .taskbar-item {
@@ -80,7 +168,7 @@ html.win11-mode .taskbar-item.active {
 
 html.win11-mode .taskbar-item.active::after {
   width: 12px;
-  background: var(--brand);
+  background: var(--win11-accent);
 }
 
 html.win11-mode .taskbar-item:hover {
@@ -197,11 +285,29 @@ html.win11-mode #taskbar .tsbar .tsIcon[data-open="true"]::after {
 
 html.win11-mode #taskbar .tsbar .tsIcon[data-active="true"]::after {
   width: 12px;
-  background: var(--brand);
+  background: var(--win11-accent);
 }
 
 html.win11-mode #taskbar .tsbar .tsIcon[data-active="true"] {
   background: var(--win11-hover-dark);
+}
+
+html.win11-mode #taskbar .tsIcon img,
+html.win11-mode #taskbar .tsIcon svg,
+html.win11-mode #taskbar .taskbar-item img,
+html.win11-mode #taskbar .taskbar-item i,
+html.win11-mode #taskbar .taskbar-item svg {
+  transform-origin: center;
+  transition: transform 400ms ease-in-out;
+}
+
+html.win11-mode #taskbar .tsIcon img:active,
+html.win11-mode #taskbar .tsIcon svg:active,
+html.win11-mode #taskbar .taskbar-item img:active,
+html.win11-mode #taskbar .taskbar-item i:active,
+html.win11-mode #taskbar .taskbar-item svg:active {
+  transform: scale(0.7);
+  transition: transform 100ms ease-in-out;
 }
 
 html[data-theme="light"].win11-mode
@@ -321,6 +427,14 @@ html.win11-mode #taskbar .prtclk * {
   pointer-events: none;
 }
 
+html.win11-mode #taskbar .win11-band-trigger svg {
+  transition: transform 0.2s var(--win11-flyout-ease);
+}
+
+html.win11-mode #taskbar .win11-band-trigger[data-open="true"] svg {
+  transform: rotate(180deg);
+}
+
 html.win11-mode #taskbar .handcr {
   cursor: pointer;
 }
@@ -433,79 +547,70 @@ html[data-theme="light"].win11-mode #taskbar .battery .charger svg path {
 
 html.win11-mode #mac-menu-bar,
 html.win11-mode #start-button,
-html.win11-mode #taskbar-windows,
-html.win11-mode #system-tray,
-html.win11-mode .win11-taskbar-btn,
-html.win11-mode #win11-start-tsicon {
+html.win11-mode #system-tray {
   display: none !important;
 }
 
-html.win11-mode #start-button {
-  width: 38px;
-  height: 38px;
-  min-width: 38px;
-  min-height: 38px;
-  flex-shrink: 0;
-  border-radius: 4px;
-  background: transparent;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.15s ease;
+html.win11-mode .win11-taskbar-menu-host {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 9900;
 }
 
-html.win11-mode #start-button.win11-start {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%230078D4' d='M3 5.5 10.5 4.4v7.1H3zM11.6 4.2 21 2.8v8.7h-9.4zM3 12.5h7.5v7.1L3 18.5zM11.6 12.5H21v8.7l-9.4-1.4z'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: center;
-  background-size: 22px 22px;
+html.win11-mode .win11-taskbar-menu-host > * {
+  pointer-events: auto;
 }
 
-html.win11-mode #start-button:hover {
-  background-color: var(--win11-hover-dark);
-  filter: none;
+html.win11-mode .win11-taskbar-menu-host #taskbar-context-menu {
+  position: absolute;
+  left: var(--ctx-left, 0px);
+  bottom: var(--ctx-bottom, 0px);
+  top: auto;
+  animation: win11TaskbarMenuIn 200ms cubic-bezier(0.2, 0, 0, 1) both;
+  opacity: 1;
 }
 
-html.win11-mode .win11-taskbar-btn {
-  width: 38px;
-  height: 38px;
-  min-width: 38px;
-  border: none;
-  border-radius: 4px;
-  background: transparent;
-  color: var(--text-primary);
-  font-size: 14px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  margin: auto 2px;
-  transition: background 0.15s ease;
+html.win11-mode .win11-taskbar-menu-host #taskbar-context-menu.closing {
+  animation: win11TaskbarMenuOut 180ms cubic-bezier(0.4, 0, 1, 1) both;
+  opacity: 1;
 }
 
-html.win11-mode .win11-taskbar-btn:hover {
-  background: var(--win11-hover-dark);
+@keyframes win11TaskbarMenuIn {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+@keyframes win11TaskbarMenuOut {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(100%);
+  }
 }
 
 @keyframes win11MenuIn {
   from {
-    opacity: 0;
-    transform: translateY(100px);
+    transform: translateY(1000px);
   }
   to {
-    opacity: 1;
     transform: translateY(0);
   }
 }
 @keyframes win11MenuOut {
   from {
-    opacity: 1;
     transform: translateY(0);
   }
   to {
-    opacity: 0;
-    transform: translateY(100px);
+    transform: translateY(1000px);
   }
 }
 html.win11-mode .start-menu {
@@ -583,7 +688,7 @@ html.win11-mode .startMenu {
       rgba(255, 255, 255, 0.02) 38%,
       rgba(160, 190, 255, 0.05)
     ),
-    rgba(22, 22, 26, 0.92);
+    rgba(22, 22, 26, 0.78);
   -webkit-backdrop-filter: blur(32px) saturate(1.6) brightness(1.1);
   backdrop-filter: blur(32px) saturate(1.6) brightness(1.1);
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -626,6 +731,9 @@ html.win11-mode .startMenu .allCont {
   flex: 1;
   min-height: 0;
 }
+html.win11-mode .startMenu .stmenu {
+  transition: cubic-bezier(0, 0.58, 0.42, 1) 300ms;
+}
 html.win11-mode .startMenu .stmenu[data-allapps="false"],
 html.win11-mode .startMenu .allCont[data-allapps="false"] {
   opacity: 0;
@@ -643,17 +751,113 @@ html.win11-mode .startMenu .stmenu[data-allapps="true"] {
   opacity: 0;
 }
 html.win11-mode .startMenu .allCont {
-  top: 0;
+  top: 68px;
   position: absolute;
   left: 100%;
   overflow: hidden;
   width: 100%;
+  height: calc(100% - 68px);
+}
+html.win11-mode .startMenu .topSearch {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 36px;
+  margin: 24px 32px 8px;
+  padding: 0 14px;
+  border-radius: 18px;
+  background: rgba(32, 34, 38, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-sizing: border-box;
+}
+html.win11-mode .startMenu .topSearch .searchIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  font-size: 13px;
+  flex-shrink: 0;
+}
+html.win11-mode .searchIcon .search-stop-1 {
+  stop-color: var(--win11-search-c1);
+}
+html.win11-mode .searchIcon .search-stop-1b {
+  stop-color: var(--win11-search-c1b);
+}
+html.win11-mode .searchIcon .search-stop-2 {
+  stop-color: var(--win11-search-c2);
+}
+html.win11-mode .searchIcon .search-stop-3 {
+  stop-color: var(--win11-search-c3);
+}
+html.win11-mode .startMenu .topSearch .searchIcon .search-ring {
+  fill: url(#win11-search-menu-gradient);
+}
+html.win11-mode #taskbar .searchIcon .search-ring {
+  stroke: url(#win11-search-bar-gradient);
+}
+html.win11-mode .startMenu .topSearch .searchIcon:hover .search-ring {
+  fill: var(--win11-search-hover);
+}
+html.win11-mode #taskbar .searchIcon:hover .search-ring {
+  stroke: var(--win11-search-hover);
+}
+html[data-theme="light"].win11-mode {
+  --win11-search-hover: #1f1f24;
+}
+html.win11-mode .startMenu .topSearch input {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text-primary);
+  font-size: 13px;
+}
+html.win11-mode .startMenu .topSearch input::placeholder {
+  color: var(--text-secondary);
+}
+html.win11-mode .startMenu[data-search="true"] .stmenu,
+html.win11-mode .startMenu[data-search="true"] .allCont,
+html.win11-mode .startMenu[data-search="true"] .lastCont {
+  display: none;
+}
+html.win11-mode .startMenu[data-search="false"] .searchMenu {
+  display: none;
 }
 html.win11-mode .startMenu .menuUp {
   padding: 32px;
   box-sizing: border-box;
   max-height: 100%;
   overflow-y: auto;
+}
+html.win11-mode .startMenu .menuUp,
+html.win11-mode .startMenu .lastFull,
+html.win11-mode .startMenu .allApps,
+html.win11-mode .startMenu .searchMenu {
+  scrollbar-width: thin;
+  scrollbar-color: var(--win11-scroll-thumb) transparent;
+}
+html.win11-mode .startMenu .menuUp::-webkit-scrollbar,
+html.win11-mode .startMenu .lastFull::-webkit-scrollbar,
+html.win11-mode .startMenu .allApps::-webkit-scrollbar,
+html.win11-mode .startMenu .searchMenu::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+html.win11-mode .startMenu .menuUp::-webkit-scrollbar-track,
+html.win11-mode .startMenu .lastFull::-webkit-scrollbar-track,
+html.win11-mode .startMenu .allApps::-webkit-scrollbar-track,
+html.win11-mode .startMenu .searchMenu::-webkit-scrollbar-track {
+  background: transparent;
+}
+html.win11-mode .startMenu .menuUp::-webkit-scrollbar-thumb,
+html.win11-mode .startMenu .lastFull::-webkit-scrollbar-thumb,
+html.win11-mode .startMenu .allApps::-webkit-scrollbar-thumb,
+html.win11-mode .startMenu .searchMenu::-webkit-scrollbar-thumb {
+  background: var(--win11-scroll-thumb);
+  border-radius: 3px;
 }
 html.win11-mode .startMenu .stAcbar {
   display: flex;
@@ -690,7 +894,7 @@ html.win11-mode .startMenu .gpbtn .chevLeft svg {
 }
 html.win11-mode .startMenu .pnApps {
   min-height: 150px;
-  padding: 20px 0;
+  padding: 20px 0 8px;
   display: grid;
   grid-template-columns: repeat(6, 1fr);
   grid-auto-rows: 84px;
@@ -743,22 +947,686 @@ html.win11-mode .startMenu .pnApp .appName {
 html.win11-mode .startMenu .pnEmpty {
   pointer-events: none;
 }
-html.win11-mode .startMenu .recApps {
+html.win11-mode .startMenu .lastApps {
   position: static;
   overflow: visible;
   max-height: none;
   width: 100%;
-  margin-top: 80px;
+  margin-top: 0;
   box-sizing: border-box;
 }
-html.win11-mode .startMenu .reApps {
+html.win11-mode .startMenu .showAllBtn {
+  background: transparent;
+  color: var(--text-primary);
+  font-size: 12px;
+  padding: 2px 8px;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+html.win11-mode .startMenu .showAllBtn:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+html.win11-mode .startMenu .lastCont {
+  top: 68px;
+  position: absolute;
+  left: 100%;
+  overflow: hidden;
+  width: 100%;
+  height: calc(100% - 68px);
+  transition: cubic-bezier(0, 0.58, 0.42, 1) 300ms;
+}
+html.win11-mode .startMenu[data-lastall="true"] .stmenu {
+  transform: translateX(-640px);
+  opacity: 0;
+}
+html.win11-mode .startMenu[data-lastall="true"] .lastCont {
+  transform: translateX(-640px);
+}
+html.win11-mode .startMenu .lastFull {
+  margin-top: 16px;
+  padding: 0 16px;
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-auto-rows: 56px;
+  column-gap: 10px;
+  align-content: start;
+}
+html.win11-mode .startMenu .lastFull .rnApp {
+  width: auto;
+}
+html.win11-mode .startMenu .catSection {
+  width: 100%;
+  box-sizing: border-box;
+}
+html.win11-mode .startMenu .catView {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-primary);
+}
+html.win11-mode .startMenu .catViewText {
+  opacity: 0.8;
+}
+html.win11-mode .startMenu .catViewSelect {
+  min-width: 92px;
+}
+html.win11-mode .startMenu .catViewSelect .select-menu__trigger {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.06);
+  border-color: transparent;
+}
+html.win11-mode
+  .startMenu
+  .catViewSelect.select-menu--open
+  .select-menu__trigger,
+html.win11-mode .startMenu .catViewSelect:focus .select-menu__trigger {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow: none;
+}
+html.win11-mode .startMenu .catViewSelect .select-menu__dropdown {
+  top: auto;
+  bottom: 100%;
+  margin: 0 0 4px 0;
+  background: rgba(36, 36, 36, 0.95);
+  border-color: rgba(255, 255, 255, 0.1);
+  padding: 2px 0;
+}
+html.win11-mode .startMenu .catViewSelect .select-menu__option {
+  font-size: 12px;
+}
+html.win11-mode .startMenu .catViewSelect .select-menu__option.selected {
+  background: rgba(76, 194, 255, 0.18);
+  color: var(--win11-accent);
+}
+html.win11-mode .startMenu .catTitle {
+  cursor: default;
+}
+html.win11-mode .startMenu .catGrid {
   margin: 12px 0 24px 0;
+  padding: 0 20px;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 18px 10px;
+}
+html.win11-mode .startMenu .catCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  min-width: 0;
+}
+html.win11-mode .startMenu .catCardBox {
+  width: 100%;
+  height: 88px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 10px;
+  box-sizing: border-box;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 6px;
+  transition: background 0.15s ease;
+}
+html.win11-mode .startMenu .catCard:hover .catCardBox {
+  background: rgba(255, 255, 255, 0.12);
+}
+html.win11-mode .startMenu .catCell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  min-height: 0;
+}
+html.win11-mode .startMenu .catMini {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 2px;
+}
+html.win11-mode .startMenu .catMiniIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  min-height: 0;
+}
+html.win11-mode .startMenu .catIcon {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+html.win11-mode .startMenu .catIcon img {
+  object-fit: contain;
+}
+html.win11-mode .startMenu .catCardLabel {
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--text-primary);
+  text-align: center;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+html.win11-mode .win11-band {
+  position: absolute;
+  bottom: var(--win11-flyout-lift);
+  right: 140px;
+  background: var(--win11-hover-dark);
+  overflow: hidden;
+  transform: translateY(0);
+  transition: transform 250ms cubic-bezier(0.62, 0, 0.32, 1);
+  z-index: 9000;
+  border-radius: 8px;
+  max-height: fit-content;
+}
+
+html.win11-mode .win11-band::before {
+  content: "";
+  position: absolute;
+  inset: -40px;
+  background-image: var(--win11-wallpaper-url, none);
+  background-size: cover;
+  background-position: center;
+  filter: blur(30px);
+  z-index: -1;
+  pointer-events: none;
+}
+
+html.win11-mode .win11-band[data-hide="true"] {
+  transform: translateY(calc(100% + var(--win11-flyout-lift)));
+  animation: win11FlyoutHider 0s ease-in-out 0.25s forwards;
+  transition: transform 250ms cubic-bezier(0.62, 0, 0.32, 1);
+  pointer-events: none;
+}
+
+html.win11-mode .win11-band .bandContainer {
+  background: var(--win11-flyout-surface);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px;
+  padding: 6px;
+  max-width: 320px;
+}
+
+html.win11-mode .win11-band .bandContainer .tray-icon-btn {
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  background: transparent;
+  border: 0;
+  color: var(--text-primary);
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.15s ease;
+}
+
+html.win11-mode .win11-band .bandContainer .tray-icon-btn:hover {
+  background: var(--win11-hover-dark);
+}
+
+html.win11-mode .win11-band .bandContainer .tray-icon-btn img {
+  display: block;
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+}
+
+html.win11-mode .win11-band .bandContainer .tray-icon-btn i {
+  font-size: 14px;
+}
+
+html.win11-mode .win11-band .bandContainer .tray-overflow-btn {
+  position: relative;
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  background: transparent;
+  border: 0;
+  color: var(--text-primary);
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.15s ease;
+}
+
+html.win11-mode .win11-band .bandContainer .tray-overflow-btn:hover {
+  background: var(--win11-hover-dark);
+}
+
+html.win11-mode .win11-band .bandContainer .tray-overflow-btn img {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+}
+
+html.win11-mode .win11-band .bandContainer .tray-overflow-count {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  min-width: 14px;
+  height: 14px;
+  padding: 0 3px;
+  border-radius: 7px;
+  background: var(--win11-accent, #4cc2ff);
+  color: #000;
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 14px;
+  text-align: center;
+}
+
+html.win11-mode .win11-band .win11-band__empty {
+  color: var(--text-secondary);
+  font-size: 12px;
+  padding: 10px 14px;
+  white-space: nowrap;
+}
+
+html.win11-mode .win11-cal {
+  position: fixed;
+  bottom: 58px;
+  right: 12px;
+  width: 336px;
+  max-height: 520px;
+  border-radius: 8px;
+  background: var(--win11-flyout-bg);
+  color: var(--text-primary);
+  border: 1px solid var(--win11-flyout-border);
+  box-shadow: var(--win11-flyout-shadow);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  overflow: hidden;
+  z-index: 9000;
+  transform: translateX(0);
+  transition:
+    transform 250ms var(--win11-flyout-ease),
+    max-height 250ms var(--win11-flyout-ease),
+    opacity 150ms var(--win11-flyout-ease);
+  font-family: var(--win11-segoe);
+}
+
+html.win11-mode .win11-cal[data-hide="true"] {
+  transform: translateX(120%);
+  opacity: 0;
+  animation: win11OverflowHider 0s ease-in-out 0.2s forwards;
+  transition: all 150ms var(--win11-flyout-ease);
+  pointer-events: none;
+}
+
+@keyframes win11OverflowHider {
+  100% {
+    width: 0;
+  }
+}
+
+html.win11-mode .win11-cal--collapsed {
+  max-height: 50px;
+}
+
+html.win11-mode .win11-cal__topbar {
+  height: 50px;
+  padding: 0 10px 0 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--win11-flyout-border);
+  background: var(--win11-flyout-surface);
+  box-sizing: border-box;
+}
+
+html.win11-mode .win11-cal__date {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+html.win11-mode .win11-cal__nav {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+html.win11-mode .win11-cal__btn,
+html.win11-mode .win11-cal__collapser {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  width: 26px;
+  height: 26px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  transition: background 0.15s ease;
+}
+
+html.win11-mode .win11-cal__btn:hover,
+html.win11-mode .win11-cal__collapser:hover {
+  background: var(--win11-hover-dark);
+  color: var(--text-primary);
+}
+
+html.win11-mode .win11-cal__collapser i {
+  transition: transform 0.2s var(--win11-flyout-ease);
+}
+
+html.win11-mode .win11-cal--collapsed .win11-cal__collapser i {
+  transform: rotate(180deg);
+}
+
+html.win11-mode .win11-cal__body {
+  padding: 14px 16px 16px;
+  background: var(--win11-flyout-surface);
+}
+
+html.win11-mode .win11-cal__month {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+html.win11-mode .win11-cal__grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+
+html.win11-mode .win11-cal__wd {
+  text-align: center;
+  font-size: 11px;
+  color: var(--text-secondary);
+  padding-bottom: 4px;
+}
+
+html.win11-mode .win11-cal__day {
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  color: var(--text-primary);
+  border-radius: 4px;
+}
+
+html.win11-mode .win11-cal__day--out {
+  color: var(--text-muted);
+  opacity: 0.5;
+}
+
+html.win11-mode .win11-cal__day--today {
+  background: var(--win11-accent);
+  color: #0b1220;
+  font-weight: 600;
+}
+
+html.win11-mode:not(.win11-cal-open) #ntf-panel {
+  display: none;
+}
+
+html.win11-mode.win11-cal-open #ntf-panel {
+  bottom: calc(var(--win11-cal-top, 58px) + 5px);
+  right: 12px;
+  width: 336px;
+  max-height: calc(100vh - var(--win11-cal-top, 58px) - 21px);
+  z-index: 9100;
+  background: var(--win11-flyout-bg);
+  border: 1px solid var(--win11-flyout-border);
+  border-radius: 8px;
+  box-shadow: var(--win11-flyout-shadow);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  font-family: var(--win11-segoe);
+  transform: translateX(120%);
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    transform 150ms var(--win11-flyout-ease),
+    opacity 150ms var(--win11-flyout-ease);
+}
+
+html.win11-mode.win11-cal-open #ntf-panel.open {
+  transform: translateX(0);
+  opacity: 1;
+  pointer-events: auto;
+  transition:
+    transform 250ms var(--win11-flyout-ease),
+    opacity 250ms var(--win11-flyout-ease),
+    bottom 250ms var(--win11-flyout-ease),
+    max-height 250ms var(--win11-flyout-ease);
+}
+
+html.win11-mode.win11-cal-open #ntf-panel .ntf-panel__head {
+  background: transparent;
+  border-bottom-color: transparent;
+}
+
+html.win11-mode.win11-cal-open #ntf-panel .ntf-panel__feed {
+  background: transparent;
+}
+
+html.win11-mode.win11-cal-open #ntf-panel .tray-pin-btn,
+html.win11-mode.win11-cal-open #ntf-panel .ntf-panel__dismiss,
+html.win11-mode.win11-cal-open #ntf-panel .close-btn {
+  display: none;
+}
+
+html.win11-mode.win11-cal-open #ntf-panel {
+  font-size: 13px;
+}
+
+html.win11-mode.win11-cal-open #ntf-panel .ntf-panel__foot {
+  display: none;
+}
+
+html.win11-mode.win11-cal-open #ntf-panel .ntf-panel__dnd {
+  padding: 10px;
+  border-radius: 2px;
+  font-size: 0;
+  line-height: 1;
+  width: auto;
+}
+
+html.win11-mode.win11-cal-open #ntf-panel .ntf-panel__dnd i {
+  font-size: 12px;
+}
+html.win11-mode .startMenu .catPopup {
+  position: absolute;
+  width: 420px;
+  max-width: calc(100% - 16px);
+  border-radius: 10px;
+  background: rgba(32, 34, 38, 0.96);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.55);
+  padding: 14px;
+  box-sizing: border-box;
+  z-index: 20;
+  transform-origin: bottom center;
+  animation: catPopupIn 220ms cubic-bezier(0.2, 0, 0, 1) both;
+}
+html.win11-mode .startMenu .catPopup.closing {
+  animation: catPopupOut 180ms cubic-bezier(0.4, 0, 1, 1) both;
+  pointer-events: none;
+}
+@keyframes catPopupIn {
+  from {
+    transform: translateY(var(--popup-start-y, 80px)) scale(0.88);
+  }
+  to {
+    transform: translateY(0) scale(1);
+  }
+}
+@keyframes catPopupOut {
+  from {
+    transform: translateY(0) scale(1);
+  }
+  to {
+    transform: translateY(var(--popup-start-y, 80px)) scale(0.88);
+  }
+}
+html.win11-mode .startMenu .catPopupTitle {
+  text-align: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 10px;
+}
+html.win11-mode .startMenu .catPopupViewport {
+  position: relative;
+  height: 180px;
+  overflow: hidden;
+}
+html.win11-mode .startMenu .catPopupTrack {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transition: transform 0.24s cubic-bezier(0.4, 0, 0.2, 1);
+}
+html.win11-mode .startMenu .catPopupGrid {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 100%;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  gap: 4px;
+}
+html.win11-mode .startMenu .catPopupEntry {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  border-radius: 6px;
+  cursor: pointer;
+  min-width: 0;
+  overflow: hidden;
+  padding: 4px 2px;
+  box-sizing: border-box;
+}
+html.win11-mode .startMenu .catPopupEntry:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+html.win11-mode .startMenu .catPopupEntry img,
+html.win11-mode .startMenu .catPopupEntry svg,
+html.win11-mode .startMenu .catPopupEntry i {
+  width: 26px;
+  height: 26px;
+  max-width: 26px;
+  max-height: 26px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+html.win11-mode .startMenu .catPopupEntry .catIcon {
+  width: 26px;
+  height: 26px;
+  font-size: 26px;
+}
+html.win11-mode .startMenu .catPopupName {
+  font-size: 11px;
+  color: var(--text-primary);
+  text-align: center;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding: 0 4px;
+  box-sizing: border-box;
+}
+html.win11-mode .startMenu .catPopupBar {
+  position: absolute;
+  top: 42px;
+  right: 5px;
+  bottom: 16px;
+  width: 3px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.12);
+}
+html.win11-mode .startMenu .catPopupThumb {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.4);
+  transition:
+    top 0.24s ease,
+    height 0.24s ease;
+}
+html.win11-mode .startMenu .catList {
+  margin: 12px 0 24px 0;
+  padding: 0 20px;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2px 0;
+}
+html.win11-mode .startMenu .catListLetter {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  padding: 14px 8px 4px 8px;
+  text-transform: uppercase;
+  user-select: none;
+}
+html.win11-mode .startMenu .catListRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  min-width: 0;
+  min-height: 44px;
+}
+html.win11-mode .startMenu .catListRow:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+html.win11-mode .startMenu .catListName {
+  font-size: 13px;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+html.win11-mode .startMenu .lastGrid {
+  margin: 8px 0 24px 0;
   width: 100%;
   padding: 0 20px;
   box-sizing: border-box;
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-auto-rows: 56px;
+  column-gap: 10px;
 }
 html.win11-mode .startMenu .rnApp {
   width: calc(50% - 10px);
@@ -767,6 +1635,9 @@ html.win11-mode .startMenu .rnApp {
   align-items: center;
   border-radius: 4px;
   cursor: pointer;
+}
+html.win11-mode .startMenu .lastGrid .rnApp {
+  width: auto;
 }
 html.win11-mode .startMenu .rnApp:hover {
   background: rgba(255, 255, 255, 0.1);
@@ -828,11 +1699,16 @@ html.win11-mode .startMenu .appCont {
   width: 100%;
   height: 100%;
   box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 html.win11-mode .startMenu .allApps {
   margin-top: 16px;
   padding: 0 16px;
-  height: 100%;
+  flex: 1;
+  min-height: 0;
+  height: auto;
   overflow: auto;
   transition: all ease-in-out 200ms;
   transform-origin: center;
@@ -1169,6 +2045,36 @@ html[data-theme="light"].win11-mode .startMenu .rightSide,
 html[data-theme="light"].win11-mode .startMenu .topApp {
   background: rgba(255, 255, 255, 0.9);
 }
+html[data-theme="light"].win11-mode .startMenu .showAllBtn:hover {
+  background: rgba(0, 0, 0, 0.08);
+}
+html[data-theme="light"].win11-mode .startMenu .catCardBox {
+  background: rgba(0, 0, 0, 0.05);
+  border-color: rgba(0, 0, 0, 0.07);
+}
+html[data-theme="light"].win11-mode .startMenu .catCard:hover .catCardBox {
+  background: rgba(0, 0, 0, 0.1);
+}
+html[data-theme="light"].win11-mode .startMenu .catListRow:hover {
+  background: rgba(0, 0, 0, 0.06);
+}
+html[data-theme="light"].win11-mode .startMenu .catPopup {
+  background: rgba(243, 243, 243, 0.97);
+  border-color: rgba(0, 0, 0, 0.08);
+}
+html[data-theme="light"].win11-mode .startMenu .catPopupEntry:hover {
+  background: rgba(0, 0, 0, 0.07);
+}
+html[data-theme="light"].win11-mode .startMenu .catPopupBar {
+  background: rgba(0, 0, 0, 0.1);
+}
+html[data-theme="light"].win11-mode .startMenu .catPopupThumb {
+  background: rgba(0, 0, 0, 0.35);
+}
+html[data-theme="light"].win11-mode .startMenu .topSearch {
+  background: rgba(255, 255, 255, 0.6);
+  border-color: rgba(0, 0, 0, 0.08);
+}
 
 html.win11-mode .window {
   border-radius: 8px;
@@ -1204,6 +2110,10 @@ html.win11-mode .window-header .window-controls {
   align-items: stretch;
   height: 100%;
   flex-shrink: 0;
+}
+
+html.win11-mode.transparent-ui.tp-window-header[data-theme] .window-header {
+  background: transparent !important;
 }
 
 html.win11-mode .icon.selectable {
@@ -1299,11 +2209,6 @@ html[data-theme="light"].win11-mode .taskbar-item.active {
   background: var(--win11-hover-light);
 }
 
-html[data-theme="light"].win11-mode #start-button:hover,
-html[data-theme="light"].win11-mode .win11-taskbar-btn:hover {
-  background-color: var(--win11-hover-light);
-}
-
 html[data-theme="light"].win11-mode .start-menu {
   background: rgba(242, 242, 242, 0.9);
   border: 1px solid rgba(0, 0, 0, 0.06);
@@ -1327,8 +2232,8 @@ html[data-theme="light"].win11-mode .icon.selectable:hover {
 
 html.win11-mode .startMenu .win11-credit {
   position: absolute;
-  top: 10px;
-  right: 10px;
+  top: 72px;
+  right: 14px;
   width: 22px;
   height: 22px;
   min-width: 22px;
@@ -1502,7 +2407,7 @@ html[data-theme="light"].win11-mode .win11-credit-panel .aboutApp {
 }
 
 html.win11-mode .window.explorer-window {
-  background: rgba(32, 32, 34, 0.78);
+  background: #191919;
   -webkit-backdrop-filter: saturate(1.8) blur(40px);
   backdrop-filter: saturate(1.8) blur(40px);
   border: 1px solid var(--glass-border);
@@ -1732,7 +2637,8 @@ html.win11-mode .window.explorer-window .sec1 .navIcon:hover {
 }
 html.win11-mode .window.explorer-window .sec1 .path-bar {
   flex-grow: 1;
-  overflow: scroll;
+  overflow-x: auto;
+  overflow-y: hidden;
   margin: 0 0.6em;
   padding: 0 0.6em;
   font-size: 12px;
@@ -1744,7 +2650,23 @@ html.win11-mode .window.explorer-window .sec1 .path-bar {
   align-items: center;
   min-height: 28px;
   background: transparent;
-  scrollbar-width: thin;
+  scrollbar-width: none;
+}
+html.win11-mode .window.explorer-window .sec1 .path-bar::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+html.win11-mode .window.explorer-window .sec1 .path-bar.noscroll {
+  scrollbar-width: none;
+}
+html.win11-mode
+  .window.explorer-window
+  .sec1
+  .path-bar.noscroll::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
 }
 html.win11-mode .window.explorer-window .sec1 .path-bar .dirfbox {
   position: absolute;
@@ -1821,25 +2743,16 @@ html.win11-mode .window.explorer-window .sec1 .path-bar .path-field:focus {
   background: transparent;
   color: var(--text-primary);
 }
+html.win11-mode .window.explorer-window .sec1 .path-bar.crumb-editing .dirfbox {
+  display: none;
+}
 html.win11-mode
   .window.explorer-window
   .sec1
-  .path-bar
-  .path-field:active
-  + .dirfbox,
-html.win11-mode
-  .window.explorer-window
-  .sec1
-  .path-bar
-  .path-field:focus
-  + .dirfbox {
-  display: none;
-}
-html.win11-mode .window.explorer-window .sec1 .path-bar:focus .dirfbox {
-  display: none;
-}
-html.win11-mode .window.explorer-window .sec1 .path-bar:focus .path-field {
+  .path-bar.crumb-editing
+  .path-field {
   display: block;
+  align-self: stretch;
 }
 html.win11-mode .window.explorer-window .sec1 .path-bar:focus-within {
   border-color: var(--brand);
@@ -3078,8 +3991,8 @@ html.win11-mode #win11-sidepane.sidePane {
   --bg3: #313131;
   --bg4: rgb(255 255 255 / 5%);
   --sliderThumbClr: #454545;
-  position: fixed;
-  bottom: 50px;
+  position: absolute;
+  bottom: var(--win11-flyout-lift);
   right: 12px;
   width: 360px;
   max-width: calc(100vw - 24px);
@@ -3087,7 +4000,7 @@ html.win11-mode #win11-sidepane.sidePane {
   color: var(--text-primary);
   background: var(--bg1);
   overflow: hidden;
-  transition: cubic-bezier(0.62, 0, 0.32, 1) 250ms;
+  transition: transform 250ms cubic-bezier(0.62, 0, 0.32, 1);
   z-index: 9999;
   transform: translateY(0);
   box-shadow: 0 24px 64px rgba(0, 0, 0, 0.55);
@@ -3101,12 +4014,12 @@ html.win11-mode #win11-sidepane.sidePane.bd-blur {
   backdrop-filter: blur(20px);
 }
 html.win11-mode #win11-sidepane.sidePane[data-hide="true"] {
-  transform: translateY(110%);
-  animation: overflow-hider 0s ease-in-out 150ms forwards;
-  transition: all cubic-bezier(0.62, 0, 0.32, 1) 150ms;
+  transform: translateY(calc(100% + var(--win11-flyout-lift)));
+  animation: win11FlyoutHider 0s ease-in-out 250ms forwards;
+  transition: transform 250ms cubic-bezier(0.62, 0, 0.32, 1);
+  pointer-events: none;
 }
 html.win11-mode #win11-sidepane.sidePane .quickSettings {
-  background: var(--bg2);
   display: flex;
   flex-direction: column;
   gap: 32px;
@@ -3138,7 +4051,7 @@ html.win11-mode #win11-sidepane.sidePane .qkbtn {
   color: var(--text-primary);
 }
 html.win11-mode #win11-sidepane.sidePane .qkbtn[data-state="true"] {
-  background: var(--brand);
+  background: var(--win11-accent);
 }
 html.win11-mode #win11-sidepane.sidePane .qktext {
   width: max-content;
@@ -3247,25 +4160,6 @@ html.win11-mode
   .sliders[type="range"]::-moz-range-thumb:active {
   border: 5px solid var(--sliderThumbClr);
 }
-html.win11-mode #win11-sidepane.sidePane .bottomBar {
-  box-sizing: border-box;
-  border-top: 1px solid var(--bg4);
-  height: 3rem;
-  display: flex;
-  align-items: center;
-}
-html.win11-mode #win11-sidepane.sidePane .battery-sidepane {
-  height: 100%;
-  display: flex;
-  align-items: center;
-  border-radius: 4px;
-  font-size: 12px;
-  color: var(--text-primary);
-  cursor: pointer;
-}
-html.win11-mode #win11-sidepane.sidePane .battery-sidepane:hover {
-  background: var(--bg4);
-}
 html[data-theme="light"].win11-mode #win11-sidepane.sidePane {
   --bg1: #dae2f2;
   --bg2: #e6edf8;
@@ -3340,12 +4234,12 @@ html[data-theme="light"].win11-mode
   img[data-invert="true"] {
   filter: invert(1);
 }
-@keyframes overflow-hider {
+@keyframes win11FlyoutHider {
   100% {
-    width: 0;
+    visibility: hidden;
   }
 }
-html.win11-mode #win11-bootscreen.bootscreen {
+#win11-bootscreen.bootscreen {
   position: fixed;
   inset: 0;
   background: #010001;
@@ -3355,11 +4249,11 @@ html.win11-mode #win11-bootscreen.bootscreen {
   cursor: progress;
   transition: opacity 400ms ease;
 }
-html.win11-mode #win11-bootscreen.bootscreen[data-done="true"] {
+#win11-bootscreen.bootscreen[data-done="true"] {
   opacity: 0;
   pointer-events: none;
 }
-html.win11-mode #win11-bootscreen.bootscreen #loader {
+#win11-bootscreen.bootscreen #loader {
   position: relative;
   top: 0;
   left: 0;
@@ -3368,7 +4262,7 @@ html.win11-mode #win11-bootscreen.bootscreen #loader {
   align-items: center;
   justify-content: center;
 }
-html.win11-mode #win11-bootscreen.bootscreen .progressRing circle {
+#win11-bootscreen.bootscreen .progressRing circle {
   stroke: white;
   fill: none;
   stroke-width: 2px;
@@ -3377,8 +4271,26 @@ html.win11-mode #win11-bootscreen.bootscreen .progressRing circle {
   transition: all 0.2s ease-in-out 0s;
   animation: 2s linear 0s infinite normal none running spin-infinite;
 }
-html.win11-mode #win11-bootscreen.bootscreen .mt-48 {
+#win11-bootscreen.bootscreen .mt-48 {
   margin-top: 192px;
+}
+#win11-bootscreen.bootscreen[data-phase="blackout"] .bootContent {
+  display: none;
+}
+#win11-bootscreen.bootscreen[data-hold="true"] {
+  cursor: pointer;
+}
+#win11-bootscreen.bootscreen .bootPowerHint {
+  position: absolute;
+  bottom: 48px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  pointer-events: none;
 }
 @keyframes spin-infinite {
   0% {

@@ -14,6 +14,7 @@ import { steamDeckAudio } from "./SteamDeckAudio.js";
 import { audioMixer } from "../../audioMixer.js";
 import { mediaTray } from "../../mediaTray.js";
 import { performanceManager } from "../../shared/performanceManager.js";
+import { guardVisible } from "../../shared/pollThrottle.js";
 import {
   renderRangeSlider,
   getRangeSliderValue,
@@ -859,21 +860,24 @@ export class QuickAccessPanel {
 
   startFriendsPolling() {
     this.stopFriendsPolling();
-    this.friendsPollTimer = setInterval(() => {
-      if (!this.isOpen || this.tab !== "friends" || this.showingRequests)
-        return;
-      const bodyEl = $(".deck-qta-panel-body", this.el);
-      if (!bodyEl) return;
-      const friendBody = $(".deck-qta-friend-body", bodyEl);
-      if (friendBody) this.renderFriendList(friendBody);
-      fetchFriends({ refresh: true })
-        .then((data) => {
-          const requests = Array.isArray(data?.requests) ? data.requests : [];
-          this.friendRequestsData = requests;
-          this.updateFriendRequestsBadge();
-        })
-        .catch(() => {});
-    }, 10000);
+    this.friendsPollTimer = setInterval(
+      guardVisible(() => {
+        if (!this.isOpen || this.tab !== "friends" || this.showingRequests)
+          return;
+        const bodyEl = $(".deck-qta-panel-body", this.el);
+        if (!bodyEl) return;
+        const friendBody = $(".deck-qta-friend-body", bodyEl);
+        if (friendBody) this.renderFriendList(friendBody);
+        fetchFriends({ refresh: true })
+          .then((data) => {
+            const requests = Array.isArray(data?.requests) ? data.requests : [];
+            this.friendRequestsData = requests;
+            this.updateFriendRequestsBadge();
+          })
+          .catch(() => {});
+      }),
+      30000,
+    );
   }
 
   stopFriendsPolling() {

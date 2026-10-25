@@ -22,6 +22,7 @@ import {
   launchSettingsPane,
 } from "../settings/settingsNav.js";
 import { addAppToDesktop, isAppOnDesktop } from "../shared/desktopShortcuts.js";
+import { playSfx, SystemSfx } from "../sfx/systemSfx.js";
 import {
   isAppPinnedToTaskbar,
   toggleTaskbarPin,
@@ -1047,11 +1048,13 @@ export function setupStartMenu(sessionManager) {
 
   $("#start-restart-btn")?.addEventListener("click", () => {
     closeStartMenu();
+    playSfx(SystemSfx.SHUTDOWN);
     sessionManager?.restart?.();
   });
 
   $("#start-shutdown-btn")?.addEventListener("click", () => {
     closeStartMenu();
+    playSfx(SystemSfx.SHUTDOWN);
     location.reload();
   });
 

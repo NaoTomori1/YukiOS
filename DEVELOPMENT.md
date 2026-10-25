@@ -11,7 +11,6 @@ This guide covers how to create new applications, add functionalities, and contr
 - [OS Bridge API](#os-bridge-api)
 - [Styling Guidelines](#styling-guidelines)
 - [Creating Themes](#creating-themes)
-- [Testing](#testing)
 - [Build & Deployment](#build--deployment)
 
 ---
@@ -808,9 +807,6 @@ pnpm run preview
 
 # Electron build
 pnpm run build:electron
-
-# Tests (Vitest)
-pnpm run test
 ```
 
 Single-file build output is supported for easy deployment.
