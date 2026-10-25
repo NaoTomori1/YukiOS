@@ -37,9 +37,8 @@ const DOWNLOAD_BUTTON_HTML = `<button class="download-btn" aria-label="Download"
 
 function buildDefaultControls(externalBtn, downloadBtn) {
   return `<div class="window-controls">
+      ${externalBtn}${downloadBtn}
       <button class="minimize-btn" aria-label="Minimize"><svg viewBox="0 0 10 1" xmlns="http://www.w3.org/2000/svg"><path d="M0 0h10v1H0z"></path></svg></button>
-      ${externalBtn}
-      ${downloadBtn}
       <button class="maximize-btn" aria-label="Maximize">
         <svg class="maximize-glyph" viewBox="0 0 10 10" xmlns="http://www.w3.org/2000/svg"><path d="M0 0v10h10V0H0zm1 1h8v8H1V1z"></path></svg>
         <svg class="restore-glyph" viewBox="0 0 10 10" xmlns="http://www.w3.org/2000/svg"><path d="M3 3V0h7v7h-3v3H0V3h3zm6-1H4v4h5V2zM2 4v4h4V4H2z"></path></svg>
@@ -50,10 +49,9 @@ function buildDefaultControls(externalBtn, downloadBtn) {
 
 function buildMacControls(externalBtn, downloadBtn) {
   return `<div class="window-controls mac-controls">
+        ${externalBtn}${downloadBtn}
         <button class="close-btn mac-btn mac-close" aria-label="Close"></button>
-        ${externalBtn}
         <button class="minimize-btn mac-btn mac-minimize" aria-label="Minimize"></button>
-        ${downloadBtn}
         <button class="maximize-btn mac-btn mac-maximize" aria-label="Maximize"></button>
       </div>`;
 }
@@ -74,33 +72,33 @@ function buildWin7Controls(externalBtn, downloadBtn) {
 
 function buildWin11Controls(externalBtn, downloadBtn) {
   return `<div class="window-controls win11-controls">
+      ${externalBtn}${downloadBtn}
       <button class="minimize-btn win11-btn" aria-label="Minimize"><svg viewBox="0 0 12 12" xmlns="http://www.w3.org/2000/svg"><path d="M1.5 6h9"></path></svg></button>
       <button class="maximize-btn win11-btn" aria-label="Maximize">
         <svg class="maximize-glyph" viewBox="0 0 12 12" xmlns="http://www.w3.org/2000/svg"><rect x="2" y="2" width="8" height="8" rx="1"></rect></svg>
         <img class="restore-glyph" width="12" data-action="EXPLORER" data-payload="mxmz" data-click="true" data-flip="false" data-invert="false" data-rounded="false" src="${resolveIconUrl("static/icons/win11-ui-maximize.png")}" alt="">
       </button>
-      ${externalBtn}${downloadBtn}
       <button class="close-btn win11-btn" aria-label="Close"><svg viewBox="0 0 12 12" xmlns="http://www.w3.org/2000/svg"><path d="M2.5 2.5l7 7M9.5 2.5l-7 7"></path></svg></button>
     </div>`;
 }
 
 function buildGnomeControls(externalBtn, downloadBtn) {
   return `<div class="window-controls gnome-controls">
+      ${externalBtn}${downloadBtn}
       <button class="minimize-btn gnome-btn" aria-label="Minimize"><svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path d="M3.5 8h9"></path></svg></button>
       <button class="maximize-btn gnome-btn" aria-label="Maximize"><svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><rect x="4.2" y="4.2" width="7.6" height="7.6" rx="1"></rect></svg></button>
-      ${externalBtn}${downloadBtn}
       <button class="close-btn gnome-btn" aria-label="Close"><svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path d="M4.5 4.5l7 7M11.5 4.5l-7 7"></path></svg></button>
     </div>`;
 }
 
 function buildKdeControls(externalBtn, downloadBtn) {
   return `<div class="window-controls kde-controls">
+      ${externalBtn}${downloadBtn}
       <button class="minimize-btn kde-btn" aria-label="Minimize"><svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path d="M4.5 6.25L8 9.75l3.5-3.5"></path></svg></button>
       <button class="maximize-btn kde-btn" aria-label="Maximize">
         <svg class="maximize-glyph" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path d="M4.5 9.75L8 6.25l3.5 3.5"></path></svg>
         <svg class="restore-glyph" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path d="M4.5 6.25L8 9.75l3.5-3.5"></path></svg>
       </button>
-      ${externalBtn}${downloadBtn}
       <button class="close-btn kde-btn" aria-label="Close"><svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path d="M4.75 4.75l6.5 6.5M11.25 4.75l-6.5 6.5"></path></svg></button>
     </div>`;
 }
