@@ -21,7 +21,7 @@ const srcsetPattern = /\bsrcset\s*=\s*(["'])([^"']*)\1/gi;
 const directLoadDomains = [
   "reeyuki.github.io",
   "reeyuki.neocities.org",
-  "camerasonworld.com",
+  "cameronsworld.net",
 ];
 
 function normalizeEngineUrl(input) {

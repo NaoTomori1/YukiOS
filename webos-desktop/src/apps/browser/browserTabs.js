@@ -554,7 +554,7 @@ export function createTabsStore(viewportContainer, opts = {}) {
     },
     {
       name: "Cameras on world",
-      url: "https://camerasonworld.com/",
+      url: "https://cameronsworld.net/",
     },
     {
       name: "Reeyuki site",
